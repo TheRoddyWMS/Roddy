@@ -1,0 +1,28 @@
+<component name="libraryTable">
+  <library name="bundledLibraries">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/dist/lib/bcpg-jdk15on-149.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dist/lib/bcpkix-jdk15on-149.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dist/lib/bcprov-ext-jdk15on-149.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dist/lib/bcprov-jdk15on-149.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dist/lib/commons-cli-1.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dist/lib/commons-codec-1.8.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dist/lib/commons-io-2.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dist/lib/commons-logging-1.1.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dist/lib/commons-logging-adapters-1.1.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dist/lib/commons-logging-api-1.1.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dist/lib/groovy-all.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dist/lib/jzlib.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dist/lib/proxy-vole_20131209.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dist/lib/reflections-0.9.9-RC1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dist/lib/slf4j-api-1.7.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dist/lib/slf4j-jcl-1.7.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dist/lib/SSHJ.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dist/lib/xstream-1.4.5.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../SSHJ/src/main/java" />
+    </SOURCES>
+  </library>
+</component>
