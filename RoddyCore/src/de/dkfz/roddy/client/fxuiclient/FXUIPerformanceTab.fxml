@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.collections.ObservableList?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.shape.Line?>
+
+<fx:root type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <center>
+        <ScrollPane>
+            <VBox>
+                <Label id="Header">Overview about FX UI task performance</Label>
+                <Label>This is mostly for debugging purposes.</Label>
+                <Button text="Refresh" onAction="#refreshView" />
+                <TableView fx:id="performanceTable" >
+                    <columns>
+                        <TableColumn prefWidth="350.0" text="Task ID"/>
+                        <TableColumn prefWidth="120.0" text="# Calls"/>
+                        <TableColumn prefWidth="150.0" text="Mean dur. [µs]"/>
+                    </columns>
+                </TableView>
+            </VBox>
+        </ScrollPane>
+    </center>
+</fx:root>

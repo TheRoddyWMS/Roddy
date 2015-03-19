@@ -1,0 +1,47 @@
+package de.dkfz.roddy.client.fxuiclient.fxdatawrappers;
+
+import de.dkfz.roddy.execution.jobs.Job;
+import de.dkfz.roddy.knowledge.files.BaseFile;
+import javafx.beans.property.*;
+
+/**
+ */
+public class FXWorkflowFileWrapper extends FXFileWrapper {
+
+    private Job job;
+    private StringProperty _jobID = new SimpleStringProperty();
+    private BooleanProperty _isFileMissing = new SimpleBooleanProperty();
+    private BooleanProperty _isTemporaryFile = new SimpleBooleanProperty();
+    private ObjectProperty<BaseFile> _baseFile= new SimpleObjectProperty<>();
+    private BaseFile baseFile;
+
+    public FXWorkflowFileWrapper(BaseFile file, Job job) {
+        super(file.getPath());
+        this.job = job;
+        this.baseFile = file;
+        this._baseFile.setValue(baseFile);
+        this._jobID.setValue(job.getJobID());
+        this._isFileMissing.setValue(!file.isFileValid());
+        this._isTemporaryFile.setValue(file.isTemporaryFile());
+    }
+
+    public Job getJob() {
+        return job;
+    }
+
+    public StringProperty jobIDProperty() {
+        return _jobID;
+    }
+
+    public BooleanProperty isTemporaryFileProperty() {
+        return _isTemporaryFile;
+    }
+
+    public BooleanProperty isFileMissingProperty() {
+        return _isFileMissing;
+    }
+
+    public ObjectProperty<BaseFile> baseFileProperty() {
+        return _baseFile;
+    }
+}

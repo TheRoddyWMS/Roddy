@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import java.net.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.LogFileListViewItemController" fx:id="borderPane">
+    <left>
+        <GridPane fx:id="iconsPane">
+            <children>
+                <ImageView fx:id="indicatorUnknown" GridPane.rowIndex="0" GridPane.columnIndex="1">
+                    <Image url="/imgs/icon_status_unknown.png"/>
+                </ImageView>
+                <ImageView fx:id="indicatorError" GridPane.rowIndex="0" GridPane.columnIndex="1" visible="false">
+                    <Image url="/imgs/icon_status_error.png"/>
+                </ImageView>
+                <ImageView fx:id="indicatorOK" GridPane.rowIndex="0" GridPane.columnIndex="1" visible="false">
+                    <Image url="/imgs/icon_status_ok.png"/>
+                </ImageView>
+                <ImageView fx:id="indicatorLogFileIsMissing" GridPane.rowIndex="0" GridPane.columnIndex="2" visible="true">
+                    <Image url="/imgs/icon_status_logfile_missing.png" />
+                </ImageView>
+            </children>
+        </GridPane>
+    </left>
+    <center>
+        <GridPane hgap="2">
+            <Label fx:id="lblJobID" GridPane.columnIndex="0"/>
+            <Label fx:id="lblFilePath" GridPane.columnIndex="1"/>
+        </GridPane>
+    </center>
+</BorderPane>

@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import de.dkfz.roddy.client.fxuiclient.fxcontrols.*?>
+<?import javafx.collections.FXCollections?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.web.WebView?>
+<?import java.lang.*?>
+<?import java.net.URL?>
+<fx:root type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <fx:define>
+        <Image url="/imgs/icon_status_logfile_missing.png" fx:id="fileIsMissing"/>
+        <Image url="/imgs/icon_file_temporary.png" fx:id="fileIsTemporary"/>
+    </fx:define>
+    <stylesheets>
+        <URL value="@RoddyStyles_Main.css"/>
+    </stylesheets>
+    <left>
+        <Accordion fx:id="accordion">
+            <panes>
+                <TitledPane text="Execution contexts" fx:id="tpExecutionContexts">
+                    <BorderPane>
+                        <top>
+                            <TitledPane fx:id="tpECFilterSettings" text="Filter settings" expanded="false">
+                                <content>
+                                    <CheckBox text="Hide empty contexts" selected="false"/>
+                                </content>
+                            </TitledPane>
+                        </top>
+                        <center>
+                            <ListView fx:id="lstRuns"/>
+                        </center>
+                    </BorderPane>
+                </TitledPane>
+                <TitledPane text="Submitted jobs" fx:id="tpSubmittedJob">
+                    <BorderPane>
+                        <top>
+                            <VBox>
+                                <TitledPane fx:id="tpJobFilterSettings" text="Filter settings">
+                                    <content>
+                                        <GridPane hgap="2" vgap="2">
+                                            <columnConstraints>
+                                                <ColumnConstraints hgrow="SOMETIMES" percentWidth="30"/>
+                                                <ColumnConstraints hgrow="ALWAYS" percentWidth="70"/>
+                                            </columnConstraints>
+                                            <rowConstraints>
+                                                <RowConstraints />
+                                                <RowConstraints />
+                                                <RowConstraints maxHeight="3.0" prefHeight="3.0" vgrow="SOMETIMES"/>
+                                                <RowConstraints vgrow="SOMETIMES"/>
+                                                <RowConstraints maxHeight="3.0" prefHeight="3.0" vgrow="SOMETIMES"/>
+                                                <RowConstraints vgrow="SOMETIMES"/>
+                                                <RowConstraints/>
+                                            </rowConstraints>
+                                            <children>
+                                                <Label text="Show" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                                                <ComboBox GridPane.columnIndex="1" GridPane.rowIndex="0" maxWidth="Infinity">
+                                                    <items>
+                                                        <FXCollections fx:factory="observableArrayList">
+                                                            <String fx:value="All"/>
+                                                            <String fx:value="Active"/>
+                                                            <String fx:value="Successful"/>
+                                                            <String fx:value="Unknown"/>
+                                                            <String fx:value="Failed"/>
+                                                        </FXCollections>
+                                                    </items>
+                                                    <value>
+                                                        <String fx:value="All"/>
+                                                    </value>
+                                                </ComboBox>
+                                                <Label text="Order by" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                                                <ComboBox GridPane.columnIndex="1" GridPane.rowIndex="1" maxWidth="Infinity">
+                                                    <items>
+                                                        <FXCollections fx:factory="observableArrayList">
+                                                            <String fx:value="Tool ID"/>
+                                                            <String fx:value="State"/>
+                                                            <String fx:value="Job ID"/>
+                                                        </FXCollections>
+                                                    </items>
+                                                    <value>
+                                                        <String fx:value="Job ID"/>
+                                                    </value>
+                                                </ComboBox>
+
+                                                <Separator orientation="HORIZONTAL" prefHeight="1.0" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="3"/>
+                                                <VBox padding="$x1" spacing="3.0" GridPane.rowIndex="3" GridPane.columnSpan="3">
+                                                    <CheckBox fx:id="ckbFilterShowFakeJobs" text="Show fake jobs"/>
+                                                    <CheckBox fx:id="ckbFilterShowArrayJobs" text="Show array jobs"/>
+                                                    <padding>
+                                                        <Insets left="8.0" top="2.0" fx:id="x1"/>
+                                                    </padding>
+                                                </VBox>
+                                                <Separator orientation="HORIZONTAL" prefHeight="1.0" GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.columnSpan="3"/>
+                                                <GridPane GridPane.rowIndex="5" GridPane.columnSpan="3" hgap="2" vgap="2">
+                                                    <columnConstraints>
+                                                        <ColumnConstraints/>
+                                                        <ColumnConstraints/>
+                                                        <ColumnConstraints/>
+                                                    </columnConstraints>
+                                                    <children>
+                                                        <ImageButtonWithToolTip onAction="#stopPIDProcessing" text="Stop processing" GridPane.columnSpan="2" imagePath="/imgs/icon_button_stop.png" tooltipText="Stops job submission and running or planned jobs."/>
+                                                        <ImageButtonWithToolTip onAction="#stopJobSubmission" text="Stop job submission" GridPane.rowIndex="1" GridPane.columnSpan="2" imagePath="/imgs/icon_button_stop.png" tooltipText="Stops job submission."/>
+                                                    </children>
+                                                </GridPane>
+                                            </children>
+                                        </GridPane>
+                                    </content>
+                                </TitledPane>
+                                <TitledPane fx:id="tpJobSettings" animated="false" text="Job settings">
+                                    <content>
+                                        <VBox>
+                                            <children>
+                                                <VBox VBox.vgrow="ALWAYS">
+                                                    <children>
+                                                        <Label text="Reset job state"/>
+                                                        <Separator/>
+                                                        <GridPane hgap="2.0" vgap="2.0" VBox.vgrow="ALWAYS">
+                                                            <children>
+                                                                <ImageButtonWithToolTip GridPane.columnIndex="0" GridPane.rowIndex="0" text="_Good" imagePath="/imgs/icon_status_ok.png" tooltipText="Job finished without an error." onAction="#resetJobState_OK"/>
+                                                                <ImageButtonWithToolTip GridPane.columnIndex="0" GridPane.rowIndex="1" text="_Failed" imagePath="/imgs/icon_status_error.png" tooltipText="Job stopped with an error." onAction="#resetJobState_FAILED"/>
+                                                                <ImageButtonWithToolTip GridPane.columnIndex="1" GridPane.rowIndex="0" text="_Unstarted" imagePath="/imgs/icon_status_unprocessed.png" tooltipText="Job was submitted but not started (missing dependency?)." onAction="#resetJobState_UNPROCESSED"/>
+                                                                <ImageButtonWithToolTip GridPane.columnIndex="1" GridPane.rowIndex="1" text="_Aborted" imagePath="/imgs/icon_status_aborted.png" tooltipText="Job was submitted but not started (missing dependency?)." onAction="#resetJobState_ABORTED"/>
+                                                            </children>
+                                                            <columnConstraints>
+                                                                <ColumnConstraints percentWidth="50.0"/>
+                                                                <ColumnConstraints percentWidth="50.0"/>
+                                                            </columnConstraints>
+                                                            <rowConstraints>
+                                                                <RowConstraints/>
+                                                                <RowConstraints/>
+                                                                <RowConstraints/>
+                                                            </rowConstraints>
+                                                        </GridPane>
+                                                    </children>
+                                                </VBox>
+                                                <VBox/>
+                                            </children>
+                                        </VBox>
+                                    </content>
+                                </TitledPane>
+                            </VBox>
+                        </top>
+                        <center>
+                            <ListView fx:id="lstJobsOfRun" VBox.vgrow="ALWAYS"/>
+                        </center>
+                    </BorderPane>
+                </TitledPane>
+            </panes>
+            <expandedPane>
+                <fx:reference source="tpExecutionContexts"/>
+            </expandedPane>
+        </Accordion>
+
+    </left>
+    <center>
+        <TabPane fx:id="tabpaneECContents">
+            <Tab text="Execution context details" closable="false">
+                <VBox>
+                    <ExecutionContextOverviewControl fx:id="executionContextOverview" VBox.vgrow="ALWAYS"/>
+                </VBox>
+            </Tab>
+            <Tab fx:id="tabJobDetails" text="Job details" closable="false">
+                <VBox>
+                    <JobOverviewControl fx:id="jobOverview" onAction="#dependencyJobClicked" VBox.vgrow="ALWAYS"/>
+                </VBox>
+            </Tab>
+            <Tab text="Additional log files" closable="false">
+                <BorderPane>
+                    <top>
+                        <ListView fx:id="lstAdditionalLogFiles"/>
+                    </top>
+                    <center>
+                        <WebView fx:id="txtAdditionalLogFile"/>
+                    </center>
+                </BorderPane>
+            </Tab>
+            <Tab text="Workflow files" closable="false">
+                <!--<BorderPane>-->
+                <!--<center>-->
+                <TableView fx:id="lstFilesCreatedByWorkflow">
+
+                    <columns>
+                        <TableColumn text="Status">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="isFileMissing"/>
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn text="Status">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="isTemporaryFile"/>
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn text="Job">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="jobID"/>
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn text="Name">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="fileName"/>
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn text="Folder">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="filePath"/>
+                            </cellValueFactory>
+                        </TableColumn>
+                    </columns>
+                </TableView>
+                <!--</top>-->
+                <!--<center>-->
+                <!---->
+                <!--</center>-->
+                <!--</BorderPane>-->
+            </Tab>
+        </TabPane>
+    </center>
+</fx:root>

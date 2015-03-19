@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.collections.ObservableList?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.shape.Line?>
+
+<fx:root type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <center>
+        <ScrollPane>
+            <VBox>
+                <Label></Label>
+                <GridPane>
+                    <columnConstraints>
+                        <ColumnConstraints prefWidth="190" maxWidth="190" hgrow="ALWAYS"/>
+                        <ColumnConstraints prefWidth="450" maxWidth="450" hgrow="ALWAYS"/>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                    </columnConstraints>
+
+                    <Label GridPane.columnIndex="0" GridPane.rowIndex="0"></Label>
+                    <TextField fx:id="Version" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="0"></TextField>
+
+                    <Label GridPane.columnIndex="0" GridPane.rowIndex="1"></Label>
+                    <TextField fx:id="0ff" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="1"></TextField>
+
+                    <Label GridPane.columnIndex="0" GridPane.rowIndex="2"></Label>
+                    <TextField fx:id="0x0" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="2"></TextField>
+
+                    <Label GridPane.columnIndex="0" GridPane.rowIndex="3"></Label>
+                    <TextField fx:id="pluginList" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="3"></TextField>
+
+
+                </GridPane>
+                <Label></Label>
+            </VBox>
+        </ScrollPane>
+    </center>
+</fx:root>

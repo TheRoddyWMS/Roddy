@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.collections.ObservableList?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.shape.Line?>
+
+<fx:root type="javafx.scene.layout.BorderPane" prefWidth="685.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <bottom>
+        <GridPane>
+            <children>
+                <Label text="Filter" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                <TextField fx:id="txtFilter" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                <Label text="Sort by" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                <ComboBox fx:id="cbbSortBy" prefHeight="21.0" prefWidth="209.0" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+            </children>
+        </GridPane>
+    </bottom>
+    <center>
+        <ListView fx:id="listView" prefHeight="200.0" prefWidth="200.0"/>
+    </center>
+    <top>
+        <HBox>
+            <children>
+                <Label fx:id="lblHeader" text="Label"/>
+            </children>
+        </HBox>
+    </top>
+</fx:root>

@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import de.dkfz.roddy.client.fxuiclient.*?>
+<?import de.dkfz.roddy.client.fxuiclient.settingsviewer.*?>
+<?import de.dkfz.roddy.client.fxuiclient.fxcontrols.*?>
+<?import de.dkfz.roddy.client.fxuiclient.ApplicationInfoTab?>
+<?import javafx.collections.FXCollections?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.Group?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?>
+<?import java.lang.*?>
+<?import java.net.URL?>
+<BorderPane minHeight="480" minWidth="640" prefHeight="800.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.dkfz.roddy.client.fxuiclient.RoddyUIController" style="-fx-background-color: gray;">
+    <fx:define>
+        <Image url="/imgs/icon_applicationSpecific.png" fx:id="iconApplicationSpecific"/>
+        <Image url="/imgs/icon_applicationInformal.png" fx:id="iconApplicationInformal"/>
+        <Image url="/imgs/icon_projectSpecific.png" fx:id="iconProjectSpecific"/>
+        <Image url="/imgs/icon_datasetSpecific.png" fx:id="iconDatasetSpecific"/>
+        <!--<Image url="/imgs/icon_dataset.png" fx:id="iconApplicationSpecific"/>-->
+    </fx:define>
+    <stylesheets>
+        <URL value="@RoddyStyles_Main.css"/>
+    </stylesheets>
+    <center>
+        <GridPane>
+            <SplitPane dividerPositions="0.2" focusTraversable="true" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
+                <items>
+                    <BorderPane prefWidth="300.0" SplitPane.resizableWithParent="false">
+
+                        <center>
+                            <Accordion prefWidth="300.0" fx:id="projectDatasetAccordion">
+                                <panes>
+                                    <TitledPane fx:id="tpProjects" text="Projects">
+                                        <content>
+                                            <BorderPane prefHeight="200.0" prefWidth="200.0">
+                                                <top>
+                                                    <TitledPane fx:id="tpProjectFilterSettings" text="Filter projects">
+                                                        <VBox spacing="2">
+                                                            <Label text="Filter by:"/>
+                                                            <GridPane>
+                                                                <columnConstraints>
+                                                                    <ColumnConstraints prefWidth="70"/>
+                                                                    <ColumnConstraints hgrow="ALWAYS"/>
+                                                                </columnConstraints>
+                                                                <Label text="ID: " GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                                                                <Label text="Analysis: " GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                                                                <TextField fx:id="txtProjectFilterByID" text="*" GridPane.rowIndex="0" GridPane.columnIndex="1" maxWidth="Infinity" onAction="#refreshProjectView"/>
+                                                                <TextField fx:id="txtProjectFilterByAnalysis" text="*" GridPane.rowIndex="1" GridPane.columnIndex="1" maxWidth="Infinity" onAction="#refreshProjectView"/>
+                                                            </GridPane>
+                                                            <Separator orientation="HORIZONTAL"/>
+                                                            <CheckBox fx:id="cbProjectFilterHideUnprocessable" text="Hide unprocessable" onAction="#refreshProjectView"/>
+                                                            <Separator orientation="HORIZONTAL"/>
+                                                        </VBox>
+                                                    </TitledPane>
+                                                </top>
+                                                <center>
+                                                    <VBox>
+                                                        <ToolBar>
+                                                            <items>
+                                                                <Region HBox.hgrow="ALWAYS"/>
+                                                                <Button onAction="#reloadProjectView">
+                                                                    <graphic>
+                                                                        <ImageView>
+                                                                            <image>
+                                                                                <Image url="/imgs/icon_refresh.png"/>
+                                                                            </image>
+                                                                        </ImageView>
+                                                                    </graphic>
+                                                                </Button>
+                                                            </items>
+                                                        </ToolBar>
+                                                        <TreeView fx:id="projectTree" prefHeight="200.0" prefWidth="200.0" showRoot="false" VBox.vgrow="ALWAYS"/>
+                                                    </VBox>
+                                                </center>
+                                            </BorderPane>
+                                        </content>
+                                    </TitledPane>
+                                    <TitledPane fx:id="tpDatasets" text="Data sets">
+                                        <content>
+                                            <BorderPane prefHeight="200.0" prefWidth="200.0">
+                                                <top>
+                                                    <VBox spacing="2">
+                                                        <TitledPane fx:id="tpProjectSettings" animated="false" text="Project settings">
+                                                            <content>
+                                                                <GridPane hgap="4.0" vgap="2.0">
+                                                                    <children>
+                                                                        <Label text="Analysis"/>
+                                                                        <Label text="Mode" GridPane.rowIndex="2"/>
+                                                                        <Separator prefWidth="200.0" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="1"/>
+                                                                        <VBox fx:id="vboxAvailableAnalyses" spacing="2.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                                                            <children>
+                                                                                <RadioButton mnemonicParsing="false" text="RadioButton"/>
+                                                                            </children>
+                                                                        </VBox>
+                                                                        <VBox fx:id="vboxProcessingMode" spacing="2.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                                                            <children>
+                                                                                <RadioButton mnemonicParsing="false" selected="true" text="Productive">
+                                                                                    <toggleGroup>
+                                                                                        <ToggleGroup fx:id="projectProcessingMode"/>
+                                                                                    </toggleGroup>
+                                                                                </RadioButton>
+                                                                                <Separator prefWidth="200.0"/>
+                                                                                <!--<RadioButton mnemonicParsing="false" text="Debug" toggleGroup="$projectProcessingMode" />-->
+                                                                            </children>
+                                                                        </VBox>
+                                                                        <VBox GridPane.rowIndex="3" GridPane.columnSpan="2">
+                                                                            <Label text="Analysis input directory"/>
+                                                                            <TextField fx:id="txtAnalysisInputDirectory" editable="false"/>
+                                                                            <Label text="Processing base directory"/>
+                                                                            <TextField fx:id="txtProjectBaseOutputDirectory" editable="false"/>
+                                                                            <Label text="Analysis output directory"/>
+                                                                            <TextField fx:id="txtAnalysisOutputDirectory" editable="false"/>
+                                                                        </VBox>
+                                                                    </children>
+                                                                    <columnConstraints>
+                                                                        <ColumnConstraints halignment="LEFT" minWidth="8.0"/>
+                                                                        <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" minWidth="8.0"/>
+                                                                    </columnConstraints>
+                                                                    <padding>
+                                                                        <Insets bottom="2.0" left="2.0" right="2.0" top="2.0"/>
+                                                                    </padding>
+                                                                    <rowConstraints>
+                                                                        <RowConstraints valignment="TOP"/>
+                                                                        <RowConstraints valignment="TOP"/>
+                                                                        <RowConstraints valignment="TOP"/>
+                                                                    </rowConstraints>
+                                                                </GridPane>
+                                                            </content>
+                                                        </TitledPane>
+                                                        <TitledPane fx:id="tpProjectDataSetFilter" animated="false" text="Filter">
+                                                            <content>
+                                                                <GridPane hgap="4.0" vgap="2.0">
+                                                                    <children>
+                                                                        <Label text="Filter"/>
+                                                                        <TextField fx:id="txtDataSetFilter" text="*" GridPane.columnIndex="1"/>
+                                                                        <Separator orientation="HORIZONTAL" prefHeight="1.0" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2"/>
+                                                                        <Label text="Order by" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                                                                        <ComboBox GridPane.columnIndex="1" GridPane.rowIndex="2" maxWidth="Infinity">
+                                                                            <items>
+                                                                                <FXCollections fx:factory="observableArrayList">
+                                                                                    <String fx:value="All"/>
+                                                                                    <String fx:value="Active"/>
+                                                                                    <String fx:value="Successful"/>
+                                                                                    <String fx:value="Unknown"/>
+                                                                                    <String fx:value="Failed"/>
+                                                                                </FXCollections>
+                                                                            </items>
+                                                                            <value>
+                                                                                <String fx:value="All"/>
+                                                                            </value>
+                                                                        </ComboBox>
+
+                                                                        <!--<VBox spacing="3.0" GridPane.columnIndex="0" GridPane.rowIndex="3">-->
+                                                                        <!--<RadioButton selected="true" text="All">-->
+                                                                        <!--<toggleGroup>-->
+                                                                        <!--<ToggleGroup fx:id="dataSetFilterViewToggleGroup"/>-->
+                                                                        <!--</toggleGroup>-->
+                                                                        <!--l-->
+                                                                        <!--</RadioButton>-->
+                                                                        <!--<RadioButton text="Active" toggleGroup="$dataSetFilterViewToggleGroup"/>-->
+                                                                        <!--<RadioButton text="Successful" toggleGroup="$dataSetFilterViewToggleGroup"/>-->
+                                                                        <!--<RadioButton text="Unknown" toggleGroup="$dataSetFilterViewToggleGroup"/>-->
+                                                                        <!--<RadioButton text="Failed" toggleGroup="$dataSetFilterViewToggleGroup"/>-->
+                                                                        <!--<padding>-->
+                                                                        <!--<Insets left="8.0" top="2.0" fx:id="x1"/>-->
+                                                                        <!--</padding>-->
+                                                                        <!--</VBox>-->
+                                                                    </children>
+                                                                    <columnConstraints>
+                                                                        <ColumnConstraints halignment="LEFT" minWidth="8.0"/>
+                                                                        <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" minWidth="8.0"/>
+                                                                    </columnConstraints>
+                                                                    <padding>
+                                                                        <Insets bottom="2.0" left="2.0" right="2.0" top="2.0"/>
+                                                                    </padding>
+                                                                    <rowConstraints>
+                                                                        <RowConstraints valignment="TOP"/>
+                                                                        <RowConstraints valignment="TOP"/>
+                                                                        <RowConstraints valignment="TOP"/>
+                                                                    </rowConstraints>
+                                                                </GridPane>
+                                                            </content>
+                                                        </TitledPane>
+                                                        <!---->
+                                                    </VBox>
+                                                </top>
+                                                <center>
+                                                    <VBox>
+                                                        <ToolBar>
+                                                            <items>
+
+                                                                <ImageButtonWithToolTip text="_Run" onAction="#executeWorkflowForDataSets" imagePath="/imgs/icon_button_run.png" minWidth="70" maxWidth="Infinity"/>
+                                                                <ImageButtonWithToolTip text="R_erun" onAction="#rerunWorkflowForDataSets" imagePath="/imgs/icon_button_rerun.png" minWidth="70" maxWidth="Infinity"/>
+                                                                <Region HBox.hgrow="ALWAYS"/>
+                                                                <Button onAction="#refreshDatasetsForWorkflow">
+                                                                    <graphic>
+                                                                        <ImageView>
+                                                                            <Image url="/imgs/icon_refresh.png"/>
+                                                                        </ImageView>
+                                                                    </graphic>
+                                                                </Button>
+                                                            </items>
+                                                        </ToolBar>
+                                                        <ListView fx:id="listViewDataSets" VBox.vgrow="ALWAYS"></ListView>
+                                                    </VBox>
+                                                </center>
+
+                                            </BorderPane>
+                                        </content>
+                                    </TitledPane>
+                                </panes>
+                                <expandedPane>
+                                    <fx:reference source="tpProjects"/>
+                                </expandedPane>
+                            </Accordion>
+                        </center>
+                    </BorderPane>
+                    <TabPane fx:id="appTabs">
+                        <tabs>
+                            <Tab text="Application" closable="false">
+                                <graphic>
+                                    <ImageView>
+                                        <fx:reference source="iconApplicationSpecific"/>
+                                    </ImageView>
+                                </graphic>
+                                <content>
+                                    <TabPane>
+                                        <Tab text="Settings" closable="false">
+                                            <graphic>
+                                                <ImageView>
+                                                    <fx:reference source="iconApplicationSpecific"/>
+                                                </ImageView>
+                                            </graphic>
+                                            <content>
+                                                <SettingsViewer />
+                                            </content>
+                                        </Tab>
+                                        <Tab text="Info" closable="false">
+                                            <graphic>
+                                                <ImageView>
+                                                    <fx:reference source="iconApplicationSpecific"/>
+                                                </ImageView>
+                                            </graphic>
+                                            <content>
+                                                <ApplicationInfoTab />
+                                            </content>
+                                        </Tab>
+                                        <Tab text="Performance" closable="false">
+                                            <graphic>
+                                                <ImageView>
+                                                    <fx:reference source="iconApplicationInformal"/>
+                                                </ImageView>
+                                            </graphic>
+                                            <content>
+                                                <FXUIPerformanceTab />
+                                            </content>
+                                        </Tab>
+                                        <Tab text="Logs" closable="false" id="TabHeaderCommon">
+                                            <graphic>
+                                                <ImageView>
+                                                    <fx:reference source="iconApplicationInformal"/>
+                                                </ImageView>
+                                            </graphic>
+                                            <content>
+                                                <LogViewer/>
+                                            </content>
+                                        </Tab>
+                                        <Tab text="Cache providers" closable="false" id="TabHeaderCommon">
+                                            <graphic>
+                                                <ImageView>
+                                                    <fx:reference source="iconApplicationInformal"/>
+                                                </ImageView>
+                                            </graphic>
+                                            <content>
+                                                <CacheProviderViewer/>
+                                            </content>
+                                        </Tab>
+                                        <Tab text="Help" closable="false">
+                                            <graphic>
+                                                <ImageView>
+                                                    <fx:reference source="iconApplicationSpecific"/>
+                                                </ImageView>
+                                            </graphic>
+                                            <content>
+                                                <GridPane>
+                                                    <Label>Application help</Label>
+                                                </GridPane>
+                                            </content>
+                                        </Tab>
+                                    </TabPane>
+                                </content>
+                            </Tab>
+
+                            <Tab fx:id="appTabConfiguration" text="Configuration" closable="false" id="TabHeaderProject">
+                                <graphic>
+                                    <ImageView>
+                                        <fx:reference source="iconProjectSpecific"/>
+                                    </ImageView>
+                                </graphic>
+                                <content>
+                                    <ConfigurationViewer fx:id="configurationViewer"/>
+                                </content>
+                            </Tab>
+                        </tabs>
+                    </TabPane>
+                </items>
+            </SplitPane>
+
+        </GridPane>
+    </center>
+    <bottom>
+        <ToolBar>
+            <!--<GridPane alignment="CENTER" BorderPane.alignment="CENTER" style="-fx-background-color: gray;">-->
+            <!--<columnConstraints>-->
+            <!--<ColumnConstraints hgrow="SOMETIMES" halignment="LEFT"/>-->
+            <!--<ColumnConstraints hgrow="SOMETIMES"/>-->
+            <!--<ColumnConstraints halignment="CENTER" hgrow="NEVER"/>-->
+            <!--</columnConstraints>-->
+            <!--<rowConstraints>-->
+            <!--<RowConstraints valignment="CENTER" vgrow="ALWAYS"/>-->
+            <!--</rowConstraints>-->
+            <items>
+                <Group GridPane.columnIndex="0" GridPane.rowIndex="0">
+                    <GridPane>
+                        <columnConstraints>
+                            <ColumnConstraints hgrow="NEVER" halignment="CENTER"></ColumnConstraints>
+                        </columnConstraints>
+                        <rowConstraints>
+                            <RowConstraints valignment="CENTER" vgrow="NEVER"/>
+                        </rowConstraints>
+                        <ProgressIndicator fx:id="executionService_activityIndicator" maxHeight="14.0" maxWidth="14.0" minHeight="14.0" minWidth="14.0" prefHeight="14.0" prefWidth="14.0" visible="false"/>
+                        <Circle fx:id="stateImage_active" fill="#00ff00" radius="4.0" strokeWidth="0.0"/>
+                        <Circle fx:id="stateImage_inactive" fill="RED" radius="4.0" strokeWidth="0.0"/>
+                        <Circle fx:id="stateImage_connecting" fill="YELLOW" radius="4.0" strokeWidth="0.0"/>
+                        <Circle fill="#ffffffa0" radius="3.0" strokeWidth="0.0"/>
+                    </GridPane>
+                </Group>
+
+                <ImageView GridPane.columnIndex="0" fx:id="imageViewConnection"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label GridPane.columnIndex="1" fx:id="lblMessage"/>
+                <HBox GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS">
+                    <Label text="Memory usage: "/>
+                    <GridPane>
+                        <ProgressBar fx:id="pgbMemory" prefHeight="18.0" progress="0.0" GridPane.columnIndex="2" GridPane.rowIndex="0" GridPane.valignment="CENTER" GridPane.vgrow="ALWAYS"/>
+                        <Label GridPane.columnIndex="2" fx:id="lblMemory" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS"/>
+                    </GridPane>
+                </HBox>
+            </items>
+        </ToolBar>
+    </bottom>
+</BorderPane>

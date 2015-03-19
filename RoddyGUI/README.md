@@ -1,0 +1,2 @@
+This project is a placeholder for the further development of Roddys GUI system.
+Currently the GUI classes are inside the core project but they will be extracted to this project at some point in the future.

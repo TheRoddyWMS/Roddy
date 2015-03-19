@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import de.dkfz.roddy.client.fxuiclient.fxcontrols.ConfigurationGraph?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import java.net.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?scenebuilder-stylesheet ConfigurationViewer.css?>
+
+<?import de.dkfz.roddy.client.fxuiclient.fxcontrols.CodeEditor?>
+<fx:root type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <fx:define>
+        <Image url="/imgs/icon_analysis.png" fx:id="imageToolListedInAnalysisHeader"/>
+        <Image url="/imgs/icon_status_running.png" fx:id="imageToolIsUsedInRun"/>
+        <Image url="/imgs/icon_overrides_cvalue.png" fx:id="imageCValueOverridesCValue"/>
+    </fx:define>
+    <stylesheets>
+        <URL value="@ConfigurationViewer.css"/>
+    </stylesheets>
+    <center>
+        <VBox>
+            <children>
+                <TitledPane fx:id="tpConfigurationGraph" text="Configuration graph">
+                    <content>
+                        <ConfigurationGraph fx:id="configurationGraph" minHeight="350" prefHeight="350"/>
+                    </content>
+                </TitledPane>
+                <BorderPane VBox.vgrow="ALWAYS">
+                    <top>
+                        <HBox>
+                            <children>
+                                <Label text="Filter: " style="-fx-font-size: 15pt;"/>
+                                <TextField fx:id="filterTextField" prefWidth="-1.0" HBox.hgrow="ALWAYS"/>
+                            </children>
+                        </HBox>
+                    </top>
+                    <center>
+                        <TabPane tabClosingPolicy="UNAVAILABLE" fx:id="tabpaneConfigurationContents">
+                            <tabs>
+                                <Tab text="Problems and Errors">
+                                    <ListView fx:id="lstConfigurationErrors"/>
+                                </Tab>
+                                <Tab text="Configuration values">
+                                    <GridPane>
+                                        <columnConstraints>
+                                            <ColumnConstraints hgrow="ALWAYS" halignment="CENTER"/>
+                                        </columnConstraints>
+                                        <rowConstraints>
+                                            <RowConstraints vgrow="ALWAYS" valignment="CENTER"/>
+                                        </rowConstraints>
+                                        <children>
+                                            <TableView fx:id="configValuesTable">
+                                                <columns>
+                                                    <!--<TableColumn prefWidth="24" text="#"/>-->
+                                                    <TableColumn prefWidth="24.0" text=""/>
+                                                    <TableColumn prefWidth="150.0" text="Configuration"/>
+                                                    <TableColumn prefWidth="350.0" text="ID"/>
+                                                    <TableColumn prefWidth="350.0" text="Value"/>
+                                                    <TableColumn prefWidth="110.0" text="Type"/>
+                                                </columns>
+                                            </TableView>
+                                            <GridPane fx:id="configValueDetailsPane" style="-fx-background-color: #000000B0;" visible="false">
+                                                <columnConstraints>
+                                                    <ColumnConstraints hgrow="ALWAYS" halignment="CENTER"/>
+                                                </columnConstraints>
+                                                <rowConstraints>
+                                                    <RowConstraints valignment="CENTER"/>
+                                                </rowConstraints>
+                                                <children>
+                                                    <VBox>
+
+                                                        <Button fx:id="btnCloseCValueInheritanceTable" GridPane.rowIndex="0"/>
+                                                        <TableView fx:id="configValuesInheritanceTable" GridPane.rowIndex="1" maxHeight="300">
+                                                            <columns>
+                                                                <!--<TableColumn prefWidth="24" text="Number"/>-->
+                                                                <TableColumn prefWidth="36.0" text="D"/>
+                                                                <TableColumn prefWidth="150.0" text="Configuration"/>
+                                                                <TableColumn prefWidth="350.0" text="Value"/>
+                                                                <TableColumn prefWidth="110.0" text="Type"/>
+                                                            </columns>
+                                                        </TableView>
+                                                    </VBox>
+                                                </children>
+                                            </GridPane>
+                                        </children>
+                                        <!--<right>-->
+                                        <!--<ScrollPane>-->
+                                        <!--<content>-->
+                                        <!--<VBox>-->
+                                        <!--<Label id="label_Header" text="Value history" VBox.vgrow="ALWAYS" maxWidth="Infinity" />-->
+                                        <!--<ListView fx:id="lstCValueHistory"/>-->
+                                        <!--<Label id="label_Header" text="Value usage"  VBox.vgrow="ALWAYS" maxWidth="Infinity"/>-->
+                                        <!--<ListView fx:id="lstCValueUsage"/>-->
+                                        <!--</VBox>-->
+                                        <!--</content>-->
+                                        <!--</ScrollPane>-->
+                                        <!--</right>-->
+                                    </GridPane>
+                                </Tab>
+                                <Tab text="Tools and tool paths">
+                                    <TableView fx:id="toolEntriesTable">
+                                        <columns>
+                                            <TableColumn prefWidth="24.0" text="Listed in analysis header"/>
+                                            <TableColumn prefWidth="24.0" text="Used in Run" />
+                                            <TableColumn prefWidth="250.0" text="Tool ID"/>
+                                            <TableColumn prefWidth="350.0" text="Path"/>
+                                            <TableColumn prefWidth="350.0" text="Base path id"/>
+                                        </columns>
+                                    </TableView>
+                                </Tab>
+                                <Tab text="File names and paths">
+                                    <TableView fx:id="filenamePatternsTable">
+                                        <columns>
+                                            <TableColumn prefWidth="250.0" text="ID"/>
+                                            <TableColumn prefWidth="350.0" text="File class"/>
+                                            <TableColumn prefWidth="350.0" text="Dependency type"/>
+                                        </columns>
+                                    </TableView>
+                                </Tab>
+                                <Tab text="Source code (XML)" fx:id="tabXMLSources">
+                                    <CodeEditor fx:id="configurationCodeEditor" />
+                                </Tab>
+                                <Tab text="Source code (Scripts)" fx:id="tabScriptSources">
+                                    <CodeEditor fx:id="scriptCodeEditor" />
+                                </Tab>
+                            </tabs>
+                        </TabPane>
+                    </center>
+                </BorderPane>
+            </children>
+        </VBox>
+    </center>
+</fx:root>

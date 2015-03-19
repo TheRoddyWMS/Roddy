@@ -1,0 +1,39 @@
+package de.dkfz.roddy.config;
+
+import de.dkfz.roddy.core.DataSet;
+import de.dkfz.roddy.knowledge.files.FileStage;
+import de.dkfz.roddy.knowledge.files.FileStageSettings;
+
+/**
+ * Created by michael on 28.10.14.
+ */
+public class TestFileStageSettings extends FileStageSettings {
+    protected TestFileStageSettings() {
+        super(null, null);
+    }
+
+    @Override
+    public FileStageSettings copy() {
+        return null;
+    }
+
+    @Override
+    public FileStageSettings decreaseLevel() {
+        return null;
+    }
+
+    @Override
+    public String getIDString() {
+        return "testid";
+    }
+
+    @Override
+    public String fillStringContent(String temp) {
+        return null;
+    }
+
+    @Override
+    public String fillStringContentWithArrayValues(int index, String temp) {
+        return null;
+    }
+}

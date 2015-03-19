@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.collections.ObservableList?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.shape.Line?>
+
+<fx:root type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <center>
+        <TabPane fx:id="tabPane"><!--fx:controller="de.dkfz.roddy.client.fxuiclient.LogViewer"-->
+            <Tab text="All logs" closable="false">
+                <content>
+                    <ListView fx:id="allEntriesList"></ListView>
+                </content>
+            </Tab>
+        </TabPane>
+    </center>
+</fx:root>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import java.net.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.DataSetListViewItemController" fx:id="borderPane">
+    <stylesheets>
+        <URL value="@../RoddyStyles_Main.css"/>
+    </stylesheets>
+    <left>
+        <GridPane fx:id="runViews">
+            <GridPane fx:id="dataSetInfo">
+                <children>
+                    <ImageView fx:id="indicatorNotExecutedByRoddy">
+                        <Image url="/imgs/icon_status_unprocessed.png"/>
+                    </ImageView>
+                    <ImageView fx:id="indicatorUnknown">
+                        <Image url="/imgs/icon_status_unknown.png"/>
+                    </ImageView>
+                    <ImageView fx:id="indicatorError">
+                        <Image url="/imgs/icon_status_error.png"/>
+                    </ImageView>
+                    <ImageView fx:id="indicatorOK">
+                        <Image url="/imgs/icon_status_ok.png"/>
+                    </ImageView>
+                    <ImageView fx:id="indicatorRunning">
+                        <Image url="/imgs/icon_status_running.png"/>
+                    </ImageView>
+                    <ImageView fx:id="indicatorAborted">
+                        <Image url="/imgs/icon_status_aborted.png"/>
+                    </ImageView>
+                    <ProgressIndicator fx:id="indicatorQueryIsActive" maxHeight="14.0" maxWidth="14.0" minHeight="14.0" minWidth="14.0" prefHeight="14.0" prefWidth="14.0"/>
+                </children>
+            </GridPane>
+            <padding>
+                <Insets right="4.0"/>
+            </padding>
+        </GridPane>
+    </left>
+    <center>
+        <GridPane BorderPane.alignment="CENTER_LEFT" fx:id="ecDetails">
+            <HBox spacing="2">
+                <Label fx:id="pidID"/>
+                <HBox style="-fx-font-style: italic;" fx:id="pidExecInfo" visible="false">
+                    <Label text="["/>
+                    <Label fx:id="furtherInfo"/>
+                    <Label text="]"/>
+                </HBox>
+                <Label fx:id="furtherInfo2"/>
+            </HBox>
+            <HBox fx:id="errorInfo" GridPane.rowIndex="1" minHeight="0" spacing="2" />
+        </GridPane>
+    </center>
+</BorderPane>

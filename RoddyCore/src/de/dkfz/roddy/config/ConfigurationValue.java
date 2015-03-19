@@ -1,0 +1,378 @@
+package de.dkfz.roddy.config;
+
+import de.dkfz.roddy.Roddy;
+import de.dkfz.roddy.core.Analysis;
+import de.dkfz.roddy.core.DataSet;
+import de.dkfz.roddy.core.ExecutionContext;
+import de.dkfz.roddy.core.Project;
+import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static de.dkfz.roddy.StringConstants.*;
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BASH_ARRAY;
+
+/**
+ * A configuration value
+ */
+public class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiable {
+
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(ConfigurationValue.class.getName());
+
+    public final String id;
+    public final String value;
+    private final Configuration configuration;
+    private final String type;
+    /**
+     * A description or comment for a configuration value.
+     */
+    private final String description;
+    private boolean invalid = false;
+
+    public ConfigurationValue(String id, String value) {
+        this(null, id, value, null);
+    }
+
+    public ConfigurationValue(Configuration config, String id, String value) {
+        this(config, id, value, null);
+    }
+
+    public ConfigurationValue(String id, String value, String type) {
+        this(null, id, value, type);
+    }
+
+    public ConfigurationValue(Configuration config, String id, String value, String type) {
+        this(config, id, value, type, "");
+    }
+
+    public ConfigurationValue(Configuration config, String id, String value, String type, String description) {
+        this.id = id;
+        this.value = value;
+        this.configuration = config;
+        this.type = type;
+        this.description = description;
+    }
+
+    public Configuration getConfiguration() {
+        return configuration;
+    }
+
+
+    private String replaceString(String src, String pattern, String text) {
+        if (src.contains(pattern)) {
+            return src.replace(pattern, text);
+        }
+        return src;
+    }
+
+    private String checkAndCorrectPath(String temp) {
+        String curUserPath = (new File("")).getAbsolutePath();
+        //TODO Make something like a blacklist. This is not properly handled now. Initially this was done because Java sometimes puts something in front of the file paths.
+        if ((value.startsWith("${") || value.startsWith("$") || value.startsWith("~")) && temp.startsWith(curUserPath)) {
+            temp = temp.substring(curUserPath.length() + 1);
+        }
+
+        return temp;
+    }
+
+    private ExecutionContext _toFileExecutionContext;
+    private File _toFileCache;
+
+    public File toFile(Project project) {
+        String temp = "";
+        try {
+            if (project == null) return toFile();
+
+            temp = toFile().getAbsolutePath();//
+            temp = replaceConfigurationBasedValues(temp, project.getConfiguration());
+            temp = replaceString(temp, "${projectName}", project.getName());
+            temp = checkAndCorrectPath(temp);
+
+            String userID = null;
+            String groupID = null;
+            try {
+                userID = FileSystemInfoProvider.getInstance().callWhoAmI();
+                groupID = FileSystemInfoProvider.getInstance().getMyGroup();
+            } catch (Exception e) {
+
+            }
+            if (userID != null)
+                temp = replaceString(temp, "$USERNAME", userID);
+            if( groupID != null)
+                temp = replaceString(temp, "$USERGROUP", groupID);
+
+            String ud = FileSystemInfoProvider.getInstance().getUserDirectory().getAbsolutePath();
+            temp = replaceString(temp, "$USERHOME", ud);
+            return new File(replaceString(temp, "~", ud));
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Could not call toFile on ConfigurationValue [" + this.id + "]. Possibly left out parts which should be replaced.", e);
+            return new File(temp);
+        }
+    }
+
+    public File toFile(Analysis analysis) {
+        try {
+            if (analysis == null) return toFile();
+
+            String temp = toFile(analysis.getProject()).getAbsolutePath();
+            temp = replaceConfigurationBasedValues(temp, analysis.getConfiguration());
+            temp = checkAndCorrectPath(temp);
+
+            return new File(temp);
+
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Converts this configuration value to a path and fills in data set and analysis specific settings.
+     *
+     * @param analysis
+     * @param dataSet
+     * @return
+     */
+    public File toFile(Analysis analysis, DataSet dataSet) {
+        File f = toFile(analysis);
+
+        String temp = f.getAbsolutePath();
+        temp = replaceString(temp, "${pid}", dataSet.getId());
+
+        return new File(temp);
+    }
+
+    public File toFile(ExecutionContext context) {
+        if (context != _toFileExecutionContext) {
+            _toFileExecutionContext = context;
+            _toFileCache = null;
+        }
+        if (_toFileCache != null) {
+            return _toFileCache;
+        }
+
+        if (context == null) {
+            _toFileCache = toFile();
+            return _toFileCache;
+        }
+        try {
+            String temp = toFile(context.getAnalysis(), context.getDataSet()).getAbsolutePath();
+//            temp = replaceConfigurationBasedValues(temp, context.getConfiguration());
+            temp = checkAndCorrectPath(temp);
+            if(value.startsWith("${DIR_BUNDLED_FILES}") || value.startsWith("${DIR_RODDY}"))
+                temp = Roddy.getApplicationDirectory().getAbsolutePath() + FileSystemInfoProvider.getInstance().getPathSeparator() + temp;
+//            getUser
+
+            if (temp.contains(ConfigurationConstants.CVALUE_PLACEHOLDER_EXECUTION_DIRECTORY)) {
+                String pd = context.getExecutionDirectory().getAbsolutePath();
+                temp = temp.replace(ConfigurationConstants.CVALUE_PLACEHOLDER_EXECUTION_DIRECTORY, pd);
+            }
+//            if (temp.contains("$USERNAME")) {
+//                String uName = context.getInstance().callWhoAmI();
+////                String pd = context.getRuntimeService().getExecutionDirectory(context).getAbsolutePath();
+//                temp = temp.replace("$USERNAME", uName);
+//            }
+            _toFileCache = new File(temp);
+            return _toFileCache;
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    public static String replaceConfigurationBasedValues(String temp, Configuration configuration) {
+        String[] allValues = temp.split("/");//File.separator);
+        for (int i = 0; i < allValues.length; i++) {
+            if (!allValues[i].startsWith("$")) continue;
+            String cValName = allValues[i].substring(2, allValues[i].length() - 1);
+            if (!configuration.getConfigurationValues().hasValue(cValName))
+                continue;
+            ConfigurationValue cval = configuration.getConfigurationValues().get(cValName);
+            if (cValName.toLowerCase().contains("directory") || cval.type.equals("path")) {
+                temp = temp.replace(allValues[i], replaceConfigurationBasedValues(cval.value, configuration));
+            } else {
+                temp = temp.replace(allValues[i], cval.toString());
+            }
+        }
+        return temp;
+    }
+
+    public File toFile(Map<String, String> replacements) {
+        String temp = value;
+
+        for (String key : replacements.keySet()) {
+            String val = replacements.get(key);
+            temp = temp.replace(key, val);
+        }
+        return new File(temp);
+    }
+
+    public File toFile() {
+        String temp = value;
+//        String[] allValues = value.split(File.separator);
+//        for (int i = 0; i < allValues.length; i++) {
+//            if (!allValues[i].startsWith("$")) continue;
+//            String cValName = allValues[i].substring(2, allValues[i].length() - 1);
+//            if (!configuration.hasConfigurationValue(cValName))
+//                continue;
+//            String val = configuration.getConfigurationValue(cValName).toString();
+//            temp = temp.replace(allValues[i], val);
+//        }
+        return new File(temp);
+    }
+
+    public Boolean toBoolean() {
+        String v = value != null ? value.toLowerCase() : "f";
+        if (v.startsWith("y") || v.startsWith("j") || v.startsWith("t"))
+            return true;
+        if (v.startsWith("n") || v.startsWith("f"))
+            return false;
+        return false;
+    }
+
+    public int toInt() {
+        return Integer.parseInt(value);
+    }
+
+    public float toFloat() {
+        return Float.parseFloat(value);
+    }
+
+    public double toDouble() {
+        return Double.parseDouble(value);
+    }
+
+    Pattern variableDetection = Pattern.compile("[$][{][a-zA-Z0-9_]*[}]");
+
+    @Override
+    public String toString() {
+        String temp = value;
+        if (configuration != null) {
+            List<String> valueIDs = getIDsForParrentValues();
+            for(String vName : valueIDs) {
+                if (configuration.getConfigurationValues().hasValue(vName))
+                    temp = temp.replace("${" + vName + '}', configuration.getConfigurationValues().get(vName).toString());
+            }
+        }
+        return temp;
+    }
+
+    public List<String> getIDsForParrentValues() {
+        List<String> parentValues = new LinkedList<>();
+
+        Matcher m = variableDetection.matcher(value);
+//            Findall is not available in standard java, so I use groovy here.
+        for (String s : ConfigurationValueHelper.callFindAllForPatternMatcher(m)) {
+            String vName = s.replaceAll("[${}]", "");
+            parentValues.add(vName);
+        }
+
+        return parentValues;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public EnumerationValue getEnumerationValueType() {
+        Enumeration enumeration = null;
+        if (getConfiguration().getEnumerations().hasValue("cvalueType"))
+            enumeration = getConfiguration().getEnumerations().getValue("cvalueType");
+        String _ev = getType();
+        if (_ev == null || _ev.trim().equals(""))
+            _ev = "string";
+        if (enumeration == null)
+            return null;
+        EnumerationValue ev = enumeration.getValue(_ev);
+        return ev;
+    }
+
+    public boolean isInvalid() {
+        return invalid;
+    }
+
+    public void setInvalid(boolean invalid) {
+        this.invalid = invalid;
+    }
+
+
+    private List<String> _bashArrayToStringList() {
+        String vTemp = value.substring(1, value.length() - 2).trim(); //Split away () and leading or trailing white characters.
+        String[] temp = vTemp.split(SPLIT_WHITESPACE); //Split by white character
+
+        //Ignore leading and trailing brackets
+        List<String> resultStrings = new LinkedList<>();
+
+        for (int i = 0; i < temp.length; i++) {
+
+            //Detect if value is a range { .. }
+            //TODO Enable array of this form {1..N}C = 1C 2C 3C 4C .. NC
+            if (temp[i].startsWith(BRACE_LEFT) && temp[i].contains(BRACE_RIGHT) && temp[i].contains(DOUBLESTOP)) {
+                String[] rangeTemp = temp[i].split(SPLIT_DOUBLESTOP);
+                int start = Integer.parseInt(rangeTemp[0].replace(BRACE_LEFT, EMPTY).trim());
+                int end = Integer.parseInt(rangeTemp[1].replace(BRACE_RIGHT, EMPTY).trim());
+                for (int j = start; j <= end; j++) {
+                    resultStrings.add(EMPTY + j);
+                }
+            } else {
+                //Just append the value.
+                resultStrings.add(temp[i]);
+            }
+        }
+
+        return resultStrings;
+    }
+
+    public List<String> toStringList() {
+        return toStringList(",", new String[0]);
+    }
+
+    public List<String> toStringList(String delimiter, String[] ignoreStrings) {
+        if (CVALUE_TYPE_BASH_ARRAY.equals(type)) {
+            return _bashArrayToStringList();
+        }
+
+        String[] temp = value.split(SBRACKET_LEFT + delimiter + SBRACKET_RIGHT);
+        List<String> tempList = new LinkedList<String>();
+        List<String> ignorable = Arrays.asList(ignoreStrings);
+
+        for (String _t : temp) {
+            String trimmed = _t.trim();
+            if (trimmed.length() == 0) continue;
+            if (ignorable.contains(trimmed))
+                continue;
+            tempList.add(trimmed);
+        }
+        return tempList;
+    }
+
+    @Override
+    public String getID() {
+        return id;
+    }
+
+    /**
+     * Returns the single, unformatted value string.
+     *
+     * @return
+     */
+    public String getValue() {
+        return value;
+    }
+
+    public String getDescription() { return description; }
+
+    /**
+     * Returns if the contained value is either null or has an empty string.
+     *
+     * @return
+     */
+    public boolean isNullOrEmpty() {
+        return value == null || value.length() == 0 || value.trim().length() == 0;
+    }
+}

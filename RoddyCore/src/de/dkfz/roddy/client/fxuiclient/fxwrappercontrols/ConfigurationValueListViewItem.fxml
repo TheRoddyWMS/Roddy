@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.net.*?>
+<?import java.util.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+
+<BorderPane fx:id="borderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.ConfigurationValueListViewItemController">
+    <center>
+        <HBox alignment="CENTER_LEFT" spacing="2.0">
+            <children>
+                <Pane prefWidth="16" prefHeight="16" fx:id="configColor" />
+                <Label fx:id="lblConfiguration" prefWidth="200.0" text="Config" />
+                <TextField fx:id="txtName" editable="false" prefWidth="300.0" text="name" />
+                <TextField fx:id="txtValue" editable="false" prefWidth="300.0" text="value" />
+            </children>
+            <padding>
+                <Insets left="4.0" />
+            </padding>
+        </HBox>
+    </center>
+</BorderPane>

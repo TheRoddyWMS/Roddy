@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import java.net.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+
+<?import de.dkfz.roddy.client.fxuiclient.fxcontrols.ImageButtonWithToolTip?>
+        <!--style="-fx-padding:0; -fx-border-width: 0 0 1 0; -fx-border-color: orange;"-->
+<BorderPane maxHeight="Infinity" maxWidth="Infinity" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.ProjectTreeItemController">
+    <fx:define>
+        <Image url="/imgs/icon_project_gray.png" fx:id="projectIconDisabled"/>
+        <Image url="/imgs/icon_project.png" fx:id="projectIconEnabled"/>
+    </fx:define>
+    <stylesheets>
+        <URL value="@ProjectTreeItem.css"/>
+    </stylesheets>
+    <center>
+        <BorderPane style="-fx-padding:0;">
+            <top>
+                <BorderPane style="-fx-padding:0;">
+                    <center>
+                        <GridPane> <!-- style="-fx-background-color: green;">-->
+
+                            <children>
+                                <Pane id="HeaderBackground" GridPane.columnSpan="1" minWidth="100" prefWidth="100" maxWidth="100" maxHeight="20" GridPane.vgrow="ALWAYS"/>
+                                <Label id="Header" GridPane.columnSpan="1" fx:id="projectName" text="Label">
+                                    <graphic>
+                                        <ImageView fx:id="projectIcon">
+                                            <image>
+                                                <fx:reference source="projectIconDisabled"/>
+                                            </image>
+                                        </ImageView>
+                                    </graphic>
+                                </Label>
+
+                            </children>
+                        </GridPane>
+
+                    </center>
+                    <!--<right>-->
+                        <!--<HBox GridPane.halignment="RIGHT">-->
+                            <!--<Label><graphic><ImageView><image><Image url="/imgs/icon_button_edit.png" /></image></ImageView></graphic></Label>-->
+                            <!--<Label><graphic><ImageView><image><Image url="/imgs/icon_button_new_sister.png" /></image></ImageView></graphic></Label>-->
+                            <!--<Label><graphic><ImageView><image><Image url="/imgs/icon_button_new_child.png" /></image></ImageView></graphic></Label>-->
+                            <!--<Label><graphic><ImageView><image><Image url="/imgs/icon_button_delete_config.png" /></image></ImageView></graphic></Label>-->
+                        <!--</HBox>-->
+                    <!--</right>-->
+                </BorderPane>
+            </top>
+
+            <center>
+                <VBox>
+                    <children>
+                        <VBox fx:id="analyses" alignment="CENTER_LEFT"/>
+                        <!--<children>-->
+                        <!--<Label fx:id="imgAnalysis">-->
+                        <!--<graphic>-->
+                        <!--<ImageView>-->
+                        <!--<image>-->
+                        <!--<Image url="/imgs/icon_analysis.png"/>-->
+                        <!--</image>-->
+                        <!--</ImageView>-->
+                        <!--</graphic>-->
+                        <!--</Label>-->
+                        <!--</children>-->
+                        <!--</VBox>-->
+                    </children>
+                    <padding>
+                        <Insets top="2.0"/>
+                    </padding>
+                </VBox>
+            </center>
+            <padding>
+                <Insets bottom="2.0" left="2.0" right="2.0" top="2.0"/>
+            </padding>
+        </BorderPane>
+    </center>
+</BorderPane>

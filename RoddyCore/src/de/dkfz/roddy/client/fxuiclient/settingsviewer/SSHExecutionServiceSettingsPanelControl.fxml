@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import java.net.URL?>
+<fx:root type="javafx.scene.layout.GridPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" id="SettingsEntryBackgroundStage2"
+         alignment="CENTER"
+         vgap="2" hgap="2">
+    <stylesheets>
+        <URL value="@../RoddyStyles_Main.css"/>
+    </stylesheets>
+    <columnConstraints>
+        <ColumnConstraints prefWidth="10" fx:id="defaultColums_0"/>
+        <ColumnConstraints prefWidth="190" fx:id="defaultColums_1"/>
+        <ColumnConstraints prefWidth="450" fx:id="defaultColums_2"/>
+    </columnConstraints>
+
+    <HBox alignment="TOP_LEFT" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="3">
+        <Label id="Header" text="SSH connection settings for runmode: " />
+        <Label id="Header" text="undefined" fx:id="lblHeaderRunmode" />
+    </HBox>
+
+    <Label GridPane.rowIndex="1" GridPane.columnIndex="1" text="Host:"/>
+    <TextField GridPane.rowIndex="1" GridPane.columnIndex="2" fx:id="txtRemoteHost"/>
+
+    <Label GridPane.rowIndex="2" GridPane.columnIndex="1" text="User:"/>
+    <TextField GridPane.rowIndex="2" GridPane.columnIndex="2" fx:id="txtRemoteUser"/>
+
+    <Label GridPane.rowIndex="3" GridPane.columnIndex="1" text="Password:"/>
+    <PasswordField GridPane.rowIndex="3" GridPane.columnIndex="2" fx:id="txtPwdRemotePassword"/>
+
+    <CheckBox GridPane.rowIndex="4" GridPane.columnIndex="1" GridPane.columnSpan="2" fx:id="chkUseCompression" text="Use compression to speed up ssh on slow connections."/>
+    <CheckBox GridPane.rowIndex="5" GridPane.columnIndex="1" GridPane.columnSpan="2" fx:id="chkUseKeyfileForRemoteConnection" text="Use a passwordless keyfile rather than user/password."/>
+    <CheckBox GridPane.rowIndex="6" GridPane.columnIndex="1" GridPane.columnSpan="2" fx:id="chkStorePassword" text="Store the password? This is done unencrypted!"/>
+
+    <padding>
+        <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" fx:id="gridpane_margin_0"/>
+        <Insets bottom="2.0" left="2.0" right="2.0" top="-2.0" fx:id="gridpane_margin_1"/>
+        <Insets bottom="4.0" top="4.0" fx:id="gridpane_padding_0"/>
+    </padding>
+</fx:root>

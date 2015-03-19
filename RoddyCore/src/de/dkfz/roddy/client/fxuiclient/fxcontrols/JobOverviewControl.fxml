@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.cell.PropertyValueFactory?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import java.net.URL?>
+<?import javafx.scene.web.WebView?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<fx:root type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" style="fx-background-colour: red; ">
+    <stylesheets>
+        <URL value="@../RoddyStyles_Main.css"/>
+    </stylesheets>
+    <top>
+        <GridPane>
+            <columnConstraints>
+                <ColumnConstraints minWidth="120"/>
+                <ColumnConstraints hgrow="ALWAYS" maxWidth="10010101"/>
+            </columnConstraints>
+            <children>
+                <Label id="Header" text="Job: "/>
+                <Label id="HeaderLvl2" fx:id="lblJobID" GridPane.columnIndex="1"/>
+                <Label id="Header" text="Tool ID: " GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                <Hyperlink fx:id="lblToolID" GridPane.columnIndex="1" GridPane.rowIndex="1" onAction="#toolIDClicked"/>
+                <Label id="Header" text="Process ID: " GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                <Label fx:id="lblProcessID" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                <Label id="Header" text="Depends on: " GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                <HBox fx:id="dependsOnHyperlinksContainer" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                <Label id="Header" style="-fx-font-style: italic;" text="Log file path: " GridPane.columnIndex="0"
+                       GridPane.rowIndex="4"/>
+                <TextField fx:id="lblLogFilePath" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+            </children>
+        </GridPane>
+    </top>
+    <center>
+        <TabPane minHeight="250" >
+            <tabs>
+                <Tab text="Parameters" closable="false">
+                    <content>
+                        <TableView fx:id="tblJobsParameters">
+                            <columns>
+                                <TableColumn minWidth="120" prefWidth="120" maxWidth="120" text="Parameter">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="name"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Value">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="value"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                            </columns>
+                        </TableView>
+                    </content>
+                </Tab>
+                <Tab text="Job log" closable="false">
+                    <content>
+                        <VBox>
+                            <ToolBar>
+                                <items>
+                                    <Region HBox.hgrow="ALWAYS"/>
+                                    <Button onAction="#reloadJobLogClicked">
+                                        <graphic>
+                                            <ImageView>
+                                                <image>
+                                                    <Image url="/imgs/icon_refresh.png"/>
+                                                </image>
+                                            </ImageView>
+                                        </graphic>
+                                    </Button>
+                                </items>
+                            </ToolBar>
+                            <WebView fx:id="txtClusterLogFile" GridPane.rowIndex="1" VBox.vgrow="ALWAYS"/>
+                        </VBox>
+                        <!--<ListView fx:id="lstFilesCreatedByJob"/>-->
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </center>
+</fx:root>

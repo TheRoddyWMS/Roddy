@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.collections.FXCollections?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.web.WebView?>
+<?import javafx.scene.layout.BorderPane?>
+<fx:root type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" minHeight="250" style="-fx-background-color: red;">
+
+    <center>
+        <WebView style="-fx-background-color: red;" fx:id="webview" maxWidth="Infinity" maxHeight="Infinity"/>
+    </center>
+    <bottom>
+        <VBox fx:id="bottomVBox">
+            <ToolBar>
+                <items>
+                    <Label fx:id="lblWebviewLoaderState"/>
+                    <ProgressBar fx:id="lblWebviewProgress"/>
+                    <Label fx:id="lblFilePath"/>
+                </items>
+            </ToolBar>
+        </VBox>
+    </bottom>
+</fx:root>

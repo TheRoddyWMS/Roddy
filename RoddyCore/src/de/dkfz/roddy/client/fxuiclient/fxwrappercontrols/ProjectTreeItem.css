@@ -1,0 +1,92 @@
+#Header {
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-padding: 0;
+}
+
+#HeaderBackground {
+    -fx-border-color: linear-gradient(to right, orange, orange 20%, transparent 80%, transparent);
+    -fx-background-color:
+         linear-gradient(to right, #f0f0f0 0%, #f0f0f0 20%, #ffffff00 60%, #ffffff00);
+    -fx-border-width: 0;
+    -fx-padding: 0;
+}
+//    -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.4) , 5, 0.0 , 0 , 3 );
+
+#importsFrom {
+    -fx-font-style: italic;
+
+}
+
+/*
+    -fx-font-weight: thin;
+        -fx-font-size: 10px;
+        */
+#idLabel {
+    -fx-font-style: italic;
+}
+
+#AnalysisHyperlink {
+    -fx-padding: 0 8 0 8;
+    -fx-border-width: 0;
+}
+
+#AnalysisHyperlinkHover {
+    -fx-padding: -1 8 -1 8;
+    -fx-border-width: 1 0 1 0;
+    -fx-border-color: linear-gradient(to right, transparent 0%, transparent 10%, orange 15%, orange 80%, transparent 85%, transparent);
+}
+
+#AnalysisHyperlinkPressed {
+    -fx-font-color: orange;
+}
+
+#AnalysisHyperlinkReleased {
+    -fx-font-color: black;
+}
+
+/*//-fx-text-fill: orange;
+//     -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.4) , 5, 0.0 , 0 , 3 );
+  */
+#ParentPane {
+    width: 100%;
+}
+
+ /*
+.label {
+//-fx-background-color: yellow;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-effect: dropshadow( gaussian , rgba(255,255,255,0.5) , 0,0,0,1 );
+}
+
+.root {
+-fx-background-image: url("background.jpg");
+}
+.label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-effect: dropshadow( gaussian , rgba(255,255,255,0.5) , 0,0,0,1 );
+}
+
+#welcome-text {
+   -fx-font-size: 32px;
+   -fx-font-family: "Arial Black";
+   -fx-fill: #818181;
+   -fx-effect: innershadow( three-pass-box , rgba(0,0,0,0.7) , 6, 0.0 , 0 , 2 );
+}
+#actiontarget {
+  -fx-fill: FIREBRICK;
+  -fx-font-weight: bold;
+  -fx-effect: dropshadow( gaussian , rgba(255,255,255,0.5) , 0,0,0,1 );
+}
+
+.button {
+    -fx-text-fill: white;
+    -fx-font-family: "Arial Narrow";
+    -fx-font-weight: bold;
+    -fx-background-color: linear-gradient(#61a2b1, #2A5058);
+    -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.6) , 5, 0.0 , 0 , 1 );
+} */

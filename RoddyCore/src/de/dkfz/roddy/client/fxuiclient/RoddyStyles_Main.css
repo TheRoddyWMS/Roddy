@@ -1,0 +1,51 @@
+#Header {
+    -fx-font-weight: bold;
+    -fx-padding: 2;
+}
+
+#HeaderLvl2 {
+    -fx-font-style: italic;
+}
+
+#ActiveItem {
+    -fx-font-weight: bold;
+    -fx-font-style: normal;
+}
+
+#InactiveItem {
+    -fx-font-weight: normal;
+    -fx-font-style: italic;
+}
+
+#SettingsHeader {
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+    -fx-background-color: #00000030;
+    -fx-padding: 2;
+}
+
+#SettingsBackground {
+    -fx-background-color:   #00000005;
+}
+
+#SettingsEntryBackground {
+    -fx-background-color:   #00000010;
+    -fx-border-color:       orange;
+    -fx-border-width:       1 0 1 0;
+}
+
+#SettingsEntryBackgroundStage2 {
+    -fx-background-color:   #00000010;
+    -fx-border-color:       orange;
+    -fx-border-width:       1 0 1 0;
+}
+
+#SettingsEntryBackground_Errors {
+    -fx-background-color:   #10000010;
+    -fx-border-color:       red;
+    -fx-border-width:       0 0 1 0;
+}
+
+#ErrorListContainer {
+    -fx-text-fill: red;
+}

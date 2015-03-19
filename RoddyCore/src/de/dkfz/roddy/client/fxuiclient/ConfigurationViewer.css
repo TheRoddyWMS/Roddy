@@ -1,0 +1,13 @@
+.highlight-highlighted {
+    -fx-font-style: normal;
+    -fx-background-color: cornflowerblue;
+}
+.highlight-grayed-out {
+    -fx-background-color: white;
+    -fx-font-style: italic;
+}
+
+#label_Header {
+    -fx-background-color: gray;
+    -fx-font-weight: bold;
+}

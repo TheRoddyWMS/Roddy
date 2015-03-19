@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.ExecutionContextErrorListViewItemController" fx:id="borderPane">
+    <left>
+        <VBox>
+            <children>
+                <GridPane fx:id="iconsPane" hgap="2" minWidth="16" minHeight="16" prefHeight="16" prefWidth="16" maxHeight="16" maxWidth="16">
+                    <children>
+                        <ImageView fx:id="indicatorError">
+                            <Image url="/imgs/icon_status_error.png"/>
+                        </ImageView>
+                        <ImageView fx:id="indicatorWarning" visible="false">
+                            <Image url="/imgs/icon_status_warning.png"/>
+                        </ImageView>
+                        <ImageView fx:id="indicatorInfo" visible="false">
+                            <Image url="/imgs/icon_status_info.png"/>
+                        </ImageView>
+                    </children>
+                </GridPane>
+            </children>
+            <BorderPane.margin>
+                <Insets bottom="2.0" left="2.0" right="2.0" top="2.0"/>
+            </BorderPane.margin>
+        </VBox>
+    </left>
+    <center>
+        <VBox>
+            <Label fx:id="lblErrorText" >
+                <tooltip>
+                    <Tooltip fx:id="lblErrorException"></Tooltip>
+                </tooltip>
+            </Label>
+
+            <Label fx:id="lblErrorDetails" style="-fx-font-style : italic;"/>
+            <Label fx:id="lblErrorClass" style="-fx-font-style : italic;"/>
+        </VBox>
+    </center>
+</BorderPane>

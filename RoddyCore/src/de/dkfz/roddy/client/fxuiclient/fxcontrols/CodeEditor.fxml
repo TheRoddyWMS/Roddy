@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.collections.FXCollections?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.web.WebView?>
+<?import javafx.scene.layout.BorderPane?>
+<fx:root type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" minHeight="250" >
+    <top>
+        <ToolBar>
+            <items>
+                <Label text="Open files"/>
+                <ComboBox>
+                    <items>
+                        <FXCollections fx:factory="observableArrayList" fx:id="listOfOpenFiles"/>
+                    </items>
+                </ComboBox>
+                <Button fx:id="btnSaveScript" text="Save" onAction="#saveFile"/>
+                <Button fx:id="btnReloadScript" text="Reload" onAction="#reloadFile"/>
+                <Button fx:id="btnRunScript" text="Run" visible="false"/>
+                <Button fx:id="btnUndoStep" text="Undo" visible="false"/>
+                <Button fx:id="btnRedoStep" text="Redo" visible="false"/>
+                <TextField text="Finder box"/>
+            </items>
+        </ToolBar>
+    </top>
+    <center>
+        <TabPane fx:id="tabEditors"></TabPane>
+    </center>
+</fx:root>

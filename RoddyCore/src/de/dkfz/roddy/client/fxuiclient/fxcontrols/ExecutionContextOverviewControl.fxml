@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.net.*?>
+<?import java.net.URL?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.PropertyValueFactory?>
+<?import javafx.scene.layout.*?>
+
+<fx:root type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <center>
+        <GridPane >
+            <children>
+                <Label id="Header" text="Execution directory:" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="0"/>
+                <TextField fx:id="txtExecutionDirectory" editable="false" text="" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                <Label id="Header" text="Input directory:" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="1"/>
+                <TextField fx:id="txtInputDirectory" editable="false" text="" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                <Label id="HeaderLvl2" text="Input directory content:" GridPane.columnIndex="0" GridPane.columnSpan="3" GridPane.rowIndex="2"/>
+                <ListView prefHeight="128.0" prefWidth="200.0" fx:id="inputDirectoryContentList" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="3"/>
+                <Label id="Header" text="Output directory" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="4"/>
+                <TextField fx:id="txtOutputDirectory" editable="false" text="" GridPane.columnIndex="2" GridPane.rowIndex="4"/>
+                <Label id="HeaderLvl2" text="Output directory content:" GridPane.columnIndex="0" GridPane.columnSpan="3" GridPane.rowIndex="5"/>
+                <ListView prefHeight="128.0" prefWidth="200.0" fx:id="outputDirectoryContentList" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="6"/>
+                <Label id="Header" text="Detected errors:" GridPane.columnIndex="0" GridPane.columnSpan="3" GridPane.rowIndex="7"/>
+                <ListView prefHeight="512.0" prefWidth="200.0" fx:id="errorList" GridPane.columnSpan="2" GridPane.columnIndex="1" GridPane.rowIndex="8"/>
+            </children>
+            <columnConstraints>
+                <ColumnConstraints minWidth="20.0"/>
+                <ColumnConstraints minWidth="100.0"/>
+                <ColumnConstraints hgrow="ALWAYS"/>
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints/>
+                <RowConstraints/>
+                <RowConstraints/>
+                <RowConstraints/>
+                <RowConstraints/>
+                <RowConstraints/>
+                <RowConstraints/>
+                <RowConstraints/>
+            </rowConstraints>
+        </GridPane>
+    </center>
+    <stylesheets>
+        <URL value="@../RoddyStyles_Main.css"/>
+    </stylesheets>
+</fx:root>

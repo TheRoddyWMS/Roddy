@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--<?import javafx.scene.web.?>-->
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.web.HTMLEditor?>
+<fx:root type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <center>
+        <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="ALWAYS" vbarPolicy="ALWAYS">
+            <content>
+
+                <HTMLEditor fx:id="editorComponent" />
+            </content>
+        </ScrollPane>
+    </center>
+</fx:root>
