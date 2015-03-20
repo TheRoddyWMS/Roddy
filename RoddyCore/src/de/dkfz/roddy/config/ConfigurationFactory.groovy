@@ -1,7 +1,6 @@
 package de.dkfz.roddy.config
 
-import de.dkfz.roddy.Constants
-import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.*
 import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
 import de.dkfz.roddy.tools.*
@@ -9,27 +8,18 @@ import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration.ConfigurationType
 import de.dkfz.roddy.config.ToolEntry.ToolFileGroupParameter.PassOptions
 import de.dkfz.roddy.config.ToolEntry.ToolStringParameter.ParameterSetbyOptions
-import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.core.Project
+import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
-import de.dkfz.roddy.knowledge.files.BaseFile
-import de.dkfz.roddy.knowledge.files.FileObject
-import de.dkfz.roddy.knowledge.files.FileStage
-import de.dkfz.roddy.knowledge.files.FileObjectTupleFactory
-import de.dkfz.roddy.plugins.LibrariesFactory
-import de.dkfz.roddy.plugins.PluginInfo
+import de.dkfz.roddy.knowledge.files.*
+import de.dkfz.roddy.plugins.*
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
-import groovy.util.slurpersupport.NodeChild
-import groovy.util.slurpersupport.NodeChildren
+import groovy.util.slurpersupport.*
 import groovy.xml.MarkupBuilder
 import org.apache.commons.io.filefilter.WildcardFileFilter
 
-import java.lang.reflect.Field
-import java.lang.reflect.Method
-import java.lang.reflect.Modifier
-import java.util.logging.Level
-import java.util.logging.Logger
+import java.lang.reflect.*
+import java.util.logging.*
 
 import static de.dkfz.roddy.StringConstants.*
 
@@ -73,7 +63,7 @@ public class ConfigurationFactory {
         List<File> pipelineDirectories = [];
         pipelineDirectories << RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "resources", "configurationFiles");
         String[] split;
-        if(Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.pluginDirectories))
+        if (Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.pluginDirectories))
             split = Roddy.getCommandLineCall().getOptionValue(RoddyStartupOptions.pluginDirectories).split("[,:]");
         else
             split = Roddy.getApplicationProperty(Constants.APP_PROPERTY_CONFIGURATION_DIRECTORIES).split("[,:]")
@@ -124,7 +114,7 @@ public class ConfigurationFactory {
         List<File> pipelineDirectories = [];
         pipelineDirectories << RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "resources", "configurationFiles");
         String[] split;
-        if(Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.pluginDirectories))
+        if (Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.pluginDirectories))
             split = Roddy.getCommandLineCall().getOptionValue(RoddyStartupOptions.pluginDirectories).split("[,:]");
         else
             split = Roddy.getApplicationProperty(Constants.APP_PROPERTY_CONFIGURATION_DIRECTORIES).split("[,:]")
@@ -411,12 +401,12 @@ public class ConfigurationFactory {
             }
             config = new AnalysisConfiguration(icc, workflowClass, testdataOptions, parentConfig, listOfUsedTools, usedToolFolders, cleanupScript);
 
-            if(workflowClass == NativeWorkflow.class.name) {
+            if (workflowClass == NativeWorkflow.class.name) {
                 //We have a native workflow
                 String workflowTool = extractAttributeText(configurationNode, "nativeWorkflowTool", null);
                 String commandFactoryClass = extractAttributeText(configurationNode, "targetCommandFactory", null);
-                ((AnalysisConfiguration)config).setNativeToolID(workflowTool);
-                ((AnalysisConfiguration)config).setTargetCommandFactory(commandFactoryClass);
+                ((AnalysisConfiguration) config).setNativeToolID(workflowTool);
+                ((AnalysisConfiguration) config).setTargetCommandFactory(commandFactoryClass);
             }
         } else {
             config = new Configuration(icc);
@@ -512,7 +502,7 @@ public class ConfigurationFactory {
                             if (classPkg == null) classPkg = pkg;
                             String calledClassName = (classPkg != null ? classPkg + "." : "") + className;
 //                            try {
-                                calledClass = (Class<FileObject>) LibrariesFactory.getInstance().loadClass(calledClassName);
+                            calledClass = (Class<FileObject>) LibrariesFactory.getInstance().loadClass(calledClassName);
 //                            } catch (Exception ex) {
 //                                calledClass = null;
 //                            }
@@ -634,22 +624,33 @@ public class ConfigurationFactory {
         for (NodeChild analysis in nAnalyses.analysis) {
             String analysisID = extractAttributeText((NodeChild) analysis, "id");
             String analysisCfg = extractAttributeText((NodeChild) analysis, "configuration");
-            AnalysisConfiguration ac = (AnalysisConfiguration) getConfiguration(analysisCfg);
-            if (parentConfiguration) {
-                ac.addParent(parentConfiguration)
-            }
-
-            // See if there are configurationvalues for the projects analysis entry which override the analysis configuration values.
-            readConfigurationValues(analysis, ac);
-
+            AnalysisConfiguration ac = new AnalysisConfigurationProxy(parentConfiguration, analysisID, analysisCfg, analysis); //
             availableAnalyses[analysisID] = ac;
+
+//        availableAnalyses[analysisID] = ac;
             _loadAnalyses(analysis.subanalyses, ac).each {
                 String k, AnalysisConfiguration subConfig ->
                     availableAnalyses[analysisID + "-" + k] = subConfig;
             }
-
         }
         return availableAnalyses;
+    }
+
+//    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    public AnalysisConfiguration lazyLoadAnalysisConfiguration(AnalysisConfigurationProxy proxy) {
+        String analysisID = proxy.getAnalysisID();
+        String analysisCfg = proxy.getAnalysisCfg();
+        AnalysisConfiguration parentConfiguration = proxy.getParentConfiguration();
+        AnalysisConfiguration ac = (AnalysisConfiguration) getConfiguration(analysisCfg);
+        proxy.setAnalysisConfiguration(ac);
+        if (parentConfiguration) {
+            ac.addParent(parentConfiguration)
+        }
+
+        // See if there are configurationvalues for the projects analysis entry which override the analysis configuration values.
+        NodeChild analysis = proxy.getAnalysisNode()
+        readConfigurationValues(analysis, ac);
+        return ac
     }
 
     /**
@@ -663,7 +664,7 @@ public class ConfigurationFactory {
         for (NodeChild cvalueNode in configurationNode.configurationvalues.cvalue) {
             //TODO Code deduplication! Also in readCVBundle.
             ConfigurationValue cvalue = readConfigurationValue(cvalueNode, config)
-            if(configurationValues.containsKey(cvalue.id)) {
+            if (configurationValues.containsKey(cvalue.id)) {
                 String cval0 = configurationValues[cvalue.id].value;//?.length() > 20 ? configurationValues[cvalue.id].value[0 .. 20] : configurationValues[cvalue.id].value;
                 String cval1 = cvalue.value;//?.length() ? cvalue.value[0..20] : cvalue.value;
                 config.addLoadError(new ConfigurationLoadError(config, "cValues", "Value ${cvalue.id} in config ${config.getID()} with value ${cval0} is not unique and will be overriden with value ${cval1}".toString(), null));
@@ -1053,7 +1054,7 @@ public class ConfigurationFactory {
             }
             oName = oName[0].toLowerCase() + oName[1..-1];
             return oName;
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             println("Could not convert value ${str} to variable name.");
             return "UNKNOWN_${str}";
         }

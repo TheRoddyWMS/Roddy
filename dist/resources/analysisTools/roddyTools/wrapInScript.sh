@@ -47,7 +47,7 @@ then
     strlen=`expr ${#RODDY_PARENT_JOBS} - 2`
     RODDY_PARENT_JOBS=${RODDY_PARENT_JOBS:1:strlen}
     for parentJob in ${RODDY_PARENT_JOBS[@]}; do
-        [[ ${exitCode} == 250 ]] && continue;
+        [[ ${exitCode-} == 250 ]] && continue;
         result=`cat ${jobStateLogFile} | grep -a "^${parentJob}:" | tail -n 1 | cut -d ":" -f 2`
         [[ ! $result -eq 0 ]] && echo "At least one of this parents jobs exited with an error code. This job will not run." && startCode=60000
     done

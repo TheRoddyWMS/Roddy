@@ -21,15 +21,17 @@ public class PluginInfo {
     private File directory;
     private File developmentDirectory;
     private String prodVersion;
+    private Map<String, String> dependencies;
     private String devVersion;
     private final File zipFile;
     private Map<String, File> listOfToolDirectories = new LinkedHashMap<>();
 
-    public PluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, String devVersion) {
+    public PluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, Map<String, String> dependencies) {
         this.name = name;
         this.directory = directory;
         this.developmentDirectory = developmentDirectory;
         this.prodVersion = prodVersion;
+        this.dependencies = dependencies;
         this.devVersion = devVersion;
         this.zipFile = zipFile;
         fillListOfToolDirectories();
@@ -100,4 +102,7 @@ public class PluginInfo {
         return listOfToolDirectories;
     }
 
+    public Map<String, String> getDependencies() {
+        return dependencies;
+    }
 }

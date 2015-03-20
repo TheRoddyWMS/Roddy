@@ -45,16 +45,31 @@ public class LibrariesFactory extends Initializable {
     public void resolveAndLoadPlugins(String[] usedPlugins) {
         Map<String, PluginInfo> pluginsToActivate = [:];
         loadMapOfAvailablePlugins();
-        for (String requestedPlugin in usedPlugins) {
+
+        Map<String,String> pluginsToCheck = usedPlugins.collectEntries { String requestedPlugin ->
             String[] pSplit = requestedPlugin.split(StringConstants.SPLIT_COLON);
             String id = pSplit[0];
             String version = pSplit[1];
+            [id, version];
+        }
+
+        while(pluginsToCheck.size() > 0) {
+
+            String id = pluginsToCheck.keySet()[0]
+            String version = pluginsToCheck[id];
+            pluginsToCheck.remove(id, version);
 
             PluginInfo pInfo = mapOfPlugins[id][version];
-            if (pluginsToActivate[id] != null && pluginsToActivate[id].prodVersion != version) {
-                throw new RuntimeException("There is a version mismatch for plugin dependencies! Not starting up.");
+            if (pluginsToActivate[id] != null) {
+                if(pluginsToActivate[id].prodVersion != version) {
+                    throw new RuntimeException("There is a version mismatch for plugin dependencies! Not starting up.");
+                } else {
+                    //Not checking again!
+                }
+            } else {
+                pluginsToCheck.putAll(pInfo.dependencies);
+                pluginsToActivate[id] = pInfo;
             }
-            pluginsToActivate[id] = pInfo;
         }
         pluginInfoList = pluginsToActivate.values() as List;
         loadLibraries(pluginInfoList);
@@ -85,7 +100,7 @@ public class LibrariesFactory extends Initializable {
 
         //Search all plugin folders and also try to join those if possible.
         List<File> pluginDirectories = Roddy.getPluginDirectories();
-        def blacklist = ["PluginBase", ".idea", "out", "Template", ".svn"]
+        def blacklist = [".idea", "out", "Template", ".svn"]
 
         for (File pBaseDirectory : pluginDirectories) {
             for (File pEntry : pBaseDirectory.listFiles().sort()) {
@@ -144,8 +159,10 @@ public class LibrariesFactory extends Initializable {
                         String workflow = split[0];
                         String version = split.length > 1 ? split[1] : "current";
                 }
+                if(!pluginDependencies.containsKey("PluginBase"))
+                    pluginDependencies.put("PluginBase", "current");
 
-                mapOfPlugins.get(pluginName, [:])[pluginVersion] = new PluginInfo(pluginName, zipFile, prodEntry, develEntry, pluginVersion, pluginVersion);
+                mapOfPlugins.get(pluginName, [:])[pluginVersion] = new PluginInfo(pluginName, zipFile, prodEntry, develEntry, pluginVersion, pluginDependencies);
             }
         }
         mapOfPlugins
@@ -194,7 +211,7 @@ public class LibrariesFactory extends Initializable {
             File jarFile = pi.directory.listFiles().find { File f -> f.name.endsWith(".jar") };
             if (!jarFile || !addFile(jarFile))
                 continue;
-            logger.postAlwaysInfo("The plugin ${pi.getName()} was loaded.")
+            logger.postAlwaysInfo("The plugin ${pi.getName()} [ Version: ${pi.getProdVersion()} ] was loaded.")
         }
     }
 

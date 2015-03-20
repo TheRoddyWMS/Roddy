@@ -197,6 +197,9 @@ public class RoddyCLIClient {
         // If this is also not set, load all libraries with the current version
         //Finally load all or only the necessary plugins.
 
+        //Load all unknown files first!
+        fac.loadUnloadedFiles();
+
         ProjectConfiguration projectConfiguration = fac.getProjectConfiguration(projectID);
 //        LibrariesFactory.getInstance().loadLibraries(analysisID, pluginVersions);
 
