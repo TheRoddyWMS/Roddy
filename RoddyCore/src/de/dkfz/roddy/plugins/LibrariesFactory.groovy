@@ -24,7 +24,7 @@ public class LibrariesFactory extends Initializable {
 
     private List<LibraryEntry> loadedLibraries = [];
 
-    private List<PluginInfo> pluginInfoList = [];
+    private List<PluginInfo> loadedPlugins = [];
 
     private Map<String, Map<String, PluginInfo>> mapOfPlugins = [:];
 
@@ -46,14 +46,14 @@ public class LibrariesFactory extends Initializable {
         Map<String, PluginInfo> pluginsToActivate = [:];
         loadMapOfAvailablePlugins();
 
-        Map<String,String> pluginsToCheck = usedPlugins.collectEntries { String requestedPlugin ->
+        Map<String, String> pluginsToCheck = usedPlugins.collectEntries { String requestedPlugin ->
             String[] pSplit = requestedPlugin.split(StringConstants.SPLIT_COLON);
             String id = pSplit[0];
             String version = pSplit[1];
             [id, version];
         }
 
-        while(pluginsToCheck.size() > 0) {
+        while (pluginsToCheck.size() > 0) {
 
             String id = pluginsToCheck.keySet()[0]
             String version = pluginsToCheck[id];
@@ -61,7 +61,7 @@ public class LibrariesFactory extends Initializable {
 
             PluginInfo pInfo = mapOfPlugins[id][version];
             if (pluginsToActivate[id] != null) {
-                if(pluginsToActivate[id].prodVersion != version) {
+                if (pluginsToActivate[id].prodVersion != version) {
                     throw new RuntimeException("There is a version mismatch for plugin dependencies! Not starting up.");
                 } else {
                     //Not checking again!
@@ -71,12 +71,12 @@ public class LibrariesFactory extends Initializable {
                 pluginsToActivate[id] = pInfo;
             }
         }
-        pluginInfoList = pluginsToActivate.values() as List;
-        loadLibraries(pluginInfoList);
+        loadedPlugins = pluginsToActivate.values() as List;
+        loadLibraries(loadedPlugins);
     }
 
-    public List<PluginInfo> loadGenericPluginInfo() {
-        return pluginInfoList;
+    public List<PluginInfo> getLoadedPlugins() {
+        return loadedPlugins;
     }
 
     /**
@@ -149,18 +149,21 @@ public class LibrariesFactory extends Initializable {
                 }
 
                 //Get dependency list from plugin
-                File buildinfoFile = pEntry.listFiles().find { File f -> f.name == "buildversion.txt"};
                 Map<String, String> pluginDependencies = [:];
-                buildinfoFile.eachLine {
-                    String line ->
-                        if(!line.startsWith("dependson"))
-                            return;
-                        String[] split = line.split(StringConstants.SPLIT_EQUALS)[1].split(StringConstants.SPLIT_COLON);
-                        String workflow = split[0];
-                        String version = split.length > 1 ? split[1] : "current";
+                File buildinfoFile = pEntry.listFiles().find { File f -> f.name == "buildinfo.txt" };
+                if (buildinfoFile) {
+                    buildinfoFile.eachLine {
+                        String line ->
+                            if (!line.startsWith("dependson"))
+                                return;
+                            String[] split = line.split(StringConstants.SPLIT_EQUALS)[1].split(StringConstants.SPLIT_COLON);
+                            String workflow = split[0];
+                            String version = split.length > 1 ? split[1] : "current";
+                            pluginDependencies.put(workflow, version);
+                    }
+                    if (!pluginDependencies.containsKey("PluginBase"))
+                        pluginDependencies.put("PluginBase", "current");
                 }
-                if(!pluginDependencies.containsKey("PluginBase"))
-                    pluginDependencies.put("PluginBase", "current");
 
                 mapOfPlugins.get(pluginName, [:])[pluginVersion] = new PluginInfo(pluginName, zipFile, prodEntry, develEntry, pluginVersion, pluginDependencies);
             }

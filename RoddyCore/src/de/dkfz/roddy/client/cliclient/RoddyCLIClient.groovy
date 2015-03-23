@@ -21,6 +21,7 @@ import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.ScannerWrapper
 
 import static de.dkfz.roddy.Constants.ENV_LINESEPARATOR as NEWLINE
@@ -186,8 +187,8 @@ public class RoddyCLIClient {
 
         String[] splitEntries = fullAnalysisID.split("[:][:]");
 
-        String pluginPart = splitEntries.find { String part -> part.startsWith("useplugin")}
-        if(pluginPart) {
+        String pluginPart = splitEntries.find { String part -> part.startsWith("useplugin") }
+        if (pluginPart) {
             // Extract the plugin and its version.
             String pluginStr = pluginPart.split("[=]")[1]
             LibrariesFactory.getInstance().resolveAndLoadPlugins(pluginStr);
@@ -197,14 +198,18 @@ public class RoddyCLIClient {
         // If this is also not set, load all libraries with the current version
         //Finally load all or only the necessary plugins.
 
+        fac.loadAvailableAnalysisConfigurationFiles();
         //Load all unknown files first!
-        fac.loadUnloadedFiles();
+//        fac.loadUnloadedFiles();
 
         ProjectConfiguration projectConfiguration = fac.getProjectConfiguration(projectID);
-//        LibrariesFactory.getInstance().loadLibraries(analysisID, pluginVersions);
+        Project project = ProjectFactory.instance.loadConfiguration(projectConfiguration);
+        AnalysisConfiguration ac = projectConfiguration.getAnalysis(analysisID);
+        Analysis analysis = null;
+        if (ac != null)
+            analysis = ProjectFactory.instance.loadAnalysisConfiguration(analysisID, project, ac);
+        project.getAnalyses().add(analysis);
 
-//        AnalysisConfiguration analysisConfiguration = projectConfiguration.getAnalysis(analysisID);
-        Analysis analysis = ProjectFactory.getInstance().loadConfiguration(projectConfiguration).getAnalysis(analysisID);
 //        ConfigurationFactory.getInstance().validateConfiguration(analysis.getConfiguration());
         if (analysis != null)
             return analysis;
@@ -304,7 +309,7 @@ public class RoddyCLIClient {
     }
 
     public static void showPluginInfo(CommandLineCall clc) {
-//        Map<String, Map<String, PluginInfo>> listOfInfos = LibrariesFactory.getInstance().loadGenericPluginInfo();
+//        Map<String, Map<String, PluginInfo>> listOfInfos = LibrariesFactory.getInstance().getLoadedPlugins();
 //        listOfInfos.each {
 //            String pluginID, Map<String, PluginInfo> pluginMap ->
 //

@@ -46,7 +46,7 @@ public class PluginInfo {
                 toolsBaseDir = new File(new File(directory, "resources"), "analysisTools");
             }
 
-            if (toolsBaseDir != null) { //Search through the default folders, if possible.
+            if (toolsBaseDir != null && toolsBaseDir.exists() && toolsBaseDir.isDirectory()) { //Search through the default folders, if possible.
                 for (File file : toolsBaseDir.listFiles()) {
                     String toolsDir = file.getName();
                     listOfToolDirectories.put(toolsDir, file);
@@ -74,7 +74,7 @@ public class PluginInfo {
                 }
             }
         } catch (Exception ex) {
-            System.out.println("The plugin " + name + " in directory " + directory + " could not be loaded properly. listFiles() in " + toolsBaseDir + " did not work.");
+//            System.out.println("The plugin " + name + " in directory " + directory + " could not be loaded properly. listFiles() in " + toolsBaseDir + " did not work.");
         }
     }
 

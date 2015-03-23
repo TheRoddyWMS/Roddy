@@ -2,6 +2,8 @@ package de.dkfz.roddy.core;
 
 import de.dkfz.roddy.config.*;
 import de.dkfz.roddy.plugins.LibrariesFactory;
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
+import de.dkfz.roddy.tools.Tuple2;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashMap;
@@ -56,10 +58,6 @@ public class ProjectFactory {
      */
     public Project loadConfiguration(ProjectConfiguration configuration) {
         List<Project> subProjects = new LinkedList<Project>();
-//        for(Configuration cp : configuration.getListOfSubConfigurations()) {
-//            ProjectConfiguration pc = (ProjectConfiguration)cp;
-//            subProjects.add(loadConfiguration());
-//        }
         List<Analysis> analyses = new LinkedList<Analysis>();
 
         String _projectClass = "";
@@ -77,15 +75,6 @@ public class ProjectFactory {
             RuntimeService runtimeService = (RuntimeService) runtimeServiceClass.getConstructor().newInstance();
             Project project = (Project) projectClass.getConstructor(ProjectConfiguration.class, RuntimeService.class, List.class, List.class).newInstance(configuration, runtimeService, subProjects, analyses);
 
-            for (String s : configuration.getListOfAnalysisIDs()) {
-                AnalysisConfiguration ac = configuration.getAnalysis(s);
-                if (ac == null) continue;
-
-                analyses.add(loadAnalysisConfiguration(s, project, ac));
-//                configuration.addParent(ac);
-//                ac.addParent(configuration);
-            }
-
             return project;
         } catch (ClassNotFoundException e) {
             logger.severe("Cannot find project or runtime class! " + e.toString());
@@ -94,11 +83,9 @@ public class ProjectFactory {
             logger.severe("Cannot find constructor <init>(Configuration)! " + e.toString());
             return null;
         } catch (Exception e) {
-            logger.severe("Cannot call constructor or error during call! (" + projectClass + ", " + runtimeServiceClass + ") ex=" + e.toString() );
+            logger.severe("Cannot call constructor or error during call! (" + projectClass + ", " + runtimeServiceClass + ") ex=" + e.toString());
             return null;
         }
-
-
     }
 
     public Analysis loadAnalysisConfiguration(String analysisName, Project project, AnalysisConfiguration configuration) {

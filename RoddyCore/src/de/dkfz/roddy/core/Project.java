@@ -83,7 +83,7 @@ public class Project implements Serializable {
     }
 
     public List<Analysis> getAnalyses() {
-        return new LinkedList<Analysis>(analyses);
+        return analyses;
     }
 
     public Analysis getAnalysis(String analysisID) {

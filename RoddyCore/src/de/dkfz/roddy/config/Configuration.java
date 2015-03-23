@@ -8,7 +8,6 @@ import de.dkfz.roddy.plugins.PluginInfo;
 
 import java.io.File;
 import java.util.*;
-import java.util.logging.Logger;
 
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA;
 
@@ -245,7 +244,7 @@ public class Configuration implements ContainerParent<Configuration> {
     }
 
     public File getSourceToolPath(String tool) {
-        List<PluginInfo> pluginInfos = LibrariesFactory.getInstance().loadGenericPluginInfo();
+        List<PluginInfo> pluginInfos = LibrariesFactory.getInstance().getLoadedPlugins();
         Map<String, File> availableBasePaths = new LinkedHashMap<>();
         for (PluginInfo pluginInfo : pluginInfos) {
             availableBasePaths.putAll(pluginInfo.getToolsDirectories());

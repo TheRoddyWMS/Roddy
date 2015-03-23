@@ -106,45 +106,13 @@ public class ConfigurationFactory {
         }
     }
 
-    /**
-     * Loads a list of all available configuration files and collects various data about each file and the stored configurations.
-     */
-
-    private void loadAvailableConfigurationFiles() {
-        List<File> pipelineDirectories = [];
-        pipelineDirectories << RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "resources", "configurationFiles");
-        String[] split;
-        if (Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.pluginDirectories))
-            split = Roddy.getCommandLineCall().getOptionValue(RoddyStartupOptions.pluginDirectories).split("[,:]");
-        else
-            split = Roddy.getApplicationProperty(Constants.APP_PROPERTY_CONFIGURATION_DIRECTORIES).split("[,:]")
-
-        for (String e in split) {
-            pipelineDirectories << new File(e);
-        }
-
-        //First:  look for all project configuration files. Identify, which project should be used...
-        //        When this is known, the selected analysis can be used to set the plugin versions...
-        //Second: look for the available plugins
-
-        for (PluginInfo pluginInfo : LibrariesFactory.getInstance().loadGenericPluginInfo()) {
-            File dir = pluginInfo.developmentDirectory ? pluginInfo.developmentDirectory : pluginInfo.directory;
-            if (dir)
-                pipelineDirectories << RoddyIOHelperMethods.assembleLocalPath(dir, "resources", "configurationFiles");
-        }
-
+    public void loadAvailableAnalysisConfigurationFiles() {
         List<File> allFiles = []
-        for (File baseDir in pipelineDirectories) {
-            logger.log(Level.CONFIG, "Searching for configuration files in: " + baseDir.toString());
-            File[] files = baseDir.listFiles((FileFilter) new WildcardFileFilter("*.xml"));
-            if (files == null) {
-                logger.info("No configuration files found in path ${baseDir.getAbsolutePath()}");
-            }
-            for (File f in files) {
-                if (!allFiles.contains(f))
-                    allFiles << f;
-            }
-        }
+        LibrariesFactory.getInstance().getLoadedPlugins()
+                .collect { PluginInfo pi -> RoddyIOHelperMethods.assembleLocalPath(pi.directory, "resources", "configurationFiles") }
+                .findAll { File f -> f.exists() && f.isDirectory() }
+                .each { File f -> allFiles.addAll(f.listFiles((FileFilter) new WildcardFileFilter("*.xml"))) }
+
 
         for (File it in allFiles) {
             try {
@@ -166,6 +134,67 @@ public class ConfigurationFactory {
             }
         }
     }
+
+//    /**
+//     * Loads a list of all available configuration files and collects various data about each file and the stored configurations.
+//     */
+//
+//    private void loadAvailableConfigurationFiles() {
+//        List<File> pipelineDirectories = [];
+//        pipelineDirectories << RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "resources", "configurationFiles");
+//        String[] split;
+//        if (Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.pluginDirectories))
+//            split = Roddy.getCommandLineCall().getOptionValue(RoddyStartupOptions.pluginDirectories).split("[,:]");
+//        else
+//            split = Roddy.getApplicationProperty(Constants.APP_PROPERTY_CONFIGURATION_DIRECTORIES).split("[,:]")
+//
+//        for (String e in split) {
+//            pipelineDirectories << new File(e);
+//        }
+//
+//        //First:  look for all project configuration files. Identify, which project should be used...
+//        //        When this is known, the selected analysis can be used to set the plugin versions...
+//        //Second: look for the available plugins
+//
+//        for (PluginInfo pluginInfo : LibrariesFactory.getInstance().getLoadedPlugins()) {
+//            File dir = pluginInfo.developmentDirectory ? pluginInfo.developmentDirectory : pluginInfo.directory;
+//            if (dir)
+//                pipelineDirectories << RoddyIOHelperMethods.assembleLocalPath(dir, "resources", "configurationFiles");
+//        }
+//
+//        List<File> allFiles = []
+//        for (File baseDir in pipelineDirectories) {
+//            logger.log(Level.CONFIG, "Searching for configuration files in: " + baseDir.toString());
+//            File[] files = baseDir.listFiles((FileFilter) new WildcardFileFilter("*.xml"));
+//            if (files == null) {
+//                logger.info("No configuration files found in path ${baseDir.getAbsolutePath()}");
+//            }
+//            for (File f in files) {
+//                if (!allFiles.contains(f))
+//                    allFiles << f;
+//            }
+//        }
+//
+//        for (File it in allFiles) {
+//            try {
+//                def icc = loadInformationalConfigurationContent(it);
+//                if (availableConfigurations.containsKey(icc.name)) {
+//                    throw new RuntimeException("Configuration with name ${icc.name} already exists! Names must be unique.")
+//                }
+//
+//                availableConfigurations[icc.id] = icc;
+//                availableConfigurationsByType.get(icc.type, []) << icc;
+//                availableConfigurationsByTypeAndID.get(icc.type, [:])[icc.id] = icc;
+//                for (InformationalConfigurationContent iccSub in icc.getAllSubContent()) {
+//                    availableConfigurations[iccSub.id] = iccSub;
+//                }
+//
+//            } catch (Exception ex) {
+//                logger.severe("File ${it.absolutePath} cannot be loaded! Error in config file! ${ex.toString()}");
+//                logger.severe(RoddyIOHelperMethods.getStackTraceAsString(ex));
+//            }
+//        }
+//    }
 
     public void refresh() {
         singleton = new ConfigurationFactory();

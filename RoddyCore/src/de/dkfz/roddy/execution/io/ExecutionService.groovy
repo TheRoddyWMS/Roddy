@@ -489,7 +489,7 @@ public abstract class ExecutionService extends CacheProvider {
 //        File sourcePath = new File(".", analysisToolsDirectory.name);
         List<File> sourcePaths = new LinkedList<>(Arrays.asList(RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "resources", "analysisTools").listFiles()));
 //        Map<String, File> allToolDirectories = new LinkedHashMap<>();
-        for (PluginInfo pluginInfo : LibrariesFactory.getInstance().loadGenericPluginInfo()) {
+        for (PluginInfo pluginInfo : LibrariesFactory.getInstance().getLoadedPlugins()) {
 //            allToolDirectories.putAll(pluginInfo.getToolsDirectories());
             sourcePaths.addAll(pluginInfo.getToolsDirectories().values());
         }
