@@ -37,6 +37,7 @@ import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
  */
 @groovy.transform.CompileStatic
 class SSHExecutionService extends RemoteExecutionService {
+
     public static final LoggerWrapper logger = LoggerWrapper.getLogger(SSHExecutionService.class.name);
 
     public static class SSHPoolConnectionSet {
@@ -147,7 +148,7 @@ class SSHExecutionService extends RemoteExecutionService {
 
         private void _initialize() {
             String sshUser = Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_USER, System.getProperty("user.name"));
-            if(sshUser == "USERNAME") sshUser = System.getProperty("user.name"); //Get the local name if USERNAME is set
+            if (sshUser == "USERNAME") sshUser = System.getProperty("user.name"); //Get the local name if USERNAME is set
             String sshMethod = Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD);
 
             if (sshMethod != Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD && sshMethod != Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE)
@@ -406,7 +407,7 @@ class SSHExecutionService extends RemoteExecutionService {
             try {
                 cmdString = command.toString();
                 ExecutionResult res = null;
-                if(run.getExecutionContextLevel() == ExecutionContextLevel.TESTRERUN){
+                if (run.getExecutionContextLevel() == ExecutionContextLevel.TESTRERUN) {
                     String pid = String.format("0x%08X", System.nanoTime());
                     res = new ExecutionResult(true, 0, [pid], pid);
                 } else
@@ -575,6 +576,22 @@ class SSHExecutionService extends RemoteExecutionService {
             fireExecutionStoppedEvent(id, "");
         }
         modifyAccessRights(file, accessRights, groupID);
+    }
+
+    @Override
+    void removeDirectory(File directory) {
+        try {
+            waitForService().sftpClient.rmdir(directory.getAbsolutePath());
+        } catch (Exception ex) {
+        }
+    }
+
+    @Override
+    void removeFile(File file) {
+        try {
+            waitForService().sftpClient.rm(file.getAbsolutePath());
+        } catch (Exception ex) {
+        }
     }
 
     @Override
@@ -812,7 +829,7 @@ class SSHExecutionService extends RemoteExecutionService {
 
     boolean isFileWriteable(File f) {
         FileAttributes attributes = queryFileAttributes(f);
-        if(attributes == null)
+        if (attributes == null)
             return false;
         return attributes.userCanWrite;
     }

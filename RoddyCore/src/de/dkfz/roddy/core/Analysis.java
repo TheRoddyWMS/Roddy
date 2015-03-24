@@ -361,7 +361,12 @@ public class Analysis {
                         //Query file validity of all files
                         FileSystemInfoProvider.getInstance().validateAllFilesInContext(context);
                     } else {
-                        ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context);
+                        //First, check if there were any executed jobs. If not, we can safely delete the the context directory.
+                        if(context.getExecutedJobs().size() == 0) {
+                            FileSystemInfoProvider.getInstance().removeDirectory(context.getExecutionDirectory());
+                        } else {
+                            ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context);
+                        }
                     }
                 }
             }

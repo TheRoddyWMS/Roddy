@@ -186,4 +186,14 @@ public class LinuxFileSystemCommandSet extends FileSystemCommandSet {
     String getDefaultAccessRightsString() {
         return "u+rwx,g+rwx,o-rwx";
     }
+
+    @Override
+    String getRemoveDirectoryCommand(File directory) {
+        return "rm -rf ${directory.getAbsolutePath()}"
+    }
+
+    @Override
+    String getRemoveFileCommand(File file) {
+        return "rm -f ${file.getAbsolutePath()}"
+    }
 }

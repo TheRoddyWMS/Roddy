@@ -26,9 +26,9 @@ fi
 jfxlibInfo=`cat ${JFX_LIBINFO_FILE}`
 libraries=`ls -d1 dist/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
 libraries=$libraries:$jfxlibInfo:dist/plugins/PluginBase/PluginBase.jar
-echo $libraries
+#echo $libraries
 parm1=${1-}
-exit 0
+#exit 0
 
 if [[ "$parm1" == "compile" ]]; then
     bash helperScripts/compile.sh

@@ -685,6 +685,10 @@ public abstract class ExecutionService extends CacheProvider {
 
     public void createFileWithRights(boolean atomic, File file, String accessRights, String groupID, boolean blocking) {}
 
+    public void removeDirectory(File directory) {}
+
+    public void removeFile(File file) {}
+
     public void appendLinesToFile(boolean atomic, File file, List<String> lines, boolean blocking) {}
 
     public void appendLineToFile(boolean atomic, File file, String line, boolean blocking) {}

@@ -558,15 +558,19 @@ public class Roddy {
 
     public static String getUsedRoddyVersion() { return getApplicationProperty("useRoddyVersion", "current"); }
 
-    public static String getUsedPluginVersion(String pluginID) {
-
+    public static String[] getPluginVersionEntries() {
         String[] pluginVersionEntries;
         if(getCommandLineCall().isOptionSet(RoddyStartupOptions.usePluginVersion))
             pluginVersionEntries = getCommandLineCall().getOptionValue(RoddyStartupOptions.usePluginVersion).split(StringConstants.SPLIT_COMMA);
         else
             pluginVersionEntries = getApplicationProperty(RoddyStartupOptions.usePluginVersion.name()).split(StringConstants.SPLIT_COMMA);
+        return pluginVersionEntries;
+    }
+
+    public static String getUsedPluginVersion(String pluginID) {
+
         Map<String, String> pluginVersions = new LinkedHashMap<>();
-        for (String pluginVersionEntry : pluginVersionEntries) {
+        for (String pluginVersionEntry : getPluginVersionEntries()) {
             if(RoddyConversionHelperMethods.isNullOrEmpty(pluginVersionEntry)) continue;
             String[] versionString = pluginVersionEntry.split(StringConstants.SPLIT_COLON);
             pluginVersions.put(versionString[0], versionString[1]);

@@ -9,8 +9,6 @@ import de.dkfz.roddy.core.LibraryEntry
 
 import java.lang.reflect.Method
 
-//import net.xeoh.plugins.base.PluginManager
-//import net.xeoh.plugins.base.impl.PluginManagerFactory
 /**
  * Factory to load and integrate plugins.
  */
@@ -60,6 +58,10 @@ public class LibrariesFactory extends Initializable {
             pluginsToCheck.remove(id, version);
 
             PluginInfo pInfo = mapOfPlugins[id][version];
+            if (pInfo == null)
+                pInfo = mapOfPlugins[id]["current"]
+            if (pInfo == null)
+                continue;
             if (pluginsToActivate[id] != null) {
                 if (pluginsToActivate[id].prodVersion != version) {
                     throw new RuntimeException("There is a version mismatch for plugin dependencies! Not starting up.");
@@ -93,7 +95,7 @@ public class LibrariesFactory extends Initializable {
      *
      * @return
      */
-    private Map<String, Map<String, PluginInfo>> loadMapOfAvailablePlugins() {
+    public Map<String, Map<String, PluginInfo>> loadMapOfAvailablePlugins() {
         if (mapOfPlugins.size() > 0) {
             return mapOfPlugins;
         }
@@ -169,6 +171,24 @@ public class LibrariesFactory extends Initializable {
             }
         }
         mapOfPlugins
+    }
+
+    /**
+     * Get a list of all available plugins in their most recent version...
+     * @return
+     */
+    public List<PluginInfo> getAvailablePluginVersion() {
+        List<PluginInfo> mostCurrentPlugins = [];
+        Map<String, Map<String, PluginInfo>> availablePlugins = loadMapOfAvailablePlugins();
+        availablePlugins.each {
+            String pluginID, Map<String, PluginInfo> versions ->
+                if(versions.keySet().contains("current"))
+                    mostCurrentPlugins << versions["current"];
+                else
+                    mostCurrentPlugins << versions[versions.keySet().last()]
+        }
+
+        return mostCurrentPlugins;
     }
 
     public static boolean addFile(File f) throws IOException {

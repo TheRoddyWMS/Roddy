@@ -607,6 +607,14 @@ public class FileSystemInfoProvider extends CacheProvider {
 
     }
 
+    public void removeDirectory(File directory) {
+        if(ExecutionService.getInstance().canWriteFiles()) {
+            ExecutionService.getInstance().removeDirectory(directory);
+        } else {
+            ExecutionService.getInstance().execute(commandSet.getRemoveDirectoryCommand(directory));
+        }
+    }
+
     public String getPathSeparator() {
         return commandSet.getPathSeparator();
     }

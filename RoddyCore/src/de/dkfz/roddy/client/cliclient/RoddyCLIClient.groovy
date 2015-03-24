@@ -187,20 +187,30 @@ public class RoddyCLIClient {
 
         String[] splitEntries = fullAnalysisID.split("[:][:]");
 
+        // If the plugin is set, find "parent" plugins with the proper version.
         String pluginPart = splitEntries.find { String part -> part.startsWith("useplugin") }
-        if (pluginPart) {
+        boolean pluginsAreLoaded = false;
+
+        def librariesFactory = LibrariesFactory.getInstance()
+        if (pluginPart && pluginPart.size() > "useplugin=".size()) {
             // Extract the plugin and its version.
             String pluginStr = pluginPart.split("[=]")[1]
-            LibrariesFactory.getInstance().resolveAndLoadPlugins(pluginStr);
+            pluginsAreLoaded = true;
+            librariesFactory.resolveAndLoadPlugins(pluginStr);
         }
-        // If the plugin is set, find "parent" plugins with the proper version.
+
         // If no plugin is set, load all libraries with the settings from the ini file
+        String[] iniPluginVersion = Roddy.getPluginVersionEntries();
+        if(!pluginsAreLoaded && iniPluginVersion) {
+            librariesFactory.resolveAndLoadPlugins(iniPluginVersion)
+            pluginsAreLoaded = true;
+        }
+
         // If this is also not set, load all libraries with the current version
-        //Finally load all or only the necessary plugins.
+        if(!pluginsAreLoaded)
+            librariesFactory.loadLibraries(librariesFactory.getAvailablePluginVersion());
 
         fac.loadAvailableAnalysisConfigurationFiles();
-        //Load all unknown files first!
-//        fac.loadUnloadedFiles();
 
         ProjectConfiguration projectConfiguration = fac.getProjectConfiguration(projectID);
         Project project = ProjectFactory.instance.loadConfiguration(projectConfiguration);

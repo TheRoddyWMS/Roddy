@@ -180,11 +180,12 @@ public abstract class CommandFactory<C extends Command> {
     public abstract String[] peekLogFile(Job job);
 
     /**
-     * Stores a new job state info to an execution contexts job state log file
+     * Stores a new job state info to an execution contexts job state log file.
      *
      * @param job
      */
     public void storeJobStateInfo(Job job) {
+//        if(job.getJobID() == null)
         String millis = "" + System.currentTimeMillis();
         millis = millis.substring(0, millis.length() - 3);
         ExecutionContext currentContext = job.getExecutionContext();
