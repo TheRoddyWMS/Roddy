@@ -1,4 +1,10 @@
+== Overview
+
+
+
 == Contents
+
+
 
 == Directory Structure
 
@@ -35,6 +41,21 @@ are in the changelist.
   Those parameters all override the settings in the application properties file
 
 == Changelist
+
+- (TEST) Roddy will delete an execution directory if no jobs were submitted. This is not working
+  with the SSH library SFTP client for unknown reasons.
+
+- (TEST) The way how libraries / plugins are loaded is changed. The used plugins / version can
+  be specified (descending priority):
+  - A project configuration analysis import:
+    <analysis id='snvCalling' configuration='snvCallingAnalysis' useplugin="COWorkflows:1.0.114,..."/>
+  - On the command line with --usePluginVersion=...
+  - The application ini file: usePluginVersion=COWorkflows:1.0.114,...
+  Roddy will try to load plugins which are linked to the set plugins. If a plugin is missing, this
+  might lead to problems.
+
+  If the used plugins are not set, Roddy will try to load all plugins in
+  their latest version.
 
 * Version update to 2.1.27
 

@@ -25,6 +25,9 @@ import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.*;
 
@@ -397,7 +400,7 @@ public class Roddy {
             BufferedInputStream stream = new BufferedInputStream(new FileInputStream(file));
             applicationProperties.load(stream);
 
-            getApplicationProperty("useRoddyVersion", "current"); // Load some default properties
+            getApplicationProperty("useRoddyVersion", LibrariesFactory.PLUGIN_VERSION_CURRENT); // Load some default properties
             getApplicationProperty("usePluginVersion");
             getApplicationProperty("pluginDirectories");
             getApplicationProperty("configurationDirectories");
@@ -415,8 +418,10 @@ public class Roddy {
     }
 
     private static void writePropertiesFile() {
+        File file = getPropertiesFilePath();
+        File tempFile = new File(file.getAbsolutePath() + "_temp");
         try {
-            File file = getPropertiesFilePath();
+            Files.copy(Paths.get(file.getAbsolutePath()), Paths.get(tempFile.getAbsolutePath()));
             if (!file.exists()) file.createNewFile();
             BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
             final Map<RunMode, String> tempPasswords = new LinkedHashMap<>();
@@ -435,7 +440,13 @@ public class Roddy {
                     setApplicationProperty(mode, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_PWD, tempPasswords.get(runMode));
             }
         } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            logger.postAlwaysInfo("The ini file could not be written. Do you have sufficient rights?");
+            try {
+                Files.copy(Paths.get(tempFile.getAbsolutePath()), Paths.get(file.getAbsolutePath()));
+                Files.delete(Paths.get(tempFile.getAbsolutePath()));
+            } catch(Exception ex) {
+                logger.postAlwaysInfo("The ini file could not be reverted. Do you have sufficient rights?");
+            }
         }
     }
 
@@ -556,7 +567,7 @@ public class Roddy {
         return applicationBundleDirectory;
     }
 
-    public static String getUsedRoddyVersion() { return getApplicationProperty("useRoddyVersion", "current"); }
+    public static String getUsedRoddyVersion() { return getApplicationProperty("useRoddyVersion", LibrariesFactory.PLUGIN_VERSION_CURRENT); }
 
     public static String[] getPluginVersionEntries() {
         String[] pluginVersionEntries;
@@ -577,7 +588,7 @@ public class Roddy {
         }
         if(pluginVersions.containsKey(pluginID))
             return pluginVersions.get(pluginID);
-        return "current";
+        return LibrariesFactory.PLUGIN_VERSION_CURRENT;
     }
 
     public static RoddyCLIClient.CommandLineCall getCommandLineCall() { return commandLineCall; }

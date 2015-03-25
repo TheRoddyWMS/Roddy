@@ -590,7 +590,7 @@ public class FileSystemInfoProvider extends CacheProvider {
         if (ExecutionService.getInstance().canListFiles()) {
             Map<File, BaseFile> baseFilesPerFile = new LinkedHashMap<>();
             context.getAllFilesInRun().each { BaseFile bf -> baseFilesPerFile[bf.path] = bf; }
-            Map<File, Boolean> readability = ExecutionService.getInstance().getReadabilityOfAllFiles(context.getAllFilesInRun().collectAll { BaseFile bf -> return bf.getPath(); })
+            Map<File, Boolean> readability = ExecutionService.getInstance().getReadabilityOfAllFiles(context.getAllFilesInRun().collect { BaseFile bf -> return bf.getPath(); })
 
             baseFilesPerFile.each {
                 File file, BaseFile bf ->
@@ -608,7 +608,7 @@ public class FileSystemInfoProvider extends CacheProvider {
     }
 
     public void removeDirectory(File directory) {
-        if(ExecutionService.getInstance().canWriteFiles()) {
+        if(ExecutionService.getInstance().canDeleteFiles()) {
             ExecutionService.getInstance().removeDirectory(directory);
         } else {
             ExecutionService.getInstance().execute(commandSet.getRemoveDirectoryCommand(directory));

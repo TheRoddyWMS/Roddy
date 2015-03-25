@@ -122,18 +122,17 @@ public abstract class RuntimeService extends CacheProvider {
         String timeStamp = executionContextDirName[1] + StringConstants.UNDERSCORE + executionContextDirName[2];
         String userID = null;
         String analysisID = null;
-        if(executionContextDirName.length > 3) {
+        if (executionContextDirName.length > 3) {
             //New style with additional information
             userID = executionContextDirName[3];
             analysisID = executionContextDirName[4];
         }
 
-
         //ERROR?
         ExecutionContext context = new ExecutionContext(api, InfoObject.parseTimestampString(timeStamp));
 
         try {
-            if(userID == null)
+            if (userID == null)
                 context.setExecutingUser(fip.getOwnerOfPath(executionDirectory));
             else
                 context.setExecutingUser(userID);
@@ -160,26 +159,17 @@ public abstract class RuntimeService extends CacheProvider {
                 }
             }
 
-            Map<String, Integer> statusList = readInJobStateLogFile(context)
+            Map<String, JobState> statusList = readInJobStateLogFile(context)
 
             for (Job job : jobsStartedInContext) {
-                if(job == null) continue;
+                if (job == null) continue;
                 job.setJobState(JobState.UNSTARTED);
                 for (String id : statusList.keySet()) {
-                    Integer status = statusList[id];
+                    JobState status = statusList[id];
 
-                    if (CommandFactory.getInstance().compareJobIDs(job.getJobID(), (id))) {
-                        JobState jobState;
-                        if (status == -2)
-                            jobState = JobState.ABORTED
-                        else if (status == 0)
-                            jobState = JobState.OK;
-                        else if (status == 57427)
-                            jobState = JobState.UNKNOWN_SUBMITTED;
-                        else
-                            jobState = JobState.FAILED;
-                        job.setJobState(jobState);
-                    }
+                    if (!CommandFactory.getInstance().compareJobIDs(job.getJobID(), (id)))
+                        continue;
+                    job.setJobState(status);
                 }
             }
 
@@ -213,7 +203,7 @@ public abstract class RuntimeService extends CacheProvider {
      * @param context
      * @param jobsStartedInContext
      */
-    public Map<String, Integer> readInJobStateLogFile(ExecutionContext context) {
+    public Map<String, JobState> readInJobStateLogFile(ExecutionContext context) {
         FileSystemInfoProvider fip = FileSystemInfoProvider.getInstance();
         File jobStatesLogFile = context.getRuntimeService().getNameOfJobStateLogFile(context);
         String[] jobStateList = fip.loadTextFile(jobStatesLogFile);
@@ -223,7 +213,7 @@ public abstract class RuntimeService extends CacheProvider {
             return [:];
         } else {
             //All in which were completed!
-            Map<String, Integer> statusList = new LinkedHashMap<>();
+            Map<String, JobState> statusList = new LinkedHashMap<>();
             Map<String, Long> timestampList = new LinkedHashMap<>();
 
             for (String stateEntry : jobStateList) {
@@ -233,22 +223,10 @@ public abstract class RuntimeService extends CacheProvider {
                 if (split.length < 2) continue;
 
                 String id = split[0];
-                Integer status;
-                if (split[1] == "C")
-                    status = 0;
-                else if (split[1] == "E")
-                    status = 255;
-                else if (split[1] == "A")
-                    status = -2;
-                else if (split[1] == "N")
-                    status = -1;
-                else
-                    status = Integer.parseInt(split[1]);
+                JobState status = JobState.parseJobState(split[1]);
                 long timestamp = 0;
                 if (split.length == 3)
                     timestamp = Long.parseLong(split[2]);
-
-                //Ignore
 
                 //Override if previous timestamp is lower or equal
                 if (timestampList.get(id, 0L) <= timestamp) {
@@ -402,7 +380,7 @@ public abstract class RuntimeService extends CacheProvider {
         String sep = FileSystemInfoProvider.getInstance().getPathSeparator();
 
         String dirPath = "${outPath}${sep}roddyExecutionStore${sep}${ConfigurationConstants.RODDY_EXEC_DIR_PREFIX}${context.getTimeStampString()}_${context.getExecutingUser()}_${context.getAnalysis().getName()}"
-        if(context.getExecutionContextLevel() == ExecutionContextLevel.CLEANUP)
+        if (context.getExecutionContextLevel() == ExecutionContextLevel.CLEANUP)
             dirPath += "_cleanup"
         return new File(dirPath);
     }

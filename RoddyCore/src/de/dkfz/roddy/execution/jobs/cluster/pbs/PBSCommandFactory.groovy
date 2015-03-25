@@ -112,7 +112,7 @@ public class PBSCommandFactory extends CommandFactory<PBSCommand> {
         List<ExecutionContext> listOfContexts = new LinkedList<>();
         synchronized (listOfCreatedCommands) {
             for (Object _command : listOfCreatedCommands) {
-                PBSCommand command = (PBSCommand)_command;
+                PBSCommand command = (PBSCommand) _command;
                 if (command.getJob() instanceof Job.FakeJob)
                     continue;
                 ids.add(command.getExecutionID().getShortID());
@@ -130,12 +130,11 @@ public class PBSCommandFactory extends CommandFactory<PBSCommand> {
             Map<String, JobState> stringJobStateMap = queryJobStatus(ids, true);
             if (logger.isVerbosityHigh()) {
                 for (String s : stringJobStateMap.keySet()) {
-                    if(stringJobStateMap.get(s) != null)
+                    if (stringJobStateMap.get(s) != null)
                         System.out.println(s + " = " + stringJobStateMap.get(s));
                 }
             }
             for (JobState js : stringJobStateMap.values()) {
-                //if (js == null && !mapOfInitialQueries.containsKey(
                 if (js == null) //Only one job needs to be active.
                     continue;
 
@@ -153,9 +152,6 @@ public class PBSCommandFactory extends CommandFactory<PBSCommand> {
                 }
             } else {
                 logger.info("Finished waiting");
-//                for (String s : stringJobStateMap.keySet()) {
-//                    logger.info("\t" + s + " => " + stringJobStateMap.get(s));
-//                }
             }
         }
         int errnousJobs = 0;
@@ -163,13 +159,13 @@ public class PBSCommandFactory extends CommandFactory<PBSCommand> {
             for (Job job : context.getExecutedJobs())
                 if (job.getJobID() != null) errnousJobs++; //Skip null jobs.
 
-            Map<String, Integer> statesMap = context.getRuntimeService().readInJobStateLogFile(context);
-            for (String s : statesMap.keySet()) {
-                Integer integer = statesMap.get(s);
-                if (integer == 0)
-                    errnousJobs--;
-                else
-                    logger.info("Job " + s + " exited with an error.");
+            Map<String, JobState> statesMap = context.getRuntimeService().readInJobStateLogFile(context);
+            statesMap.each {
+                String s, JobState integer ->
+                    if (integer == 0)
+                        errnousJobs--;
+                    else
+                        logger.info("Job " + s + " exited with an error.");
             }
             int unknown = context.getExecutedJobs().size() - statesMap.size();
             if (unknown > 0) {
@@ -216,7 +212,7 @@ public class PBSCommandFactory extends CommandFactory<PBSCommand> {
         }
         if (resourceSet.isCoresSet() && resourceSet.isNodesSet()) {
             sb.append(" -l nodes=").append(resourceSet.getNodes()).append(":ppn=").append(resourceSet.getCores());
-            if(resourceSet.isAdditionalNodeFlagSet()) {
+            if (resourceSet.isAdditionalNodeFlagSet()) {
                 sb.append(":").append(resourceSet.getAdditionalNodeFlag());
             }
         }
@@ -226,7 +222,7 @@ public class PBSCommandFactory extends CommandFactory<PBSCommand> {
         if (resourceSet.isStorageSet()) {
 //            sb.append(" -l mem=").append(resourceSet.getMem()).append("g");
         }
-        if(resourceSet.isQueueSet()) {
+        if (resourceSet.isQueueSet()) {
             sb.append(" -q ").append(resourceSet.getQueue());
         }
         return new PBSResourceProcessingCommand(sb.toString());
@@ -297,13 +293,13 @@ public class PBSCommandFactory extends CommandFactory<PBSCommand> {
         int skriptIndex = -1;
         final String DBL_QUOTE = "\"";
         if (commandString.endsWith(DBL_QUOTE)) {
-            skriptIndex = commandString[0 ..  -2].lastIndexOf(DBL_QUOTE);
+            skriptIndex = commandString[0..-2].lastIndexOf(DBL_QUOTE);
         } else {
             skriptIndex = commandString.lastIndexOf(" ");
         }
 
-        String skript = commandString[skriptIndex .. -1].trim();
-        commandString = commandString[5 .. skriptIndex].trim();
+        String skript = commandString[skriptIndex..-1].trim();
+        commandString = commandString[5..skriptIndex].trim();
         String[] options = (" " + commandString).split(" [-]");   //Put " " in front of the string so that every command can be recognized properly beginning with the first one.
         String jobName = "not readable";
         String toolID = "";
@@ -345,28 +341,28 @@ public class PBSCommandFactory extends CommandFactory<PBSCommand> {
                     String parm ->
                         String parmID = parm.split(StringConstants.SPLIT_EQUALS)[0];
                         String parmVal = parm.split(StringConstants.SPLIT_EQUALS)[1];
-                        if(parmID == "mem") {
+                        if (parmID == "mem") {
                             bufferUnit = BufferUnit.valueOf(parmVal[-1]);
-                            memory = parmVal[0 .. -2];
-                        } else if(parmID == "walltime") {
+                            memory = parmVal[0..-2];
+                        } else if (parmID == "walltime") {
                             String[] splitParm = parmVal.split(StringConstants.SPLIT_COLON);
                             //TODO Increase overall granularity for walltime and mem in config.
-                        } else if(parmID == "nodes") {
+                        } else if (parmID == "nodes") {
                             String[] splitParm = parmVal.split(StringConstants.SPLIT_COLON);
                             nodes = splitParm[0];
                             cores = splitParm[1];
                         }
                 }
-            } else if(var.equals("W")) {
-                if(parms.startsWith("depend")) {
-                    def deps = parms[7 .. -1].split("[:]");
+            } else if (var.equals("W")) {
+                if (parms.startsWith("depend")) {
+                    def deps = parms[7..-1].split("[:]");
 //                    println deps;
-                    if(deps[0] != "afterok")
+                    if (deps[0] != "afterok")
                         println "Not supported: " + deps[0];
 //                    println deps[1 .. -1]
                     try {
-                        dependencies.addAll(deps[1 .. -1]);
-                    } catch (Exception ex)  {
+                        dependencies.addAll(deps[1..-1]);
+                    } catch (Exception ex) {
                         println(parms)
                         println(ex);
                     }
@@ -424,7 +420,7 @@ public class PBSCommandFactory extends CommandFactory<PBSCommand> {
 
         if (Roddy.queryOnlyStartedJobs() && listOfCreatedCommands.size() < 10) {
             for (Object _l : listOfCreatedCommands) {
-                PBSCommand listOfCreatedCommand = (PBSCommand)_l;
+                PBSCommand listOfCreatedCommand = (PBSCommand) _l;
                 queryCommand += " " + listOfCreatedCommand.getJob().getJobID();
             }
         }
@@ -488,7 +484,7 @@ public class PBSCommandFactory extends CommandFactory<PBSCommand> {
             }
 
             //Create a local cache of jobstate logfile entries.
-            Map<ExecutionContext, Map<String, Integer>> map = new LinkedHashMap<>();
+            Map<ExecutionContext, Map<String, JobState>> map = new LinkedHashMap<>();
             List<Job> removejobs = new LinkedList<>();
             synchronized (jobStatusListeners) {
                 for (String id : jobStatusListeners.keySet()) {
@@ -517,8 +513,8 @@ public class PBSCommandFactory extends CommandFactory<PBSCommand> {
                             if (!map.containsKey(executionContext))
                                 map.put(executionContext, executionContext.readJobStateLogFile());
 
-                            Integer jobsCurrentState = null;
-                            Map<String, Integer> statesMap = map.get(executionContext);
+                            JobState jobsCurrentState = null;
+                            Map<String, JobState> statesMap = map.get(executionContext);
                             if (job.getRunResult() != null) {
                                 jobsCurrentState = statesMap.get(job.getRunResult().getJobID().getId());
                             } else { //Search within entries.
@@ -529,13 +525,7 @@ public class PBSCommandFactory extends CommandFactory<PBSCommand> {
                                     }
                                 }
                             }
-                            if (jobsCurrentState == 0) {
-                                js = JobState.OK;
-                            } else if (jobsCurrentState > 0) {
-                                js = JobState.FAILED;
-                            } else if (jobsCurrentState == 57427) { //Magic START in Leetcode
-                                js = JobState.FAILED;
-                            }
+                            js = jobsCurrentState;
                         } catch (Exception ex) {
                             //Could not read out job state from file
                         }
@@ -675,7 +665,7 @@ public class PBSCommandFactory extends CommandFactory<PBSCommand> {
             String[] split = id.split(SPLIT_SBRACKET_RIGHT)[0].split(SPLIT_SBRACKET_LEFT);
             searchID = split[0] + MINUS + split[1];
         }
-        String cmd = String.format("jobHost=`qstat -f %s  | grep exec_host | cut -d \"/\" -f 1 | cut -d \"=\" -f 2`; ssh %s@${jobHost:1} 'cat /opt/torque/spool/spool/*'%s'*'", id, user, searchID);
+        String cmd = String.format("jobHost=`qstat -f %s  | grep exec_host | cut -d \"/\" -f 1 | cut -d \"=\" -f 2`; ssh %s@${jobHost: 1} 'cat /opt/torque/spool/spool/*'%s'*'", id, user, searchID);
         ExecutionResult executionResult = ExecutionService.getInstance().execute(cmd);
         if (executionResult.successful)
             return executionResult.resultLines.toArray(new String[0]);

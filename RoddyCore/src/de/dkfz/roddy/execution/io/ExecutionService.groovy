@@ -665,6 +665,8 @@ public abstract class ExecutionService extends CacheProvider {
 
     public boolean canWriteFiles() { return false; }
 
+    public boolean canDeleteFiles() { false; }
+
     public boolean canListFiles() { return false; }
 
     public boolean canModifyAccessRights() { return false; }

@@ -9,16 +9,22 @@ import de.dkfz.roddy.core.LibraryEntry
 
 import java.lang.reflect.Method
 
+import static de.dkfz.roddy.plugins.LibrariesFactory.PLUGIN_VERSION_CURRENT
+import static de.dkfz.roddy.plugins.LibrariesFactory.PLUGIN_VERSION_CURRENT
+
 /**
  * Factory to load and integrate plugins.
  */
 @groovy.transform.CompileStatic
 public class LibrariesFactory extends Initializable {
-    public static final String PLUGIN_VERSION_CURRENT = "current";
-
     private static LoggerWrapper logger = LoggerWrapper.getLogger(LibrariesFactory.class.getName());
 
     private static LibrariesFactory librariesFactory;
+
+    public static final String PLUGIN_VERSION_CURRENT = "current";
+    public static final String PLUGIN_BASEPLUGIN = "PluginBase";
+    public static final String BUILDINFO_DEPENDENCY = "dependson";
+    public static final String BUILDINFO_TEXTFILE = "buildinfo.txt";
 
     private List<LibraryEntry> loadedLibraries = [];
 
@@ -28,6 +34,7 @@ public class LibrariesFactory extends Initializable {
 
     /**
      * This resets the singleton and is not thread safe!
+     * Actually only creates a new singleton clearing out old values.
      * @return
      */
     public static LibrariesFactory initializeFactory() {
@@ -59,7 +66,7 @@ public class LibrariesFactory extends Initializable {
 
             PluginInfo pInfo = mapOfPlugins[id][version];
             if (pInfo == null)
-                pInfo = mapOfPlugins[id]["current"]
+                pInfo = mapOfPlugins[id][PLUGIN_VERSION_CURRENT]
             if (pInfo == null)
                 continue;
             if (pluginsToActivate[id] != null) {
@@ -69,7 +76,7 @@ public class LibrariesFactory extends Initializable {
                     //Not checking again!
                 }
             } else {
-                pluginsToCheck.putAll(pInfo.dependencies);
+                pluginsToCheck.putAll(pInfo.getDependencies());
                 pluginsToActivate[id] = pInfo;
             }
         }
@@ -105,7 +112,7 @@ public class LibrariesFactory extends Initializable {
         def blacklist = [".idea", "out", "Template", ".svn"]
 
         for (File pBaseDirectory : pluginDirectories) {
-            for (File pEntry : pBaseDirectory.listFiles().sort()) {
+            for (File pEntry in pBaseDirectory.listFiles().sort()) {
                 String dirName = pEntry.getName();
                 boolean isZip = dirName.endsWith(".zip");
                 if (isZip)
@@ -152,19 +159,18 @@ public class LibrariesFactory extends Initializable {
 
                 //Get dependency list from plugin
                 Map<String, String> pluginDependencies = [:];
-                File buildinfoFile = pEntry.listFiles().find { File f -> f.name == "buildinfo.txt" };
+                File buildinfoFile = pEntry.listFiles().find { File f -> f.name == BUILDINFO_TEXTFILE };
                 if (buildinfoFile) {
-                    buildinfoFile.eachLine {
-                        String line ->
-                            if (!line.startsWith("dependson"))
-                                return;
-                            String[] split = line.split(StringConstants.SPLIT_EQUALS)[1].split(StringConstants.SPLIT_COLON);
-                            String workflow = split[0];
-                            String version = split.length > 1 ? split[1] : "current";
-                            pluginDependencies.put(workflow, version);
+                    for (String line in buildinfoFile.readLines()) {
+                        if (!line.startsWith(BUILDINFO_DEPENDENCY))
+                            return;
+                        String[] split = line.split(StringConstants.SPLIT_EQUALS)[1].split(StringConstants.SPLIT_COLON);
+                        String workflow = split[0];
+                        String version = split.length > 1 ? split[1] : PLUGIN_VERSION_CURRENT;
+                        pluginDependencies.put(workflow, version);
                     }
-                    if (!pluginDependencies.containsKey("PluginBase"))
-                        pluginDependencies.put("PluginBase", "current");
+                    if (!pluginDependencies.containsKey(PLUGIN_BASEPLUGIN))
+                        pluginDependencies.put(PLUGIN_BASEPLUGIN, PLUGIN_VERSION_CURRENT);
                 }
 
                 mapOfPlugins.get(pluginName, [:])[pluginVersion] = new PluginInfo(pluginName, zipFile, prodEntry, develEntry, pluginVersion, pluginDependencies);
@@ -182,8 +188,8 @@ public class LibrariesFactory extends Initializable {
         Map<String, Map<String, PluginInfo>> availablePlugins = loadMapOfAvailablePlugins();
         availablePlugins.each {
             String pluginID, Map<String, PluginInfo> versions ->
-                if(versions.keySet().contains("current"))
-                    mostCurrentPlugins << versions["current"];
+                if (versions.keySet().contains(PLUGIN_VERSION_CURRENT))
+                    mostCurrentPlugins << versions[PLUGIN_VERSION_CURRENT];
                 else
                     mostCurrentPlugins << versions[versions.keySet().last()]
         }

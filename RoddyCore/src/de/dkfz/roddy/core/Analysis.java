@@ -361,8 +361,10 @@ public class Analysis {
                         //Query file validity of all files
                         FileSystemInfoProvider.getInstance().validateAllFilesInContext(context);
                     } else {
+
                         //First, check if there were any executed jobs. If not, we can safely delete the the context directory.
-                        if(context.getExecutedJobs().size() == 0) {
+                        if (context.getStartedJobs().size() == 0) {
+                            logger.postAlwaysInfo("There were no started jobs, the execution directory will be removed.");
                             FileSystemInfoProvider.getInstance().removeDirectory(context.getExecutionDirectory());
                         } else {
                             ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context);
@@ -375,11 +377,16 @@ public class Analysis {
             logger.log(Level.SEVERE, e.toString());
             logger.log(Level.SEVERE, RoddyIOHelperMethods.getStackTraceAsString(e));
         }
-        //Look up errors when jobs are executed directly
-        for (Job job : context.getExecutedJobs()) {
-            if (job.getJobState() == JobState.FAILED)
-                context.addErrorEntry(ExecutionContextError.EXECUTION_JOBFAILED.expand("A job execution failed "));
+
+        // Look up errors when jobs are executed directly and when there were any started jobs.
+        if (context.getStartedJobs().size() > 0) {
+            for (Job job : context.getExecutedJobs()) {
+                if (job.getJobState() == JobState.FAILED)
+                    context.addErrorEntry(ExecutionContextError.EXECUTION_JOBFAILED.expand("A job execution failed "));
+            }
         }
+
+        // Print out context errors.
         if (context.getErrors().size() > 0) {
             StringBuilder messages = new StringBuilder();
             messages.append("There were errors for the execution context for dataset " + datasetID);
@@ -411,7 +418,7 @@ public class Analysis {
                 try {
                     ExecutionService.getInstance().writeFilesForExecution(context);
                     cleanupJob.run();
-                } catch(Exception ex) {
+                } catch (Exception ex) {
                 } finally {
                     ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context);
                 }

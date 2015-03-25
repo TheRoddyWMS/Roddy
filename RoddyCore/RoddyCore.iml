@@ -33,5 +33,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="groovy-2.3.4" level="application" />
     <orderEntry type="library" name="bundledLibraries" level="project" />
+    <orderEntry type="library" name="junit-4.11" level="project" />
   </component>
 </module>

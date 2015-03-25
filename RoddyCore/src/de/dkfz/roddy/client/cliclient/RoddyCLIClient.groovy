@@ -10,22 +10,16 @@ import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.validation.ValidationError
 import de.dkfz.roddy.config.validation.WholeConfigurationValidator
 import de.dkfz.roddy.core.*
-import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.SSHExecutionService
 import de.dkfz.roddy.execution.jobs.CommandFactory
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.execution.jobs.ProcessingCommands
-import de.dkfz.roddy.knowledge.files.BaseFile
-import de.dkfz.roddy.plugins.LibrariesFactory
-import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.tools.LoggerWrapper
-import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.ScannerWrapper
 
 import static de.dkfz.roddy.Constants.ENV_LINESEPARATOR as NEWLINE
-import static de.dkfz.roddy.StringConstants.SPLIT_AT
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 import static de.dkfz.roddy.client.RoddyStartupModes.*;
 
@@ -165,75 +159,6 @@ public class RoddyCLIClient {
         }
     }
 
-    /**
-     * Todo: Move this to a better suiting location, like i.e. project factory or analysis factory.
-     * @param id
-     * @return
-     */
-    private static Analysis loadAnalysis(String id) {
-
-        LibrariesFactory.initializeFactory();
-
-        String[] split = id.split(SPLIT_AT);
-        String projectID = split[0];
-        if (split.length == 1) {
-            logger.postAlwaysInfo("There was no analysis specified for configuration " + split[0] + "\n\t Please specify the configuration string as [configuration_id]@[analysis_id].");
-            return null;
-        }
-        String analysisID = split[1];
-        ConfigurationFactory fac = ConfigurationFactory.getInstance();
-        InformationalConfigurationContent iccProject = fac.getAllAvailableConfigurations()[projectID];
-        String fullAnalysisID = iccProject.getListOfAnalyses().find { String aID -> aID.split("[:][:]")[0] == analysisID; }
-
-        String[] splitEntries = fullAnalysisID.split("[:][:]");
-
-        // If the plugin is set, find "parent" plugins with the proper version.
-        String pluginPart = splitEntries.find { String part -> part.startsWith("useplugin") }
-        boolean pluginsAreLoaded = false;
-
-        def librariesFactory = LibrariesFactory.getInstance()
-        if (pluginPart && pluginPart.size() > "useplugin=".size()) {
-            // Extract the plugin and its version.
-            String pluginStr = pluginPart.split("[=]")[1]
-            pluginsAreLoaded = true;
-            librariesFactory.resolveAndLoadPlugins(pluginStr);
-        }
-
-        // If no plugin is set, load all libraries with the settings from the ini file
-        String[] iniPluginVersion = Roddy.getPluginVersionEntries();
-        if(!pluginsAreLoaded && iniPluginVersion) {
-            librariesFactory.resolveAndLoadPlugins(iniPluginVersion)
-            pluginsAreLoaded = true;
-        }
-
-        // If this is also not set, load all libraries with the current version
-        if(!pluginsAreLoaded)
-            librariesFactory.loadLibraries(librariesFactory.getAvailablePluginVersion());
-
-        fac.loadAvailableAnalysisConfigurationFiles();
-
-        ProjectConfiguration projectConfiguration = fac.getProjectConfiguration(projectID);
-        Project project = ProjectFactory.instance.loadConfiguration(projectConfiguration);
-        AnalysisConfiguration ac = projectConfiguration.getAnalysis(analysisID);
-        Analysis analysis = null;
-        if (ac != null)
-            analysis = ProjectFactory.instance.loadAnalysisConfiguration(analysisID, project, ac);
-        project.getAnalyses().add(analysis);
-
-//        ConfigurationFactory.getInstance().validateConfiguration(analysis.getConfiguration());
-        if (analysis != null)
-            return analysis;
-
-        if (projectConfiguration == null)
-            throw new RuntimeException("Could not load project ${projectID}!");
-
-        StringBuilder sb = new StringBuilder();
-        sb << "Could not load analysis ${id}, try one of those: " << Constants.ENV_LINESEPARATOR;
-        for (String aID : projectConfiguration.listOfAnalysisIDs) {
-            sb << "  " << projectID << "@" << aID << Constants.ENV_LINESEPARATOR;
-        }
-        throw new RuntimeException(sb.toString());
-    }
 
     public static void parseStartupMode(CommandLineCall clc) {
         //TODO Convert to CommandLineCall
@@ -346,7 +271,7 @@ public class RoddyCLIClient {
      * @return
      */
     public static boolean validateConfiguration(String id) {
-        Analysis analysis = loadAnalysis(id)
+        Analysis analysis = ProjectFactory.loadAnalysis(id)
         if (!analysis) return false;
 
         WholeConfigurationValidator wcv = new WholeConfigurationValidator(analysis.getConfiguration());
@@ -386,7 +311,7 @@ public class RoddyCLIClient {
     }
 
     public static void printRuntimeConfiguration(CommandLineCall commandLineCall) {
-        Analysis analysis = loadAnalysis(commandLineCall.getArguments()[1]);
+        Analysis analysis = ProjectFactory.loadAnalysis(commandLineCall.getArguments()[1]);
         if (!analysis) return;
 
         if (commandLineCall.getParameters().size() < 2) {
@@ -513,7 +438,7 @@ public class RoddyCLIClient {
     }
 
     public static void listDatasets(String[] args) {
-        Analysis analysis = loadAnalysis(args[1]);
+        Analysis analysis = ProjectFactory.loadAnalysis(args[1]);
         if (!analysis) return;
         def datasets = analysis.getListOfDataSets()
         for (DataSet ds : datasets) {
@@ -526,7 +451,7 @@ public class RoddyCLIClient {
      * @param args
      */
     public static void testrun(String[] args) {
-        Analysis analysis = loadAnalysis(args[1]);
+        Analysis analysis = ProjectFactory.loadAnalysis(args[1]);
         if (!analysis) return;
 
         List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(args[2].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
@@ -539,7 +464,7 @@ public class RoddyCLIClient {
      * @param args
      */
     public static void testrerun(String[] args) {
-        Analysis analysis = loadAnalysis(args[1]);
+        Analysis analysis = ProjectFactory.loadAnalysis(args[1]);
         List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(args[2].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
         executionContexts = analysis.rerun(executionContexts, true);
 
@@ -602,13 +527,13 @@ public class RoddyCLIClient {
     }
 
     public static void run(String[] args) {
-        Analysis analysis = loadAnalysis(args[1]);
+        Analysis analysis = ProjectFactory.loadAnalysis(args[1]);
         if (!analysis) return;
         analysis.run(Arrays.asList(args[2].split(SPLIT_COMMA)), ExecutionContextLevel.RUN);
     }
 
     public static List<ExecutionContext> rerun(String[] args) {
-        Analysis analysis = loadAnalysis(args[1]);
+        Analysis analysis = ProjectFactory.loadAnalysis(args[1]);
         if (!analysis) return;
         List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(args[2].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
         return analysis.rerun(executionContexts, false);
@@ -623,7 +548,7 @@ public class RoddyCLIClient {
         final String separator = Constants.ENV_LINESEPARATOR;
 
         def analysisID = clc.getParameters().get(0)
-        Analysis analysis = loadAnalysis(analysisID);
+        Analysis analysis = ProjectFactory.loadAnalysis(analysisID);
         if (!analysis) return;
         List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getParameters()[1].split(SPLIT_COMMA) : null;
         if (dFilter == null) {
@@ -666,7 +591,7 @@ public class RoddyCLIClient {
 
     static void cleanupWorkflow(CommandLineCall clc) {
         def analysisID = clc.getParameters().get(0)
-        Analysis analysis = loadAnalysis(analysisID);
+        Analysis analysis = ProjectFactory.loadAnalysis(analysisID);
         if (!analysis) return;
         List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getParameters()[1].split(SPLIT_COMMA) : null;
         if (dFilter == null) {
@@ -678,7 +603,7 @@ public class RoddyCLIClient {
 
     static void abortWorkflow(CommandLineCall clc) {
         def analysisID = clc.getParameters().get(0)
-        Analysis analysis = loadAnalysis(analysisID);
+        Analysis analysis = ProjectFactory.loadAnalysis(analysisID);
         if (!analysis) return;
         List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getParameters()[1].split(SPLIT_COMMA) : null;
         if (dFilter == null) {

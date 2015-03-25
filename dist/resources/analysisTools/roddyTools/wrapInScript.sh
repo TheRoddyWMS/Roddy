@@ -37,7 +37,7 @@ useLockfile=true
 [[ -z `which lockfile` ]] && useLockfile=false
 [[ ${useLockfile} == false ]] && lockCommand=lockfile-create && unlockCommand=lockfile-remove && echo "Set lockfile commands to lockfile-create and lockfile-remove"
 
-startCode=57427
+startCode=STARTED
 
 # Check if the jobs parent jobs are stored and passed as a parameter. If so Roddy checks the job state logfile
 # if at least one of the parent jobs exited with a value different to 0.
@@ -49,14 +49,14 @@ then
     for parentJob in ${RODDY_PARENT_JOBS[@]}; do
         [[ ${exitCode-} == 250 ]] && continue;
         result=`cat ${jobStateLogFile} | grep -a "^${parentJob}:" | tail -n 1 | cut -d ":" -f 2`
-        [[ ! $result -eq 0 ]] && echo "At least one of this parents jobs exited with an error code. This job will not run." && startCode=60000
+        [[ ! $result -eq 0 ]] && echo "At least one of this parents jobs exited with an error code. This job will not run." && startCode="ABORTED"
     done
 fi
 
 
 # Put in start in Leetcode
 ${lockCommand} $_lock; echo "${RODDY_JOBID}:${startCode}:"`date +"%s"`":${TOOL_ID}" >> ${jobStateLogFile}; ${unlockCommand} $_lock
-[[ ${startCode} == 60000 ]] && echo "Exitting because a former job died." && exit 250
+[[ ${startCode} == 60000 || ${startCode} == "ABORTED" ]] && echo "Exitting because a former job died." && exit 250
 # Sleep a second before and after executing the wrapped script. Allow the system to get different timestamps.
 sleep 2
 

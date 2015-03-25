@@ -64,7 +64,7 @@ echo "Compressing files to dist/Roddy.jar"
 jar cmf ../../manifest.tmp ../../dist/Roddy.jar $classFiles
 cd ../../RoddyCore/src
 echo $PWD
-set -xuv
+#set -xuv
 # Add JavaFX files and gui images
 fxmlFiles=`find . -type f \( -name "*.fxml" \)`
 cssFiles=`find . -type f \( -name "*.css" \)`

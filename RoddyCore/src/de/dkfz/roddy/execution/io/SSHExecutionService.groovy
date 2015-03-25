@@ -335,7 +335,6 @@ class SSHExecutionService extends RemoteExecutionService {
                 set.release();
             }
             String content = IOUtils.readFully(cmd.getInputStream()).toString();
-//            logger.info("Executing " + (waitFor ? "and waiting for " : "") + "command " + command);
             session.close();
 
             cmd.join();
@@ -448,9 +447,8 @@ class SSHExecutionService extends RemoteExecutionService {
         boolean fileCopy = _in.isFile();
         String copyType = fileCopy ? "file" : "directory";
 
-        final service = waitForService();
         long id = fireExecutionStartedEvent("")
-        service.acquire();
+        SSHPoolConnectionSet service = waitForAndAcquireService()
         try {
             service.sftpClient.getFileTransfer().upload(_in.absolutePath, _out.absolutePath);
         } catch (SFTPException ex) {
@@ -488,25 +486,11 @@ class SSHExecutionService extends RemoteExecutionService {
         Process process = gString.execute()
         process.waitFor();
 
-//        List<String> lines = process.getInputStream().readLines();
         copyFile(tempZip, _out, retries);
         String outPath = "${_out.getAbsolutePath()}/${tempZip.getName()}";
-//        copyFile(_in, _out, retries);
         execute("tar -C ${_out.getAbsolutePath()} -xzvf ${outPath} && rm ${outPath}", true);
 
         tempZip.delete();
-//        boolean retry = false;
-//        final service = waitForService();
-//        long id = fireExecutionStartedEvent("")
-//        service.acquire();
-//        try {
-//            service.sftpClient.getFileTransfer().upload(_in.absolutePath, _out.absolutePath);
-//        } catch {
-//        } finally {
-//            service.release();
-//            measureStop(id, "directory copy [sshclient:${service.id}]");
-//            fireExecutionStoppedEvent(id, "");
-//        }
     }
 
     @Override
@@ -514,8 +498,7 @@ class SSHExecutionService extends RemoteExecutionService {
         waitForService();
         long id = fireExecutionStartedEvent("")
 
-        final service = waitForService();
-        service.acquire();
+        SSHPoolConnectionSet service = waitForAndAcquireService()
         boolean result = true;
         try {
             FileSystemInfoProvider fp = FileSystemInfoProvider.getInstance();
@@ -559,8 +542,7 @@ class SSHExecutionService extends RemoteExecutionService {
     @Override
     void createFileWithRights(boolean atomic, File file, String accessRights, String groupID, boolean blocking) {
         long id = fireExecutionStartedEvent("")
-        final service = waitForService();
-        service.acquire();
+        SSHPoolConnectionSet service = waitForAndAcquireService()
         try {
             Set<OpenMode> set = new HashSet<>();
             set.add(OpenMode.CREAT);
@@ -580,17 +562,23 @@ class SSHExecutionService extends RemoteExecutionService {
 
     @Override
     void removeDirectory(File directory) {
+        SSHPoolConnectionSet service = waitForAndAcquireService()
         try {
-            waitForService().sftpClient.rmdir(directory.getAbsolutePath());
-        } catch (Exception ex) {
+            waitForService().sftpClient.rmdir(directory.absolutePath)
+        } catch(Exception ex) {
+            println(ex);
+        } finally {
+            service.release();
         }
     }
 
     @Override
     void removeFile(File file) {
+        SSHPoolConnectionSet service = waitForAndAcquireService()
         try {
-            waitForService().sftpClient.rm(file.getAbsolutePath());
-        } catch (Exception ex) {
+            waitForService().sftpClient.rm(file.absolutePath)
+        } finally {
+            service.release();
         }
     }
 
@@ -603,8 +591,7 @@ class SSHExecutionService extends RemoteExecutionService {
     @Override
     void appendLineToFile(boolean atomic, File file, String line, boolean blocking) {
         long id = fireExecutionStartedEvent("")
-        final service = waitForService();
-        service.acquire();
+        SSHPoolConnectionSet service = waitForAndAcquireService()
         try {
             Set<OpenMode> set = new HashSet<>();
             set.add(OpenMode.APPEND);
@@ -622,6 +609,12 @@ class SSHExecutionService extends RemoteExecutionService {
         }
     }
 
+    private SSHPoolConnectionSet waitForAndAcquireService() {
+        final service = waitForService();
+        service.acquire();
+        service
+    }
+
     @Override
     void writeTextFile(File file, String text) {
         copyFile(FileSystemInfoProvider.writeTextToTempFile(text), file);
@@ -635,30 +628,6 @@ class SSHExecutionService extends RemoteExecutionService {
             logger.warning("Could not write or serialize object ${serializable.toString()} to file ${file.absolutePath}. " + ex.toString());
         }
     }
-
-    private class ReducableSemaphore extends Semaphore {
-        private int maximumPermits;
-
-        ReducableSemaphore(int i) {
-            super(i)
-            maximumPermits = i;
-        }
-
-        ReducableSemaphore(int i, boolean b) {
-            super(i, b)
-            maximumPermits = i;
-        }
-
-        public synchronized void decrementPermits() {
-            if (maximumPermits > 4) {
-                maximumPermits--;
-                logger.warning("Reducing semaphore permit size by one to " + (maximumPermits))
-                super.reducePermits(1);
-            }
-        }
-    }
-
-//    private final ReducableSemaphore sshSemaphore = new ReducableSemaphore(16);
 
     private final Map<File, File> tempFileByFile = new LinkedHashMap<>();
 /**
@@ -680,21 +649,15 @@ class SSHExecutionService extends RemoteExecutionService {
                     File tempFile = File.createTempFile(tempPre, tempPost);
                     tempFile.deleteOnExit();
 
-//                    sshSemaphore.acquire();
-//                    acquired = true;
                     long t = measureStart();
-                    def service = waitForService();
-                    service.acquire()
+                    SSHPoolConnectionSet service = waitForAndAcquireService()
                     try {
                         if (service.sftpClient.statExistence(file.getAbsolutePath()))
-//                            service.scpDownloadClient.copy(file.getAbsolutePath(), new FileSystemFile(tempFile.getAbsolutePath()));
                             service.sftpClient.get(file.getAbsolutePath(), tempFile.getAbsolutePath());
                     } finally {
                         service.release();
                     }
                     measureStop(t, "transfer file [sshclient:${service.id}] ${file.getAbsolutePath()} from remote");
-//                    sshSemaphore.release();
-//                    acquired = false;
                     lock.lock();
                     try {
                         if (FileSystemInfoProvider.getInstance().isCachingAllowed(file))
@@ -766,19 +729,12 @@ class SSHExecutionService extends RemoteExecutionService {
     @Override
     List<File> listFiles(File file, List<String> filters) {
         try {
-//            synchronized (file) {
             long id = fireExecutionStartedEvent("")
             final service = waitForService();
-//            final SFTPClient client = sshClient.newSFTPClient();
             final List<RemoteResourceInfo> ls;
             service.acquire();
             try {
-//                if (filters) {
-//                    final WildcardFileFilter wff = new WildcardFileFilter(filters);
-//                    ls = service.sftpClient.ls(file.absolutePath)
-//                } else {
                 ls = service.sftpClient.ls(file.absolutePath);
-//                }
             }
             finally {
                 service.release();
@@ -787,12 +743,6 @@ class SSHExecutionService extends RemoteExecutionService {
             WildcardFileFilter wff = null;
             if (filters)
                 wff = new WildcardFileFilter(filters);
-//            , new RemoteResourceFilter() {
-//                @Override
-//                boolean accept(RemoteResourceInfo remoteResourceInfo) {
-//                    return wff.accept(new File(remoteResourceInfo.path));
-//                }
-//            });
 
             List<File> result = [];
             for (RemoteResourceInfo rinfo in ls) {
@@ -804,7 +754,6 @@ class SSHExecutionService extends RemoteExecutionService {
             fireExecutionStoppedEvent(id, "");
             return result;
         }
-//        }
 
         catch (any) {
             []
@@ -847,8 +796,7 @@ class SSHExecutionService extends RemoteExecutionService {
         try {
             long id = fireExecutionStartedEvent("")
             net.schmizz.sshj.sftp.FileAttributes attributes
-            final service = waitForService();
-            service.acquire();
+            SSHPoolConnectionSet service = waitForAndAcquireService()
             try {
                 attributes = service.sftpClient.lstat(file.absolutePath);
             }
@@ -889,6 +837,11 @@ class SSHExecutionService extends RemoteExecutionService {
     @Override
     public boolean canWriteFiles() {
         return true;
+    }
+
+    @Override
+    boolean canDeleteFiles() {
+        return false;
     }
 
     @Override
