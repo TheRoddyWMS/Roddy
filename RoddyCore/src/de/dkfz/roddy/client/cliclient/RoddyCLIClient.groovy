@@ -271,7 +271,7 @@ public class RoddyCLIClient {
      * @return
      */
     public static boolean validateConfiguration(String id) {
-        Analysis analysis = ProjectFactory.loadAnalysis(id)
+        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(id)
         if (!analysis) return false;
 
         WholeConfigurationValidator wcv = new WholeConfigurationValidator(analysis.getConfiguration());
@@ -311,7 +311,7 @@ public class RoddyCLIClient {
     }
 
     public static void printRuntimeConfiguration(CommandLineCall commandLineCall) {
-        Analysis analysis = ProjectFactory.loadAnalysis(commandLineCall.getArguments()[1]);
+        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(commandLineCall.getArguments()[1]);
         if (!analysis) return;
 
         if (commandLineCall.getParameters().size() < 2) {
@@ -438,7 +438,7 @@ public class RoddyCLIClient {
     }
 
     public static void listDatasets(String[] args) {
-        Analysis analysis = ProjectFactory.loadAnalysis(args[1]);
+        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(args[1]);
         if (!analysis) return;
         def datasets = analysis.getListOfDataSets()
         for (DataSet ds : datasets) {
@@ -451,7 +451,7 @@ public class RoddyCLIClient {
      * @param args
      */
     public static void testrun(String[] args) {
-        Analysis analysis = ProjectFactory.loadAnalysis(args[1]);
+        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(args[1]);
         if (!analysis) return;
 
         List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(args[2].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
@@ -464,7 +464,7 @@ public class RoddyCLIClient {
      * @param args
      */
     public static void testrerun(String[] args) {
-        Analysis analysis = ProjectFactory.loadAnalysis(args[1]);
+        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(args[1]);
         List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(args[2].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
         executionContexts = analysis.rerun(executionContexts, true);
 
@@ -527,13 +527,13 @@ public class RoddyCLIClient {
     }
 
     public static void run(String[] args) {
-        Analysis analysis = ProjectFactory.loadAnalysis(args[1]);
+        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(args[1]);
         if (!analysis) return;
         analysis.run(Arrays.asList(args[2].split(SPLIT_COMMA)), ExecutionContextLevel.RUN);
     }
 
     public static List<ExecutionContext> rerun(String[] args) {
-        Analysis analysis = ProjectFactory.loadAnalysis(args[1]);
+        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(args[1]);
         if (!analysis) return;
         List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(args[2].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
         return analysis.rerun(executionContexts, false);
@@ -548,7 +548,7 @@ public class RoddyCLIClient {
         final String separator = Constants.ENV_LINESEPARATOR;
 
         def analysisID = clc.getParameters().get(0)
-        Analysis analysis = ProjectFactory.loadAnalysis(analysisID);
+        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(analysisID);
         if (!analysis) return;
         List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getParameters()[1].split(SPLIT_COMMA) : null;
         if (dFilter == null) {
@@ -591,7 +591,7 @@ public class RoddyCLIClient {
 
     static void cleanupWorkflow(CommandLineCall clc) {
         def analysisID = clc.getParameters().get(0)
-        Analysis analysis = ProjectFactory.loadAnalysis(analysisID);
+        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(analysisID);
         if (!analysis) return;
         List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getParameters()[1].split(SPLIT_COMMA) : null;
         if (dFilter == null) {
@@ -603,7 +603,7 @@ public class RoddyCLIClient {
 
     static void abortWorkflow(CommandLineCall clc) {
         def analysisID = clc.getParameters().get(0)
-        Analysis analysis = ProjectFactory.loadAnalysis(analysisID);
+        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(analysisID);
         if (!analysis) return;
         List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getParameters()[1].split(SPLIT_COMMA) : null;
         if (dFilter == null) {

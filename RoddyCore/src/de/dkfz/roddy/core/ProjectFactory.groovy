@@ -123,7 +123,7 @@ public class ProjectFactory {
      * @param id Something like [project.subproject.subproject]@[analysisID] where analysisID will be used to find the correct analysis.
      * @return An analysis object containing linking a project and an analysis configuration.
      */
-    public static Analysis loadAnalysis(String id) {
+    public Analysis loadAnalysis(String id) {
 
         LibrariesFactory.initializeFactory();
 
@@ -166,11 +166,11 @@ public class ProjectFactory {
         fac.loadAvailableAnalysisConfigurationFiles();
 
         ProjectConfiguration projectConfiguration = fac.getProjectConfiguration(projectID);
-        Project project = ProjectFactory.instance.loadConfiguration(projectConfiguration);
+        Project project = loadConfiguration(projectConfiguration);
         AnalysisConfiguration ac = projectConfiguration.getAnalysis(analysisID);
         Analysis analysis = null;
         if (ac != null)
-            analysis = ProjectFactory.instance.loadAnalysisConfiguration(analysisID, project, ac);
+            analysis = loadAnalysisConfiguration(analysisID, project, ac);
         project.getAnalyses().add(analysis);
 
         if (analysis != null)
