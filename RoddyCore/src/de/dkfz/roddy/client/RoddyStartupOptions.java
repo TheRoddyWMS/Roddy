@@ -27,6 +27,7 @@ public enum RoddyStartupOptions {
     autosubmit,
     run(true),
     dontrun(true),
+    cvalues(true),
     
     useRoddyVersion(true),
     usePluginVersion(true),

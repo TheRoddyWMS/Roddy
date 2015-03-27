@@ -13,7 +13,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+import java.util.Map
+
+import static de.dkfz.roddy.config.ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY
+import static de.dkfz.roddy.config.ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY;
 
 /**
  * The project factory converts a configuration to a project/analysis. It stores a reference to already loaded projects and reuses them if possible.
@@ -120,20 +123,20 @@ public class ProjectFactory {
     /**
      * Load an analysis with a set project/analysis identifier.
      *
-     * @param id Something like [project.subproject.subproject]@[analysisID] where analysisID will be used to find the correct analysis.
+     * @param configurationIdentifier Something like [project.subproject.subproject]@[analysisID] where analysisID will be used to find the correct analysis.
      * @return An analysis object containing linking a project and an analysis configuration.
      */
-    public Analysis loadAnalysis(String id) {
+    public Analysis loadAnalysis(String configurationIdentifier) {
 
         LibrariesFactory.initializeFactory();
 
-        String[] split = id.split(StringConstants.SPLIT_AT);
-        String projectID = split[0];
-        if (split.length == 1) {
-            RoddyCLIClient.logger.postAlwaysInfo("There was no analysis specified for configuration " + split[0] + "\n\t Please specify the configuration string as [configuration_id]@[analysis_id].");
+        String[] splitProjectAnalysis = configurationIdentifier.split(StringConstants.SPLIT_AT);
+        String projectID = splitProjectAnalysis[0];
+        if (splitProjectAnalysis.length == 1) {
+            RoddyCLIClient.logger.postAlwaysInfo("There was no analysis specified for configuration " + splitProjectAnalysis[0] + "\n\t Please specify the configuration string as [configuration_id]@[analysis_id].");
             return null;
         }
-        String analysisID = split[1];
+        String analysisID = splitProjectAnalysis[1];
         ConfigurationFactory fac = ConfigurationFactory.getInstance();
         InformationalConfigurationContent iccProject = fac.getAllAvailableConfigurations()[projectID];
         String fullAnalysisID = iccProject.getListOfAnalyses().find { String aID -> aID.split("[:][:]")[0] == analysisID; }
@@ -154,33 +157,52 @@ public class ProjectFactory {
 
         // If no plugin is set, load all libraries with the settings from the ini file
         String[] iniPluginVersion = Roddy.getPluginVersionEntries();
-        if(!pluginsAreLoaded && iniPluginVersion) {
+        if (!pluginsAreLoaded && iniPluginVersion) {
             librariesFactory.resolveAndLoadPlugins(iniPluginVersion)
             pluginsAreLoaded = true;
         }
 
         // If this is also not set, load all libraries with the current version
-        if(!pluginsAreLoaded)
+        if (!pluginsAreLoaded)
             librariesFactory.loadLibraries(librariesFactory.getAvailablePluginVersion());
 
         fac.loadAvailableAnalysisConfigurationFiles();
 
         ProjectConfiguration projectConfiguration = fac.getProjectConfiguration(projectID);
         Project project = loadConfiguration(projectConfiguration);
+
         AnalysisConfiguration ac = projectConfiguration.getAnalysis(analysisID);
         Analysis analysis = null;
         if (ac != null)
             analysis = loadAnalysisConfiguration(analysisID, project, ac);
         project.getAnalyses().add(analysis);
 
-        if (analysis != null)
-            return analysis;
 
         if (projectConfiguration == null)
             throw new RuntimeException("Could not load project ${projectID}!");
 
+        // Add custom command line values to the project configuration.
+        List<String> externalConfigurationValues = Roddy.getCommandLineCall().getSetConfigurationValues();
+
+        def configurationValues = project.getConfiguration().getConfigurationValues()
+        for (eVal in externalConfigurationValues) {
+            String[] splitIDValue = eVal.split(StringConstants.SPLIT_COLON);
+            String cvalueId = splitIDValue[0];
+            String value = splitIDValue.size() >= 2 ? splitIDValue[1] : "";
+            String type = splitIDValue.size() >= 3 ? splitIDValue[2] : "string";
+            configurationValues.add(new ConfigurationValue(cvalueId, value, type));
+        }
+
+        if(Roddy.useCustomIODirectories()) {
+            configurationValues.add(new ConfigurationValue(CFG_INPUT_BASE_DIRECTORY, Roddy.getCustomBaseInputDirectory(), "path"));
+            configurationValues.add(new ConfigurationValue(CFG_OUTPUT_BASE_DIRECTORY, Roddy.getCustomBaseOutputDirectory(), "path"));
+        }
+
+        if (analysis != null)
+            return analysis;
+
         StringBuilder sb = new StringBuilder();
-        sb << "Could not load analysis ${id}, try one of those: " << Constants.ENV_LINESEPARATOR;
+        sb << "Could not load analysis ${configurationIdentifier}, try one of those: " << Constants.ENV_LINESEPARATOR;
         for (String aID : projectConfiguration.listOfAnalysisIDs) {
             sb << "  " << projectID << "@" << aID << Constants.ENV_LINESEPARATOR;
         }

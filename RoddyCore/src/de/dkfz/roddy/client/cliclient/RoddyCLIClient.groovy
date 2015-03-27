@@ -83,7 +83,7 @@ public class RoddyCLIClient {
             List<String> parameters = args.findAll { String arg -> !arg.startsWith("--") } as ArrayList<String>;
             Collection<String> options = args.findAll { String arg -> arg.startsWith("--") };
 
-            RoddyStartupModes startupMode = help;
+            // Try to extract the startup mode. If it not know, display the help message.
             try {
                 startupMode = Enum.valueOf(RoddyStartupModes.class, parameters[0]);
             } catch (Exception ex) {
@@ -98,6 +98,9 @@ public class RoddyCLIClient {
                 String[] split = optArg.split(StringConstants.SPLIT_EQUALS);
                 try {
                     RoddyStartupOptions option = split[0][2..-1] as RoddyStartupOptions;
+                    //TODO This needs to be reworked because:
+                    //i.e. --cvalues=test:abc,test2:(e,e,f),test3("A string, with a comma") will seriously make problems!
+                    //Leave it for now, but come back to it if it is necessary.
                     List<String> values = option.acceptsParameters ? split[1].split(StringConstants.SPLIT_COMMA)?.toList() : null;
                     parsedOptions[option] = values;
                     if (option.acceptsParameters)
@@ -110,7 +113,7 @@ public class RoddyCLIClient {
                 }
             }
 
-            this.startupMode = startupMode;
+            // Store all parameters and remove the startup mode.
             if (parameters.size() > 1)
                 this.parameters += parameters[1..-1];
             this.optionsMap.putAll(parsedOptions);
@@ -142,6 +145,15 @@ public class RoddyCLIClient {
 
         public List<String> getArguments() {
             return arguments;
+        }
+
+        /**
+         * Returns all set configuration values as a list in the format:
+         * [ a:a string, b:another string, c:123, ... ]
+         * @return
+         */
+        public List<String> getSetConfigurationValues() {
+            return optionsMap.get(RoddyStartupOptions.cvalues, []);
         }
     }
 

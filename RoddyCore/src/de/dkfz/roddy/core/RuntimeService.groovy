@@ -576,12 +576,6 @@ public abstract class RuntimeService extends CacheProvider {
     }
 
     public File getInputFolderForAnalysis(Analysis analysis) {
-        if (Roddy.useCustomIODirectories()) {
-            analysis.getConfiguration().getConfigurationValues().put(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, Roddy.getCustomBaseInputDirectory(), "path");
-            analysis.getProject().getConfiguration().getConfigurationValues().put(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, Roddy.getCustomBaseInputDirectory(), "path");
-//            getConfiguration().getConfigurationValues().put(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY);
-//            return Roddy.getCustomBaseInputDirectory();
-        }
         return analysis.getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY).toFile(analysis);
     }
 
@@ -589,12 +583,7 @@ public abstract class RuntimeService extends CacheProvider {
         return project.getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY).toFile(project);
     }
 
-    //TODO Should this be CFG_OUTPUT_ANALYSIS_BASE_DIR???
     public File getOutputFolderForAnalysis(Analysis analysis) {
-        if (Roddy.useCustomIODirectories()) {
-            analysis.getConfiguration().getConfigurationValues().put(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, Roddy.getCustomBaseOutputDirectory(), "path");
-            analysis.getProject().getConfiguration().getConfigurationValues().put(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, Roddy.getCustomBaseOutputDirectory(), "path");
-        }
         return analysis.getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY).toFile(analysis);
     }
 

@@ -419,8 +419,16 @@ public class Roddy {
 
     private static void writePropertiesFile() {
         File file = getPropertiesFilePath();
-        File tempFile = new File(file.getAbsolutePath() + "_temp");
+        File tempFile = null;
         try {
+            tempFile = File.createTempFile("roddy_config", ".ini");
+            tempFile.delete();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        tempFile.deleteOnExit();
+        try {
+
             Files.copy(Paths.get(file.getAbsolutePath()), Paths.get(tempFile.getAbsolutePath()));
             if (!file.exists()) file.createNewFile();
             BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(file));

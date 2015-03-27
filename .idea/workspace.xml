@@ -37,11 +37,54 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="RoddyCLIClient.groovy" pinned="false" current-in-tab="true">
+      <file leaf-file-name="ExecutionContext.groovy" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/ExecutionContext.groovy">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="487" column="31" selection-start-line="487" selection-start-column="31" selection-end-line="487" selection-end-column="31" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="Roddy.java" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/Roddy.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.3326886">
+              <caret line="458" column="0" selection-start-line="458" selection-start-column="0" selection-end-line="458" selection-end-column="0" />
+              <folding>
+                <element signature="e#4720#4721#0" expanded="true" />
+                <element signature="e#4761#4762#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="RuntimeService.groovy" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/RuntimeService.groovy">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="578" column="0" selection-start-line="578" selection-start-column="0" selection-end-line="578" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="RoddyCLIClient.groovy" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/client/cliclient/RoddyCLIClient.groovy">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="4.016529">
-              <caret line="273" column="56" selection-start-line="273" selection-start-column="56" selection-end-line="273" selection-end-column="56" />
+            <state vertical-scroll-proportion="0.0">
+              <caret line="155" column="0" selection-start-line="155" selection-start-column="0" selection-end-line="155" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="RoddyStartupOptions.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/client/RoddyStartupOptions.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="22" column="12" selection-start-line="22" selection-start-column="4" selection-end-line="22" selection-end-column="12" />
               <folding />
             </state>
           </provider>
@@ -51,21 +94,53 @@
         <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/ProjectFactory.groovy">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="125" column="11" selection-start-line="125" selection-start-column="11" selection-end-line="125" selection-end-column="11" />
+              <caret line="200" column="0" selection-start-line="200" selection-start-column="0" selection-end-line="200" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="applicationProperties.ini" pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/.roddy/applicationProperties.ini">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="16" column="33" selection-start-line="16" selection-start-column="33" selection-end-line="16" selection-end-column="33" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="RecursiveOverridableMapContainer.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/config/RecursiveOverridableMapContainer.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="106" column="16" selection-start-line="106" selection-start-column="16" selection-end-line="106" selection-end-column="16" />
               <folding>
-                <element signature="e#28#58#0" expanded="true" />
+                <element signature="e#2854#2855#0" expanded="true" />
+                <element signature="e#2911#2912#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="LibrariesFactory.groovy" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/plugins/LibrariesFactory.groovy">
+      <file leaf-file-name="FileSystemInfoProvider.groovy" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/execution/io/fs/FileSystemInfoProvider.groovy">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="36" column="69" selection-start-line="36" selection-start-column="69" selection-end-line="36" selection-end-column="69" />
+              <caret line="613" column="0" selection-start-line="613" selection-start-column="0" selection-end-line="613" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="Project.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/Project.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="60" column="25" selection-start-line="60" selection-start-column="25" selection-end-line="60" selection-end-column="25" />
               <folding>
-                <element signature="e#31#57#0" expanded="true" />
+                <element signature="e#2247#2248#0" expanded="true" />
+                <element signature="e#2283#2284#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -86,8 +161,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/BufferUnit.java" />
-        <option value="$PROJECT_DIR$/dist/plugins/DefaultPlugin/resources/configurationFiles/analysisTest.xml" />
         <option value="$PROJECT_DIR$/dist/plugins/DefaultPlugin/resources/configurationFiles/analysisTestNative.xml" />
         <option value="$PROJECT_DIR$/dist/plugins/DefaultPlugin/resources/analysisTools/roddyTests/NativeTestWorkflow.sh" />
         <option value="$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/execution/jobs/cluster/pbs/PBSCommand.groovy" />
@@ -126,17 +199,19 @@
         <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/Analysis.java" />
         <option value="$PROJECT_DIR$/helperScripts/compile.sh" />
-        <option value="$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/Roddy.java" />
         <option value="$PROJECT_DIR$/dist/resources/analysisTools/roddyTools/wrapInScript.sh" />
         <option value="$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/execution/jobs/JobState.java" />
-        <option value="$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/ExecutionContext.groovy" />
-        <option value="$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/RuntimeService.groovy" />
         <option value="$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/execution/jobs/cluster/pbs/PBSCommandFactory.groovy" />
         <option value="$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/execution/io/fs/FileSystemInfoProvider.groovy" />
         <option value="$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/execution/io/SSHExecutionService.groovy" />
         <option value="$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/plugins/LibrariesFactory.groovy" />
-        <option value="$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/ProjectFactory.groovy" />
+        <option value="$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/ExecutionContextLevel.java" />
+        <option value="$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/ExecutionContext.groovy" />
+        <option value="$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/client/RoddyStartupOptions.java" />
         <option value="$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/client/cliclient/RoddyCLIClient.groovy" />
+        <option value="$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/RuntimeService.groovy" />
+        <option value="$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/ProjectFactory.groovy" />
+        <option value="$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/Roddy.java" />
       </list>
     </option>
   </component>
@@ -144,7 +219,7 @@
     <order />
   </component>
   <component name="ProjectFrameBounds">
-    <option name="width" value="1912" />
+    <option name="width" value="1900" />
     <option name="height" value="1045" />
   </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
@@ -358,6 +433,7 @@
       <sortByType />
     </navigator>
     <panes>
+      <pane id="Scratches" />
       <pane id="PackagesPane">
         <subPane>
           <PATH>
@@ -478,11 +554,7 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="execution" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="io" />
+              <option name="myItemId" value="core" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -509,36 +581,6 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="client" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Roddy" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="RoddyCore" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="RoddyCore" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="roddy" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="client" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="cliclient" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -580,50 +622,6 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="dist" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="resources" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Roddy" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="RoddyCore" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="dist" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="resources" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="analysisTools" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="roddyTools" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Roddy" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="RoddyCore" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
               <option name="myItemId" value=".roddy" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
@@ -640,7 +638,6 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -650,7 +647,7 @@
     <property name="MemberChooser.sorted" value="false" />
     <property name="MemberChooser.showClasses" value="true" />
     <property name="MemberChooser.copyJavadoc" value="false" />
-    <property name="project.structure.last.edited" value="Libraries" />
+    <property name="project.structure.last.edited" value="Modules" />
     <property name="project.structure.proportion" value="0.15" />
     <property name="project.structure.side.proportion" value="0.2" />
     <property name="FullScreen" value="false" />
@@ -1161,19 +1158,6 @@
       <option name="USE_KEYWORD" value="false" />
       <method />
     </configuration>
-    <configuration default="false" name="Unnamed" type="BashConfigurationType" factoryName="Bash">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="INTERPRETER_PATH" value="/bin/bash" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/roddy.sh" />
-      <option name="PARAMETERS" value="createworkflow COWorkflowsf TestWorkflow" />
-      <module name="COWorkflows" />
-      <envs />
-      <RunnerSettings RunnerId="Run" />
-      <ConfigurationWrapper RunnerId="Run" />
-      <method />
-    </configuration>
     <configuration default="false" name="ui" type="Application" factoryName="Application">
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
       <option name="MAIN_CLASS_NAME" value="de.dkfz.roddy.Roddy" />
@@ -1373,7 +1357,7 @@
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
       <option name="MAIN_CLASS_NAME" value="de.dkfz.roddy.Roddy" />
       <option name="VM_PARAMETERS" value="" />
-      <option name="PROGRAM_PARAMETERS" value="rerun coWorkflowsTestProject@snvCalling stds --usePluginVersion=COWorkflows:1.0.114" />
+      <option name="PROGRAM_PARAMETERS" value="rerun coWorkflowsTestProject@snvCalling stds --usePluginVersion=COWorkflows:1.0.114 --cvalues=outputBaseDirectory:/tmp/roddyTest:path" />
       <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
       <option name="ALTERNATIVE_JRE_PATH" value="" />
@@ -1954,6 +1938,19 @@
       <ConfigurationWrapper RunnerId="Run" />
       <method />
     </configuration>
+    <configuration default="false" name="Unnamed" type="BashConfigurationType" factoryName="Bash">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="INTERPRETER_PATH" value="/bin/bash" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/roddy.sh" />
+      <option name="PARAMETERS" value="createworkflow COWorkflowsf TestWorkflow" />
+      <module name="COWorkflows" />
+      <envs />
+      <RunnerSettings RunnerId="Run" />
+      <ConfigurationWrapper RunnerId="Run" />
+      <method />
+    </configuration>
     <configuration default="false" name="findpluginlibs script" type="GroovyScriptRunConfiguration" factoryName="Groovy">
       <module name="RoddyCore" />
       <setting name="path" value="file://$PROJECT_DIR$/helperScripts/findPluginLibraries.groovy" />
@@ -1970,43 +1967,43 @@
       <method />
     </configuration>
     <list size="43">
-      <item index="0" class="java.lang.String" itemvalue="Bash.Unnamed" />
-      <item index="1" class="java.lang.String" itemvalue="Application.ui" />
-      <item index="2" class="java.lang.String" itemvalue="Application.listdatasets coWorkflowsTestProject@snvCalling A100" />
-      <item index="3" class="java.lang.String" itemvalue="Application.testrun coWorkflowsTestProject@snvCalling A100" />
-      <item index="4" class="java.lang.String" itemvalue="Application.run coWorkflowsTestProject@snvCalling A100" />
-      <item index="5" class="java.lang.String" itemvalue="Application.checkworkflowstatus dkfzPancancerBaseAtDKFZ@copyNumberEstimation PC58s-000001,PC58s-000002" />
-      <item index="6" class="java.lang.String" itemvalue="Application.validateconfig coWorkflowsTestProject@snvCalling stds" />
-      <item index="7" class="java.lang.String" itemvalue="Application.printruntimeconfig coWorkflowsTestProject@snvCalling stds" />
-      <item index="8" class="java.lang.String" itemvalue="Application.plugininfo coWorkflowsTestProject@snvCalling" />
-      <item index="9" class="java.lang.String" itemvalue="Application.rerun coWorkflowsTestProject@snvCalling A100 " />
-      <item index="10" class="java.lang.String" itemvalue="Application.testrun coWorkflowsTestProject@snvCalling stds" />
-      <item index="11" class="java.lang.String" itemvalue="Application.run coWorkflowsTestProject@nativeTelomereExtraction stds" />
-      <item index="12" class="java.lang.String" itemvalue="Application.testrun ICGCeval.combinedAlignAndSampe_pancan.SJ_genomes@genome *009 --useconfig=/data/michael/.roddy/applicationPropertiesFunctionalTest.ini" />
-      <item index="13" class="java.lang.String" itemvalue="Application.listworkflows" />
-      <item index="14" class="java.lang.String" itemvalue="Application.listworkflows long" />
-      <item index="15" class="java.lang.String" itemvalue="Application.listdatasets" />
-      <item index="16" class="java.lang.String" itemvalue="Application.run SJ_genomes" />
-      <item index="17" class="java.lang.String" itemvalue="Application.showconfigpaths" />
-      <item index="18" class="java.lang.String" itemvalue="Application.testrun SJ_genomes (2)" />
-      <item index="19" class="java.lang.String" itemvalue="Application.testrun SJ_genomes (1)" />
-      <item index="20" class="java.lang.String" itemvalue="Application.testrun SJ_genomes (3)" />
-      <item index="21" class="java.lang.String" itemvalue="Application.run coWorkflowsTestProject@indelCalling *027* --waitforjobs" />
-      <item index="22" class="java.lang.String" itemvalue="Application.testrun coWorkflowsTestProject@postMergeQC *027*" />
-      <item index="23" class="java.lang.String" itemvalue="Application.testrun coWorkflowsTestProject@postMergeQC stds" />
-      <item index="24" class="java.lang.String" itemvalue="Application.testrun ICGCeval.combinedAlignAndSampe_pancan.toB080UserTest@genome *C_MB1" />
-      <item index="25" class="java.lang.String" itemvalue="Application.testrun b080-prostate.cne@copyNumberEstimation ICGC_PCA055_T01 " />
-      <item index="26" class="java.lang.String" itemvalue="Application.testrun ICGCeval.combinedAlignAndSampe_conveyTest.nonconvey@genome *MB107,*MB280" />
-      <item index="27" class="java.lang.String" itemvalue="Application.testrun testProject@test A100" />
-      <item index="28" class="java.lang.String" itemvalue="Application.rerun testProject@test A100 --useconfig=applicationPropertiesAllLocal.ini" />
-      <item index="29" class="java.lang.String" itemvalue="Application.testrun hipo.hipo_021@exome H021-TBUL" />
-      <item index="30" class="java.lang.String" itemvalue="Application.testrun hipo.hipo_006@exome H006-1" />
-      <item index="31" class="java.lang.String" itemvalue="Application.run coWorkflowsTestProject@telomereExtraction stds" />
-      <item index="32" class="java.lang.String" itemvalue="Application.run coWorkflowsTestProject.lclPanCanTest@snvCalling stds" />
-      <item index="33" class="java.lang.String" itemvalue="Application.cleanup coWorkflowsTestProject.lclPanCanTest@snvCalling stds" />
-      <item index="34" class="java.lang.String" itemvalue="Application.run coWorkflowsTestProject.lclPanCanTest@indelCalling stds" />
-      <item index="35" class="java.lang.String" itemvalue="Application.printruntimeconfig hipo.hipo_009@exome" />
-      <item index="36" class="java.lang.String" itemvalue="Application.testrun Mouse@genome *EE" />
+      <item index="0" class="java.lang.String" itemvalue="Application.ui" />
+      <item index="1" class="java.lang.String" itemvalue="Application.listdatasets coWorkflowsTestProject@snvCalling A100" />
+      <item index="2" class="java.lang.String" itemvalue="Application.testrun coWorkflowsTestProject@snvCalling A100" />
+      <item index="3" class="java.lang.String" itemvalue="Application.run coWorkflowsTestProject@snvCalling A100" />
+      <item index="4" class="java.lang.String" itemvalue="Application.checkworkflowstatus dkfzPancancerBaseAtDKFZ@copyNumberEstimation PC58s-000001,PC58s-000002" />
+      <item index="5" class="java.lang.String" itemvalue="Application.validateconfig coWorkflowsTestProject@snvCalling stds" />
+      <item index="6" class="java.lang.String" itemvalue="Application.printruntimeconfig coWorkflowsTestProject@snvCalling stds" />
+      <item index="7" class="java.lang.String" itemvalue="Application.plugininfo coWorkflowsTestProject@snvCalling" />
+      <item index="8" class="java.lang.String" itemvalue="Application.rerun coWorkflowsTestProject@snvCalling A100 " />
+      <item index="9" class="java.lang.String" itemvalue="Application.testrun coWorkflowsTestProject@snvCalling stds" />
+      <item index="10" class="java.lang.String" itemvalue="Application.run coWorkflowsTestProject@nativeTelomereExtraction stds" />
+      <item index="11" class="java.lang.String" itemvalue="Application.testrun ICGCeval.combinedAlignAndSampe_pancan.SJ_genomes@genome *009 --useconfig=/data/michael/.roddy/applicationPropertiesFunctionalTest.ini" />
+      <item index="12" class="java.lang.String" itemvalue="Application.listworkflows" />
+      <item index="13" class="java.lang.String" itemvalue="Application.listworkflows long" />
+      <item index="14" class="java.lang.String" itemvalue="Application.listdatasets" />
+      <item index="15" class="java.lang.String" itemvalue="Application.run SJ_genomes" />
+      <item index="16" class="java.lang.String" itemvalue="Application.showconfigpaths" />
+      <item index="17" class="java.lang.String" itemvalue="Application.testrun SJ_genomes (2)" />
+      <item index="18" class="java.lang.String" itemvalue="Application.testrun SJ_genomes (1)" />
+      <item index="19" class="java.lang.String" itemvalue="Application.testrun SJ_genomes (3)" />
+      <item index="20" class="java.lang.String" itemvalue="Application.run coWorkflowsTestProject@indelCalling *027* --waitforjobs" />
+      <item index="21" class="java.lang.String" itemvalue="Application.testrun coWorkflowsTestProject@postMergeQC *027*" />
+      <item index="22" class="java.lang.String" itemvalue="Application.testrun coWorkflowsTestProject@postMergeQC stds" />
+      <item index="23" class="java.lang.String" itemvalue="Application.testrun ICGCeval.combinedAlignAndSampe_pancan.toB080UserTest@genome *C_MB1" />
+      <item index="24" class="java.lang.String" itemvalue="Application.testrun b080-prostate.cne@copyNumberEstimation ICGC_PCA055_T01 " />
+      <item index="25" class="java.lang.String" itemvalue="Application.testrun ICGCeval.combinedAlignAndSampe_conveyTest.nonconvey@genome *MB107,*MB280" />
+      <item index="26" class="java.lang.String" itemvalue="Application.testrun testProject@test A100" />
+      <item index="27" class="java.lang.String" itemvalue="Application.rerun testProject@test A100 --useconfig=applicationPropertiesAllLocal.ini" />
+      <item index="28" class="java.lang.String" itemvalue="Application.testrun hipo.hipo_021@exome H021-TBUL" />
+      <item index="29" class="java.lang.String" itemvalue="Application.testrun hipo.hipo_006@exome H006-1" />
+      <item index="30" class="java.lang.String" itemvalue="Application.run coWorkflowsTestProject@telomereExtraction stds" />
+      <item index="31" class="java.lang.String" itemvalue="Application.run coWorkflowsTestProject.lclPanCanTest@snvCalling stds" />
+      <item index="32" class="java.lang.String" itemvalue="Application.cleanup coWorkflowsTestProject.lclPanCanTest@snvCalling stds" />
+      <item index="33" class="java.lang.String" itemvalue="Application.run coWorkflowsTestProject.lclPanCanTest@indelCalling stds" />
+      <item index="34" class="java.lang.String" itemvalue="Application.printruntimeconfig hipo.hipo_009@exome" />
+      <item index="35" class="java.lang.String" itemvalue="Application.testrun Mouse@genome *EE" />
+      <item index="36" class="java.lang.String" itemvalue="Bash.Unnamed" />
       <item index="37" class="java.lang.String" itemvalue="Groovy.findpluginlibs script" />
       <item index="38" class="java.lang.String" itemvalue="JUnit.All in RoddyCore" />
       <item index="39" class="java.lang.String" itemvalue="JUnit.RoddyCLIClientTest.testRerun" />
@@ -2052,28 +2049,37 @@
     <option name="localTasksCounter" value="2" />
     <servers />
   </component>
+  <component name="TodoView">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+  </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="0" width="1912" height="1045" extended-state="4" />
-    <editor active="true" />
+    <frame x="0" y="0" width="1900" height="1045" extended-state="4" />
+    <editor active="false" />
     <layout>
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2857143" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32900432" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.2857143" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
       <window_info id="Palette&#9;" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="true" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24675325" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.44683138" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.44588745" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.1567086" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.21413502" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.29545453" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24791667" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="4" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.41125542" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.41125542" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32871974" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -2162,7 +2168,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/client/cliclient/RoddyCLIClient.groovy</url>
-          <line>246</line>
+          <line>258</line>
           <properties />
           <option name="timeStamp" value="316" />
         </line-breakpoint>
@@ -2174,7 +2180,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/client/cliclient/RoddyCLIClient.groovy</url>
-          <line>583</line>
+          <line>595</line>
           <properties />
           <option name="timeStamp" value="364" />
         </line-breakpoint>
@@ -2234,67 +2240,33 @@
           <option name="timeStamp" value="512" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/execution/io/fs/FileSystemInfoProvider.groovy</url>
-          <line>613</line>
-          <properties />
-          <option name="timeStamp" value="524" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/execution/io/SSHExecutionService.groovy</url>
           <line>568</line>
           <properties />
           <option name="timeStamp" value="525" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/Roddy.java</url>
+          <line>450</line>
+          <properties />
+          <option name="timeStamp" value="541" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/Roddy.java</url>
+          <line>431</line>
+          <properties />
+          <option name="timeStamp" value="542" />
+        </line-breakpoint>
       </breakpoints>
-      <option name="time" value="526" />
+      <option name="time" value="543" />
     </breakpoint-manager>
-    <watches-manager>
-      <configuration name="Application">
-        <watch expression="context.getExecutionDirectory()" language="JAVA" custom="" />
-      </configuration>
-    </watches-manager>
+    <watches-manager />
   </component>
   <component name="antWorkspaceConfiguration">
     <option name="IS_AUTOSCROLL_TO_SOURCE" value="false" />
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/config/Configuration.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="166" column="0" selection-start-line="166" selection-start-column="0" selection-end-line="166" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/dist/plugins/PluginBase/README.md">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/dist/plugins/DefaultPlugin/README.md">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/dist/plugins/DefaultPlugin/buildversion.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/dist/plugins/PluginBase/src/de/dkfz/roddy/plugins/BasePlugin.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="6" column="0" selection-start-line="6" selection-start-column="0" selection-end-line="6" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/dist/plugins/Template/src/CopyThisClass.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -2306,26 +2278,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="413" column="62" selection-start-line="413" selection-start-column="62" selection-end-line="413" selection-end-column="62" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/Project.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="85" column="23" selection-start-line="85" selection-start-column="23" selection-end-line="85" selection-end-column="23" />
-          <folding>
-            <element signature="imports" expanded="false" />
-            <element signature="e#2247#2248#0" expanded="false" />
-            <element signature="e#2283#2284#0" expanded="false" />
-            <element signature="e#2989#2990#0" expanded="false" />
-            <element signature="e#3035#3036#0" expanded="false" />
-            <element signature="e#3514#3515#0" expanded="false" />
-            <element signature="e#3578#3579#0" expanded="false" />
-            <element signature="e#3995#3996#0" expanded="false" />
-            <element signature="e#4032#4033#0" expanded="false" />
-            <element signature="e#4080#4081#0" expanded="false" />
-            <element signature="e#4117#4118#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -2421,32 +2373,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="555" column="0" selection-start-line="555" selection-start-column="0" selection-end-line="555" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#95358#0" expanded="false" />
-            <element signature="imports" expanded="false" />
-            <element signature="e#8262#8263#0" expanded="false" />
-            <element signature="e#8297#8298#0" expanded="false" />
-            <element signature="e#21135#21136#0" expanded="false" />
-            <element signature="e#21162#21163#0" expanded="false" />
-            <element signature="e#21752#21753#0" expanded="false" />
-            <element signature="e#21794#21795#0" expanded="false" />
-            <element signature="e#64751#64752#0" expanded="false" />
-            <element signature="e#64801#64802#0" expanded="false" />
-            <element signature="e#68391#68392#0" expanded="false" />
-            <element signature="e#68441#68442#0" expanded="false" />
-            <element signature="e#72099#72100#0" expanded="false" />
-            <element signature="e#72153#72154#0" expanded="false" />
-            <element signature="e#75713#75714#0" expanded="false" />
-            <element signature="e#75750#75751#0" expanded="false" />
-            <element signature="e#80745#80746#0" expanded="false" />
-            <element signature="e#80782#80783#0" expanded="false" />
-            <element signature="e#89537#89538#0" expanded="false" />
-            <element signature="e#89586#89587#0" expanded="false" />
-            <element signature="e#91257#91258#0" expanded="false" />
-            <element signature="e#91297#91298#0" expanded="false" />
-            <element signature="e#91558#91559#0" expanded="false" />
-            <element signature="e#91590#91591#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -2454,16 +2380,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="133" column="0" selection-start-line="133" selection-start-column="0" selection-end-line="133" selection-end-column="0" />
-          <folding>
-            <element signature="n#!!doc" expanded="false" />
-            <element signature="imports" expanded="false" />
-            <element signature="e#1402#1403#0" expanded="false" />
-            <element signature="e#1431#1432#0" expanded="false" />
-            <element signature="e#1480#1481#0" expanded="false" />
-            <element signature="e#1507#1508#0" expanded="false" />
-            <element signature="e#4240#4241#0" expanded="false" />
-            <element signature="e#4299#4300#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -2471,24 +2387,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="205" column="0" selection-start-line="205" selection-start-column="0" selection-end-line="205" selection-end-column="0" />
-          <folding>
-            <element signature="n#!!doc" expanded="false" />
-            <element signature="imports" expanded="false" />
-            <element signature="e#3385#3386#0" expanded="false" />
-            <element signature="e#3411#3412#0" expanded="false" />
-            <element signature="e#3459#3460#0" expanded="false" />
-            <element signature="e#3498#3499#0" expanded="false" />
-            <element signature="e#3555#3556#0" expanded="false" />
-            <element signature="e#3628#3629#0" expanded="false" />
-            <element signature="e#3683#3684#0" expanded="false" />
-            <element signature="e#3716#3717#0" expanded="false" />
-            <element signature="e#3793#3794#0" expanded="false" />
-            <element signature="e#3866#3867#0" expanded="false" />
-            <element signature="e#7962#7963#0" expanded="false" />
-            <element signature="e#8004#8005#0" expanded="false" />
-            <element signature="e#8037#8038#0" expanded="false" />
-            <element signature="e#8069#8070#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -2496,25 +2394,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-14.28">
           <caret line="45" column="55" selection-start-line="45" selection-start-column="55" selection-end-line="45" selection-end-column="55" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/.roddy/applicationProperties.ini">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.3326886">
-          <caret line="16" column="33" selection-start-line="16" selection-start-column="33" selection-end-line="16" selection-end-column="33" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/execution/io/ExecutionService.groovy">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="609" column="34" selection-start-line="609" selection-start-column="34" selection-end-line="609" selection-end-column="34" />
-          <folding>
-            <element signature="e#32220#32553#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -2547,7 +2426,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="191" column="0" selection-start-line="191" selection-start-column="0" selection-end-line="191" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2555,7 +2433,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="67" column="0" selection-start-line="67" selection-start-column="0" selection-end-line="67" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2563,7 +2440,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="135" column="62" selection-start-line="135" selection-start-column="62" selection-end-line="135" selection-end-column="62" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2571,7 +2447,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="11" column="13" selection-start-line="11" selection-start-column="13" selection-end-line="11" selection-end-column="13" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2579,7 +2454,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="9" column="19" selection-start-line="9" selection-start-column="13" selection-end-line="9" selection-end-column="19" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2587,15 +2461,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="10" column="42" selection-start-line="10" selection-start-column="42" selection-end-line="10" selection-end-column="42" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/Roddy.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="547" column="66" selection-start-line="547" selection-start-column="66" selection-end-line="547" selection-end-column="66" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2603,7 +2468,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2611,7 +2475,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2619,7 +2482,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2627,7 +2489,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="16" column="0" selection-start-line="16" selection-start-column="0" selection-end-line="16" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2635,28 +2496,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.81042653">
           <caret line="79" column="5" selection-start-line="79" selection-start-column="5" selection-end-line="79" selection-end-column="5" />
-          <folding>
-            <element signature="e#1003#1004#0" expanded="false" />
-            <element signature="e#1148#1149#0" expanded="false" />
-            <element signature="e#1250#1251#0" expanded="false" />
-            <element signature="e#1297#1298#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/ExecutionContext.groovy">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="487" column="31" selection-start-line="487" selection-start-column="31" selection-end-line="487" selection-end-column="31" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/RuntimeService.groovy">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.13902053">
-          <caret line="171" column="42" selection-start-line="171" selection-start-column="42" selection-end-line="171" selection-end-column="42" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2665,7 +2504,7 @@
         <state vertical-scroll-proportion="0.0">
           <caret line="527" column="50" selection-start-line="527" selection-start-column="50" selection-end-line="527" selection-end-column="50" />
           <folding>
-            <element signature="e#51#81#0" expanded="true" />
+            <element signature="e#51#81#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -2682,7 +2521,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.11848341">
           <caret line="5" column="16" selection-start-line="5" selection-start-column="16" selection-end-line="5" selection-end-column="16" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2690,9 +2528,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.2843602">
           <caret line="12" column="1" selection-start-line="12" selection-start-column="1" selection-end-line="12" selection-end-column="1" />
-          <folding>
-            <element signature="e#40#61#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -2704,20 +2539,20 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/execution/io/fs/FileSystemInfoProvider.groovy">
+    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/plugins/LibrariesFactory.groovy">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.52606636">
-          <caret line="592" column="136" selection-start-line="592" selection-start-column="136" selection-end-line="592" selection-end-column="136" />
+        <state vertical-scroll-proportion="0.28593996">
+          <caret line="36" column="69" selection-start-line="36" selection-start-column="69" selection-end-line="36" selection-end-column="69" />
           <folding>
-            <element signature="e#39#69#0" expanded="true" />
+            <element signature="e#31#57#0" expanded="false" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/execution/io/SSHExecutionService.groovy">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.52606636">
-          <caret line="756" column="0" selection-start-line="756" selection-start-column="0" selection-end-line="756" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="34" column="2" selection-start-line="34" selection-start-column="2" selection-end-line="34" selection-end-column="2" />
           <folding>
             <element signature="n#!!doc" expanded="true" />
             <element signature="e#133#163#0" expanded="true" />
@@ -2725,31 +2560,129 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/plugins/LibrariesFactory.groovy">
+    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/execution/io/ExecutionService.groovy">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="36" column="69" selection-start-line="36" selection-start-column="69" selection-end-line="36" selection-end-column="69" />
+          <caret line="240" column="43" selection-start-line="240" selection-start-column="43" selection-end-line="240" selection-end-column="43" />
           <folding>
-            <element signature="e#31#57#0" expanded="true" />
+            <element signature="e#32220#32553#0" expanded="false" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/ExecutionContextLevel.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="2" column="3" selection-start-line="2" selection-start-column="3" selection-end-line="2" selection-end-column="3" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/execution/io/ExecutionHelper.groovy">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="7" column="10" selection-start-line="7" selection-start-column="10" selection-end-line="7" selection-end-column="10" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/config/Configuration.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="133" column="66" selection-start-line="133" selection-start-column="66" selection-end-line="133" selection-end-column="66" />
+          <folding>
+            <element signature="e#5154#5155#0" expanded="true" />
+            <element signature="e#5196#5197#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/Project.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="60" column="25" selection-start-line="60" selection-start-column="25" selection-end-line="60" selection-end-column="25" />
+          <folding>
+            <element signature="e#2247#2248#0" expanded="true" />
+            <element signature="e#2283#2284#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/execution/io/fs/FileSystemInfoProvider.groovy">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="613" column="0" selection-start-line="613" selection-start-column="0" selection-end-line="613" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/ExecutionContext.groovy">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="487" column="31" selection-start-line="487" selection-start-column="31" selection-end-line="487" selection-end-column="31" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/client/cliclient/RoddyCLIClient.groovy">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="155" column="0" selection-start-line="155" selection-start-column="0" selection-end-line="155" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/RuntimeService.groovy">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="578" column="0" selection-start-line="578" selection-start-column="0" selection-end-line="578" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/client/RoddyStartupOptions.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="22" column="12" selection-start-line="22" selection-start-column="4" selection-end-line="22" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/config/RecursiveOverridableMapContainer.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="106" column="16" selection-start-line="106" selection-start-column="16" selection-end-line="106" selection-end-column="16" />
+          <folding>
+            <element signature="e#2854#2855#0" expanded="true" />
+            <element signature="e#2911#2912#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.roddy/applicationProperties.ini">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="16" column="33" selection-start-line="16" selection-start-column="33" selection-end-line="16" selection-end-column="33" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/core/ProjectFactory.groovy">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="125" column="11" selection-start-line="125" selection-start-column="11" selection-end-line="125" selection-end-column="11" />
-          <folding>
-            <element signature="e#28#58#0" expanded="true" />
-          </folding>
+          <caret line="200" column="0" selection-start-line="200" selection-start-column="0" selection-end-line="200" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/client/cliclient/RoddyCLIClient.groovy">
+    <entry file="file://$PROJECT_DIR$/RoddyCore/src/de/dkfz/roddy/Roddy.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="4.016529">
-          <caret line="273" column="56" selection-start-line="273" selection-start-column="56" selection-end-line="273" selection-end-column="56" />
-          <folding />
+        <state vertical-scroll-proportion="0.3326886">
+          <caret line="458" column="0" selection-start-line="458" selection-start-column="0" selection-end-line="458" selection-end-column="0" />
+          <folding>
+            <element signature="e#4720#4721#0" expanded="true" />
+            <element signature="e#4761#4762#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
