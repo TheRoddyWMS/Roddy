@@ -177,7 +177,6 @@ public class ProjectFactory {
             analysis = loadAnalysisConfiguration(analysisID, project, ac);
         project.getAnalyses().add(analysis);
 
-
         if (projectConfiguration == null)
             throw new RuntimeException("Could not load project ${projectID}!");
 
@@ -187,8 +186,9 @@ public class ProjectFactory {
         def configurationValues = project.getConfiguration().getConfigurationValues()
         for (eVal in externalConfigurationValues) {
             String[] splitIDValue = eVal.split(StringConstants.SPLIT_COLON);
-            String cvalueId = splitIDValue[0];
+            //TODO Put in a better error checking when converting the split string to a configuration value.
             String value = splitIDValue.size() >= 2 ? splitIDValue[1] : "";
+            String cvalueId = splitIDValue[0];
             String type = splitIDValue.size() >= 3 ? splitIDValue[2] : "string";
             configurationValues.add(new ConfigurationValue(cvalueId, value, type));
         }

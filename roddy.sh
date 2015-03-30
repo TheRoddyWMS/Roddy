@@ -23,12 +23,36 @@ if [[ ! -f ${JFX_LIBINFO_FILE} ]] || [[ ! -f `cat ${JFX_LIBINFO_FILE}` ]]; then
 	echo `find ${JAVA_HOME}/ -name "jfxrt.jar"` > ${JFX_LIBINFO_FILE}
 fi
 
+#TODO Resolve the PluginBase.jar This might be set in the ini file.
+pluginbaseLib=${RODDY_DIRECTORY}/dist/plugins/PluginBase/PluginBase.jar
 jfxlibInfo=`cat ${JFX_LIBINFO_FILE}`
 libraries=`ls -d1 dist/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
-libraries=$libraries:$jfxlibInfo:dist/plugins/PluginBase/PluginBase.jar
-#echo $libraries
+libraries=$libraries:$jfxlibInfo:$pluginbaseLib
 parm1=${1-}
-#exit 0
+
+#Resolve the configuration file
+source helperScripts/resolveAppConfig.sh
+
+overrideRoddyVersionParameter=""
+overridePluginParameters=""
+
+#Is the roddy binary or anything set via command line?
+for i in $*
+do
+    if [[ $i == --useRoddyVersion* ]]; then
+        overrideRoddyVersionParameter=${i:18:40}
+        RODDY_BINARY=dist/Roddy_${overrideRoddyVersionParameter}.jar
+        if [[ ! -f $RODDY_BINARY ]]; then
+            echo "${RODDY_BINARY} not found, the following files are available:"
+            for bin in `ls dist/Roddy*.jar`; do
+                echo "  ${bin}"
+            done
+            exit 1
+        fi
+    elif [[ $i == --usePluginVersion* ]]; then
+        overridePluginParameters=${i:19:140}
+    fi
+done
 
 if [[ "$parm1" == "compile" ]]; then
     bash helperScripts/compile.sh
@@ -46,11 +70,13 @@ elif [[ "$parm1" == "pack" ]]; then
     svn add ${filename} ${filename}.nfo
     exit 0
 elif [[ "$parm1" == "compileplugin" ]]; then
-    bash helperScripts/compileToJarFile.sh $2
+    echo "Using Roddy binary "`basename ${RODDY_BINARY}`
+    source helperScripts/compileToJarFile.sh
     exit 0
 elif [[ "$parm1" == "packplugin" || "$parm1" == "testpackplugin" ]]; then
     [[ "$parm1" == "testpackplugin" ]] && set -xuv
-    bash helperScripts/compileToJarFile.sh $2 increasebuildonly
+    set -xuv
+    source helperScripts/compileToJarFile.sh $2 increasebuildonly
 
     # Test pack does not put things to svn so it is safe to use. Test will not change the zip file but will increase the buildnumber.
     source ${RODDY_DIRECTORY}/helperScripts/resolveAppConfig.sh
@@ -108,29 +134,5 @@ elif [[ "$parm1" == "createworkflow" ]]; then
     source ${RODDY_DIRECTORY}/helperScripts/createNewWorkflow.sh ${customconfigfile} ${pluginID} ${3-}
     exit 0
 fi
-
-#Resolve the configuration file
-source helperScripts/resolveAppConfig.sh
-
-overrideRoddyVersionParameter=""
-overridePluginParameters=""
-
-#Is the roddy binary or anything set via command line?
-for i in $*
-do
-    if [[ $i == --useRoddyVersion* ]]; then
-        overrideRoddyVersionParameter=${i:18:40}
-        RODDY_BINARY=dist/Roddy_${overrideRoddyVersionParameter}.jar
-        if [[ ! -f $RODDY_BINARY ]]; then
-            echo "${RODDY_BINARY} not found, the following files are available:"
-            for bin in `ls dist/Roddy*.jar`; do
-                echo "  ${bin}"
-            done
-            exit 1
-        fi
-    elif [[ $i == --usePluginVersion* ]]; then
-        overridePluginParameters=${i:19:140}
-    fi
-done
 
 java -cp .:$libraries:./${RODDY_BINARY} de.dkfz.roddy.Roddy $*

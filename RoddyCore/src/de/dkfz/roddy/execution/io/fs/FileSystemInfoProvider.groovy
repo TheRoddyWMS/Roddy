@@ -132,6 +132,20 @@ public class FileSystemInfoProvider extends CacheProvider {
         return true;
     }
 
+    public boolean fileExists(File f) {
+        if (ExecutionService.getInstance().canQueryFileAttributes()) {
+            return ExecutionService.getInstance().fileExists(f);
+        }
+        return runFileTestCommand(commandSet.getFileExistsTestCommand(f));
+    }
+
+    public boolean directoryExists(File f) {
+        if (ExecutionService.getInstance().canQueryFileAttributes()) {
+            return ExecutionService.getInstance().directoryExists(f);
+        }
+        return runFileTestCommand(commandSet.getDirectoryExistsTestCommand(f));
+    }
+
     /**
      * Tests if a file is readable
      * @param f
@@ -145,15 +159,14 @@ public class FileSystemInfoProvider extends CacheProvider {
     }
 
     public boolean isWritable(BaseFile f) {
-        return true; //return isWritable(f.path);
+        return isWritable(f.path);
     }
 
     public boolean isWritable(File f) {
-//        if(Roddy.getInstance().canQueryFileAttributes()) {
-//            return Roddy.getInstance().isFileWritable();
-//        }
-//        return runFileTestCommand(commandSet.getWritabilityTestCommand(f));
-        return true;
+        if (ExecutionService.getInstance().canQueryFileAttributes()) {
+            return ExecutionService.getInstance().isFileWriteable(f);
+        }
+        return runFileTestCommand(commandSet.getWriteabilityTestCommand(f));
     }
 
     public boolean isExecutable(File f) {
@@ -629,5 +642,4 @@ public class FileSystemInfoProvider extends CacheProvider {
     public String getNewLineString() {
         return commandSet.getNewLineString();
     }
-
 }

@@ -25,8 +25,9 @@ then
     if [[ $_temp != 0 ]] && [[ $_temp != "useRoddyVersion=" ]]
     then
         useRoddyVersion=`cat ${customconfigfile} | grep useRoddyVersion | cut -d "=" -f 2`
-        RODDY_BINARY=`ls dist/Roddy*${useRoddyVersion}.jar`
-        echo "Using alternative Roddy version: $useRoddyVersion"
+        [[ $useRoddyVersion == "current" ]] && RODDY_BINARY="dist/Roddy.jar"
+        [[ $useRoddyVersion != "current" ]] && RODDY_BINARY=`ls dist/Roddy*${useRoddyVersion}.jar` && echo "Using alternative Roddy version: $useRoddyVersion"
+
     fi
 fi
 #set +xuv

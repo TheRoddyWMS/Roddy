@@ -15,6 +15,14 @@ public class ExecutionContextError {
 
     public static final ExecutionContextError EXECUTION_BASEPATH_NOTFOUND = new ExecutionContextError("A base path could not be found in the configuration or the id is invalid.", Level.SEVERE);
 
+    public static final ExecutionContextError EXECUTION_PATH_NOTFOUND = new ExecutionContextError("A path could not be found.", Level.SEVERE);
+
+    public static final ExecutionContextError EXECUTION_PATH_NOTFOUND_WARN = new ExecutionContextError("A path could not be found.", Level.WARNING);
+
+    public static final ExecutionContextError EXECUTION_PATH_INACCESSIBLE = new ExecutionContextError("A path could not be accessed.", Level.SEVERE);
+
+    public static final ExecutionContextError EXECUTION_PATH_NOTWRITABLE = new ExecutionContextError("A path is not writable.", Level.SEVERE);
+
     public static final ExecutionContextError EXECUTION_FILECREATION_PATH_NOTSET= new ExecutionContextError("A file object has no valid path.", Level.SEVERE);
 
     public static final ExecutionContextError EXECUTION_FILECREATION_NOCONSTRUCTOR= new ExecutionContextError("There is no constructor for automatic file name creation available.", Level.SEVERE);

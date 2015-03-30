@@ -345,16 +345,16 @@ public class Analysis {
      * @param context
      */
     protected void executeRun(ExecutionContext context) {
+        logger.postSometimesInfo("" + context.getExecutionContextLevel());
         boolean isExecutable;
         String datasetID = context.getDataSet().getId();
         try {
-            isExecutable = context.checkExecutability();
+            isExecutable = context.checkExecutability() && ExecutionService.getInstance().checkContextPermissions(context);
             if (!isExecutable) {
                 logger.postAlwaysInfo("The workflow does not seem to be executable for dataset " + datasetID);
             } else {
                 try {
                     ExecutionService.getInstance().writeFilesForExecution(context);
-                    ExecutionService.getInstance().checkContextPermissions(context);
                     context.execute();
                 } finally {
                     if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) { //Clean up

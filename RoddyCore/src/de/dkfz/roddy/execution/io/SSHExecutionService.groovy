@@ -270,7 +270,6 @@ class SSHExecutionService extends RemoteExecutionService {
             return true;
         }
 
-
         return connectionPool.initialize();
     }
 
@@ -284,8 +283,6 @@ class SSHExecutionService extends RemoteExecutionService {
     @Override
     public boolean testConnection() {
         return connectionPool.check();
-//        return (sshClient != null && sshClient.isConnected() && sshClient.isAuthenticated());
-
     }
 
     public SSHExecutionService() {
@@ -350,7 +347,7 @@ class SSHExecutionService extends RemoteExecutionService {
                 if (ignoreError)
                     logger.severe("Command not executed correctly, return code: " + cmd.getExitStatus() + ", error was ignored on purpose.");
 
-                content.eachLine { String line -> output << "" + (line) }
+                content.readLines().each { String line -> output << "" + line }
             }
             return output;
         }
@@ -769,6 +766,30 @@ class SSHExecutionService extends RemoteExecutionService {
     }
 
     @Override
+    public boolean fileExists(File file) {
+        return checkExistence( file, FileMode.Type.REGULAR)
+    }
+
+    @Override
+    public boolean directoryExists(File file) {
+        return checkExistence( file, FileMode.Type.DIRECTORY)
+    }
+
+    private boolean checkExistence(File file, FileMode.Type typeToCheck) {
+        SSHPoolConnectionSet service = waitForAndAcquireService()
+        boolean typecheck = false;
+        try {
+            net.schmizz.sshj.sftp.FileAttributes attributes = service.sftpClient.statExistence(file.absolutePath);
+
+            if (attributes && attributes.getType() == typeToCheck) typecheck = true;
+        }
+        finally {
+            service.release();
+        }
+        return typecheck
+    }
+
+    @Override
     boolean isFileReadable(File f) {
         FileAttributes attributes = queryFileAttributes(f);
         if (attributes == null)
@@ -776,6 +797,7 @@ class SSHExecutionService extends RemoteExecutionService {
         return attributes.userCanRead;
     }
 
+    @Override
     boolean isFileWriteable(File f) {
         FileAttributes attributes = queryFileAttributes(f);
         if (attributes == null)

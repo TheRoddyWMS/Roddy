@@ -4,7 +4,13 @@ package de.dkfz.roddy.execution.io.fs
 @groovy.transform.CompileStatic
 public abstract class FileSystemCommandSet {
 
+    public abstract String getFileExistsTestCommand(File f)
+
+    public abstract String getDirectoryExistsTestCommand(File f)
+
     public abstract String getReadabilityTestCommand(File f);
+
+    public abstract String getWriteabilityTestCommand(File f);
 
     public abstract String getExecutabilityTestCommand(File f)
 

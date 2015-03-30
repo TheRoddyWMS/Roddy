@@ -23,6 +23,7 @@ import groovy.transform.CompileStatic
 
 import java.util.logging.Level
 
+import static de.dkfz.roddy.StringConstants.FALSE
 import static de.dkfz.roddy.StringConstants.TILDE
 import static de.dkfz.roddy.config.ConfigurationConstants.*
 
@@ -217,165 +218,76 @@ public abstract class ExecutionService extends CacheProvider {
         return t;
     }
 
+    /**
+     * Check different directories and files to see, if files are accessible.
+     * Will not check everything but at least some of the well-known sources of errors.
+     * The method also check for some files, if they exist. If so, the read / write access will be checked.
+     * If a file does not exist yet, it will not be checked!
+     * @param context The context object which needs to be checked.
+     * @return
+     */
     public boolean checkContextPermissions(ExecutionContext context) {
-        //Create a script which contains a list of tool scripts and binary files which are
-        //used by the workflow.
+        FileSystemInfoProvider fis = FileSystemInfoProvider.getInstance();
+        Analysis analysis = context.getAnalysis()
 
-        //TODO Move some of those checks to the configuration validation. Especially missing tools, scripts and variables.
+        //First check in and output directories for accessibility
 
-        ExecutionContext clone = context.clone();
-        Configuration cfg = clone.getConfiguration();
-        clone.setExecutionContextLevel(ExecutionContextLevel.QUERY_STATUS);
-        clone.execute();
-        int contextErrorCountStart = context.getErrors().size();
+        File inputBaseDirectory = analysis.getInputBaseDirectory()      //Project input directory with i.e. ../view-by-pid
+        File outputBaseDirectory = analysis.getOutputBaseDirectory()    //Project output directory with i.e. ../results_per_pid
+        File outputDirectory = context.getOutputDirectory()             //Output with dataset id
 
-//        Collection<String> calledTools = clone.getExecutedJobs().collect { Job j -> j.getToolID(); }.unique();
-//        Collection<File> calledToolPaths = calledTools.collect { String toolID -> context.getConfiguration().getSourceToolPath(toolID) };
-//        Collection<File> calledToolPathsOriginalList = new LinkedList<>(calledToolPaths);
-//
-//        // Parse each file and extract binary and tool entries this will surely be incomplete du to missing applied naming conventions!
-//        // Tools / Scripts need to be named like TOOL_[name], binaries need to contain BINARY
-//        List<String> allLines = [];
-//        calledToolPaths.each { File f -> allLines += f.readLines() }
-//
-//        //TODO Skipping commentary lines should be based on the target file system
-//        Collection<String> allUsedTools = allLines.findAll { String line -> !line.startsWith("#") && line.contains("{TOOL_") }; //Skip commentary lines
-//        Collection<String> allUsedBinaries = allLines.findAll { String line -> !line.startsWith("#") && line.contains("BINARY}") };
-//
-//        List<String> extractedToolIDs = [];
-//        List<String> extractedBinaries = [];
-//        allUsedTools.each { String it -> it.split("[\\{,\\}]").each { String it2 -> if (it2.contains("TOOL_")) extractedToolIDs << it2 } }
-//        allUsedBinaries.each { String it -> it.split("[\\{,\\}]").each { String it2 -> if (it2.contains("_BINARY")) extractedBinaries << it2 } }
-//        extractedToolIDs = extractedToolIDs.unique().sort();
-//        extractedBinaries = extractedBinaries.unique().sort();
-//
-//        //Convert back a TOOL_ID_NAME to idName
-//        for (int i = 0; i < extractedToolIDs.size(); i++) {
-//            String toolID = extractedToolIDs[i];
-//            String oName = "";
-//            String[] split = toolID.split("_");
-//            for (int p = 1; p < split.length; p++) {
-//                oName += split[p][0].toUpperCase() + split[p][1..-1].toLowerCase();
-//            }
-//            toolID = oName[0].toLowerCase() + oName[1..-1];
-//            extractedToolIDs[i] = toolID;
-//            File path = null;
-//            try {
-//                path = context.getConfiguration().getSourceToolPath(toolID);
-//                calledToolPaths << path;
-//            } catch (Exception ex) {
-//                context.addErrorEntry(ExecutionContextError.EXECUTION_SCRIPT_NOTFOUND.expand("${toolID} - ${context.getConfiguration().getID()}"));
-//            }
-//        }
-//
-//        //Binaries are stored as configuration values, tools as tool entries.
-//        //For tools, see if they exist and if they are in the roddy directory? So they will be available on the cluster.
-//        calledToolPaths.each {
-//            File file ->
-//
-//                boolean canRead = file.canRead();
-//                boolean sizeIsGood = file.size() > 0;
-//                if (!canRead && !sizeIsGood)
-//                    context.addErrorEntry(ExecutionContextError.EXECUTION_SCRIPT_INVALID.expand(file.getAbsolutePath()));
-//        }
-//
-//        //For binaries, see if they are available online.l
-//        extractedBinaries.each {
-//            String binary ->
-//                File file = context.getConfiguration().getConfigurationValues().get(binary).toFile(context);
-//                if (!Roddy.getInstance().isExecutable(file))
-//                    context.addErrorEntry(ExecutionContextError.EXECUTION_BINARY_INVALID.expand("The binary ${binary} (file ${file.getAbsolutePath()}) could not be read."))
-//        }
-////        Roddy.getInstance().
+        File projectExecCacheFile = context.getRuntimeService().getNameOfExecCacheFile(context.getAnalysis())   // .roddyExecCache.txt containing the list of executed runs in the project output folder
+        File projectExecutionDirectory = context.getCommonExecutionDirectory()  // .roddyExecutionDirectory in outputBaseDirectory
+        File projectToolsMD5SumFile = context.getFileForAnalysisToolsArchiveOverview()  // The md5 sum file in .roddyExecutionDirectory
+        File baseContextExecutionDirectory = context.getRuntimeService().getBaseExecutionDirectory(context) //roddyExecutionStore in the dataset folder
+        File contextExecutionDirectory = context.getExecutionDirectory()        // the exec_... folder int he base context exec dir. (NOT CHECKED, created later!)
 
-        //Also check all variables in scripts.
-        //Ideally, all input variables are in the form ${...}
+        Boolean inputIsReadable = fis.isReadable(inputBaseDirectory);
+        Boolean outputIsWriteable = fis.directoryExists(outputBaseDirectory) ? fis.isReadable(outputBaseDirectory) && fis.isWritable(outputBaseDirectory) : null;
+        Boolean datasetDirIsWritable = fis.directoryExists(outputDirectory) ? fis.isReadable(outputDirectory) && fis.isWritable(outputDirectory) : null;
 
-//        calledToolPathsOriginalList.each { File f ->
-//            List<String> allLinesInFile = f.readLines();
-//            // Create a list of special characters which can occur in the complex variable syntax. The name is always in front of one of those.
-//            List<String> specialChars = Arrays.asList("%", StringConstants.SPLIT_COLON, "/", "[-]", "[+]", '#');
-//            // Keep a list of blacklistet variables, those are not checked.
-//            // TODO This list has to be configurable, some can also be coming from the command factory.
-//            List<String> blacklist = Arrays.asList("CONFIG_FILE", "PBS_*", "RODDY_*");
-//            List<String> alreadyChecked = [];
-////            Collection<String> allLinesWithVariables = allLinesInFile.findAll { String line -> !line.startsWith("#") && line.contains("\${") };
-////            Collection<String> allLinesWithVariableDeclarations = allLinesInFile.findAll { String line -> !line.startsWith("#") && line.contains("\${") };
-//
-////            List<String> declaredVariableNames = [];
-//            List<String> foundVariableNames = [];
-//
-//            for (String line in allLinesInFile) {
-//                //Skip comments
-//                line = line.trim();
-//                if (line.startsWith("#")) continue;
-//                if (line.length() == 0) continue;
-//                //First step, find variable assignments
-//                //These can either be declared using declare or by just assigning them
-//                //Variables can be created in a [[ ]] && clause!
-//                //Split by " " and parse every value.
-//                String[] splitLine = line.split(" ");
-//                for (String splitVar : splitLine) {
-//                    if (!splitVar.contains("="))
-//                        continue;
-//                    String variableName = splitVar.split("=")[0];
-////                    foundVariableNames << variableName;
-//                    alreadyChecked << variableName;
-//                }
-//
-//                //Second step, find variable usages
-//                //Maybe also keep line number so you see if a variable was used before assignment if it was created in the script
-//                String[] splitted = line.split("\\\$");
-//                for (String splitVar in splitted) {
-//                    if (splitVar.contains(StringConstants.BRACE_LEFT) && splitVar.contains(StringConstants.BRACE_RIGHT)) {
-//                        String variableName = splitVar.split("[{]")[1].split(StringConstants.BRACE_RIGHT)[0].toString();
-//                        foundVariableNames << variableName;
-//                    }
-//                }
-//            }
-//            //Third step, check all found variables
-//            for (String variableName in foundVariableNames) {
-//
-//                if (variableName.contains("_BINARY") || variableName.startsWith("TOOL_"))
-//                    continue;
-//
-//                specialChars.each { String chr -> variableName = variableName.split(chr)[0] }
-//
-//                if (alreadyChecked.contains(variableName))
-//                    continue;
-//                alreadyChecked << variableName;
-//                boolean skip = false;
-//                for (String entry in blacklist) {
-//                    if (entry.endsWith("*")) {
-//                        if (variableName.startsWith(entry[0..-2]))
-//                            skip = true;
-//                    } else {
-//                        if (entry == variableName) {
-//                            skip = true;
-//                        }
-//                    }
-//                    if (skip)
-//                        break;
-//                }
-//                if (skip)
-//                    continue;
-//
-//                //Check if the variable is in the configuration
-//                if (cfg.getConfigurationValues().hasValue(variableName))
-//                    continue;
-//
-//                //Check if variable was defined somewhere in the script
-//
-//                //Check if variable was passed as a parameter
-//
-////                            println(varName);
-//                context.addErrorEntry(ExecutionContextError.EXECUTION_SCRIPT_INVALID.expand("The variable ${variableName} is possibly not defined correctly: ${f.getAbsolutePath()}"));
-//            }
-//
-//        }
+        Boolean projectExecCacheFileIsWritable = fis.fileExists(projectExecCacheFile) ? fis.isReadable(projectExecCacheFile) && fis.isWritable(projectExecCacheFile) : null
+        Boolean projectExecutionContextDirIsWritable = fis.directoryExists(projectExecutionDirectory) ? fis.isReadable(projectExecutionDirectory) && fis.directoryExists(projectExecutionDirectory) : null;
+        Boolean projectToolsMD5SumFileIsWritable = fis.fileExists(projectToolsMD5SumFile) ? fis.isReadable(projectToolsMD5SumFile) && fis.isWritable(projectToolsMD5SumFile) : null
+        Boolean baseContextDirIsWritable = fis.directoryExists(baseContextExecutionDirectory) ?  fis.isReadable(baseContextExecutionDirectory) && fis.isWritable(baseContextExecutionDirectory) : null;
 
-        //See if there are new errors in the list.
-        return context.getErrors().size() - contextErrorCountStart == 0;
+        int countErrors = context.getErrors().sum(0) { ExecutionContextError ece -> ece.getErrorLevel() == Level.SEVERE ? 1 : 0 } as Integer
+
+        if(!inputIsReadable)
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_INACCESSIBLE.expand("Base input dir is not readable: "));
+
+        if(outputIsWriteable == null)
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${outputBaseDirectory}", Level.WARNING));
+        else if(outputIsWriteable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("Output dir is not writable: ${outputBaseDirectory}"));
+
+        if(datasetDirIsWritable == null)
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${outputDirectory}", Level.WARNING));
+        else if(datasetDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("Output dir is not writable: ${outputDirectory}"));
+
+        if(projectExecCacheFileIsWritable == null)
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output file is missing: ${projectExecCacheFile}", Level.WARNING));
+        else if(projectExecCacheFileIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("The projects exec cache file is not writable: ${projectExecCacheFile}"));
+
+        if(projectExecutionContextDirIsWritable == null)
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${projectExecutionDirectory}", Level.WARNING));
+        else if(projectExecutionContextDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("The project execution store is not writable: ${projectExecutionDirectory}"));
+
+        if(projectToolsMD5SumFileIsWritable == null)
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output file is missing: ${projectToolsMD5SumFile}", Level.WARNING));
+        else if(projectToolsMD5SumFileIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("The project md5sum file is not writable: ${projectToolsMD5SumFile}"));
+
+        if(baseContextDirIsWritable == null)
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${baseContextExecutionDirectory}", Level.WARNING));
+        else if(baseContextDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("The datasets execution storeage folder is not writable: ${baseContextExecutionDirectory}"));
+
+        //Just check, if there were new errors.
+        return (context.getErrors().sum(0) { ExecutionContextError ece -> ece.getErrorLevel() == Level.SEVERE ? 1 : 0 } as Integer) - countErrors == 0;
     }
 
     private class CompressedArchiveInfo {
@@ -703,7 +615,13 @@ public abstract class ExecutionService extends CacheProvider {
 
     public List<File> listFiles(List<File> file, List<String> filters) {}
 
+    public boolean fileExists(File f) { return false }
+
+    public boolean directoryExists(File f) { return false }
+
     public boolean isFileReadable(File f) {}
+
+    public boolean isFileWriteable(File f) { }
 
     public boolean isFileExecutable(File f) {}
 

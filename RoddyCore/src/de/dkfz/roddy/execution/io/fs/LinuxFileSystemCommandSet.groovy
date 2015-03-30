@@ -12,9 +12,26 @@ public class LinuxFileSystemCommandSet extends FileSystemCommandSet {
     public static final String NEWLINE = "\n";
 
     @Override
+    public String getFileExistsTestCommand(File f) {
+        String path = f.getAbsolutePath();
+        return "[[ -f ${path} ]] && echo ${TRUE}";
+    }
+
+    @Override String getDirectoryExistsTestCommand(File f) {
+        String path = f.getAbsolutePath();
+        return "[[ -d ${path} ]] && echo ${TRUE}";
+    }
+
+    @Override
     public String getReadabilityTestCommand(File f) {
         String path = f.getAbsolutePath();
         return "[[ -e ${path} && -r ${path} ]] && echo ${TRUE}";
+    }
+
+    @Override
+    String getWriteabilityTestCommand(File f) {
+        String path = f.getAbsolutePath();
+        return "[[ -e ${path} && -w ${path} ]] && echo ${TRUE}";
     }
 
     @Override
