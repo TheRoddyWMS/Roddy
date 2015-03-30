@@ -349,7 +349,7 @@ public class Analysis {
         boolean isExecutable;
         String datasetID = context.getDataSet().getId();
         try {
-            isExecutable = context.checkExecutability() && ExecutionService.getInstance().checkContextPermissions(context);
+            isExecutable = ExecutionService.getInstance().checkContextPermissions(context) && context.checkExecutability();
             if (!isExecutable) {
                 logger.postAlwaysInfo("The workflow does not seem to be executable for dataset " + datasetID);
             } else {
