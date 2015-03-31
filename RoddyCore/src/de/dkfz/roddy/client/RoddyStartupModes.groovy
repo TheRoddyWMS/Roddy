@@ -2,79 +2,79 @@ package de.dkfz.roddy.client;
 
 import de.dkfz.roddy.Constants;
 import static RoddyStartupOptions.*;
+import static RoddyStartupModeScopes.*;
 
 /**
  * Contains the possible startup modes for Roddy.
  */
 @groovy.transform.CompileStatic
 public enum RoddyStartupModes {
-    //    importconfig,
-    //    prepareuserconfig,
-    //    listworkflowcalls,
-    //    testcall,
-    importworkflow(false),
 
-    help(false),
+    importworkflow(SCOPE_REDUCED),
 
-    showconfigpaths(false, [useconfig, verbositylevel]),
+    help(SCOPE_CLI),
 
-    compile(false),
+    showconfigpaths(SCOPE_REDUCED, [useconfig, verbositylevel]),
 
-    pack(false),
+    prepareprojectconfig(SCOPE_REDUCED),
 
-    plugininfo(false, [useconfig]),
+    compile(SCOPE_CLI),
 
-    compileplugin(false, [useconfig]),
+    pack(SCOPE_CLI),
 
-    updateplugin(false, [useconfig]),
+    plugininfo(SCOPE_REDUCED, [useconfig]),
 
-    packplugin(false, [useconfig]),
+    compileplugin(SCOPE_CLI, [useconfig]),
 
-    showconfig(false, [useconfig]),
+    updateplugin(SCOPE_CLI, [useconfig]),
 
-    validateconfig(false, [useconfig]),
+    packplugin(SCOPE_CLI, [useconfig]),
 
-    printruntimeconfig(true, [useconfig]),
+    showconfig(SCOPE_REDUCED, [useconfig]),
 
-    listworkflows(false, [useconfig, shortlist]),
+    validateconfig(SCOPE_REDUCED, [useconfig]),
 
-    listdatasets(true, [useconfig]),
+    printruntimeconfig(SCOPE_FULL, [useconfig]),
 
-    run(true, [test, useconfig, verbositylevel, debugOptions, waitforjobs, useiodir, disabletrackonlyuserjobs, trackonlystartedjobs, resubmitjobonerror, autosubmit, autocleanup, run, dontrun]),
+    listworkflows(SCOPE_REDUCED, [useconfig, shortlist]),
 
-    rerun(true, [test, run, dontrun, useconfig, verbositylevel, debugOptions, waitforjobs, useiodir, disabletrackonlyuserjobs, trackonlystartedjobs, resubmitjobonerror, autosubmit, autocleanup] as List<RoddyStartupOptions>),
+    listdatasets(SCOPE_FULL, [useconfig]),
 
-    testrun(true, [useconfig, verbositylevel, debugOptions, waitforjobs, useiodir, disabletrackonlyuserjobs, trackonlystartedjobs, resubmitjobonerror, autosubmit, autocleanup, run, dontrun] as List<RoddyStartupOptions>),
+    run(SCOPE_FULL, [test, useconfig, verbositylevel, debugOptions, waitforjobs, useiodir, disabletrackonlyuserjobs, trackonlystartedjobs, resubmitjobonerror, autosubmit, autocleanup, run, dontrun]),
 
-    testrerun(true, [useconfig, verbositylevel, debugOptions, waitforjobs, useiodir, disabletrackonlyuserjobs, trackonlystartedjobs, resubmitjobonerror, autosubmit, autocleanup, run, dontrun] as List<RoddyStartupOptions>),
+    rerun(SCOPE_FULL, [test, run, dontrun, useconfig, verbositylevel, debugOptions, waitforjobs, useiodir, disabletrackonlyuserjobs, trackonlystartedjobs, resubmitjobonerror, autosubmit, autocleanup] as List<RoddyStartupOptions>),
 
-    rerunstep(true, [useconfig, verbositylevel, debugOptions, waitforjobs, useiodir, resubmitjobonerror] as List<RoddyStartupOptions>), // rerun a single step of an executed dataset.
+    testrun(SCOPE_FULL, [useconfig, verbositylevel, debugOptions, waitforjobs, useiodir, disabletrackonlyuserjobs, trackonlystartedjobs, resubmitjobonerror, autosubmit, autocleanup, run, dontrun] as List<RoddyStartupOptions>),
 
-    checkworkflowstatus(true, [useconfig, verbositylevel, detailed] as List<RoddyStartupOptions>), // Show the (last) status of an executed dataset.
+    testrerun(SCOPE_FULL, [useconfig, verbositylevel, debugOptions, waitforjobs, useiodir, disabletrackonlyuserjobs, trackonlystartedjobs, resubmitjobonerror, autosubmit, autocleanup, run, dontrun] as List<RoddyStartupOptions>),
 
-    cleanup(true, [useconfig, verbositylevel]),
+    rerunstep(SCOPE_FULL, [useconfig, verbositylevel, debugOptions, waitforjobs, useiodir, resubmitjobonerror] as List<RoddyStartupOptions>), // rerun a single step of an executed dataset.
 
-    abort(true, [useconfig, verbositylevel]),
+    checkworkflowstatus(SCOPE_FULL, [useconfig, verbositylevel, detailed] as List<RoddyStartupOptions>), // Show the (last) status of an executed dataset.
 
-    ui(true, [useconfig, verbositylevel]),
+    cleanup(SCOPE_FULL, [useconfig, verbositylevel]),
 
-    setup(false);
+    abort(SCOPE_FULL, [useconfig, verbositylevel]),
+
+    ui(SCOPE_FULL, [useconfig, verbositylevel]),
+
+    setup(SCOPE_CLI);
     //    networksubmissionserver(false),
 
     //    createtestdata(true),
 
     //    showstatus(true),
 
-    private boolean fullInit = false;
+    public final int scope;
 
     /**
      * A list of valid startup options for this startup mode.
      */
     private List<RoddyStartupOptions> validOptions
 
-    RoddyStartupModes(Boolean fullInit, List<RoddyStartupOptions> validOptions = []) {
+    RoddyStartupModes(int scope, List<RoddyStartupOptions> validOptions = []) {
         this.validOptions = validOptions
-        this.fullInit = fullInit;
+        this.scope = scope;
     }
 
     private static void printCommand(RoddyStartupModes option, String parameters) {
@@ -103,6 +103,7 @@ public enum RoddyStartupModes {
 
         printCommand(RoddyStartupModes.help, "", "Shows a list of available configuration files in all configured paths.");
         printCommand(RoddyStartupModes.showconfigpaths, "[--useconfig={file}]", "Shows a list of available configuration files in all configured paths.");
+        printCommand(RoddyStartupModes.prepareprojectconfig, "", "Create or update a project xml file and an application properties ini file.");
         printCommand(RoddyStartupModes.plugininfo, "[--useconfig={file}]", "Shows details about the available plugins.");
 //        printCommand(RoddyStartupModes.showconfig, "[--useconfig={file}]", "Shows a list of available configuration files in all configured paths.");
         printCommand(RoddyStartupModes.validateconfig, "(configuration@analysis) [--useconfig={file}]", "Tries to find errors in the specified configuration and shows them.");
@@ -128,18 +129,18 @@ public enum RoddyStartupModes {
         println("================================")
         System.out.println(Constants.ENV_LINESEPARATOR + Constants.ENV_LINESEPARATOR + "Common additional options");
         System.out.println("    --useconfig={file}              - Use {file} as the application configuration.\n" +
-                           "                                      The order is: full path, .roddy folder, Roddy directory." );
+                "                                      The order is: full path, .roddy folder, Roddy directory.");
         System.out.println("    --useiodir=[fileIn],{fileOut}   - Use fileIn/fileOut as the base input and output directories for your project.\n" +
-                           "                                      If fileOut is not specified, fileIn is used for that as well.");
+                "                                      If fileOut is not specified, fileIn is used for that as well.");
         System.out.println("    --waitforjobs                   - Let Roddy wait for all submitted jobs to finish.");
         System.out.println("    --disabletrackonlyuserjobs      - Default for command line mode is that Roddy only tracks user jobs. This can be changed with this switch.");
-        System.out.println("    --useRoddyVersion=(version no)  - Not supported yet! Override the settings from the properties ini file.");
-        System.out.println("    --usePluginVersion=(...,...)    - Not supported yet! Override the settings from the properties ini file.");
+        System.out.println("    --useRoddyVersion=(version no)  - Use a specific roddy version.");
+        System.out.println("    --usePluginVersion=(...,...)    - Supply a list of used plugins and versions.");
         System.out.println(Constants.ENV_LINESEPARATOR + Constants.ENV_LINESEPARATOR + "Roddy version " + Constants.APP_CURRENT_VERSION_STRING + " build at " + Constants.APP_CURRENT_VERSION_BUILD_DATE);
     }
 
     public boolean needsFullInit() {
-        return fullInit;
+        return scope == SCOPE_FULL;
     }
 
     @Override

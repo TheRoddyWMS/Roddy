@@ -2,12 +2,23 @@
 
 cd `dirname $0`
 
+RODDY_DIRECTORY=`readlink -f .`
+parm1=${1-}
+
+# Call some scripts before other steps start.
+if [[ "$parm1" == "prepareprojectconfig" ]]; then
+    source helperScripts/prepareProjectConfiguration.sh
+    exit 0
+elif [[ "$parm1" == "setup" ]]; then
+    source helperScripts/setupRoddy.sh
+    exit 0
+fi
+
 # Example for a date call (for timestamps)
 #date +"%M %S %N"
 GROOVY_HOME=`ls -d ${PWD}/dist/runtime*/groovy 2> /dev/null`
 JAVA_HOME=`ls -d ${PWD}/dist/runtime*/jre 2> /dev/null`
 RODDY_BINARY=dist/Roddy.jar
-RODDY_DIRECTORY=`readlink -f .`
 
 if [[ -z $JAVA_HOME ]]
 then
@@ -28,7 +39,6 @@ pluginbaseLib=${RODDY_DIRECTORY}/dist/plugins/PluginBase/PluginBase.jar
 jfxlibInfo=`cat ${JFX_LIBINFO_FILE}`
 libraries=`ls -d1 dist/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
 libraries=$libraries:$jfxlibInfo:$pluginbaseLib
-parm1=${1-}
 
 #Resolve the configuration file
 source helperScripts/resolveAppConfig.sh
