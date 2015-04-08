@@ -493,7 +493,7 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
 
             if (selectionTag.equals("default")) {
                 if (filename == null) {
-                    //TODO Put a warning in here.
+                    throw new RuntimeException("There is no valid filename pattern for this file: " + baseFile);
                 }
                 else {
                     //Check if the path exists and create it if necessary.

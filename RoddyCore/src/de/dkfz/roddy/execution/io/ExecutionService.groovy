@@ -429,6 +429,7 @@ public abstract class ExecutionService extends CacheProvider {
                 cfg.getConfigurationValues().add(new ConfigurationValue(basepathConfigurationID, RoddyIOHelperMethods.assembleLocalPath(dstExecutionDirectory, "analysisTools", bPathID).getAbsolutePath(), "string"));
             }
 
+            // Compress existing tool folders to a central location and generate some md5 sums for them.
             listOfFolders.parallelStream().forEach {
                 File subFolder ->
                     String md5sum = RoddyIOHelperMethods.getSingleMD5OfFilesInDirectory(subFolder);
@@ -457,10 +458,8 @@ public abstract class ExecutionService extends CacheProvider {
                     }
             };
 
-//            listOfFolders.parallelStream().forEach() {
-//                File subFolder ->
+            // Now check if the local file with its md5 sum exists on the remote site.
             for (File subFolder : listOfFolders) {
-//                File remoteFile = File.createTempFile("roddy_", "_compressedArchive_analysisTools_pluginID_" + subFolder.getName() + ".zip");
                 File localFile = mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive;
                 File remoteFile = new File(mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive.getName()[0..-5] + "_" + context.getTimeStampString() + ".zip");
                 String archiveMD5 = mapOfPreviouslyCompressedArchivesByFolder[subFolder].md5
@@ -483,6 +482,26 @@ public abstract class ExecutionService extends CacheProvider {
                 }
 
                 File analysisToolsServerDir;
+
+                // Check, if there is a zip file available and if the zip file is uncompressed.
+                if (foundExisting) {
+                    analysisToolsServerDir = new File(dstCommonExecutionDirectory, "/dir_" + foundExisting);
+                    File remoteZipFile = new File(dstCommonExecutionDirectory, remoteFile.getName());
+                    if(!provider.directoryExists(analysisToolsServerDir)) {
+                        //Now we may assume, that the file was not uncompressed!
+                        //Check if the zip file exists. If so, uncompress it.
+                        if(provider.fileExists(remoteZipFile)) {
+                            // Unzip the file again. foundExisting stays true
+                            GString str = RoddyIOHelperMethods.getCompressor().getDecompressionString(remoteZipFile, analysisToolsServerDir, analysisToolsServerDir);
+                            getInstance().execute(str, true);
+                            provider.setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.getAbsolutePath()), context);
+                        } else {
+                            // Uh Oh, the file is not existing, the directory is not existing! Copy again and unzip
+                            foundExisting = false;
+                        }
+                    }
+                }
+
                 if (foundExisting) {
                     //remoteFile.delete(); //Don't need that anymore
                     analysisToolsServerDir = new File(dstCommonExecutionDirectory, "/dir_" + foundExisting);
@@ -500,10 +519,11 @@ public abstract class ExecutionService extends CacheProvider {
                     GString str = RoddyIOHelperMethods.getCompressor().getDecompressionString(new File(dstCommonExecutionDirectory, remoteFile.getName()), analysisToolsServerDir, analysisToolsServerDir);
                     getInstance().execute(str, true);
                     provider.setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.getAbsolutePath()), context);
+                    if(provider.directoryExists(analysisToolsServerDir))
+                        context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND.expand("The central archive ${analysisToolsServerDir.absolutePath} was not created!"))
 
                 }
                 provider.checkDirectory(dstAnalysisToolsDirectory, context, true);
-
                 def linkCommand = "ln -s ${analysisToolsServerDir.getAbsolutePath()}/${subFolderOnRemote} ${dstAnalysisToolsDirectory.absolutePath}/${subFolder.getName()}"
                 getInstance().execute(linkCommand, true);
             }
