@@ -85,24 +85,50 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
     private ExecutionContext _toFileExecutionContext;
     private File _toFileCache;
 
-    public File toFile(Project project) {
-        String temp = "";
-        try {
-            if (project == null) return toFile();
+//    public File toFile(Project project) {
+//        String temp = "";
+//        try {
+//            if (project == null) return toFile();
+//
+//            temp = toFile().getAbsolutePath();//
+//            temp = replaceConfigurationBasedValues(temp, project.getConfiguration());
+//            temp = replaceString(temp, "${projectName}", project.getName());
+//            temp = checkAndCorrectPath(temp);
+//
+//            String userID = null;
+//            String groupID = null;
+//            try {
+//                userID = FileSystemInfoProvider.getInstance().callWhoAmI();
+//                groupID = FileSystemInfoProvider.getInstance().getMyGroup();    //Default vaule
+//                if(project.getConfiguration())
+//            } catch (Exception e) {
+//
+//            }
+//            if (userID != null)
+//                temp = replaceString(temp, "$USERNAME", userID);
+//            if( groupID != null)
+//                temp = replaceString(temp, "$USERGROUP", groupID);
+//
+//            String ud = FileSystemInfoProvider.getInstance().getUserDirectory().getAbsolutePath();
+//            temp = replaceString(temp, "$USERHOME", ud);
+//            return new File(replaceString(temp, "~", ud));
+//        } catch (Exception e) {
+//            logger.log(Level.SEVERE, "Could not call toFile on ConfigurationValue [" + this.id + "]. Possibly left out parts which should be replaced.", e);
+//            return new File(temp);
+//        }
+//    }
 
-            temp = toFile().getAbsolutePath();//
-            temp = replaceConfigurationBasedValues(temp, project.getConfiguration());
-            temp = replaceString(temp, "${projectName}", project.getName());
+    public File toFile(Analysis analysis) {
+        try {
+            if (analysis == null) return toFile();
+
+            String temp = toFile().getAbsolutePath();
+            temp = replaceString(temp, "${projectName}", analysis.getProject().getName());
             temp = checkAndCorrectPath(temp);
 
-            String userID = null;
-            String groupID = null;
-            try {
-                userID = FileSystemInfoProvider.getInstance().callWhoAmI();
-                groupID = FileSystemInfoProvider.getInstance().getMyGroup();
-            } catch (Exception e) {
+            String userID = analysis.getUsername();
+            String groupID = analysis.getUsergroup();
 
-            }
             if (userID != null)
                 temp = replaceString(temp, "$USERNAME", userID);
             if( groupID != null)
@@ -110,18 +136,6 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
 
             String ud = FileSystemInfoProvider.getInstance().getUserDirectory().getAbsolutePath();
             temp = replaceString(temp, "$USERHOME", ud);
-            return new File(replaceString(temp, "~", ud));
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Could not call toFile on ConfigurationValue [" + this.id + "]. Possibly left out parts which should be replaced.", e);
-            return new File(temp);
-        }
-    }
-
-    public File toFile(Analysis analysis) {
-        try {
-            if (analysis == null) return toFile();
-
-            String temp = toFile(analysis.getProject()).getAbsolutePath();
             temp = replaceConfigurationBasedValues(temp, analysis.getConfiguration());
             temp = checkAndCorrectPath(temp);
 

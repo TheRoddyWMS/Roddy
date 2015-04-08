@@ -385,12 +385,12 @@ public abstract class RuntimeService extends CacheProvider {
         return new File(dirPath);
     }
 
-    public File getCommonExecutionDirectory(Project project) {
-        return new File(getOutputFolderForProject(project).getAbsolutePath() + FileSystemInfoProvider.getInstance().getPathSeparator() + DIRECTORY_RODDY_COMMON_EXECUTION);
+    public File getCommonExecutionDirectory(ExecutionContext context) {
+        return new File(getOutputFolderForProject(context).getAbsolutePath() + FileSystemInfoProvider.getInstance().getPathSeparator() + DIRECTORY_RODDY_COMMON_EXECUTION);
     }
 
-    public File getAnalysedMD5OverviewFile(Project project) {
-        return new File(getCommonExecutionDirectory(project).getAbsolutePath() + FileSystemInfoProvider.getInstance().getPathSeparator() + FILENAME_ANALYSES_MD5_OVERVIEW);
+    public File getAnalysedMD5OverviewFile(ExecutionContext context) {
+        return new File(getCommonExecutionDirectory(context).getAbsolutePath() + FileSystemInfoProvider.getInstance().getPathSeparator() + FILENAME_ANALYSES_MD5_OVERVIEW);
     }
 
     public File getLoggingDirectory(ExecutionContext run) {
@@ -579,8 +579,8 @@ public abstract class RuntimeService extends CacheProvider {
         return analysis.getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY).toFile(analysis);
     }
 
-    public File getOutputFolderForProject(Project project) {
-        return project.getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY).toFile(project);
+    public File getOutputFolderForProject(ExecutionContext context) {
+        return context.getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY).toFile(context);
     }
 
     public File getOutputFolderForAnalysis(Analysis analysis) {

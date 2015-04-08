@@ -378,6 +378,10 @@ public abstract class ExecutionService extends CacheProvider {
         String configText = cfgService.convertConfigurationToShellscript(context, cfg);
         provider.writeTextFile(context.getProject().getRuntimeService().getNameOfConfigurationFile(context), configText, context);
 
+        //The application ini
+        provider.copyFile(Roddy.getPropertiesFilePath(), new File(executionDirectory, "applicationProperties.ini"), context);
+        provider.writeTextFile(new File(executionDirectory, "roddyCall.sh"), Roddy.getApplicationDirectory().getAbsolutePath() + "/roddy.sh" + Roddy.getCommandLineCall().getArguments().join(StringConstants.WHITESPACE), context);
+
         //Current configs xml files (default, user, pipeline config file)
         String configXML = cfgService.convertConfigurationToXML(cfg);
         provider.writeTextFile(context.getProject().getRuntimeService().getNameOfXMLConfigurationFile(context), configXML, context);
@@ -478,7 +482,7 @@ public abstract class ExecutionService extends CacheProvider {
                     }
                 }
 
-                File analysisToolsServerDir = null;
+                File analysisToolsServerDir;
                 if (foundExisting) {
                     //remoteFile.delete(); //Don't need that anymore
                     analysisToolsServerDir = new File(dstCommonExecutionDirectory, "/dir_" + foundExisting);

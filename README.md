@@ -27,6 +27,21 @@ dist/plugins/Template
 	        A template plugin which you can use to create your own plugins or workflows.
 	        This also gets used if you call the createnewworkflow option.
 
+== Available configuration flags for project configuration files
+
+ID                                      Default Description
+debugOptionsUsePipefail                 true    Enable process termination for pipes
+debugOptionsUseVerboseOutput            true    Print a lot, like "set -v" in bash
+debugOptionsUseExecuteOutput            true    Print executed lines, like "set -x" in bash
+debugOptionsUseUndefinedVariableBreak   false   Fail, if a variable in a script is missing, like "set -u" in bash
+debugOptionsUseExitOnError              false   Fail, if a script throws an error, like "set -e" in bash
+debugOptionsParseScripts                false
+
+processOptionsSetUserGroup              true    Overrides the users default group on the target system
+processOptionsSetUserMask               true    Overrides the users default usermask on the target system
+processOptionsQueryEnv                  false   Call something like env (in bash) on the target system
+processOptionsQueryID                   false
+
 == Work in progress
 
 This section contains features which are currently in development. Testable / active features

@@ -416,7 +416,7 @@ public class ExecutionContext implements JobStatusListener {
 
     public synchronized File getCommonExecutionDirectory() {
         if (commonExecutionDirectory == null)
-            commonExecutionDirectory = project.getRuntimeService().getCommonExecutionDirectory(project);
+            commonExecutionDirectory = project.getRuntimeService().getCommonExecutionDirectory(this);
         return commonExecutionDirectory;
     }
 

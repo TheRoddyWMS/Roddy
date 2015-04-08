@@ -34,15 +34,15 @@ public class Project implements Serializable {
     private List<DataSet> listOfDataSets = new LinkedList<>();
     protected Configuration configuration;
 
-    /**
-     * The input base directory for this analysis. This is the location where the source data folders are located.
-     */
-    private File inputBaseDirectory;
+//    /**
+//     * The input base directory for this analysis. This is the location where the source data folders are located.
+//     */
+//    private File inputBaseDirectory;
 
-    /**
-     * The output base directory for this analysis. This is the base location where the analysed data folders are located.
-     */
-    private File outputBaseDirectory;
+//    /**
+//     * The output base directory for this analysis. This is the base location where the analysed data folders are located.
+//     */
+//    private File outputBaseDirectory;
 
     /**
      * The runtime service instance for this project.
@@ -51,8 +51,8 @@ public class Project implements Serializable {
 
     public Project(ProjectConfiguration configuration, RuntimeService runtimeService, List<Project> subProjects, List<Analysis> analyses) {
         this.configuration = configuration;
-        inputBaseDirectory = configuration.getConfigurationValues().get(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY).toFile(this);
-        outputBaseDirectory = configuration.getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY).toFile(this);
+//        inputBaseDirectory = configuration.getConfigurationValues().get(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY).toFile(this);
+//        outputBaseDirectory = configuration.getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY).toFile(this);
         this.analyses = analyses != null ? analyses : new LinkedList<Analysis>();
         this.subProjects = subProjects != null ? subProjects : new LinkedList<Project>();
         this.runtimeService = runtimeService;
@@ -95,35 +95,35 @@ public class Project implements Serializable {
         return null;
     }
 
-    /**
-     * Returns the first level of sub projects / variants for this project.
-     *
-     * @return
-     */
-    public List<Project> getDirectSubProjects() {
-        return new LinkedList<Project>(this.subProjects);
-    }
+//    /**
+//     * Returns the first level of sub projects / variants for this project.
+//     *
+//     * @return
+//     */
+//    public List<Project> getDirectSubProjects() {
+//        return new LinkedList<Project>(this.subProjects);
+//    }
 
-    /**
-     * Returns a list of all subprojects /variants (direct and indirect) for this project.
-     *
-     * @return
-     */
-    public List<Project> getAllSubProjects() {
-        List<Project> all = new LinkedList<Project>(subProjects);
-        for (Project sp : subProjects) {
-            all.addAll(sp.getAllSubProjects());
-        }
-        return all;
-    }
+//    /**
+//     * Returns a list of all subprojects /variants (direct and indirect) for this project.
+//     *
+//     * @return
+//     */
+//    public List<Project> getAllSubProjects() {
+//        List<Project> all = new LinkedList<Project>(subProjects);
+//        for (Project sp : subProjects) {
+//            all.addAll(sp.getAllSubProjects());
+//        }
+//        return all;
+//    }
 
     public RuntimeService getRuntimeService() {
         return runtimeService;
     }
 
-    public List<DataSet> getListOfDataSets() {
-        return listOfDataSets;
-    }
+//    public List<DataSet> getListOfDataSets() {
+//        return listOfDataSets;
+//    }
 
     /**
      * Sets or overrides

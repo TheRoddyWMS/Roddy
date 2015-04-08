@@ -840,7 +840,6 @@ public class ConfigurationFactory {
             List<String> valueBlacklist = ["PBS_JOBID", "PBS_ARRAYID", 'PWD', "PID", "pid", "sample", "run", "projectName", "testDataOptionID", "analysisMethodNameOnInput", "analysisMethodNameOnOutput"
                                            , "outputAnalysisBaseDirectory", "inputAnalysisBaseDirectory", "executionTimeString"]
             for (ConfigurationValue cv in listOfUnsortedValues.values()) {
-                //    boolean isDependent = cv.value.contains("\$");
                 boolean isValidationRule = cv.id.contains("cfgValidationRule");
                 if (isValidationRule)
                     continue;
@@ -866,7 +865,6 @@ public class ConfigurationFactory {
                 }
                 foundValues[cv.id] = cv;
                 listOfSortedValues[cv.id] = cv;
-//        println "${noOfOriginalDependencies}: ${cv.id} = ${cv.value}:";
             }
             if (foundValues.values().size() > 0)
                 somethingChanged = true;
@@ -879,25 +877,16 @@ public class ConfigurationFactory {
             }
         listOfSortedValues += listOfUnsortedValues;
 
-//        List<String>[] unsortedText = new List<String>[2];
         StringBuilder text = new StringBuilder();
         text << "#!/bin/bash" << separator; //Add a shebang line
-//        for (int pass = 0; pass < 2; pass++) {
-//            unsortedText[pass] = new LinkedList<>();
 
         for (ConfigurationValue cv : listOfSortedValues.values()) {
-//            boolean isDependent = cv.value.contains("\$");
             boolean isValidationRule = cv.id.contains("cfgValidationRule");
 
             if (isValidationRule) {
                 text << "# Validation rule!: " + cv.toString() << separator;
                 continue;
             }
-//
-//            if (isDependent && pass == 0)
-//                continue;
-//            if (!isDependent && pass == 1)
-//                continue;
 
             convertConfigurationValueToShellScriptLine(cv, text, context)
             text << separator;

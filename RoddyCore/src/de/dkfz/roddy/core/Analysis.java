@@ -86,6 +86,30 @@ public class Analysis {
         return workflow;
     }
 
+    public String getUsername() {
+        try {
+            return FileSystemInfoProvider.getInstance().callWhoAmI();
+        } catch (Exception e) {
+            return "UNKNOWN";
+        }
+    }
+
+    public String getUsergroup() {
+        try {
+            //Get the default value.
+            String groupID = FileSystemInfoProvider.getInstance().getMyGroup();
+
+            //If it is configured, get the group id from the config.
+            boolean processSetUserGroup = getConfiguration().getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, true);
+            if(processSetUserGroup) {
+                groupID = getConfiguration().getConfigurationValues().getString(ConfigurationFactory.XMLTAG_OUTPUT_FILE_GROUP, groupID);
+            }
+            return groupID;
+        } catch (Exception e) {
+            return "UNKNOWN";
+        }
+    }
+
 
     private ContextConfiguration _contextConfiguration = null;
 
