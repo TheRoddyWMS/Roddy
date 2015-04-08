@@ -123,6 +123,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
             if (analysis == null) return toFile();
 
             String temp = toFile().getAbsolutePath();
+            temp = replaceConfigurationBasedValues(temp, analysis.getConfiguration());
             temp = replaceString(temp, "${projectName}", analysis.getProject().getName());
             temp = checkAndCorrectPath(temp);
 
@@ -136,7 +137,6 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
 
             String ud = FileSystemInfoProvider.getInstance().getUserDirectory().getAbsolutePath();
             temp = replaceString(temp, "$USERHOME", ud);
-            temp = replaceConfigurationBasedValues(temp, analysis.getConfiguration());
             temp = checkAndCorrectPath(temp);
 
             return new File(temp);
