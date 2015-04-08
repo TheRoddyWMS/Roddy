@@ -85,38 +85,21 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
     private ExecutionContext _toFileExecutionContext;
     private File _toFileCache;
 
-//    public File toFile(Project project) {
-//        String temp = "";
-//        try {
-//            if (project == null) return toFile();
-//
-//            temp = toFile().getAbsolutePath();//
-//            temp = replaceConfigurationBasedValues(temp, project.getConfiguration());
-//            temp = replaceString(temp, "${projectName}", project.getName());
-//            temp = checkAndCorrectPath(temp);
-//
-//            String userID = null;
-//            String groupID = null;
-//            try {
-//                userID = FileSystemInfoProvider.getInstance().callWhoAmI();
-//                groupID = FileSystemInfoProvider.getInstance().getMyGroup();    //Default vaule
-//                if(project.getConfiguration())
-//            } catch (Exception e) {
-//
-//            }
-//            if (userID != null)
-//                temp = replaceString(temp, "$USERNAME", userID);
-//            if( groupID != null)
-//                temp = replaceString(temp, "$USERGROUP", groupID);
-//
-//            String ud = FileSystemInfoProvider.getInstance().getUserDirectory().getAbsolutePath();
-//            temp = replaceString(temp, "$USERHOME", ud);
-//            return new File(replaceString(temp, "~", ud));
-//        } catch (Exception e) {
-//            logger.log(Level.SEVERE, "Could not call toFile on ConfigurationValue [" + this.id + "]. Possibly left out parts which should be replaced.", e);
-//            return new File(temp);
-//        }
-//    }
+    /**
+     * Converts this configuration value to a path and fills in data set and analysis specific settings.
+     *
+     * @param analysis
+     * @param dataSet
+     * @return
+     */
+    public File toFile(Analysis analysis, DataSet dataSet) {
+        File f = toFile(analysis);
+
+        String temp = f.getAbsolutePath();
+        temp = replaceString(temp, "${pid}", dataSet.getId());
+
+        return new File(temp);
+    }
 
     public File toFile(Analysis analysis) {
         try {
@@ -146,22 +129,6 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         }
     }
 
-    /**
-     * Converts this configuration value to a path and fills in data set and analysis specific settings.
-     *
-     * @param analysis
-     * @param dataSet
-     * @return
-     */
-    public File toFile(Analysis analysis, DataSet dataSet) {
-        File f = toFile(analysis);
-
-        String temp = f.getAbsolutePath();
-        temp = replaceString(temp, "${pid}", dataSet.getId());
-
-        return new File(temp);
-    }
-
     public File toFile(ExecutionContext context) {
         if (context != _toFileExecutionContext) {
             _toFileExecutionContext = context;
@@ -177,21 +144,14 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         }
         try {
             String temp = toFile(context.getAnalysis(), context.getDataSet()).getAbsolutePath();
-//            temp = replaceConfigurationBasedValues(temp, context.getConfiguration());
             temp = checkAndCorrectPath(temp);
             if(value.startsWith("${DIR_BUNDLED_FILES}") || value.startsWith("${DIR_RODDY}"))
                 temp = Roddy.getApplicationDirectory().getAbsolutePath() + FileSystemInfoProvider.getInstance().getPathSeparator() + temp;
-//            getUser
 
             if (temp.contains(ConfigurationConstants.CVALUE_PLACEHOLDER_EXECUTION_DIRECTORY)) {
                 String pd = context.getExecutionDirectory().getAbsolutePath();
                 temp = temp.replace(ConfigurationConstants.CVALUE_PLACEHOLDER_EXECUTION_DIRECTORY, pd);
             }
-//            if (temp.contains("$USERNAME")) {
-//                String uName = context.getInstance().callWhoAmI();
-////                String pd = context.getRuntimeService().getExecutionDirectory(context).getAbsolutePath();
-//                temp = temp.replace("$USERNAME", uName);
-//            }
             _toFileCache = new File(temp);
             return _toFileCache;
         } catch (Exception ex) {
