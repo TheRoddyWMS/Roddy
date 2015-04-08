@@ -57,6 +57,8 @@ are in the changelist.
 
 == Changelist
 
+* Version update to 2.1.49
+
 - (TEST) Roddy will delete an execution directory if no jobs were submitted. This is not working
   with the SSH library SFTP client for unknown reasons.
 
