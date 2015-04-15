@@ -7,10 +7,10 @@ parm1=${1-}
 
 # Call some scripts before other steps start.
 if [[ "$parm1" == "prepareprojectconfig" ]]; then
-    source helperScripts/prepareProjectConfiguration.sh
+    source ${SCRIPTS_DIR}/prepareProjectConfiguration.sh
     exit 0
 elif [[ "$parm1" == "setup" ]]; then
-    source helperScripts/setupRoddy.sh
+    source ${SCRIPTS_DIR}/setupRoddy.sh
     exit 0
 fi
 
@@ -37,65 +37,52 @@ fi
 #TODO Resolve the PluginBase.jar This might be set in the ini file.
 pluginbaseLib=${RODDY_DIRECTORY}/dist/plugins/PluginBase/PluginBase.jar
 jfxlibInfo=`cat ${JFX_LIBINFO_FILE}`
-libraries=`ls -d1 dist/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
+libraries=`ls -d1 ${RODDY_BINARY_DIR}/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
 libraries=$libraries:$jfxlibInfo
 
 #Resolve the configuration file
-source helperScripts/resolveAppConfig.sh
-
-overrideRoddyVersionParameter=""
-overridePluginParameters=""
+source ${SCRIPTS_DIR}/resolveAppConfig.sh
 
 #Is the roddy binary or anything set via command line?
 for i in $*
 do
-    if [[ $i == --useRoddyVersion* ]]; then
-        overrideRoddyVersionParameter=${i:18:40}
-        RODDY_BINARY=dist/Roddy_${overrideRoddyVersionParameter}.jar
-        if [[ ! -f $RODDY_BINARY ]]; then
-            echo "${RODDY_BINARY} not found, the following files are available:"
-            for bin in `ls dist/Roddy*.jar`; do
-                echo "  ${bin}"
-            done
-            exit 1
-        fi
-    elif [[ $i == --usePluginVersion* ]]; then
+    if [[ $i == --usePluginVersion* ]]; then
         overridePluginParameters=${i:19:140}
     fi
 done
 
 if [[ "$parm1" == "compile" ]]; then
-    bash helperScripts/compile.sh
+    bash ${SCRIPTS_DIR}/compile.sh
     exit 0
 elif [[ "$parm1" == "pack" ]]; then
-    groovy helperScripts/addChangelistVersionTag.groovy README.md RoddyCore/rbuildversions.txt
+    groovy ${SCRIPTS_DIR}/addChangelistVersionTag.groovy README.md RoddyCore/rbuildversions.txt
     major=`head RoddyCore/rbuildversions.txt -n 1`
     minor=`tail RoddyCore/rbuildversions.txt -n 1`
-    filename=dist/Roddy_${major}.${minor}.jar
-    cp dist/Roddy.jar $filename
+    filename=${RODDY_BINARY_DIR}/Roddy.jar
+    cp dist/bin/current/Roddy.jar $filename
     svn info > ${filename}.nfo
     svn status >> ${filename}.nfo
-    find ${RODDY_DIRECTORY}/dist >> ${filename}.nfo
-    ls -l ${RODDY_DIRECTORY}/dist >> ${filename}.nfo
+    find ${RODDY_DIRECTORY}/dist/bin/current >> ${filename}.nfo
+    ls -l ${RODDY_DIRECTORY}/dist/bin/current >> ${filename}.nfo
     svn add ${filename} ${filename}.nfo
     exit 0
 elif [[ "$parm1" == "compileplugin" ]]; then
     echo "Using Roddy binary "`basename ${RODDY_BINARY}`
     set -e
-    source helperScripts/compileToJarFile.sh
+    source ${SCRIPTS_DIR}/compileToJarFile.sh
     exit 0
 elif [[ "$parm1" == "packplugin" || "$parm1" == "testpackplugin" ]]; then
     [[ "$parm1" == "testpackplugin" ]] && set -xuv
     set -xuv
-    source helperScripts/compileToJarFile.sh $2 increasebuildonly
+    source ${SCRIPTS_DIR}/compileToJarFile.sh $2 increasebuildonly
 
     # Test pack does not put things to svn so it is safe to use. Test will not change the zip file but will increase the buildnumber.
-    source ${RODDY_DIRECTORY}/helperScripts/resolveAppConfig.sh
+    source ${SCRIPTS_DIR}/resolveAppConfig.sh
     pluginID=$2
     pluginDirectories=`grep pluginDirectories ${customconfigfile}`
-    pluginDirectory=`groovy ${RODDY_DIRECTORY}/helperScripts/findPluginFolders.groovy ${pluginDirectories} ${PWD} ${pluginID}`
+    pluginDirectory=`groovy ${SCRIPTS_DIR}/findPluginFolders.groovy ${pluginDirectories} ${PWD} ${pluginID}`
     for i in `ls ${pluginDirectory}/README*.txt`; do
-        groovy helperScripts/addChangelistVersionTag.groovy $i ${pluginDirectory}/buildversion.txt
+        groovy ${SCRIPTS_DIR}/addChangelistVersionTag.groovy $i ${pluginDirectory}/buildversion.txt
     done
 
     major=`head ${pluginDirectory}/buildversion.txt -n 1`
@@ -139,17 +126,11 @@ elif [[ "$parm1" == "packplugin" || "$parm1" == "testpackplugin" ]]; then
 
     # Only unzip if necessary!
 elif [[ "$parm1" == "createworkflow" ]]; then
-    source ${RODDY_DIRECTORY}/helperScripts/resolveAppConfig.sh
+    source ${SCRIPTS_DIR}/resolveAppConfig.sh
     pluginID=$2
     workflowID=$3
-    source ${RODDY_DIRECTORY}/helperScripts/createNewWorkflow.sh ${customconfigfile} ${pluginID} ${3-}
+    source ${SCRIPTS_DIR}/createNewWorkflow.sh ${customconfigfile} ${pluginID} ${3-}
     exit 0
 fi
 
-includedPluginLib=":$pluginbaseLib"
-
-# TODO Hardcoded fix for some newer functions which are available from version 2.1.49 on. 2.1.49+ automatically import the proper PluginBase.jar
-count=`groovy -e 'println (args[0][0..-4].split("[_]")[1].split("[.]").collect { (it as Integer) + 1000 }.join() as Long)' ${RODDY_BINARY}`
-[[ $count -ge 100210011049 ]] && $includedPluginLib=""
-set -xv
-java -cp .:$libraries$includedPluginLib:./${RODDY_BINARY} de.dkfz.roddy.Roddy $*
+java -cp .:$libraries:./${RODDY_BINARY} de.dkfz.roddy.Roddy $*

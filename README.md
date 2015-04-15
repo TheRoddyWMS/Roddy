@@ -47,6 +47,14 @@ processOptionsQueryID                   false
 This section contains features which are currently in development. Testable / active features
 are in the changelist.
 
+- (WIP) Roddy binaries, scripts and libraries will be stored in a different directory.
+  Insided dist, there will be several bin/{version} folders like 2.1.49. Inside those, the binary and necessary 
+  dependencies are store like i.e.:
+	dist/bin/2.1.49/Roddy.jar
+                       /helperScripts
+                       /lib
+  Regarding Runtime libraries handling like groovy and the JDK there is no good solution yet.
+
 - (WIP) Roddy accepts a lot more parameters which might otherwise be configured with the
   application properties file:
     useRoddyVersion, usePluginVersion,
@@ -58,6 +66,9 @@ are in the changelist.
 == Changelist
 
 * Version update to 2.1.49
+
+- (TEST) Roddy will perform a lot more checks before starting a workflow. These checks include file system
+  checks, file availability and some more. 
 
 - (TEST) Roddy will delete an execution directory if no jobs were submitted. This is not working
   with the SSH library SFTP client for unknown reasons.
@@ -73,6 +84,8 @@ are in the changelist.
 
   If the used plugins are not set, Roddy will try to load all plugins in
   their latest version.
+
+* Version update to 2.1.28
 
 * Version update to 2.1.27
 
