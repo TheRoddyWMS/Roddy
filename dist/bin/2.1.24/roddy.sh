@@ -18,7 +18,6 @@ fi
 #date +"%M %S %N"
 GROOVY_HOME=`ls -d ${PWD}/dist/runtime*/groovy 2> /dev/null`
 JAVA_HOME=`ls -d ${PWD}/dist/runtime*/jre 2> /dev/null`
-RODDY_BINARY=dist/Roddy.jar
 
 if [[ -z $JAVA_HOME ]]
 then
@@ -39,9 +38,6 @@ pluginbaseLib=${RODDY_DIRECTORY}/dist/plugins/PluginBase/PluginBase.jar
 jfxlibInfo=`cat ${JFX_LIBINFO_FILE}`
 libraries=`ls -d1 ${RODDY_BINARY_DIR}/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
 libraries=$libraries:$jfxlibInfo
-
-#Resolve the configuration file
-source ${SCRIPTS_DIR}/resolveAppConfig.sh
 
 #Is the roddy binary or anything set via command line?
 for i in $*

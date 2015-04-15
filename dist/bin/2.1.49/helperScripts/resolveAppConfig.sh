@@ -1,8 +1,8 @@
 #!/bin/sh
 # As of version 2.1.1, Roddy supports mutliple binary and plugin versions. So the useconfig option is already resolved here (and also in the roddy binary).
-#set -xuv
+
 customconfigfile=applicationProperties.ini
-#echo $@
+
 for option in $@
 do
     [[ $option == --useconfig* ]] && customconfigfile=${option:12:800}
@@ -25,9 +25,8 @@ then
     if [[ $_temp != 0 ]] && [[ $_temp != "useRoddyVersion=" ]]
     then
         useRoddyVersion=`cat ${customconfigfile} | grep useRoddyVersion | cut -d "=" -f 2`
-        [[ $useRoddyVersion == "current" ]] && RODDY_BINARY="dist/Roddy.jar"
-        [[ $useRoddyVersion != "current" ]] && RODDY_BINARY=`ls dist/Roddy*${useRoddyVersion}.jar` && echo "Using alternative Roddy version: $useRoddyVersion"
-
+        RODDY_BINARY_DIR=dist/bin/$useRoddyVersion
+        RODDY_BINARY=$RODDY_BINARY_DIR/Roddy.jar
+        RODDY_BSCRIPT=$RODDY_BINARY_DIR/roddy.sh
     fi
 fi
-#set +xuv
