@@ -16,7 +16,7 @@ cd $srcDirectory
 
 echo "Increasing build number and date"
 pluginClass=`find $srcDirectory -name "*Plugin.java" | head -n 1`
-groovy helperScripts/IncreaseAndSetBuildVersion.groovy $srcDirectory/buildversion.txt $pluginClass
+groovy ${RODDY_DIRECTORY}/helperScripts/IncreaseAndSetBuildVersion.groovy $srcDirectory/buildversion.txt $pluginClass
 echo "  Increased to" `head -n 1 $srcDirectory/buildversion.txt`.`tail -n 1 $srcDirectory/buildversion.txt`
 
 [[ $increasebuildonly == true ]] && echo "Compilation will be skipped!" && exit 0

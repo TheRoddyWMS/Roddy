@@ -1,0 +1,6 @@
+<configuration configurationType='project' name='testProjectImportLvl0' description='Test project' runtimeServiceClass='de.dkfz.roddy.knowledge.examples.SimpleRuntimeService' imports="testProjectImportLvl1">
+    <configurationvalues>
+
+        <cvalue name="useCentralAnalysisArchive" value="true" />
+    </configurationvalues>
+</configuration>

@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # This script wraps in another script.
-# The configuration file is sourced, all variables should be set via export
+# The configuration file is sourced and has to be sourced again in the wrapped script.
 # A job error entry is created in the results list along with a timestamp
-#   i.e. 1237474.tbi-pbs1,C,928130918393
+#   i.e. 1237474.tbi-pbs1,START,928130918393
 # This status is ignored if the script is currently planned or running
 # When the job finished an entry with the job scripts exit code is created with a timestamp
 #
 # Cluster options (like i.e. PBS ) have to be parsed and set before job submission!
-# They will possibly be ignored after the script is wrapped.
+# They will be ignored after the script is wrapped.
 
 source ${CONFIG_FILE}
 
@@ -68,6 +68,7 @@ export WRAPPED_SCRIPT=${WRAPPED_SCRIPT} # Export script so it can identify itsel
 mkdir -p ${DIR_TEMP} 2> /dev/null
 
 echo "Calling script ${WRAPPED_SCRIPT}"
+[[ ${enableJobProfiling-false} == true ]] && echo "Job profiling enabled"
 bash ${WRAPPED_SCRIPT}
 exitCode=$?
 echo "Exited script ${WRAPPED_SCRIPT} with value ${exitCode}"
