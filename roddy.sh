@@ -8,7 +8,7 @@ parm1=${1-}
 #Resolve the configuration file
 # TODO This script is one of the more important ones but could also underly changes.
 # Let's use the most current one by default but think hard if this is really good.
-source dist/bin/current/helperScripts/resolveAppConfig.sh
+source ${RODDY_DIRECTORY}/dist/bin/current/helperScripts/resolveAppConfig.sh
 
 overrideRoddyVersionParameter=""
 
@@ -17,7 +17,7 @@ for i in $*
 do
     if [[ $i == --useRoddyVersion* ]]; then
         overrideRoddyVersionParameter=${i:18:40}
-        RODDY_BINARY_DIR=dist/bin/${overrideRoddyVersionParameter}
+        RODDY_BINARY_DIR=${RODDY_DIRECTORY}/dist/bin/${overrideRoddyVersionParameter}
         RODDY_BINARY=$RODDY_BINARY_DIR/Roddy.jar
         RODDY_BSCRIPT=$RODDY_BINARY_DIR/roddy.sh
         if [[ ! -f $RODDY_BINARY  ]]; then

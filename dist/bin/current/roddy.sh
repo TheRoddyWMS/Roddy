@@ -53,13 +53,23 @@ elif [[ "$parm1" == "pack" ]]; then
     groovy ${SCRIPTS_DIR}/addChangelistVersionTag.groovy README.md RoddyCore/rbuildversions.txt
     major=`head RoddyCore/rbuildversions.txt -n 1`
     minor=`tail RoddyCore/rbuildversions.txt -n 1`
-    filename=${RODDY_BINARY_DIR}/Roddy.jar
-    cp dist/bin/current/Roddy.jar $filename
+
+    packedRoddyDir=${RODDY_DIRECTORY}/dist/bin/${major}.${minor}
+    packedZip=${RODDY_DIRECTORY}/dist/bin/Roddy_${major}.${minor}.zip
+    currentRoddyDir=${RODDY_DIRECTORY}/dist/bin/current
+    mkdir -p $packedRoddyDir
+
+    nfoFile=${packedRoddyDir}/Roddy.jar.nfo
+    cp -r $currentRoddyDir $packedRoddyDir
+
     svn info > ${filename}.nfo
     svn status >> ${filename}.nfo
-    find ${RODDY_DIRECTORY}/dist/bin/current >> ${filename}.nfo
-    ls -l ${RODDY_DIRECTORY}/dist/bin/current >> ${filename}.nfo
-    svn add ${filename} ${filename}.nfo
+    find ${packedRoddyDir} >> ${nfoFile}
+    ls -l ${packedRoddyDir} >> ${nfoFile}
+
+    cd ${RODDY_DIRECTORY}/dist/bin
+    zip -r9 $packedZip ${major}.${minor}
+
     exit 0
 elif [[ "$parm1" == "compileplugin" ]]; then
     echo "Using Roddy binary "`basename ${RODDY_BINARY}`
@@ -116,8 +126,8 @@ elif [[ "$parm1" == "packplugin" || "$parm1" == "testpackplugin" ]]; then
         svn add ${filename}.zip ${filename}.nfo 2> /dev/null
     fi
 
-    cd ..; echo "Done"; exit 0
-
+    cd ..; echo "Done";
+    exit 0
     # Only unzip if necessary!
 elif [[ "$parm1" == "createworkflow" ]]; then
     source ${SCRIPTS_DIR}/resolveAppConfig.sh

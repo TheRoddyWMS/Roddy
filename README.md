@@ -65,6 +65,8 @@ are in the changelist.
 
 == Changelist
 
+* Version update to 2.1.61
+
 * Version update to 2.1.49
 
 - (TEST) Roddy will perform a lot more checks before starting a workflow. These checks include file system
