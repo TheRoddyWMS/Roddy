@@ -15,7 +15,7 @@ JDK_HOME=$JAVA_HOME
 PATH=$JDK_HOME/bin:$GROOVY_HOME/bin:$PATH
 
 echo "Increasing build number and date"
-groovy helperScripts/IncreaseAndSetBuildVersion.groovy RoddyCore/rbuildversions.txt RoddyCore/src/de/dkfz/roddy/Constants.java &
+groovy ${SCRIPTS_DIR}/IncreaseAndSetBuildVersion.groovy RoddyCore/rbuildversions.txt RoddyCore/src/de/dkfz/roddy/Constants.java &
 
 echo "Searching source files"
 test=`find RoddyCore/src/ -type f \( -name "*.groovy" -or -name "*.java"  \)`
@@ -26,21 +26,24 @@ if [[ ! -f ~/.roddy/jfxlibInfo ]] || [[ ! -f `cat ~/.roddy/jfxlibInfo` ]]; then
 fi
 jfxLibrary=`cat ~/.roddy/jfxlibInfo`
 
-pluginbaseLib=dist/plugins/PluginBase/PluginBase.jar
-libraries=`ls -d1 dist/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
+# TODO Find proper PluginBase jar file Not the most current one!
+pluginbaseLib=${RODDY_DIRECTORY}/dist/plugins/PluginBase/PluginBase.jar
+libraries=`ls -d1 ${RODDY_DIRECTORY}/dist/bin/current/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
 libraries=$libraries:$pluginbaseLib:$jfxLibrary
 
 cd dist
-librariesForManifest=`ls -d1 lib/**`
+librariesForManifest=`ls -d1 ${RODDY_DIRECTORY}/dist/bin/current/lib/**`
 librariesForManifest="$librariesForManifest $pluginbaseLib $jfxLibrary"
 cd ..
 
+NEW_RODDY_BINARY=dist/bin/current/Roddy.jar
+
 echo "Creating necessary paths"
-[[ -f dist/Roddy.jar ]] && rm dist/Roddy.jar 2> /dev/null
+[[ -f ${NEW_RODDY_BINARY} ]] && rm ${NEW_RODDY_BINARY} 2> /dev/null
 rm -rf build
 rm -rf out
 mkdir -p build/classes
-mkdir -p dist/lib
+#mkdir -p dist/lib
 
 echo "Compiling solution"
 javac -version
@@ -61,20 +64,20 @@ echo $PWD
 classFiles=`find . -type f \( -name "*.class" \)`
 
 echo "Compressing files to dist/Roddy.jar"
-jar cmf ../../manifest.tmp ../../dist/Roddy.jar $classFiles
+jar cmf ../../manifest.tmp ../../${NEW_RODDY_BINARY} $classFiles
 cd ../../RoddyCore/src
 echo $PWD
 #set -xuv
 # Add JavaFX files and gui images
 fxmlFiles=`find . -type f \( -name "*.fxml" \)`
 cssFiles=`find . -type f \( -name "*.css" \)`
-jar uf ../../dist/Roddy.jar imgs/* $cssFiles $fxmlFiles
+jar uf ../../${NEW_RODDY_BINARY} imgs/* $cssFiles $fxmlFiles
 cd ../..
 echo $PWD
 
-javapackager -createjar -srcdir dist/ -srcfiles Roddy.jar -outdir dist/ -outfile RoddyPacked.jar
+javapackager -createjar -srcdir dist/bin/current -srcfiles Roddy.jar -outdir dist/bin/current -outfile RoddyPacked.jar
 
-mv dist/RoddyPacked.jar dist/Roddy.jar
+mv dist/bin/current/RoddyPacked.jar ${NEW_RODDY_BINARY}
 
 [ $? -ne 0 ] && "Error during compression" && exit $?
 

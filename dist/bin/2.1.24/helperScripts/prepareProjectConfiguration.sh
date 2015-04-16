@@ -45,8 +45,8 @@ if [[ $mode == "create" ]]; then
 	[[ ! $connection == ssh:* && ! $connection == "local" ]] && echo "Wrong connection type supplied, needs to be either ssh:(host) or local." && exit 3
 
 	mkdir -p $targetConfigFolder
-	cp helperScripts/skeletonProject.xml $targetConfigFolder/project.xml
-	cp helperScripts/skeletonAppProperties.ini $targetConfigFolder/applicationProperties.ini
+	cp ${SCRIPTS_DIR}/skeletonProject.xml $targetConfigFolder/project.xml
+	cp ${SCRIPTS_DIR}/skeletonAppProperties.ini $targetConfigFolder/applicationProperties.ini
 
 	if [[ $connection == ssh:* ]]; then
 		echo "CLI.executionServiceClass=de.dkfz.roddy.execution.io.SSHExecutionService" >> $targetConfigFolder/applicationProperties.ini

@@ -8,7 +8,8 @@ def pluginID = args[2]
 def workingDirectory = args[1]
 def pluginLine = ["${workingDirectory}/dist/plugins"]
 def pluginFolders = []
-pluginLine.addAll(args[0].split("[=]")[1].split("[,]"))
+def splitPlugin = args[0].split("[=]");
+if(splitPlugin.size() > 1) pluginLine.addAll(splitPlugin[1].split("[,]"))
 pluginLine.each { pl -> pluginFolders.addAll(new File(pl).listFiles().findAll { dir -> dir.isDirectory() }) }
 println(pluginFolders.find { it.name.endsWith(pluginID); })
 

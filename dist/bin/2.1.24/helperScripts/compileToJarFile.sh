@@ -3,26 +3,23 @@
 
 increasebuildonly=${increasebuildonly-false}
 
-#[[ "$1" == "" ]] && exit 5
-#[[ "$2" == "increasebuildonly" ]] && increasebuildonly=true
-
+# Check for configured plugin directories. Set empty if no dirs are configured.
 pluginDirectories=`grep pluginDirectories ${customconfigfile}`
+[[ -z "$pluginDirectories" ]] && pluginDirectories="pluginDirectories="
 
 #TODO Find other plugin directories as well
-set -xuv
 pluginID=$2
-srcDirectory=`groovy ${RODDY_DIRECTORY}/helperScripts/findPluginFolders.groovy ${pluginDirectories} ${RODDY_DIRECTORY} ${pluginID}`
+srcDirectory=`groovy ${SCRIPTS_DIR}/findPluginFolders.groovy ${pluginDirectories} ${RODDY_DIRECTORY} ${pluginID}`
 cd $srcDirectory
 
 echo "Increasing build number and date"
 pluginClass=`find $srcDirectory -name "*Plugin.java" | head -n 1`
-groovy ${RODDY_DIRECTORY}/helperScripts/IncreaseAndSetBuildVersion.groovy $srcDirectory/buildversion.txt $pluginClass
+groovy ${SCRIPTS_DIR}/IncreaseAndSetBuildVersion.groovy $srcDirectory/buildversion.txt $pluginClass
 echo "  Increased to" `head -n 1 $srcDirectory/buildversion.txt`.`tail -n 1 $srcDirectory/buildversion.txt`
 
 [[ $increasebuildonly == true ]] && echo "Compilation will be skipped!" && exit 0
 
 echo "Switching to plugin directory"
-set -xuv
 libName=$2
 
 echo "Creating necessary paths"
@@ -35,27 +32,28 @@ test=`find src/ -type f \( -name "*.groovy" -or -name "*.java"  \)`
 
 echo "Searching libraries"
 
-roddyLibrary=${RODDY_DIRECTORY}/${RODDY_BINARY}           #Always use the most current jar file.
+roddyLibrary=${RODDY_BINARY}
 jfxLibrary=`find $JDK_HOME/ -name "jfxrt.jar"`
-libraries=`ls -d1 ${RODDY_DIRECTORY}/dist/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
+libraries=`ls -d1 ${RODDY_BINARY_DIR}/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
 libraries=$roddyLibrary:$pluginbaseLib:$libraries:$jfxLibrary
 
 # Check if there is a buildinfo.txt and resolve additional library dependencies.
 if [[ -f buildinfo.txt ]]
 then
-    [[ $? == 0 ]] && pluginLibs=`groovy ${RODDY_DIRECTORY}/helperScripts/findPluginLibraries.groovy ${pluginDirectories} ${PWD}`
+    [[ $? == 0 ]] && pluginLibs=`groovy ${SCRIPTS_DIR}/findPluginLibraries.groovy ${pluginDirectories} ${RODDY_DIRECTORY} ${PWD}`
     [[ $? == 0 && $pluginLibs != "null" ]] && libraries=$libraries:$pluginLibs
 fi
 
 echo "Working in:" $PWD
 echo "Using jfx lib:" $jfxLibrary
-librariesForManifest=`ls -d1 ${RODDY_DIRECTORY}/dist/lib/*groo*`
-librariesForManifest="$librariesForManifest $pluginbaseLib $jfxLibrary ../Roddy.jar"
+librariesForManifest=`ls -d1 ${RODDY_BINARY_DIR}/lib/*groo*`
+librariesForManifest="$librariesForManifest $pluginbaseLib $jfxLibrary ${RODDY_BINARY}"
 
 echo "Compiling library / plugin in $1"
 javac -version
 groovyc -version
 uncheckedStr=""
+
 groovyc $uncheckedStr -d build/classes -cp $libraries -j $test
 [ "$?" -ne 0 ] && "Error during compilation" && exit $?
 

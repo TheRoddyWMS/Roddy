@@ -2,7 +2,6 @@
 
 cd `dirname $0`
 
-RODDY_DIRECTORY=`readlink -f .`
 parm1=${1-}
 
 # Call some scripts before other steps start.
@@ -33,8 +32,6 @@ if [[ ! -f ${JFX_LIBINFO_FILE} ]] || [[ ! -f `cat ${JFX_LIBINFO_FILE}` ]]; then
 	echo `find ${JAVA_HOME}/ -name "jfxrt.jar"` > ${JFX_LIBINFO_FILE}
 fi
 
-set -xuv
-
 #TODO Resolve the PluginBase.jar This might be set in the ini file.
 pluginbaseLib=${RODDY_DIRECTORY}/dist/plugins/PluginBase/PluginBase.jar
 jfxlibInfo=`cat ${JFX_LIBINFO_FILE}`
@@ -50,7 +47,7 @@ do
 done
 
 if [[ "$parm1" == "compile" ]]; then
-    bash ${SCRIPTS_DIR}/compile.sh
+    source ${SCRIPTS_DIR}/compile.sh
     exit 0
 elif [[ "$parm1" == "pack" ]]; then
     groovy ${SCRIPTS_DIR}/addChangelistVersionTag.groovy README.md RoddyCore/rbuildversions.txt
@@ -66,7 +63,6 @@ elif [[ "$parm1" == "pack" ]]; then
     exit 0
 elif [[ "$parm1" == "compileplugin" ]]; then
     echo "Using Roddy binary "`basename ${RODDY_BINARY}`
-    set -e
     source ${SCRIPTS_DIR}/compileToJarFile.sh
     exit 0
 elif [[ "$parm1" == "packplugin" || "$parm1" == "testpackplugin" ]]; then
@@ -131,5 +127,5 @@ elif [[ "$parm1" == "createworkflow" ]]; then
     exit 0
 fi
 
-java -cp .:$libraries:./${RODDY_BINARY} de.dkfz.roddy.Roddy $*
+java -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
 

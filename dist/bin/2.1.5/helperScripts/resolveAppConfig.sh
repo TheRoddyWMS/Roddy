@@ -25,8 +25,15 @@ then
     if [[ $_temp != 0 ]] && [[ $_temp != "useRoddyVersion=" ]]
     then
         useRoddyVersion=`cat ${customconfigfile} | grep useRoddyVersion | cut -d "=" -f 2`
-        RODDY_BINARY_DIR=dist/bin/$useRoddyVersion
+        RODDY_BINARY_DIR=${RODDY_DIRECTORY}/dist/bin/$useRoddyVersion
         RODDY_BINARY=$RODDY_BINARY_DIR/Roddy.jar
         RODDY_BSCRIPT=$RODDY_BINARY_DIR/roddy.sh
     fi
+fi
+
+if [[ -z ${RODDY_BINARY_DIR-} ]]
+then
+    RODDY_BINARY_DIR=${RODDY_DIRECTORY}/dist/bin/current
+    RODDY_BINARY=$RODDY_BINARY_DIR/Roddy.jar
+    RODDY_BSCRIPT=$RODDY_BINARY_DIR/roddy.sh
 fi
