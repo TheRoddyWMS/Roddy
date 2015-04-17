@@ -2,7 +2,6 @@
 
 cd `dirname $0`
 
-RODDY_DIRECTORY=`readlink -f .`
 parm1=${1-}
 
 # Call some scripts before other steps start.
@@ -33,8 +32,6 @@ if [[ ! -f ${JFX_LIBINFO_FILE} ]] || [[ ! -f `cat ${JFX_LIBINFO_FILE}` ]]; then
 	echo `find ${JAVA_HOME}/ -name "jfxrt.jar"` > ${JFX_LIBINFO_FILE}
 fi
 
-set -xuv
-
 #TODO Resolve the PluginBase.jar This might be set in the ini file.
 pluginbaseLib=${RODDY_DIRECTORY}/dist/plugins/PluginBase/PluginBase.jar
 jfxlibInfo=`cat ${JFX_LIBINFO_FILE}`
@@ -50,23 +47,32 @@ do
 done
 
 if [[ "$parm1" == "compile" ]]; then
-    bash ${SCRIPTS_DIR}/compile.sh
+    source ${SCRIPTS_DIR}/compile.sh
     exit 0
 elif [[ "$parm1" == "pack" ]]; then
     groovy ${SCRIPTS_DIR}/addChangelistVersionTag.groovy README.md RoddyCore/rbuildversions.txt
     major=`head RoddyCore/rbuildversions.txt -n 1`
     minor=`tail RoddyCore/rbuildversions.txt -n 1`
-    filename=${RODDY_BINARY_DIR}/Roddy.jar
-    cp dist/bin/current/Roddy.jar $filename
+
+    packedRoddyDir=${RODDY_DIRECTORY}/dist/bin/${major}.${minor}
+    packedZip=${RODDY_DIRECTORY}/dist/bin/Roddy_${major}.${minor}.zip
+    currentRoddyDir=${RODDY_DIRECTORY}/dist/bin/current
+    mkdir -p $packedRoddyDir
+
+    nfoFile=${packedRoddyDir}/Roddy.jar.nfo
+    cp -r $currentRoddyDir $packedRoddyDir
+
     svn info > ${filename}.nfo
     svn status >> ${filename}.nfo
-    find ${RODDY_DIRECTORY}/dist/bin/current >> ${filename}.nfo
-    ls -l ${RODDY_DIRECTORY}/dist/bin/current >> ${filename}.nfo
-    svn add ${filename} ${filename}.nfo
+    find ${packedRoddyDir} >> ${nfoFile}
+    ls -l ${packedRoddyDir} >> ${nfoFile}
+
+    cd ${RODDY_DIRECTORY}/dist/bin
+    zip -r9 $packedZip ${major}.${minor}
+
     exit 0
 elif [[ "$parm1" == "compileplugin" ]]; then
     echo "Using Roddy binary "`basename ${RODDY_BINARY}`
-    set -e
     source ${SCRIPTS_DIR}/compileToJarFile.sh
     exit 0
 elif [[ "$parm1" == "packplugin" || "$parm1" == "testpackplugin" ]]; then
@@ -120,8 +126,8 @@ elif [[ "$parm1" == "packplugin" || "$parm1" == "testpackplugin" ]]; then
         svn add ${filename}.zip ${filename}.nfo 2> /dev/null
     fi
 
-    cd ..; echo "Done"; exit 0
-
+    cd ..; echo "Done";
+    exit 0
     # Only unzip if necessary!
 elif [[ "$parm1" == "createworkflow" ]]; then
     source ${SCRIPTS_DIR}/resolveAppConfig.sh
@@ -131,5 +137,5 @@ elif [[ "$parm1" == "createworkflow" ]]; then
     exit 0
 fi
 
-java -cp .:$libraries:./${RODDY_BINARY} de.dkfz.roddy.Roddy $*
+java -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
 

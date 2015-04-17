@@ -34,7 +34,7 @@ if [[ ! -f ${JFX_LIBINFO_FILE} ]] || [[ ! -f `cat ${JFX_LIBINFO_FILE}` ]]; then
 fi
 
 #TODO Resolve the PluginBase.jar This might be set in the ini file.
-pluginbaseLib=${RODDY_DIRECTORY}/dist/plugins/PluginBase/PluginBase.jar
+pluginbaseLib=${RODDY_DIRECTORY}/dist/plugins/PluginBase_1.0.24/PluginBase.jar
 jfxlibInfo=`cat ${JFX_LIBINFO_FILE}`
 libraries=`ls -d1 ${RODDY_BINARY_DIR}/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
 libraries=$libraries:$jfxlibInfo
@@ -129,6 +129,8 @@ elif [[ "$parm1" == "createworkflow" ]]; then
     exit 0
 fi
 
+set -xuv
+
 includedPluginLib=":$pluginbaseLib"
 
-java -cp .:$libraries$includedPluginLib:./${RODDY_BINARY} de.dkfz.roddy.Roddy $*
+java -cp .:$libraries$includedPluginLib:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
