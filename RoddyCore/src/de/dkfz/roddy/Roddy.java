@@ -143,7 +143,6 @@ public class Roddy {
      */
     public static void main(String[] args) {
         try {
-
             //Check if Roddy is called from the right directory.
             //TODO Think about a better way to get Roddys base directory.
             String[] list = applicationDirectory.list((dir, name) -> name.equals("roddy.sh"));
@@ -317,10 +316,8 @@ public class Roddy {
                 proxySearch.addStrategy(ProxySearch.Strategy.ENV_VAR);
                 proxySearch.addStrategy(ProxySearch.Strategy.KDE);
 
-//                proxySearch.addStrategy(ProxySearch.Strategy.JAVA);
                 proxySearch.addStrategy(ProxySearch.Strategy.BROWSER);
                 ProxySelector proxySelector = proxySearch.getProxySelector();
-//                l = proxySelector.select(new URI("http://codemirror.net"));
                 ProxySelector.setDefault(proxySelector);
                 l = ProxySelector.getDefault().select(new URI("http://codemirror.net"));
             } catch (URISyntaxException e) {
@@ -575,7 +572,18 @@ public class Roddy {
         return applicationBundleDirectory;
     }
 
-    public static String getUsedRoddyVersion() { return getApplicationProperty("useRoddyVersion", LibrariesFactory.PLUGIN_VERSION_CURRENT); }
+    public static String getUsedRoddyVersion() {
+        String[] strClassPath = System.getProperty("java.class.path").split("[;:]");
+        if(getCommandLineCall().isOptionSet(RoddyStartupOptions.useRoddyVersion))
+            return getCommandLineCall().getOptionValue(RoddyStartupOptions.useRoddyVersion);
+        else
+            return getApplicationProperty("useRoddyVersion", LibrariesFactory.PLUGIN_VERSION_CURRENT);
+    }
+
+    public static File getRoddyBinaryFolder() {
+        String roddyVersion = getUsedRoddyVersion();
+        return RoddyIOHelperMethods.assembleLocalPath(applicationDirectory, "dist", "bin", roddyVersion);
+    }
 
     public static String[] getPluginVersionEntries() {
         String[] pluginVersionEntries;
