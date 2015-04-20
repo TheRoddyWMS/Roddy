@@ -68,8 +68,9 @@ export WRAPPED_SCRIPT=${WRAPPED_SCRIPT} # Export script so it can identify itsel
 mkdir -p ${DIR_TEMP} 2> /dev/null
 
 echo "Calling script ${WRAPPED_SCRIPT}"
-[[ ${enableJobProfiling-false} == true ]] && echo "Job profiling enabled"
-bash ${WRAPPED_SCRIPT}
+jobProfilerBinary=${JOB_PROFILER_BINARY-}
+[[ ${enableJobProfiling-false} == false ]] && jobProfilerBinary=""
+$jobProfilerBinary bash ${WRAPPED_SCRIPT}
 exitCode=$?
 echo "Exited script ${WRAPPED_SCRIPT} with value ${exitCode}"
 
