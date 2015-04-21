@@ -151,15 +151,13 @@ public class ProjectFactory {
         if (pluginPart && pluginPart.size() > "useplugin=".size()) {
             // Extract the plugin and its version.
             String pluginStr = pluginPart.split("[=]")[1]
-            pluginsAreLoaded = true;
-            librariesFactory.resolveAndLoadPlugins(pluginStr);
+            pluginsAreLoaded = librariesFactory.resolveAndLoadPlugins(pluginStr);
         }
 
         // If no plugin is set, load all libraries with the settings from the ini file
         String[] iniPluginVersion = Roddy.getPluginVersionEntries();
         if (!pluginsAreLoaded && iniPluginVersion) {
-            librariesFactory.resolveAndLoadPlugins(iniPluginVersion)
-            pluginsAreLoaded = true;
+            pluginsAreLoaded = librariesFactory.resolveAndLoadPlugins(iniPluginVersion)
         }
 
         // If this is also not set, load all libraries with the current version
