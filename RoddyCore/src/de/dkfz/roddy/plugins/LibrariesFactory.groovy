@@ -47,14 +47,16 @@ public class LibrariesFactory extends Initializable {
      * Resolve all used / necessary plugins and also look for miscrepancies.
      * @param usedPlugins
      */
-    public void resolveAndLoadPlugins(String[] usedPlugins) {
+    public boolean resolveAndLoadPlugins(String[] usedPlugins) {
         Map<String, PluginInfo> pluginsToActivate = [:];
         loadMapOfAvailablePlugins();
 
         Map<String, String> pluginsToCheck = usedPlugins.collectEntries { String requestedPlugin ->
             String[] pSplit = requestedPlugin.split(StringConstants.SPLIT_COLON);
             String id = pSplit[0];
-            String version = pSplit[1];
+            String version = "current";
+            if (pSplit.length >= 2)
+                version = pSplit[1];
             [id, version];
         }
 
@@ -64,6 +66,11 @@ public class LibrariesFactory extends Initializable {
             String version = pluginsToCheck[id];
             pluginsToCheck.remove(id, version);
 
+            if(!mapOfPlugins[id] || !mapOfPlugins[id][version]) {
+                logger.severe("The plugin ${id}:${version} could not be found, are the plugin paths properly set?");
+                return false;
+            }
+
             PluginInfo pInfo = mapOfPlugins[id][version];
             if (pInfo == null)
                 pInfo = mapOfPlugins[id][PLUGIN_VERSION_CURRENT]
@@ -71,7 +78,8 @@ public class LibrariesFactory extends Initializable {
                 continue;
             if (pluginsToActivate[id] != null) {
                 if (pluginsToActivate[id].prodVersion != version) {
-                    throw new RuntimeException("There is a version mismatch for plugin dependencies! Not starting up.");
+                    logger.severe("There is a version mismatch for plugin dependencies! Not starting up.");
+                    return false;
                 } else {
                     //Not checking again!
                 }
@@ -82,6 +90,7 @@ public class LibrariesFactory extends Initializable {
         }
         loadedPlugins = pluginsToActivate.values() as List;
         loadLibraries(loadedPlugins);
+        return true;
     }
 
     public List<PluginInfo> getLoadedPlugins() {
@@ -171,6 +180,8 @@ public class LibrariesFactory extends Initializable {
                     }
                     if (!pluginDependencies.containsKey(PLUGIN_BASEPLUGIN))
                         pluginDependencies.put(PLUGIN_BASEPLUGIN, PLUGIN_VERSION_CURRENT);
+                    if (!pluginDependencies.containsKey("DefaultPlugin"))
+                        pluginDependencies.put("DefaultPlugin", PLUGIN_VERSION_CURRENT);
                 }
 
                 mapOfPlugins.get(pluginName, [:])[pluginVersion] = new PluginInfo(pluginName, zipFile, prodEntry, develEntry, pluginVersion, pluginDependencies);

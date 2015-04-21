@@ -60,17 +60,7 @@ public class ConfigurationFactory {
     }
 
     private void loadAvailableProjectConfigurationFiles() {
-        List<File> pipelineDirectories = [];
-        pipelineDirectories << RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "resources", "configurationFiles");
-        String[] split;
-        if (Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.pluginDirectories))
-            split = Roddy.getCommandLineCall().getOptionValue(RoddyStartupOptions.pluginDirectories).split("[,:]");
-        else
-            split = Roddy.getApplicationProperty(Constants.APP_PROPERTY_CONFIGURATION_DIRECTORIES).split("[,:]")
-
-        for (String e in split) {
-            pipelineDirectories << new File(e);
-        }
+        List<File> pipelineDirectories = Roddy.getConfigurationDirectories();
 
         List<File> allFiles = []
         for (File baseDir in pipelineDirectories) {
@@ -262,7 +252,7 @@ public class ConfigurationFactory {
                 config.addParent(cfg);
             } catch (Exception ex) {
                 logger.severe("Configuration ${ic} cannot be read!" + ex.toString());
-                Thread.dumpStack();
+//                Thread.dumpStack();
             }
         }
         return config;

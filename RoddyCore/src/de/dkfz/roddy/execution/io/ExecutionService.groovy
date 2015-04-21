@@ -139,10 +139,6 @@ public abstract class ExecutionService extends CacheProvider {
         ExecutionResult er = null;
         if (string) {
             List<String> result = _execute(string, waitFor, true, outputStream);
-//            System.out.println("" + (outputStream != null));
-//            for (String line : result) {
-//                System.out.println(line);
-//            }
             String returnCodeStr = result[0];
             String processID = result[1];
             if (returnCodeStr == null) {
@@ -248,7 +244,7 @@ public abstract class ExecutionService extends CacheProvider {
 
         Boolean projectExecCacheFileIsWritable = fis.fileExists(projectExecCacheFile) ? fis.isReadable(projectExecCacheFile) && fis.isWritable(projectExecCacheFile) : null
         Boolean projectExecutionContextDirIsWritable = fis.directoryExists(projectExecutionDirectory) ? fis.isReadable(projectExecutionDirectory) && fis.directoryExists(projectExecutionDirectory) : null;
-        Boolean projectToolsMD5SumFileIsWritable = fis.fileExists(projectToolsMD5SumFile) ? fis.isReadable(projectToolsMD5SumFile) && fis.isWritable(projectToolsMD5SumFile) : null
+        Boolean projectToolsMD5SumFileIsWritable = fis.fileExists(projectToolsMD5SumFile) ? fis.isReadable(projectToolsMD5SumFile) && fis.isWritable(projectToolsMD5SumFile) : projectExecutionContextDirIsWritable
         Boolean baseContextDirIsWritable = fis.directoryExists(baseContextExecutionDirectory) ?  fis.isReadable(baseContextExecutionDirectory) && fis.isWritable(baseContextExecutionDirectory) : null;
 
         int countErrors = context.getErrors().sum(0) { ExecutionContextError ece -> ece.getErrorLevel() == Level.SEVERE ? 1 : 0 } as Integer
@@ -402,11 +398,8 @@ public abstract class ExecutionService extends CacheProvider {
         boolean useCentralAnalysisArchive = cfg.getUseCentralAnalysisArchive();
 
         //Current analysisTools directory (they are also used for execution)
-//        File sourcePath = new File(".", analysisToolsDirectory.name);
-        List<File> sourcePaths = new LinkedList<>(Arrays.asList(RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "resources", "analysisTools").listFiles()));
-//        Map<String, File> allToolDirectories = new LinkedHashMap<>();
+        List<File> sourcePaths = [];
         for (PluginInfo pluginInfo : LibrariesFactory.getInstance().getLoadedPlugins()) {
-//            allToolDirectories.putAll(pluginInfo.getToolsDirectories());
             sourcePaths.addAll(pluginInfo.getToolsDirectories().values());
         }
 
@@ -519,7 +512,7 @@ public abstract class ExecutionService extends CacheProvider {
                     GString str = RoddyIOHelperMethods.getCompressor().getDecompressionString(new File(dstCommonExecutionDirectory, remoteFile.getName()), analysisToolsServerDir, analysisToolsServerDir);
                     getInstance().execute(str, true);
                     provider.setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.getAbsolutePath()), context);
-                    if(provider.directoryExists(analysisToolsServerDir))
+                    if(!provider.directoryExists(analysisToolsServerDir))
                         context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND.expand("The central archive ${analysisToolsServerDir.absolutePath} was not created!"))
 
                 }

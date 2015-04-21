@@ -536,12 +536,12 @@ public class Roddy {
         return new File(getCompressedAnalysisToolsDirectory(), "listOfCompressedFiles.txt");
     }
 
-    public static List<File> getPluginDirectories() {
+    private static List<File> loadFolderListFromConfiguration(RoddyStartupOptions option, String configurationConstant) {
         String[] split;
-        if(getCommandLineCall().isOptionSet(RoddyStartupOptions.pluginDirectories))
-            split = getCommandLineCall().getOptionValue(RoddyStartupOptions.pluginDirectories).split(StringConstants.SPLIT_COMMA);
+        if(getCommandLineCall().isOptionSet(option))
+            split = getCommandLineCall().getOptionValue(option).split(StringConstants.SPLIT_COMMA);
         else
-            split = Roddy.getApplicationProperty(Constants.APP_PROPERTY_PLUGIN_DIRECTORIES, "").split(StringConstants.SPLIT_COLON);
+            split = Roddy.getApplicationProperty(configurationConstant, "").split("[,:]");
 
         List<File> folders = new LinkedList<>();
         for (String s : split) {
@@ -549,10 +549,23 @@ public class Roddy {
             if (f.exists())
                 folders.add(f);
         }
+        return folders;
+    }
+
+    public static List<File> getConfigurationDirectories() {
+        return loadFolderListFromConfiguration(RoddyStartupOptions.configurationDirectories, Constants.APP_PROPERTY_CONFIGURATION_DIRECTORIES);
+    }
+
+    public static List<File> getPluginDirectories() {
+        List<File> folders = loadFolderListFromConfiguration(RoddyStartupOptions.pluginDirectories, Constants.APP_PROPERTY_PLUGIN_DIRECTORIES);
+
+        // TODO For backward compatibility the following plugin folders will be used in an hardcoded way
         File pFolder = RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "plugins");
         File pFolder2 = RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins");
+        File pFolder3 = RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins_2.49plus");
         if (pFolder.exists()) folders.add(pFolder);
         if (pFolder2.exists()) folders.add(pFolder2);
+        if (pFolder3.exists()) folders.add(pFolder3);
         return folders;
     }
 
