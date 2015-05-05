@@ -32,6 +32,8 @@ public class LibrariesFactory extends Initializable {
 
     private Map<String, Map<String, PluginInfo>> mapOfPlugins = [:];
 
+    private boolean librariesAreLoaded = false;
+
     /**
      * This resets the singleton and is not thread safe!
      * Actually only creates a new singleton clearing out old values.
@@ -66,7 +68,7 @@ public class LibrariesFactory extends Initializable {
             String version = pluginsToCheck[id];
             pluginsToCheck.remove(id, version);
 
-            if(!mapOfPlugins[id] || !mapOfPlugins[id][version]) {
+            if (!mapOfPlugins[id] || !mapOfPlugins[id][version]) {
                 logger.severe("The plugin ${id}:${version} could not be found, are the plugin paths properly set?");
                 return false;
             }
@@ -90,7 +92,12 @@ public class LibrariesFactory extends Initializable {
         }
         loadedPlugins = pluginsToActivate.values() as List;
         loadLibraries(loadedPlugins);
+        librariesAreLoaded = true;
         return true;
+    }
+
+    public boolean areLibrariesLoaded() {
+        return librariesAreLoaded
     }
 
     public List<PluginInfo> getLoadedPlugins() {

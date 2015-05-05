@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="configuration" type="configurationType"/>
+    <xs:complexType name="availableAnalysesType">
+        <xs:sequence>
+            <xs:element type="analysisType" name="analysis" maxOccurs="unbounded" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="analysisType" mixed="true">
+        <xs:sequence>
+            <xs:element type="configurationvaluesType" name="configurationvalues" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute type="xs:string" name="id" use="required"/>
+        <xs:attribute type="xs:string" name="configuration" use="required"/>
+        <xs:attribute type="xs:string" name="useplugin" use="optional"/>
+    </xs:complexType>
+    <xs:complexType name="configurationvaluesType" mixed="true">
+        <xs:sequence>
+            <xs:element type="cvalueType" name="cvalue" maxOccurs="unbounded" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="cvalueType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute type="xs:string" name="name" use="required"/>
+                <xs:attribute type="xs:string" name="value" use="required"/>
+                <xs:attribute type="xs:string" name="type" use="optional" default="string"/>
+                <xs:attribute type="xs:string" name="description" use="optional"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    <xs:complexType name="processingToolsType">
+        <xs:sequence>
+            <xs:element type="toolType" name="tool"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="toolType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute type="xs:string" name="name" use="required"/>
+                <xs:attribute type="xs:string" name="value" use="required"/>
+                <xs:attribute type="xs:string" name="basepath" use="required"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    <xs:complexType name="subconfigurationsType">
+        <xs:sequence>
+            <xs:element type="configurationType" name="configuration" maxOccurs="unbounded" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="configurationType">
+        <xs:sequence>
+            <xs:element type="availableAnalysesType" name="availableAnalyses" minOccurs="0" maxOccurs="1"/>
+            <xs:element type="configurationvaluesType" name="configurationvalues" minOccurs="0" maxOccurs="1"/>
+            <xs:element type="processingToolsType" name="processingTools" minOccurs="0" maxOccurs="1"/>
+            <xs:element type="subconfigurationsType" name="subconfigurations" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute type="xs:string" name="name" use="required"/>
+        <xs:attribute type="xs:string" name="usedresourcessize" use="optional" default="l"/>
+        <xs:attribute type="xs:string" name="inheritAnalyses" use="optional" default="true"/>
+        <xs:attribute type="xs:string" name="configurationType" use="optional" fixed="project"/>
+        <xs:attribute type="xs:string" name="description" use="optional"/>
+        <xs:attribute type="xs:string" name="imports" use="optional"/>
+    </xs:complexType>
+</xs:schema>
