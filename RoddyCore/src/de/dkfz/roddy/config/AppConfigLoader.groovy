@@ -1,6 +1,7 @@
 package de.dkfz.roddy.config
 
-import de.dkfz.roddy.StringConstants;
+import de.dkfz.roddy.StringConstants
+
 
 /**
  * Java basically provides an ini file loading class. When using this class, there were several problems:
@@ -10,22 +11,48 @@ import de.dkfz.roddy.StringConstants;
 @groovy.transform.CompileStatic
 public class AppConfigLoader {
 
+    private class Entry {
+
+        private String line;
+
+        private int lineNo;
+
+        private String key;
+
+        private List<String> values;
+
+        private String comment;
+
+
+        public boolean isEmpty() {
+            return line.split(StringConstants.SPLIT_HASH)[0].trim();
+        }
+
+        public boolean isHeader() {
+
+        }
+
+        public boolean isContent() {
+
+        }
+    }
+
     /**
      * A copy of the entries in the ini file.
      */
-    private final Map<String, String> entries = [:];
+    private final Map<String, Entry> entries = [:];
 
     public AppConfigLoader(String file) {
         this(new File(file));
     }
 
     public AppConfigLoader(File file) {
-        file.eachLine {
-            String line ->
-                // Split away comments and trim the line
-                String[] splitline = line.split(StringConstants.SPLIT_HASH)[0].trim().split(StringConstants.SPLIT_EQUALS, 2)
-                String key = splitline[0];
-                String value = splitline.size() > 1 ? splitline[1];
-        };
+//        file.eachLine {
+//            String line ->
+//                // Split away comments and trim the line
+//                String[] splitline = line.split(StringConstants.SPLIT_HASH)[0].trim().split(StringConstants.SPLIT_EQUALS, 2)
+//                String key = splitline[0];
+//                String value = splitline.size() > 1 ? splitline[1];
+//        };
     }
 }

@@ -47,13 +47,7 @@ processOptionsQueryID                   false
 This section contains features which are currently in development. Testable / active features
 are in the changelist.
 
-- (WIP) Roddy binaries, scripts and libraries will be stored in a different directory.
-  Insided dist, there will be several bin/{version} folders like 2.1.49. Inside those, the binary and necessary 
-  dependencies are store like i.e.:
-	dist/bin/2.1.49/Roddy.jar
-                       /helperScripts
-                       /lib
-  Regarding Runtime libraries handling like groovy and the JDK there is no good solution yet.
+- (WIP) XML validation will take place when XML files are loaded.
 
 - (WIP) Roddy accepts a lot more parameters which might otherwise be configured with the
   application properties file:
@@ -65,7 +59,13 @@ are in the changelist.
 
 == Changelist
 
-* Version update to 2.1.61
+- (TEST) Roddy binaries, scripts and libraries will be stored in a different directory.
+  Insided dist, there will be several bin/{version} folders like 2.1.49. Inside those, the binary and necessary
+  dependencies are store like i.e.:
+        dist/bin/2.1.49/Roddy.jar
+                       /helperScripts
+                       /lib
+  Regarding Runtime libraries handling like groovy and the JDK there is no good solution yet.
 
 * Version update to 2.1.49
 
