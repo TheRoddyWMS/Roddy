@@ -32,7 +32,7 @@ public class XSDValidator {
         } else if(icc.type == Configuration.ConfigurationType.ANALYSIS) {
             xsdString = RoddyIOHelperMethods.assembleLocalPath(Roddy.getRoddyBinaryFolder(), "xmlvalidation", "analysisConfigurationValidation.xst").text;
         } else {
-            return true;
+            xsdString = RoddyIOHelperMethods.assembleLocalPath(Roddy.getRoddyBinaryFolder(), "xmlvalidation", "commonConfigurationValidation.xst").text;
         }
 
         def list = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
