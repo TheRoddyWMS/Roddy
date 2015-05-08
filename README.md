@@ -47,6 +47,8 @@ processOptionsQueryID                   false
 This section contains features which are currently in development. Testable / active features
 are in the changelist.
 
+- (WIP) New app ini loader
+
 - (WIP) XML validation will take place when XML files are loaded.
 
 - (WIP) Roddy accepts a lot more parameters which might otherwise be configured with the
