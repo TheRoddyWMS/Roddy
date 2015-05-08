@@ -103,7 +103,7 @@ class RoddyIOHelperMethods {
         @Override
         GString getDecompressionString(File from, File to, File workingDirectory = null) {
             String wdPath = getWorkingDirectory(to, workingDirectory);
-            GString gString = "${wdPath} unzip ${from} > /dev/null";
+            GString gString = "${wdPath} unzip -o ${from} > /dev/null";
             return gString;
         }
     }
