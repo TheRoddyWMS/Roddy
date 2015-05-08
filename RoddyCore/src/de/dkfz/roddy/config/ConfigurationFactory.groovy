@@ -2,6 +2,7 @@ package de.dkfz.roddy.config
 
 import de.dkfz.roddy.*
 import de.dkfz.roddy.client.RoddyStartupOptions
+import de.dkfz.roddy.config.validation.XSDValidator
 import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
 import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.Roddy
@@ -213,6 +214,8 @@ public class ConfigurationFactory {
             subConf << _loadInformationalConfigurationContent(file, text, subConfiguration, icc);
         }
 
+        XSDValidator.validate(icc);
+
         return icc;
     }
 
@@ -243,6 +246,8 @@ public class ConfigurationFactory {
         loadConfiguration(icc);
     }
 
+    private Map filesNotFoundCache = [:];
+
     public Configuration loadConfiguration(InformationalConfigurationContent icc) {
         Configuration config = _loadConfiguration(icc);
 
@@ -251,8 +256,8 @@ public class ConfigurationFactory {
                 Configuration cfg = getConfiguration(ic);
                 config.addParent(cfg);
             } catch (Exception ex) {
-                logger.severe("Configuration ${ic} cannot be read!" + ex.toString());
-//                Thread.dumpStack();
+                if (LibrariesFactory.getInstance().areLibrariesLoaded())
+                    logger.severe("Configuration ${ic} cannot be read!" + ex.toString());
             }
         }
         return config;
@@ -340,8 +345,6 @@ public class ConfigurationFactory {
             List<String> listOfUsedTools = _listOfUsedTools.size() > 0 && _listOfUsedTools[0] ? Arrays.asList(_listOfUsedTools) : null;
             List<String> usedToolFolders = _usedToolFolders.size() > 0 && _usedToolFolders[0] ? Arrays.asList(_usedToolFolders) : null;
             Map<String, TestDataOption> testdataOptions = new HashMap<>();
-
-
 
             for (NodeChild testdataoption in configurationNode.testdataoptions.testdataoption) {
                 String tdId = extractAttributeText((NodeChild) testdataoption, "id", "small");

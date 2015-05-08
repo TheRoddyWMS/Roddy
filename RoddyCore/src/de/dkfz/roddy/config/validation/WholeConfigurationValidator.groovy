@@ -31,6 +31,7 @@ public class WholeConfigurationValidator extends ConfigurationValidator {
             logger.info("Not revalidating configuration ${configuration.name}; Already invalid.")
             return false
         };
+
         boolean valid = true;
         try {
             List<ConfigurationValue> unValidatedConfigurationValues = [];
