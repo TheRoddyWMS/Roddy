@@ -176,6 +176,9 @@ public class RoddyCLIClient {
         //TODO Convert to CommandLineCall
         String[] args = clc.getArguments();
         switch (clc.startupMode) {
+            case printappconfig:
+                printApplicationConfiguration();
+                break;
             case showconfigpaths:
                 showConfigurationPaths();
                 break;
@@ -237,6 +240,11 @@ public class RoddyCLIClient {
 //            }
         }
     }
+
+    public static void printApplicationConfiguration() {
+        println(Roddy.getApplicationConfiguration());
+    }
+
 /**
  * List up configuration paths and the files in those.
  * @param args

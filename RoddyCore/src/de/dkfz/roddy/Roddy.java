@@ -4,7 +4,7 @@ import com.btr.proxy.search.ProxySearch;
 import de.dkfz.roddy.client.RoddyStartupModes;
 import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
-import de.dkfz.roddy.config.ConfigurationFactory;
+import de.dkfz.roddy.config.AppConfig;
 import de.dkfz.roddy.core.Initializable;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
@@ -25,9 +25,6 @@ import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.*;
 
@@ -47,7 +44,7 @@ import static de.dkfz.roddy.StringConstants.FALSE;
 public class Roddy {
 
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(Roddy.class.getName());
-    private static final Properties applicationProperties = new Properties();
+    private static AppConfig applicationProperties;
 
     private static RunMode runMode;
     private static boolean mainStarted = false;
@@ -277,10 +274,6 @@ public class Roddy {
      */
     public static final boolean initializeServices(boolean fullSetup) {
         try {
-//            LibrariesFactory.initializeFactory();
-//
-//            ConfigurationFactory.getInstance();
-
             // Configure a proxy for internet connection. Used i.e. for codemirror
             initializeProxySettings();
 
@@ -384,75 +377,31 @@ public class Roddy {
     }
 
     public static void exit(int ecode) {
-        writePropertiesFile();
+//        writePropertiesFile();
         Initializable.destroyAll();
         System.exit(ecode <= 250 ? ecode : 250); //Exit codes should be in range from 0 .. 255
     }
 
     public static void loadPropertiesFile() {
-        try {
-            File file = getPropertiesFilePath();
-            logger.postSometimesInfo("Loading properties file: " + file.getAbsolutePath());
-            if (!file.exists()) file.createNewFile();
-            BufferedInputStream stream = new BufferedInputStream(new FileInputStream(file));
-            applicationProperties.load(stream);
-
-            getApplicationProperty("useRoddyVersion", LibrariesFactory.PLUGIN_VERSION_CURRENT); // Load some default properties
-            getApplicationProperty("usePluginVersion");
-            getApplicationProperty("pluginDirectories");
-            getApplicationProperty("configurationDirectories");
-
-            if (LoggerWrapper.getVerbosityLevel() >= LoggerWrapper.VERBOSITY_HIGH) {
-                for (Object o : applicationProperties.keySet()) {
-                    boolean isSet = applicationProperties.get(o).toString().length() > 0;
-                    if (!isSet) logger.postRareInfo("Property " + o.toString() + " is not set");
-                }
-            }
-            stream.close();
-        } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        File file = getPropertiesFilePath();
+        logger.postSometimesInfo("Loading properties file: " + file.getAbsolutePath());
+        if (!file.exists()) {
+            // Skip and exit!
+            logger.postAlwaysInfo("Could not load the application properties file: Exitting");
+            exit(1);
         }
+
+        applicationProperties = new AppConfig(file);
+
+        getApplicationProperty("useRoddyVersion", LibrariesFactory.PLUGIN_VERSION_CURRENT); // Load some default properties
+        getApplicationProperty("usePluginVersion");
+        getApplicationProperty("pluginDirectories");
+        getApplicationProperty("configurationDirectories");
+
     }
 
-    private static void writePropertiesFile() {
-        File file = getPropertiesFilePath();
-        File tempFile = null;
-        try {
-            tempFile = File.createTempFile("roddy_config", ".ini");
-            tempFile.delete();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        tempFile.deleteOnExit();
-        try {
-
-            Files.copy(Paths.get(file.getAbsolutePath()), Paths.get(tempFile.getAbsolutePath()));
-            if (!file.exists()) file.createNewFile();
-            BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
-            final Map<RunMode, String> tempPasswords = new LinkedHashMap<>();
-            for (RunMode mode : RunMode.values()) {
-                boolean storePWD = false; //This will now always be set to false as a security request! Either use keyfiles or type it in.
-                //Roddy.getApplicationProperty(mode, Constants.APP_PROPERTY_EXECUTION_SERVICE_STORE_PWD, Boolean.FALSE.toString()).equals(Boolean.TRUE.toString());
-                tempPasswords.put(mode, getApplicationProperty(mode, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_PWD));
-                if (!storePWD)
-                    setApplicationProperty(mode, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_PWD, "");
-            }
-            applicationProperties.store(stream, "No comment");
-            stream.close();
-            for (RunMode mode : RunMode.values()) {
-                boolean storePWD = false;// Roddy.getApplicationProperty(mode, Constants.APP_PROPERTY_EXECUTION_SERVICE_STORE_PWD, Boolean.FALSE.toString()).equals(Boolean.TRUE.toString());
-                if (!storePWD)
-                    setApplicationProperty(mode, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_PWD, tempPasswords.get(runMode));
-            }
-        } catch (IOException e) {
-            logger.postAlwaysInfo("The ini file could not be written. Do you have sufficient rights?");
-            try {
-                Files.copy(Paths.get(tempFile.getAbsolutePath()), Paths.get(file.getAbsolutePath()));
-                Files.delete(Paths.get(tempFile.getAbsolutePath()));
-            } catch(Exception ex) {
-                logger.postAlwaysInfo("The ini file could not be reverted. Do you have sufficient rights?");
-            }
-        }
+    public static AppConfig getApplicationConfiguration() {
+        return applicationProperties;
     }
 
     public static String getApplicationProperty(String pName) {
