@@ -15,9 +15,28 @@
         <xs:attribute type="xs:string" name="configuration" use="required"/>
         <xs:attribute type="xs:string" name="useplugin" use="optional"/>
     </xs:complexType>
+    <xs:complexType name="filenamesType">
+        <xs:sequence>
+            <xs:element type="filenameType" name="filename" maxOccurs="unbounded" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute type="xs:string" name="package"/>
+        <xs:attribute type="xs:string" name="filestagesbase"/>
+    </xs:complexType>
+    <xs:complexType name="filenameType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute type="xs:string" name="class" use="optional"/>
+                <xs:attribute type="xs:string" name="derivedFrom" use="optional"/>
+                <xs:attribute type="xs:string" name="pattern" use="optional"/>
+                <xs:attribute type="xs:string" name="onMethod" use="optional"/>
+                <xs:attribute type="xs:string" name="selectiontag" use="optional"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
     <xs:complexType name="configurationvaluesType" mixed="true">
         <xs:sequence>
             <xs:element type="cvalueType" name="cvalue" maxOccurs="unbounded" minOccurs="0"/>
+            <xs:element type="configurationValueBundleType" name="configurationValueBundle" maxOccurs="unbounded" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="cvalueType">
@@ -29,6 +48,12 @@
                 <xs:attribute type="xs:string" name="description" use="optional"/>
             </xs:extension>
         </xs:simpleContent>
+    </xs:complexType>
+    <xs:complexType name="configurationValueBundleType">
+        <xs:sequence>
+            <xs:element type="cvalueType" name="cvalue" maxOccurs="unbounded" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute type="xs:string" name="name" use="optional"/>
     </xs:complexType>
     <xs:complexType name="processingToolsType">
         <xs:sequence>
@@ -48,7 +73,7 @@
     </xs:complexType>
     <xs:complexType name="resourcesetsType">
         <xs:sequence>
-            <xs:element type="rsetType" name="rset"/>
+            <xs:element type="rsetType" name="rset" maxOccurs="unbounded" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="rsetType">
@@ -70,6 +95,7 @@
                 <xs:attribute type="xs:string" name="typeof"/>
                 <xs:attribute type="xs:string" name="scriptparameter"/>
                 <xs:attribute type="xs:string" name="setby"/>
+                <xs:attribute type="xs:string" name="passas"/>
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
@@ -95,6 +121,7 @@
             <xs:element type="configurationvaluesType" name="configurationvalues" minOccurs="0" maxOccurs="1"/>
             <xs:element type="processingToolsType" name="processingTools" minOccurs="0" maxOccurs="1"/>
             <xs:element type="subconfigurationsType" name="subconfigurations" minOccurs="0" maxOccurs="1"/>
+            <xs:element type="filenamesType" name="filenames" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
         <xs:attribute type="xs:string" name="name" use="required"/>
         <xs:attribute type="xs:string" name="usedresourcessize" use="optional" default="l"/>
