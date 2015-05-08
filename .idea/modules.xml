@@ -2,11 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Plugins/COWorkflows/COWorkflows.iml" filepath="$PROJECT_DIR$/Plugins/COWorkflows/COWorkflows.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Plugins/PluginBase/PluginBase.iml" filepath="$PROJECT_DIR$/Plugins/PluginBase/PluginBase.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Roddy.iml" filepath="$PROJECT_DIR$/Roddy.iml" />
       <module fileurl="file://$PROJECT_DIR$/RoddyCore/RoddyCore.iml" filepath="$PROJECT_DIR$/RoddyCore/RoddyCore.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Plugins/Template/Template.iml" filepath="$PROJECT_DIR$/Plugins/Template/Template.iml" />
     </modules>
   </component>
 </project>
