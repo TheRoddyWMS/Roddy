@@ -16,9 +16,6 @@ import de.dkfz.roddy.plugins.LibrariesFactory;
 import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
-//import sun.misc.Signal;
-//import sun.misc.SignalHandler;
-//import sun.tools.jar.CommandLine;
 
 import java.io.*;
 import java.net.InetSocketAddress;

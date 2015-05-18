@@ -1,5 +1,6 @@
-package de.dkfz.roddy.config.validation;
+package de.dkfz.roddy.config.validation
 
+import com.stackoverflow.questions.xmlvalidation.ResourceResolver
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.config.InformationalConfigurationContent;
@@ -34,9 +35,12 @@ public class XSDValidator {
         } else {
             xsdString = RoddyIOHelperMethods.assembleLocalPath(Roddy.getRoddyBinaryFolder(), "xmlvalidation", "commonConfigurationValidation.xst").text;
         }
+        String xsdCommonString = RoddyIOHelperMethods.assembleLocalPath(Roddy.getRoddyBinaryFolder(), "xmlvalidation", "commonValidationDefinitions.xst").text;
 
-        def list = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
-                .newSchema(new StreamSource(new StringReader(xsdString)))
+        def factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        factory.setResourceResolver(new ResourceResolver(RoddyIOHelperMethods.assembleLocalPath(Roddy.getRoddyBinaryFolder(), "xmlvalidation/").absolutePath));
+
+        def list = factory.newSchema(  new StreamSource(new StringReader(xsdString))  )
                 .newValidator().with { validator ->
             List exceptions = []
             Closure<Void> handler = { exception -> exceptions << exception }
