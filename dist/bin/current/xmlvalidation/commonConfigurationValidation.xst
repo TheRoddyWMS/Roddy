@@ -112,10 +112,10 @@
     <xs:complexType name="configurationType">
         <xs:sequence>
             <xs:element type="configurationvaluesType" name="configurationvalues" minOccurs="0" maxOccurs="1"/>
+            <xs:element type="enumerationsType" name="enumerations" minOccurs="0" maxOccurs="1"/>
             <xs:element type="processingToolsType" name="processingTools" minOccurs="0" maxOccurs="1"/>
             <xs:element type="subconfigurationsType" name="subconfigurations" minOccurs="0" maxOccurs="1"/>
             <xs:element type="filenamesType" name="filenames" minOccurs="0" maxOccurs="1"/>
-            <xs:element type="enumerationsType" name="enumerations" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
         <xs:attribute type="xs:string" name="name" use="required"/>
         <xs:attribute type="xs:string" name="description" use="optional"/>

@@ -510,7 +510,7 @@ public abstract class RuntimeService extends CacheProvider {
             }
         }
         if (processInfo.size() == 0) {
-            logger.info("No process info objects could be matched for ${execCache.size()} lines in the cache file.")
+            logger.postSometimesInfo("No process info objects could be matched for ${execCache.size()} lines in the cache file.")
             //TODO Possible input output directory mismatch or configuration error!
         }
 

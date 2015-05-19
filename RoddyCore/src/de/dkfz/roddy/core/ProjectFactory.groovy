@@ -107,15 +107,15 @@ public class ProjectFactory {
             Workflow workflow = (Workflow) workflowClass.getConstructor().newInstance();
             analysis = (Analysis) analysisClass.getConstructor(String.class, Project.class, Workflow.class, AnalysisConfiguration.class).newInstance(analysisName, project, workflow, configuration);
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
         } catch (InstantiationException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
         } catch (IllegalAccessException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
         } catch (InvocationTargetException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
         } catch (NoSuchMethodException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
         }
         return analysis;
     }
@@ -139,12 +139,23 @@ public class ProjectFactory {
         String analysisID = splitProjectAnalysis[1];
         ConfigurationFactory fac = ConfigurationFactory.getInstance();
         InformationalConfigurationContent iccProject = fac.getAllAvailableConfigurations()[projectID];
+
+        if (iccProject == null) {
+            logger.postAlwaysInfo("The project configuration \"${projectID}\" could not be found.")
+            return null;
+        }
+
         String fullAnalysisID = iccProject.getListOfAnalyses().find { String aID -> aID.split("[:][:]")[0] == analysisID; }
 
-        String[] splitEntries = fullAnalysisID.split("[:][:]");
+        if (fullAnalysisID == null) {
+            logger.postAlwaysInfo("The analysis \"${analysisID}\" could not be found.")
+            return null;
+        }
+
+        String[] splitEntries = fullAnalysisID?.split("[:][:]");
 
         // If the plugin is set, find "parent" plugins with the proper version.
-        String pluginPart = splitEntries.find { String part -> part.startsWith("useplugin") }
+        String pluginPart = splitEntries?.find { String part -> part.startsWith("useplugin") }
         boolean pluginsAreLoaded = false;
 
         def librariesFactory = LibrariesFactory.getInstance()
@@ -191,7 +202,7 @@ public class ProjectFactory {
             configurationValues.add(new ConfigurationValue(cvalueId, value, type));
         }
 
-        if(Roddy.useCustomIODirectories()) {
+        if (Roddy.useCustomIODirectories()) {
             configurationValues.add(new ConfigurationValue(CFG_INPUT_BASE_DIRECTORY, Roddy.getCustomBaseInputDirectory(), "path"));
             configurationValues.add(new ConfigurationValue(CFG_OUTPUT_BASE_DIRECTORY, Roddy.getCustomBaseOutputDirectory(), "path"));
         }

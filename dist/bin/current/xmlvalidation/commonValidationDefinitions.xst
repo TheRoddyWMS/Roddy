@@ -5,9 +5,20 @@
             <xs:element type="enumerationType" name="enumeration" maxOccurs="unbounded" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
-    <xs:complexType name="enumerationType">
+    <xs:complexType name="enumerationValueType">
+        <xs:attribute type="xs:string" name="id"/>
+        <xs:attribute type="xs:string" name="valueTag"/>
+        <xs:attribute type="xs:string" name="description"/>
     </xs:complexType>
-    <xs:complexType name="filenamesType">
+    <xs:complexType name="enumerationType" mixed="true">
+        <xs:sequence>
+            <xs:element type="enumerationValueType" name="value" maxOccurs="unbounded" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute type="xs:string" name="name"/>
+        <xs:attribute type="xs:string" name="description"/>
+        <xs:attribute type="xs:string" name="extends"/>
+    </xs:complexType>
+    <xs:complexType name="filenamesType" mixed="true">
         <xs:sequence>
             <xs:element type="filenameType" name="filename" maxOccurs="unbounded" minOccurs="0"/>
         </xs:sequence>
@@ -19,9 +30,10 @@
             <xs:extension base="xs:string">
                 <xs:attribute type="xs:string" name="class" use="optional"/>
                 <xs:attribute type="xs:string" name="derivedFrom" use="optional"/>
-                <xs:attribute type="xs:string" name="pattern" use="optional"/>
+                <xs:attribute type="xs:string" name="fileStage" use="optional"/>
                 <xs:attribute type="xs:string" name="onMethod" use="optional"/>
                 <xs:attribute type="xs:string" name="selectiontag" use="optional"/>
+                <xs:attribute type="xs:string" name="pattern" use="optional"/>
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
@@ -77,19 +89,22 @@
                 <xs:attribute type="xs:string" name="nodes"/>
                 <xs:attribute type="xs:string" name="walltime"/>
                 <xs:attribute type="xs:string" name="queue"/>
+                <xs:attribute type="xs:string" name="nodeflag"/>
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
+    <xs:complexType name="inputConstraintType">
+
+    </xs:complexType>
     <xs:complexType name="inputType">
-        <xs:simpleContent>
-            <xs:extension base="xs:string">
-                <xs:attribute type="xs:string" name="type"/>
-                <xs:attribute type="xs:string" name="typeof"/>
-                <xs:attribute type="xs:string" name="scriptparameter"/>
-                <xs:attribute type="xs:string" name="setby"/>
-                <xs:attribute type="xs:string" name="passas"/>
-            </xs:extension>
-        </xs:simpleContent>
+        <xs:sequence>
+            <xs:element type="inputConstraintType" name="constraint" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute type="xs:string" name="type"/>
+        <xs:attribute type="xs:string" name="typeof"/>
+        <xs:attribute type="xs:string" name="scriptparameter"/>
+        <xs:attribute type="xs:string" name="setby"/>
+        <xs:attribute type="xs:string" name="passas"/>
     </xs:complexType>
     <xs:complexType name="outputType" mixed="true">
         <xs:sequence>
@@ -103,8 +118,8 @@
         <xs:attribute type="xs:boolean" name="check" use="optional"/>
     </xs:complexType>
     <!--<xs:complexType name="subconfigurationsType">-->
-        <!--<xs:sequence>-->
-            <!--<xs:element type="configurationType" name="configuration" maxOccurs="unbounded" minOccurs="0"/>-->
-        <!--</xs:sequence>-->
+    <!--<xs:sequence>-->
+    <!--<xs:element type="configurationType" name="configuration" maxOccurs="unbounded" minOccurs="0"/>-->
+    <!--</xs:sequence>-->
     <!--</xs:complexType>-->
 </xs:schema>

@@ -19,7 +19,7 @@ up and is included in the configuration. The configuration settings directly ove
         <cvalue name='jobStateLogFile' value="jobStates.txt" type="string"/>
     </configurationvalues>
     <enumerations>
-        <enum name='cvalueType' description='various types of configuration values' extends="">
+        <enumeration name='cvalueType' description='various types of configuration values' extends="">
             <value id='filename' valueTag="de.dkfz.roddy.config.validation.FileSystemValidator" description='Value type is a filename and will be checked for consistency'/>
             <value id='filenamePattern' valueTag="de.dkfz.roddy.config.validation.FileSystemValidator" description="Value type is a pattern like i.e. for searching"/>
             <value id='path' valueTag="de.dkfz.roddy.config.validation.FileSystemValidator" description="Value type is a file system path (fully or with wildcards like ~, *"/>
@@ -29,7 +29,7 @@ up and is included in the configuration. The configuration settings directly ove
             <value id='float' valueTag="de.dkfz.roddy.config.validation.DefaultValidator" description="A single precision floating point value."/>
             <value id='double' valueTag="de.dkfz.roddy.config.validation.DefaultValidator" description="A double precision floating point value."/>
             <value id='string' valueTag="de.dkfz.roddy.config.validation.DefaultValidator" description="The default type of no type is set. The value will be stored unchecked."/>
-        </enum>
+        </enumeration>
     </enumerations>
     <processingTools>
         <tool name='compressionDetection' value='determineFileCompressor.sh' basepath='roddyTools'/>

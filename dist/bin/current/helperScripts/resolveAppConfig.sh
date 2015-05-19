@@ -21,10 +21,10 @@ then
         customconfigfile=`dirname $0`/${customconfigfile}
     fi
 
-    _temp=`cat ${customconfigfile} | grep useRoddyVersion || echo 0`
+    _temp=`cat ${customconfigfile} | grep useRoddyVersion || echo 0` 
     if [[ $_temp != 0 ]] && [[ $_temp != "useRoddyVersion=" ]]
     then
-        useRoddyVersion=`cat ${customconfigfile} | grep useRoddyVersion | cut -d "=" -f 2`
+        useRoddyVersion=`cat ${customconfigfile} | grep useRoddyVersion | cut -d "=" -f 2 | cut -d "#" -f 1 | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'`
         RODDY_BINARY_DIR=${RODDY_DIRECTORY}/dist/bin/$useRoddyVersion
         RODDY_BINARY=$RODDY_BINARY_DIR/Roddy.jar
         RODDY_BSCRIPT=$RODDY_BINARY_DIR/roddy.sh
