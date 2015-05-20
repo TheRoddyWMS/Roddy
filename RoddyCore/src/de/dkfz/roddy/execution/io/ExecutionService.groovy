@@ -20,11 +20,9 @@ import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
-import sun.plugin.navig.motif.Plugin
 
 import java.util.logging.Level
 
-import static de.dkfz.roddy.StringConstants.FALSE
 import static de.dkfz.roddy.StringConstants.TILDE
 import static de.dkfz.roddy.config.ConfigurationConstants.*
 

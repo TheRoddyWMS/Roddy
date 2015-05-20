@@ -1,3 +1,18 @@
+== Prerequisites
+
+Roddy currently needs a JDK / JRE installed in either ~/.roddy/runtime or ~/.roddy/runtimeDevel
+Roddy needs a Groovy Version of 2.3.x in the same directory like the JDK so e.g.
+~/Projekte/Roddy> ll ~/.roddy/runtimeDevel/
+ groovy -> groovy-2.3.6
+ groovy-2.3.6
+ groovy-2.4.3
+ jdk -> jdk1.8.0_20
+ jdk1.8.0_20
+ jdk1.8.0_40
+ jre -> jdk/jre
+
+Support for Groovy 2.4.x has been tested and it is currently not working!
+
 == Overview
 
 
@@ -47,10 +62,6 @@ processOptionsQueryID                   false
 This section contains features which are currently in development. Testable / active features
 are in the changelist.
 
-- (WIP) New app ini loader
-
-- (WIP) XML validation will take place when XML files are loaded.
-
 - (WIP) Roddy accepts a lot more parameters which might otherwise be configured with the
   application properties file:
     useRoddyVersion, usePluginVersion,
@@ -60,6 +71,12 @@ are in the changelist.
   Those parameters all override the settings in the application properties file
 
 == Changelist
+
+* Version update to 2.2.8
+
+- (TEST) New app ini loader
+
+- (TEST) XML validation will take place when XML files are loaded.
 
 - (TEST) Roddy binaries, scripts and libraries will be stored in a different directory.
   Insided dist, there will be several bin/{version} folders like 2.1.49. Inside those, the binary and necessary
@@ -71,13 +88,13 @@ are in the changelist.
 
 * Version update to 2.1.49
 
-- (TEST) Roddy will perform a lot more checks before starting a workflow. These checks include file system
+- Roddy will perform a lot more checks before starting a workflow. These checks include file system
   checks, file availability and some more. 
 
-- (TEST) Roddy will delete an execution directory if no jobs were submitted. This is not working
+- Roddy will delete an execution directory if no jobs were submitted. This is not working
   with the SSH library SFTP client for unknown reasons.
 
-- (TEST) The way how libraries / plugins are loaded is changed. The used plugins / version can
+- The way how libraries / plugins are loaded is changed. The used plugins / version can
   be specified (descending priority):
   - A project configuration analysis import:
     <analysis id='snvCalling' configuration='snvCallingAnalysis' useplugin="COWorkflows:1.0.114,..."/>
@@ -99,7 +116,7 @@ are in the changelist.
 
 * Version update to 2.1.26
 
-- (TEST) Roddy tries to create all files with the proper group rights and settings. This
+- Roddy tries to create all files with the proper group rights and settings. This
   is mostly tested for PBS based execution. The change of settings includes files in
   .roddyExecutionDirectory as well as those in the roddyExecutionStore
   File settings are set recursively where this is necessary.
