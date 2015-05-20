@@ -78,7 +78,7 @@ public class LoggerWrapper {
     }
 
     public void log(int lvl, String text) {
-        if(lvl >= verbosityLevel) {
+        if(verbosityLevel >= lvl) {
             logger.log(getVerbosityLevelObject(lvl), text);
         }
     }
