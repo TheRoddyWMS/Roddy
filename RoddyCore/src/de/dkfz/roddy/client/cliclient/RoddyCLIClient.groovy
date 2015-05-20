@@ -10,6 +10,7 @@ import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.validation.ValidationError
 import de.dkfz.roddy.config.validation.WholeConfigurationValidator
 import de.dkfz.roddy.core.*
+import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.SSHExecutionService
 import de.dkfz.roddy.execution.jobs.CommandFactory
@@ -61,101 +62,6 @@ public class RoddyCLIClient {
         return _formatter;
     }
 
-    /**
-     * A helper class for command line calls.
-     * Options and parameters are extracted and put into an object of this class.
-     */
-    public static class CommandLineCall {
-        public final RoddyStartupModes startupMode;
-        private final List<String> arguments;
-        private final List<String> parameters = [];
-        private Map<RoddyStartupOptions, List<String>> optionsMap = [:];
-
-        CommandLineCall(String[] args) {
-            this(Arrays.asList(args));
-        }
-
-        CommandLineCall(List<String> args) {
-            if (!args.size() == 0)
-                args = [RoddyStartupModes.help.toString()];
-            this.arguments = args;
-
-            List<String> parameters = args.findAll { String arg -> !arg.startsWith("--") } as ArrayList<String>;
-            Collection<String> options = args.findAll { String arg -> arg.startsWith("--") };
-
-            // Try to extract the startup mode. If it not know, display the help message.
-            try {
-                startupMode = Enum.valueOf(RoddyStartupModes.class, parameters[0]);
-            } catch (Exception ex) {
-                logger.postAlwaysInfo("The startupmode " + parameters[0] + " is not known.");
-                this.startupMode = help;
-                return;
-            }
-
-            //Parse options
-            Map<RoddyStartupOptions, List<String>> parsedOptions = [:];
-            for (String optArg in options) {
-                String[] split = optArg.split(StringConstants.SPLIT_EQUALS);
-                try {
-                    RoddyStartupOptions option = split[0][2..-1] as RoddyStartupOptions;
-                    //TODO This needs to be reworked because:
-                    //i.e. --cvalues=test:abc,test2:(e,e,f),test3("A string, with a comma") will seriously make problems!
-                    //Leave it for now, but come back to it if it is necessary.
-                    List<String> values = option.acceptsParameters ? split[1].split(StringConstants.SPLIT_COMMA)?.toList() : null;
-                    parsedOptions[option] = values;
-                    if (option.acceptsParameters)
-                        if (values)
-                            parsedOptions[option] = values;
-                        else
-                            logger.severe("The option " + option + " is malformed!");
-                } catch (Exception ex) {
-                    logger.postAlwaysInfo("The option with " + optArg + " is malformed!");
-                }
-            }
-
-            // Store all parameters and remove the startup mode.
-            if (parameters.size() > 1)
-                this.parameters += parameters[1..-1];
-            this.optionsMap.putAll(parsedOptions);
-        }
-
-        List<String> getParameters() {
-            return new LinkedList(parameters);
-        }
-
-        public boolean hasParameters() {
-            return parameters.size() > 0;
-        }
-
-        public boolean isOptionSet(RoddyStartupOptions option) {
-            return optionsMap.containsKey(option);
-        }
-
-        public List<RoddyStartupOptions> getOptionList() {
-            return optionsMap.keySet().asList();
-        }
-
-        public String getOptionValue(RoddyStartupOptions option) {
-            return optionsMap.get(option)?.first();
-        }
-
-        public List<String> getOptionList(RoddyStartupOptions option) {
-            return optionsMap.get(option);
-        }
-
-        public List<String> getArguments() {
-            return arguments;
-        }
-
-        /**
-         * Returns all set configuration values as a list in the format:
-         * [ a:a string, b:another string, c:123, ... ]
-         * @return
-         */
-        public List<String> getSetConfigurationValues() {
-            return optionsMap.get(RoddyStartupOptions.cvalues, []);
-        }
-    }
 
     /**
      * Simple method to count input parameters
@@ -198,16 +104,16 @@ public class RoddyCLIClient {
                 listDatasets(args);
                 break;
             case run:
-                RoddyCLIClient.run(args);
+                RoddyCLIClient.run(clc);
                 break;
             case rerun:
-                RoddyCLIClient.rerun(args);
+                RoddyCLIClient.rerun(clc);
                 break;
             case testrun:
-                RoddyCLIClient.testrun(args);
+                RoddyCLIClient.testrun(clc);
                 break;
             case testrerun:
-                RoddyCLIClient.testrerun(args);
+                RoddyCLIClient.testrerun(clc);
                 break;
             case rerunstep:
                 break;
@@ -220,24 +126,10 @@ public class RoddyCLIClient {
             case abort:
                 abortWorkflow(clc);
                 break;
-//            case networksubmissionserver:
-//                RoddyNetworkSubmissionServer.main(args);
-//                break;
             case help:
             default:
                 RoddyStartupModes.printCommandLineOptions();
                 System.exit(0);
-//            case createtestdata:
-//                RoddyCLIClient.runProcess(args, ExecutionContextLevel.CREATETESTDATA);
-//                break;
-//            case showconfig: {
-//                RoddyCLIClient.showConfiguration(args);
-//                break;
-//            }
-//            case setup: {
-//                RoddyCLIClient.performCommandLineSetup();
-//                break;
-//            }
         }
     }
 
@@ -460,21 +352,44 @@ public class RoddyCLIClient {
     public static void listDatasets(String[] args) {
         Analysis analysis = ProjectFactory.getInstance().loadAnalysis(args[1]);
         if (!analysis) return;
+
         def datasets = analysis.getListOfDataSets()
         for (DataSet ds : datasets) {
             System.out.println(String.format("\t%s", ds.getId()));
         }
     }
 
+    private static Analysis checkAndLoadAnalysis(CommandLineCall clc) {
+        if(clc.parameters.size() < 2) { logger.postAlwaysInfo("There were no dataset identifiers set, cannot run workflow."); return null; }
+        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(clc.parameters[0]);
+        return analysis;
+    }
+
+    public static void run(CommandLineCall clc) {
+        Analysis analysis = checkAndLoadAnalysis(clc);
+        if (!analysis) return;
+
+        analysis.run(Arrays.asList(clc.parameters[1].split(SPLIT_COMMA)), ExecutionContextLevel.RUN);
+    }
+
+    public static List<ExecutionContext> rerun(CommandLineCall clc) {
+        Analysis analysis = checkAndLoadAnalysis(clc);
+        if (!analysis) return;
+
+        List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(clc.parameters[1].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
+        return analysis.rerun(executionContexts, false);
+    }
+
     /**
      * Performs a dry run and prints out information about jobs and files which would normally be run or created.
      * @param args
      */
-    public static void testrun(String[] args) {
-        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(args[1]);
+    public static void testrun(CommandLineCall clc, boolean testrerun = false) {
+        Analysis analysis = checkAndLoadAnalysis(clc);
         if (!analysis) return;
 
-        List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(args[2].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
+        List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(clc.parameters[1].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
+        if (testrerun) executionContexts = analysis.rerun(executionContexts, true);
 
         outputRerunResult(executionContexts, false)
     }
@@ -483,12 +398,8 @@ public class RoddyCLIClient {
      * Performs a dry rerun and prints out information about jobs and files which would normally be run or created.
      * @param args
      */
-    public static void testrerun(String[] args) {
-        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(args[1]);
-        List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(args[2].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
-        executionContexts = analysis.rerun(executionContexts, true);
-
-        outputRerunResult(executionContexts, true);
+    public static void testrerun(CommandLineCall clc) {
+        RoddyCLIClient.testrun(clc, true);
     }
 
     private static void outputRerunResult(List<ExecutionContext> executionContexts, boolean rerun) {
@@ -544,19 +455,6 @@ public class RoddyCLIClient {
 
             println(getFormatter().formatAll(sb.toString()));
         }
-    }
-
-    public static void run(String[] args) {
-        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(args[1]);
-        if (!analysis) return;
-        analysis.run(Arrays.asList(args[2].split(SPLIT_COMMA)), ExecutionContextLevel.RUN);
-    }
-
-    public static List<ExecutionContext> rerun(String[] args) {
-        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(args[1]);
-        if (!analysis) return;
-        List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(args[2].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
-        return analysis.rerun(executionContexts, false);
     }
 
     /**

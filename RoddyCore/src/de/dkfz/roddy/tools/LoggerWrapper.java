@@ -66,6 +66,23 @@ public class LoggerWrapper {
         return 0;
     }
 
+    private static Level getVerbosityLevelObject(int lvl) {
+        if (lvl == VERBOSITY_INFO) {
+            return Level.INFO;
+        } else if (lvl == VERBOSITY_WARNING) {
+            return Level.WARNING;
+        } else if (lvl == VERBOSITY_SEVERE) {
+            return Level.SEVERE;
+        }
+        return Level.SEVERE;
+    }
+
+    public void log(int lvl, String text) {
+        if(lvl >= verbosityLevel) {
+            logger.log(getVerbosityLevelObject(lvl), text);
+        }
+    }
+
     public void log(Level lvl, String text) {
         if (getVerbosityLevelFor(lvl) >= verbosityLevel)
             logger.log(lvl, text);

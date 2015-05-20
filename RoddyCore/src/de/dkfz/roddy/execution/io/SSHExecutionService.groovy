@@ -255,7 +255,10 @@ class SSHExecutionService extends RemoteExecutionService {
 
     @Override
     String getUsername() {
-        return Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_USER);
+        String userName = Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_USER);
+        if(userName == "USERNAME") //Get the local username.
+            userName = System.getProperty("user.name")
+        return userName;
     }
 
     @Override

@@ -20,6 +20,7 @@ import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
+import sun.plugin.navig.motif.Plugin
 
 import java.util.logging.Level
 
@@ -207,10 +208,10 @@ public abstract class ExecutionService extends CacheProvider {
 
     public static long measureStart() { return System.nanoTime(); }
 
-    public static double measureStop(long startValue, String measurementID) {
+    public static double measureStop(long startValue, String measurementID, int verbosityLevel = LoggerWrapper.VERBOSITY_RARE) {
         double t = (System.nanoTime() - startValue) / 1000000.0;
         if (measurementID != null)
-            logger.postRareInfo("Execution of ${measurementID} took ${t} ms.")
+            logger.log(verbosityLevel, "Execution of ${measurementID} took ${t} ms.")
         return t;
     }
 
@@ -245,41 +246,41 @@ public abstract class ExecutionService extends CacheProvider {
         Boolean projectExecCacheFileIsWritable = fis.fileExists(projectExecCacheFile) ? fis.isReadable(projectExecCacheFile) && fis.isWritable(projectExecCacheFile) : null
         Boolean projectExecutionContextDirIsWritable = fis.directoryExists(projectExecutionDirectory) ? fis.isReadable(projectExecutionDirectory) && fis.directoryExists(projectExecutionDirectory) : null;
         Boolean projectToolsMD5SumFileIsWritable = fis.fileExists(projectToolsMD5SumFile) ? fis.isReadable(projectToolsMD5SumFile) && fis.isWritable(projectToolsMD5SumFile) : projectExecutionContextDirIsWritable
-        Boolean baseContextDirIsWritable = fis.directoryExists(baseContextExecutionDirectory) ?  fis.isReadable(baseContextExecutionDirectory) && fis.isWritable(baseContextExecutionDirectory) : null;
+        Boolean baseContextDirIsWritable = fis.directoryExists(baseContextExecutionDirectory) ? fis.isReadable(baseContextExecutionDirectory) && fis.isWritable(baseContextExecutionDirectory) : null;
 
         int countErrors = context.getErrors().sum(0) { ExecutionContextError ece -> ece.getErrorLevel() == Level.SEVERE ? 1 : 0 } as Integer
 
-        if(!inputIsReadable)
+        if (!inputIsReadable)
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_INACCESSIBLE.expand("Base input dir is not readable: "));
 
-        if(outputIsWriteable == null)
+        if (outputIsWriteable == null)
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${outputBaseDirectory}", Level.WARNING));
-        else if(outputIsWriteable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
+        else if (outputIsWriteable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("Output dir is not writable: ${outputBaseDirectory}"));
 
-        if(datasetDirIsWritable == null)
+        if (datasetDirIsWritable == null)
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${outputDirectory}", Level.WARNING));
-        else if(datasetDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
+        else if (datasetDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("Output dir is not writable: ${outputDirectory}"));
 
-        if(projectExecCacheFileIsWritable == null)
+        if (projectExecCacheFileIsWritable == null)
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output file is missing: ${projectExecCacheFile}", Level.WARNING));
-        else if(projectExecCacheFileIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
+        else if (projectExecCacheFileIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("The projects exec cache file is not writable: ${projectExecCacheFile}"));
 
-        if(projectExecutionContextDirIsWritable == null)
+        if (projectExecutionContextDirIsWritable == null)
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${projectExecutionDirectory}", Level.WARNING));
-        else if(projectExecutionContextDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
+        else if (projectExecutionContextDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("The project execution store is not writable: ${projectExecutionDirectory}"));
 
-        if(projectToolsMD5SumFileIsWritable == null)
+        if (projectToolsMD5SumFileIsWritable == null)
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output file is missing: ${projectToolsMD5SumFile}", Level.WARNING));
-        else if(projectToolsMD5SumFileIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
+        else if (projectToolsMD5SumFileIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("The project md5sum file is not writable: ${projectToolsMD5SumFile}"));
 
-        if(baseContextDirIsWritable == null)
+        if (baseContextDirIsWritable == null)
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${baseContextExecutionDirectory}", Level.WARNING));
-        else if(baseContextDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
+        else if (baseContextDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("The datasets execution storeage folder is not writable: ${baseContextExecutionDirectory}"));
 
         //Just check, if there were new errors.
@@ -398,9 +399,9 @@ public abstract class ExecutionService extends CacheProvider {
         boolean useCentralAnalysisArchive = cfg.getUseCentralAnalysisArchive();
 
         //Current analysisTools directory (they are also used for execution)
-        List<File> sourcePaths = [];
+        Map<File, PluginInfo> sourcePaths = [:];
         for (PluginInfo pluginInfo : LibrariesFactory.getInstance().getLoadedPlugins()) {
-            sourcePaths.addAll(pluginInfo.getToolsDirectories().values());
+            pluginInfo.getToolsDirectories().values().each { sourcePaths[it] = pluginInfo }
         }
 
         provider.checkDirectory(dstExecutionDirectory, context, true);
@@ -409,24 +410,28 @@ public abstract class ExecutionService extends CacheProvider {
             String[] existingArchives = provider.loadTextFile(context.getFileForAnalysisToolsArchiveOverview());
             Roddy.getCompressedAnalysisToolsDirectory().mkdir();
 
-            Collection<File> listOfFolders = sourcePaths.findAll { File it -> !it.getName().contains(".svn"); }
+            Map<File, PluginInfo> listOfFolders = sourcePaths.findAll { File it, PluginInfo pInfo -> !it.getName().contains(".svn"); }
 
             //We always copy the roddy folder as this folder is used by all scripts.
-            if (usedToolFolders.size() > 0)
-                listOfFolders = listOfFolders.findAll { File it -> it.getName().equals("roddyTools") || usedToolFolders.contains(it.getName()); }
+//            if (usedToolFolders.size() > 0)
+//                listOfFolders = listOfFolders.findAll { File it -> it.getName().equals("roddyTools") || usedToolFolders.contains(it.getName()); }
 
             //Add used base paths to configuration.
-            for (File folder : listOfFolders) {
-                def bPathID = folder.getName()
-                String basepathConfigurationID = ConfigurationFactory.createVariableName(ConfigurationConstants.CVALUE_PREFIX_BASEPATH, bPathID);
-                cfg.getConfigurationValues().add(new ConfigurationValue(basepathConfigurationID, RoddyIOHelperMethods.assembleLocalPath(dstExecutionDirectory, "analysisTools", bPathID).getAbsolutePath(), "string"));
+            listOfFolders.each {
+                File folder, PluginInfo pInfo ->
+                    def bPathID = folder.getName()
+                    String basepathConfigurationID = ConfigurationFactory.createVariableName(ConfigurationConstants.CVALUE_PREFIX_BASEPATH, bPathID);
+                    cfg.getConfigurationValues().add(new ConfigurationValue(basepathConfigurationID, RoddyIOHelperMethods.assembleLocalPath(dstExecutionDirectory, "analysisTools", bPathID).getAbsolutePath(), "string"));
             }
 
             // Compress existing tool folders to a central location and generate some md5 sums for them.
-            listOfFolders.parallelStream().forEach {
+            long startParallelCompression = System.nanoTime()
+            listOfFolders.keySet().parallelStream().each {
                 File subFolder ->
+                    long startSingleCompression = System.nanoTime()
+                    PluginInfo pInfo = listOfFolders[subFolder]
                     String md5sum = RoddyIOHelperMethods.getSingleMD5OfFilesInDirectory(subFolder);
-                    String zipFilename = "roddy_compressedArchive_analysisTools_pluginID_" + subFolder.getName() + ".zip";
+                    String zipFilename = "cTools_${pInfo.getName()}:${pInfo.getProdVersion()}_${subFolder.getName()}.zip";
                     String zipMD5Filename = zipFilename + "_contentmd5";
                     File tempFile = new File(Roddy.getCompressedAnalysisToolsDirectory(), zipFilename);
                     File zipMD5File = new File(Roddy.getCompressedAnalysisToolsDirectory(), zipMD5Filename);
@@ -449,84 +454,88 @@ public abstract class ExecutionService extends CacheProvider {
                     synchronized (mapOfPreviouslyCompressedArchivesByFolder) {
                         mapOfPreviouslyCompressedArchivesByFolder[subFolder] = new CompressedArchiveInfo(tempFile, newArchiveMD5, subFolder);
                     }
+                    logger.postSometimesInfo("Compression of ${zipFilename} took ${(System.nanoTime() - startSingleCompression) / 1000000} ms.")
             };
+            logger.postSometimesInfo("Overall tool compression took ${(System.nanoTime() - startParallelCompression) / 1000000} ms.");
 
             // Now check if the local file with its md5 sum exists on the remote site.
-            for (File subFolder : listOfFolders) {
-                File localFile = mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive;
-                File remoteFile = new File(mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive.getName()[0..-5] + "_" + context.getTimeStampString() + ".zip");
-                String archiveMD5 = mapOfPreviouslyCompressedArchivesByFolder[subFolder].md5
+            listOfFolders.each {
+                File subFolder, PluginInfo pInfo ->
+                    File localFile = mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive;
+                    File remoteFile = new File(mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive.getName()[0..-5] + "_" + context.getTimeStampString() + ".zip");
+                    String archiveMD5 = mapOfPreviouslyCompressedArchivesByFolder[subFolder].md5
 
-                String foundExisting = null;
-                String subFolderOnRemote = subFolder.getName();
-                for (String line : existingArchives) {
-                    String[] split = line.split(StringConstants.SPLIT_COLON);
-                    if (split.length != 2) continue;
-                    String existingFilePath = split[0];
-                    String existingFileMD5 = split[1];
+                    String foundExisting = null;
+                    String subFolderOnRemote = subFolder.getName();
+                    for (String line : existingArchives) {
+                        String[] split = line.split(StringConstants.SPLIT_COLON);
+                        if (split.length != 2) continue;
+                        String existingFilePath = split[0];
+                        String existingFileMD5 = split[1];
 
-                    if (existingFileMD5.equals(archiveMD5)) {
-                        foundExisting = existingFilePath;
-                        remoteFile = new File(remoteFile.getParentFile(), existingFilePath);
-                        subFolderOnRemote = remoteFile.getName().split(StringConstants.SPLIT_UNDERSCORE)[-3];
-                        //TODO This is seriously a hack.
-                        break;
-                    }
-                }
-
-                File analysisToolsServerDir;
-
-                // Check, if there is a zip file available and if the zip file is uncompressed.
-                if (foundExisting) {
-                    analysisToolsServerDir = new File(dstCommonExecutionDirectory, "/dir_" + foundExisting);
-                    File remoteZipFile = new File(dstCommonExecutionDirectory, remoteFile.getName());
-                    if(!provider.directoryExists(analysisToolsServerDir)) {
-                        //Now we may assume, that the file was not uncompressed!
-                        //Check if the zip file exists. If so, uncompress it.
-                        if(provider.fileExists(remoteZipFile)) {
-                            // Unzip the file again. foundExisting stays true
-                            GString str = RoddyIOHelperMethods.getCompressor().getDecompressionString(remoteZipFile, analysisToolsServerDir, analysisToolsServerDir);
-                            getInstance().execute(str, true);
-                            provider.setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.getAbsolutePath()), context);
-                        } else {
-                            // Uh Oh, the file is not existing, the directory is not existing! Copy again and unzip
-                            foundExisting = false;
+                        if (existingFileMD5.equals(archiveMD5)) {
+                            foundExisting = existingFilePath;
+                            remoteFile = new File(remoteFile.getParentFile(), existingFilePath);
+                            subFolderOnRemote = remoteFile.getName().split(StringConstants.SPLIT_UNDERSCORE)[-3];
+                            //TODO This is seriously a hack.
+                            break;
                         }
                     }
-                }
 
-                if (foundExisting) {
-                    //remoteFile.delete(); //Don't need that anymore
-                    analysisToolsServerDir = new File(dstCommonExecutionDirectory, "/dir_" + foundExisting);
-                    logger.postSometimesInfo("Skipping copy of file ${remoteFile.getName()}, a file with the same md5 was found.")
-                } else {
-                    //TODO This one is a really huge mess, make it good.
+                    File analysisToolsServerDir;
 
-                    analysisToolsServerDir = new File(dstCommonExecutionDirectory, "/dir_" + remoteFile.getName())
-                    provider.checkDirectory(dstCommonExecutionDirectory, context, true);
-                    provider.checkDirectory(analysisToolsServerDir, context, true);
-                    provider.copyFile(localFile, new File(dstCommonExecutionDirectory, remoteFile.getName()), context);
-                    provider.checkFile(context.getFileForAnalysisToolsArchiveOverview(), true, context);
-                    provider.appendLineToFile(true, context.getFileForAnalysisToolsArchiveOverview(), "${remoteFile.getName()}:${archiveMD5}", true);
+                    // Check, if there is a zip file available and if the zip file is uncompressed.
+                    if (foundExisting) {
+                        analysisToolsServerDir = new File(dstCommonExecutionDirectory, "/dir_" + foundExisting);
+                        File remoteZipFile = new File(dstCommonExecutionDirectory, remoteFile.getName());
+                        if (!provider.directoryExists(analysisToolsServerDir)) {
+                            //Now we may assume, that the file was not uncompressed!
+                            //Check if the zip file exists. If so, uncompress it.
+                            if (provider.fileExists(remoteZipFile)) {
+                                // Unzip the file again. foundExisting stays true
+                                GString str = RoddyIOHelperMethods.getCompressor().getDecompressionString(remoteZipFile, analysisToolsServerDir, analysisToolsServerDir);
+                                getInstance().execute(str, true);
+                                provider.setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.getAbsolutePath()), context);
+                            } else {
+                                // Uh Oh, the file is not existing, the directory is not existing! Copy again and unzip
+                                foundExisting = false;
+                            }
+                        }
+                    }
 
-                    GString str = RoddyIOHelperMethods.getCompressor().getDecompressionString(new File(dstCommonExecutionDirectory, remoteFile.getName()), analysisToolsServerDir, analysisToolsServerDir);
-                    getInstance().execute(str, true);
-                    provider.setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.getAbsolutePath()), context);
-                    if(!provider.directoryExists(analysisToolsServerDir))
-                        context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND.expand("The central archive ${analysisToolsServerDir.absolutePath} was not created!"))
+                    if (foundExisting) {
+                        //remoteFile.delete(); //Don't need that anymore
+                        analysisToolsServerDir = new File(dstCommonExecutionDirectory, "/dir_" + foundExisting);
+                        logger.postSometimesInfo("Skipping copy of file ${remoteFile.getName()}, a file with the same md5 was found.")
+                    } else {
+                        //TODO This one is a really huge mess, make it good.
 
-                }
-                provider.checkDirectory(dstAnalysisToolsDirectory, context, true);
-                def linkCommand = "ln -s ${analysisToolsServerDir.getAbsolutePath()}/${subFolderOnRemote} ${dstAnalysisToolsDirectory.absolutePath}/${subFolder.getName()}"
-                getInstance().execute(linkCommand, true);
+                        analysisToolsServerDir = new File(dstCommonExecutionDirectory, "/dir_" + remoteFile.getName())
+                        provider.checkDirectory(dstCommonExecutionDirectory, context, true);
+                        provider.checkDirectory(analysisToolsServerDir, context, true);
+                        provider.copyFile(localFile, new File(dstCommonExecutionDirectory, remoteFile.getName()), context);
+                        provider.checkFile(context.getFileForAnalysisToolsArchiveOverview(), true, context);
+                        provider.appendLineToFile(true, context.getFileForAnalysisToolsArchiveOverview(), "${remoteFile.getName()}:${archiveMD5}", true);
+
+                        GString str = RoddyIOHelperMethods.getCompressor().getDecompressionString(new File(dstCommonExecutionDirectory, remoteFile.getName()), analysisToolsServerDir, analysisToolsServerDir);
+                        getInstance().execute(str, true);
+                        provider.setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.getAbsolutePath()), context);
+                        if (!provider.directoryExists(analysisToolsServerDir))
+                            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND.expand("The central archive ${analysisToolsServerDir.absolutePath} was not created!"))
+
+                    }
+                    provider.checkDirectory(dstAnalysisToolsDirectory, context, true);
+                    def linkCommand = "ln -s ${analysisToolsServerDir.getAbsolutePath()}/${subFolderOnRemote} ${dstAnalysisToolsDirectory.absolutePath}/${subFolder.getName()}"
+                    getInstance().execute(linkCommand, true);
             }
 
 
         } else {
-            for (File sourcePath : sourcePaths) {
-                provider.checkDirectory(dstAnalysisToolsDirectory, context, true);
-                provider.copyDirectory(sourcePath, dstAnalysisToolsDirectory);
-                provider.setDefaultAccessRightsRecursively(dstAnalysisToolsDirectory, context);
+            sourcePaths.each {
+                File sourcePath, PluginInfo pInfo ->
+                    provider.checkDirectory(dstAnalysisToolsDirectory, context, true);
+                    provider.copyDirectory(sourcePath, dstAnalysisToolsDirectory);
+                    provider.setDefaultAccessRightsRecursively(dstAnalysisToolsDirectory, context);
             }
         }
     }
@@ -638,7 +647,7 @@ public abstract class ExecutionService extends CacheProvider {
 
     public boolean isFileReadable(File f) {}
 
-    public boolean isFileWriteable(File f) { }
+    public boolean isFileWriteable(File f) {}
 
     public boolean isFileExecutable(File f) {}
 
@@ -647,7 +656,7 @@ public abstract class ExecutionService extends CacheProvider {
     public Map<File, Boolean> getReadabilityOfAllFiles(List<File> listOfFiles) {
         List<File> allPaths = [];
         for (File file in listOfFiles) {
-            if(file == null) {
+            if (file == null) {
                 //TODO Print out an error message? Or just ignore this because the error is already noted somewhere else.
                 continue;
             }

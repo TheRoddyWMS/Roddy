@@ -21,6 +21,11 @@ public class LocalExecutionService extends ExecutionService {
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(LocalExecutionService.class.name);
 
     @Override
+    String getUsername() {
+        return System.getProperty("user.name")
+    }
+
+    @Override
     void addSpecificSettingsToConfiguration(Configuration configuration) {
         //Disable several things which don't work.
         configuration.getConfigurationValues().add(new ConfigurationValue(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, "false"));

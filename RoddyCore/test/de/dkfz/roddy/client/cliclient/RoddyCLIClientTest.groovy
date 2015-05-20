@@ -70,14 +70,14 @@ class RoddyCLIClientTest extends GroovyTestCase {
     }
 
     void testValidateConfiguration() {
-        RoddyCLIClient.CommandLineCall properCall = new RoddyCLIClient.CommandLineCall([RoddyStartupModes.validateconfig.name(), TESTCONFIG] as List<String>);
+        CommandLineCall properCall = new CommandLineCall([RoddyStartupModes.validateconfig.name(), TESTCONFIG] as List<String>);
         RoddyCLIClient.parseStartupMode(properCall);
     }
 
     void testListWorkflows() {
-        RoddyCLIClient.CommandLineCall properCall = new RoddyCLIClient.CommandLineCall([RoddyStartupModes.listworkflows.name()] as List<String>);
-        RoddyCLIClient.CommandLineCall properCallFiltered = new RoddyCLIClient.CommandLineCall([RoddyStartupModes.listworkflows.name(), "testProject"] as List<String>);
-        RoddyCLIClient.CommandLineCall properCallFilteredShortlist = new RoddyCLIClient.CommandLineCall([RoddyStartupModes.listworkflows.name(), "--shortlist"] as List<String>);
+        CommandLineCall properCall = new CommandLineCall([RoddyStartupModes.listworkflows.name()] as List<String>);
+        CommandLineCall properCallFiltered = new CommandLineCall([RoddyStartupModes.listworkflows.name(), "testProject"] as List<String>);
+        CommandLineCall properCallFilteredShortlist = new CommandLineCall([RoddyStartupModes.listworkflows.name(), "--shortlist"] as List<String>);
         assert (properCall.startupMode == RoddyStartupModes.listworkflows);
         RoddyCLIClient.parseStartupMode(properCall);
         RoddyCLIClient.parseStartupMode(properCallFiltered);

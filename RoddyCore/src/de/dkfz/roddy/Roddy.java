@@ -3,6 +3,7 @@ package de.dkfz.roddy;
 import com.btr.proxy.search.ProxySearch;
 import de.dkfz.roddy.client.RoddyStartupModes;
 import de.dkfz.roddy.client.RoddyStartupOptions;
+import de.dkfz.roddy.client.cliclient.CommandLineCall;
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
 import de.dkfz.roddy.config.AppConfig;
 import de.dkfz.roddy.core.Initializable;
@@ -79,7 +80,7 @@ public class Roddy {
     private static final File applicationDirectory = new File("").getAbsoluteFile();
     private static final File applicationBundleDirectory = new File(applicationDirectory, "bundledFiles");
 
-    private static RoddyCLIClient.CommandLineCall commandLineCall;
+    private static CommandLineCall commandLineCall;
 
     /**
      * An option specifically for listworkflows.
@@ -159,24 +160,36 @@ public class Roddy {
         }
     }
 
+    private static long t1 = 0;
+    private static long t2 = 0;
+    private static void time(String info) {
+        t2 = System.nanoTime();
+        if(info != null) logger.postRareInfo("Timing " + info + ": " + ((t2 -t1) / 1000000) + " ms");
+        t1 = t2;
+    }
+
     private static void startup(String[] args) {
-
+        time(null);
         LoggerWrapper.setup();
-
-        RoddyCLIClient.CommandLineCall clc = new RoddyCLIClient.CommandLineCall(args);
+        time("setup");
+        List<String> list = Arrays.asList(args);
+        time("clc .1");
+        CommandLineCall clc = new CommandLineCall(list);
         commandLineCall = clc;
-
+        time("clc");
         performInitialSetup(args, clc.startupMode);
-
+        time("initial");
         parseAdditionalStartupOptions(clc);
-
+        time("parseopt");
         loadPropertiesFile();
-
+        time("loadprop");
         initializeServices(clc.startupMode.needsFullInit());
-
+        time("initserv");
         parseRoddyStartupModeAndRun(clc);
-
+        time("parsemode");
         performCLIExit(clc.startupMode);
+        time("exit");
+
     }
 
     public static void performInitialSetup(String[] args, RoddyStartupModes option) {
@@ -189,7 +202,7 @@ public class Roddy {
         }
     }
 
-    protected static void parseAdditionalStartupOptions(RoddyCLIClient.CommandLineCall clc) {
+    protected static void parseAdditionalStartupOptions(CommandLineCall clc) {
 
         //Parse different options out of the args back from behind
         displayShortWorkflowList = clc.isOptionSet(RoddyStartupOptions.shortlist);
@@ -333,7 +346,7 @@ public class Roddy {
         }
     }
 
-    private static void parseRoddyStartupModeAndRun(RoddyCLIClient.CommandLineCall clc) {
+    private static void parseRoddyStartupModeAndRun(CommandLineCall clc) {
         if (clc.startupMode == RoddyStartupModes.ui)
             RoddyUIController.App.main(clc.getArguments().toArray(new String[0]));
         else
@@ -566,7 +579,7 @@ public class Roddy {
         return LibrariesFactory.PLUGIN_VERSION_CURRENT;
     }
 
-    public static RoddyCLIClient.CommandLineCall getCommandLineCall() { return commandLineCall; }
+    public static CommandLineCall getCommandLineCall() { return commandLineCall; }
 
     public enum RunMode {
         UI,

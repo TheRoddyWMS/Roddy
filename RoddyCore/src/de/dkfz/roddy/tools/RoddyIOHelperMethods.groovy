@@ -71,13 +71,13 @@ class RoddyIOHelperMethods {
         void compressDirectory(File from, File to, File workingDirectory = null) {
 
             String result = ExecutionHelper.executeSingleCommand(getCompressionString(from, to, workingDirectory).toString());
-            println(result);
+//            println(result);
         }
 
         @Override
         void decompress(File from, File to, File workingDirectory = null) {
             String result = ExecutionHelper.executeSingleCommand(getDecompressionString(from, to, workingDirectory));
-            println(result);
+//            println(result);
         }
 
         private String getWorkingDirectory(File from, File workingDirectory = null) {

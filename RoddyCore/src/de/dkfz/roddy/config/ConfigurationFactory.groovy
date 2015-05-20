@@ -56,27 +56,32 @@ public class ConfigurationFactory {
     }
 
     private ConfigurationFactory() {
+//        long test = System.nanoTime();
         loadAvailableProjectConfigurationFiles()
-//        loadAvailableConfigurationFiles()
+//        println((System.nanoTime() - test));
     }
 
     private void loadAvailableProjectConfigurationFiles() {
         List<File> pipelineDirectories = Roddy.getConfigurationDirectories();
 
         List<File> allFiles = []
-        for (File baseDir in pipelineDirectories) {
+        pipelineDirectories.parallelStream().each {
+            File baseDir ->
             logger.log(Level.CONFIG, "Searching for configuration files in: " + baseDir.toString());
             File[] files = baseDir.listFiles((FileFilter) new WildcardFileFilter("*.xml"));
             if (files == null) {
                 logger.info("No configuration files found in path ${baseDir.getAbsolutePath()}");
             }
             for (File f in files) {
-                if (!allFiles.contains(f))
-                    allFiles << f;
+                synchronized (allFiles) {
+                    if (!allFiles.contains(f))
+                        allFiles << f;
+                }
             }
         }
 
-        for (File it in allFiles) {
+        allFiles.parallelStream().each {
+            File it ->
             try {
                 def icc = loadInformationalConfigurationContent(it);
                 if (availableConfigurations.containsKey(icc.name)) {

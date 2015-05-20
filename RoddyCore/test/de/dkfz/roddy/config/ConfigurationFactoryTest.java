@@ -2,6 +2,7 @@ package de.dkfz.roddy.config;
 
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.client.RoddyStartupModes;
+import de.dkfz.roddy.client.cliclient.CommandLineCall;
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
 import de.dkfz.roddy.core.Analysis;
 import de.dkfz.roddy.core.ExecutionContextLevel;
@@ -44,7 +45,7 @@ public class ConfigurationFactoryTest {
         Roddy.loadPropertiesFile();
         Roddy.initializeServices(true);
 
-        RoddyCLIClient.testrun(new String[]{"testrun", "testProject.sub_inherit@test", "A100"});
+        RoddyCLIClient.testrun(new CommandLineCall(Arrays.asList(new String[] {"testrun", "testProject.sub_inherit@test", "A100"})));
         ProjectConfiguration cfg = ConfigurationFactory.getInstance().getProjectConfiguration("testProject");
 
         assert cfg != null;
