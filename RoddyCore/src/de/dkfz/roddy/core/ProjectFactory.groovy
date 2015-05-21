@@ -1,10 +1,12 @@
 package de.dkfz.roddy.core
 
+import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
-import de.dkfz.roddy.config.*;
+import de.dkfz.roddy.config.*
+import de.dkfz.roddy.config.validation.XSDValidator;
 import de.dkfz.roddy.plugins.LibrariesFactory;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.Tuple2;
@@ -145,6 +147,10 @@ public class ProjectFactory {
             return null;
         }
 
+        //Validate the project icc
+        if(Roddy.getFeatureToggleValue(AvailableFeatureToggles.XMLValidation))
+            XSDValidator.validate(iccProject);
+
         String fullAnalysisID = iccProject.getListOfAnalyses().find { String aID -> aID.split("[:][:]")[0] == analysisID; }
 
         if (fullAnalysisID == null) {
@@ -176,8 +182,15 @@ public class ProjectFactory {
             librariesFactory.loadLibraries(librariesFactory.getAvailablePluginVersion());
 
         fac.loadAvailableAnalysisConfigurationFiles();
+        // Validate the analysis icc
+//        InformationalConfigurationContent iccAnalysis = fac.allAvailableConfigurations.get(iccProject.anaanalysisID);
+//        if(Roddy.getFeatureToggleValue(AvailableFeatureToggles.XMLValidation))
+//            XSDValidator.validate(iccAnalysis);
 
         ProjectConfiguration projectConfiguration = fac.getProjectConfiguration(projectID);
+        InformationalConfigurationContent iccAnalysis = ((AnalysisConfigurationProxy)projectConfiguration.getAnalysis(analysisID)).informationalConfigurationContent;
+        if(Roddy.getFeatureToggleValue(AvailableFeatureToggles.XMLValidation))
+            XSDValidator.validate(iccAnalysis);
         Project project = loadConfiguration(projectConfiguration);
 
         AnalysisConfiguration ac = projectConfiguration.getAnalysis(analysisID);

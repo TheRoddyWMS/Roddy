@@ -41,6 +41,8 @@ import static de.dkfz.roddy.StringConstants.FALSE;
  */
 public class Roddy {
 
+    public static final String FEATURE_TOGGLE_ENABLE_XML_VALIDATION = "enableXMLValidation";
+
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(Roddy.class.getName());
     private static AppConfig applicationProperties;
 
@@ -91,6 +93,8 @@ public class Roddy {
      * ICGCeval.dbg@exome
      */
     private static boolean displayShortWorkflowList;
+
+    private static AppConfig featureToggleConfig;
 
     public static int getRepeatSubmissionAmount() {
         if (!repeatJobSubmission)
@@ -172,6 +176,8 @@ public class Roddy {
         time(null);
         LoggerWrapper.setup();
         time("setup");
+        initializeFeatureToggles();
+        time("ftoggleini");
         List<String> list = Arrays.asList(args);
         time("clc .1");
         CommandLineCall clc = new CommandLineCall(list);
@@ -276,6 +282,20 @@ public class Roddy {
             }
         }
 //        return newArguments.toArray(new String[0]);
+    }
+
+    private static void initializeFeatureToggles() {
+        File toggleIni = new File(getSettingsDirectory(), "featureToggles.ini");
+        if(toggleIni.exists()) { // Use default values, if the file is not available
+            AppConfig appConfig = new AppConfig(toggleIni);
+            featureToggleConfig = appConfig;
+        } else {
+            //TODO: Enable all defaults... Let's see how that works.
+        }
+    }
+
+    public static boolean getFeatureToggleValue(AvailableFeatureToggles toggle) {
+        return RoddyConversionHelperMethods.toBoolean(featureToggleConfig.getProperty(toggle.name(), null), toggle.defaultValue);
     }
 
     /**

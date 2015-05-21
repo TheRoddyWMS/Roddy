@@ -219,8 +219,6 @@ public class ConfigurationFactory {
             subConf << _loadInformationalConfigurationContent(file, text, subConfiguration, icc);
         }
 
-        XSDValidator.validate(icc);
-
         return icc;
     }
 
