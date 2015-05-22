@@ -331,11 +331,7 @@ public abstract class ExecutionService extends CacheProvider {
         //Those are files, that are available within the roddy directory/bundledFiles but those are not copied anywhere!This path might not be available on the target system (i.e. because of ssh calls).
 
         if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) {
-            provider.checkDirectory(executionBaseDirectory, context, true);
-            provider.checkDirectory(executionDirectory, context, true);
-            provider.checkDirectory(executionDirectory, context, true);
-            provider.checkDirectory(temporaryDirectory, context, true);
-            provider.checkDirectory(lockFilesDirectory, context, true);
+            provider.checkDirectories([executionBaseDirectory, executionDirectory, temporaryDirectory, lockFilesDirectory], context, true);
             logger.postAlwaysInfo("Creating the following execution directory to store information about this process:")
             logger.postAlwaysInfo("\t${executionDirectory.getAbsolutePath()}");
         }
@@ -409,10 +405,6 @@ public abstract class ExecutionService extends CacheProvider {
             Roddy.getCompressedAnalysisToolsDirectory().mkdir();
 
             Map<File, PluginInfo> listOfFolders = sourcePaths.findAll { File it, PluginInfo pInfo -> !it.getName().contains(".svn"); }
-
-            //We always copy the roddy folder as this folder is used by all scripts.
-//            if (usedToolFolders.size() > 0)
-//                listOfFolders = listOfFolders.findAll { File it -> it.getName().equals("roddyTools") || usedToolFolders.contains(it.getName()); }
 
             //Add used base paths to configuration.
             listOfFolders.each {

@@ -35,7 +35,9 @@ public class ExecutionContextError {
 
     public static final ExecutionContextError EXECUTION_NOINPUTDATA = new ExecutionContextError("No input data was found.", Level.SEVERE);
 
-    public static final ExecutionContextError EXECUTION_UNCATCHEDERROR = new ExecutionContextError("An uncatched error occurred during a run.", Level.SEVERE);
+    public static final ExecutionContextError EXECUTION_UNCATCHEDERROR = new ExecutionContextError("An uncaught error occurred during a run.", Level.SEVERE);
+
+    public static final ExecutionContextError EXECUTION_SUBMISSION_FAILURE = new ExecutionContextError("The job submission did not work, aborting job submission.", Level.SEVERE);
 
     public static final ExecutionContextError READBACK_NOREALJOBCALLSFILE = new ExecutionContextError("The created calls log file is missing => No information about created jobs is available.", Level.SEVERE);
 

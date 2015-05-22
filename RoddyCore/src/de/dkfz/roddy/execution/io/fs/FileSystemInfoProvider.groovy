@@ -248,6 +248,15 @@ public class FileSystemInfoProvider extends CacheProvider {
         }
     }
 
+    public boolean checkDirectories(List<File> files, ExecutionContext context, boolean createMissing) {
+        boolean result = true;
+        files.parallelStream().each {
+            File f ->
+                result &= checkDirectory(f, context, createMissing);
+        }
+        return result;
+    }
+
     /**
      * Checks if a directory is existing and accessible.
      * @param f The directory which should be checked.

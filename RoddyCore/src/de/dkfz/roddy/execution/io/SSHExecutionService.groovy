@@ -256,7 +256,7 @@ class SSHExecutionService extends RemoteExecutionService {
     @Override
     String getUsername() {
         String userName = Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_USER);
-        if(userName == "USERNAME") //Get the local username.
+        if (userName == "USERNAME") //Get the local username.
             userName = System.getProperty("user.name")
         return userName;
     }
@@ -340,18 +340,27 @@ class SSHExecutionService extends RemoteExecutionService {
             cmd.join();
             session.close();
 
+            // Get the exit status of the process. In case of things like caught signals (SEGV-Segmentation fault), the value is null and will be set to 256.
+            Integer exitStatus = cmd.getExitStatus();
+            if (exitStatus == null) exitStatus = 256;
+
             List<String> output = new LinkedList<String>()
-            output << "" + cmd.getExitStatus();
+            output << "" + exitStatus;
             measureStop(id, "blocking command [sshclient:${set.id}] '" + cmdLogStr + "'");
             fireExecutionStoppedEvent(id, command);
-            if (cmd.getExitStatus()) {
-                logger.severe("Command not executed correctly, return code: " + cmd.getExitStatus());
-            } else {
-                if (ignoreError)
-                    logger.severe("Command not executed correctly, return code: " + cmd.getExitStatus() + ", error was ignored on purpose.");
 
+            if (exitStatus > 0) {
+                if (ignoreError) {
+                    logger.severe("Command not executed correctly, return code: " + exitStatus + ", error was ignored on purpose.");
+                    content.readLines().each { String line -> output << "" + line }
+                } else {
+                    logger.severe("Command not executed correctly, return code: " + exitStatus + " Caught signal is " + cmd.getExitSignal().name());
+//                    IOUtils.readFully(cmd.getErrorStream()).toString();
+                }
+            } else {
                 content.readLines().each { String line -> output << "" + line }
             }
+
             return output;
         }
 
@@ -565,7 +574,7 @@ class SSHExecutionService extends RemoteExecutionService {
         SSHPoolConnectionSet service = waitForAndAcquireService()
         try {
             waitForService().sftpClient.rmdir(directory.absolutePath)
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             println(ex);
         } finally {
             service.release();
@@ -770,12 +779,12 @@ class SSHExecutionService extends RemoteExecutionService {
 
     @Override
     public boolean fileExists(File file) {
-        return checkExistence( file, FileMode.Type.REGULAR)
+        return checkExistence(file, FileMode.Type.REGULAR)
     }
 
     @Override
     public boolean directoryExists(File file) {
-        return checkExistence( file, FileMode.Type.DIRECTORY)
+        return checkExistence(file, FileMode.Type.DIRECTORY)
     }
 
     private boolean checkExistence(File file, FileMode.Type typeToCheck) {

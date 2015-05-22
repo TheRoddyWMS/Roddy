@@ -72,6 +72,8 @@ are in the changelist.
 
 == Changelist
 
+* Version update to 2.2.10
+
 * Version update to 2.2.8
 
 - (TEST) New app ini loader

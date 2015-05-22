@@ -413,9 +413,9 @@ public class Analysis {
         // Print out context errors.
         if (context.getErrors().size() > 0) {
             StringBuilder messages = new StringBuilder();
-            messages.append("There were errors for the execution context for dataset " + datasetID);
+            messages.append("\nThere were errors for the execution context for dataset " + datasetID);
             for (ExecutionContextError executionContextError : context.getErrors()) {
-                messages.append("\n\t").append(executionContextError.toString());
+                messages.append("\n\t* ").append(executionContextError.toString());
             }
             logger.postAlwaysInfo(messages.toString());
         }

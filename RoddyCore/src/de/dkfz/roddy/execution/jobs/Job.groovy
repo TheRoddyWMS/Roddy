@@ -1,6 +1,8 @@
-package de.dkfz.roddy.execution.jobs;
+package de.dkfz.roddy.execution.jobs
 
-import de.dkfz.roddy.Constants;
+import de.dkfz.roddy.AvailableFeatureToggles;
+import de.dkfz.roddy.Constants
+import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.knowledge.files.Tuple2;
 import de.dkfz.roddy.tools.LoggerWrapper;
@@ -299,6 +301,12 @@ public class Job {
         //Execute the job or create a dummy command.
         if (runJob) {
             cmd = executeJob(dependencies, dbgMessage)
+            if (cmd.getExecutionID() == null) {
+                context.addErrorEntry(ExecutionContextError.EXECUTION_SUBMISSION_FAILURE.expand("Please check your submission command manually.\n\t  Is your access group set properly? [${context.getAnalysis().getUsergroup()}]\n\t  Can the submission binary handle your binary?\n\t  Is your submission system offline?"));
+                if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.BreakSubmissionOnError)) {
+                    context.abortJobSubmission();
+                }
+            }
         } else {
             cmd = CommandFactory.getInstance().createDummyCommand(this, context, jobName, arrayIndices);
             this.setJobState(JobState.DUMMY);
@@ -360,8 +368,8 @@ public class Job {
         //Now check if the new created files are in the list of already existing files and if those files are valid.
         if (!parentFileIsDirty) {
             List res = verifyFiles(dbgMessage)
-            fileUnverified = (Boolean)res[0];
-            knownFilesCnt = (Integer)res[1];
+            fileUnverified = (Boolean) res[0];
+            knownFilesCnt = (Integer) res[1];
         }
 
         boolean rerunIsNecessary = fileUnverified || parentFileIsDirty;
@@ -409,7 +417,7 @@ public class Job {
                 }
             }
         }
-        return [ fileUnverified, knownFilesCnt ];
+        return [fileUnverified, knownFilesCnt];
     }
 
     private void postProcessArrayJob(JobResult runResult) {
