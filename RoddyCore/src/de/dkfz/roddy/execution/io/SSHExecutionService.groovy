@@ -386,7 +386,7 @@ class SSHExecutionService extends RemoteExecutionService {
     public ExecutionResult execute(String string, boolean waitFor = true) {
         List<String> result = _execute(string, waitFor);
         String returnCodeStr = result[0];
-        int returnCode = Integer.parseInt(returnCodeStr);
+        int returnCode = result.size() > 0 && result[0] != "null" ? Integer.parseInt(returnCodeStr) : 256;
         result.remove(0);
         ExecutionResult er = new ExecutionResult(returnCode == 0, returnCode, result, "");
         fireStringExecutedEvent(string, er);
