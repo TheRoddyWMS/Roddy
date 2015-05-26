@@ -17,7 +17,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.atomic.AtomicLong;
 
 import static de.dkfz.roddy.Constants.NO_VALUE;
 
@@ -35,17 +36,23 @@ public class Job {
         }
     }
 
-    private static
-    final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(Job.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(Job.class.getName());
 
     private JobType jobType = JobType.STANDARD;
 
     private final List<Job> arrayChildJobs = new LinkedList<>();
 
+    private static AtomicLong absoluteJobCreationCounter = new AtomicLong();
+
     /**
      * The name of the job which should be passed to the execution system.
      */
     public final String jobName;
+
+    /**
+     * An internal job creation count. Has nothing to do with e.g. PBS / cluster / process id's!
+     */
+    public final long jobCreationCounter = absoluteJobCreationCounter.incrementAndGet();
 
     /**
      * The current context.

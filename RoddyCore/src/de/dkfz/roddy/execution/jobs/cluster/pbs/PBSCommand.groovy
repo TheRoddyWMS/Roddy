@@ -1,8 +1,12 @@
 package de.dkfz.roddy.execution.jobs.cluster.pbs
 
+import de.dkfz.roddy.AvailableFeatureToggles
+import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.ExecutionService
+import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.ProcessingCommands
@@ -11,6 +15,7 @@ import java.util.logging.Level
 import java.util.logging.Logger
 
 import static de.dkfz.roddy.StringConstants.*
+
 /**
  * This class is used to create and execute qsub commands
  *
@@ -189,7 +194,7 @@ public class PBSCommand extends Command implements Serializable {
 
         qsubCall << QSUB << PARM_JOBNAME << id
 
-        if (accountName) qsubCall << PARM_ACCOUNT << accountName << " " 
+        if (accountName) qsubCall << PARM_ACCOUNT << accountName << " "
 
         qsubCall << getAdditionalCommandParameters();
 
@@ -298,20 +303,33 @@ public class PBSCommand extends Command implements Serializable {
 
         qsubCall << PARM_VARIABLES + PARM_WRAPPED_SCRIPT << command;
         if (parameters.size() > 0) {
-
+            List<String> allParms = [];
             StringBuilder parameterSB = new StringBuilder();
-//            parameterSB << "   " //Prevent the string to be null
             for (String parm : parameters.keySet()) {
                 String val = parameters.get(parm);
-                if(val.contains("\${") && val.contains(BRACE_RIGHT)) {
+                if (val.contains("\${") && val.contains(BRACE_RIGHT)) {
                     val = val.replace("\${", "#{"); // Replace variable names so they can be passed to qsub.
                 }
-                if(val.startsWith("parameterArray=")) {
+                String key = parm;
+                if (val.startsWith("parameterArray=")) {
                     val = "'" + val.replace("parameterArray=", EMPTY) + SINGLE_QUOTE;
                 }
-                parameterSB << COMMA << parm << EQUALS << val
+                allParms << "${key}${EQUALS}${val}".toString();
+//                parameterSB << COMMA << key << EQUALS << val
             }
-            qsubCall << parameterSB;
+            if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.ModifiedVariablePassing)) {
+                File parmFile = executionContext.getParameterFilename(this);
+                qsubCall << ",PARAMETER_FILE=" << parmFile;
+                StringBuilder allLines = new StringBuilder();
+                allParms.each {
+                    String line ->
+                    //TODO export is Bash dependent!
+                    allLines << "export " << line << "\n";
+                }
+                FileSystemInfoProvider.getInstance().writeTextFile(parmFile, allLines.toString(), executionContext);
+            } else {
+                qsubCall << allParms.join(StringConstants.COMMA);
+            }
         }
         qsubCall << " " << configuration.getProcessingToolPath(executionContext, "wrapinScript").getAbsolutePath();
         return qsubCall

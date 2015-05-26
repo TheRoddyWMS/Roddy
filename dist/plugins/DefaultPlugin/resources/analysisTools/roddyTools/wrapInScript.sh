@@ -10,9 +10,11 @@
 # Cluster options (like i.e. PBS ) have to be parsed and set before job submission!
 # They will be ignored after the script is wrapped.
 
+[[ ${PARAMETER_FILE-false} != false ]] && source ${PARAMETER_FILE}
+
 source ${CONFIG_FILE}
 
-[[ ${debugWrapInScript-false} == true ]]  && set -xv
+[[ ${debugWrapInScript-false} == true ]] && set -xv
 [[ ${debugWrapInScript-false} == false ]] && set +xv
 
 #set +xuv # Disable output again
@@ -43,19 +45,21 @@ startCode=STARTED
 # if at least one of the parent jobs exited with a value different to 0.
 if [[ ! ${RODDY_PARENT_JOBS} = false ]]
 then
-    # Now check all lines in the file
-    strlen=`expr ${#RODDY_PARENT_JOBS} - 2`
-    RODDY_PARENT_JOBS=${RODDY_PARENT_JOBS:1:strlen}
-    for parentJob in ${RODDY_PARENT_JOBS[@]}; do
-        [[ ${exitCode-} == 250 ]] && continue;
-        result=`cat ${jobStateLogFile} | grep -a "^${parentJob}:" | tail -n 1 | cut -d ":" -f 2`
-        [[ ! $result -eq 0 ]] && echo "At least one of this parents jobs exited with an error code. This job will not run." && startCode="ABORTED"
-    done
+  # Now check all lines in the file
+  strlen=`expr ${#RODDY_PARENT_JOBS} - 2`
+  RODDY_PARENT_JOBS=${RODDY_PARENT_JOBS:1:strlen}
+  for parentJob in ${RODDY_PARENT_JOBS[@]}; do
+    [[ ${exitCode-} == 250 ]] && continue;
+    result=`cat ${jobStateLogFile} | grep -a "^${parentJob}:" | tail -n 1 | cut -d ":" -f 2`
+    [[ ! $result -eq 0 ]] && echo "At least one of this parents jobs exited with an error code. This job will not run." && startCode="ABORTED"
+  done
 fi
 
 
 # Put in start in Leetcode
-${lockCommand} $_lock; echo "${RODDY_JOBID}:${startCode}:"`date +"%s"`":${TOOL_ID}" >> ${jobStateLogFile}; ${unlockCommand} $_lock
+${lockCommand} $_lock;
+echo "${RODDY_JOBID}:${startCode}:"`date +"%s"`":${TOOL_ID}" >> ${jobStateLogFile};
+${unlockCommand} $_lock
 [[ ${startCode} == 60000 || ${startCode} == "ABORTED" ]] && echo "Exitting because a former job died." && exit 250
 # Sleep a second before and after executing the wrapped script. Allow the system to get different timestamps.
 sleep 2
@@ -64,8 +68,8 @@ export WRAPPED_SCRIPT=${WRAPPED_SCRIPT} # Export script so it can identify itsel
 # TODO Integrate automated checkpoint file creation
 #[[ -f ${FILENAME_CHECKPOINT} ]] && ${FILENAME_CHECKPOINT}
 
- # Create directories
-mkdir -p ${DIR_TEMP} 2> /dev/null
+# Create directories
+mkdir -p ${DIR_TEMP} 2 > /dev/null
 
 echo "Calling script ${WRAPPED_SCRIPT}"
 jobProfilerBinary=${JOB_PROFILER_BINARY-}
@@ -74,12 +78,14 @@ $jobProfilerBinary bash ${WRAPPED_SCRIPT}
 exitCode=$?
 echo "Exited script ${WRAPPED_SCRIPT} with value ${exitCode}"
 
-[[ ${debugWrapInScript-false} == true ]]  && set -xuv
+[[ ${debugWrapInScript-false} == true ]] && set -xuv
 [[ ${debugWrapInScript-false} == false ]] && set +xuv
 
 sleep 2
 
-${lockCommand} $_lock; echo "${RODDY_JOBID}:${exitCode}:"`date +"%s"`":${TOOL_ID}" >> ${jobStateLogFile}; ${unlockCommand} $_lock
+${lockCommand} $_lock;
+echo "${RODDY_JOBID}:${exitCode}:"`date +"%s"`":${TOOL_ID}" >> ${jobStateLogFile};
+${unlockCommand} $_lock
 
 # Set this in your command factory class, when roddy should clean up the dir for you.
 [[ ${RODDY_AUTOCLEANUP_SCRATCH-false} == "true" ]] && rm -rf ${RODDY_SCRATCH} && echo "Auto cleaned up RODDY_SCRATCH"

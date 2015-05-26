@@ -1,5 +1,6 @@
 package de.dkfz.roddy.execution.io
 
+import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
@@ -328,8 +329,6 @@ public abstract class ExecutionService extends CacheProvider {
         //Base path for the application. This path might not be available on the target system (i.e. because of ssh calls).
         File roddyBundledFilesDirectory = Roddy.getBundledFilesDirectory();
 
-        //Those are files, that are available within the roddy directory/bundledFiles but those are not copied anywhere!This path might not be available on the target system (i.e. because of ssh calls).
-
         if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) {
             provider.checkDirectories([executionBaseDirectory, executionDirectory, temporaryDirectory, lockFilesDirectory], context, true);
             logger.postAlwaysInfo("Creating the following execution directory to store information about this process:")
@@ -341,6 +340,13 @@ public abstract class ExecutionService extends CacheProvider {
 
         CommandFactory.getInstance().addSpecificSettingsToConfiguration(cfg)
         getInstance().addSpecificSettingsToConfiguration(cfg)
+
+        //Add feature toggles to configuration
+        AvailableFeatureToggles.values().each {
+            AvailableFeatureToggles toggle ->
+            configurationValues.put(toggle.name(), ((Boolean)Roddy.getFeatureToggleValue(toggle)).toString(), CVALUE_TYPE_BOOLEAN);
+        }
+
         configurationValues.put(RODDY_CVALUE_DIRECTORY_LOCKFILES, lockFilesDirectory.getAbsolutePath(), CVALUE_TYPE_PATH);
         configurationValues.put(RODDY_CVALUE_DIRECTORY_TEMP, temporaryDirectory.getAbsolutePath(), CVALUE_TYPE_PATH);
         configurationValues.put(RODDY_CVALUE_DIRECTORY_EXECUTION, executionDirectory.getAbsolutePath(), CVALUE_TYPE_PATH);

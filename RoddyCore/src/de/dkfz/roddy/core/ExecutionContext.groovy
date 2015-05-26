@@ -3,7 +3,8 @@ package de.dkfz.roddy.core;
 import de.dkfz.roddy.Constants;
 import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
-import de.dkfz.roddy.execution.jobs.*;
+import de.dkfz.roddy.execution.jobs.*
+import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommand;
 import de.dkfz.roddy.knowledge.files.*;
 
 import java.io.File;
@@ -446,6 +447,10 @@ public class ExecutionContext implements JobStatusListener {
         if (analysisToolsDirectory == null)
             analysisToolsDirectory = project.getRuntimeService().getAnalysisToolsDirectory(this);
         return analysisToolsDirectory;
+    }
+
+    public File getParameterFilename(Command command) {
+        new File(getExecutionDirectory(), "${command.getJob().getJobName()}_${command.getJob().jobCreationCounter}.parameters");
     }
 
     public String getTimeStampString() {

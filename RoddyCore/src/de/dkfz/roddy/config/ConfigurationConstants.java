@@ -34,6 +34,7 @@ public class ConfigurationConstants {
     public static final String CVALUE_TYPE_BASH_ARRAY = "bashArray";
     public static final String CVALUE_TYPE_PATH = "path";
     public static final String CVALUE_TYPE_STRING = "string";
+    public static final String CVALUE_TYPE_BOOLEAN = "boolean";
 
     public static final String CVALUE_PREFIX_BASEPATH = "BASEPATH_";
     public static final String CVALUE_PREFIX_TOOL = "TOOL_";

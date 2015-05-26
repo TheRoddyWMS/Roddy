@@ -8,7 +8,9 @@ public enum AvailableFeatureToggles {
 
     XMLValidation(true),
     BreakSubmissionOnError(false),
-    RollbackOnSubmissionOnError(false);
+    RollbackOnSubmissionOnError(false),
+    // Modify bash arrays and pass them with a different separator. (comma instead of whitespace)
+    ModifiedVariablePassing(false);
 
     public final boolean defaultValue;
 

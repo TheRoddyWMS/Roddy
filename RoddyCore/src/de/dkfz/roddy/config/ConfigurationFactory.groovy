@@ -907,7 +907,8 @@ public class ConfigurationFactory {
             text << valueName << '="' << cfg.getProcessingToolPath(context, id) << '"' << separator;
         }
 
-        String umask = cfg.getConfigurationValues().getString(XMLTAG_OUTPUT_UMASK, "077");
+        //TODO The output umask and the group should be taken from a central location.
+        String umask = cfg.getConfigurationValues().getString(XMLTAG_OUTPUT_UMASK, "007");
         String outputFileGroup = cfg.getConfigurationValues().getString(XMLTAG_OUTPUT_FILE_GROUP);
 
         boolean debugPipefail = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.DEBUG_OPTIONS_USE_PIPEFAIL, true);

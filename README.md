@@ -1,3 +1,13 @@
+== Overview
+
+What is Roddy and what is it not?
+- It is not a workflow.
+- It is workflow development framework and you can develop, run and bundle your workflows with it.
+- Roddy is designed to be as independent from the runtime environment as possible. But keep in mind, that
+  this might not be the case for workflows.
+
+Roddy has been tested and successfully used in a docker container together with Sun Grid Engine.
+
 == Prerequisites
 
 Roddy currently needs a JDK / JRE installed in either ~/.roddy/runtime or ~/.roddy/runtimeDevel
@@ -12,10 +22,6 @@ Roddy needs a Groovy Version of 2.3.x in the same directory like the JDK so e.g.
  jre -> jdk/jre
 
 Support for Groovy 2.4.x has been tested and it is currently not working!
-
-== Overview
-
-
 
 == Contents
 
@@ -62,9 +68,11 @@ processOptionsQueryID                   false
 This section contains features which are currently in development. Testable / active features
 are in the changelist.
 
+- (WIP) Pass parameters in a parameter file instead of the normal cli parameter passing. (Feature toggle id: ModifiedVariablePassing[def:false])
+
 - (WIP) Roddy accepts a lot more parameters which might otherwise be configured with the
   application properties file:
-    useRoddyVersion, usePluginVersion,
+    useRoddyVersion (ok), usePluginVersion,
     pluginDirectories, configurationDirectories
     commandFactoryClass,
     executionServiceClass, executionServiceAuth, executionServiceHost, executionServiceUser
@@ -76,9 +84,12 @@ are in the changelist.
 
 * Version update to 2.2.8
 
-- (TEST) New app ini loader
+- (TEST) Break submission, if an error occurs. If a job cannot be started on a cluster environment, the overall
+  job submission will be skipped. Running / Started processes are not affected. (Feature toggle id: BreakSubmissionOnError[def:false])
 
-- (TEST) XML validation will take place when XML files are loaded.
+- (TEST) New app ini loader, does not store files. This part was remove for now.
+
+- (TEST) XML validation will take place when XML files are loaded. (Feature toggle id: XMLValidation[def:true])
 
 - (TEST) Roddy binaries, scripts and libraries will be stored in a different directory.
   Insided dist, there will be several bin/{version} folders like 2.1.49. Inside those, the binary and necessary

@@ -287,6 +287,7 @@ public class Roddy {
     private static void initializeFeatureToggles() {
         File toggleIni = new File(getSettingsDirectory(), "featureToggles.ini");
         if(toggleIni.exists()) { // Use default values, if the file is not available
+            logger.postAlwaysInfo("Loading a feature toggle file.");
             AppConfig appConfig = new AppConfig(toggleIni);
             featureToggleConfig = appConfig;
         } else {

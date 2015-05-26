@@ -483,11 +483,11 @@ public class FileSystemInfoProvider extends CacheProvider {
         return setAccessRightsRecursively(path, getContextSpecificAccessRightsForDirectory(context), getContextSpecificAccessRights(context), getContextSpecificGroupString(context));
     }
 
-    private String getContextSpecificAccessRightsForDirectory(ExecutionContext context) {
+    public String getContextSpecificAccessRightsForDirectory(ExecutionContext context) {
         context.getConfiguration().getConfigurationValues().get("outputAccessRightsForDirectories", getDefaultAccessRightsString()).toString()
     }
 
-    private String getContextSpecificAccessRights(ExecutionContext context) {
+    public String getContextSpecificAccessRights(ExecutionContext context) {
         context.getConfiguration().getConfigurationValues().get("outputAccessRights", getDefaultAccessRightsString()).toString()
     }
 

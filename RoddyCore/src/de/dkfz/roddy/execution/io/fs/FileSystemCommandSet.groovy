@@ -62,6 +62,8 @@ public abstract class FileSystemCommandSet {
 
     public abstract String getMoveFileCommand(File _from, File _to);
 
+    public abstract String getDefaultUMask()
+
     public abstract String getDefaultAccessRightsString()
 
     public abstract String getRemoveDirectoryCommand(File file);

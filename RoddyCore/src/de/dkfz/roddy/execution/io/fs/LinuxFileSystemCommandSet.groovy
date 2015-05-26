@@ -200,6 +200,11 @@ public class LinuxFileSystemCommandSet extends FileSystemCommandSet {
     String getMoveFileCommand(File _in, File _out) { return "mv ${_in.getAbsolutePath()} ${_out.getAbsolutePath()}"; }
 
     @Override
+    String getDefaultUMask() {
+        return "007";
+    }
+
+    @Override
     String getDefaultAccessRightsString() {
         return "u+rwx,g+rwx,o-rwx";
     }
