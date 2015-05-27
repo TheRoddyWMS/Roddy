@@ -60,8 +60,9 @@ elif [[ "$parm1" == "pack" ]]; then
     mkdir -p $packedRoddyDir
 
     nfoFile=${packedRoddyDir}/Roddy.jar.nfo
-    cp -r $currentRoddyDir $packedRoddyDir
+    cp -r $currentRoddyDir/* $packedRoddyDir
 
+    git status > ${filename}.nfo
     svn info > ${filename}.nfo
     svn status >> ${filename}.nfo
     find ${packedRoddyDir} >> ${nfoFile}
@@ -77,15 +78,15 @@ elif [[ "$parm1" == "compileplugin" ]]; then
     exit 0
 elif [[ "$parm1" == "packplugin" || "$parm1" == "testpackplugin" ]]; then
     [[ "$parm1" == "testpackplugin" ]] && set -xuv
-    set -xuv
-    source ${SCRIPTS_DIR}/compileToJarFile.sh $2 increasebuildonly
+    increasebuildonly=true
+    source ${SCRIPTS_DIR}/compileToJarFile.sh
 
     # Test pack does not put things to svn so it is safe to use. Test will not change the zip file but will increase the buildnumber.
     source ${SCRIPTS_DIR}/resolveAppConfig.sh
     pluginID=$2
     pluginDirectories=`grep pluginDirectories ${customconfigfile}`
     pluginDirectory=`groovy ${SCRIPTS_DIR}/findPluginFolders.groovy ${pluginDirectories} ${PWD} ${pluginID}`
-    for i in `ls ${pluginDirectory}/README*.txt`; do
+    for i in `ls ${pluginDirectory}/README*.txt 2> /dev/null`; do
         groovy ${SCRIPTS_DIR}/addChangelistVersionTag.groovy $i ${pluginDirectory}/buildversion.txt
     done
 
@@ -97,7 +98,7 @@ elif [[ "$parm1" == "packplugin" || "$parm1" == "testpackplugin" ]]; then
     [[ ! -d ${filename} ]] && mkdir ${filename}
     cp -r $pluginID/* ${filename}
     cd $filename
-
+    set -xuv
     echo "Removing obsolete files"
     # Find .svn folders?
     find -type d -name "*.svn" | xargs rm -rf
@@ -123,7 +124,7 @@ elif [[ "$parm1" == "packplugin" || "$parm1" == "testpackplugin" ]]; then
     if [[ "$parm1" == "packplugin" ]]; then
         zip -x "*/build/*" -r9 ${filename}.zip ${filename} > /dev/null
         echo "Adding to SVN"
-        svn add ${filename}.zip ${filename}.nfo 2> /dev/null
+#        svn add ${filename}.zip ${filename}.nfo 2> /dev/null
     fi
 
     cd ..; echo "Done";

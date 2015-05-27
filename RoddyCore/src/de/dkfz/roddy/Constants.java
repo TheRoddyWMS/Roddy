@@ -10,8 +10,8 @@ public class Constants {
     // Application constants
     /////////////////////////
 
-    public static final String APP_CURRENT_VERSION_STRING = "2.2.11";
-    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Tue May 26 16:51:10 CEST 2015";
+    public static final String APP_CURRENT_VERSION_STRING = "2.2.13";
+    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Wed May 27 12:26:14 CEST 2015";
     public static final String APP_PROPERTY_COMMAND_FACTORY_CLASS = "commandFactoryClass";
     public static final String APP_PROPERTY_FILESYSTEM_INFO_PROVIDER_CLASS = "fileSystemInfoProviderClass";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_CLASS = "executionServiceClass";
