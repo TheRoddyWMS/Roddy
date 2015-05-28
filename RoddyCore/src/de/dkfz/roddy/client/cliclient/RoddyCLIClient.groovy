@@ -491,16 +491,25 @@ public class RoddyCLIClient {
 
         StringBuilder sb = new StringBuilder();
         sb << "#FWHITE##BGBLUE#Listing datasets for analysis ${analysisID}:#CLEAR#" << NEWLINE;
+
+        //Get padding length for pid.
+        int padSize = dataSets.keySet().max { DataSet ds -> ds.id.length(); }.id.length() + 2
+        if(padSize < 10) padSize = 10;
+
+        sb << " Dataset".padRight(padSize) << "  State     " << "#    " << "OK   " << "ERR  " << "Folder / Message" << separator;
+
         for (DataSet ds in dataSets.keySet()) {
             boolean running = dataSets.get(ds);
             List<AnalysisProcessingInformation> information = ds.getProcessingInformation(analysis);
             ExecutionContext context = null;
             if (information)
                 context = information.first().getDetailedProcessingInfo();
+
+            sb << ds.getId().padLeft(padSize) << "  ";
             if (context == null) {
-                sb << "  #FYELLOW#${ds.getId()}:#CLEAR# Was not executed (or the Roddy log files were deleted).#CLEAR#" << separator;
+                sb << "UNSTARTED 0    0    0".padRight(25) << "Not executed (or the Roddy log files were deleted).#CLEAR#" << separator;
             } else if (running) {
-                sb << "  #FYELLOW#${ds.getId()}:#CLEAR# " << "#FGREEN#is running. " + context.getExecutingUser() + " - " + context.getExecutionDirectory().getAbsolutePath() << "#CLEAR#" << separator;
+                sb << "RUNNING".padLeft(10).padRight(25) << context.getExecutingUser() + " - " + context.getExecutionDirectory().getAbsolutePath() << separator;
             } else { //Check for errors in the last run.
                 //Check if there were errornous jobs
                 List<Job> listOfJobs = context.getExecutedJobs();
@@ -512,7 +521,10 @@ public class RoddyCLIClient {
                         counter[it.getJobState()] = counter.get(it.getJobState(), 0) + 1;
                     }
                 }
-                sb << "  #FYELLOW#${ds.getId()}:#CLEAR# " << "#FRED#Was executed in ${context.getExecutionDirectory().getAbsolutePath()}." << separator << "    During the last execution there were ${listOfJobs.size()} executed jobs and ${failedJobs} exited with an error." << "#CLEAR#" << separator;
+                String state = failedJobs > 0 ? "FAILED" : "OK";
+
+                int startedJobCnt = listOfJobs.size()
+                sb << state.padRight(10) << ("" + startedJobCnt).padRight(5) << ("" + (startedJobCnt - failedJobs)).padRight(5) << ("" + failedJobs).padRight(5) << context.getExecutingUser() + " - " + context.getExecutionDirectory().getAbsolutePath() << separator;
             }
         }
         sb << "#CLEAR#" << separator;

@@ -81,6 +81,9 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 == Changelist
 
+- queryworkflowstatus now gives a much leaner overview about all datasets of a project.
+  There was also a bugfix which stated that some processes were still running though they were obviously crashed.
+
 - The Roddy wrapper script for called scripts contains various new checks which will lead to ABORTED, if the conditions cannot be met.
 
 - The feature toggle file can be selected with --usefeaturetoggleconfig=<file>.

@@ -61,18 +61,17 @@ public enum JobState {
 
     public static JobState parseJobState(String stateString) {
         JobState status = FAILED;
-        if (stateString == "0" || stateString == "C")    //Completed
-        if (stateString == "C")    //Completed
+        if (stateString.equals("0") || stateString.equals("C"))    //Completed
             status = OK;
-        else if (stateString == "E")   //E??
+        else if (stateString.equals("E"))   //E - Exitting
             status = FAILED;
-        else if (stateString == "A")   //A??
+        else if (stateString.equals("A"))   //A - Aborted
             status = ABORTED;
-        else if (stateString == "N")   //N??
+        else if (stateString.equals("N"))   //N??
             status = FAILED;
-        else if (stateString == "60000" || stateString == "ABORTED")   //Aborted due to failed parent job
+        else if (stateString.equals("60000") || stateString.equals("ABORTED"))   //Aborted due to failed parent job or due to a missing dependency.
             status = ABORTED;
-        else if (stateString == "57427" || stateString == "STARTED")   //Started and possibly running
+        else if (stateString.equals("57427") || stateString.equals("STARTED"))   //Started and possibly running
             status = RUNNING;
         else
             status = FAILED;

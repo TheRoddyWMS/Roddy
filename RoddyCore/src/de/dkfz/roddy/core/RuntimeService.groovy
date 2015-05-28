@@ -176,11 +176,15 @@ public abstract class RuntimeService extends CacheProvider {
 
 
             Map<String, Job> unknownJobs = new LinkedHashMap<>();
+            Map<String, Job> possiblyRunningJobs = new LinkedHashMap<>();
             List<String> queryList = new LinkedList<>();
-            //For every job which is still unknown get that from the cluster
+            //For every job which is still unknown or possibly running get the actual state from the cluster
             for (Job job : jobsStartedInContext) {
                 if (job.getJobState().isUnknown() || job.getJobState() == JobState.UNSTARTED) {
                     unknownJobs.put(job.getJobID(), job);
+                    queryList.add(job.getJobID());
+                } else if (job.getJobState() == JobState.RUNNING) {
+                    possiblyRunningJobs.put(job.getJobID(), job);
                     queryList.add(job.getJobID());
                 }
             }
@@ -191,6 +195,16 @@ public abstract class RuntimeService extends CacheProvider {
                 job.setJobState(map.get(jobID));
                 CommandFactory.getInstance().addJobStatusChangeListener(job);
             }
+            for (String jobID : possiblyRunningJobs.keySet()) {
+                Job job = possiblyRunningJobs.get(jobID);
+                if(map.get(jobID) == null) {
+                    job.setJobState(JobState.FAILED);
+                } else {
+                    job.setJobState(map.get(jobID));
+                    CommandFactory.getInstance().addJobStatusChangeListener(job);
+                }
+            }
+
         } catch (Exception ex) {
             System.out.println(ex);
             for (Object o : ex.getStackTrace())
