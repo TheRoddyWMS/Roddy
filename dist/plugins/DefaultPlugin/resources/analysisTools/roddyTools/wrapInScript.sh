@@ -55,6 +55,8 @@ then
   done
 fi
 
+# Check the wrapped script for existence
+[[ ${WRAPPED_SCRIPT-false} == false || ! -f ${WRAPPED_SCRIPT} ]] && startCode=ABORTED && echo "The wrapped script is not defined or not existing."
 
 # Put in start in Leetcode
 ${lockCommand} $_lock;

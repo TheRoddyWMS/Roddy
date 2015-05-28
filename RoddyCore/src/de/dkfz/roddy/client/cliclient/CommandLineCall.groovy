@@ -35,7 +35,10 @@ public class CommandLineCall {
         t1 = ExecutionService.measureStart();
         // Try to extract the startup mode. If it not know, display the help message.
         try {
-            startupMode = Enum.valueOf(RoddyStartupModes.class, parameters[0]);
+            if(parameters.size() == 0)
+                startupMode = help;
+            else
+                startupMode = Enum.valueOf(RoddyStartupModes.class, parameters[0]);
         } catch (Exception ex) {
             logger.postAlwaysInfo("The startupmode " + parameters[0] + " is not known.");
             this.startupMode = help;

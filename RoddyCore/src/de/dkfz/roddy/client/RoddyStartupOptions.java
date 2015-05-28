@@ -16,6 +16,7 @@ public enum RoddyStartupOptions {
     shortlist,
     autocleanup,
     useconfig(true),
+    usefeaturetoggleconfig(true),
     verbositylevel(true),
     debugOptions(true),
     waitforjobs,
@@ -28,7 +29,9 @@ public enum RoddyStartupOptions {
     run(true),
     dontrun(true),
     cvalues(true),
-    
+    enabletoggles(true),
+    disabletoggles(true),
+
     useRoddyVersion(true),
     usePluginVersion(true),
     pluginDirectories(true), 

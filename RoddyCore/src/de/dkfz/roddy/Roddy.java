@@ -166,22 +166,23 @@ public class Roddy {
 
     private static long t1 = 0;
     private static long t2 = 0;
+
     private static void time(String info) {
         t2 = System.nanoTime();
-        if(info != null) logger.postRareInfo("Timing " + info + ": " + ((t2 -t1) / 1000000) + " ms");
+        if (info != null) logger.postRareInfo("Timing " + info + ": " + ((t2 - t1) / 1000000) + " ms");
         t1 = t2;
     }
 
     private static void startup(String[] args) {
         time(null);
         LoggerWrapper.setup();
-        time("setup");
-        initializeFeatureToggles();
         time("ftoggleini");
         List<String> list = Arrays.asList(args);
         time("clc .1");
         CommandLineCall clc = new CommandLineCall(list);
         commandLineCall = clc;
+        time("setup");
+        initializeFeatureToggles();
         time("clc");
         performInitialSetup(args, clc.startupMode);
         time("initial");
@@ -285,13 +286,41 @@ public class Roddy {
     }
 
     private static void initializeFeatureToggles() {
-        File toggleIni = new File(getSettingsDirectory(), "featureToggles.ini");
-        if(toggleIni.exists()) { // Use default values, if the file is not available
+        File toggleIni = null;
+        if (commandLineCall.isOptionSet(RoddyStartupOptions.usefeaturetoggleconfig)) {
+            toggleIni = new File(commandLineCall.getOptionValue(RoddyStartupOptions.usefeaturetoggleconfig));
+            logger.postSometimesInfo("Trying to load alternative feature toggles file: " + toggleIni);
+            if (toggleIni == null || !toggleIni.exists()) {
+                logger.postAlwaysInfo("Cannot find requested toggle file.");
+                exit(1);
+            }
+
+        } else {
+            toggleIni = new File(getSettingsDirectory(), "featureToggles.ini");
+        }
+        if (toggleIni != null && toggleIni.exists()) { // Use default values, if the file is not available
             logger.postAlwaysInfo("Loading a feature toggle file.");
             AppConfig appConfig = new AppConfig(toggleIni);
             featureToggleConfig = appConfig;
         } else {
-            //TODO: Enable all defaults... Let's see how that works.
+            featureToggleConfig = new AppConfig();
+            Arrays.asList(AvailableFeatureToggles.values()).forEach(toggle -> {
+                featureToggleConfig.setProperty(toggle.name(), "" + toggle.defaultValue);
+            });
+        }
+        //Override toggles in ini
+        if (commandLineCall.isOptionSet(RoddyStartupOptions.enabletoggles)) {
+            List<String> enabledToggles = commandLineCall.getOptionList(RoddyStartupOptions.enabletoggles);
+            enabledToggles.forEach(toggle -> {
+                if (AvailableFeatureToggles.valueOf(toggle) != null) featureToggleConfig.setProperty(toggle, "true");
+            });
+        }
+
+        if (commandLineCall.isOptionSet(RoddyStartupOptions.disabletoggles)) {
+            List<String> enabledToggles = commandLineCall.getOptionList(RoddyStartupOptions.enabletoggles);
+            enabledToggles.forEach(toggle -> {
+                if (AvailableFeatureToggles.valueOf(toggle) != null) featureToggleConfig.setProperty(toggle, "false");
+            });
         }
     }
 
@@ -518,7 +547,7 @@ public class Roddy {
 
     private static List<File> loadFolderListFromConfiguration(RoddyStartupOptions option, String configurationConstant) {
         String[] split;
-        if(getCommandLineCall().isOptionSet(option))
+        if (getCommandLineCall().isOptionSet(option))
             split = getCommandLineCall().getOptionValue(option).split(StringConstants.SPLIT_COMMA);
         else
             split = Roddy.getApplicationProperty(configurationConstant, "").split("[,:]");
@@ -567,7 +596,7 @@ public class Roddy {
 
     public static String getUsedRoddyVersion() {
         String[] strClassPath = System.getProperty("java.class.path").split("[;:]");
-        if(getCommandLineCall().isOptionSet(RoddyStartupOptions.useRoddyVersion))
+        if (getCommandLineCall().isOptionSet(RoddyStartupOptions.useRoddyVersion))
             return getCommandLineCall().getOptionValue(RoddyStartupOptions.useRoddyVersion);
         else
             return getApplicationProperty("useRoddyVersion", LibrariesFactory.PLUGIN_VERSION_CURRENT);
@@ -580,7 +609,7 @@ public class Roddy {
 
     public static String[] getPluginVersionEntries() {
         String[] pluginVersionEntries;
-        if(getCommandLineCall().isOptionSet(RoddyStartupOptions.usePluginVersion))
+        if (getCommandLineCall().isOptionSet(RoddyStartupOptions.usePluginVersion))
             pluginVersionEntries = getCommandLineCall().getOptionValue(RoddyStartupOptions.usePluginVersion).split(StringConstants.SPLIT_COMMA);
         else
             pluginVersionEntries = getApplicationProperty(RoddyStartupOptions.usePluginVersion.name()).split(StringConstants.SPLIT_COMMA);
@@ -591,16 +620,18 @@ public class Roddy {
 
         Map<String, String> pluginVersions = new LinkedHashMap<>();
         for (String pluginVersionEntry : getPluginVersionEntries()) {
-            if(RoddyConversionHelperMethods.isNullOrEmpty(pluginVersionEntry)) continue;
+            if (RoddyConversionHelperMethods.isNullOrEmpty(pluginVersionEntry)) continue;
             String[] versionString = pluginVersionEntry.split(StringConstants.SPLIT_COLON);
             pluginVersions.put(versionString[0], versionString[1]);
         }
-        if(pluginVersions.containsKey(pluginID))
+        if (pluginVersions.containsKey(pluginID))
             return pluginVersions.get(pluginID);
         return LibrariesFactory.PLUGIN_VERSION_CURRENT;
     }
 
-    public static CommandLineCall getCommandLineCall() { return commandLineCall; }
+    public static CommandLineCall getCommandLineCall() {
+        return commandLineCall;
+    }
 
     public enum RunMode {
         UI,

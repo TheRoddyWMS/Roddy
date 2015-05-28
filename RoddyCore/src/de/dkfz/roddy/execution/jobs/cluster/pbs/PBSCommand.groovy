@@ -328,7 +328,7 @@ public class PBSCommand extends Command implements Serializable {
                 }
                 FileSystemInfoProvider.getInstance().writeTextFile(parmFile, allLines.toString(), executionContext);
             } else {
-                qsubCall << allParms.join(StringConstants.COMMA);
+                qsubCall << StringConstants.COMMA << allParms.join(StringConstants.COMMA);
             }
         }
         qsubCall << " " << configuration.getProcessingToolPath(executionContext, "wrapinScript").getAbsolutePath();

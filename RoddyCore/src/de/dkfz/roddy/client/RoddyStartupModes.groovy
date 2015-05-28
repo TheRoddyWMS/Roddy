@@ -14,6 +14,8 @@ public enum RoddyStartupModes {
 
     help(SCOPE_CLI),
 
+    showfeaturetoggles(SCOPE_REDUCED),
+
     printappconfig(SCOPE_REDUCED, [useconfig]),
 
     showconfigpaths(SCOPE_REDUCED, [useconfig, verbositylevel]),

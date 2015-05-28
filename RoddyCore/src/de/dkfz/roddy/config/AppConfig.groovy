@@ -99,6 +99,10 @@ public class AppConfig {
         }
     }
 
+    public AppConfig() {
+        appIniFile = null;
+    }
+
     public String toString() {
         println(appIniFile);
 

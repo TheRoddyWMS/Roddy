@@ -29,6 +29,7 @@ import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 @CompileStatic
 public abstract class RuntimeService extends CacheProvider {
     private static LoggerWrapper logger = LoggerWrapper.getLogger(RuntimeService.class.getName());
+    public static final String FILENAME_RUNTIME_INFO= "versionsInfo.txt"
     public static final String FILENAME_RUNTIME_CONFIGURATION = "runtimeConfig.sh"
     public static final String FILENAME_RUNTIME_CONFIGURATION_XML = "runtimeConfig.xml"
     public static final String FILENAME_REALJOBCALLS = "realJobCalls.txt"
@@ -452,6 +453,10 @@ public abstract class RuntimeService extends CacheProvider {
         return new File(analysis.getOutputBaseDirectory().getAbsolutePath() + FileSystemInfoProvider.getInstance().getPathSeparator() + ConfigurationConstants.RODDY_EXEC_CACHE_FILE);
     }
 
+    public File getNameOfRuntimeFile(ExecutionContext context) {
+        return new File(getExecutionDirFilePrefixString(context) + FILENAME_RUNTIME_INFO);
+    }
+
     public String extractDataSetIDFromPath(File p, Analysis analysis) {
 //        analysis.getOutputAnalysisBaseDirectory()
         getOutputFolderForAnalysis(analysis);
@@ -608,5 +613,4 @@ public abstract class RuntimeService extends CacheProvider {
     public abstract String createJobName(ExecutionContext executionContext, BaseFile file, String TOOLID, boolean reduceLevel)
 
     public abstract boolean isFileValid(BaseFile baseFile)
-
 }

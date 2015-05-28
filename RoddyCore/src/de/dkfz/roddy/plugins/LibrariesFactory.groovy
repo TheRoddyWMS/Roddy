@@ -1,5 +1,6 @@
 package de.dkfz.roddy.plugins
 
+import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.client.RoddyStartupModes
 import de.dkfz.roddy.tools.*
@@ -8,9 +9,6 @@ import de.dkfz.roddy.core.Initializable
 import de.dkfz.roddy.core.LibraryEntry
 
 import java.lang.reflect.Method
-
-import static de.dkfz.roddy.plugins.LibrariesFactory.PLUGIN_VERSION_CURRENT
-import static de.dkfz.roddy.plugins.LibrariesFactory.PLUGIN_VERSION_CURRENT
 
 /**
  * Factory to load and integrate plugins.
@@ -26,7 +24,7 @@ public class LibrariesFactory extends Initializable {
     public static final String BUILDINFO_DEPENDENCY = "dependson";
     public static final String BUILDINFO_TEXTFILE = "buildinfo.txt";
 
-    private List<LibraryEntry> loadedLibraries = [];
+    private List<String> loadedLibrariesInfo = [];
 
     private List<PluginInfo> loadedPlugins = [];
 
@@ -148,10 +146,11 @@ public class LibrariesFactory extends Initializable {
 
                 if (pEntry.getName().endsWith(".zip")) { // Zip files are handled differently and cannot be checked for contents!
                     zipFile = pEntry;
-
-                    if (!new File(zipFile.getAbsolutePath()[0..-5]).exists()) {
-                        if (!helpMode) logger.postAlwaysInfo("Unzipping zipped plugin (this is done unchecked and unlocked, processes could interfere with each other!)")
-                        (new RoddyIOHelperMethods.NativeLinuxZipCompressor()).decompress(zipFile, null, zipFile.getParentFile());
+                    if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.UnzipZippedPlugins)) {
+                        if (!new File(zipFile.getAbsolutePath()[0..-5]).exists()) {
+                            if (!helpMode) logger.postAlwaysInfo("Unzipping zipped plugin (this is done unchecked and unlocked, processes could interfere with each other!)")
+                            (new RoddyIOHelperMethods.NativeLinuxZipCompressor()).decompress(zipFile, null, zipFile.getParentFile());
+                        }
                     }
                     continue;
                 }
@@ -252,18 +251,23 @@ public class LibrariesFactory extends Initializable {
     }
 
     public void loadLibraries(List<PluginInfo> pluginInfo) {
-        for (PluginInfo pi : pluginInfo) {
+        pluginInfo.parallelStream().each { PluginInfo pi ->
             if (!pi.directory)
-                continue;
+                return;
             File jarFile = pi.directory.listFiles().find { File f -> f.name.endsWith(".jar") };
             if (!jarFile || !addFile(jarFile))
-                continue;
-            logger.postAlwaysInfo("The plugin ${pi.getName()} [ Version: ${pi.getProdVersion()} ] was loaded.")
+                return;
+
+            def loadInfo = "The plugin ${pi.getName()} [ Version: ${pi.getProdVersion()} ] was loaded."
+            logger.postAlwaysInfo(loadInfo)
+            synchronized (loadedLibrariesInfo) {
+                loadedLibrariesInfo << loadInfo.toString()
+            }
         }
     }
 
-    public List<LibraryEntry> getAllLibraries() {
-        return new LinkedList<>(loadedLibraries);
+    public List<String> getLoadedLibrariesInfoList() {
+        return loadedLibrariesInfo;
     }
 
     public Class tryLoadClass(String className) throws ClassNotFoundException {

@@ -67,8 +67,9 @@ processOptionsQueryID                   false
 
 This section contains features which are currently in development. Testable / active features
 are in the changelist.
+Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Changelist.
 
-- (WIP) Pass parameters in a parameter file instead of the normal cli parameter passing. (Feature toggle id: ModifiedVariablePassing[def:false])
+- (PLANNED) enable and disable runFlags with --run=... and --dontrun=...
 
 - (WIP) Roddy accepts a lot more parameters which might otherwise be configured with the
   application properties file:
@@ -80,7 +81,15 @@ are in the changelist.
 
 == Changelist
 
-* Version update to 2.2.10
+- The Roddy wrapper script for called scripts contains various new checks which will lead to ABORTED, if the conditions cannot be met.
+
+- The feature toggle file can be selected with --usefeaturetoggleconfig=<file>.
+  Single feature toggles can be enabled or disabled with --enabletoggle=<toggle>,<toggle> or --disabletoggle
+  The list of possibly available toggle can be queried with the "showfeaturetoggles" start mode
+
+- (TEST) Unzip of plugins is disabled by default now. Can be enabled via feature toggle. (Feature toggle id: UnzipZippedPlugins[def:false])
+
+- (TEST) Pass parameters in a parameter file instead of the normal cli parameter passing. (Feature toggle id: ModifiedVariablePassing[def:false])
 
 * Version update to 2.2.8
 

@@ -371,6 +371,10 @@ public abstract class ExecutionService extends CacheProvider {
 
         context.setDetailedExecutionContextLevel(ExecutionContextSubLevel.RUN_SETUP_COPY_CONFIG);
 
+        //Current version info strings.
+        String versionInfo = "Roddy version: " + Roddy.getUsedRoddyVersion() + "\nLibrary info:\n" + LibrariesFactory.getInstance().getLoadedLibrariesInfoList().join("\n");
+        provider.writeTextFile(context.getProject().getRuntimeService().getNameOfRuntimeFile(context), versionInfo, context);
+
         //Current config
         String configText = cfgService.convertConfigurationToShellscript(context, cfg);
         provider.writeTextFile(context.getProject().getRuntimeService().getNameOfConfigurationFile(context), configText, context);

@@ -1,5 +1,6 @@
 package de.dkfz.roddy.client.cliclient
 
+import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
@@ -82,6 +83,9 @@ public class RoddyCLIClient {
         //TODO Convert to CommandLineCall
         String[] args = clc.getArguments();
         switch (clc.startupMode) {
+            case showfeaturetoggles:
+                showFeatureToggles();
+                break;
             case printappconfig:
                 printApplicationConfiguration();
                 break;
@@ -130,6 +134,15 @@ public class RoddyCLIClient {
             default:
                 RoddyStartupModes.printCommandLineOptions();
                 System.exit(0);
+        }
+    }
+
+    public static void showFeatureToggles() {
+        println("Available feature toggles and their default values.")
+        println("Note, that not every toggle is active or usable!")
+        AvailableFeatureToggles.values().each {
+            AvailableFeatureToggles toggle ->
+            println("\t${toggle.name()} [def:${toggle.defaultValue}]")
         }
     }
 
