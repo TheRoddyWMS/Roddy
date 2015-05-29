@@ -81,6 +81,9 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 == Changelist
 
+- Add the boolean configuration parameter outputAllowAccessRightsModification to allow (default) or disallow access rights modification
+  on the target file system.
+
 - queryworkflowstatus now gives a much leaner overview about all datasets of a project.
   There was also a bugfix which stated that some processes were still running though they were obviously crashed.
 
