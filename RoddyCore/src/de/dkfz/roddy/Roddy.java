@@ -548,7 +548,7 @@ public class Roddy {
     private static List<File> loadFolderListFromConfiguration(RoddyStartupOptions option, String configurationConstant) {
         String[] split;
         if (getCommandLineCall().isOptionSet(option))
-            split = getCommandLineCall().getOptionValue(option).split(StringConstants.SPLIT_COMMA);
+            split = getCommandLineCall().getOptionList(option).toArray(new String[0]);
         else
             split = Roddy.getApplicationProperty(configurationConstant, "").split("[,:]");
 
