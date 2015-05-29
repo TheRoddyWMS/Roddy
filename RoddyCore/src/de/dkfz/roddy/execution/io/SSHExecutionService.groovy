@@ -511,8 +511,8 @@ class SSHExecutionService extends RemoteExecutionService {
         boolean result = true;
         try {
             FileSystemInfoProvider fp = FileSystemInfoProvider.getInstance();
-            service.sftpClient.chmod(file.getAbsolutePath(), convertToAccessRights(rightsStr));
-            service.sftpClient.chgrp(file.getAbsolutePath(), fp.getGroupID(groupID));
+            if(rightsStr) service.sftpClient.chmod(file.getAbsolutePath(), convertToAccessRights(rightsStr));
+            if(groupID) service.sftpClient.chgrp(file.getAbsolutePath(), fp.getGroupID(groupID));
         } catch (Exception ex) {
             logger.severe("Could not set access attributes for ${file.absolutePath}")
             result = false;
@@ -559,8 +559,10 @@ class SSHExecutionService extends RemoteExecutionService {
             final RemoteFile f = service.sftpClient.open(file.getAbsolutePath(), set);
             f.close();
             FileSystemInfoProvider fp = FileSystemInfoProvider.getInstance();
-            service.sftpClient.chmod(file.getAbsolutePath(), convertToAccessRights(accessRights));
-            service.sftpClient.chgrp(file.getAbsolutePath(), fp.getGroupID(groupID));
+            if(accessRights)
+                service.sftpClient.chmod(file.getAbsolutePath(), convertToAccessRights(accessRights));
+            if(groupID)
+                service.sftpClient.chgrp(file.getAbsolutePath(), fp.getGroupID(groupID));
         } finally {
             service.release();
             measureStop(id, "touch [sshclient:${service.id}]");
