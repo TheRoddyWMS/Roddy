@@ -489,28 +489,40 @@ public class RoddyCLIClient {
 
         Map<DataSet, Boolean> dataSets = analysis.checkStatus(dFilter, true);
 
+        String outputDirectory = analysis.getOutputBaseDirectory().getAbsolutePath()
+
         StringBuilder sb = new StringBuilder();
         sb << "#FWHITE##BGBLUE#Listing datasets for analysis ${analysisID}:#CLEAR#" << NEWLINE;
+        sb << "Note, that only 'valid' information is processed and display. Empty execution folders and " ;
+        sb << "folders containing no job information will be skipped." << NEWLINE << NEWLINE << "[outDir]: " << outputDirectory << NEWLINE;
 
         //Get padding length for pid.
         int padSize = dataSets.keySet().max { DataSet ds -> ds.id.length(); }.id.length() + 2
         if(padSize < 10) padSize = 10;
 
-        sb << " Dataset".padRight(padSize) << "  State     " << "#    " << "OK   " << "ERR  " << "Folder / Message" << separator;
+        sb << "Dataset".padRight(padSize) << "  State     " << "#    " << "OK   " << "ERR  " << "User      " << "Folder / Message" << separator;
 
         for (DataSet ds in dataSets.keySet()) {
             boolean running = dataSets.get(ds);
-            List<AnalysisProcessingInformation> information = ds.getProcessingInformation(analysis);
+            AnalysisProcessingInformation information = ds.getLatestValidProcessingInformation(analysis);
             ExecutionContext context = null;
             if (information)
-                context = information.first().getDetailedProcessingInfo();
+                context = information.getDetailedProcessingInfo();
 
-            sb << ds.getId().padLeft(padSize) << "  ";
+            sb << ds.getId().padRight(padSize) << "  ";
             if (context == null) {
                 sb << "UNSTARTED 0    0    0".padRight(25) << "Not executed (or the Roddy log files were deleted).#CLEAR#" << separator;
-            } else if (running) {
-                sb << "RUNNING".padLeft(10).padRight(25) << context.getExecutingUser() + " - " + context.getExecutionDirectory().getAbsolutePath() << separator;
-            } else { //Check for errors in the last run.
+                continue;
+            }
+
+            def userID = context.getExecutingUser().padRight(10).substring(0, 9)
+            def execFolder = context.getExecutionDirectory().getAbsolutePath()
+            if(clc.isOptionSet(RoddyStartupOptions.shortlist)) execFolder = execFolder.replace(outputDirectory, "[outDir]")
+
+            if (running) {
+                sb << "RUNNING".padRight(25) << userID << " " << execFolder << separator;
+            } else {
+                //Check for errors in the last run.
                 //Check if there were errornous jobs
                 List<Job> listOfJobs = context.getExecutedJobs();
                 int failedJobs = 0;
@@ -524,7 +536,7 @@ public class RoddyCLIClient {
                 String state = failedJobs > 0 ? "FAILED" : "OK";
 
                 int startedJobCnt = listOfJobs.size()
-                sb << state.padRight(10) << ("" + startedJobCnt).padRight(5) << ("" + (startedJobCnt - failedJobs)).padRight(5) << ("" + failedJobs).padRight(5) << context.getExecutingUser() + " - " + context.getExecutionDirectory().getAbsolutePath() << separator;
+                sb << state.padRight(10) << ("" + startedJobCnt).padRight(5) << ("" + (startedJobCnt - failedJobs)).padRight(5) << ("" + failedJobs).padRight(5) << userID << " " << execFolder << separator;
             }
         }
         sb << "#CLEAR#" << separator;

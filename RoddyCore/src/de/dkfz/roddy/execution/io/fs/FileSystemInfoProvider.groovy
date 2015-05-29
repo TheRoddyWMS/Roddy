@@ -271,8 +271,6 @@ public class FileSystemInfoProvider extends CacheProvider {
         final String path = f.absolutePath
         String id = String.format("checkDirectory_%08X", path.hashCode());
         if (!_directoryExistsAndIsAccessible.containsKey(path)) {
-            def configurationValues = context.getConfiguration().getConfigurationValues();
-            boolean modRights = isAccessRightsModificationAllowed(context);
             String outputAccessRightsForDirectories = getContextSpecificAccessRightsForDirectory(context);
             String outputFileGroup = getContextSpecificGroupString(context);
             String cmd = commandSet.getCheckDirectoryCommand(f, createMissing, outputFileGroup, outputAccessRightsForDirectories);
@@ -375,12 +373,12 @@ public class FileSystemInfoProvider extends CacheProvider {
 
     int getGroupID(String groupID) {
         synchronized (_groupIDsByGroup) {
-            if(! _groupIDsByGroup.containsKey(groupID)) {
+            if (!_groupIDsByGroup.containsKey(groupID)) {
                 ExecutionResult er = ExecutionService.getInstance().execute(commandSet.getGroupIDCommand(groupID));
                 _groupIDsByGroup[groupID] = er.resultLines[0].toInteger();
             }
 
-                return _groupIDsByGroup[groupID];
+            return _groupIDsByGroup[groupID];
         }
     }
 
@@ -489,17 +487,20 @@ public class FileSystemInfoProvider extends CacheProvider {
     }
 
     public String getContextSpecificAccessRightsForDirectory(ExecutionContext context) {
-        if(!isAccessRightsModificationAllowed(context)) return null;
+        if (!context) return null;
+        if (!isAccessRightsModificationAllowed(context)) return null;
         context.getConfiguration().getConfigurationValues().get("outputAccessRightsForDirectories", getDefaultAccessRightsString()).toString()
     }
 
     public String getContextSpecificAccessRights(ExecutionContext context) {
-        if(!isAccessRightsModificationAllowed(context)) return null;
+        if (!context) return null;
+        if (!isAccessRightsModificationAllowed(context)) return null;
         context.getConfiguration().getConfigurationValues().get("outputAccessRights", getDefaultAccessRightsString()).toString()
     }
 
     public String getContextSpecificGroupString(ExecutionContext context) {
-        if(!isAccessRightsModificationAllowed(context)) return null;
+        if (!context) return null;
+        if (!isAccessRightsModificationAllowed(context)) return null;
         return context.getConfiguration().getConfigurationValues().get("outputFileGroup", getMyGroup()).toString()
     }
     /**
@@ -513,7 +514,7 @@ public class FileSystemInfoProvider extends CacheProvider {
     }
 
     public boolean setDefaultAccessRights(File file, ExecutionContext context) {
-        if(!isAccessRightsModificationAllowed(context))
+        if (!isAccessRightsModificationAllowed(context))
             return true;
         return setAccessRights(file, getContextSpecificAccessRights(context), getContextSpecificGroupString(context));
     }
@@ -641,7 +642,7 @@ public class FileSystemInfoProvider extends CacheProvider {
     }
 
     public void removeDirectory(File directory) {
-        if(ExecutionService.getInstance().canDeleteFiles()) {
+        if (ExecutionService.getInstance().canDeleteFiles()) {
             ExecutionService.getInstance().removeDirectory(directory);
         } else {
             ExecutionService.getInstance().execute(commandSet.getRemoveDirectoryCommand(directory));

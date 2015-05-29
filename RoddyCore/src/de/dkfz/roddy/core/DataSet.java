@@ -1,6 +1,7 @@
 package de.dkfz.roddy.core;
 
 import de.dkfz.roddy.config.TestDataOption;
+import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
 import de.dkfz.roddy.execution.jobs.Job;
 
 import java.io.File;
@@ -182,6 +183,18 @@ public class DataSet extends InfoObject implements Serializable, ExecutionContex
 
     public List<AnalysisProcessingInformation> getProcessingInformation(Analysis analysis) {
         return new LinkedList<>(getAnalysisContainer(analysis));
+    }
+
+    public AnalysisProcessingInformation getLatestValidProcessingInformation(Analysis analysis) {
+        List<AnalysisProcessingInformation> information = getProcessingInformation(analysis);
+        FileSystemInfoProvider fip = FileSystemInfoProvider.getInstance();
+        for (AnalysisProcessingInformation api : information) {
+            ExecutionContext detailedProcessingInfo = api.getDetailedProcessingInfo();
+            if (api == null || detailedProcessingInfo == null || detailedProcessingInfo.getExecutedJobs().size() == 0 || !fip.checkDirectory(api.getExecPath(), null, false))
+                continue;
+            return api;
+        }
+        return null;
     }
 
     @Override

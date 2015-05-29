@@ -101,7 +101,7 @@ public class Analysis {
 
             //If it is configured, get the group id from the config.
             boolean processSetUserGroup = getConfiguration().getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, true);
-            if(processSetUserGroup) {
+            if (processSetUserGroup) {
                 groupID = getConfiguration().getConfigurationValues().getString(ConfigurationFactory.XMLTAG_OUTPUT_FILE_GROUP, groupID);
             }
             return groupID;
@@ -260,10 +260,9 @@ public class Analysis {
     }
 
     public boolean checkStatusForDataset(DataSet ds) {
-        List<AnalysisProcessingInformation> information = ds.getProcessingInformation(this);
-        if (information != null && information.size() > 0)
-            return information.get(0).getDetailedProcessingInfo() != null && information.get(0).getDetailedProcessingInfo().hasRunningJobs();
-        return false;
+        AnalysisProcessingInformation api = ds.getLatestValidProcessingInformation(this);
+        ExecutionContext detailedProcessingInfo = api.getDetailedProcessingInfo();
+        return detailedProcessingInfo != null && detailedProcessingInfo.hasRunningJobs();
     }
 
     public Map<DataSet, Boolean> checkStatus(List<String> pids) {
@@ -273,10 +272,19 @@ public class Analysis {
     public Map<DataSet, Boolean> checkStatus(List<String> pids, boolean suppressInfo) {
         List<DataSet> dataSets = loadDatasetsWithFilter(pids, suppressInfo);
         Map<DataSet, Boolean> results = new LinkedHashMap<>();
-        for (DataSet ds : dataSets) {
-            results.put(ds, checkStatusForDataset(ds));
+        dataSets.parallelStream().forEach(ds -> {
+            boolean result = checkStatusForDataset(ds);
+            synchronized (results) {
+                results.put(ds, result);
+            }
+        });
+        List<DataSet> sortedKeys = new LinkedList<>(results.keySet());
+        sortedKeys.sort((ds1, ds2) -> ds1.getId().compareTo(ds2.getId()));
+        Map<DataSet, Boolean> sortedMap = new LinkedHashMap<>();
+        for (DataSet ds : sortedKeys) {
+            sortedMap.put(ds, results.get(ds));
         }
-        return results;
+        return sortedMap;
     }
 
     public List<DataSet> loadDatasetsWithFilter(List<String> pidFilters) {
