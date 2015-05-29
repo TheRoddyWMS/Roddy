@@ -261,7 +261,7 @@ public class Analysis {
 
     public boolean checkStatusForDataset(DataSet ds) {
         AnalysisProcessingInformation api = ds.getLatestValidProcessingInformation(this);
-        ExecutionContext detailedProcessingInfo = api.getDetailedProcessingInfo();
+        ExecutionContext detailedProcessingInfo = api != null ? api.getDetailedProcessingInfo() : null;
         return detailedProcessingInfo != null && detailedProcessingInfo.hasRunningJobs();
     }
 
