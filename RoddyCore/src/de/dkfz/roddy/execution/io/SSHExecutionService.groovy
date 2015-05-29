@@ -354,7 +354,7 @@ class SSHExecutionService extends RemoteExecutionService {
                     logger.severe("Command not executed correctly, return code: " + exitStatus + ", error was ignored on purpose.");
                     content.readLines().each { String line -> output << "" + line }
                 } else {
-                    logger.severe("Command not executed correctly, return code: " + exitStatus + " Caught signal is " + cmd.getExitSignal().name());
+                    logger.severe("Command not executed correctly, return code: " + exitStatus + (cmd.getExitSignal() ? " Caught signal is " + cmd.getExitSignal().name() : ""));
 //                    IOUtils.readFully(cmd.getErrorStream()).toString();
                 }
             } else {
