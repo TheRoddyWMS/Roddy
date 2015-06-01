@@ -46,9 +46,7 @@ public class RecursiveOverridableMapContainerForConfigurationValues extends Recu
      * @param value
      * @param type
      */
-    public void put(String id, String value, String type) {
-        super.add(new ConfigurationValue(id, value, type));
-    }
+    public void put(String id, String value, String type) { super.add(new ConfigurationValue(id, value, type)); }
 
     public List<ConfigurationValue> getInheritanceList(String id) {
         List<ConfigurationValue> allValues = new LinkedList<>();
