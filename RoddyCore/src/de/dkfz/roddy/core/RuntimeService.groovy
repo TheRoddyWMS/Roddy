@@ -164,7 +164,10 @@ public abstract class RuntimeService extends CacheProvider {
 
             for (Job job : jobsStartedInContext) {
                 if (job == null) continue;
-                job.setJobState(JobState.UNSTARTED);
+                if(job.jobID == "Unknown")
+                    job.setJobState(JobState.FAILED)
+                else
+                    job.setJobState(JobState.UNSTARTED);
                 for (String id : statusList.keySet()) {
                     JobState status = statusList[id];
 
