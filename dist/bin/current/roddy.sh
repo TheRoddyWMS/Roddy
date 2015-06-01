@@ -13,11 +13,15 @@ elif [[ "$parm1" == "setup" ]]; then
     exit 0
 fi
 
+# TODO: Groovy and Java might also be accessible from other places, however this roddy.sh does not support anything besides the current path!
+
 # Example for a date call (for timestamps)
 #date +"%M %S %N"
 GROOVY_HOME=`ls -d ${PWD}/dist/runtime*/groovy 2> /dev/null`
 JAVA_HOME=`ls -d ${PWD}/dist/runtime*/jre 2> /dev/null`
 JDK_HOME=`ls -d ${PWD}/dist/runtime*/jdk 2> /dev/null`
+
+[[ ! -d $GROOVY_HOME ]] && echo "Groovy SDK / Runtime not found, Roddy cannot be compiled or started." && exit 1
 
 if [[ -z $JAVA_HOME ]]
 then
@@ -27,7 +31,7 @@ fi
 
 [[ ! -d $JAVA_HOME ]] && echo "There was no java runtime environment or jdk setup. Roddy cannot be compiled." && exit 1
 
-PATH=$JAVA_HOME/bin:$GROOVY_HOME/bin:$PATH
+PATH=$JDK_HOME/bin:$JAVA_HOME/bin:$GROOVY_HOME/bin:$PATH
 JFX_LIBINFO_FILE=~/.roddy/jfxlibInfo
 if [[ ! -f ${JFX_LIBINFO_FILE} ]] || [[ ! -f `cat ${JFX_LIBINFO_FILE}` ]]; then
 	echo `find ${JAVA_HOME}/ -name "jfxrt.jar"` > ${JFX_LIBINFO_FILE}
