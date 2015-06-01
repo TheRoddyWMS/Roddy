@@ -34,6 +34,10 @@ public enum JobState {
      * Jobs which were submitted but not started (i.e. due to crashed or cancelled succeeding jobs).
      */
     UNSTARTED,
+    /**
+     * Jobs which were started and which might be running.
+     */
+    STARTED,
     HOLD,
     QUEUED,
     /**
@@ -72,7 +76,7 @@ public enum JobState {
         else if (stateString.equals("60000") || stateString.equals("ABORTED"))   //Aborted due to failed parent job or due to a missing dependency.
             status = ABORTED;
         else if (stateString.equals("57427") || stateString.equals("STARTED"))   //Started and possibly running
-            status = RUNNING;
+            status = STARTED;
         else
             status = FAILED;
         return status;

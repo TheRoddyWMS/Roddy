@@ -183,7 +183,7 @@ public abstract class RuntimeService extends CacheProvider {
                 if (job.getJobState().isUnknown() || job.getJobState() == JobState.UNSTARTED) {
                     unknownJobs.put(job.getJobID(), job);
                     queryList.add(job.getJobID());
-                } else if (job.getJobState() == JobState.RUNNING) {
+                } else if (job.getJobState() == JobState.STARTED) {
                     possiblyRunningJobs.put(job.getJobID(), job);
                     queryList.add(job.getJobID());
                 }

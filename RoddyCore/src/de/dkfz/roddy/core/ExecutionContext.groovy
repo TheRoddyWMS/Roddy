@@ -537,8 +537,16 @@ public class ExecutionContext implements JobStatusListener {
         if (jobsForProcess.get(0) instanceof ReadOutJob) {
             for (Job job : jobsForProcess) {
                 ReadOutJob rj = (ReadOutJob) job;
-                if (rj.getJobState().isPlannedOrRunning())
-                    return true;
+
+                def state = rj.getJobState()
+                if (state.isPlannedOrRunning()) {
+                    if(state.isRunning())
+                        return true;
+                    else {
+                        //Check previous jobs... Or just wait for the next step???
+
+                    }
+                }
             }
         }
 
