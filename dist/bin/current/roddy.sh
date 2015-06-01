@@ -17,6 +17,7 @@ fi
 #date +"%M %S %N"
 GROOVY_HOME=`ls -d ${PWD}/dist/runtime*/groovy 2> /dev/null`
 JAVA_HOME=`ls -d ${PWD}/dist/runtime*/jre 2> /dev/null`
+JDK_HOME=`ls -d ${PWD}/dist/runtime*/jdk 2> /dev/null`
 
 if [[ -z $JAVA_HOME ]]
 then
@@ -47,6 +48,7 @@ do
 done
 
 if [[ "$parm1" == "compile" ]]; then
+    [[ ! -d $JDK_HOME ]] && echo "There was no JDK home found. Roddy cannot compile workflows." && exit 1
     source ${SCRIPTS_DIR}/compile.sh
     exit 0
 elif [[ "$parm1" == "pack" ]]; then
@@ -74,6 +76,7 @@ elif [[ "$parm1" == "pack" ]]; then
     exit 0
 elif [[ "$parm1" == "compileplugin" ]]; then
     echo "Using Roddy binary "`basename ${RODDY_BINARY}`
+    [[ ! -d $JDK_HOME ]] && echo "There was no JDK home found. Roddy cannot compile workflows." && exit 1
     source ${SCRIPTS_DIR}/compileToJarFile.sh
     exit 0
 elif [[ "$parm1" == "packplugin" || "$parm1" == "testpackplugin" ]]; then
