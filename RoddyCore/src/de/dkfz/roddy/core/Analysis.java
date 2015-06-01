@@ -1,5 +1,7 @@
 package de.dkfz.roddy.core;
 
+import de.dkfz.roddy.AvailableFeatureToggles;
+import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
 import de.dkfz.roddy.execution.jobs.*;
@@ -252,9 +254,9 @@ public class Analysis {
         String datasetID = ds.getId();
         boolean running = checkStatusForDataset(ds);
 
-        if (running) {
+        if (running && Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning)) {
             logger.postAlwaysInfo("The pid " + datasetID + " is still running and will be skipped for the process.");
-            return true;
+            return false;
         }
         return true;
     }

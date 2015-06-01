@@ -7,6 +7,7 @@ package de.dkfz.roddy;
 public enum AvailableFeatureToggles {
 
     XMLValidation(true),
+    ForbidSubmissionOnRunning(false),
     BreakSubmissionOnError(false),
     RollbackOnSubmissionOnError(false),
     // Modify bash arrays and pass them with a different separator. (comma instead of whitespace)

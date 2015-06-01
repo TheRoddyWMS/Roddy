@@ -19,7 +19,6 @@
       <excludeFolder url="file://$USER_HOME$/.roddy/roddyPipelines" />
       <excludeFolder url="file://$USER_HOME$/.roddy/runtimeDevel" />
     </content>
-    <content url="file://$MODULE_DIR$/../../RoddyWorkflows/COProjectConfigurations" />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
@@ -28,6 +27,7 @@
       <sourceFolder url="file://$MODULE_DIR$/../dist/plugins/PluginBase/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../dist/plugins/Template/src" isTestSource="false" />
     </content>
+    <content url="file://$MODULE_DIR$/../../RoddyWorkflows/COProjectConfigurations" />
     <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="junit-4.11" level="project" />
