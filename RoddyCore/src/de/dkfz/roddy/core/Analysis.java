@@ -399,7 +399,11 @@ public class Analysis {
                         //First, check if there were any executed jobs. If not, we can safely delete the the context directory.
                         if (context.getStartedJobs().size() == 0) {
                             logger.postAlwaysInfo("There were no started jobs, the execution directory will be removed.");
-                            FileSystemInfoProvider.getInstance().removeDirectory(context.getExecutionDirectory());
+                            if(context.getExecutionDirectory().getName().contains(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX))
+                                FileSystemInfoProvider.getInstance().removeDirectory(context.getExecutionDirectory());
+                            else {
+                                throw new RuntimeException("A wrong path would be deleted: " + context.getExecutionDirectory().getAbsolutePath());
+                            }
                         } else {
                             ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context);
                         }
