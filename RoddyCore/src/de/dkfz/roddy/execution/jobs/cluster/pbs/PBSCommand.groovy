@@ -326,7 +326,8 @@ public class PBSCommand extends Command implements Serializable {
                     //TODO export is Bash dependent!
                     allLines << "export " << line << "\n";
                 }
-                FileSystemInfoProvider.getInstance().writeTextFile(parmFile, allLines.toString(), executionContext);
+                if(getExecutionContext().getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
+                    FileSystemInfoProvider.getInstance().writeTextFile(parmFile, allLines.toString(), executionContext);
             } else {
                 qsubCall << StringConstants.COMMA << allParms.join(StringConstants.COMMA);
             }

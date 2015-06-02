@@ -107,6 +107,7 @@ public enum RoddyStartupModes {
 
         printCommand(RoddyStartupModes.help, "", "Shows a list of available configuration files in all configured paths.");
         printCommand(RoddyStartupModes.showconfigpaths, "[--useconfig={file}]", "Shows a list of available configuration files in all configured paths.");
+        printCommand(RoddyStartupModes.showfeaturetoggles, "", "Shows a list of available feature toggles.");
         printCommand(RoddyStartupModes.prepareprojectconfig, "", "Create or update a project xml file and an application properties ini file.");
         printCommand(RoddyStartupModes.plugininfo, "[--useconfig={file}]", "Shows details about the available plugins.");
 //        printCommand(RoddyStartupModes.showconfig, "[--useconfig={file}]", "Shows a list of available configuration files in all configured paths.");

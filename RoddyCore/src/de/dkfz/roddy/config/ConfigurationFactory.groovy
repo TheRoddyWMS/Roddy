@@ -208,7 +208,6 @@ public class ConfigurationFactory {
             } else {
                 analyses = parent.getListOfAnalyses();
             }
-//        }
             ToolEntry.ResourceSetSize setSize = ToolEntry.ResourceSetSize.valueOf(extractAttributeText(configurationNode, "usedresourcessize", "l"));
             icc = new InformationalConfigurationContent(parent, type, name, description, cls, configurationNode, imports, setSize, analyses, subConf, file, text);
         } else {
@@ -231,10 +230,6 @@ public class ConfigurationFactory {
             String useplugin = extractAttributeText(analysis, "useplugin", "");
             String idStr = "${id}::${configuration}::useplugin=${useplugin}".toString();
             listOfanalyses << idStr;
-//            List<String> subanalyses = _loadICCAnalyses(analysis.subanalyses);
-//            for (String sa in subanalyses) {
-//                listOfanalyses << idStr + "-" + sa;
-//            }
         }
         return listOfanalyses;
     }
@@ -248,8 +243,6 @@ public class ConfigurationFactory {
 
         loadConfiguration(icc);
     }
-
-    private Map filesNotFoundCache = [:];
 
     public Configuration loadConfiguration(InformationalConfigurationContent icc) {
         Configuration config = _loadConfiguration(icc);
