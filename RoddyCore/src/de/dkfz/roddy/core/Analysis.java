@@ -294,7 +294,7 @@ public class Analysis {
     }
 
     public List<DataSet> loadDatasetsWithFilter(List<String> pidFilters, boolean suppressInfo) {
-        if (pidFilters == null || pidFilters.size() == 0) {
+        if (pidFilters == null || pidFilters.size() == 0 || pidFilters.size() == 1  && pidFilters.get(0).equals("[ALL]")) {
             pidFilters = Arrays.asList("*");
         }
         List<DataSet> listOfDataSets = getListOfDataSets();
