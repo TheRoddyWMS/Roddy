@@ -354,7 +354,7 @@ class SSHExecutionService extends RemoteExecutionService {
                     logger.severe("Command not executed correctly, return code: " + exitStatus + ", error was ignored on purpose.");
                     content.readLines().each { String line -> output << "" + line }
                 } else {
-                    logger.severe("Command not executed correctly, return code: " + exitStatus + (cmd.getExitSignal() ? " Caught signal is " + cmd.getExitSignal().name() : ""));
+                    logger.severe("Command not executed correctly, return code: " + exitStatus + (cmd.getExitSignal() ? " Caught signal is " + cmd.getExitSignal().name() : "" + "\n\tCommand Str. ${command[0..80]}"));
 //                    IOUtils.readFully(cmd.getErrorStream()).toString();
                 }
             } else {
@@ -745,6 +745,7 @@ class SSHExecutionService extends RemoteExecutionService {
             final List<RemoteResourceInfo> ls;
             service.acquire();
             try {
+                // TODO Check first, if the directory is readable and accessible. If not, throw an error.
                 ls = service.sftpClient.ls(file.absolutePath);
             }
             finally {
