@@ -84,8 +84,8 @@ class GenericMethod {
                 pFiles.addAll(((FileGroup) fo).getFilesInGroup());
         }
 
-        for (int i = 0; i < te.inputParameters.size(); i++) {
-            ToolEntry.ToolParameter toolParameter = te.inputParameters[i];
+        for (int i = 0; i < te.getInputParameters(context).size(); i++) {
+            ToolEntry.ToolParameter toolParameter = te.getInputParameters(context)[i];
             if (toolParameter instanceof ToolEntry.ToolFileParameter) {
                 ToolEntry.ToolFileParameter _tp = (ToolEntry.ToolFileParameter) toolParameter;
                 //TODO Check if input and output parameters match and also check for array indices and item count. Throw a proper error message.
@@ -124,8 +124,8 @@ class GenericMethod {
             }
         }
 
-        for (int i = 0; i < te.outputParameters.size(); i++) {
-            ToolEntry.ToolParameter toolParameter = te.outputParameters[i];
+        for (int i = 0; i < te.getOutputParameters(context).size(); i++) {
+            ToolEntry.ToolParameter toolParameter = te.getOutputParameters(context)[i];
             if (toolParameter instanceof ToolEntry.ToolFileParameter) {
                 ToolEntry.ToolFileParameter _tp = (ToolEntry.ToolFileParameter) toolParameter;
                 for (ToolEntry.ToolConstraint constraint in _tp.constraints) {
@@ -183,8 +183,8 @@ class GenericMethod {
     private
     static <F extends FileObject> F createOutputObject(ToolEntry te, BaseFile input, List<BaseFile> allInput, Map<String, Object> parameters, List<FileObject> allCreatedObjects, String arrayIndex = null) {
         F outputObject = null;
-        if (te.outputParameters.size() == 1) {
-            ToolEntry.ToolParameter tparm = te.outputParameters[0];
+        if (te.getOutputParameters(input.getExecutionContext()).size() == 1) {
+            ToolEntry.ToolParameter tparm = te.getOutputParameters(input.getExecutionContext())[0];
             if (tparm instanceof ToolEntry.ToolFileParameter) {
                 ToolEntry.ToolFileParameter fileParameter = tparm as ToolEntry.ToolFileParameter;
                 BaseFile bf = toolFileParameterToBaseFile(fileParameter, input, allInput, parameters)

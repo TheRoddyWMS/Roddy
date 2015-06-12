@@ -69,7 +69,17 @@ This section contains features which are currently in development. Testable / ac
 are in the changelist.
 Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Changelist.
 
+- (PLANNED) check defined binaries for existence. Isn't this already done in the validation part?
+
 - (PLANNED) enable and disable runFlags with --run=... and --dontrun=...
+
+- (TEST) Tool entries allow override of old entries without resetting everything.
+  A ToolEntry must be defined like this: (with overrideresourcesets="true"!)
+          <tool name='fastqc' value='checkFastQC.sh' basepath='qcPipeline' overrideresourcesets="true">
+              <resourcesets>
+                  <rset size="l" nodes="1" walltime="1000"/>
+              </resourcesets>
+          </tool>
 
 - (WIP) Roddy accepts a lot more parameters which might otherwise be configured with the
   application properties file:

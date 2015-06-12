@@ -104,13 +104,13 @@ public class BashScriptChecker extends ScriptChecker {
             ToolEntry toolEntry = configuration.getTools().getValue(toolID, null);
             if (toolEntry) {
                 boolean foundAsParameter;
-                for (ToolEntry.ToolParameter toolParameter : toolEntry.inputParameters) {
+                for (ToolEntry.ToolParameter toolParameter : toolEntry.getInputParameters(configuration)) {
                     if (toolParameter.scriptParameterName.equals(variableName)) {
                         foundAsParameter = true;
                         break;
                     }
                 }
-                for (ToolEntry.ToolParameter toolParameter : toolEntry.outputParameters) {
+                for (ToolEntry.ToolParameter toolParameter : toolEntry.getOutputParameters(configuration)) {
                     if (toolParameter.scriptParameterName.equals(variableName)) {
                         foundAsParameter = true;
                         break;

@@ -1,5 +1,6 @@
 package de.dkfz.roddy.config;
 
+import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.knowledge.files.FileGroup;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
@@ -44,6 +45,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         private Integer nodes;
         private Integer nodesMax;
         private Integer walltime;
+
         /**
          * Hard disk storage used.
          */
@@ -319,9 +321,10 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
     public final String basePathId;
     public final String path;
     public final String computationResourcesFlags;
-    public final List<ToolParameter> inputParameters = new LinkedList<>();
-    public final List<ToolParameter> outputParameters = new LinkedList<>();
-    public final List<ResourceSet> resourceSets = new LinkedList<>();
+    private final List<ToolParameter> inputParameters = new LinkedList<>();
+    private final List<ToolParameter> outputParameters = new LinkedList<>();
+    private final List<ResourceSet> resourceSets = new LinkedList<>();
+    private boolean overridesResourceSets;
 
     public ToolEntry(String id, String basePathId, String path) {
         this.id = id;
@@ -338,7 +341,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
     }
 
     public boolean isToolGeneric() {
-        return inputParameters.size() > 0 || outputParameters.size() > 0;
+        return overridesResourceSets ||  (inputParameters.size() > 0 || outputParameters.size() > 0);
     }
 
     public void setGenericOptions(List<ToolParameter> input, List<ToolParameter> output, List<ResourceSet> resourceSets) {
@@ -362,6 +365,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         }
         ToolEntry te = new ToolEntry(id, basePathId, path, computationResourcesFlags);
         te.setGenericOptions(_inp, _outp, _rsets);
+        if(overridesResourceSets) te.setOverridesResourceSets();
         return te;
     }
 
@@ -392,6 +396,47 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         return null;
     }
 
+    public void setOverridesResourceSets() { overridesResourceSets = true; }
+
+    public boolean doesOverrideResourceSets() { return overridesResourceSets; }
+
+    public List<ToolParameter> getInputParameters(ExecutionContext context) {
+        return getInputParameters(context.getConfiguration());
+    }
+
+    public List<ToolParameter> getInputParameters(Configuration configuration) {
+        if(overridesResourceSets) {
+            List<ToolEntry> containerParents = configuration.getTools().getInheritanceList(this.id);
+            if(containerParents.size() == 1)
+                return inputParameters;
+            for (int i = containerParents.size() - 2; i >= 0 ; i--) {
+                if(!containerParents.get(i).overridesResourceSets)
+                    return containerParents.get(i).inputParameters;
+            }
+        }
+        return inputParameters;
+    }
+
+    public List<ToolParameter> getOutputParameters(ExecutionContext context) {
+        return getOutputParameters(context.getConfiguration());
+    }
+
+    public List<ToolParameter> getOutputParameters(Configuration configuration) {
+        if(overridesResourceSets) {
+            List<ToolEntry> containerParents = configuration.getTools().getInheritanceList(this.id);
+            if(containerParents.size() == 1)
+                return outputParameters;
+            for (int i = containerParents.size() - 2; i >= 0 ; i--) {
+                if (!containerParents.get(i).overridesResourceSets)
+                    return containerParents.get(i).outputParameters;
+            }
+        }
+        return outputParameters;
+    }
+
+    public List<ResourceSet> getResourceSets() {
+        return resourceSets;
+    }
 
     @Override
     public String getID() {

@@ -48,21 +48,4 @@ public class RecursiveOverridableMapContainerForConfigurationValues extends Recu
      */
     public void put(String id, String value, String type) { super.add(new ConfigurationValue(id, value, type)); }
 
-    public List<ConfigurationValue> getInheritanceList(String id) {
-        List<ConfigurationValue> allValues = new LinkedList<>();
-
-        if (getMap().containsKey(id))
-            allValues.add(getValue(id));
-
-        Configuration containerParent = getContainerParent();
-
-        if (containerParent == null)
-            return allValues;
-
-        for (Configuration configuration : containerParent.getContainerParents()) {
-            allValues.addAll(configuration.getConfigurationValues().getInheritanceList(id));
-        }
-
-        return allValues;
-    }
 }

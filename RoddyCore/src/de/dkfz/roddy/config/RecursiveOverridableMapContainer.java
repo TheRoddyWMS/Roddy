@@ -11,6 +11,7 @@ import java.util.Map;
 public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableMapContainer.Identifiable, P extends ContainerParent> {
 
 
+
     public static interface Identifiable {
         public String getID();
 
@@ -76,6 +77,25 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
 
     public List<V> getAllValuesAsList() {
         return new LinkedList<>(getAllValues().values());
+    }
+
+    public List<V> getInheritanceList(String valueID) {
+        List<V> allValues = new LinkedList<>();
+
+        if (getMap().containsKey(valueID))
+            allValues.add(getValue(valueID));
+
+        P containerParent = getContainerParent();
+
+        if (containerParent == null)
+            return allValues;
+
+        for (Object _configuration : containerParent.getContainerParents()) {
+            ContainerParent configuration = (ContainerParent)_configuration;
+            allValues.addAll(configuration.getContainer(this.id).getInheritanceList(valueID));
+        }
+
+        return allValues;
     }
 
     public boolean hasValue(String id) {

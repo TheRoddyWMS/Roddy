@@ -501,7 +501,10 @@ public class ConfigurationFactory {
             String toolID = tool.@name.text()
             String path = tool.@value.text()
             String basePathId = tool.@basepath.text()
+            boolean overrideresourcesets = extractAttributeText(tool, "overrideresourcesets", "false").toBoolean();
             ToolEntry currentEntry = new ToolEntry(toolID, basePathId, path);
+            if(overrideresourcesets)
+                currentEntry.setOverridesResourceSets();
             int noOfChildren = tool.children().size();
             if (noOfChildren > 0) {
                 List<ToolEntry.ToolParameter> inputParameters = new LinkedList<>();
@@ -509,6 +512,7 @@ public class ConfigurationFactory {
                 List<ToolEntry.ResourceSet> resourceSets = new LinkedList<>();
                 for (NodeChild child in tool.children()) {
                     String cName = child.name();
+
                     if (cName == "resourcesets") {
                         for (NodeChild rset in child.rset) {
                             try {
