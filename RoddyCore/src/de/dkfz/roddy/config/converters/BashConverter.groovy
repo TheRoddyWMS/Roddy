@@ -4,6 +4,7 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
+import de.dkfz.roddy.config.ConfigurationFactory
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.ConfigurationValueBundle
 import de.dkfz.roddy.config.InformationalConfigurationContent
@@ -19,6 +20,7 @@ import java.util.logging.Level
  * Converts a configuration object to bash script.
  * Created by heinold on 18.06.15.
  */
+@groovy.transform.CompileStatic
 class BashConverter extends ConfigurationConverter {
 
     //TODO Use a pipeline converter interface with methods like "convertCValues, convertCValueBundles, convertTools"
@@ -122,8 +124,8 @@ class BashConverter extends ConfigurationConverter {
         }
 
         //TODO The output umask and the group should be taken from a central location.
-        String umask = cfg.getConfigurationValues().getString(XMLTAG_OUTPUT_UMASK, "007");
-        String outputFileGroup = cfg.getConfigurationValues().getString(XMLTAG_OUTPUT_FILE_GROUP);
+        String umask = cfg.getConfigurationValues().getString(ConfigurationFactory.XMLTAG_OUTPUT_UMASK, "007");
+        String outputFileGroup = cfg.getConfigurationValues().getString(ConfigurationFactory.XMLTAG_OUTPUT_FILE_GROUP);
 
         boolean debugPipefail = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.DEBUG_OPTIONS_USE_PIPEFAIL, true);
         boolean debugVerbose = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.DEBUG_OPTIONS_USE_VERBOSE_OUTPUT, true);
