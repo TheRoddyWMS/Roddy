@@ -3,6 +3,7 @@ package de.dkfz.roddy.execution.io.fs
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
+import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.core.CacheProvider
@@ -662,5 +663,9 @@ public class FileSystemInfoProvider extends CacheProvider {
 
     public String getNewLineString() {
         return commandSet.getNewLineString();
+    }
+
+    ConfigurationConverter getConfigurationConverter() {
+        return commandSet.getConfigurationConverter();
     }
 }

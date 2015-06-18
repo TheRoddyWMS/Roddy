@@ -2,6 +2,7 @@ package de.dkfz.roddy.config.validation
 import de.dkfz.roddy.config.AnalysisConfiguration
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationFactory
+import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.core.ExecutionContextError
 
 import static de.dkfz.roddy.config.ConfigurationConstants.*
@@ -103,7 +104,7 @@ public class ScriptValidator extends ConfigurationValidator {
         //Convert back a TOOL_ID_NAME to idName
         for (int i = 0; i < extractedToolIDs.size(); i++) {
             String toolID = extractedToolIDs[i];
-            toolID = ConfigurationFactory.convertBackVariableName(toolID);
+            toolID = ConfigurationConverter.convertBackVariableName(toolID);
             extractedToolIDs[i] = toolID;
             try {
                 File path = configuration.getSourceToolPath(toolID);

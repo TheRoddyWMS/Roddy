@@ -8,6 +8,7 @@ import de.dkfz.roddy.client.RoddyStartupModes
 import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.client.cliclient.clioutput.*
 import de.dkfz.roddy.config.*
+import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.validation.ValidationError
 import de.dkfz.roddy.config.validation.WholeConfigurationValidator
 import de.dkfz.roddy.core.*
@@ -246,7 +247,7 @@ public class RoddyCLIClient {
 
         List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(commandLineCall.getArguments()[2].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
         for (it in executionContexts) {
-            System.out.println(ConfigurationFactory.getInstance().convertConfigurationToShellscript(it, it.getAnalysis().getConfiguration()));
+            System.out.println(ConfigurationConverter.convertAutomatically(it, it.getAnalysis().getConfiguration()));
         }
     }
 
@@ -419,7 +420,7 @@ public class RoddyCLIClient {
         final String separator = Constants.ENV_LINESEPARATOR;
         for (ExecutionContext ec : executionContexts) {
             Configuration configuration = ec.getConfiguration()
-            ConfigurationFactory.getInstance().convertConfigurationToShellscript(ec, configuration);
+            ConfigurationConverter.convertAutomatically(ec, configuration);
             StringBuilder sb = new StringBuilder();
 
             sb << "#FWHITE##BGBLUE#Information about run test for dataset: " << ec.getDataSet().getId() << "#CLEAR#" << separator;

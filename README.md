@@ -91,6 +91,8 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 == Changelist
 
+- Move the configuration conversion (bash, xml) to different classes, cleansing the ConfigurationFactory a bit.
+
 - Add the boolean configuration parameter outputAllowAccessRightsModification to allow (default) or disallow access rights modification
   on the target file system.
 

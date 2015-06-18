@@ -4,6 +4,7 @@ import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.client.RoddyStartupModes;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
+import de.dkfz.roddy.config.converters.XMLConverter;
 import de.dkfz.roddy.core.Analysis;
 import de.dkfz.roddy.core.ExecutionContextLevel;
 import de.dkfz.roddy.core.Project;
@@ -75,7 +76,7 @@ public class ConfigurationFactoryTest {
     @Test
     public void testConvertConfigurationToXML() throws Exception {
         ProjectConfiguration cfg = ConfigurationFactory.getInstance().getProjectConfiguration("testProject");
-        ConfigurationFactory.getInstance().convertConfigurationToXML(cfg);
+        new XMLConverter().convert(null, cfg);
     }
 //
 //    @Test

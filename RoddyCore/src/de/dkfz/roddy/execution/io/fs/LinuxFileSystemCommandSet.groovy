@@ -1,4 +1,8 @@
 package de.dkfz.roddy.execution.io.fs
+
+import de.dkfz.roddy.config.converters.BashConverter
+import de.dkfz.roddy.config.converters.ConfigurationConverter
+
 /**
  * Provides a command generator for linux file systems / bash
  */
@@ -217,5 +221,10 @@ public class LinuxFileSystemCommandSet extends FileSystemCommandSet {
     @Override
     String getRemoveFileCommand(File file) {
         return "rm -f ${file.getAbsolutePath()}"
+    }
+
+    @Override
+    ConfigurationConverter getConfigurationConverter() {
+        return new BashConverter();
     }
 }

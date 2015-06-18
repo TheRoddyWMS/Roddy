@@ -1,4 +1,7 @@
 package de.dkfz.roddy.execution.io.fs
+
+import de.dkfz.roddy.config.converters.ConfigurationConverter
+
 /**
  */
 @groovy.transform.CompileStatic
@@ -69,4 +72,6 @@ public abstract class FileSystemCommandSet {
     public abstract String getRemoveDirectoryCommand(File file);
 
     public abstract String getRemoveFileCommand(File file);
+
+    public abstract ConfigurationConverter getConfigurationConverter();
 }

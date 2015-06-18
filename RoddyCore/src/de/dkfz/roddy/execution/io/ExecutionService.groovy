@@ -10,6 +10,8 @@ import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationFactory
 import de.dkfz.roddy.config.ConfigurationValue
+import de.dkfz.roddy.config.converters.ConfigurationConverter
+import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
 import de.dkfz.roddy.execution.jobs.Command
@@ -312,7 +314,7 @@ public abstract class ExecutionService extends CacheProvider {
         context.setDetailedExecutionContextLevel(ExecutionContextSubLevel.RUN_SETUP_INIT);
 
         FileSystemInfoProvider provider = FileSystemInfoProvider.getInstance();
-        ConfigurationFactory cfgService = ConfigurationFactory.getInstance();
+        ConfigurationFactory configurationFactory = ConfigurationFactory.getInstance();
 
         String analysisID = context.getAnalysis().getName();
 
@@ -376,7 +378,7 @@ public abstract class ExecutionService extends CacheProvider {
         provider.writeTextFile(context.getProject().getRuntimeService().getNameOfRuntimeFile(context), versionInfo, context);
 
         //Current config
-        String configText = cfgService.convertConfigurationToShellscript(context, cfg);
+        String configText = ConfigurationConverter.convertAutomatically(context, cfg);
         provider.writeTextFile(context.getProject().getRuntimeService().getNameOfConfigurationFile(context), configText, context);
 
         //The application ini
@@ -384,7 +386,7 @@ public abstract class ExecutionService extends CacheProvider {
         provider.writeTextFile(new File(executionDirectory, "roddyCall.sh"), Roddy.getApplicationDirectory().getAbsolutePath() + "/roddy.sh" + Roddy.getCommandLineCall().getArguments().join(StringConstants.WHITESPACE), context);
 
         //Current configs xml files (default, user, pipeline config file)
-        String configXML = cfgService.convertConfigurationToXML(cfg);
+        String configXML = new XMLConverter().convert(context, cfg);
         provider.writeTextFile(context.getProject().getRuntimeService().getNameOfXMLConfigurationFile(context), configXML, context);
         context.setDetailedExecutionContextLevel(ExecutionContextSubLevel.RUN_RUN);
     }
@@ -420,7 +422,7 @@ public abstract class ExecutionService extends CacheProvider {
             listOfFolders.each {
                 File folder, PluginInfo pInfo ->
                     def bPathID = folder.getName()
-                    String basepathConfigurationID = ConfigurationFactory.createVariableName(ConfigurationConstants.CVALUE_PREFIX_BASEPATH, bPathID);
+                    String basepathConfigurationID = ConfigurationConverter.createVariableName(ConfigurationConstants.CVALUE_PREFIX_BASEPATH, bPathID);
                     cfg.getConfigurationValues().add(new ConfigurationValue(basepathConfigurationID, RoddyIOHelperMethods.assembleLocalPath(dstExecutionDirectory, "analysisTools", bPathID).getAbsolutePath(), "string"));
             }
 
