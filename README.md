@@ -73,14 +73,6 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 - (PLANNED) enable and disable runFlags with --run=... and --dontrun=...
 
-- (TEST) Tool entries allow override of old entries without resetting everything.
-  A ToolEntry must be defined like this: (with overrideresourcesets="true"!)
-          <tool name='fastqc' value='checkFastQC.sh' basepath='qcPipeline' overrideresourcesets="true">
-              <resourcesets>
-                  <rset size="l" nodes="1" walltime="1000"/>
-              </resourcesets>
-          </tool>
-
 - (WIP) Roddy accepts a lot more parameters which might otherwise be configured with the
   application properties file:
     useRoddyVersion (ok), usePluginVersion,
@@ -90,6 +82,14 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
   Those parameters all override the settings in the application properties file
 
 == Changelist
+
+- (TEST) Tool entries allow override of old entries without resetting everything.
+  A ToolEntry must be defined like this: (with overrideresourcesets="true"!)
+          <tool name='fastqc' value='checkFastQC.sh' basepath='qcPipeline' overrideresourcesets="true">
+              <resourcesets>
+                  <rset size="l" nodes="1" walltime="1000"/>
+              </resourcesets>
+          </tool>
 
 - Move the configuration conversion (bash, xml) to different classes, cleansing the ConfigurationFactory a bit.
 
