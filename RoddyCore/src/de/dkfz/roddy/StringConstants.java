@@ -38,7 +38,7 @@ public class StringConstants {
     public static final String TILDE = "~";
     public static final String DOUBLESTOP = ".";
     public static final String SBRACKET_LEFT = "[";
-    public static final String SBRACKET_RIGHT = "[";
+    public static final String SBRACKET_RIGHT = "]";
     public static final String BRACE_LEFT = "{";
     public static final String BRACE_RIGHT = "}";
     public static final String EQUALS = "=";
