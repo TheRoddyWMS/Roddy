@@ -83,7 +83,7 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 == Changelist
 
-* Version update to 2.2.41
+* Version update to 2.2.49
 
 - Add the --extendedlist option to support a very extended view for checkworkflostatus.
   In this view, all previous runs are shown.
