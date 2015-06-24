@@ -64,7 +64,6 @@ public class RoddyCLIClient {
         return _formatter;
     }
 
-
     /**
      * Simple method to count input parameters
      *
@@ -143,7 +142,7 @@ public class RoddyCLIClient {
         println("Note, that not every toggle is active or usable!")
         AvailableFeatureToggles.values().each {
             AvailableFeatureToggles toggle ->
-            println("\t${toggle.name()} [def:${toggle.defaultValue}]")
+                println("\t${toggle.name()} [def:${toggle.defaultValue}]")
         }
     }
 
@@ -286,9 +285,7 @@ public class RoddyCLIClient {
         }
     }
 
-    private
-    static List<ProjectTreeItem> loadProjectsRec(List<InformationalConfigurationContent> availableProjectConfigurations) {
-        int count = 0;
+    private static List<ProjectTreeItem> loadProjectsRec(List<InformationalConfigurationContent> availableProjectConfigurations) {
         List<ProjectTreeItem> lst = [];
         for (InformationalConfigurationContent icc : availableProjectConfigurations) {
             lst << new ProjectTreeItem(icc, loadProjectsRec(icc.getSubContent()));
@@ -374,7 +371,9 @@ public class RoddyCLIClient {
     }
 
     private static Analysis checkAndLoadAnalysis(CommandLineCall clc) {
-        if(clc.parameters.size() < 2) { logger.postAlwaysInfo("There were no dataset identifiers set, cannot run workflow."); return null; }
+        if (clc.parameters.size() < 2) {
+            logger.postAlwaysInfo("There were no dataset identifiers set, cannot run workflow."); return null;
+        }
         Analysis analysis = ProjectFactory.getInstance().loadAnalysis(clc.parameters[0]);
         return analysis;
     }
@@ -494,51 +493,67 @@ public class RoddyCLIClient {
 
         StringBuilder sb = new StringBuilder();
         sb << "#FWHITE##BGBLUE#Listing datasets for analysis ${analysisID}:#CLEAR#" << NEWLINE;
-        sb << "Note, that only 'valid' information is processed and display. Empty execution folders and " ;
+        sb << "Note, that only 'valid' information is processed and display. Empty execution folders and ";
         sb << "folders containing no job information will be skipped." << NEWLINE << NEWLINE << "[outDir]: " << outputDirectory << NEWLINE;
 
         //Get padding length for pid.
         int padSize = dataSets.keySet().max { DataSet ds -> ds.id.length(); }.id.length() + 2
-        if(padSize < 10) padSize = 10;
+        if (padSize < 10) padSize = 10;
 
         sb << "Dataset".padRight(padSize) << "  State     " << "#    " << "OK   " << "ERR  " << "User      " << "Folder / Message" << separator;
 
         for (DataSet ds in dataSets.keySet()) {
             boolean running = dataSets.get(ds);
-            AnalysisProcessingInformation information = ds.getLatestValidProcessingInformation(analysis);
-            ExecutionContext context = null;
-            if (information)
-                context = information.getDetailedProcessingInfo();
-
-            sb << ds.getId().padRight(padSize) << "  ";
-            if (context == null) {
-                sb << "UNSTARTED 0    0    0".padRight(25) << "Not executed (or the Roddy log files were deleted).#CLEAR#" << separator;
-                continue;
-            }
-
-            def userID = context.getExecutingUser().padRight(10).substring(0, 9)
-            def execFolder = context.getExecutionDirectory().getAbsolutePath()
-            if(clc.isOptionSet(RoddyStartupOptions.shortlist)) execFolder = execFolder.replace(outputDirectory, "[outDir]")
-
-            if (running) {
-                sb << "RUNNING".padRight(25) << userID << " " << execFolder << separator;
+            boolean datasetprinted = false;
+            List<AnalysisProcessingInformation> listOfAPIsToPrint = [];
+            if (clc.isOptionSet(RoddyStartupOptions.extendedlist)) {
+                listOfAPIsToPrint = ds.getProcessingInformation(analysis);
             } else {
-                //Check for errors in the last run.
-                //Check if there were errornous jobs
-                List<Job> listOfJobs = context.getExecutedJobs();
-                int failedJobs = 0;
-                Map<JobState, Integer> counter = [:];
-                for (it in listOfJobs) {
-                    if (it.getJobState() == JobState.FAILED) {
-                        failedJobs++;
-                        counter[it.getJobState()] = counter.get(it.getJobState(), 0) + 1;
-                    }
-                }
-                String state = failedJobs > 0 ? "FAILED" : "OK";
-
-                int startedJobCnt = listOfJobs.size()
-                sb << state.padRight(10) << ("" + startedJobCnt).padRight(5) << ("" + (startedJobCnt - failedJobs)).padRight(5) << ("" + failedJobs).padRight(5) << userID << " " << execFolder << separator;
+                listOfAPIsToPrint << ds.getLatestValidProcessingInformation(analysis);
             }
+            for (AnalysisProcessingInformation information : listOfAPIsToPrint) {
+
+                ExecutionContext context = null;
+                if (information)
+                    context = information.getDetailedProcessingInfo();
+
+                if(!datasetprinted) {
+                    sb << ds.getId().padRight(padSize) << "  ";
+                    datasetprinted = true;
+                } else {
+                    sb << "".padRight(padSize) << "  ";
+                }
+
+                if (context == null) {
+                    sb << "UNSTARTED 0    0    0".padRight(25) << "Not executed (or the Roddy log files were deleted).#CLEAR#" << separator;
+                    continue;
+                }
+
+                def userID = context.getExecutingUser().padRight(10).substring(0, 9)
+                def execFolder = context.getExecutionDirectory().getAbsolutePath()
+                if (clc.isOptionSet(RoddyStartupOptions.shortlist)) execFolder = execFolder.replace(outputDirectory, "[outDir]")
+
+                if (running) {
+                    sb << "RUNNING".padRight(25) << userID << " " << execFolder << separator;
+                } else {
+                    //Check for errors in the last run.
+                    //Check if there were errornous jobs
+                    List<Job> listOfJobs = context.getExecutedJobs();
+                    int failedJobs = 0;
+                    Map<JobState, Integer> counter = [:];
+                    for (it in listOfJobs) {
+                        if (it.getJobState() == JobState.FAILED) {
+                            failedJobs++;
+                            counter[it.getJobState()] = counter.get(it.getJobState(), 0) + 1;
+                        }
+                    }
+                    String state = failedJobs > 0 ? "FAILED" : "OK";
+
+                    int startedJobCnt = listOfJobs.size()
+                    sb << state.padRight(10) << ("" + startedJobCnt).padRight(5) << ("" + (startedJobCnt - failedJobs)).padRight(5) << ("" + failedJobs).padRight(5) << userID << " " << execFolder << separator;
+                }
+            }
+
         }
         sb << "#CLEAR#" << separator;
         println(getFormatter().formatAll(sb.toString()));

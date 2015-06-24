@@ -14,6 +14,7 @@ public enum RoddyStartupOptions {
      * ICGCeval.dbg@exome
      */
     shortlist,
+    extendedlist,
     autocleanup,
     useconfig(true),
     usefeaturetoggleconfig(true),

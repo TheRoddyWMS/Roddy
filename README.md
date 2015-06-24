@@ -83,6 +83,11 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 == Changelist
 
+* Version update to 2.2.41
+
+- Add the --extendedlist option to support a very extended view for checkworkflostatus.
+  In this view, all previous runs are shown.
+
 - (TEST) Tool entries allow override of old entries without resetting everything.
   A ToolEntry must be defined like this: (with overrideresourcesets="true"!)
           <tool name='fastqc' value='checkFastQC.sh' basepath='qcPipeline' overrideresourcesets="true">
