@@ -357,7 +357,7 @@ public class Job {
     private boolean handleRerunJob(StringBuilder dbgMessage) {
         def isVerbosityHigh = logger.isVerbosityHigh()
         String sep = Constants.ENV_LINESEPARATOR;
-        dbgMessage << "  Rerun job " + jobName;
+        if (isVerbosityHigh) dbgMessage << "  Rerunning job " + jobName;
 
         //Check the parents of the new files to see if one of those is invalid for the current context! A file might be validated during a dry context...
         boolean parentFileIsDirty = false;
@@ -462,8 +462,10 @@ public class Job {
         ExecutionService.getInstance().execute(cmd);
         if (LoggerWrapper.isVerbosityMedium()) {
             dbgMessage << sep << "\tcommand was created and executed for job. ID is " + cmd.getExecutionID() << sep;
-        } else dbgMessage << " => " << cmd.getExecutionID();
+        }
         logger.info(dbgMessage.toString());
+        // The following line is part of the OTP interface and should not be changed without communicating to the OTP team.
+        System.out.println("  Rerun job " + jobName + " => " + cmd.getExecutionID())
         return cmd;
     }
 

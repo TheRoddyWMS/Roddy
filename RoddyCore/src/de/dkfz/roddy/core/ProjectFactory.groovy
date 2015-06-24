@@ -220,14 +220,15 @@ public class ProjectFactory {
             configurationValues.add(new ConfigurationValue(CFG_OUTPUT_BASE_DIRECTORY, Roddy.getCustomBaseOutputDirectory(), "path"));
         }
 
-        if (analysis != null)
+        if (analysis != null) {
             return analysis;
-
-        StringBuilder sb = new StringBuilder();
-        sb << "Could not load analysis ${configurationIdentifier}, try one of those: " << Constants.ENV_LINESEPARATOR;
-        for (String aID : projectConfiguration.listOfAnalysisIDs) {
-            sb << "  " << projectID << "@" << aID << Constants.ENV_LINESEPARATOR;
+        } else {
+            StringBuilder sb = new StringBuilder();
+            sb << "Could not load analysis ${configurationIdentifier}, try one of those: " << Constants.ENV_LINESEPARATOR;
+            for (String aID : projectConfiguration.listOfAnalysisIDs) {
+                sb << "  " << projectID << "@" << aID << Constants.ENV_LINESEPARATOR;
+            }
+            throw new RuntimeException(sb.toString());
         }
-        throw new RuntimeException(sb.toString());
     }
 }

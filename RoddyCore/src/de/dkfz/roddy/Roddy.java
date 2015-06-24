@@ -238,14 +238,14 @@ public class Roddy {
                 if (startupOption == (RoddyStartupOptions.useiodir)) {
                     useCustomIODirectories = true;
 
-                    String[] directories = clc.getOptionValue(startupOption).split(StringConstants.SPLIT_COMMA);
-                    if (directories.length == 0 || directories.length > 2) {
+                    List<String> directories = clc.getOptionList(startupOption);
+                    if (directories.size()== 0 || directories.size()> 2) {
                         throw new RuntimeException("Arguments for useasiodir are wrong");
                     }
 
-                    useSingleIODirectory = directories.length == 1;
-                    baseInputDirectory = directories[0];
-                    baseOutputDirectory = useSingleIODirectory ? baseInputDirectory : directories[1];
+                    useSingleIODirectory = directories.size() == 1;
+                    baseInputDirectory = directories.get(0);
+                    baseOutputDirectory = useSingleIODirectory ? baseInputDirectory : directories.get(1);
                 }
 
                 if (startupOption == (RoddyStartupOptions.disabletrackonlyuserjobs)) {
