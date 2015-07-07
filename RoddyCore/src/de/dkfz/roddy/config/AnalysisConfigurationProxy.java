@@ -162,6 +162,11 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
+    public void removeFilenamePatternsRecursively() {
+        checkAnalysisConfig().removeFilenamePatternsRecursively();
+    }
+
+    @Override
     public RecursiveOverridableMapContainer<String, FilenamePattern, Configuration> getFilenamePatterns() {
         return checkAnalysisConfig().getFilenamePatterns();
     }

@@ -76,7 +76,7 @@ public class Configuration implements ContainerParent<Configuration> {
 
     private final RecursiveOverridableMapContainer<String, Enumeration, Configuration> enumerations = new RecursiveOverridableMapContainer<>(this, "enumerations");
 
-    private final RecursiveOverridableMapContainer<String, FilenamePattern, Configuration> filenamePatterns = new RecursiveOverridableMapContainer<>(this, "filenamePatterns");
+    private RecursiveOverridableMapContainer<String, FilenamePattern, Configuration> filenamePatterns = new RecursiveOverridableMapContainer<>(this, "filenamePatterns");
 
     /**
      * Creates a new configuration which can be filled by filling the containers.
@@ -117,6 +117,13 @@ public class Configuration implements ContainerParent<Configuration> {
 
     public ConfigurationType getConfigurationLevel() {
         return informationalConfigurationContent.type;
+    }
+
+    public void removeFilenamePatternsRecursively() {
+        this.filenamePatterns = new RecursiveOverridableMapContainer<>(this, "filenamePatterns");
+        for (Configuration parent : parents) {
+            parent.removeFilenamePatternsRecursively();
+        }
     }
 
     public RecursiveOverridableMapContainer<String, FilenamePattern, Configuration> getFilenamePatterns() {

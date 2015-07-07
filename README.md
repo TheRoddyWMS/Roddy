@@ -83,6 +83,8 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 == Changelist
 
+- (WIP) Introduce a killswitch to disable filename imports upon analysis import.
+
 * Version update to 2.2.49
 
 - Add the --extendedlist option to support a very extended view for checkworkflostatus.

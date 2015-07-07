@@ -160,7 +160,7 @@ public class Roddy {
             startup(args);
         } catch (Exception e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            exit();
+            exit(1);
         }
     }
 

@@ -229,7 +229,9 @@ public class ConfigurationFactory {
             String id = analysis.@id.text();
             String configuration = analysis.@configuration.@id.text();
             String useplugin = extractAttributeText(analysis, "useplugin", "");
-            String idStr = "${id}::${configuration}::useplugin=${useplugin}".toString();
+            String killswitches = extractAttributeText(analysis, "killswitches", "")
+            String idStr = "${id}::${configuration}::useplugin=${useplugin}::killswitches=${killswitches}".toString();
+
             listOfanalyses << idStr;
         }
         return listOfanalyses;

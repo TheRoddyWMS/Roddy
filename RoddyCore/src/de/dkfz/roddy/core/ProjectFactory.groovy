@@ -162,6 +162,16 @@ public class ProjectFactory {
 
         // If the plugin is set, find "parent" plugins with the proper version.
         String pluginPart = splitEntries?.find { String part -> part.startsWith("useplugin") }
+
+        // Get kill switches from the fullAnalysisID.
+        String[] killSwitchKeyVal = splitEntries?.find { String part -> part.startsWith("killswitches") }.split(StringConstants.EQUALS)
+        List<AnalysisImportKillSwitch> killSwitches;
+        if (killSwitchKeyVal.size() == 2) {
+            killSwitches = killSwitchKeyVal[1]?.split(StringConstants.SPLIT_COMMA)?.collect { it as AnalysisImportKillSwitch } as List;
+        } else {
+            killSwitches = new LinkedList<AnalysisImportKillSwitch>()
+        }
+
         boolean pluginsAreLoaded = false;
 
         def librariesFactory = LibrariesFactory.getInstance()
@@ -194,6 +204,9 @@ public class ProjectFactory {
         Project project = loadConfiguration(projectConfiguration);
 
         AnalysisConfiguration ac = projectConfiguration.getAnalysis(analysisID);
+        if(killSwitches.contains(AnalysisImportKillSwitch.FilenameSection))
+            ac.removeFilenamePatternsRecursively();
+
         Analysis analysis = null;
         if (ac != null)
             analysis = loadAnalysisConfiguration(analysisID, project, ac);
