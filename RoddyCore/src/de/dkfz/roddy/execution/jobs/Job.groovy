@@ -285,6 +285,7 @@ public class Job {
         File tool = configuration.getProcessingToolPath(context, toolID);
 
         StringBuilder dbgMessage = new StringBuilder();
+        StringBuilder jobDetailsLine = new StringBuilder();
         Command cmd;
         boolean isArrayJob = arrayIndices;// (arrayIndices != null && arrayIndices.size() > 0);
         boolean runJob;
@@ -297,10 +298,11 @@ public class Job {
 
         //See if the job should be executed
         if (contextLevel == ExecutionContextLevel.RUN || contextLevel == ExecutionContextLevel.CLEANUP) {
-            dbgMessage << "  Running job " << jobName;
             runJob = true; //The job is always executed if run is selected
+            jobDetailsLine << "  Running job " + jobName;
         } else if (contextLevel == ExecutionContextLevel.RERUN || contextLevel == ExecutionContextLevel.TESTRERUN) {
             runJob = handleRerunJob(dbgMessage);
+            jobDetailsLine << "  Rerun job " + jobName;
         } else {
             return handleDifferentJobRun(dbgMessage);
         }
@@ -308,6 +310,8 @@ public class Job {
         //Execute the job or create a dummy command.
         if (runJob) {
             cmd = executeJob(dependencies, dbgMessage)
+            jobDetailsLine << " => " + cmd.getExecutionID()
+            System.out.println(jobDetailsLine.toString())
             if (cmd.getExecutionID() == null) {
                 context.addErrorEntry(ExecutionContextError.EXECUTION_SUBMISSION_FAILURE.expand("Please check your submission command manually.\n\t  Is your access group set properly? [${context.getAnalysis().getUsergroup()}]\n\t  Can the submission binary handle your binary?\n\t  Is your submission system offline?"));
                 if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.BreakSubmissionOnError)) {
@@ -357,7 +361,7 @@ public class Job {
     private boolean handleRerunJob(StringBuilder dbgMessage) {
         def isVerbosityHigh = logger.isVerbosityHigh()
         String sep = Constants.ENV_LINESEPARATOR;
-        if (isVerbosityHigh) dbgMessage << "  Rerunning job " + jobName;
+        if (isVerbosityHigh) dbgMessage << "Rerunning job " + jobName
 
         //Check the parents of the new files to see if one of those is invalid for the current context! A file might be validated during a dry context...
         boolean parentFileIsDirty = false;
@@ -463,9 +467,7 @@ public class Job {
         if (LoggerWrapper.isVerbosityMedium()) {
             dbgMessage << sep << "\tcommand was created and executed for job. ID is " + cmd.getExecutionID() << sep;
         }
-        logger.info(dbgMessage.toString());
-        // The following line is part of the OTP interface and should not be changed without communicating to the OTP team.
-        System.out.println("  Rerun job " + jobName + " => " + cmd.getExecutionID())
+        if (LoggerWrapper.isVerbosityHigh()) logger.info(dbgMessage.toString());
         return cmd;
     }
 
