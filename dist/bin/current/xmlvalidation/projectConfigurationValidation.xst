@@ -15,6 +15,7 @@
         <xs:attribute type="xs:string" name="id" use="required"/>
         <xs:attribute type="xs:string" name="configuration" use="required"/>
         <xs:attribute type="xs:string" name="useplugin" use="optional"/>
+        <xs:attribute type="xs:string" name="killswitches" use="optional"/>
     </xs:complexType>
     <!--<xs:complexType name="enumerationsType">-->
         <!--<xs:sequence>-->
