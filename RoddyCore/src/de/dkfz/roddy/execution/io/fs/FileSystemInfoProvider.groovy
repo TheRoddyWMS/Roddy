@@ -570,6 +570,14 @@ public class FileSystemInfoProvider extends CacheProvider {
         }
     }
 
+    public String getLineOfFile(File file, int lineIndex) {
+        try {
+            return ExecutionService.getInstance().execute(commandSet.getReadLineOfFileCommand(file, lineIndex), true).resultLines[0];
+        } catch (Exception ex) {
+            logger.postAlwaysInfo("There was an error while trying to read a line of file " + file);
+        }
+    }
+
     void createFileWithDefaultAccessRights(boolean atomic, File filename, ExecutionContext context, boolean blocking) {
         try {
             if (ExecutionService.getInstance().canWriteFiles()) {

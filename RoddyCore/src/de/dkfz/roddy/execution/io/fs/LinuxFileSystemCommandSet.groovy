@@ -21,7 +21,8 @@ public class LinuxFileSystemCommandSet extends FileSystemCommandSet {
         return "[[ -f ${path} ]] && echo ${TRUE}";
     }
 
-    @Override String getDirectoryExistsTestCommand(File f) {
+    @Override
+    String getDirectoryExistsTestCommand(File f) {
         String path = f.getAbsolutePath();
         return "[[ -d ${path} ]] && echo ${TRUE}";
     }
@@ -108,6 +109,11 @@ public class LinuxFileSystemCommandSet extends FileSystemCommandSet {
     @Override
     String getReadOutTextFileCommand(File f) {
         return "cat ${f.absolutePath}";
+    }
+
+    @Override
+    String getReadLineOfFileCommand(File file, int lineIndex) {
+        return "tail -n +${lineIndex + 1} ${file.getAbsolutePath()} | head -n 1";
     }
 /**
  * Creates a list of all directories in a directory.

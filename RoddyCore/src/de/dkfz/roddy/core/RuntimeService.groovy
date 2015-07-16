@@ -1,5 +1,7 @@
 package de.dkfz.roddy.core
 
+import com.sun.javafx.binding.StringConstant
+import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
@@ -29,7 +31,7 @@ import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 @CompileStatic
 public abstract class RuntimeService extends CacheProvider {
     private static LoggerWrapper logger = LoggerWrapper.getLogger(RuntimeService.class.getName());
-    public static final String FILENAME_RUNTIME_INFO= "versionsInfo.txt"
+    public static final String FILENAME_RUNTIME_INFO = "versionsInfo.txt"
     public static final String FILENAME_RUNTIME_CONFIGURATION = "runtimeConfig.sh"
     public static final String FILENAME_RUNTIME_CONFIGURATION_XML = "runtimeConfig.xml"
     public static final String FILENAME_REALJOBCALLS = "realJobCalls.txt"
@@ -164,7 +166,7 @@ public abstract class RuntimeService extends CacheProvider {
 
             for (Job job : jobsStartedInContext) {
                 if (job == null) continue;
-                if(job.jobID == "Unknown")
+                if (job.jobID == "Unknown")
                     job.setJobState(JobState.FAILED)
                 else
                     job.setJobState(JobState.UNSTARTED);
@@ -200,7 +202,7 @@ public abstract class RuntimeService extends CacheProvider {
             }
             for (String jobID : possiblyRunningJobs.keySet()) {
                 Job job = possiblyRunningJobs.get(jobID);
-                if(map.get(jobID) == null) {
+                if (map.get(jobID) == null) {
                     job.setJobState(JobState.FAILED);
                 } else {
                     job.setJobState(map.get(jobID));
@@ -475,14 +477,29 @@ public abstract class RuntimeService extends CacheProvider {
     }
 
     public String extractDataSetIDFromPath(File p, Analysis analysis) {
-//        analysis.getOutputAnalysisBaseDirectory()
+        //Try new version first, fallback to old version if necessary.
+//        if (!Roddy.getFeatureToggleValue(AvailableFeatureToggles.UseOldDataSetIDExtraction)) {
+//            def instance = FileSystemInfoProvider.getInstance();
+//            //TODO Hack! This will only work on Linux systems using bash. Extract the PID from the realjobcalls file. PID is always a parameter.
+//            def realJobCalls = new File(p, "realJobCalls.txt")
+//            try {
+//                if (instance.checkFile(realJobCalls)) {
+//                    String line = instance.getLineOfFile(realJobCalls, 0); //Get the first line of a file.
+//                    int indexOfPID = line.indexOf("PID=");
+//                    String datasetID = line.substring(indexOfPID + 4).split(StringConstants.SPLIT_COMMA)[0].split(StringConstants.SPLIT_WHITESPACE)[0]
+//                    return datasetID;
+//                }
+//            } catch (Exception ex) {
+//                //Fallback...
+//            }
+//        }
+
         getOutputFolderForAnalysis(analysis);
 
         String realString = analysis.getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY).toFile(analysis).getAbsolutePath();
         String[] split = realString.split("/");
         //TODO can be quite error prone! what if a user puts an additional / somewhere?
         int index = -1;
-//        for (int i = split.length - 1; i >= 0; i--) {
         for (int i = 0; i < split.length; i++) {
             index++;
             if (split[i].equals('${pid}')) {
@@ -495,6 +512,7 @@ public abstract class RuntimeService extends CacheProvider {
 
         split = p.getAbsolutePath().split("/");
         return split[index];
+
     }
 
     /**
@@ -512,31 +530,32 @@ public abstract class RuntimeService extends CacheProvider {
 //        }
         List<AnalysisProcessingInformation> processInfo = [];
         List<File> execDirectories = [];
-
-        for (String line in execCache) {
-            if (line == "") continue;
-            String[] info = line.split(",");
-            if (info.length < 2) return;
-            File path = new File(info[0]);
-            execDirectories << path;
-            String dataSetID = analysis.getProject().getRuntimeService().extractDataSetIDFromPath(path, analysis);
-            Analysis dataSetAnalysis = analysis.getProject().getAnalysis(info[1])
-            DataSet ds = analysis.getDataSet(dataSetID);
-            if (dataSetAnalysis == analysis) {
-                AnalysisProcessingInformation api = new AnalysisProcessingInformation(dataSetAnalysis, ds, path);
-                if (info.length > 3) {
-                    String user = info[3];
-                    api.setExecutingUser(user);
+        Arrays.asList(execCache).parallelStream().each {
+            String line ->
+                if (line == "") return;
+                String[] info = line.split(",");
+                if (info.length < 2) return;
+                File path = new File(info[0]);
+                execDirectories << path;
+                String dataSetID = analysis.getProject().getRuntimeService().extractDataSetIDFromPath(path, analysis);
+                Analysis dataSetAnalysis = analysis.getProject().getAnalysis(info[1])
+                DataSet ds = analysis.getDataSet(dataSetID);
+                if (dataSetAnalysis == analysis) {
+                    AnalysisProcessingInformation api = new AnalysisProcessingInformation(dataSetAnalysis, ds, path);
+                    if (info.length > 3) {
+                        String user = info[3];
+                        api.setExecutingUser(user);
+                    }
+                    synchronized (processInfo) {
+                        processInfo << api;
+                    }
                 }
-                processInfo << api;
-            }
         }
         if (processInfo.size() == 0) {
             logger.postSometimesInfo("No process info objects could be matched for ${execCache.size()} lines in the cache file.")
             //TODO Possible input output directory mismatch or configuration error!
         }
-
-//        Roddy.getInstance().buildUpCache(execDirectories, 1, false, false);
+        processInfo.sort { AnalysisProcessingInformation p1, AnalysisProcessingInformation p2 -> p1.getExecPath().absolutePath.compareTo(p2.getExecPath().getAbsolutePath()); }
         return processInfo;
     }
 

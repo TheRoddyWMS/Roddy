@@ -496,6 +496,9 @@ public class RoddyCLIClient {
         sb << "Note, that only 'valid' information is processed and display. Empty execution folders and ";
         sb << "folders containing no job information will be skipped." << NEWLINE << NEWLINE << "[outDir]: " << outputDirectory << NEWLINE;
 
+        if(!dataSets)
+            return;
+
         //Get padding length for pid.
         int padSize = dataSets.keySet().max { DataSet ds -> ds.id.length(); }.id.length() + 2
         if (padSize < 10) padSize = 10;

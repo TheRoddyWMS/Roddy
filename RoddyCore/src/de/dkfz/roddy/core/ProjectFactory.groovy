@@ -148,7 +148,7 @@ public class ProjectFactory {
         }
 
         //Validate the project icc
-        if(Roddy.getFeatureToggleValue(AvailableFeatureToggles.XMLValidation))
+        if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.XMLValidation))
             XSDValidator.validate(iccProject);
 
         String fullAnalysisID = iccProject.getListOfAnalyses().find { String aID -> aID.split("[:][:]")[0] == analysisID; }
@@ -198,13 +198,13 @@ public class ProjectFactory {
 //            XSDValidator.validate(iccAnalysis);
 
         ProjectConfiguration projectConfiguration = fac.getProjectConfiguration(projectID);
-        InformationalConfigurationContent iccAnalysis = ((AnalysisConfigurationProxy)projectConfiguration.getAnalysis(analysisID)).informationalConfigurationContent;
-        if(Roddy.getFeatureToggleValue(AvailableFeatureToggles.XMLValidation))
+        InformationalConfigurationContent iccAnalysis = ((AnalysisConfigurationProxy) projectConfiguration.getAnalysis(analysisID)).informationalConfigurationContent;
+        if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.XMLValidation))
             XSDValidator.validate(iccAnalysis);
         Project project = loadConfiguration(projectConfiguration);
 
         AnalysisConfiguration ac = projectConfiguration.getAnalysis(analysisID);
-        if(killSwitches.contains(AnalysisImportKillSwitch.FilenameSection))
+        if (killSwitches.contains(AnalysisImportKillSwitch.FilenameSection))
             ac.removeFilenamePatternsRecursively();
 
         Analysis analysis = null;
@@ -222,7 +222,7 @@ public class ProjectFactory {
         for (eVal in externalConfigurationValues) {
             String[] splitIDValue = eVal.split(StringConstants.SPLIT_COLON);
             //TODO Put in a better error checking when converting the split string to a configuration value.
-            String value = splitIDValue.size() >= 2 ? splitIDValue[1] : "";
+            String value = "'" + splitIDValue.size() >= 2 ? splitIDValue[1] : "" + "'"; // Surround value with single quotes '' to prevent string interpretation for e.g. execution in bash
             String cvalueId = splitIDValue[0];
             String type = splitIDValue.size() >= 3 ? splitIDValue[2] : "string";
             configurationValues.add(new ConfigurationValue(cvalueId, value, type));

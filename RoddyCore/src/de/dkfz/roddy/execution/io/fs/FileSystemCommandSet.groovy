@@ -41,6 +41,8 @@ public abstract class FileSystemCommandSet {
 
     public abstract String getReadOutTextFileCommand(File f);
 
+    public abstract String getReadLineOfFileCommand(File file, int lineIndex);
+
     public abstract String getListDirectoriesInDirectoryCommand(File file);
 
     public abstract String getListDirectoriesInDirectoryCommand(File file, List<String> filters);

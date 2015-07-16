@@ -73,6 +73,9 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 - (PLANNED) enable and disable runFlags with --run=... and --dontrun=...
 
+- (PLANNED) Implement a showreadme command to show the readme of a workflow.
+            Also put in a showanalysisconfig to show the analysis xml
+
 - (WIP) Roddy accepts a lot more parameters which might otherwise be configured with the
   application properties file:
     useRoddyVersion (ok), usePluginVersion,
@@ -83,7 +86,14 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 == Changelist
 
-- (WIP) Introduce a killswitch to disable filename imports upon analysis import.
+- (WIP) Integrate slurm as a cluster backend
+
+- (WIP) Allow selection of nodes via command line for PBS and SLURM. SGE is currently not supported.
+  The configuration value to set is "enforceSubmissionToNodes:<nodeid>;<nodeid>" followed by a semicolon separated list of nodes.
+
+- (TEST) Change output of job ids to use println.
+
+- (TEST) Introduce a killswitch to disable filename imports upon analysis import.
 
 * Version update to 2.2.49
 

@@ -5,7 +5,8 @@ import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.core.BufferUnit;
 import de.dkfz.roddy.execution.io.ExecutionService;
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
+import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
+import de.dkfz.roddy.execution.jobs.cluster.ClusterCommandFactory;
 import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo;
 import de.dkfz.roddy.tools.*;
 import de.dkfz.roddy.config.*;
@@ -25,7 +26,7 @@ import static de.dkfz.roddy.StringConstants.*;
  * @author michael
  */
 @groovy.transform.CompileStatic
-public class PBSCommandFactory extends CommandFactory<PBSCommand> {
+public class PBSCommandFactory extends ClusterCommandFactory<PBSCommand> {
 
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(PBSCommandFactory.class.getName());
 
@@ -211,9 +212,18 @@ public class PBSCommandFactory extends CommandFactory<PBSCommand> {
             sb.append(" -l mem=").append(memoryInMB).append("m");
         }
         if (resourceSet.isCoresSet() && resourceSet.isNodesSet()) {
-            sb.append(" -l nodes=").append(resourceSet.getNodes()).append(":ppn=").append(resourceSet.getCores());
-            if (resourceSet.isAdditionalNodeFlagSet()) {
-                sb.append(":").append(resourceSet.getAdditionalNodeFlag());
+            String enforceSubmissionNodes = configuration.getConfigurationValues().getString(CVALUE_ENFORCE_SUBMISSION_TO_NODES, null);
+            if (!enforceSubmissionNodes) {
+                sb.append(" -l nodes=").append(resourceSet.getNodes()).append(":ppn=").append(resourceSet.getCores());
+                if (resourceSet.isAdditionalNodeFlagSet()) {
+                    sb.append(":").append(resourceSet.getAdditionalNodeFlag());
+                }
+            } else {
+                String[] nodes = enforceSubmissionNodes.split(StringConstants.SPLIT_SEMICOLON);
+                nodes.each {
+                    String node ->
+                        sb.append(" -l nodes=").append(node).append(":ppn=").append(resourceSet.getCores());
+                }
             }
         }
         if (resourceSet.isWalltimeSet()) {

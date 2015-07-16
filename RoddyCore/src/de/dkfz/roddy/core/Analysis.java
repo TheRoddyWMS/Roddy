@@ -294,7 +294,7 @@ public class Analysis {
     }
 
     public List<DataSet> loadDatasetsWithFilter(List<String> pidFilters, boolean suppressInfo) {
-        if (pidFilters == null || pidFilters.size() == 0 || pidFilters.size() == 1  && pidFilters.get(0).equals("[ALL]")) {
+        if (pidFilters == null || pidFilters.size() == 0 || pidFilters.size() == 1 && pidFilters.get(0).equals("[ALL]")) {
             pidFilters = Arrays.asList("*");
         }
         List<DataSet> listOfDataSets = getListOfDataSets();
@@ -399,7 +399,7 @@ public class Analysis {
                         //First, check if there were any executed jobs. If not, we can safely delete the the context directory.
                         if (context.getStartedJobs().size() == 0) {
                             logger.postAlwaysInfo("There were no started jobs, the execution directory will be removed.");
-                            if(context.getExecutionDirectory().getName().contains(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX))
+                            if (context.getExecutionDirectory().getName().contains(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX))
                                 FileSystemInfoProvider.getInstance().removeDirectory(context.getExecutionDirectory());
                             else {
                                 throw new RuntimeException("A wrong path would be deleted: " + context.getExecutionDirectory().getAbsolutePath());

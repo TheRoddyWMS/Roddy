@@ -31,6 +31,11 @@ public class RecursiveOverridableMapContainerForConfigurationValues extends Recu
         return hasValue(id) ? getValue(id).toBoolean() : b;
     }
 
+    /**
+     * Returns the value converted to a string or an empty string ("") if the value could not be found.
+     * @param id The id of the value
+     * @return "" or the value converted to a string.
+     */
     public String getString(String id) {
         return getString(id, "");
     }
