@@ -68,52 +68,60 @@ public class ConfigurationFactory {
         List<File> allFiles = []
         pipelineDirectories.parallelStream().each {
             File baseDir ->
-            logger.log(Level.CONFIG, "Searching for configuration files in: " + baseDir.toString());
-            File[] files = baseDir.listFiles((FileFilter) new WildcardFileFilter("*.xml"));
-            if (files == null) {
-                logger.info("No configuration files found in path ${baseDir.getAbsolutePath()}");
-            }
-            for (File f in files) {
-                synchronized (allFiles) {
-                    if (!allFiles.contains(f))
-                        allFiles << f;
+                logger.log(Level.CONFIG, "Searching for configuration files in: " + baseDir.toString());
+                File[] files = baseDir.listFiles((FileFilter) new WildcardFileFilter("*.xml"));
+                if (files == null) {
+                    logger.info("No configuration files found in path ${baseDir.getAbsolutePath()}");
                 }
-            }
+                for (File f in files) {
+                    synchronized (allFiles) {
+                        if (!allFiles.contains(f))
+                            allFiles << f;
+                    }
+                }
         }
 
         allFiles.parallelStream().each {
             File it ->
-            try {
-                def icc = loadInformationalConfigurationContent(it);
-                if (availableConfigurations.containsKey(icc.name)) {
-                    throw new RuntimeException("Configuration with name ${icc.name} already exists! Names must be unique.")
-                }
+                try {
+                    def icc = loadInformationalConfigurationContent(it);
+                    if (availableConfigurations.containsKey(icc.name)) {
+                        throw new RuntimeException("Configuration with name ${icc.name} already exists! Names must be unique.")
+                    }
 
-                availableConfigurations[icc.id] = icc;
-                availableConfigurationsByType.get(icc.type, []) << icc;
-                availableConfigurationsByTypeAndID.get(icc.type, [:])[icc.id] = icc;
-                for (InformationalConfigurationContent iccSub in icc.getAllSubContent()) {
-                    availableConfigurations[iccSub.id] = iccSub;
-                }
+                    availableConfigurations[icc.id] = icc;
+                    availableConfigurationsByType.get(icc.type, []) << icc;
+                    availableConfigurationsByTypeAndID.get(icc.type, [:])[icc.id] = icc;
+                    for (InformationalConfigurationContent iccSub in icc.getAllSubContent()) {
+                        availableConfigurations[iccSub.id] = iccSub;
+                    }
 
-            } catch (Exception ex) {
-                logger.severe("File ${it.absolutePath} cannot be loaded! Error in config file! ${ex.toString()}");
-                logger.severe(RoddyIOHelperMethods.getStackTraceAsString(ex));
-            }
+                } catch (Exception ex) {
+                    logger.severe("File ${it.absolutePath} cannot be loaded! Error in config file! ${ex.toString()}");
+                    logger.severe(RoddyIOHelperMethods.getStackTraceAsString(ex));
+                }
         }
     }
 
     public void loadAvailableAnalysisConfigurationFiles() {
         List<File> allFiles = []
-        LibrariesFactory.getInstance().getLoadedPlugins()
-                .collect { PluginInfo pi -> RoddyIOHelperMethods.assembleLocalPath(pi.directory, "resources", "configurationFiles") }
-                .findAll { File f -> f.exists() && f.isDirectory() }
-                .each { File f -> allFiles.addAll(f.listFiles((FileFilter) new WildcardFileFilter("*.xml"))) }
-
+        Map<File, PluginInfo> pluginsByFile = [:]
+        for (PluginInfo pi in LibrariesFactory.getInstance().getLoadedPlugins()) {
+            File configPath = RoddyIOHelperMethods.assembleLocalPath(pi.directory, "resources", "configurationFiles");
+            File[] configFiles = configPath.listFiles((FileFilter) new WildcardFileFilter("*.xml"));
+            for (File f in configFiles) {
+                allFiles.add(f);
+                pluginsByFile[f] = pi;
+            }
+        }
 
         for (File it in allFiles) {
             try {
                 def icc = loadInformationalConfigurationContent(it);
+                File readmeFile = RoddyIOHelperMethods.assembleLocalPath(pluginsByFile[it].directory, "README." + icc.id + ".txt");
+                if(readmeFile.exists())
+                    icc.setReadmeFile(readmeFile);
+
                 if (availableConfigurations.containsKey(icc.name)) {
                     throw new RuntimeException("Configuration with name ${icc.name} already exists! Names must be unique.")
                 }
@@ -506,7 +514,7 @@ public class ConfigurationFactory {
             String basePathId = tool.@basepath.text()
             boolean overrideresourcesets = extractAttributeText(tool, "overrideresourcesets", "false").toBoolean();
             ToolEntry currentEntry = new ToolEntry(toolID, basePathId, path);
-            if(overrideresourcesets)
+            if (overrideresourcesets)
                 currentEntry.setOverridesResourceSets();
             int noOfChildren = tool.children().size();
             if (noOfChildren > 0) {

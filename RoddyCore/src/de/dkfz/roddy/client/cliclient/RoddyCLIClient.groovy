@@ -95,6 +95,12 @@ public class RoddyCLIClient {
             case plugininfo:
                 showPluginInfo(clc);
                 break;
+            case printpluginreadme:
+                printPluginReadme(clc);
+                break;
+            case printanalysisxml:
+                printAnalysisXML(clc);
+                break;
             case validateconfig:
                 validateConfiguration(args[1]);
                 break;
@@ -136,6 +142,7 @@ public class RoddyCLIClient {
                 System.exit(0);
         }
     }
+
 
     public static void showFeatureToggles() {
         println("Available feature toggles and their default values.")
@@ -187,6 +194,24 @@ public class RoddyCLIClient {
 //                System.out.println(sb.toString())
 //            }
 //        }
+    }
+
+    public static void printPluginReadme(CommandLineCall commandLineCall) {
+        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(commandLineCall.getArguments()[1]);
+
+        def text = analysis.getReadmeFile()?.text
+        if(text) {
+            println("Print readme file for analysis ${analysis.getName()}: \n\t" + analysis.getReadmeFile());
+            println(text);
+        }
+    }
+
+    public static void printAnalysisXML(CommandLineCall commandLineCall) {
+        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(commandLineCall.getArguments()[1]);
+        def content = analysis.getConfiguration().getInformationalConfigurationContent()
+
+        System.out.println("Print analysis XML file for analysis ${analysis.getName()}: \n\t" + content.file);
+        System.out.println(content.text);
     }
 
     /**

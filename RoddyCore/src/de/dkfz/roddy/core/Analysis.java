@@ -62,13 +62,6 @@ public class Analysis {
      */
     private List<DataSet> listOfAnalysisDataSets;
 
-    /**
-     * If getListOfDataSets is called asynchronously, this task will be created.
-     * If it already exists, it will not be started again, to prevent unnecessary double calling.
-     */
-    private AsyncDataFetcherTask<List<DataSet>> asyncTask_getListOfDataSets;
-
-
     public Analysis(String name, Project project, Workflow workflow, AnalysisConfiguration configuration) {
         this.name = name;
         this.project = project;
@@ -466,5 +459,9 @@ public class Analysis {
             if (getWorkflow().hasCleanupMethod())
                 getWorkflow().cleanup(ds);
         }
+    }
+
+    public File getReadmeFile() {
+        return getConfiguration().getInformationalConfigurationContent().getReadmeFile();
     }
 }

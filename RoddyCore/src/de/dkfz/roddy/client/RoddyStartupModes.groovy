@@ -26,6 +26,10 @@ public enum RoddyStartupModes {
 
     pack(SCOPE_CLI),
 
+    printpluginreadme(SCOPE_CLI, [useconfig]),
+
+    printanalysisxml(SCOPE_CLI, [useconfig]),
+
     plugininfo(SCOPE_REDUCED, [useconfig]),
 
     compileplugin(SCOPE_CLI, [useconfig]),
@@ -106,10 +110,13 @@ public enum RoddyStartupModes {
                 + Constants.ENV_LINESEPARATOR + Constants.ENV_LINESEPARATOR + "  To support you with your workflows, Roddy offers you several options:" + Constants.ENV_LINESEPARATOR);
 
         printCommand(RoddyStartupModes.help, "", "Shows a list of available configuration files in all configured paths.");
+        printCommand(RoddyStartupModes.printappconfig, "[--useconfig={file}]", "Prints the currently loaded application properties ini file.");
         printCommand(RoddyStartupModes.showconfigpaths, "[--useconfig={file}]", "Shows a list of available configuration files in all configured paths.");
         printCommand(RoddyStartupModes.showfeaturetoggles, "", "Shows a list of available feature toggles.");
         printCommand(RoddyStartupModes.prepareprojectconfig, "", "Create or update a project xml file and an application properties ini file.");
         printCommand(RoddyStartupModes.plugininfo, "[--useconfig={file}]", "Shows details about the available plugins.");
+        printCommand(RoddyStartupModes.printpluginreadme, "(configuration@analysis) [--useconfig={file}]", "Prints the readme file of the currently selected workflow.");
+        printCommand(RoddyStartupModes.printanalysisxml, "(configuration@analysis) [--useconfig={file}]", "Prints the analysis xml file of the currently selected workflow.");
 //        printCommand(RoddyStartupModes.showconfig, "[--useconfig={file}]", "Shows a list of available configuration files in all configured paths.");
         printCommand(RoddyStartupModes.validateconfig, "(configuration@analysis) [--useconfig={file}]", "Tries to find errors in the specified configuration and shows them.");
         printCommand(RoddyStartupModes.listworkflows, "[filter word] [--shortlist] [--useconfig={file}]", "Shows a list of available configurations and analyses.", "If a filter word is specified, then the whole configuration tree is only printed", "if at least one configuration id in the tree contains the word.");

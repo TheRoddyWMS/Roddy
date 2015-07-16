@@ -17,6 +17,8 @@ class InformationalConfigurationContent {
     public final String text;
     public final String id;
 
+    private File readmeFile;
+
     private final List<InformationalConfigurationContent> subConf;
     private final List<String> analyses;
     public final ToolEntry.ResourceSetSize usedresourcessize;
@@ -86,5 +88,13 @@ class InformationalConfigurationContent {
     @Override
     public String toString() {
         return "Config: ${name} of type ${type} in file ${file.absolutePath}";
+    }
+
+    public void setReadmeFile(File file) {
+        this.readmeFile = file;
+    }
+
+    public File getReadmeFile() {
+        return readmeFile;
     }
 }
