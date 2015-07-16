@@ -85,6 +85,8 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 == Changelist
 
+- (TEST) Implement the "showreadme" command to show the Roddy README.md
+
 - (TEST) Implement the "printpluginreadme" command to show the readme of a workflow.
          Also put in the "printanalysisxml" to show the analysis xml.
 

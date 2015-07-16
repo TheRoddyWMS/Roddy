@@ -20,6 +20,7 @@ import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.execution.jobs.ProcessingCommands
 import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.ScannerWrapper
 
 import static de.dkfz.roddy.Constants.ENV_LINESEPARATOR as NEWLINE
@@ -83,6 +84,9 @@ public class RoddyCLIClient {
         //TODO Convert to CommandLineCall
         String[] args = clc.getArguments();
         switch (clc.startupMode) {
+            case showreadme:
+                showReadme();
+                break;
             case showfeaturetoggles:
                 showFeatureToggles();
                 break;
@@ -143,6 +147,10 @@ public class RoddyCLIClient {
         }
     }
 
+    public static void showReadme() {
+        println("Showing the Roddy readme file.");
+        println(new File(RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "README.md").text));
+    }
 
     public static void showFeatureToggles() {
         println("Available feature toggles and their default values.")
