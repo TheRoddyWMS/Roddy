@@ -222,10 +222,13 @@ public class ProjectFactory {
         for (eVal in externalConfigurationValues) {
             String[] splitIDValue = eVal.split(StringConstants.SPLIT_COLON);
             //TODO Put in a better error checking when converting the split string to a configuration value.
-            String value = "'" + (splitIDValue.size() >= 2 ? splitIDValue[1] : "") + "'"; // Surround value with single quotes '' to prevent string interpretation for e.g. execution in bash
+            String value = (splitIDValue.size() >= 2 ? splitIDValue[1] : ""); // Surround value with single quotes '' to prevent string interpretation for e.g. execution in bash
             String cvalueId = splitIDValue[0];
             String type = splitIDValue.size() >= 3 ? splitIDValue[2] : "string";
-            configurationValues.add(new ConfigurationValue(cvalueId, value, type));
+
+            def configurationValue = new ConfigurationValue(cvalueId, value, type)
+            configurationValue.setQuoteOnConversion();
+            configurationValues.add(configurationValue);
         }
 
         if (Roddy.useCustomIODirectories()) {

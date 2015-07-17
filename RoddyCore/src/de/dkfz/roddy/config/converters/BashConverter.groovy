@@ -185,7 +185,9 @@ class BashConverter extends ConfigurationConverter {
             //TODO Important, this is a serious hack! It must be removed soon
             if (tmp.startsWith("bundledFiles/"))
                 text << Roddy.getApplicationDirectory().getAbsolutePath() << FileSystemInfoProvider.getInstance().getPathSeparator();
+            if(cv.isQuoteOnConversionSet()) text << "'";
             text << tmp;
+            if(cv.isQuoteOnConversionSet()) text << "'";
         }
     }
 

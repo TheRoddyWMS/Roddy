@@ -30,6 +30,8 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
     public final String value;
     private final Configuration configuration;
     private final String type;
+    private boolean quoteOnConversion;
+
     /**
      * A description or comment for a configuration value.
      */
@@ -340,6 +342,14 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
     }
 
     public String getDescription() { return description; }
+
+    public boolean isQuoteOnConversionSet() {
+        return quoteOnConversion;
+    }
+
+    public void setQuoteOnConversion() {
+        this.quoteOnConversion = true;
+    }
 
     /**
      * Returns if the contained value is either null or has an empty string.
