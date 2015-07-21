@@ -346,7 +346,7 @@ public abstract class ExecutionService extends CacheProvider {
         //Add feature toggles to configuration
         AvailableFeatureToggles.values().each {
             AvailableFeatureToggles toggle ->
-            configurationValues.put(toggle.name(), ((Boolean)Roddy.getFeatureToggleValue(toggle)).toString(), CVALUE_TYPE_BOOLEAN);
+                configurationValues.put(toggle.name(), ((Boolean) Roddy.getFeatureToggleValue(toggle)).toString(), CVALUE_TYPE_BOOLEAN);
         }
 
         configurationValues.put(RODDY_CVALUE_DIRECTORY_LOCKFILES, lockFilesDirectory.getAbsolutePath(), CVALUE_TYPE_PATH);
@@ -471,9 +471,17 @@ public abstract class ExecutionService extends CacheProvider {
                     String subFolderOnRemote = subFolder.getName();
                     for (String line : existingArchives) {
                         String[] split = line.split(StringConstants.SPLIT_COLON);
-                        if (split.length != 2) continue;
                         String existingFilePath = split[0];
                         String existingFileMD5 = split[1];
+                        if (split.length == 2) {
+                            existingFilePath = split[0];
+                            existingFileMD5 = split[1];
+                        } else if (split.length == 3) {                   // Newer Roddy version create directories containing version strings (separated by ":")
+                            existingFilePath = split[0] + ":" + split[1];
+                            existingFileMD5 = split[2];
+                        } else {
+                            continue;
+                        }
 
                         if (existingFileMD5.equals(archiveMD5)) {
                             foundExisting = existingFilePath;

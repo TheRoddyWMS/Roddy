@@ -523,11 +523,6 @@ public abstract class RuntimeService extends CacheProvider {
     public List<AnalysisProcessingInformation> readoutExecCacheFile(Analysis analysis) {
         File cacheFile = getNameOfExecCacheFile(analysis);
         String[] execCache = FileSystemInfoProvider.getInstance().loadTextFile(cacheFile);
-//        String cmd = commandSet.getCheckCreateAndReadoutExecCacheFileCommand(cacheFile);
-//        ExecutionResult er = Roddy.getInstance().execute(cmd);
-//        if (!er.successful) {
-//            return [];
-//        }
         List<AnalysisProcessingInformation> processInfo = [];
         List<File> execDirectories = [];
         Arrays.asList(execCache).parallelStream().each {
@@ -568,33 +563,6 @@ public abstract class RuntimeService extends CacheProvider {
         //Nearly the same as for the job but with a process id
         File f = new File(getExecutionDirectory(command.getExecutionContext()), CommandFactory.getInstance().getLogFileName(command));
     }
-
-//    private long _cacheTimeStampListOfFiles;
-//    private List<File> _cachedListOfFiles;
-//
-//    public File getLogFileForJob(Job job) {
-//        String wildcard = Roddy.getInstance().getLogFileWildcard(job);
-////        List<File> files = null;
-////        synchronized (this) {
-////            long ts = System.nanoTime();
-////            if (ts - _cacheTimeStampListOfFiles > 5000000000) {
-////                _cachedListOfFiles = Roddy.getInstance().listFilesInDirectory(job.getExecutionContext().getLoggingDirectory());//, Arrays.asList(wildcard));
-////                _cacheTimeStampListOfFiles = ts;
-////            }
-////            files = _cachedListOfFiles;
-////        }
-//        List<File> files = Roddy.getInstance().listFilesInDirectory(job.getExecutionContext().getLoggingDirectory(), Arrays.asList(wildcard));
-////        if (files.size() > 1) {
-////            for()
-////        } else
-//        if (files.size() == 1) {
-//            return files.get(0);
-//        } else if (files.size() == 0) {
-//            return null;
-//        } else {
-//            return files.get(0);
-//        }
-//    }
 
     public boolean hasLogFileForJob(Job job) {
         return getLogFileForJob(job) != null;

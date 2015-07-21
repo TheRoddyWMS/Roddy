@@ -187,15 +187,13 @@ public class ProjectFactory {
             pluginsAreLoaded = librariesFactory.resolveAndLoadPlugins(iniPluginVersion)
         }
 
-        // If this is also not set, load all libraries with the current version
-        if (!pluginsAreLoaded)
-            librariesFactory.loadLibraries(librariesFactory.getAvailablePluginVersion());
+        // If this is also not set, exit with an error code!
+        if (!pluginsAreLoaded) {
+            logger.severe("Could not find plugin for analysis ${analysisID}");
+            Roddy.exit(2)
+        }
 
         fac.loadAvailableAnalysisConfigurationFiles();
-        // Validate the analysis icc
-//        InformationalConfigurationContent iccAnalysis = fac.allAvailableConfigurations.get(iccProject.anaanalysisID);
-//        if(Roddy.getFeatureToggleValue(AvailableFeatureToggles.XMLValidation))
-//            XSDValidator.validate(iccAnalysis);
 
         ProjectConfiguration projectConfiguration = fac.getProjectConfiguration(projectID);
         InformationalConfigurationContent iccAnalysis = ((AnalysisConfigurationProxy) projectConfiguration.getAnalysis(analysisID)).informationalConfigurationContent;
