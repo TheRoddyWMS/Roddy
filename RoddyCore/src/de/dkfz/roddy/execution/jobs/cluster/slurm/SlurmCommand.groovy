@@ -1,5 +1,6 @@
 package de.dkfz.roddy.execution.jobs.cluster.slurm
 
+import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.jobs.Job
@@ -12,6 +13,7 @@ import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommand
  *
  */
 class SlurmCommand extends PBSCommand {
+
     /**
      *
      * @param job @param run @param executionService @param id
@@ -24,5 +26,37 @@ class SlurmCommand extends PBSCommand {
         super(job, run, executionService, id, processingCommands, parameters, arrayIndices, dependencyIDs, command)
     }
 
+    @Override
+    public String getDependsSuperParameter() {
+        return "--dependency=";
+    }
 
+    @Override
+    protected String getDependencyIDSeparator() {
+        return StringConstants.COMMA;
+    }
+
+    @Override
+    String getVariablesParameter() {
+        return "--export="
+    }
+
+    @Override
+    public String toString() {
+        String email = configuration.getConfigurationValues().getString("email");
+        String groupList = configuration.getConfigurationValues().getString("outputFileGroup", null);
+        String accountName = configuration.getConfigurationValues().getString("PBS_AccountName", "");
+
+        String name = "--job-name=${id}";
+        String groupID="--gid=${groupList}"
+        String dependencies = assembleDependencyString();
+        String resources = ""
+        String variables = assembleVariableExportString();
+        String toolPath = configuration.getProcessingToolPath(executionContext, "wrapinScript").getAbsolutePath();;
+
+        String additionalParameters = getAdditionalCommandParameters();
+
+        String slurmCommand = "/home/heinold/sbatch ${name} ${dependencies} ${resources} ${variables} ${additionalParameters} ${toolPath}";
+        return slurmCommand;
+    }
 }

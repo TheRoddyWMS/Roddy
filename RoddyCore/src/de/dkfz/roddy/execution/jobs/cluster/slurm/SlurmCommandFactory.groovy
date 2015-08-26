@@ -53,7 +53,7 @@ class SlurmCommandFactory extends PBSCommandFactory {
 
     @Override
     public SlurmCommand createCommand(Job job, ExecutionContext run, String jobName, List<ProcessingCommands> processingCommands, File tool, Map<String, String> parameters, List<String> dependencies, List<String> arraySettings) {
-        SGECommand command = new SGECommand(job, run, ExecutionService.getInstance(), jobName, processingCommands, parameters, arraySettings, dependencies, tool.getAbsolutePath());
+        SlurmCommand command = new SlurmCommand(job, run, ExecutionService.getInstance(), jobName, processingCommands, parameters, arraySettings, dependencies, tool.getAbsolutePath());
         addCommandToList(command);
         return command;
     }
@@ -78,23 +78,25 @@ class SlurmCommandFactory extends PBSCommandFactory {
 
     @Override
     public ProcessingCommands convertResourceSet(Configuration configuration, ToolEntry.ResourceSet resourceSet) {
-        // "-l mf=4G -l h_vmem=6G -l h_stack=128M -V"
         StringBuilder sb = new StringBuilder();
         sb.append(" -V"); //TODO Think if default SGE options should go somewhere else?
         if (resourceSet.isMemSet()) {
             Float memo = resourceSet.getMem();
             int memoryInMB = (int)(memo * 1024);
-            String memfield = configuration.getConfigurationValues().getString("SGEDefaultMemoryResource", "s_data");
-            sb.append(" -l ").append(memfield).append("=").append(memoryInMB).append("M");
+            sb.append(" --mem=").append(memoryInMB).append("MB");
         }
-//        if (resourceSet.isCoresSet() && resourceSet.isNodesSet()) {
-//            sb.append(" -l nodes=").append(resourceSet.getNodes()).append(":ppn=").append(resourceSet.getCores());
-//        }
-//        if(resourceSet.isWalltimeSet()) {
-//            sb.append(" -l walltime=").append(resourceSet.getWalltime()).append(":00:00");
-//        }
-        if (resourceSet.isStorageSet()) {
-//            sb.append(" -l mem=").append(resourceSet.getMem()).append("g");
+        if (resourceSet.isCoresSet()) {
+            sb.append(" --cpus-per-task=").append(resourceSet.getCores());
+        }
+        if(resourceSet.isNodesSet()) {
+            sb.append(" --nodes=").append(resourceSet.getCores()).append("-").append(resourceSet.getCores());
+            String enforceSubmissionNodes = configuration.getConfigurationValues().getString(CVALUE_ENFORCE_SUBMISSION_TO_NODES, null);
+            if (enforceSubmissionNodes) {
+                sb.append(" --nodelist=").append(enforceSubmissionNodes);
+            }
+        }
+        if(resourceSet.isWalltimeSet()) {
+            sb.append(" --time=").append(resourceSet.getWalltime()).append(":00:00");
         }
         return new PBSResourceProcessingCommand(sb.toString());
     }
@@ -131,10 +133,14 @@ class SlurmCommandFactory extends PBSCommandFactory {
 
     @Override
     public String parseJobID(String commandOutput) {
-        if(!commandOutput.startsWith("Your job"))
-            return null;
-        String id = commandOutput.split(StringConstants.SPLIT_WHITESPACE)[2];
+
+        String id = commandOutput.split(StringConstants.SPLIT_STOP)[0];
         return id;
+    }
+
+    @Override
+    public String getQueryCommand() {
+        return "/home/heinold/squeue %i %P %.55j %u %t"
     }
 
     protected List<String> getTestQstat() {

@@ -421,12 +421,16 @@ public class PBSCommandFactory extends ClusterCommandFactory<PBSCommand> {
         updateJobStatus(false);
     }
 
+    protected String getQueryCommand() {
+        return PBS_COMMAND_QUERY_STATES;
+    }
+
     protected void updateJobStatus(boolean forceUpdate) {
 
         if (!ExecutionService.getInstance().isAvailable())
             return;
 
-        String queryCommand = PBS_COMMAND_QUERY_STATES;
+        String queryCommand = getQueryCommand();
 
         if (Roddy.queryOnlyStartedJobs() && listOfCreatedCommands.size() < 10) {
             for (Object _l : listOfCreatedCommands) {
