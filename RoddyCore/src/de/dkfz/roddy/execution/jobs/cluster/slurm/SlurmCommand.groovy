@@ -56,7 +56,7 @@ class SlurmCommand extends PBSCommand {
 
         String additionalParameters = getAdditionalCommandParameters();
 
-        String slurmCommand = "/home/heinold/sbatch ${name} ${dependencies} ${resources} ${variables} ${additionalParameters} ${toolPath}";
+        String slurmCommand = "sbatch ${name} ${dependencies} ${resources} ${variables} ${additionalParameters} ${toolPath}";
         return slurmCommand;
     }
 }

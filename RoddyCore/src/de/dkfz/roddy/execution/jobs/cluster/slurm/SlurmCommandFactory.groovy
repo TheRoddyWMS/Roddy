@@ -61,9 +61,9 @@ class SlurmCommandFactory extends PBSCommandFactory {
 
     @Override
     public void addSpecificSettingsToConfiguration(Configuration configuration) {
-        configuration.getConfigurationValues().add(new ConfigurationValue("RODDY_JOBID", '${PBS_JOBID}'));
-        configuration.getConfigurationValues().add(new ConfigurationValue("RODDY_JOBARRAYINDEX", '${PBS_ARRAYID}'));
-        configuration.getConfigurationValues().add(new ConfigurationValue('RODDY_SCRATCH', '${PBS_SCRATCH_DIR}/${PBS_JOBID}'));
+        configuration.getConfigurationValues().add(new ConfigurationValue("RODDY_JOBID", '${SLURM_JOB_ID}'));
+        configuration.getConfigurationValues().add(new ConfigurationValue("RODDY_SCRATCH", '/tmp/roddyScratch/${SLURM_JOB_ID}'));
+        configuration.getConfigurationValues().add(new ConfigurationValue("RODDY_AUTOCLEANUP_SCRATCH", "true"));
     }
 
     @Override
@@ -73,7 +73,7 @@ class SlurmCommandFactory extends PBSCommandFactory {
 
     @Override
     public String getResourceOptionsPrefix() {
-        return "SGEResourceOptions_";
+        return "SlurmResourceOptions_";
     }
 
     @Override
@@ -140,7 +140,7 @@ class SlurmCommandFactory extends PBSCommandFactory {
 
     @Override
     public String getQueryCommand() {
-        return "/home/heinold/squeue %i %P %.55j %u %t"
+        return "squeue %i %P %.55j %u %t"
     }
 
     protected List<String> getTestQstat() {
