@@ -523,9 +523,9 @@ public class FileSystemInfoProvider extends CacheProvider {
     public boolean setAccessRights(File file, String accessString, String groupID) {
         if (ExecutionService.getInstance().canModifyAccessRights()) {
             return ExecutionService.getInstance().modifyAccessRights(file, accessString, groupID);
+        } else {
+            commandSet.getSetAccessRightsCommand(file, accessString, groupID)
         }
-        //TODO: Implement for the file system info provider.
-        throw new RuntimeException("Load binary file not supported by the file system info provider.");
     }
 
     public String getDefaultAccessRightsString() {

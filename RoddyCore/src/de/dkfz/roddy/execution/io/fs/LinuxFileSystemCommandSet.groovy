@@ -96,6 +96,11 @@ public class LinuxFileSystemCommandSet extends FileSystemCommandSet {
     }
 
     @Override
+    String getSetAccessRightsCommand(File f, String rightsForFiles, String fileGroup) {
+        return "chmod ${rightsForFiles} ${f.absolutePath}; chgrp ${fileGroup} ${f.absolutePath}";
+    }
+
+    @Override
     String getSetAccessRightsRecursivelyCommand(File f, String rightsForDirectories, String rightsForFiles, String fileGroup) {
         def path = "${f.getAbsolutePath()}"
         return "find ${path} -type d | xargs chmod ${rightsForDirectories}; find ${path} -type d | xargs chgrp ${fileGroup}; find ${path} -type f | xargs chmod ${rightsForFiles}; find ${path} -type f | xargs chgrp ${fileGroup};";

@@ -35,6 +35,8 @@ public abstract class FileSystemCommandSet {
 
     public abstract String getCheckAndCreateDirectoryCommand(File f, String onCreateAccessRights, String onCreateFileGroup)
 
+    public abstract String getSetAccessRightsCommand(File f, String rightsForFiles, String fileGroup);
+
     public abstract String getSetAccessRightsRecursivelyCommand(File f, String rightsForDirectories, String rightsForFiles, String fileGroup);
 
     public abstract String getCheckCreateAndReadoutExecCacheFileCommand(File f);

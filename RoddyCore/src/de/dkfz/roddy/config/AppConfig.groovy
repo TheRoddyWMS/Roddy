@@ -59,7 +59,9 @@ public class AppConfig {
             this.line = s;
             // Split away comments and trim the line
             // TODO Append comments again, if there was one stored.
-            String[] splitline = line.split(StringConstants.SPLIT_HASH)[0].trim().split(StringConstants.SPLIT_EQUALS, 2)
+            def splitLineByHash = line.split(StringConstants.SPLIT_HASH)
+            String[] splitline = splitLineByHash[0].trim().split(StringConstants.SPLIT_EQUALS, 2)
+            comment = splitLineByHash[1];
             key = splitline[0];
 
             if(splitline.size() > 1) {
