@@ -5,8 +5,10 @@ import de.dkfz.roddy.config.validation.ConfigurationValidationError;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.plugins.LibrariesFactory;
 import de.dkfz.roddy.plugins.PluginInfo;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.*;
 
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA;
@@ -248,6 +250,20 @@ public class Configuration implements ContainerParent<Configuration> {
 
     public List<Configuration> getListOfSubConfigurations() {
         return new LinkedList<Configuration>(subConfigurations.values());
+    }
+
+    public File getSourceBrawlWorkflow(String brawlName) {
+        List<PluginInfo> pluginInfos = LibrariesFactory.getInstance().getLoadedPlugins();
+        Map<String, File> availableBasePaths = new LinkedHashMap<>();
+        List<File> allFiles = new LinkedList<>();
+        for (PluginInfo pluginInfo : pluginInfos) {
+            File[] files = pluginInfo.getBrawlWorkflowDirectory().listFiles((FileFilter) new WildcardFileFilter(brawlName + ".brawl"));
+            if(files != null && files.length > 0)
+            allFiles.addAll(Arrays.asList(files));
+        }
+        if(allFiles.size() == 1) return allFiles.get(0);
+        logger.severe("Too many braw workflows called " + brawlName);
+        return null;
     }
 
     public File getSourceToolPath(String tool) {

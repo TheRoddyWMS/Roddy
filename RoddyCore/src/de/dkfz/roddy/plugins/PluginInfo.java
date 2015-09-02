@@ -78,6 +78,10 @@ public class PluginInfo {
         }
     }
 
+    public File getBrawlWorkflowDirectory() {
+        return new File(new File(directory, "resources"), "brawlworkflows");
+    }
+
     public String getName() {
         return name;
     }

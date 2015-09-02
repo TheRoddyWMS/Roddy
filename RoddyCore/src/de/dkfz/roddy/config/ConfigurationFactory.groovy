@@ -4,6 +4,7 @@ import de.dkfz.roddy.*
 import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.config.validation.XSDValidator
+import de.dkfz.roddy.knowledge.brawlworkflows.BrawlWorkflow
 import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
 import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.Roddy
@@ -40,7 +41,7 @@ public class ConfigurationFactory {
     public static final String XMLTAG_OUTPUT_FILE_GROUP = "outputFileGroup"
     public static final String XMLTAG_OUTPUT_UMASK = "outputUMask"
 
-    public static final Logger logger = Logger.getLogger(ConfigurationFactory.class.name);
+    public static final LoggerWrapper logger = LoggerWrapper.getLogger(ConfigurationFactory.class.name);
 
     private static ConfigurationFactory singleton = new ConfigurationFactory();
 
@@ -369,12 +370,17 @@ public class ConfigurationFactory {
             }
             config = new AnalysisConfiguration(icc, workflowClass, testdataOptions, parentConfig, listOfUsedTools, usedToolFolders, cleanupScript);
 
-            if (workflowClass == NativeWorkflow.class.name) {
+            if (workflowClass == NativeWorkflow.class.name || workflowClass == "NativeWorkflow") {
                 //We have a native workflow
                 String workflowTool = extractAttributeText(configurationNode, "nativeWorkflowTool", null);
                 String commandFactoryClass = extractAttributeText(configurationNode, "targetCommandFactory", null);
                 ((AnalysisConfiguration) config).setNativeToolID(workflowTool);
                 ((AnalysisConfiguration) config).setTargetCommandFactory(commandFactoryClass);
+            }
+
+            if (workflowClass == BrawlWorkflow.class.name || workflowClass == "BrawlWorkflow") {
+                String brawlWorkflow = extractAttributeText(configurationNode, "brawlWorkflow", null);
+                ((de.dkfz.roddy.config.AnalysisConfiguration) config).setBrawlWorkflow(brawlWorkflow);
             }
         } else {
             config = new Configuration(icc);

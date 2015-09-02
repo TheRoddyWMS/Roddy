@@ -3,10 +3,12 @@ package de.dkfz.roddy.plugins
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.client.RoddyStartupModes
+import de.dkfz.roddy.execution.io.ExecutionHelper
 import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.core.Initializable
 import de.dkfz.roddy.core.LibraryEntry
+import org.reflections.Reflections
 
 import java.lang.reflect.Method
 
@@ -28,6 +30,8 @@ public class LibrariesFactory extends Initializable {
 
     private List<PluginInfo> loadedPlugins = [];
 
+    private Map<PluginInfo, File> loadedJarsByPlugin = [:]
+
     private Map<String, Map<String, PluginInfo>> mapOfPlugins = [:];
 
     private boolean librariesAreLoaded = false;
@@ -43,10 +47,46 @@ public class LibrariesFactory extends Initializable {
         return librariesFactory;
     }
 
-    /**
-     * Resolve all used / necessary plugins and also look for miscrepancies.
-     * @param usedPlugins
-     */
+    public Class searchForClass(String name) {
+        if (name.contains(".")) {
+            return ClassLoader.getSystemClassLoader().loadClass(name);
+        } else {
+            // SEVERE TODO This is a very quick hack and heavily depends on the existens of jar on the system!
+            List<String> listOfClasses = []
+            synchronized (loadedPlugins) {
+                loadedPlugins.each {
+                    PluginInfo plugin ->
+                        String text = ExecutionHelper.execute("jar tvf ${loadedJarsByPlugin[plugin]}")
+                        text.eachLine {
+                            String line ->
+                                if (!line.endsWith(".class")) return;
+                                String cls = line.split("[ ]")[-1][0..-7];
+                                if (cls.endsWith(name)) {
+                                    cls = cls.replace("/", ".");
+                                    cls = cls.replace("\\", ".");
+                                    synchronized (listOfClasses) {
+                                        listOfClasses << cls;
+                                    }
+                                }
+                        }
+                }
+            }
+            if (listOfClasses.size() > 1) {
+                logger.severe("Too many available classes, please specify fully, choosing one of the following: ")
+                listOfClasses.each { logger.severe("  " + it) }
+                return null;
+            }
+            if (listOfClasses.size() == 1) {
+                return ClassLoader.systemClassLoader.loadClass(listOfClasses[0]);
+            }
+            logger.severe("No class found for ${name}")
+            return null;
+        }
+    }
+/**
+ * Resolve all used / necessary plugins and also look for miscrepancies.
+ * @param usedPlugins
+ */
     public boolean resolveAndLoadPlugins(String[] usedPlugins) {
         Map<String, PluginInfo> pluginsToActivate = [:];
         loadMapOfAvailablePlugins();
@@ -262,6 +302,7 @@ public class LibrariesFactory extends Initializable {
             logger.postAlwaysInfo(loadInfo)
             synchronized (loadedLibrariesInfo) {
                 loadedLibrariesInfo << loadInfo.toString()
+                loadedJarsByPlugin[pi] = jarFile;
             }
         }
     }

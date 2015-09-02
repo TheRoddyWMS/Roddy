@@ -23,6 +23,7 @@ public class AnalysisConfiguration extends Configuration {
     private String cleanupScript;
     private String nativeToolID;
     private String targetCommandFactory;
+    private String brawlWorkflow;
 
     /**
      * For main configurations
@@ -159,6 +160,14 @@ public class AnalysisConfiguration extends Configuration {
 
     public String getCleanupScript() {
         return cleanupScript;
+    }
+
+    public void setBrawlWorkflow(String brawlWorkflow) {
+        this.brawlWorkflow = brawlWorkflow;
+    }
+
+    public String getBrawlWorkflow() {
+        return brawlWorkflow;
     }
 
     public boolean isNative() {
