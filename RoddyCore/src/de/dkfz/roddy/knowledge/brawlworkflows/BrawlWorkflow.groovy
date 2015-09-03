@@ -101,7 +101,6 @@ public class BrawlWorkflow extends Workflow {
         classBuilder << "Configuration configuration = context.getConfiguration(); $NEWLINE"
 
         // Find and convert run flags
-//        Map<String, Boolean> runflags = [:]
         for (; lineIndex < lines.size(); lineIndex++) {
             if (!lines[lineIndex].startsWith("runflag")) break;
             String[] values = lines[lineIndex].split(StringConstants.SPLIT_WHITESPACE);
@@ -110,19 +109,10 @@ public class BrawlWorkflow extends Workflow {
             }
             String flagid = values[1];
             Boolean defaultValue = values.size() == 4 && values[2] == "default" ? RoddyConversionHelperMethods.toBoolean(values[3], false) : false;
-//            runflags[flagid] = configuration.getConfigurationValues().getBoolean(flagid, defaultValue);
             classBuilder << "boolean $flagid = configuration.getConfigurationValues().getBoolean(\"$flagid\", ${defaultValue}); $NEWLINE"
         }
 
         // Load the rest of the code
-        //  Step through all lines and identify as
-        //    variable definition
-        //    variable definition with call
-        //    variable set with call
-        //    call without variable
-        //    call with parameters
-        //    if with runflag
-
         Map<String, String> undefinedVariables = [:];
         // First, create a list of code blocks... also check, if there are if/fi mismatches.
         for (; lineIndex < lines.size(); lineIndex++) {
@@ -139,106 +129,49 @@ public class BrawlWorkflow extends Workflow {
             } else if (l.startsWith("else")) {
                 classBuilder << "} else {"
             } else if (l.startsWith("call")) {
+                int indexOfCallCmd = 0;
+                int indexOfCallee = 1
 
+                StringBuilder temp = new StringBuilder();
+
+                assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, context, knownObjects)
+
+                classBuilder << temp.toString()[2 .. -1] << NEWLINE;
             } else if (l.startsWith("var ")) {
+                int indexOfAssignment = 2;
                 int indexOfCallCmd = 3;
                 int indexOfCallee = 4
+
                 StringBuilder temp = new StringBuilder();
                 String varname = _l[1];
                 String classOfFileObject = "def" //FileObject.class.name;
-                // TODO Think about unset fileobjects! They need to be set later!
-                if (_l.size() > 2 && _l[2] == "=") {
-                    if (!_l[indexOfCallCmd] == "call") logger.severe("Something is wrong!");
-                    String call = _l[indexOfCallee];
-                    if (call[0] == '"') { // We call a tool!
-                        temp << " = " << GenericMethod.class.name << ".callGenericTool(" << '"' << call << '"' << ");"
-                        //Find out via tool id
-                        List<ToolEntry.ToolParameter> outputParameters = configuration.getTools().getValue(call).getOutputParameters(context);
-                        if (outputParameters.size() == 1) {
-                            if (outputParameters[0] instanceof ToolEntry.ToolFileParameter)
-                                classOfFileObject = ((ToolEntry.ToolFileParameter) outputParameters[0]).fileClass.name;
-                            if (outputParameters[0] instanceof ToolEntry.ToolFileGroupParameter)
-                                classOfFileObject = ((ToolEntry.ToolFileGroupParameter) outputParameters[0]).groupClass.name;
-                            if (outputParameters[0] instanceof ToolEntry.ToolTupleParameter)
-                                classOfFileObject = "de.dkfz.roddy.knowledge.files.Tuple" + ((ToolEntry.ToolTupleParameter) outputParameters[0]).files.size();
-                        }
-                    } else {
-                        temp << " = " << _l[indexOfCallee] << "(" << (_l.size() > (indexOfCallee + 2) ? _l[(indexOfCallee + 2)..-1].join(", ").replaceAll("\\,+", ",") : "") << ");"
-                        //Find out via method
-                        //Find class first, then the method
-                        String[] splitCall = call.split(StringConstants.SPLIT_STOP)
-                        String classOrObject = splitCall[0];
-                        if (knownObjects.containsKey(classOrObject)) {
-//                            if(knownObjects[varname] == "def") {
-//
-//                            }
-                            String classOfCallingObject = knownObjects[classOrObject];
-                            Class _classOfCallingObject = ClassLoader.getSystemClassLoader().loadClass(classOfCallingObject)
-                            Method method = _classOfCallingObject.methods.find { Method m -> m.name == splitCall[1] }
-                            classOfFileObject = method.returnType.name;
-                        } else {
-                            Class foundClass = LibrariesFactory.getInstance().searchForClass(classOrObject);
-                            if (!foundClass) {
-                                logger.severe("Could not find a class or method!")
-                            }
-                        }
-                    }
+
+                if (_l.size() > indexOfAssignment && _l[indexOfAssignment] == "=") {
+                    classOfFileObject = assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, context, knownObjects)
                 }
+
                 knownObjects[varname] = classOfFileObject;
                 String alternativeName = "#${knownObjects.size()}#"
                 if (classOfFileObject == "def") {
                     undefinedVariables[varname] = alternativeName;
                 }
+
                 String result = (classOfFileObject == "def" ? alternativeName : classOfFileObject) + " " + varname + temp;
                 classBuilder << result;
 
             } else {
-                StringBuilder temp = new StringBuilder();
-                String varname = _l[0];
-
+                int indexOfAssignment = 1;
                 int indexOfCallCmd = 2;
                 int indexOfCallee = 3;
-                String classOfFileObject = "def" //FileObject.class.name;
 
-                if (_l[1] == "=") {
-                    if (!_l[indexOfCallCmd] == "call") logger.severe("Something is wrong!");
-                    String call = _l[indexOfCallee];
-                    if (call[0] == '"') { // We call a tool!
-                        temp << " = " << GenericMethod.class.name << ".callGenericTool(" << '"' << call << '"' << ");"
-                        //Find out via tool id
-                        List<ToolEntry.ToolParameter> outputParameters = configuration.getTools().getValue(call).getOutputParameters(context);
-                        if (outputParameters.size() == 1) {
-                            if (outputParameters[0] instanceof ToolEntry.ToolFileParameter)
-                                classOfFileObject = ((ToolEntry.ToolFileParameter) outputParameters[0]).fileClass.name;
-                            if (outputParameters[0] instanceof ToolEntry.ToolFileGroupParameter)
-                                classOfFileObject = ((ToolEntry.ToolFileGroupParameter) outputParameters[0]).groupClass.name;
-                            if (outputParameters[0] instanceof ToolEntry.ToolTupleParameter)
-                                classOfFileObject = "de.dkfz.roddy.knowledge.files.Tuple" + ((ToolEntry.ToolTupleParameter) outputParameters[0]).files.size();
-                        }
-                    } else {
-                        temp << " = " << _l[indexOfCallee] << "(" << (_l.size() > (indexOfCallee + 2) ? _l[(indexOfCallee + 2)..-1].join(", ").replaceAll("\\,+", ",") : "") << ");"
-                        //Find out via method
-                        //Find class first, then the method
-                        String[] splitCall = call.split(StringConstants.SPLIT_STOP)
-                        String classOrObject = splitCall[0];
-                        if (knownObjects.containsKey(classOrObject)) {
-//                            if(knownObjects[varname] == "def") {
-//
-//                            }
-                            String classOfCallingObject = knownObjects[classOrObject];
-                            Class _classOfCallingObject = ClassLoader.getSystemClassLoader().loadClass(classOfCallingObject)
-                            Method method = _classOfCallingObject.methods.find { Method m -> m.name == splitCall[1] }
-                            classOfFileObject = method.returnType.name;
-                        } else {
-                            Class foundClass = LibrariesFactory.getInstance().searchForClass(classOrObject);
-                            if (!foundClass) {
-                                logger.severe("Could not find a class or method!")
-                            }
-                        }
-                    }
+                StringBuilder temp = new StringBuilder();
+                String varname = _l[0];
+                String classOfFileObject = "def";
+
+                if (_l.size() > indexOfAssignment && _l[indexOfAssignment] == "=") {
+                    classOfFileObject = assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, context, knownObjects)
                     classBuilder << varname << temp << NEWLINE;
                 }
-
 
                 if (knownObjects.containsKey(varname) && knownObjects[varname] == "def") {
                     knownObjects[varname] = classOfFileObject;
@@ -254,15 +187,55 @@ public class BrawlWorkflow extends Workflow {
             text = text.replaceAll(v, knownObjects[k]);
         }
 
-//        println(text);
+        logger.postSometimesInfo(text);
         try {
             GroovyClassLoader groovyClassLoader = new GroovyClassLoader();
             Class theParsedWorkflow = groovyClassLoader.parseClass(text);
             ((Workflow)theParsedWorkflow.newInstance()).execute(context);
         } catch (Exception ex) {
             println(ex);
-//            println(text);
+            return false;
         }
-        return false;
+        return true;
+    }
+
+    private String assembleCall(String[] _l, int indexOfCallCmd, int indexOfCallee, StringBuilder temp, ContextConfiguration configuration, ExecutionContext context, LinkedHashMap<String, String> knownObjects) {
+        String classOfFileObject = "def" //FileObject.class.name;
+        if (!_l[indexOfCallCmd] == "call") logger.severe("Something is wrong!");
+        String call = _l[indexOfCallee];
+        String methodParameters = (_l.size() > (indexOfCallee + 2) ? _l[(indexOfCallee + 2)..-1].join(", ").replaceAll("\\,+", ",") : "").replaceAll("\", =,", "=\" + ");
+
+        if (call[0] == '"') { // We call a tool!
+            //Find out via tool id
+            List<ToolEntry.ToolParameter> outputParameters = configuration.getTools().getValue(call[1 .. -2]).getOutputParameters(context);
+            if (outputParameters.size() == 1) {
+                if (outputParameters[0] instanceof ToolEntry.ToolFileParameter)
+                    classOfFileObject = ((ToolEntry.ToolFileParameter) outputParameters[0]).fileClass.name;
+                if (outputParameters[0] instanceof ToolEntry.ToolFileGroupParameter)
+                    classOfFileObject = ((ToolEntry.ToolFileGroupParameter) outputParameters[0]).groupClass.name;
+                if (outputParameters[0] instanceof ToolEntry.ToolTupleParameter)
+                    classOfFileObject = "de.dkfz.roddy.knowledge.files.Tuple" + ((ToolEntry.ToolTupleParameter) outputParameters[0]).files.size();
+            }
+            temp << " = (" << classOfFileObject << ") " << GenericMethod.class.name << ".callGenericTool(" << call << ", " << methodParameters << ");"
+        } else {
+            temp << " = " << _l[indexOfCallee] << "(" << methodParameters << ");"
+            //Find out via method
+            //Find class first, then the method
+            String[] splitCall = call.split(StringConstants.SPLIT_STOP)
+            String classOrObject = splitCall[0];
+            if (knownObjects.containsKey(classOrObject)) {
+                String classOfCallingObject = knownObjects[classOrObject];
+                Class _classOfCallingObject = ClassLoader.getSystemClassLoader().loadClass(classOfCallingObject)
+                Method method = _classOfCallingObject.methods.find { Method m -> m.name == splitCall[1] }
+                classOfFileObject = method.returnType.name;
+
+            } else {
+                Class foundClass = LibrariesFactory.getInstance().searchForClass(classOrObject);
+                if (!foundClass) {
+                    logger.severe("Could not find a class or method!")
+                }
+            }
+        }
+        classOfFileObject
     }
 }
