@@ -45,7 +45,7 @@ public class BrawlWorkflow extends Workflow {
 
         // Find all lines which are not a comment and not empty
         def lines = f.readLines();
-        lines = lines.findAll { it.trim() != "" && !it.startsWith("#") }.collect { it.split(StringConstants.SPLIT_HASH)[0].trim() }
+        lines = lines.findAll { it.trim() != "" && !it.startsWith("#") }.collect { String s = it.split(StringConstants.SPLIT_HASH)[0].trim(); s.endsWith(";") ? s[0 .. -2] : s }
 
         // Find the header and get the proper base class
         // If there are lines before the header, the code will stop and return false
@@ -97,6 +97,7 @@ public class BrawlWorkflow extends Workflow {
             parmArr << "${pType} ${pName}";
             knownObjects[pName] = pType;
         }
+        knownObjects["configuration"] = ContextConfiguration.class.name
         classBuilder << parmArr.join(", ") << ") { $NEWLINE"
         classBuilder << "Configuration configuration = context.getConfiguration(); $NEWLINE"
 
@@ -121,13 +122,21 @@ public class BrawlWorkflow extends Workflow {
             String[] _l = l.split(StringConstants.SPLIT_WHITESPACE);
 
             if (l.startsWith("if ")) {
-                classBuilder << "if (${_l[1]}) {"
+                if(!l.contains("="))
+                    classBuilder << "if (${_l[1]}) {"
+                else
+                    classBuilder << "if (${_l[1]} == ${_l[3]}) {"
             } else if (l == "fi") {
                 classBuilder << "}"
             } else if (l.startsWith("else if")) {
                 classBuilder << "} else if (${_l[1]}) {"
             } else if (l.startsWith("else")) {
                 classBuilder << "} else {"
+            } else if (l.startsWith("return")) {
+                if(_l.size() == 1)
+                    classBuilder << "return true"
+                else
+                    classBuilder << "return " << RoddyConversionHelperMethods.toBoolean(_l[1], false);
             } else if (l.startsWith("call")) {
                 int indexOfCallCmd = 0;
                 int indexOfCallee = 1
@@ -136,7 +145,7 @@ public class BrawlWorkflow extends Workflow {
 
                 assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, context, knownObjects)
 
-                classBuilder << temp.toString()[2 .. -1] << NEWLINE;
+                classBuilder << temp.toString()[2..-1] << NEWLINE;
             } else if (l.startsWith("var ")) {
                 int indexOfAssignment = 2;
                 int indexOfCallCmd = 3;
@@ -170,7 +179,7 @@ public class BrawlWorkflow extends Workflow {
 
                 if (_l.size() > indexOfAssignment && _l[indexOfAssignment] == "=") {
                     classOfFileObject = assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, context, knownObjects)
-                    classBuilder << varname << temp << NEWLINE;
+                    classBuilder << varname << temp ;
                 }
 
                 if (knownObjects.containsKey(varname) && knownObjects[varname] == "def") {
@@ -180,18 +189,18 @@ public class BrawlWorkflow extends Workflow {
             classBuilder << NEWLINE;
         }
 
-        classBuilder << "} $NEWLINE }"
+        classBuilder << "return true" << NEWLINE << "} $NEWLINE }"
 
         String text = classBuilder.toString();
         undefinedVariables.each { String k, String v ->
             text = text.replaceAll(v, knownObjects[k]);
         }
 
-        logger.postSometimesInfo(text);
+        logger.postAlwaysInfo(text);
         try {
             GroovyClassLoader groovyClassLoader = new GroovyClassLoader();
             Class theParsedWorkflow = groovyClassLoader.parseClass(text);
-            ((Workflow)theParsedWorkflow.newInstance()).execute(context);
+            ((Workflow) theParsedWorkflow.newInstance()).execute(context);
         } catch (Exception ex) {
             println(ex);
             return false;
@@ -200,14 +209,22 @@ public class BrawlWorkflow extends Workflow {
     }
 
     private String assembleCall(String[] _l, int indexOfCallCmd, int indexOfCallee, StringBuilder temp, ContextConfiguration configuration, ExecutionContext context, LinkedHashMap<String, String> knownObjects) {
+        try {
+            return _assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, context, knownObjects);
+        } catch (Exception ex) {
+            logger.severe("Can't assemble call for line ${_l}")
+        }
+    }
+
+    private String _assembleCall(String[] _l, int indexOfCallCmd, int indexOfCallee, StringBuilder temp, ContextConfiguration configuration, ExecutionContext context, LinkedHashMap<String, String> knownObjects) {
         String classOfFileObject = "def" //FileObject.class.name;
         if (!_l[indexOfCallCmd] == "call") logger.severe("Something is wrong!");
         String call = _l[indexOfCallee];
-        String methodParameters = (_l.size() > (indexOfCallee + 2) ? _l[(indexOfCallee + 2)..-1].join(", ").replaceAll("\\,+", ",") : "").replaceAll("\", =,", "=\" + ");
+        String methodParameters = (_l.size() > (indexOfCallee + 2) ? _l[(indexOfCallee + 2)..-1].join(", ").replaceAll("\\,+", ",") : "").replaceAll("\", =,", "=\" + ").replaceAll("new, ", "new ");
 
         if (call[0] == '"') { // We call a tool!
             //Find out via tool id
-            List<ToolEntry.ToolParameter> outputParameters = configuration.getTools().getValue(call[1 .. -2]).getOutputParameters(context);
+            List<ToolEntry.ToolParameter> outputParameters = configuration.getTools().getValue(call[1..-2]).getOutputParameters(context);
             if (outputParameters.size() == 1) {
                 if (outputParameters[0] instanceof ToolEntry.ToolFileParameter)
                     classOfFileObject = ((ToolEntry.ToolFileParameter) outputParameters[0]).fileClass.name;
@@ -223,19 +240,27 @@ public class BrawlWorkflow extends Workflow {
             //Find class first, then the method
             String[] splitCall = call.split(StringConstants.SPLIT_STOP)
             String classOrObject = splitCall[0];
-            if (knownObjects.containsKey(classOrObject)) {
-                String classOfCallingObject = knownObjects[classOrObject];
-                Class _classOfCallingObject = ClassLoader.getSystemClassLoader().loadClass(classOfCallingObject)
-                Method method = _classOfCallingObject.methods.find { Method m -> m.name == splitCall[1] }
-                classOfFileObject = method.returnType.name;
-
-            } else {
-                Class foundClass = LibrariesFactory.getInstance().searchForClass(classOrObject);
-                if (!foundClass) {
+            String classOfCallingObject = "";
+            if (!knownObjects.containsKey(classOrObject)) {
+                classOfCallingObject = LibrariesFactory.getInstance().searchForClass(classOrObject).name;
+                if (!classOfCallingObject) {
                     logger.severe("Could not find a class or method!")
                 }
-            }
+            } else
+                classOfCallingObject = knownObjects[classOrObject];
+            Class _classOfCallingObject = ClassLoader.getSystemClassLoader().loadClass(classOfCallingObject)
+            classOfFileObject = findTypeOfMethodOrProperty(_classOfCallingObject, splitCall, 1);
+
         }
         classOfFileObject
+    }
+
+    private String findTypeOfMethodOrProperty(Class _classOfCallingObject, String[] splitCall, int indexInSplit) {
+        Method method = _classOfCallingObject.methods.find { Method m -> m.name == splitCall[indexInSplit].replaceAll("[()]", "") }
+        Class classOfFileObject = method.returnType.name;
+        if (splitCall.size() == indexInSplit + 1)
+            return classOfFileObject.name;
+        else
+            return findTypeOfMethodOrProperty(classOfFileObject, splitCall, indexInSplit + 1);
     }
 }
