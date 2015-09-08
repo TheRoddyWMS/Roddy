@@ -24,6 +24,7 @@ public class AnalysisConfiguration extends Configuration {
     private String nativeToolID;
     private String targetCommandFactory;
     private String brawlWorkflow;
+    private String brawlBaseWorkflow;
 
     /**
      * For main configurations
@@ -188,6 +189,14 @@ public class AnalysisConfiguration extends Configuration {
 
     public String getTargetCommandFactoryClass() {
         return targetCommandFactory;
+    }
+
+    public String getBrawlBaseWorkflow() {
+        return brawlBaseWorkflow;
+    }
+
+    public void setBrawlBaseWorkflow(String brawlBaseWorkflow) {
+        this.brawlBaseWorkflow = brawlBaseWorkflow;
     }
 }
 

@@ -107,6 +107,16 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
+    public String getBrawlBaseWorkflow() {
+        return checkAnalysisConfig().getBrawlBaseWorkflow();
+    }
+
+    @Override
+    public void setBrawlBaseWorkflow(String brawlBaseWorkflow) {
+        checkAnalysisConfig().setBrawlBaseWorkflow(brawlBaseWorkflow);
+    }
+
+    @Override
     public void addTestDataOptions(List<TestDataOption> options) {
         checkAnalysisConfig().addTestDataOptions(options);
     }

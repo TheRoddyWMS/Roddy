@@ -34,6 +34,7 @@ public class BrawlWorkflow extends Workflow {
     public boolean execute(ExecutionContext context) {
 
         StringBuilder classBuilder = new StringBuilder();
+        StringBuilder syntheticFileClasses = new StringBuilder();
 
         ContextConfiguration configuration = (ContextConfiguration) context.getConfiguration();
         AnalysisConfiguration aCfg = configuration.getAnalysisConfiguration();
@@ -49,14 +50,13 @@ public class BrawlWorkflow extends Workflow {
 
         // Find the header and get the proper base class
         // If there are lines before the header, the code will stop and return false
-        int lineIndex = 0
-        if (!lines[0].contains(":")) return false;
+        int lineIndex;
+//        if (!lines[0].contains(":")) return false;
         // Extract the Workflow name and the base class
         // Find the base class.
-        String[] header = lines[0].split("[:]");
-        String workflowName = header[0].trim();
-        String baseClass = header[1].trim();
-        Class _baseClass = null;
+        String workflowName = aCfg.getBrawlWorkflow();
+        String baseClass = aCfg.getBrawlBaseWorkflow();
+        Class _baseClass;
         if (baseClass == Workflow.class.simpleName)
             _baseClass = Workflow.class;
         else {
@@ -65,13 +65,13 @@ public class BrawlWorkflow extends Workflow {
         }
         classBuilder << "import " << Configuration.class.name << NEWLINE
         classBuilder << NEWLINE << "@groovy.transform.CompileStatic" << NEWLINE
-        classBuilder << "public class $workflowName extends ${_baseClass.name} { $NEWLINE $NEWLINE @Override $NEWLINE public boolean execute(";
+        classBuilder << "public class $workflowName extends ${_baseClass.name} { $NEWLINE @Override $NEWLINE public boolean execute(";
 
         // The second line must be the execute line
-        if (!lines[1] == "execute") return false;
-        def parms = []
+        if (!lines[0] == "execute") return false;
+        def parms = [ "context" ]
         // Follow up parameters for the execute code
-        for (lineIndex = 2; lineIndex < lines.size(); lineIndex++) {
+        for (lineIndex = 1; lineIndex < lines.size(); lineIndex++) {
             if (!lines[lineIndex].startsWith("->"))
                 break;
             parms << lines[lineIndex][3..-1].trim()
@@ -146,7 +146,7 @@ public class BrawlWorkflow extends Workflow {
                 assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, context, knownObjects)
 
                 classBuilder << temp.toString()[2..-1] << NEWLINE;
-            } else if (l.startsWith("var ")) {
+            } else if (l.startsWith("set ")) {
                 int indexOfAssignment = 2;
                 int indexOfCallCmd = 3;
                 int indexOfCallee = 4
@@ -192,13 +192,16 @@ public class BrawlWorkflow extends Workflow {
         classBuilder << "return true" << NEWLINE << "} $NEWLINE }"
 
         String text = classBuilder.toString();
+
+        text = text.replace("#SYNTHETIC_FILECLASSES#", syntheticFileClasses.toString());
+
         undefinedVariables.each { String k, String v ->
             text = text.replaceAll(v, knownObjects[k]);
         }
 
         logger.postAlwaysInfo(text);
         try {
-            GroovyClassLoader groovyClassLoader = new GroovyClassLoader();
+            GroovyClassLoader groovyClassLoader = LibrariesFactory.getGroovyClassLoader();
             Class theParsedWorkflow = groovyClassLoader.parseClass(text);
             ((Workflow) theParsedWorkflow.newInstance()).execute(context);
         } catch (Exception ex) {

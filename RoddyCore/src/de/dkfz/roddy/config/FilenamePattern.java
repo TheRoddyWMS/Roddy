@@ -31,7 +31,8 @@ public class FilenamePattern implements RecursiveOverridableMapContainer.Identif
     public enum FilenamePatternDependency {
         SourceClass,
         FileStage,
-        MethodName;
+        MethodName,
+        ScriptID;
     }
 
     private final Class<BaseFile> cls;
@@ -40,6 +41,7 @@ public class FilenamePattern implements RecursiveOverridableMapContainer.Identif
     private final FileStage fileStage;
     private final Class calledMethodsClass;
     private final Method calledMethodsName;
+    private final String calledScriptID;
     private final String pattern;
     private final String selectionTag;
     private final FilenamePatternDependency filenamePatternDependency;
@@ -56,6 +58,7 @@ public class FilenamePattern implements RecursiveOverridableMapContainer.Identif
         this.fileStage = null;
         calledMethodsName = null;
         calledMethodsClass = null;
+        this.calledScriptID = null;
         this.pattern = pattern;
         this.filenamePatternDependency = FilenamePatternDependency.SourceClass;
         this.selectionTag = selectionTag != null ? selectionTag : DEFAULT_SELECTION_TAG;
@@ -67,15 +70,43 @@ public class FilenamePattern implements RecursiveOverridableMapContainer.Identif
         this.derivedFromCls = null;
         calledMethodsName = null;
         calledMethodsClass = null;
+        this.calledScriptID = null;
         this.pattern = pattern;
         this.filenamePatternDependency = FilenamePatternDependency.FileStage;
         this.selectionTag = selectionTag != null ? selectionTag : DEFAULT_SELECTION_TAG;
     }
 
+    /**
+     * OnScript
+     * @param cls
+     * @param pattern
+     * @param selectionTag
+     */
+    public FilenamePattern(Class<BaseFile> cls, String script, String pattern, String selectionTag) {
+        this.cls = cls;
+        this.calledScriptID = script;
+        this.pattern = pattern;
+        this.filenamePatternDependency = FilenamePatternDependency.ScriptID;
+        this.selectionTag = selectionTag != null ? selectionTag : DEFAULT_SELECTION_TAG;
+        fileStage = null;
+        derivedFromCls = null;
+        calledMethodsName = null;
+        calledMethodsClass = null;
+    }
+
+    /**
+     * OnMethod
+     * @param cls
+     * @param calledClass
+     * @param method
+     * @param pattern
+     * @param selectionTag
+     */
     public FilenamePattern(Class<BaseFile> cls, Class calledClass, Method method, String pattern, String selectionTag) {
         this.cls = cls;
         this.fileStage = null;
         this.derivedFromCls = null;
+        this.calledScriptID = null;
         this.calledMethodsClass = calledClass;
         this.calledMethodsName = method;
         this.pattern = pattern;
@@ -95,12 +126,18 @@ public class FilenamePattern implements RecursiveOverridableMapContainer.Identif
         return String.format("%s::m_%s/r_%s[%s]", cls.getName(), calledMethodsName.getName(), createdClass.getName(), selectionTag);
     }
 
+    public static String assembleID(Class<BaseFile> cls, String scriptID, String selectionTag) {
+        return String.format("%s::onS_%s[%s]", cls.getName(), scriptID, selectionTag);
+    }
+
     @Override
     public String getID() {
         if (filenamePatternDependency == FilenamePatternDependency.FileStage)
             return assembleID(cls, fileStage, selectionTag);
         if (filenamePatternDependency == FilenamePatternDependency.SourceClass)
             return assembleID(cls, derivedFromCls, selectionTag);
+        if (filenamePatternDependency == FilenamePatternDependency.ScriptID)
+            return assembleID(cls, calledScriptID, selectionTag);
         if (filenamePatternDependency == FilenamePatternDependency.MethodName)
             return assembleID(calledMethodsClass, calledMethodsName, cls, selectionTag);
         return null;
