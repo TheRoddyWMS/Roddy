@@ -420,16 +420,23 @@ public class ConfigurationFactory {
 
         for (NodeChild filenames in configurationNode.filenames) {
             String pkg = extractAttributeText(filenames, "package", "de.dkfz.roddy.synthetic.files");
+            boolean packageIsSet = pkg && pkg != "de.dkfz.roddy.synthetic.files";
             String filestagesbase = extractAttributeText(filenames, "filestagesbase", null);
 
             for (NodeChild filename in filenames.filename) {
                 try {
-                    String cls = (pkg != null ? pkg + "." : "") + filename.@class.text();
+                    String classSimpleName = filename.@class.text();
+                    String cls;
+                    Class foundClass = !packageIsSet ? LibrariesFactory.instance.searchForClass(classSimpleName) : null;
+                    if(foundClass)
+                        cls = foundClass.name;
+                    else
+                        cls = (pkg != null ? pkg + "." : "") + filename.@class.text();
                     String pattern = filename.@pattern.text();
                     String selectionTag = extractAttributeText(filename, "selectiontag", FilenamePattern.DEFAULT_SELECTION_TAG);
                     Class _classID
                     try {
-                        _classID = LibrariesFactory.getInstance().searchForClass(cls);
+                        _classID = foundClass ?: LibrariesFactory.getInstance().searchForClass(cls);
                     } catch (Exception ex) {
                         _classID = null;
                     }
@@ -441,6 +448,12 @@ public class ConfigurationFactory {
                         if (isDerivedFromFile) {
                             String dfc = filename.@derivedFrom.text();
                             //(pkg != null ? pkg + "." : "") + filename.@derivedFrom.text();
+                            try {
+                                Class foundDerivedFromClass = LibrariesFactory.instance.searchForClass(dfc.split(StringConstants.SPLIT_SBRACKET_LEFT)[0]);
+                                if(foundDerivedFromClass)
+                                    dfc = foundDerivedFromClass.name;
+                            } catch (Exception ex) {
+                            }
                             if(!dfc.contains(".")) dfc = pkg + "." + dfc;
                             if (dfc.contains("[")) {
                                 int openingIndex = dfc.indexOf("[");
@@ -472,7 +485,16 @@ public class ConfigurationFactory {
 
                     if (isDerivedFromFile) {
                         String fnDerivedFrom = filename.@derivedFrom.text();
-                        String dfc = (!fnDerivedFrom.contains(".") && pkg != null ? pkg + "." : "") + fnDerivedFrom;
+                        String dfc = filename.@derivedFrom.text();
+                        //(pkg != null ? pkg + "." : "") + filename.@derivedFrom.text();
+                        try {
+                            Class foundDerivedFromClass = LibrariesFactory.instance.searchForClass(dfc.split(StringConstants.SPLIT_SBRACKET_LEFT)[0]);
+                            if(foundDerivedFromClass)
+                                dfc = foundDerivedFromClass.name;
+                        } catch (Exception ex) {
+                        }
+                        if(!dfc.contains("."))
+                            dfc = (!fnDerivedFrom.contains(".") && pkg != null ? pkg + "." : "") + fnDerivedFrom;
                         boolean isArray = false;
                         int enforcedArraySize = -1;
                         //Support for arrays of the same file class

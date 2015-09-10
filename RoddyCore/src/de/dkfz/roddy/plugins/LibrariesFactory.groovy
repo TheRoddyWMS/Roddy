@@ -96,6 +96,8 @@ public class LibrariesFactory extends Initializable {
         return centralGroovyClassLoader;
     }
 
+    private Map<PluginInfo, List<String>> classListCacheByPlugin = [:];
+
     public Class searchForClass(String name) {
         if (name.contains(".")) {
             return getGroovyClassLoader().loadClass(name);
@@ -109,12 +111,15 @@ public class LibrariesFactory extends Initializable {
             synchronized (loadedPlugins) {
                 loadedPlugins.each {
                     PluginInfo plugin ->
-                        String text = ExecutionHelper.execute("jar tvf ${loadedJarsByPlugin[plugin]}")
-                        text.eachLine {
+                        if(!classListCacheByPlugin.containsKey(plugin)) {
+                            String text = ExecutionHelper.execute("jar tvf ${loadedJarsByPlugin[plugin]}")
+                            classListCacheByPlugin[plugin] = text.readLines();
+                        }
+                        classListCacheByPlugin[plugin].each {
                             String line ->
                                 if (!line.endsWith(".class")) return;
                                 String cls = line.split("[ ]")[-1][0..-7];
-                                if (cls.endsWith(name)) {
+                                if (cls.endsWith("/" + name)) {
                                     cls = cls.replace("/", ".");
                                     cls = cls.replace("\\", ".");
                                     synchronized (listOfClasses) {

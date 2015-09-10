@@ -14,7 +14,9 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
+import java.lang.reflect.Field
 import java.lang.reflect.Parameter
+import java.lang.reflect.Type
 
 import static de.dkfz.roddy.Constants.ENV_LINESEPARATOR as NEWLINE
 
@@ -46,7 +48,7 @@ public class BrawlWorkflow extends Workflow {
 
         // Find all lines which are not a comment and not empty
         def lines = f.readLines();
-        lines = lines.findAll { it.trim() != "" && !it.startsWith("#") }.collect { String s = it.split(StringConstants.SPLIT_HASH)[0].trim(); s.endsWith(";") ? s[0 .. -2] : s }
+        lines = lines.findAll { it.trim() != "" && !it.startsWith("#") }.collect { String s = it.split(StringConstants.SPLIT_HASH)[0].trim(); s.endsWith(";") ? s[0..-2] : s }
 
         // Find the header and get the proper base class
         // If there are lines before the header, the code will stop and return false
@@ -64,17 +66,18 @@ public class BrawlWorkflow extends Workflow {
             _baseClass = LibrariesFactory.getInstance().searchForClass(baseClass);
         }
         classBuilder << "import " << Configuration.class.name << NEWLINE
+        classBuilder << "import de.dkfz.roddy.knowledge.files.*" << NEWLINE
         classBuilder << NEWLINE << "@groovy.transform.CompileStatic" << NEWLINE
-        classBuilder << "public class $workflowName extends ${_baseClass.name} { $NEWLINE @Override $NEWLINE public boolean execute(";
+        classBuilder << "public class $workflowName extends ${_baseClass.name} { $NEWLINE  @Override $NEWLINE  public boolean execute(";
 
         // The second line must be the execute line
-        if (!lines[0] == "execute") return false;
-        def parms = [ "context" ]
+//        if (!lines[0].startsWith() == "execute") return false;
+        def parms = ["context"]
         // Follow up parameters for the execute code
-        for (lineIndex = 1; lineIndex < lines.size(); lineIndex++) {
-            if (!lines[lineIndex].startsWith("->"))
+        for (lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
+            if (!lines[lineIndex].startsWith("input"))
                 break;
-            parms << lines[lineIndex][3..-1].trim()
+            parms << lines[lineIndex][6..-1].trim()
         }
         // Find the proper execute method in the base Workflow classes
         // Go for the parameter count first, then for the parameter names... types are difficult.
@@ -99,7 +102,7 @@ public class BrawlWorkflow extends Workflow {
         }
         knownObjects["configuration"] = ContextConfiguration.class.name
         classBuilder << parmArr.join(", ") << ") { $NEWLINE"
-        classBuilder << "Configuration configuration = context.getConfiguration(); $NEWLINE"
+        classBuilder << "    Configuration configuration = context.getConfiguration(); $NEWLINE"
 
         // Find and convert run flags
         for (; lineIndex < lines.size(); lineIndex++) {
@@ -110,30 +113,43 @@ public class BrawlWorkflow extends Workflow {
             }
             String flagid = values[1];
             Boolean defaultValue = values.size() == 4 && values[2] == "default" ? RoddyConversionHelperMethods.toBoolean(values[3], false) : false;
-            classBuilder << "boolean $flagid = configuration.getConfigurationValues().getBoolean(\"$flagid\", ${defaultValue}); $NEWLINE"
+            classBuilder << "    boolean $flagid = configuration.getConfigurationValues().getBoolean(\"$flagid\", ${defaultValue}); $NEWLINE"
         }
 
         // Load the rest of the code
         Map<String, String> undefinedVariables = [:];
+        Map<String, String> genericTypesMap = [:];
         // First, create a list of code blocks... also check, if there are if/fi mismatches.
+        int level = 2;
         for (; lineIndex < lines.size(); lineIndex++) {
 
-            String l = lines[lineIndex].replaceAll("=", " = ").replaceAll("\\s+", " ");
-            String[] _l = l.split(StringConstants.SPLIT_WHITESPACE);
+            // Get the line and shape it so it is splitable by whitespace
+            String l = lines[lineIndex].replaceFirst("=", " = ") // Pre-/Append whitespace to the first equals. Don't change equals in parameters...
+                    .replaceAll("!", "! ")  // Append a whitespace to negations
+                    .replaceAll("[(]", ' ( ')  // Prepend a whitespace to braces
+                    .replaceAll("[)]", ' ) ')  // Prepend a whitespace to braces
+                    .replaceAll("\\s+", " ");
 
+            if(!l) continue; //Skip empty lines
+
+            String[] _l = l.split(StringConstants.SPLIT_WHITESPACE);
+            for(int indent = 0; indent < level; indent++) {
+                classBuilder << "  ";
+            }
             if (l.startsWith("if ")) {
-                if(!l.contains("="))
-                    classBuilder << "if (${_l[1]}) {"
-                else
-                    classBuilder << "if (${_l[1]} == ${_l[3]}) {"
+                attachIfLine(_l, l, classBuilder)
+                level ++;
             } else if (l == "fi") {
                 classBuilder << "}"
+                level --;
             } else if (l.startsWith("else if")) {
-                classBuilder << "} else if (${_l[1]}) {"
+                classBuilder << "} else "
+                attachIfLine(_l, l, classBuilder)
+                level ++;
             } else if (l.startsWith("else")) {
                 classBuilder << "} else {"
             } else if (l.startsWith("return")) {
-                if(_l.size() == 1)
+                if (_l.size() == 1)
                     classBuilder << "return true"
                 else
                     classBuilder << "return " << RoddyConversionHelperMethods.toBoolean(_l[1], false);
@@ -179,7 +195,7 @@ public class BrawlWorkflow extends Workflow {
 
                 if (_l.size() > indexOfAssignment && _l[indexOfAssignment] == "=") {
                     classOfFileObject = assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, context, knownObjects)
-                    classBuilder << varname << temp ;
+                    classBuilder << varname << temp;
                 }
 
                 if (knownObjects.containsKey(varname) && knownObjects[varname] == "def") {
@@ -189,17 +205,19 @@ public class BrawlWorkflow extends Workflow {
             classBuilder << NEWLINE;
         }
 
-        classBuilder << "return true" << NEWLINE << "} $NEWLINE }"
+        classBuilder << "    return true" << NEWLINE << "  } $NEWLINE}"
 
         String text = classBuilder.toString();
 
         text = text.replace("#SYNTHETIC_FILECLASSES#", syntheticFileClasses.toString());
+        text = text.replace(", class ", ", ").replace("<class ", "< ");
 
         undefinedVariables.each { String k, String v ->
             text = text.replaceAll(v, knownObjects[k]);
         }
 
-        logger.postAlwaysInfo(text);
+        int lineNo = 1;
+        text.eachLine { String line -> println("" + lineNo + ":\t" + line); lineNo++; }
         try {
             GroovyClassLoader groovyClassLoader = LibrariesFactory.getGroovyClassLoader();
             Class theParsedWorkflow = groovyClassLoader.parseClass(text);
@@ -209,6 +227,19 @@ public class BrawlWorkflow extends Workflow {
             return false;
         }
         return true;
+    }
+
+    private void attachIfLine(String[] _l, String l, StringBuilder classBuilder) {
+        int indexOfValue = 1;
+        int indexOfComparedValue = 3;
+        if (_l[1] == "!") {
+            indexOfValue = 2;
+            indexOfComparedValue = 4;
+        }
+        if (!l.contains("="))
+            classBuilder << "if (${_l[indexOfValue]}) {"
+        else
+            classBuilder << "if (${_l[indexOfValue]} == ${_l[indexOfComparedValue]}) {"
     }
 
     private String assembleCall(String[] _l, int indexOfCallCmd, int indexOfCallee, StringBuilder temp, ContextConfiguration configuration, ExecutionContext context, LinkedHashMap<String, String> knownObjects) {
@@ -222,23 +253,27 @@ public class BrawlWorkflow extends Workflow {
     private String _assembleCall(String[] _l, int indexOfCallCmd, int indexOfCallee, StringBuilder temp, ContextConfiguration configuration, ExecutionContext context, LinkedHashMap<String, String> knownObjects) {
         String classOfFileObject = "def" //FileObject.class.name;
         if (!_l[indexOfCallCmd] == "call") logger.severe("Something is wrong!");
-        String call = _l[indexOfCallee];
-        String methodParameters = (_l.size() > (indexOfCallee + 2) ? _l[(indexOfCallee + 2)..-1].join(", ").replaceAll("\\,+", ",") : "").replaceAll("\", =,", "=\" + ").replaceAll("new, ", "new ");
 
-        if (call[0] == '"') { // We call a tool!
+        if (_l[indexOfCallee][0] == '"') { // We call a tool!
             //Find out via tool id
-            List<ToolEntry.ToolParameter> outputParameters = configuration.getTools().getValue(call[1..-2]).getOutputParameters(context);
+            List<ToolEntry.ToolParameter> outputParameters = configuration.getTools().getValue(_l[indexOfCallee].replaceAll('"', "")).getOutputParameters(context);
             if (outputParameters.size() == 1) {
                 if (outputParameters[0] instanceof ToolEntry.ToolFileParameter)
                     classOfFileObject = ((ToolEntry.ToolFileParameter) outputParameters[0]).fileClass.name;
                 if (outputParameters[0] instanceof ToolEntry.ToolFileGroupParameter)
                     classOfFileObject = ((ToolEntry.ToolFileGroupParameter) outputParameters[0]).groupClass.name;
-                if (outputParameters[0] instanceof ToolEntry.ToolTupleParameter)
-                    classOfFileObject = "de.dkfz.roddy.knowledge.files.Tuple" + ((ToolEntry.ToolTupleParameter) outputParameters[0]).files.size();
+                if (outputParameters[0] instanceof ToolEntry.ToolTupleParameter) {
+
+                    ToolEntry.ToolTupleParameter tupleParameter = (ToolEntry.ToolTupleParameter) outputParameters[0]
+                    String generics = tupleParameter.files.collect { ToolEntry.ToolFileParameter tfp -> return tfp.fileClass }.join(", ")
+                    classOfFileObject = "de.dkfz.roddy.knowledge.files.Tuple" + tupleParameter.files.size() + "<$generics>";
+                }
             }
-            temp << " = (" << classOfFileObject << ") " << GenericMethod.class.name << ".callGenericTool(" << call << ", " << methodParameters << ");"
+            temp << " = (" << classOfFileObject << ") " << GenericMethod.class.name
+            temp << ".callGenericTool(" << _l[indexOfCallee] << ", " << _l[indexOfCallee + 2 .. -2].join(" ")  << ")";
         } else {
-            temp << " = " << _l[indexOfCallee] << "(" << methodParameters << ");"
+            temp << " = " << _l[indexOfCallee .. -1].join("");
+            String call = _l[indexOfCallee];
             //Find out via method
             //Find class first, then the method
             String[] splitCall = call.split(StringConstants.SPLIT_STOP)
@@ -251,19 +286,63 @@ public class BrawlWorkflow extends Workflow {
                 }
             } else
                 classOfCallingObject = knownObjects[classOrObject];
-            Class _classOfCallingObject = ClassLoader.getSystemClassLoader().loadClass(classOfCallingObject)
-            classOfFileObject = findTypeOfMethodOrProperty(_classOfCallingObject, splitCall, 1);
+            Class _classOfCallingObject = LibrariesFactory.getInstance().getGroovyClassLoader().loadClass(classOfCallingObject)
+            classOfFileObject = findTypeOfMethodOrProperty(_classOfCallingObject, splitCall, 1).typeName;
 
         }
         classOfFileObject
     }
 
-    private String findTypeOfMethodOrProperty(Class _classOfCallingObject, String[] splitCall, int indexInSplit) {
-        Method method = _classOfCallingObject.methods.find { Method m -> m.name == splitCall[indexInSplit].replaceAll("[()]", "") }
-        Class classOfFileObject = method.returnType.name;
+    private Type findTypeOfMethodOrProperty(Class _classOfCallingObject, String[] splitCall, int indexInSplit) {
+        Type classToLoad;
+        Method method = _classOfCallingObject.methods.find { Method m -> m.name == splitCall[indexInSplit].split("[(]")[0].replaceAll("[()]", "") }
+
+        if (method) {
+
+            classToLoad = method.genericReturnType;
+//            if(method.getGenericReturnType().typeName != classToLoad)
+//                genericTypesMap[classToLoad] = method.getGenericReturnType().typeName;
+//            if(method-)
+        }
+        Field field = _classOfCallingObject.fields.find { Field f -> f.name == splitCall[indexInSplit].split("[(]")[0].replaceAll("[()]", "") }
+        if (field) {
+            classToLoad = field.genericType;
+        }
+
+//        Class classOfFileObject = LibrariesFactory.getInstance().getGroovyClassLoader().loadClass(classToLoad);
         if (splitCall.size() == indexInSplit + 1)
-            return classOfFileObject.name;
-        else
-            return findTypeOfMethodOrProperty(classOfFileObject, splitCall, indexInSplit + 1);
+            return classToLoad;
+        else {
+            //Is the next in line a method or a field?...
+            //If the current classToLoad is some sort of generic object... then what?
+            // Unfortunately, Roddy uses generics at some points, e.g. for Tuples. However, Generics can be a huge pain.
+            // If our next call is a method, we will just go on, if it is a value and the current type is generic... Let's handle that differently.
+            boolean nextIsMethod = isNextMethodCall(method ? method.returnType : field.type, splitCall, indexInSplit + 1)
+            if (nextIsMethod || (!nextIsMethod && !classToLoad.typeName.contains("<")))
+                return findTypeOfMethodOrProperty(method ? method.returnType : field.type, splitCall, indexInSplit + 1);
+            else {
+                // Now handle the generic fields...
+                //Get the fields name first.
+                String fieldName = splitCall[indexInSplit + 1];
+                int index = method.getReturnType().fields.findIndexOf { Field it -> it.name == fieldName; };
+
+                Type genericReturnType = method.getGenericReturnType()
+                Field hidden = genericReturnType.class.getDeclaredField("actualTypeArguments");
+                hidden.setAccessible(true);
+                return ((Type[])hidden.get(genericReturnType))[index];
+            }
+        }
     }
+
+    /**
+     * Auto boolean to true or false.
+     * @param _classOfCallingObject
+     * @param splitCall
+     * @param indexInSplit
+     * @return
+     */
+    boolean isNextMethodCall(Class _classOfCallingObject, String[] splitCall, int indexInSplit) {
+        return  _classOfCallingObject.methods.find { Method m -> m.name == splitCall[indexInSplit].replaceAll("[()]", "") }
+    }
+
 }
