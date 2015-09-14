@@ -355,9 +355,7 @@ class SSHExecutionService extends RemoteExecutionService {
                     content.readLines().each { String line -> output << "" + line }
                 } else {
                     String cStr = command?.size() > 80 ? command[0..80] : command;
-                    //ERR Message is never displayed!
                     logger.severe("Command not executed correctly, return code: " + exitStatus + (cmd.getExitSignal() ? " Caught signal is " + cmd.getExitSignal().name() : "" + "\n\tCommand Str. $cStr"));
-//                    IOUtils.readFully(cmd.getErrorStream()).toString();
                 }
             } else {
                 content.readLines().each { String line -> output << "" + line }

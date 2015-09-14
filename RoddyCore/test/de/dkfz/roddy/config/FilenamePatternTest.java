@@ -5,7 +5,7 @@ import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.ExecutionContextLevel;
 import de.dkfz.roddy.knowledge.examples.SimpleFileStageSettings;
 import de.dkfz.roddy.knowledge.examples.TextFile;
-import de.dkfz.roddy.knowledge.files.BaseFile;
+
 import java.io.*;
 
 import de.dkfz.roddy.knowledge.files.Tuple2;
@@ -14,8 +14,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Method;
-
-import static org.junit.Assert.*;
 
 public class FilenamePatternTest {
 

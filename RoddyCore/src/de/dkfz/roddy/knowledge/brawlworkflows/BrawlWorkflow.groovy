@@ -36,7 +36,6 @@ public class BrawlWorkflow extends Workflow {
     public boolean execute(ExecutionContext context) {
 
         StringBuilder classBuilder = new StringBuilder();
-        StringBuilder syntheticFileClasses = new StringBuilder();
 
         ContextConfiguration configuration = (ContextConfiguration) context.getConfiguration();
         AnalysisConfiguration aCfg = configuration.getAnalysisConfiguration();
@@ -50,10 +49,6 @@ public class BrawlWorkflow extends Workflow {
         def lines = f.readLines();
         lines = lines.findAll { it.trim() != "" && !it.startsWith("#") }.collect { String s = it.split(StringConstants.SPLIT_HASH)[0].trim(); s.endsWith(";") ? s[0..-2] : s }
 
-        // Find the header and get the proper base class
-        // If there are lines before the header, the code will stop and return false
-        int lineIndex;
-//        if (!lines[0].contains(":")) return false;
         // Extract the Workflow name and the base class
         // Find the base class.
         String workflowName = aCfg.getBrawlWorkflow();
@@ -66,15 +61,25 @@ public class BrawlWorkflow extends Workflow {
             _baseClass = LibrariesFactory.getInstance().searchForClass(baseClass);
         }
         classBuilder << "import " << Configuration.class.name << NEWLINE
-        classBuilder << "import de.dkfz.roddy.knowledge.files.*" << NEWLINE
+        classBuilder << "import de.dkfz.roddy.knowledge.files.*" << NEWLINE << NEWLINE
+
+        // Brawl accepts Java imports.
+        // Search for them and append them.
+        int lineIndex;
+        for (lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
+            if (!lines[lineIndex].startsWith("import"))
+                break;
+            classBuilder << lines[lineIndex] << NEWLINE
+        }
+
         classBuilder << NEWLINE << "@groovy.transform.CompileStatic" << NEWLINE
         classBuilder << "public class $workflowName extends ${_baseClass.name} { $NEWLINE  @Override $NEWLINE  public boolean execute(";
 
-        // The second line must be the execute line
-//        if (!lines[0].startsWith() == "execute") return false;
+        // Now grab the parameters
         def parms = ["context"]
+
         // Follow up parameters for the execute code
-        for (lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
+        for (; lineIndex < lines.size(); lineIndex++) {
             if (!lines[lineIndex].startsWith("input"))
                 break;
             parms << lines[lineIndex][6..-1].trim()
@@ -128,24 +133,29 @@ public class BrawlWorkflow extends Workflow {
                     .replaceAll("!", "! ")  // Append a whitespace to negations
                     .replaceAll("[(]", ' ( ')  // Prepend a whitespace to braces
                     .replaceAll("[)]", ' ) ')  // Prepend a whitespace to braces
-                    .replaceAll("\\s+", " ");
+                    .replaceAll("\\s+", " ")
+                    .replaceAll("[;]", "; ")
+                    .replaceAll("[ ][(][ ][)][ ]", "()")
+                    .replaceAll("[)][)]", ") )");
 
-            if(!l) continue; //Skip empty lines
+            if (!l) continue; //Skip empty lines
 
-            String[] _l = l.split(StringConstants.SPLIT_WHITESPACE);
-            for(int indent = 0; indent < level; indent++) {
+            String[] _l = l.split(StringConstants.SEMICOLON)[0].split(StringConstants.SPLIT_WHITESPACE);
+            for (int indent = 0; indent < level; indent++) {
                 classBuilder << "  ";
             }
-            if (l.startsWith("if ")) {
+            if (l.startsWith("for ") && l.endsWith("; do")) {
+            } else if (l == "done") {
+            } else if (l.startsWith("if ") && l.endsWith("; then")) {
                 attachIfLine(_l, l, classBuilder)
-                level ++;
+                level++;
             } else if (l == "fi") {
                 classBuilder << "}"
-                level --;
+                level--;
             } else if (l.startsWith("else if")) {
                 classBuilder << "} else "
                 attachIfLine(_l, l, classBuilder)
-                level ++;
+                level++;
             } else if (l.startsWith("else")) {
                 classBuilder << "} else {"
             } else if (l.startsWith("return")) {
@@ -209,7 +219,6 @@ public class BrawlWorkflow extends Workflow {
 
         String text = classBuilder.toString();
 
-        text = text.replace("#SYNTHETIC_FILECLASSES#", syntheticFileClasses.toString());
         text = text.replace(", class ", ", ").replace("<class ", "< ");
 
         undefinedVariables.each { String k, String v ->
@@ -217,8 +226,10 @@ public class BrawlWorkflow extends Workflow {
         }
 
         int lineNo = 1;
-        text.eachLine { String line -> println("" + lineNo + ":\t" + line); lineNo++; }
+        // eachline would be possible, but at least Intellij Idea always shows up an error, which bugs me a little...
+        text.readLines().each { String line -> println("" + lineNo + ":\t" + line); lineNo++; }
         try {
+            //Finally load and parse the class, output any errors.
             GroovyClassLoader groovyClassLoader = LibrariesFactory.getGroovyClassLoader();
             Class theParsedWorkflow = groovyClassLoader.parseClass(text);
             ((Workflow) theParsedWorkflow.newInstance()).execute(context);
@@ -242,6 +253,9 @@ public class BrawlWorkflow extends Workflow {
             classBuilder << "if (${_l[indexOfValue]} == ${_l[indexOfComparedValue]}) {"
     }
 
+    /**
+     * Wrapper method for _assembleCall to have a cheap try catch around it.
+     */
     private String assembleCall(String[] _l, int indexOfCallCmd, int indexOfCallee, StringBuilder temp, ContextConfiguration configuration, ExecutionContext context, LinkedHashMap<String, String> knownObjects) {
         try {
             return _assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, context, knownObjects);
@@ -270,9 +284,9 @@ public class BrawlWorkflow extends Workflow {
                 }
             }
             temp << " = (" << classOfFileObject << ") " << GenericMethod.class.name
-            temp << ".callGenericTool(" << _l[indexOfCallee] << ", " << _l[indexOfCallee + 2 .. -2].join(" ")  << ")";
+            temp << ".callGenericTool(" << _l[indexOfCallee] << ", " << _l[indexOfCallee + 2..-2].join(" ") << ")";
         } else {
-            temp << " = " << _l[indexOfCallee .. -1].join("");
+            temp << " = " << _l[indexOfCallee..-1].join("");
             String call = _l[indexOfCallee];
             //Find out via method
             //Find class first, then the method
@@ -300,16 +314,12 @@ public class BrawlWorkflow extends Workflow {
         if (method) {
 
             classToLoad = method.genericReturnType;
-//            if(method.getGenericReturnType().typeName != classToLoad)
-//                genericTypesMap[classToLoad] = method.getGenericReturnType().typeName;
-//            if(method-)
         }
         Field field = _classOfCallingObject.fields.find { Field f -> f.name == splitCall[indexInSplit].split("[(]")[0].replaceAll("[()]", "") }
         if (field) {
             classToLoad = field.genericType;
         }
 
-//        Class classOfFileObject = LibrariesFactory.getInstance().getGroovyClassLoader().loadClass(classToLoad);
         if (splitCall.size() == indexInSplit + 1)
             return classToLoad;
         else {
@@ -329,7 +339,7 @@ public class BrawlWorkflow extends Workflow {
                 Type genericReturnType = method.getGenericReturnType()
                 Field hidden = genericReturnType.class.getDeclaredField("actualTypeArguments");
                 hidden.setAccessible(true);
-                return ((Type[])hidden.get(genericReturnType))[index];
+                return ((Type[]) hidden.get(genericReturnType))[index];
             }
         }
     }
@@ -342,7 +352,7 @@ public class BrawlWorkflow extends Workflow {
      * @return
      */
     boolean isNextMethodCall(Class _classOfCallingObject, String[] splitCall, int indexInSplit) {
-        return  _classOfCallingObject.methods.find { Method m -> m.name == splitCall[indexInSplit].replaceAll("[()]", "") }
+        return _classOfCallingObject.methods.find { Method m -> m.name == splitCall[indexInSplit].replaceAll("[()]", "") }
     }
 
 }

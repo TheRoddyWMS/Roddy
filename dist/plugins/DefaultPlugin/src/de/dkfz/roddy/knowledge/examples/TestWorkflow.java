@@ -5,7 +5,7 @@ import de.dkfz.roddy.core.Workflow;
 
 /**
  */
-public class SimpleWorkflow extends Workflow {
+public class TestWorkflow extends Workflow {
     @Override
     public boolean execute(ExecutionContext context) {
         SimpleRuntimeService srs = (SimpleRuntimeService) context.getRuntimeService();
