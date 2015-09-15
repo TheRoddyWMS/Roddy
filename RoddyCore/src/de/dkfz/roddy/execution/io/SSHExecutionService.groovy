@@ -14,6 +14,7 @@ import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
 import de.dkfz.roddy.execution.jobs.Command
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.common.IOUtils
 import net.schmizz.sshj.connection.channel.OpenFailException
@@ -322,7 +323,6 @@ class SSHExecutionService extends RemoteExecutionService {
         SSHPoolConnectionSet set = waitForService()
         SSHClient sshClient = set.client;
 
-        final String cmdLogStr = command.length() < 20 ? command : command.substring(0, 20);
         if (waitFor) {
             long id = fireExecutionStartedEvent(command)
 
@@ -346,7 +346,7 @@ class SSHExecutionService extends RemoteExecutionService {
 
             List<String> output = new LinkedList<String>()
             output << "" + exitStatus;
-            measureStop(id, "blocking command [sshclient:${set.id}] '" + cmdLogStr + "'");
+            measureStop(id, "blocking command [sshclient:${set.id}] '" + RoddyIOHelperMethods.truncateCommand(command, 20) + "'");
             fireExecutionStoppedEvent(id, command);
 
             if (exitStatus > 0) {
@@ -354,8 +354,10 @@ class SSHExecutionService extends RemoteExecutionService {
                     logger.severe("Command not executed correctly, return code: " + exitStatus + ", error was ignored on purpose.");
                     content.readLines().each { String line -> output << "" + line }
                 } else {
-                    String cStr = command?.size() > 80 ? command[0..80] : command;
-                    logger.severe("Command not executed correctly, return code: " + exitStatus + (cmd.getExitSignal() ? " Caught signal is " + cmd.getExitSignal().name() : "" + "\n\tCommand Str. $cStr"));
+                    logger.severe("Command not executed correctly, return code: " + exitStatus +
+                                    (cmd.getExitSignal()
+                                            ? " Caught signal is " + cmd.getExitSignal().name()
+                                            : "\n\tCommand Str. " + RoddyIOHelperMethods.truncateCommand(command)));
                 }
             } else {
                 content.readLines().each { String line -> output << "" + line }
@@ -380,7 +382,7 @@ class SSHExecutionService extends RemoteExecutionService {
                 }
                 String content = IOUtils.readFully(cmd.getInputStream()).toString();
                 session.close();
-                measureStop(id, "async command  [sshclient:${set.id}] '" + cmdLogStr + "'");
+                measureStop(id, "async command  [sshclient:${set.id}] '" + RoddyIOHelperMethods.truncateCommand(command, 20) + "'");
                 fireExecutionStoppedEvent(id, command)
             }
         }
