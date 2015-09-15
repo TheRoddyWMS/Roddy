@@ -1,6 +1,7 @@
 package de.dkfz.roddy.tools
 
 import de.dkfz.roddy.Constants
+import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.execution.io.ExecutionHelper
 import de.dkfz.roddy.execution.io.ExecutionService
@@ -185,6 +186,22 @@ class RoddyIOHelperMethods {
             logger.warning("Could not md5 file ${f.absolutePath} " + ex.toString());
             return "";
         }
+    }
+
+    public static String truncateCommand(String inStr) {
+        truncateCommand(inStr, Roddy.getApplicationProperty("commandLogTruncate", '80').toInteger())
+    }
+
+    public static String truncateCommand(String inStr, int maxLength) {
+        if (maxLength > 0 && inStr?.size() > maxLength) {
+            if (maxLength > 4) {
+                return inStr[0..(maxLength-4)] + " ..."
+            } else {
+                return inStr[0..maxLength]
+            }
+        } else {
+            return inStr
+        };
     }
 
     /**
