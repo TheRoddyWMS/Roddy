@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/RoddyCore/RoddyCore.iml" filepath="$PROJECT_DIR$/RoddyCore/RoddyCore.iml" />
+      <module fileurl="file://$PROJECT_DIR$/roddy.iml" filepath="$PROJECT_DIR$/roddy.iml" />
     </modules>
   </component>
 </project>
