@@ -27,6 +27,7 @@
       <sourceFolder url="file://$MODULE_DIR$/../dist/plugins/PluginBase/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../dist/plugins/Template/src" isTestSource="false" />
     </content>
+    <content url="file://$MODULE_DIR$/../../RoddyGithubWiki" />
     <content url="file://$MODULE_DIR$/../../RoddyWorkflows/COProjectConfigurations" />
     <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />

@@ -526,6 +526,12 @@ class SSHExecutionService extends RemoteExecutionService {
         return result;
     }
 
+    /**
+     * FIXME Method is currently not setting the access rights relative but absolute.
+     * Also it is not possible to set absolute rights with = (u=rwx)
+     * @param rightsStr
+     * @return
+     */
     private int convertToAccessRights(String rightsStr) {
         Map<String, Integer> rights = [u: 07, g: 00, o: 00];
         String[] split = rightsStr.split(SPLIT_COMMA);
@@ -539,6 +545,8 @@ class SSHExecutionService extends RemoteExecutionService {
             } else {
                 //Possibly contains a -
                 String[] _s = s.split(StringConstants.SPLIT_MINUS);
+
+                //FIXME By default the value is always set to all and rights are subtracted.
                 int number = 07 - (_s[1].contains("r") ? 04 : 0);
                 number -= _s[1].contains("w") ? 02 : 0;
                 number -= _s[1].contains("x") ? 01 : 0;

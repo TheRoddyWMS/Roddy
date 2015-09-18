@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#set -xuv
+
 GROOVY_HOME=`ls -d ${PWD}/dist/runtime*/groovy 2> /dev/null`
 JAVA_HOME=`ls -d ${PWD}/dist/runtime*/jdk 2> /dev/null`
 

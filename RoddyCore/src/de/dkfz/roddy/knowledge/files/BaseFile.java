@@ -434,7 +434,7 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
                         }
                         //Abort when the workflows execute method is called.
                         if ((ste.getClassName().equals(ExecutionContext.class.getName())
-                                || Workflow.class.isAssignableFrom(BaseFile.class.getClassLoader().loadClass(ste.getClassName())))
+                                || Workflow.class.isAssignableFrom(LibrariesFactory.getGroovyClassLoader().loadClass(ste.getClassName())))
                                 && methodName.equals("execute"))
                             break;
 

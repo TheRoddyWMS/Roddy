@@ -60,9 +60,14 @@ public class Roddy {
      * until the maxim of n running datasets is reached. If one dataset is finished it starts
      * the next one. So it is some sort of controlled submit mode where you can i.e. leave
      * roddy lalone over night.
+     *
+     * This feature was planned and might still be of interest. However, most users created
+     * their own scripts and it might be more feasible to use such a script than a permanent
+     * running Roddy instance.
      */
     private static boolean autosubmitMode = false;
     private static int autosubmitMaxBatchCount = 4;
+
     private static boolean repeatJobSubmission = false;
     private static int repeatJobSubmissionAmount = -1;
     private static int repeatJobSubmissionWait = 10;

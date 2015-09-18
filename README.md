@@ -85,10 +85,12 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 == Changelist
 
-- (WIP) A first working and very rough version of Roddys built in brawl language. brawl will be a very basic
-  language to implement simpler workflows. Support is e.g. given for if and a lot of typing can be skipped.
-  brawl scripts will be auto converted and compiled to Java workflows upon startup. This way it is guaranteed
-  that those scripts are writte properly.
+- (WIP) add the createworkflow runmode to Roddy.
+
+- (TEST) A working and version of Roddys built in Brawl language. Brawl is be a very basic
+  language to implement simple workflows. Support is e.g. given for if and a lot of typing can be skipped.
+  brawl scripts will be auto converted and compiled to Groovy workflows upon startup. This way it is guaranteed
+  that those scripts are written properly. Still missing is the for loop syntax.
 
 * Version update to 2.2.69
 

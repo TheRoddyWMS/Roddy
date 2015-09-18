@@ -29,7 +29,6 @@ if [[ $pluginIsAvailable == false ]]; then
     echo    # (optional) move to a new line
     [[ ! $REPLY =~ ^[Yy]$ ]] && echo "Plugin not created, exitting." && exit 0
 
-#set -xuv
     # Ask for the folder
     oFS=$IFS
     IFS=","
@@ -48,10 +47,8 @@ if [[ $pluginIsAvailable == false ]]; then
     echo ${pluginDirectories[$no]}
     IFS=$oFS
 fi
-#exit 0
-#set -xuv
 
-#set -xuv
+# Collect all template files which will be copied to the target folder.
 templateReadmeFile=${RODDY_DIRECTORY}/dist/plugins/Template/README.template.txt
 templateBuildFile=${RODDY_DIRECTORY}/dist/plugins/Template/buildversion.txt
 templateAnalysisConfig=${RODDY_DIRECTORY}/dist/plugins/Template/resources/configurationFiles/analysisTemplate.xml

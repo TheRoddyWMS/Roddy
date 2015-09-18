@@ -1,7 +1,7 @@
 #!/bin/bash
 #TODO Build in additional configured plugin folders!
 
-set -xuv
+set -e
 increasebuildonly=${increasebuildonly-false}
 
 # Check for configured plugin directories. Set empty if no dirs are configured.

@@ -4,6 +4,7 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
 import de.dkfz.roddy.config.converters.ConfigurationConverter
+import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.core.CacheProvider
@@ -61,7 +62,7 @@ public class FileSystemInfoProvider extends CacheProvider {
             fileSystemInfoProvider = new NoNoFileSystemInfoProvider();
         }
         try {
-            Class fisClz = Roddy.class.getClassLoader().loadClass(Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_FILESYSTEM_INFO_PROVIDER_CLASS, FileSystemInfoProvider.class.getName()));
+            Class fisClz = LibrariesFactory.getGroovyClassLoader().loadClass(Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_FILESYSTEM_INFO_PROVIDER_CLASS, FileSystemInfoProvider.class.getName()));
             fileSystemInfoProvider = (FileSystemInfoProvider) fisClz.getConstructors()[0].newInstance();
         } catch (Exception e) {
             logger.warning("Falling back to default file system info provider");

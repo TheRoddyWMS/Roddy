@@ -65,7 +65,7 @@ public abstract class ExecutionService extends CacheProvider {
             return;
         }
 
-        ClassLoader classLoader = Roddy.class.getClassLoader();
+        ClassLoader classLoader = LibrariesFactory.getGroovyClassLoader();
 
         String executionServiceClassID = null;
         Roddy.RunMode runMode = Roddy.getRunMode();

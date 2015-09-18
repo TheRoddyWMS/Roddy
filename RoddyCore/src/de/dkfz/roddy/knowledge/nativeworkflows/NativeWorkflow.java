@@ -18,6 +18,7 @@ import de.dkfz.roddy.execution.jobs.Job;
 import de.dkfz.roddy.execution.jobs.JobState;
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand;
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutedCommandFactory;
+import de.dkfz.roddy.plugins.LibrariesFactory;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -56,7 +57,7 @@ public class NativeWorkflow extends Workflow {
         CommandFactory targetCommandFactory = null;
         try {
             String clz = aCfg.getTargetCommandFactoryClass();
-            ClassLoader classLoader = Roddy.class.getClassLoader();
+            ClassLoader classLoader = LibrariesFactory.getGroovyClassLoader();
             Class<?> targetCommandFactoryClass = classLoader.loadClass(clz);
             Constructor[] c = targetCommandFactoryClass.getConstructors();
             Constructor first = c[0];

@@ -16,7 +16,7 @@
 mode=${2-}
 [[ ! $mode == "create" && ! $mode == "update" ]] && echo "Wrong mode supplied, needs to be either create or update." && exit 2
 
-[[ $mode == "create" && $# -lt 8 ]] && echo "Wrong parameters supplied, use bash roddy.sh prepareprojectconfig create [base path] [ssh:(host) / local] [Config folders] [Plugin folders] [Roddy binary version] [Plugin list and version]" && exit 1
+[[ $mode == "create" && $# -lt 8 ]] && echo "Wrong parameters supplied, use bash roddy.sh prepareprojectconfig create [base path] [ssh:(host) / local] [Config folders] [Plugin folders] [Roddy binary version] [analysisId:baseAnalysisId:PluginFolder]" && exit 1
 
 [[ $mode == "update" && $# -lt 3 ]] && echo "Wrong parameters supplied, use bash roddy.sh prepareprojectconfig update [base path]" && exit 1
 
@@ -62,7 +62,7 @@ if [[ $mode == "create" ]]; then
 	echo "pluginDirectories=$pluginFolders" >> $targetConfigFolder/applicationProperties.ini
 	echo "configurationDirectories=$configFolders" >> $targetConfigFolder/applicationProperties.ini
 	echo "useRoddyVersion=$roddyVersion" >> $targetConfigFolder/applicationProperties.ini
-	echo "usePluginVersion=$pluginList" >> $targetConfigFolder/applicationProperties.ini
+#	echo "usePluginVersion=$pluginList" >> $targetConfigFolder/applicationProperties.ini
 
 elif [[ $mode == "update" ]]; then
 	# Find latest version and copy that.
