@@ -25,6 +25,7 @@ public class RoddyTest {
 
         Roddy.parseAdditionalStartupOptions(clc);
 
+        // TODO: Currently this needs an applicationProperties.ini in ~/.roddy/.
         Roddy.loadPropertiesFile();
 
         Roddy.initializeServices(true);
