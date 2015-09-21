@@ -18,7 +18,7 @@ allprojects {
     // Manage a local copy of the required libraries.
     flatDir dirs: ["${rootProject.projectDir}/dist/bin/current/lib/",
                    "${rootProject.projectDir}/dist/runtimeDevel/groovy/lib",
-                   "dist/runtimeDevel/jdk/lib"]
+                   "${rootProject.projectDir}/dist/runtimeDevel/jdk/lib"]
   }
 
   dependencies {
