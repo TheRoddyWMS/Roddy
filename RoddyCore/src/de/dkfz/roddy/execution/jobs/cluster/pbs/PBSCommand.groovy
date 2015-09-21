@@ -1,9 +1,11 @@
 package de.dkfz.roddy.execution.jobs.cluster.pbs
 
 import de.dkfz.roddy.AvailableFeatureToggles
+import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
+import de.dkfz.roddy.config.ConfigurationFactory
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
@@ -226,7 +228,7 @@ public class PBSCommand extends Command implements Serializable {
         if (groupList != EMPTY && groupList != "UNDEFINED") {
             qsubCall << getGroupListString(groupList);
         }
-        String outputUMask = configuration.getConfigurationValues().getString("outputUMask", "007");
+        String outputUMask = configuration.getConfigurationValues().getString(ConfigurationFactory.XMLTAG_OUTPUT_UMASK, Constants.DEFAULT_UMASK);
         qsubCall << getUmaskString(outputUMask);
 
         for (ProcessingCommands pcmd in job.getListOfProcessingCommand()) {

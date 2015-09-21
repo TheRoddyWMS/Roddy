@@ -47,6 +47,7 @@ public class Constants {
     /////////////////////////
 
     public static final String ENV_LINESEPARATOR = System.getProperty("line.separator");
+    public static final String DEFAULT_UMASK = "007";
 
     /////////////////////////
     // Roddy tools

@@ -124,7 +124,7 @@ class BashConverter extends ConfigurationConverter {
         }
 
         //TODO The output umask and the group should be taken from a central location.
-        String umask = cfg.getConfigurationValues().getString(ConfigurationFactory.XMLTAG_OUTPUT_UMASK, "007");
+        String umask = cfg.getConfigurationValues().getString(ConfigurationFactory.XMLTAG_OUTPUT_UMASK, Constants.DEFAULT_UMASK);
         String outputFileGroup = cfg.getConfigurationValues().getString(ConfigurationFactory.XMLTAG_OUTPUT_FILE_GROUP);
 
         boolean debugPipefail = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.DEBUG_OPTIONS_USE_PIPEFAIL, true);
