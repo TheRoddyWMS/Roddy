@@ -236,4 +236,58 @@ class RoddyIOHelperMethods {
         }
         return result;
     }
+
+    // TODO Make class representing rights (compare java.nio.file.attribute.PosixAccessRights) to handle different representations
+    //      of rights, their interconversion and modifications (for modifications three states are required (+, -, nochange), not just 2 (set, unset)).
+    /** Convert symbolic to numeric access rights.
+     * Warning: This is still no full implementation. E.g. multi-who is not supported (e.g. go+x).
+     * TODO Taking symbolic access rights and a hash of defaults is kind of schizephrenic. Fix this.
+     * @param rightsStr        string representation of access rights
+     * @param defaultRights    background access rights
+     * @return                 numeric access rights
+     */
+    public static int symbolicToNumericAccessRights(String rightsStr, Map<String, Integer> defaultRights = [u: 07, g: 07, o: 07]) {
+        Map<String, Integer> resultRights = defaultRights;
+        String[] split = rightsStr.toLowerCase().split(StringConstants.SPLIT_COMMA);
+        for (String s in split) {
+  	        String[] whoPerm = s.split("[+=-]")
+	        String group = whoPerm[0]
+	        String rights = whoPerm.size() == 1 ? "" : whoPerm[1]
+            if (!"ugo".contains(group)) {
+                throw new IOException( "Invalid permission string '${rightsStr}'")
+            }
+            int number  = resultRights[group]
+            if (s.contains(StringConstants.EQUALS)) {
+                number  = rights.contains("r") ? 04 : 0;  // Reset!
+                number |= rights.contains("w") ? 02 : 0;
+                number |= rights.contains("x") ? 01 : 0;
+            } else if (s.contains(StringConstants.PLUS)) {
+                number |= rights.contains("r") ? 04 : 0;
+                number |= rights.contains("w") ? 02 : 0;
+                number |= rights.contains("x") ? 01 : 0;
+            } else if (s.contains(StringConstants.MINUS)) {
+                number &= rights.contains("r") ? 03 : 07;
+                number &= rights.contains("w") ? 05 : 07;
+                number &= rights.contains("x") ? 06 : 07;
+            } else {
+                throw new IOException ("Cannot parse permission string '${rightsStr}'")
+            }
+            resultRights[group] = number;
+        }
+
+        int rightsNo = resultRights["u"] * 0100 + resultRights["g"] * 010 + resultRights["o"];
+        rightsNo
+    }
+
+    public static int symbolicToNumericAccessRights(String rightsStr, int defaultRights) {
+        symbolicToNumericAccessRights(rightsStr, numericToHashAccessRights(defaultRights))
+    }
+
+    public static Map<String, Integer> numericToHashAccessRights(int rights) {
+        assert rights <= 07777  // including suid, sgid, sticky bits.
+        return [u: (rights & 0700) >> 6,
+                g: (rights & 0070) >> 3,
+                o: (rights & 0007)]
+    }
+
 }
