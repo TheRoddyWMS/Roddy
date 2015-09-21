@@ -357,7 +357,9 @@ class SSHExecutionService extends RemoteExecutionService {
                     logger.severe("Command not executed correctly, return code: " + exitStatus +
                                     (cmd.getExitSignal()
                                             ? " Caught signal is " + cmd.getExitSignal().name()
-                                            : "\n\tCommand Str. " + RoddyIOHelperMethods.truncateCommand(command)));
+                                            : "\n\tCommand Str. " + RoddyIOHelperMethods.truncateCommand(command,
+                                                Roddy.getApplicationProperty("commandLogTruncate", '80').toInteger())));
+                    // IOUtils.readFully(cmd.getErrorStream()).toString();
                 }
             } else {
                 content.readLines().each { String line -> output << "" + line }
@@ -513,7 +515,8 @@ class SSHExecutionService extends RemoteExecutionService {
         boolean result = true;
         try {
             FileSystemInfoProvider fp = FileSystemInfoProvider.getInstance();
-            if(rightsStr) service.sftpClient.chmod(file.getAbsolutePath(), convertToAccessRights(rightsStr));
+            if(rightsStr) service.sftpClient.chmod(file.getAbsolutePath(),
+                                                   RoddyIOHelperMethods.symbolicToNumericAccessRights(rightsStr));
             if(groupID) service.sftpClient.chgrp(file.getAbsolutePath(), fp.getGroupID(groupID));
         } catch (Exception ex) {
             logger.severe("Could not set access attributes for ${file.absolutePath}")
@@ -524,38 +527,6 @@ class SSHExecutionService extends RemoteExecutionService {
             fireExecutionStoppedEvent(id, "");
         }
         return result;
-    }
-
-    /**
-     * FIXME Method is currently not setting the access rights relative but absolute.
-     * Also it is not possible to set absolute rights with = (u=rwx)
-     * @param rightsStr
-     * @return
-     */
-    private int convertToAccessRights(String rightsStr) {
-        Map<String, Integer> rights = [u: 07, g: 00, o: 00];
-        String[] split = rightsStr.split(SPLIT_COMMA);
-        for (String s in split) {
-            if (s.contains(StringConstants.PLUS)) {
-                String[] _s = s.split(StringConstants.SPLIT_PLUS);
-                int number = _s[1].contains("r") ? 04 : 0;
-                number += _s[1].contains("w") ? 02 : 0;
-                number += _s[1].contains("x") ? 01 : 0;
-                rights[_s[0]] = number;
-            } else {
-                //Possibly contains a -
-                String[] _s = s.split(StringConstants.SPLIT_MINUS);
-
-                //FIXME By default the value is always set to all and rights are subtracted.
-                int number = 07 - (_s[1].contains("r") ? 04 : 0);
-                number -= _s[1].contains("w") ? 02 : 0;
-                number -= _s[1].contains("x") ? 01 : 0;
-                rights[_s[0]] = number;
-            }
-        }
-
-        int rightsNo = rights["u"] * 0100 + rights["g"] * 010 + rights["o"];
-        rightsNo
     }
 
     @Override
@@ -570,7 +541,7 @@ class SSHExecutionService extends RemoteExecutionService {
             f.close();
             FileSystemInfoProvider fp = FileSystemInfoProvider.getInstance();
             if(accessRights)
-                service.sftpClient.chmod(file.getAbsolutePath(), convertToAccessRights(accessRights));
+                service.sftpClient.chmod(file.getAbsolutePath(), RoddyIOHelperMethods.symbolicToNumericAccessRights(accessRights));
             if(groupID)
                 service.sftpClient.chgrp(file.getAbsolutePath(), fp.getGroupID(groupID));
         } finally {
