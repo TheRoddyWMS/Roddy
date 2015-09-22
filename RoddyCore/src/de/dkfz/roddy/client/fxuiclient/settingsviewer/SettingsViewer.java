@@ -5,8 +5,8 @@ import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.LocalExecutionService;
 import de.dkfz.roddy.execution.io.SSHExecutionService;
-import de.dkfz.roddy.execution.io.fs.FileSystemCommandSet;
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
+import de.dkfz.roddy.execution.io.fs.ShellCommandSet;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager;
 import de.dkfz.roddy.client.fxuiclient.RoddyUITask;
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.CustomControlOnGridPane;
 import javafx.beans.value.ChangeListener;
@@ -29,7 +29,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA;
 
@@ -128,8 +127,8 @@ public class SettingsViewer extends CustomControlOnGridPane {
             protected Object _call() throws Exception {
                 Reflections collect = Reflections.collect();
                 Set<Class<? extends ExecutionService>> lstOfExecutionServices = collect.getSubTypesOf(ExecutionService.class);
-                Set<Class<? extends FileSystemInfoProvider>> lstOfFileSystemInfoProviders = collect.getSubTypesOf(FileSystemInfoProvider.class);
-                Set<Class<? extends FileSystemCommandSet>> lstOfFileSystemCommandSets = collect.getSubTypesOf(FileSystemCommandSet.class);
+                Set<Class<? extends FileSystemAccessManager>> lstOfFileSystemAccessManagers = collect.getSubTypesOf(FileSystemAccessManager.class);
+                Set<Class<? extends ShellCommandSet>> lstOfFileSystemCommandSets = collect.getSubTypesOf(ShellCommandSet.class);
 //                collect.getSubTypesOf(de.dkfz.roddy.execution.io.RuntimeService.class);
                 return null;
             }
@@ -190,7 +189,7 @@ public class SettingsViewer extends CustomControlOnGridPane {
 
         try {
 
-            FileSystemInfoProvider.initializeProvider(true);
+            FileSystemAccessManager.initializeProvider(true);
             ExecutionService.initializeService(true);
         } catch (Exception ex) {
             logger.log(Level.SEVERE, null, ex);

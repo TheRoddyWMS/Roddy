@@ -4,15 +4,13 @@ import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.core.Analysis;
 import de.dkfz.roddy.core.DataSet;
 import de.dkfz.roddy.core.ExecutionContext;
-import de.dkfz.roddy.core.Project;
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -120,7 +118,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
             if( groupID != null)
                 temp = replaceString(temp, "$USERGROUP", groupID);
 
-            String ud = FileSystemInfoProvider.getInstance().getUserDirectory().getAbsolutePath();
+            String ud = FileSystemAccessManager.getInstance().getUserDirectory().getAbsolutePath();
             temp = replaceString(temp, "$USERHOME", ud);
             temp = checkAndCorrectPath(temp);
 
@@ -148,7 +146,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
             String temp = toFile(context.getAnalysis(), context.getDataSet()).getAbsolutePath();
             temp = checkAndCorrectPath(temp);
             if(value.startsWith("${DIR_BUNDLED_FILES}") || value.startsWith("${DIR_RODDY}"))
-                temp = Roddy.getApplicationDirectory().getAbsolutePath() + FileSystemInfoProvider.getInstance().getPathSeparator() + temp;
+                temp = Roddy.getApplicationDirectory().getAbsolutePath() + FileSystemAccessManager.getInstance().getPathSeparator() + temp;
 
             if (temp.contains(ConfigurationConstants.CVALUE_PLACEHOLDER_EXECUTION_DIRECTORY)) {
                 String pd = context.getExecutionDirectory().getAbsolutePath();

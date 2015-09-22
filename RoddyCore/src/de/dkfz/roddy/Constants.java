@@ -13,7 +13,7 @@ public class Constants {
     public static final String APP_CURRENT_VERSION_STRING = "2.2.81";
     public static final String APP_CURRENT_VERSION_BUILD_DATE = "Fri Sep 25 14:34:47 CEST 2015";
     public static final String APP_PROPERTY_COMMAND_FACTORY_CLASS = "commandFactoryClass";
-    public static final String APP_PROPERTY_FILESYSTEM_INFO_PROVIDER_CLASS = "fileSystemInfoProviderClass";
+    public static final String APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS = "fileSystemAccessManagerClass";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_CLASS = "executionServiceClass";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_USER = "executionServiceUser";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_HOSTS = "executionServiceHost";
@@ -47,7 +47,6 @@ public class Constants {
     /////////////////////////
 
     public static final String ENV_LINESEPARATOR = System.getProperty("line.separator");
-    public static final String DEFAULT_UMASK = "007";
 
     /////////////////////////
     // Roddy tools

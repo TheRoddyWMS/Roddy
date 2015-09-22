@@ -6,7 +6,7 @@ import de.dkfz.roddy.client.fxuiclient.RoddyUITask;
 import de.dkfz.roddy.client.fxuiclient.fxdatawrappers.FXExecutionContextErrorWrapper;
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.CustomControlOnBorderPane;
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.GenericListViewItemCellImplementation;
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ListCell;
@@ -67,12 +67,12 @@ public class ExecutionContextOverviewControl extends CustomControlOnBorderPane i
             @Override
             protected Object _call() throws Exception {
                 try {
-                    filesIn = FileSystemInfoProvider.getInstance().listDirectoriesInDirectory(context.getInputDirectory());
+                    filesIn = FileSystemAccessManager.getInstance().listDirectoriesInDirectory(context.getInputDirectory());
                 } catch (Exception e) {
                     filesIn = new LinkedList<File>();
                 }
                 try {
-                    filesOut = FileSystemInfoProvider.getInstance().listDirectoriesInDirectory(context.getOutputDirectory());
+                    filesOut = FileSystemAccessManager.getInstance().listDirectoriesInDirectory(context.getOutputDirectory());
                 } catch (Exception e) {
                     filesOut = new LinkedList<File>();
                 }

@@ -2,7 +2,6 @@ package de.dkfz.roddy.execution.io.fs
 
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
 import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -22,16 +21,16 @@ import org.apache.commons.io.filefilter.WildcardFileFilter
  * I.e. setting file access rights is only available with SSH. This needs to be completed!
  */
 @groovy.transform.CompileStatic
-public class FileSystemInfoProvider extends CacheProvider {
-    private static LoggerWrapper logger = LoggerWrapper.getLogger(FileSystemInfoProvider.getClass().getName());
-    private static FileSystemInfoProvider fileSystemInfoProvider = null;
+public class FileSystemAccessManager extends CacheProvider {
+    private static LoggerWrapper logger = LoggerWrapper.getLogger(FileSystemAccessManager.getClass().getName());
+    private static FileSystemAccessManager fileSystemAccessManager = null;
 
     /**
      * This is the command set assembler for the current target file system.
      * As currently only Linux target fs are supported it is assigned by default.
      * TODO Initialize this in a different way!
      */
-    protected final FileSystemCommandSet commandSet = new LinuxFileSystemCommandSet();
+    public final ShellCommandSet commandSet = new BashCommandSet();
 
     /**
      * The current users user name (logon on local or target system)
@@ -53,20 +52,20 @@ public class FileSystemInfoProvider extends CacheProvider {
      */
     private Map<String, Boolean> _directoryExistsAndIsAccessible = new LinkedHashMap<>();
 
-    public FileSystemInfoProvider() {
-        super("FileSystemInfoProvider", true);
+    public FileSystemAccessManager() {
+        super("FileSystemAccessManager", true);
     }
 
     public static void initializeProvider(boolean fullSetup) {
         if (!fullSetup) {
-            fileSystemInfoProvider = new NoNoFileSystemInfoProvider();
+            fileSystemAccessManager = new NoNoFileSystemAccessManager();
         }
         try {
-            Class fisClz = LibrariesFactory.getGroovyClassLoader().loadClass(Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_FILESYSTEM_INFO_PROVIDER_CLASS, FileSystemInfoProvider.class.getName()));
-            fileSystemInfoProvider = (FileSystemInfoProvider) fisClz.getConstructors()[0].newInstance();
+            Class fisClz = LibrariesFactory.getGroovyClassLoader().loadClass(Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS, FileSystemAccessManager.class.getName()));
+            fileSystemAccessManager = (FileSystemAccessManager) fisClz.getConstructors()[0].newInstance();
         } catch (Exception e) {
             logger.warning("Falling back to default file system info provider");
-            fileSystemInfoProvider = new FileSystemInfoProvider();
+            fileSystemAccessManager = new FileSystemAccessManager();
         }
     }
 
@@ -96,8 +95,8 @@ public class FileSystemInfoProvider extends CacheProvider {
         return ois.readObject();
     }
 
-    public static FileSystemInfoProvider getInstance() {
-        return fileSystemInfoProvider;
+    public static FileSystemAccessManager getInstance() {
+        return fileSystemAccessManager;
     }
 
     @Override
@@ -108,10 +107,6 @@ public class FileSystemInfoProvider extends CacheProvider {
     @Override
     void destroy() {
 
-    }
-
-    public boolean isAccessRightsModificationAllowed(ExecutionContext context) {
-        return context.getConfiguration().getConfigurationValues().getBoolean("outputAllowAccessRightsModification", true);
     }
 
     /**
@@ -125,7 +120,7 @@ public class FileSystemInfoProvider extends CacheProvider {
 
     private boolean runFileTestCommand(String cmd) {
         ExecutionResult er = ExecutionService.getInstance().execute(cmd);
-        return er.firstLine == commandSet.getReadibilityTestPositiveResult();
+        return er.firstLine == commandSet.getReadabilityTestPositiveResult();
     }
 
     public boolean isCachingAllowed(File file) {
@@ -183,7 +178,7 @@ public class FileSystemInfoProvider extends CacheProvider {
             if (eService.isLocalService())
                 return f.canExecute();
             else
-                return eService.execute(commandSet.getExecutabilityTestCommand(f)).firstLine == commandSet.getReadibilityTestPositiveResult();
+                return eService.execute(commandSet.getExecutabilityTestCommand(f)).firstLine == commandSet.getReadabilityTestPositiveResult();
         }
     }
 
@@ -273,11 +268,11 @@ public class FileSystemInfoProvider extends CacheProvider {
         final String path = f.absolutePath
         String id = String.format("checkDirectory_%08X", path.hashCode());
         if (!_directoryExistsAndIsAccessible.containsKey(path)) {
-            String outputAccessRightsForDirectories = getContextSpecificAccessRightsForDirectory(context);
-            String outputFileGroup = getContextSpecificGroupString(context);
+            String outputAccessRightsForDirectories = context.getOutputDirectoryAccess();
+            String outputFileGroup = context.getOutputGroupString();
             String cmd = commandSet.getCheckDirectoryCommand(f, createMissing, outputFileGroup, outputAccessRightsForDirectories);
             ExecutionResult er = ExecutionService.getInstance().execute(cmd);
-            _directoryExistsAndIsAccessible[path] = (er.firstLine == commandSet.getReadibilityTestPositiveResult());
+            _directoryExistsAndIsAccessible[path] = (er.firstLine == commandSet.getReadabilityTestPositiveResult());
             fireCacheValueAddedEvent(id, path);
         }
         fireCacheValueReadEvent(id, -1);
@@ -485,26 +480,13 @@ public class FileSystemInfoProvider extends CacheProvider {
     }
 
     public boolean setDefaultAccessRightsRecursively(File path, ExecutionContext context) {
-        return setAccessRightsRecursively(path, getContextSpecificAccessRightsForDirectory(context), getContextSpecificAccessRights(context), getContextSpecificGroupString(context));
+        if (context == null) {
+            return setAccessRightsRecursively(path, null, null, null)
+        } else {
+            return setAccessRightsRecursively(path, context.outputDirectoryAccess, context.outputFileAccessRights, context.outputGroupString)
+        };
     }
 
-    public String getContextSpecificAccessRightsForDirectory(ExecutionContext context) {
-        if (!context) return null;
-        if (!isAccessRightsModificationAllowed(context)) return null;
-        context.getConfiguration().getConfigurationValues().get("outputAccessRightsForDirectories", getDefaultAccessRightsString()).toString()
-    }
-
-    public String getContextSpecificAccessRights(ExecutionContext context) {
-        if (!context) return null;
-        if (!isAccessRightsModificationAllowed(context)) return null;
-        context.getConfiguration().getConfigurationValues().get("outputAccessRights", getDefaultAccessRightsString()).toString()
-    }
-
-    public String getContextSpecificGroupString(ExecutionContext context) {
-        if (!context) return null;
-        if (!isAccessRightsModificationAllowed(context)) return null;
-        return context.getConfiguration().getConfigurationValues().get("outputFileGroup", getMyGroup()).toString()
-    }
     /**
      * Sets the rights for all files in the path and ints subpaths.
      * @param path
@@ -516,9 +498,9 @@ public class FileSystemInfoProvider extends CacheProvider {
     }
 
     public boolean setDefaultAccessRights(File file, ExecutionContext context) {
-        if (!isAccessRightsModificationAllowed(context))
+        if (!context.isAccessRightsModificationAllowed())
             return true;
-        return setAccessRights(file, getContextSpecificAccessRights(context), getContextSpecificGroupString(context));
+        return setAccessRights(file, context.getOutputFileAccessRights(), context.getOutputGroupString());
     }
 
     public boolean setAccessRights(File file, String accessString, String groupID) {
@@ -527,10 +509,6 @@ public class FileSystemInfoProvider extends CacheProvider {
         } else {
             commandSet.getSetAccessRightsCommand(file, accessString, groupID)
         }
-    }
-
-    public String getDefaultAccessRightsString() {
-        return commandSet.getDefaultAccessRightsString();
     }
 
     public Object loadBinaryFile(File file) {
@@ -583,8 +561,8 @@ public class FileSystemInfoProvider extends CacheProvider {
         try {
             if (ExecutionService.getInstance().canWriteFiles()) {
 
-                String accessRights = getContextSpecificAccessRights(context);
-                String groupID = getContextSpecificGroupString(context);
+                String accessRights = context.getOutputFileAccessRights();
+                String groupID = context.getOutputGroupString();
                 ExecutionService.getInstance().createFileWithRights(atomic, filename, accessRights, groupID, blocking);
             } else {
                 if (ExecutionService.getInstance().isLocalService()) {

@@ -12,10 +12,10 @@ import java.util.List;
  * Dummy file system info provider which is used in lean initialization mode.
  * It basically returns empty lists and positive results anywhere.
  */
-public class NoNoFileSystemInfoProvider extends FileSystemInfoProvider {
+public class NoNoFileSystemAccessManager extends FileSystemAccessManager {
 
 
-    public NoNoFileSystemInfoProvider() {
+    public NoNoFileSystemAccessManager() {
         super();
     }
 

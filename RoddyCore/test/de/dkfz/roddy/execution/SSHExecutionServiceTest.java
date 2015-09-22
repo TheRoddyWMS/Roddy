@@ -3,7 +3,7 @@
 //import de.dkfz.roddy.Roddy;
 //import de.dkfz.roddy.config.ConfigurationFactory;
 //import de.dkfz.roddy.core.*;
-//import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
+//import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager;
 //import org.junit.Test;
 //
 //import java.io.File;
@@ -20,9 +20,9 @@
 //        Analysis analysis = project.getAnalysis("genome");
 //        analysis.run(Arrays.asList("*SANGER*"), ExecutionContextLevel.RUN);
 //        String[] testString = new String[]{"abcdefg", "test1", "test2"};
-//        File f = FileSystemInfoProvider.serializeObjectToTempFile(testString);
+//        File f = FileSystemAccessManager.serializeObjectToTempFile(testString);
 //        assert f != null;
-//        Object o = FileSystemInfoProvider.deserializeObjectFromFile(f);
+//        Object o = FileSystemAccessManager.deserializeObjectFromFile(f);
 //        assert o != null;
 //        o.toString().equals(testString);
 //    }

@@ -8,7 +8,7 @@ import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
 import de.dkfz.roddy.config.AppConfig;
 import de.dkfz.roddy.core.Initializable;
 import de.dkfz.roddy.execution.io.ExecutionService;
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager;
 import de.dkfz.roddy.execution.jobs.Command;
 import de.dkfz.roddy.execution.jobs.CommandFactory;
 import de.dkfz.roddy.client.fxuiclient.RoddyUIController;
@@ -347,7 +347,7 @@ public class Roddy {
             // Configure a proxy for internet connection. Used i.e. for codemirror
             initializeProxySettings();
 
-            FileSystemInfoProvider.initializeProvider(fullSetup);
+            FileSystemAccessManager.initializeProvider(fullSetup);
 
             //Do not touch the calling order, execution service must be set before commandfactory.
             ExecutionService.initializeService(fullSetup);

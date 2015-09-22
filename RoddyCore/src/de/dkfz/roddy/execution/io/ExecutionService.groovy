@@ -13,7 +13,7 @@ import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.CommandFactory
 import de.dkfz.roddy.execution.jobs.JobDependencyID
@@ -30,7 +30,7 @@ import static de.dkfz.roddy.StringConstants.TILDE
 import static de.dkfz.roddy.config.ConfigurationConstants.*
 
 /**
- * Execution services context commands locally or remotely. Some specific commands (copy file or directory) are also available as those can (hopefully) be created by all service implementations.
+ * Execution services commands locally or remotely. Some specific commands (copy file or directory) are also available as those can (hopefully) be created by all service implementations.
  * i.e. local file handling is done by Java itself wheres remote handling with ssh is done via the ssh library
  *
  */
@@ -186,7 +186,7 @@ public abstract class ExecutionService extends CacheProvider {
                     command.setExecutionID(CommandFactory.getInstance().createJobDependencyID(command.getJob(), res.processID));
 
                     File logFile = command.getExecutionContext().getRuntimeService().getLogFileForCommand(command)
-                    FileSystemInfoProvider.getInstance().moveFile(tmpFile, logFile);
+                    FileSystemAccessManager.getInstance().moveFile(tmpFile, logFile);
                 } else if (res.successful) {
                     String exID = CommandFactory.getInstance().parseJobID(res.resultLines[0]);
                     command.setExecutionID(CommandFactory.getInstance().createJobDependencyID(command.getJob(), exID));
@@ -225,7 +225,7 @@ public abstract class ExecutionService extends CacheProvider {
      * @return
      */
     public boolean checkContextPermissions(ExecutionContext context) {
-        FileSystemInfoProvider fis = FileSystemInfoProvider.getInstance();
+        FileSystemAccessManager fis = FileSystemAccessManager.getInstance();
         Analysis analysis = context.getAnalysis()
 
         //First check in and output directories for accessibility
@@ -313,7 +313,7 @@ public abstract class ExecutionService extends CacheProvider {
     public void writeFilesForExecution(ExecutionContext context) {
         context.setDetailedExecutionContextLevel(ExecutionContextSubLevel.RUN_SETUP_INIT);
 
-        FileSystemInfoProvider provider = FileSystemInfoProvider.getInstance();
+        FileSystemAccessManager provider = FileSystemAccessManager.getInstance();
         ConfigurationFactory configurationFactory = ConfigurationFactory.getInstance();
 
         String analysisID = context.getAnalysis().getName();
@@ -356,7 +356,7 @@ public abstract class ExecutionService extends CacheProvider {
         configurationValues.put(RODDY_CVALUE_DIRECTORY_RODDY_APPLICATION, roddyApplicationDirectory.getAbsolutePath(), CVALUE_TYPE_PATH);
         configurationValues.put(RODDY_CVALUE_DIRECTORY_BUNDLED_FILES, roddyBundledFilesDirectory.getAbsolutePath(), CVALUE_TYPE_PATH);
         configurationValues.put(RODDY_CVALUE_DIRECTORY_ANALYSIS_TOOLS, analysisToolsDirectory.getAbsolutePath(), CVALUE_TYPE_PATH);
-        configurationValues.put(RODDY_CVALUE_JOBSTATE_LOGFILE, executionDirectory.getAbsolutePath() + FileSystemInfoProvider.getInstance().getPathSeparator() + RODDY_JOBSTATE_LOGFILE, CVALUE_TYPE_STRING);
+        configurationValues.put(RODDY_CVALUE_JOBSTATE_LOGFILE, executionDirectory.getAbsolutePath() + FileSystemAccessManager.getInstance().getPathSeparator() + RODDY_JOBSTATE_LOGFILE, CVALUE_TYPE_STRING);
 
         if (!context.getExecutionContextLevel().canSubmitJobs) return;
 
@@ -397,7 +397,7 @@ public abstract class ExecutionService extends CacheProvider {
      * @param context
      */
     private void copyAnalysisToolsForContext(ExecutionContext context) {
-        FileSystemInfoProvider provider = FileSystemInfoProvider.getInstance();
+        FileSystemAccessManager provider = FileSystemAccessManager.getInstance();
         Configuration cfg = context.getConfiguration();
         File dstExecutionDirectory = context.getExecutionDirectory();
         File dstAnalysisToolsDirectory = context.getAnalysisToolsDirectory();
@@ -560,7 +560,7 @@ public abstract class ExecutionService extends CacheProvider {
 
         context.setDetailedExecutionContextLevel(ExecutionContextSubLevel.RUN_FINALIZE_CREATE_JOBFILES);
 
-        final FileSystemInfoProvider provider = FileSystemInfoProvider.getInstance();
+        final FileSystemAccessManager provider = FileSystemAccessManager.getInstance();
         final String separator = Constants.ENV_LINESEPARATOR;
 
         List<Command> commandCalls = context.getCommandCalls();

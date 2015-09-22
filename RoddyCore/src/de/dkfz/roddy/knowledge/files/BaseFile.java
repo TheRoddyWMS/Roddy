@@ -7,17 +7,15 @@ import de.dkfz.roddy.config.FilenamePattern;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.ExecutionContextLevel;
 import de.dkfz.roddy.core.Workflow;
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager;
 import de.dkfz.roddy.execution.jobs.Job;
 import de.dkfz.roddy.execution.jobs.JobResult;
 import de.dkfz.roddy.plugins.LibrariesFactory;
 import org.reflections.Reflections;
 import de.dkfz.roddy.tools.Tuple2;
-import de.dkfz.roddy.tools.Tuple3;
 
 import java.io.File;
 import java.util.*;
-import java.util.logging.Level;
 
 /**
  * Basic class for all processed files. Contains information about the storage
@@ -207,7 +205,7 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
      */
     public final boolean isFileReadable() {
         if (isReadable == null)
-            isReadable = FileSystemInfoProvider.getInstance().isReadable(this);
+            isReadable = FileSystemAccessManager.getInstance().isReadable(this);
         return isReadable;
     }
 
@@ -488,7 +486,6 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
         result = new Tuple2<>(filename, appliedPattern);
         return result;
     }
-
 
     /**
      * Tries to find a filename from onMethod patterns.

@@ -68,7 +68,7 @@
                         <Label text="Job subsystem" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
                         <TextField fx:id="txtExecutionService" text="de.dkfz.roddy.execution.io.SSHExecutionService" GridPane.columnIndex="2" GridPane.rowIndex="2" editable="false"/>
                         <Label text="I/O command set" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
-                        <TextField fx:id="txtFileSystemCommandSet" text="de.dkfz.roddy.execution.io.fs.LinuxFileSystemCommandSet" GridPane.columnIndex="2" GridPane.rowIndex="3" editable="false"/>
+                        <TextField fx:id="txtFileSystemCommandSet" text="de.dkfz.roddy.execution.io.fs.BashCommandSet" GridPane.columnIndex="2" GridPane.rowIndex="3" editable="false"/>
                     </GridPane>
 
                     <GridPane fx:id="executionServiceSetup" id="SettingsBackground" alignment="CENTER" padding="$gridpane_padding_0" VBox.margin="$gridpane_margin_0" vgap="2" hgap="2">

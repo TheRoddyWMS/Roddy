@@ -14,18 +14,18 @@ import java.util.logging.Logger
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING
 
 /**
- * Cached version of the FileSystemInfoProvider.
+ * Cached version of the FileSystemAccessManager.
  * Caches some values but not everything.
  * Currently stores some parts of the cache in a local database (h2, hardcoded!)
  * TODO Make database configurable?
  * TODO pull out and simplify code for database access.
  */
 @groovy.transform.CompileStatic
-public class CachedFileSystemInfoProvider extends FileSystemInfoProvider {
+public class CachedFileSystemAccessManager extends FileSystemAccessManager {
 
-    private static Logger logger = java.util.logging.Logger.getLogger(CachedFileSystemInfoProvider.getClass().getName());
-    private static final String TBL_FILECHACHEINFO = (CachedFileSystemInfoProvider.class.getSimpleName() + "_fileCacheInfo").toUpperCase();
-    private static final String TBL_RUNOWNER = (CachedFileSystemInfoProvider.class.getSimpleName() + "_runOwner").toUpperCase();
+    private static Logger logger = java.util.logging.Logger.getLogger(CachedFileSystemAccessManager.getClass().getName());
+    private static final String TBL_FILECHACHEINFO = (CachedFileSystemAccessManager.class.getSimpleName() + "_fileCacheInfo").toUpperCase();
+    private static final String TBL_RUNOWNER = (CachedFileSystemAccessManager.class.getSimpleName() + "_runOwner").toUpperCase();
     public static final String FORMATSTRING_FILELISTENTRY = "fileList_%08X"
     public static final String FORMATSTRING_TEXTFILEENTRY = "textFile_%08X"
 
@@ -83,7 +83,7 @@ public class CachedFileSystemInfoProvider extends FileSystemInfoProvider {
         tables.close();
     }
 
-    public CachedFileSystemInfoProvider() {
+    public CachedFileSystemAccessManager() {
         //Connect to a database
         initializeCacheDB()
 
@@ -182,7 +182,7 @@ public class CachedFileSystemInfoProvider extends FileSystemInfoProvider {
 
     private Object readObjectFromLocalCacheFile(File f) {
         if (f.exists())
-            return FileSystemInfoProvider.deserializeObjectFromFile(f);
+            return FileSystemAccessManager.deserializeObjectFromFile(f);
         return null;
     }
 

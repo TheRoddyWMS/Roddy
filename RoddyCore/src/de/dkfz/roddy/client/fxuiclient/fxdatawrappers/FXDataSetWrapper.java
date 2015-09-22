@@ -1,7 +1,7 @@
 package de.dkfz.roddy.client.fxuiclient.fxdatawrappers;
 
 import de.dkfz.roddy.core.*;
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager;
 
 import java.util.List;
 
@@ -56,7 +56,7 @@ public class FXDataSetWrapper implements Comparable<FXDataSetWrapper> {
             DataSet ds = dataSet;
             Analysis analysis = getAnalysis();
             Workflow workflow = analysis.getWorkflow();
-            isExecutable = workflow.checkExecutability(new ExecutionContext(FileSystemInfoProvider.getInstance().callWhoAmI(), analysis, ds, ExecutionContextLevel.QUERY_STATUS, ds.getOutputFolderForAnalysis(analysis), ds.getInputFolderForAnalysis(analysis), null, -1, true));
+            isExecutable = workflow.checkExecutability(new ExecutionContext(FileSystemAccessManager.getInstance().callWhoAmI(), analysis, ds, ExecutionContextLevel.QUERY_STATUS, ds.getOutputFolderForAnalysis(analysis), ds.getInputFolderForAnalysis(analysis), null, -1, true));
         }
         return isExecutable;
     }

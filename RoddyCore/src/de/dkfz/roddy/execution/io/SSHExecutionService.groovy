@@ -10,9 +10,8 @@ import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.execution.jobs.CommandFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
-import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import net.schmizz.sshj.SSHClient
@@ -514,7 +513,7 @@ class SSHExecutionService extends RemoteExecutionService {
         SSHPoolConnectionSet service = waitForAndAcquireService()
         boolean result = true;
         try {
-            FileSystemInfoProvider fp = FileSystemInfoProvider.getInstance();
+            FileSystemAccessManager fp = FileSystemAccessManager.getInstance();
             if(rightsStr) service.sftpClient.chmod(file.getAbsolutePath(),
                                                    RoddyIOHelperMethods.symbolicToNumericAccessRights(rightsStr));
             if(groupID) service.sftpClient.chgrp(file.getAbsolutePath(), fp.getGroupID(groupID));
@@ -539,7 +538,7 @@ class SSHExecutionService extends RemoteExecutionService {
             set.add(OpenMode.WRITE);
             final RemoteFile f = service.sftpClient.open(file.getAbsolutePath(), set);
             f.close();
-            FileSystemInfoProvider fp = FileSystemInfoProvider.getInstance();
+            FileSystemAccessManager fp = FileSystemAccessManager.getInstance();
             if(accessRights)
                 service.sftpClient.chmod(file.getAbsolutePath(), RoddyIOHelperMethods.symbolicToNumericAccessRights(accessRights));
             if(groupID)
@@ -576,7 +575,7 @@ class SSHExecutionService extends RemoteExecutionService {
 
     @Override
     void appendLinesToFile(boolean atomic, File file, List<String> lines, boolean blocking) {
-        String text = lines.join(FileSystemInfoProvider.getInstance().getNewLineString());
+        String text = lines.join(FileSystemAccessManager.getInstance().getNewLineString());
         appendLineToFile(atomic, file, text, blocking);
     }
 
@@ -589,7 +588,7 @@ class SSHExecutionService extends RemoteExecutionService {
             set.add(OpenMode.APPEND);
             set.add(OpenMode.CREAT);
             set.add(OpenMode.WRITE);
-            String sep = FileSystemInfoProvider.getInstance().getNewLineString();
+            String sep = FileSystemAccessManager.getInstance().getNewLineString();
             String lineNew = line + (!line.endsWith(sep) ? sep : "");
             final RemoteFile f = service.sftpClient.open(file.getAbsolutePath(), set);
             f.write(f.length(), lineNew.getBytes(), 0, lineNew.length());
@@ -609,13 +608,13 @@ class SSHExecutionService extends RemoteExecutionService {
 
     @Override
     void writeTextFile(File file, String text) {
-        copyFile(FileSystemInfoProvider.writeTextToTempFile(text), file);
+        copyFile(FileSystemAccessManager.writeTextToTempFile(text), file);
     }
 
     @Override
     void writeBinaryFile(File file, Serializable serializable) {
         try {
-            copyFile(FileSystemInfoProvider.serializeObjectToTempFile(serializable), file);
+            copyFile(FileSystemAccessManager.serializeObjectToTempFile(serializable), file);
         } catch (Exception ex) {
             logger.warning("Could not write or serialize object ${serializable.toString()} to file ${file.absolutePath}. " + ex.toString());
         }
@@ -652,7 +651,7 @@ class SSHExecutionService extends RemoteExecutionService {
                     measureStop(t, "transfer file [sshclient:${service.id}] ${file.getAbsolutePath()} from remote");
                     lock.lock();
                     try {
-                        if (FileSystemInfoProvider.getInstance().isCachingAllowed(file))
+                        if (FileSystemAccessManager.getInstance().isCachingAllowed(file))
                             _fileToTempFileMap.put(file, tempFile);
                     } finally {
                         lock.unlock();
@@ -674,7 +673,7 @@ class SSHExecutionService extends RemoteExecutionService {
     @Override
     Object loadBinaryFile(File file) {
         try {
-            return FileSystemInfoProvider.deserializeObjectFromFile(transferFileFromRemoteToLocal(file, "roddy_sshserver_down", ".tmp"));
+            return FileSystemAccessManager.deserializeObjectFromFile(transferFileFromRemoteToLocal(file, "roddy_sshserver_down", ".tmp"));
         } catch (Exception ex) {
             logger.warning("Could not read file ${file.absolutePath}");
             return null;

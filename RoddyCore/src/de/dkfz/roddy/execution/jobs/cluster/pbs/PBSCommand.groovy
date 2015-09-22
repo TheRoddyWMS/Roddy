@@ -1,14 +1,14 @@
 package de.dkfz.roddy.execution.jobs.cluster.pbs
 
 import de.dkfz.roddy.AvailableFeatureToggles
-import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationFactory
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.ExecutionService
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager
+import de.dkfz.roddy.execution.io.fs.BashCommandSet
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.ProcessingCommands
@@ -43,6 +43,8 @@ public class PBSCommand extends Command implements Serializable {
     public static final String PARM_WRAPPED_SCRIPT = "WRAPPED_SCRIPT="
 
     protected transient Configuration configuration;
+
+    private static BashCommandSet commandSet
 
     /**
      * The qsub log directoy where all output is put
@@ -228,7 +230,7 @@ public class PBSCommand extends Command implements Serializable {
         if (groupList != EMPTY && groupList != "UNDEFINED") {
             qsubCall << getGroupListString(groupList);
         }
-        String outputUMask = configuration.getConfigurationValues().getString(ConfigurationFactory.XMLTAG_OUTPUT_UMASK, Constants.DEFAULT_UMASK);
+        String outputUMask = configuration.getConfigurationValues().getString(ConfigurationFactory.XMLTAG_OUTPUT_UMASK, commandSet.getDefaultUMask());
         qsubCall << getUmaskString(outputUMask);
 
         for (ProcessingCommands pcmd in job.getListOfProcessingCommand()) {
@@ -274,7 +276,7 @@ public class PBSCommand extends Command implements Serializable {
                         allLines << "export " << line << "\n";
                 }
                 if (getExecutionContext().getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
-                    FileSystemInfoProvider.getInstance().writeTextFile(parmFile, allLines.toString(), executionContext);
+                    FileSystemAccessManager.getInstance().writeTextFile(parmFile, allLines.toString(), executionContext);
             } else {
                 qsubCall << StringConstants.COMMA << allParms.join(StringConstants.COMMA);
             }

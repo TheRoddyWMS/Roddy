@@ -10,7 +10,8 @@ import de.dkfz.roddy.config.ConfigurationValueBundle
 import de.dkfz.roddy.config.InformationalConfigurationContent
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager
+import de.dkfz.roddy.execution.io.fs.BashCommandSet
 import de.dkfz.roddy.tools.LoggerWrapper
 import groovy.transform.CompileStatic
 
@@ -23,10 +24,12 @@ import java.util.logging.Level
 @groovy.transform.CompileStatic
 class BashConverter extends ConfigurationConverter {
 
+    private static BashCommandSet commandSet
+
     //TODO Use a pipeline converter interface with methods like "convertCValues, convertCValueBundles, convertTools"
     @Override
     String convert(ExecutionContext context, Configuration cfg) {
-        final FileSystemInfoProvider provider = FileSystemInfoProvider.getInstance();
+        final FileSystemAccessManager provider = FileSystemAccessManager.getInstance();
         final String targetSystemNewLineString = provider.getNewLineString();
         final String separator = Constants.ENV_LINESEPARATOR;
 
@@ -124,7 +127,7 @@ class BashConverter extends ConfigurationConverter {
         }
 
         //TODO The output umask and the group should be taken from a central location.
-        String umask = cfg.getConfigurationValues().getString(ConfigurationFactory.XMLTAG_OUTPUT_UMASK, Constants.DEFAULT_UMASK);
+        String umask = cfg.getConfigurationValues().getString(ConfigurationFactory.XMLTAG_OUTPUT_UMASK, commandSet.getDefaultUMask());
         String outputFileGroup = cfg.getConfigurationValues().getString(ConfigurationFactory.XMLTAG_OUTPUT_FILE_GROUP);
 
         boolean debugPipefail = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.DEBUG_OPTIONS_USE_PIPEFAIL, true);
@@ -150,7 +153,7 @@ class BashConverter extends ConfigurationConverter {
         if (debugParseScripts) text << separator << "set -n";
 
         text << separator << 'if [ -z "${PS1-}" ]; then' << separator << "\t echo non interactive process!" << separator << "else" << separator << "\t echo interactive process" << separator
-        //TODO Change to filesysteminfoprovider!
+        //TODO Change to FileSystemAccessManager!
         if (processSetUserMask) text << separator << 'umask ' << umask;
         if (processSetUserGroup) text << separator << 'newgrp ' << outputFileGroup;
         text << separator << "fi";
@@ -184,7 +187,7 @@ class BashConverter extends ConfigurationConverter {
             text << "${cv.id}=";
             //TODO Important, this is a serious hack! It must be removed soon
             if (tmp.startsWith("bundledFiles/"))
-                text << Roddy.getApplicationDirectory().getAbsolutePath() << FileSystemInfoProvider.getInstance().getPathSeparator();
+                text << Roddy.getApplicationDirectory().getAbsolutePath() << FileSystemAccessManager.getInstance().getPathSeparator();
             if(cv.isQuoteOnConversionSet()) text << "'";
             text << tmp;
             if(cv.isQuoteOnConversionSet()) text << "'";

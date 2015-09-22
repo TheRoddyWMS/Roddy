@@ -3,7 +3,7 @@ package de.dkfz.roddy.core;
 import de.dkfz.roddy.AvailableFeatureToggles;
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.execution.io.ExecutionService;
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager;
 import de.dkfz.roddy.execution.jobs.*;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.config.*;
@@ -83,7 +83,7 @@ public class Analysis {
 
     public String getUsername() {
         try {
-            return FileSystemInfoProvider.getInstance().callWhoAmI();
+            return FileSystemAccessManager.getInstance().callWhoAmI();
         } catch (Exception e) {
             return "UNKNOWN";
         }
@@ -92,7 +92,7 @@ public class Analysis {
     public String getUsergroup() {
         try {
             //Get the default value.
-            String groupID = FileSystemInfoProvider.getInstance().getMyGroup();
+            String groupID = FileSystemAccessManager.getInstance().getMyGroup();
 
             //If it is configured, get the group id from the config.
             boolean processSetUserGroup = getConfiguration().getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, true);
@@ -212,7 +212,7 @@ public class Analysis {
         for (DataSet ds : selectedDatasets) {
             if (level.isOrWasAllowedToSubmitJobs && !checkJobStartability(ds)) continue;
 
-            ExecutionContext ec = new ExecutionContext(FileSystemInfoProvider.getInstance().callWhoAmI(), this, ds, level, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null, creationCheckPoint);
+            ExecutionContext ec = new ExecutionContext(FileSystemAccessManager.getInstance().callWhoAmI(), this, ds, level, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null, creationCheckPoint);
 
             executeRun(ec);
             runs.add(ec);
@@ -234,7 +234,7 @@ public class Analysis {
             DataSet ds = oldContext.getDataSet();
             if (!test && !checkJobStartability(ds)) continue;
 
-            ExecutionContext context = new ExecutionContext(FileSystemInfoProvider.getInstance().callWhoAmI(), this, oldContext.getDataSet(), test ? ExecutionContextLevel.TESTRERUN : ExecutionContextLevel.RERUN, oldContext.getOutputDirectory(), oldContext.getInputDirectory(), null, creationCheckPoint);
+            ExecutionContext context = new ExecutionContext(FileSystemAccessManager.getInstance().callWhoAmI(), this, oldContext.getDataSet(), test ? ExecutionContextLevel.TESTRERUN : ExecutionContextLevel.RERUN, oldContext.getOutputDirectory(), oldContext.getInputDirectory(), null, creationCheckPoint);
 
             context.getAllFilesInRun().addAll(oldContext.getAllFilesInRun());
             executeRun(context);
@@ -325,7 +325,7 @@ public class Analysis {
         for (DataSet ds : getListOfDataSets()) {
             if (!new WildcardFileFilter(pidFilter).accept(ds.getInputFolderForAnalysis(this)))
                 continue;
-            final ExecutionContext context = new ExecutionContext(FileSystemInfoProvider.getInstance().callWhoAmI(), this, ds, executionContextLevel, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null, creationCheckPoint);
+            final ExecutionContext context = new ExecutionContext(FileSystemAccessManager.getInstance().callWhoAmI(), this, ds, executionContextLevel, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null, creationCheckPoint);
             runDeferredContext(context);
             return context;
         }
@@ -386,14 +386,14 @@ public class Analysis {
                 } finally {
                     if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) { //Clean up
                         //Query file validity of all files
-                        FileSystemInfoProvider.getInstance().validateAllFilesInContext(context);
+                        FileSystemAccessManager.getInstance().validateAllFilesInContext(context);
                     } else {
 
                         //First, check if there were any executed jobs. If not, we can safely delete the the context directory.
                         if (context.getStartedJobs().size() == 0) {
                             logger.postAlwaysInfo("There were no started jobs, the execution directory will be removed.");
                             if (context.getExecutionDirectory().getName().contains(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX))
-                                FileSystemInfoProvider.getInstance().removeDirectory(context.getExecutionDirectory());
+                                FileSystemAccessManager.getInstance().removeDirectory(context.getExecutionDirectory());
                             else {
                                 throw new RuntimeException("A wrong path would be deleted: " + context.getExecutionDirectory().getAbsolutePath());
                             }
@@ -443,7 +443,7 @@ public class Analysis {
             // Call a custom cleanup shell script.
             if (((AnalysisConfiguration) getConfiguration()).hasCleanupScript()) {
                 //TODO Think hard if this could be generified and simplified! This is also used in other places in a similar way right?
-                ExecutionContext context = new ExecutionContext(FileSystemInfoProvider.getInstance().callWhoAmI(), this, ds, ExecutionContextLevel.CLEANUP, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null);
+                ExecutionContext context = new ExecutionContext(FileSystemAccessManager.getInstance().callWhoAmI(), this, ds, ExecutionContextLevel.CLEANUP, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null);
                 Job cleanupJob = new Job(context, "cleanup", ((AnalysisConfiguration) getConfiguration()).getCleanupScript(), null);
 //                Command cleanupCmd = CommandFactory.getInstance().createCommand(cleanupJob, cleanupJob.getToolPath(), new LinkedList<>());
                 try {

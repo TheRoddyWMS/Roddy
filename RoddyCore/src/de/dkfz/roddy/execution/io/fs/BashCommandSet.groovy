@@ -7,7 +7,7 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
  * Provides a command generator for linux file systems / bash
  */
 @groovy.transform.CompileStatic
-public class LinuxFileSystemCommandSet extends FileSystemCommandSet {
+public class BashCommandSet extends ShellCommandSet {
 
     public static final String TRUE = "TRUE"
 
@@ -46,7 +46,7 @@ public class LinuxFileSystemCommandSet extends FileSystemCommandSet {
     }
 
     @Override
-    String getReadibilityTestPositiveResult() {
+    String getReadabilityTestPositiveResult() {
         return TRUE;
     }
 
