@@ -146,7 +146,7 @@ public class BrawlWorkflow extends Workflow {
             }
             if (l.startsWith("for ") && l.endsWith("; do")) {
             } else if (l == "done") {
-            } else if (l.startsWith("if ") && l.endsWith("; then")) {
+            } else if (l.startsWith("if ") && l.endsWith(";  then")) {
                 attachIfLine(_l, l, classBuilder)
                 level++;
             } else if (l == "fi") {
