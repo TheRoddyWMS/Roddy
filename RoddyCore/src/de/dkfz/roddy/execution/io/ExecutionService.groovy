@@ -13,7 +13,7 @@ import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.CommandFactory
 import de.dkfz.roddy.execution.jobs.JobDependencyID
@@ -177,16 +177,16 @@ public abstract class ExecutionService extends CacheProvider {
                 if (run.getExecutionContextLevel() == ExecutionContextLevel.TESTRERUN) {
                     String pid = String.format("0x%08X", System.nanoTime());
                     res = new ExecutionResult(true, 0, [pid], pid);
-                } else
+                } else {
                     res = execute(cmdString, waitFor, outputStream);
-
+                }
                 command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.OK);
 
                 if (isLocalService() && command.isBlockingCommand()) {
                     command.setExecutionID(CommandFactory.getInstance().createJobDependencyID(command.getJob(), res.processID));
 
                     File logFile = command.getExecutionContext().getRuntimeService().getLogFileForCommand(command)
-                    FileSystemAccessManager.getInstance().moveFile(tmpFile, logFile);
+                    FileSystemAccessProvider.getInstance().moveFile(tmpFile, logFile);
                 } else if (res.successful) {
                     String exID = CommandFactory.getInstance().parseJobID(res.resultLines[0]);
                     command.setExecutionID(CommandFactory.getInstance().createJobDependencyID(command.getJob(), exID));
@@ -225,7 +225,7 @@ public abstract class ExecutionService extends CacheProvider {
      * @return
      */
     public boolean checkContextPermissions(ExecutionContext context) {
-        FileSystemAccessManager fis = FileSystemAccessManager.getInstance();
+        FileSystemAccessProvider fis = FileSystemAccessProvider.getInstance();
         Analysis analysis = context.getAnalysis()
 
         //First check in and output directories for accessibility
@@ -313,7 +313,7 @@ public abstract class ExecutionService extends CacheProvider {
     public void writeFilesForExecution(ExecutionContext context) {
         context.setDetailedExecutionContextLevel(ExecutionContextSubLevel.RUN_SETUP_INIT);
 
-        FileSystemAccessManager provider = FileSystemAccessManager.getInstance();
+        FileSystemAccessProvider provider = FileSystemAccessProvider.getInstance();
         ConfigurationFactory configurationFactory = ConfigurationFactory.getInstance();
 
         String analysisID = context.getAnalysis().getName();
@@ -356,7 +356,7 @@ public abstract class ExecutionService extends CacheProvider {
         configurationValues.put(RODDY_CVALUE_DIRECTORY_RODDY_APPLICATION, roddyApplicationDirectory.getAbsolutePath(), CVALUE_TYPE_PATH);
         configurationValues.put(RODDY_CVALUE_DIRECTORY_BUNDLED_FILES, roddyBundledFilesDirectory.getAbsolutePath(), CVALUE_TYPE_PATH);
         configurationValues.put(RODDY_CVALUE_DIRECTORY_ANALYSIS_TOOLS, analysisToolsDirectory.getAbsolutePath(), CVALUE_TYPE_PATH);
-        configurationValues.put(RODDY_CVALUE_JOBSTATE_LOGFILE, executionDirectory.getAbsolutePath() + FileSystemAccessManager.getInstance().getPathSeparator() + RODDY_JOBSTATE_LOGFILE, CVALUE_TYPE_STRING);
+        configurationValues.put(RODDY_CVALUE_JOBSTATE_LOGFILE, executionDirectory.getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + RODDY_JOBSTATE_LOGFILE, CVALUE_TYPE_STRING);
 
         if (!context.getExecutionContextLevel().canSubmitJobs) return;
 
@@ -397,7 +397,7 @@ public abstract class ExecutionService extends CacheProvider {
      * @param context
      */
     private void copyAnalysisToolsForContext(ExecutionContext context) {
-        FileSystemAccessManager provider = FileSystemAccessManager.getInstance();
+        FileSystemAccessProvider provider = FileSystemAccessProvider.getInstance();
         Configuration cfg = context.getConfiguration();
         File dstExecutionDirectory = context.getExecutionDirectory();
         File dstAnalysisToolsDirectory = context.getAnalysisToolsDirectory();
@@ -560,7 +560,7 @@ public abstract class ExecutionService extends CacheProvider {
 
         context.setDetailedExecutionContextLevel(ExecutionContextSubLevel.RUN_FINALIZE_CREATE_JOBFILES);
 
-        final FileSystemAccessManager provider = FileSystemAccessManager.getInstance();
+        final FileSystemAccessProvider provider = FileSystemAccessProvider.getInstance();
         final String separator = Constants.ENV_LINESEPARATOR;
 
         List<Command> commandCalls = context.getCommandCalls();
@@ -621,27 +621,27 @@ public abstract class ExecutionService extends CacheProvider {
 
     public boolean canQueryFileAttributes() { return false; }
 
-    public void writeTextFile(File file, String text) {}
+    public boolean writeTextFile(File file, String text) {}
 
-    public void writeBinaryFile(File file, Serializable serializable) {}
+    public boolean writeBinaryFile(File file, Serializable serializable) {}
 
-    public void copyFile(File _in, File _out) {}
+    public boolean copyFile(File _in, File _out) {}
 
-    public void copyDirectory(File _in, File _out) {}
+    public boolean copyDirectory(File _in, File _out) {}
 
-    public void moveFile(File _from, File _to) {}
+    public boolean moveFile(File _from, File _to) {}
 
     public boolean modifyAccessRights(File file, String rightsStr, String groupID) {}
 
-    public void createFileWithRights(boolean atomic, File file, String accessRights, String groupID, boolean blocking) {}
+    public boolean createFileWithRights(boolean atomic, File file, String accessRights, String groupID, boolean blocking) {}
 
-    public void removeDirectory(File directory) {}
+    public boolean removeDirectory(File directory) {}
 
-    public void removeFile(File file) {}
+    public boolean removeFile(File file) {}
 
-    public void appendLinesToFile(boolean atomic, File file, List<String> lines, boolean blocking) {}
+    public boolean appendLinesToFile(boolean atomic, File file, List<String> lines, boolean blocking) {}
 
-    public void appendLineToFile(boolean atomic, File file, String line, boolean blocking) {}
+    public boolean appendLineToFile(boolean atomic, File file, String line, boolean blocking) {}
 
     public Object loadBinaryFile(File file) {}
 

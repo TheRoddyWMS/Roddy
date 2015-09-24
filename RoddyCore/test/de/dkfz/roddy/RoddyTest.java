@@ -2,7 +2,7 @@ package de.dkfz.roddy;
 
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
 import de.dkfz.roddy.execution.io.ExecutionService;
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.CommandFactory;
 import de.dkfz.roddy.tools.LoggerWrapper;
 import org.junit.Test;
@@ -29,7 +29,7 @@ public class RoddyTest {
 
         Roddy.initializeServices(true);
 
-        assert FileSystemAccessManager.getInstance() != null;
+        assert FileSystemAccessProvider.getInstance() != null;
         assert CommandFactory.getInstance() != null;
         assert ExecutionService.getInstance() != null;
     }

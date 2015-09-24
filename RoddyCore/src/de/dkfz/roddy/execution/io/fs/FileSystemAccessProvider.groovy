@@ -21,9 +21,9 @@ import org.apache.commons.io.filefilter.WildcardFileFilter
  * I.e. setting file access rights is only available with SSH. This needs to be completed!
  */
 @groovy.transform.CompileStatic
-public class FileSystemAccessManager extends CacheProvider {
-    private static LoggerWrapper logger = LoggerWrapper.getLogger(FileSystemAccessManager.getClass().getName());
-    private static FileSystemAccessManager fileSystemAccessManager = null;
+public class FileSystemAccessProvider extends CacheProvider {
+    private static LoggerWrapper logger = LoggerWrapper.getLogger(FileSystemAccessProvider.getClass().getName());
+    private static FileSystemAccessProvider fileSystemAccessManager = null;
 
     /**
      * This is the command set assembler for the current target file system.
@@ -52,20 +52,20 @@ public class FileSystemAccessManager extends CacheProvider {
      */
     private Map<String, Boolean> _directoryExistsAndIsAccessible = new LinkedHashMap<>();
 
-    public FileSystemAccessManager() {
+    public FileSystemAccessProvider() {
         super("FileSystemAccessManager", true);
     }
 
     public static void initializeProvider(boolean fullSetup) {
         if (!fullSetup) {
-            fileSystemAccessManager = new NoNoFileSystemAccessManager();
+            fileSystemAccessManager = new NoNoFileSystemAccessProvider();
         }
         try {
-            Class fisClz = LibrariesFactory.getGroovyClassLoader().loadClass(Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS, FileSystemAccessManager.class.getName()));
-            fileSystemAccessManager = (FileSystemAccessManager) fisClz.getConstructors()[0].newInstance();
+            Class fisClz = LibrariesFactory.getGroovyClassLoader().loadClass(Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS, FileSystemAccessProvider.class.getName()));
+            fileSystemAccessManager = (FileSystemAccessProvider) fisClz.getConstructors()[0].newInstance();
         } catch (Exception e) {
             logger.warning("Falling back to default file system info provider");
-            fileSystemAccessManager = new FileSystemAccessManager();
+            fileSystemAccessManager = new FileSystemAccessProvider();
         }
     }
 
@@ -95,7 +95,7 @@ public class FileSystemAccessManager extends CacheProvider {
         return ois.readObject();
     }
 
-    public static FileSystemAccessManager getInstance() {
+    public static FileSystemAccessProvider getInstance() {
         return fileSystemAccessManager;
     }
 
@@ -407,76 +407,74 @@ public class FileSystemAccessManager extends CacheProvider {
     }
 
 
-    public void writeTextFile(File file, String text, ExecutionContext context) {
-        writeTextFile(file, text);
-        setDefaultAccessRights(file, context);
+    public boolean writeTextFile(File file, String text, ExecutionContext context) {
+        return writeTextFile(file, text) &&
+                setDefaultAccessRights(file, context);
     }
 
-    public void writeTextFile(File file, String text) {
+    public boolean writeTextFile(File file, String text) {
         ExecutionService eService = ExecutionService.getInstance()
         if (eService.canWriteFiles()) { //Let the execution service do this.
-            eService.writeTextFile(file, text);
-            return;
+            return eService.writeTextFile(file, text);
         } else if (eService.isLocalService()) {
-
             if (!file.getParentFile().exists())
                 file.getParentFile().mkdirs();
             file.write(text);
+            return true;
         } else
             throw new RuntimeException("Not implemented yet!");
     }
 
-    public void writeBinaryFile(File file, Serializable serializable, ExecutionContext context) {
-        writeBinaryFile(file, serializable);
-        setDefaultAccessRights(file, context);
+    public boolean writeBinaryFile(File file, Serializable serializable, ExecutionContext context) {
+        return writeBinaryFile(file, serializable) &&
+                setDefaultAccessRights(file, context);
     }
 
-    public void writeBinaryFile(File file, Serializable serializable) {
+    public boolean writeBinaryFile(File file, Serializable serializable) {
         if (ExecutionService.getInstance().canWriteFiles()) { //Let the execution service do this.
-            ExecutionService.getInstance().writeBinaryFile(file, serializable);
+            return ExecutionService.getInstance().writeBinaryFile(file, serializable);
         }
         throw new RuntimeException("Not implemented yet!");
     }
 
-    public void copyFile(File _in, File _out, ExecutionContext context) {
-        copyFile(_in, _out);
-        setDefaultAccessRights(_out, context);
+    public boolean copyFile(File _in, File _out, ExecutionContext context) {
+        return copyFile(_in, _out) && setDefaultAccessRights(_out, context);
     }
 
-    public void copyFile(File _in, File _out) {
+    public boolean copyFile(File _in, File _out) {
         ExecutionService eService = ExecutionService.getInstance();
         if (eService.canCopyFiles()) { //Let the execution service do this.
-            eService.copyFile(_in, _out);
+            return eService.copyFile(_in, _out);
         } else {
-            eService.execute(commandSet.getCopyFileCommand(_in, _out));
+            return eService.execute(commandSet.getCopyFileCommand(_in, _out));
         }
     }
 
-    public void moveFile(File _from, File _to, ExecutionContext context) {
-        moveFile(_from, _to);
-        setDefaultAccessRights(_to, context);
+    public boolean moveFile(File _from, File _to, ExecutionContext context) {
+        return moveFile(_from, _to) && setDefaultAccessRights(_to, context);
     }
 
-    public void moveFile(File _from, File _to) {
+    public boolean moveFile(File _from, File _to) {
         ExecutionService eService = ExecutionService.getInstance();
         if (eService.canCopyFiles()) { //Let the execution service do this.
-            eService.moveFile(_from, _to);
+            return eService.moveFile(_from, _to);
         } else {
-            eService.execute(commandSet.getMoveFileCommand(_from, _to));
+            return eService.execute(commandSet.getMoveFileCommand(_from, _to));
         }
     }
 
-    public void copyDirectory(File _in, File _out, ExecutionContext context) {
-        copyDirectory(_in, _out);
-        setDefaultAccessRightsRecursively(_out, context);
+    public boolean copyDirectory(File _in, File _out, ExecutionContext context) {
+        return copyDirectory(_in, _out) && setDefaultAccessRightsRecursively(_out, context);
     }
 
-    public void copyDirectory(File _in, File _out) {
+    public boolean copyDirectory(File _in, File _out) {
         ExecutionService eService = ExecutionService.getInstance()
         if (eService.canCopyFiles()) { //Let the execution service do this.
-            eService.copyDirectory(_in, _out);
-        } else
-            eService.execute(commandSet.getCopyDirectoryCommand(_in, _out));
+            return eService.copyDirectory(_in, _out);
+        } else {
+            return eService.execute(commandSet.getCopyDirectoryCommand(_in, _out))
+        };
+
     }
 
     public boolean setDefaultAccessRightsRecursively(File path, ExecutionContext context) {
@@ -493,21 +491,22 @@ public class FileSystemAccessManager extends CacheProvider {
      * @param accessString
      * @return
      */
-    public boolean setAccessRightsRecursively(File path, String accessStringDirecties, String accessString, String group) {
-        return ExecutionService.getInstance().execute(commandSet.getSetAccessRightsRecursivelyCommand(path, accessStringDirecties, accessString, group), false);
+    public boolean setAccessRightsRecursively(File path, String accessStringDirectories, String accessString, String group) {
+        return ExecutionService.getInstance().execute(commandSet.getSetAccessRightsRecursivelyCommand(path, accessStringDirectories, accessString, group), false);
     }
 
     public boolean setDefaultAccessRights(File file, ExecutionContext context) {
         if (!context.isAccessRightsModificationAllowed())
-            return true;
+            return true; // an economic decision ...
         return setAccessRights(file, context.getOutputFileAccessRights(), context.getOutputGroupString());
     }
 
     public boolean setAccessRights(File file, String accessString, String groupID) {
-        if (ExecutionService.getInstance().canModifyAccessRights()) {
+        ExecutionService eService = ExecutionService.getInstance()
+        if (eService.canModifyAccessRights()) {
             return ExecutionService.getInstance().modifyAccessRights(file, accessString, groupID);
         } else {
-            commandSet.getSetAccessRightsCommand(file, accessString, groupID)
+            return eService.execute(commandSet.getSetAccessRightsCommand(file, accessString, groupID))
         }
     }
 
@@ -557,18 +556,18 @@ public class FileSystemAccessManager extends CacheProvider {
         }
     }
 
-    void createFileWithDefaultAccessRights(boolean atomic, File filename, ExecutionContext context, boolean blocking) {
+    boolean createFileWithDefaultAccessRights(boolean atomic, File filename, ExecutionContext context, boolean blocking) {
         try {
             if (ExecutionService.getInstance().canWriteFiles()) {
-
                 String accessRights = context.getOutputFileAccessRights();
                 String groupID = context.getOutputGroupString();
-                ExecutionService.getInstance().createFileWithRights(atomic, filename, accessRights, groupID, blocking);
+                return ExecutionService.getInstance().createFileWithRights(atomic, filename, accessRights, groupID, blocking);
             } else {
                 if (ExecutionService.getInstance().isLocalService()) {
                     boolean created = filename.createNewFile();
                     if (!created)
                         throw new IOException("The file ${filename.absolutePath} could not be created.")
+                    return created
                 } else
                     throw new RuntimeException("Not implemented yet!");
             }
@@ -577,9 +576,9 @@ public class FileSystemAccessManager extends CacheProvider {
         }
     }
 
-    void appendLinesToFile(boolean atomic, File filename, List<String> lines, boolean blocking) {
+    boolean appendLinesToFile(boolean atomic, File filename, List<String> lines, boolean blocking) {
         if (ExecutionService.getInstance().canWriteFiles()) {
-            ExecutionService.getInstance().appendLinesToFile(atomic, filename, lines, blocking);
+            return ExecutionService.getInstance().appendLinesToFile(atomic, filename, lines, blocking);
         } else {
             lines.each {
                 String line -> appendLineToFile(atomic, filename, line, blocking);
@@ -590,15 +589,15 @@ public class FileSystemAccessManager extends CacheProvider {
 
     private Object _appendLineToFileLock = new Object();
 
-    void appendLineToFile(boolean atomic, File filename, String line, boolean blocking) {
+    boolean appendLineToFile(boolean atomic, File filename, String line, boolean blocking) {
         try {
             ExecutionService eService = ExecutionService.getInstance()
             if (eService.canWriteFiles()) {
-                eService.appendLineToFile(atomic, filename, line, blocking);
+                return eService.appendLineToFile(atomic, filename, line, blocking);
             } else {
                 if (eService.isLocalService())
                     synchronized (_appendLineToFileLock) {
-                        RoddyIOHelperMethods.appendLineToFile(filename, line)
+                        return RoddyIOHelperMethods.appendLineToFile(filename, line)
                     }
                 else
                     throw new RuntimeException("Not implemented yet!");
@@ -629,11 +628,11 @@ public class FileSystemAccessManager extends CacheProvider {
 
     }
 
-    public void removeDirectory(File directory) {
+    public boolean removeDirectory(File directory) {
         if (ExecutionService.getInstance().canDeleteFiles()) {
-            ExecutionService.getInstance().removeDirectory(directory);
+            return ExecutionService.getInstance().removeDirectory(directory);
         } else {
-            ExecutionService.getInstance().execute(commandSet.getRemoveDirectoryCommand(directory));
+            return ExecutionService.getInstance().execute(commandSet.getRemoveDirectoryCommand(directory));
         }
     }
 

@@ -10,7 +10,7 @@ import de.dkfz.roddy.config.ConfigurationValueBundle
 import de.dkfz.roddy.config.InformationalConfigurationContent
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.io.fs.BashCommandSet
 import de.dkfz.roddy.tools.LoggerWrapper
 import groovy.transform.CompileStatic
@@ -29,7 +29,7 @@ class BashConverter extends ConfigurationConverter {
     //TODO Use a pipeline converter interface with methods like "convertCValues, convertCValueBundles, convertTools"
     @Override
     String convert(ExecutionContext context, Configuration cfg) {
-        final FileSystemAccessManager provider = FileSystemAccessManager.getInstance();
+        final FileSystemAccessProvider provider = FileSystemAccessProvider.getInstance();
         final String targetSystemNewLineString = provider.getNewLineString();
         final String separator = Constants.ENV_LINESEPARATOR;
 
@@ -187,7 +187,7 @@ class BashConverter extends ConfigurationConverter {
             text << "${cv.id}=";
             //TODO Important, this is a serious hack! It must be removed soon
             if (tmp.startsWith("bundledFiles/"))
-                text << Roddy.getApplicationDirectory().getAbsolutePath() << FileSystemAccessManager.getInstance().getPathSeparator();
+                text << Roddy.getApplicationDirectory().getAbsolutePath() << FileSystemAccessProvider.getInstance().getPathSeparator();
             if(cv.isQuoteOnConversionSet()) text << "'";
             text << tmp;
             if(cv.isQuoteOnConversionSet()) text << "'";

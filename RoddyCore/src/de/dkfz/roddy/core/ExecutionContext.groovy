@@ -3,7 +3,7 @@ package de.dkfz.roddy.core;
 import de.dkfz.roddy.Constants;
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants;
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.*
 
@@ -428,8 +428,8 @@ public class ExecutionContext implements JobStatusListener {
         return getConfiguration().getConfigurationValues().getBoolean(ConfigurationConstants.CFG_ALLOW_ACCESS_RIGHTS_MODIFICATION, true);
     }
 
-    public FileSystemAccessManager getFileSystemAccessManager() {
-        return FileSystemAccessManager.getInstance()
+    public FileSystemAccessProvider getFileSystemAccessManager() {
+        return FileSystemAccessProvider.getInstance()
     }
 
     public String getOutputDirectoryAccess() {

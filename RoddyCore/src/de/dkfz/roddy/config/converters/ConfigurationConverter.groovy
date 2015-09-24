@@ -3,7 +3,7 @@ package de.dkfz.roddy.config.converters;
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants;
 import de.dkfz.roddy.core.ExecutionContext;
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 
 import java.util.logging.Logger
 
@@ -23,7 +23,7 @@ public abstract class ConfigurationConverter {
     public abstract String convert(ExecutionContext context, Configuration configuration);
 
     public static String convertAutomatically(ExecutionContext context, Configuration configuration) {
-        return FileSystemAccessManager.getInstance().getConfigurationConverter().convert(context, configuration);
+        return FileSystemAccessProvider.getInstance().getConfigurationConverter().convert(context, configuration);
     }
 
     /**

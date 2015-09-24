@@ -7,7 +7,7 @@ import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationFactory
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.ExecutionService
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.io.fs.BashCommandSet
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.Job
@@ -276,7 +276,7 @@ public class PBSCommand extends Command implements Serializable {
                         allLines << "export " << line << "\n";
                 }
                 if (getExecutionContext().getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
-                    FileSystemAccessManager.getInstance().writeTextFile(parmFile, allLines.toString(), executionContext);
+                    FileSystemAccessProvider.getInstance().writeTextFile(parmFile, allLines.toString(), executionContext);
             } else {
                 qsubCall << StringConstants.COMMA << allParms.join(StringConstants.COMMA);
             }

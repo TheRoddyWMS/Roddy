@@ -8,7 +8,7 @@ import de.dkfz.roddy.core.ExecutionContextLevel;
 import de.dkfz.roddy.core.Workflow;
 import de.dkfz.roddy.execution.io.ExecutionResult;
 import de.dkfz.roddy.execution.io.ExecutionService;
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.Command;
 import de.dkfz.roddy.execution.jobs.CommandFactory;
 import de.dkfz.roddy.execution.jobs.Job;
@@ -90,7 +90,7 @@ public class NativeWorkflow extends Workflow {
 
         ExecutionResult execute = ExecutionService.getInstance().execute(finalCommand);
         //Get the calls file in the temp directory.
-        String[] calls = FileSystemAccessManager.getInstance().loadTextFile(new File(context.getTemporaryDirectory(), "calls"));
+        String[] calls = FileSystemAccessProvider.getInstance().loadTextFile(new File(context.getTemporaryDirectory(), "calls"));
         Map<String, GenericJobInfo> callsByID = new LinkedHashMap<>();
         Map<String, String> fakeIDWithRealID = new LinkedHashMap<>();
         for (String call : calls) {

@@ -5,7 +5,7 @@ import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.core.BufferUnit;
 import de.dkfz.roddy.execution.io.ExecutionService;
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.cluster.ClusterCommandFactory;
 import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo;
 import de.dkfz.roddy.tools.*;
@@ -438,7 +438,7 @@ public class PBSCommandFactory extends ClusterCommandFactory<PBSCommand> {
             }
         }
         if (Roddy.isTrackingOfUserJobsEnabled())
-            queryCommand += " -u " + FileSystemAccessManager.getInstance().callWhoAmI() + " ";
+            queryCommand += " -u " + FileSystemAccessProvider.getInstance().callWhoAmI() + " ";
 
 
         Map<String, JobState> allStatesTemp = new LinkedHashMap<String, JobState>();
@@ -671,7 +671,7 @@ public class PBSCommandFactory extends ClusterCommandFactory<PBSCommand> {
 
     @Override
     public String[] peekLogFile(Job job) {
-        String user = FileSystemAccessManager.getInstance().callWhoAmI();
+        String user = FileSystemAccessProvider.getInstance().callWhoAmI();
         String id = job.getJobID();
         String searchID = id;
         if (id.contains(SBRACKET_LEFT)) {

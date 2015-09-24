@@ -20,23 +20,23 @@ public class NoNoExecutionService extends ExecutionService {
     }
 
     @Override
-    public void writeTextFile(File file, String text) {
-
+    public boolean writeTextFile(File file, String text) {
+        return true;
     }
 
     @Override
-    public void writeBinaryFile(File file, Serializable serializable) {
-
+    public boolean writeBinaryFile(File file, Serializable serializable) {
+        return true;
     }
 
     @Override
-    public void copyFile(File _in, File _out) {
-
+    public boolean copyFile(File _in, File _out) {
+        return true;
     }
 
     @Override
-    public void copyDirectory(File _in, File _out) {
-
+    public boolean copyDirectory(File _in, File _out) {
+        return true;
     }
 
     @Override
@@ -45,18 +45,18 @@ public class NoNoExecutionService extends ExecutionService {
     }
 
     @Override
-    public void createFileWithRights(boolean atomic, File file, String accessRights, String groupID, boolean blocking) {
-
+    public boolean createFileWithRights(boolean atomic, File file, String accessRights, String groupID, boolean blocking) {
+        return true;
     }
 
     @Override
-    public void appendLinesToFile(boolean atomic, File file, List<String> lines, boolean blocking) {
-
+    public boolean appendLinesToFile(boolean atomic, File file, List<String> lines, boolean blocking) {
+        return true;
     }
 
     @Override
-    public void appendLineToFile(boolean atomic, File file, String line, boolean blocking) {
-
+    public boolean appendLineToFile(boolean atomic, File file, String line, boolean blocking) {
+        return true;
     }
 
     @Override

@@ -7,7 +7,7 @@ import de.dkfz.roddy.config.FilenamePattern;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.ExecutionContextLevel;
 import de.dkfz.roddy.core.Workflow;
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.Job;
 import de.dkfz.roddy.execution.jobs.JobResult;
 import de.dkfz.roddy.plugins.LibrariesFactory;
@@ -205,7 +205,7 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
      */
     public final boolean isFileReadable() {
         if (isReadable == null)
-            isReadable = FileSystemAccessManager.getInstance().isReadable(this);
+            isReadable = FileSystemAccessProvider.getInstance().isReadable(this);
         return isReadable;
     }
 
@@ -413,7 +413,7 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
                     throw new RuntimeException("There is no valid filename pattern for this file: " + baseFile);
                 } else {
                     //Check if the path exists and create it if necessary.
-                    if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs && !FileSystemInfoProvider.getInstance().checkDirectory(patternResult.x.getParentFile(), context, true)) {
+                    if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs && !FileSystemAccessProvider.getInstance().checkDirectory(patternResult.x.getParentFile(), context, true)) {
                         throw new RuntimeException("Output path could not be created for file: " + baseFile);
                     }
                 }
@@ -424,7 +424,7 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
                 }
 
                 //Check if the path exists and create it if necessary.
-                if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs && !FileSystemInfoProvider.getInstance().checkDirectory(patternResult.x.getParentFile(), context, true)) {
+                if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs && !FileSystemAccessProvider.getInstance().checkDirectory(patternResult.x.getParentFile(), context, true)) {
                     throw new RuntimeException("Output path could not be created for file: " + baseFile);
                 }
             }

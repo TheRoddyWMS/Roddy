@@ -21,11 +21,11 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING
  * TODO pull out and simplify code for database access.
  */
 @groovy.transform.CompileStatic
-public class CachedFileSystemAccessManager extends FileSystemAccessManager {
+public class CachedFileSystemAccessProvider extends FileSystemAccessProvider {
 
-    private static Logger logger = java.util.logging.Logger.getLogger(CachedFileSystemAccessManager.getClass().getName());
-    private static final String TBL_FILECHACHEINFO = (CachedFileSystemAccessManager.class.getSimpleName() + "_fileCacheInfo").toUpperCase();
-    private static final String TBL_RUNOWNER = (CachedFileSystemAccessManager.class.getSimpleName() + "_runOwner").toUpperCase();
+    private static Logger logger = java.util.logging.Logger.getLogger(CachedFileSystemAccessProvider.getClass().getName());
+    private static final String TBL_FILECHACHEINFO = (CachedFileSystemAccessProvider.class.getSimpleName() + "_fileCacheInfo").toUpperCase();
+    private static final String TBL_RUNOWNER = (CachedFileSystemAccessProvider.class.getSimpleName() + "_runOwner").toUpperCase();
     public static final String FORMATSTRING_FILELISTENTRY = "fileList_%08X"
     public static final String FORMATSTRING_TEXTFILEENTRY = "textFile_%08X"
 
@@ -83,7 +83,7 @@ public class CachedFileSystemAccessManager extends FileSystemAccessManager {
         tables.close();
     }
 
-    public CachedFileSystemAccessManager() {
+    public CachedFileSystemAccessProvider() {
         //Connect to a database
         initializeCacheDB()
 
@@ -182,7 +182,7 @@ public class CachedFileSystemAccessManager extends FileSystemAccessManager {
 
     private Object readObjectFromLocalCacheFile(File f) {
         if (f.exists())
-            return FileSystemAccessManager.deserializeObjectFromFile(f);
+            return FileSystemAccessProvider.deserializeObjectFromFile(f);
         return null;
     }
 

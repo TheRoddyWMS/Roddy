@@ -4,7 +4,7 @@ import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.core.Analysis;
 import de.dkfz.roddy.core.DataSet;
 import de.dkfz.roddy.core.ExecutionContext;
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 
 import java.io.File;
 import java.util.Arrays;
@@ -118,7 +118,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
             if( groupID != null)
                 temp = replaceString(temp, "$USERGROUP", groupID);
 
-            String ud = FileSystemAccessManager.getInstance().getUserDirectory().getAbsolutePath();
+            String ud = FileSystemAccessProvider.getInstance().getUserDirectory().getAbsolutePath();
             temp = replaceString(temp, "$USERHOME", ud);
             temp = checkAndCorrectPath(temp);
 
@@ -146,7 +146,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
             String temp = toFile(context.getAnalysis(), context.getDataSet()).getAbsolutePath();
             temp = checkAndCorrectPath(temp);
             if(value.startsWith("${DIR_BUNDLED_FILES}") || value.startsWith("${DIR_RODDY}"))
-                temp = Roddy.getApplicationDirectory().getAbsolutePath() + FileSystemAccessManager.getInstance().getPathSeparator() + temp;
+                temp = Roddy.getApplicationDirectory().getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + temp;
 
             if (temp.contains(ConfigurationConstants.CVALUE_PLACEHOLDER_EXECUTION_DIRECTORY)) {
                 String pd = context.getExecutionDirectory().getAbsolutePath();
