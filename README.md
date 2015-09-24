@@ -85,6 +85,10 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 == Changelist
 
+- (TEST) Roddy can now create auto filenames, if there was no filename pattern for a file.
+  This is currently enabled by default! Auto filenames are placed in the output directory and
+  contain the job name, the parameter name, the job id and the suffix .auto.
+
 - (WIP) add the createworkflow runmode to Roddy.
 
 - (TEST) A working and version of Roddys built in Brawl language. Brawl is be a very basic

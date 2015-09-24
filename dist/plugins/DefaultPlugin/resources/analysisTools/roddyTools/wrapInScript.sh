@@ -22,6 +22,16 @@ export RODDY_JOBID=${RODDY_JOBID-$$}
 export RODDY_PARENT_JOBS=${RODDY_PARENT_JOBS-false}
 echo "RODDY_JOBID is set to ${RODDY_JOBID}"
 
+# Replace #{RODDY_JOBID} in passed variables.
+while read line; do
+  echo $line
+  _temp=$RODDY_JOBID
+  export RODDY_JOBID=`echo $RODDY_JOBID | cut -d "." -f 1`
+  line=${line//-x/};
+  eval ${line//#/\$};
+  export RODDY_JOBID=$_temp
+done <<< `export | grep "#{"`
+
 # Default to the data folder on the node
 defaultScratchDir=${defaultScratchDir-/data/roddyScratch}
 [[ ${RODDY_SCRATCH-x} == "x" ]] && export RODDY_SCRATCH=${defaultScratchDir}/${RODDY_JOBID}

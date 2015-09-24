@@ -1,5 +1,6 @@
 package de.dkfz.roddy.knowledge.methods
 
+import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.config.*;
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.execution.jobs.CommandFactory
@@ -28,12 +29,29 @@ import static de.dkfz.roddy.Constants.NO_VALUE;
 
 /**
  * Class for generic, configurable methods
+ * This class is very magic and does quite a lot of stuff.
+ * Unfortunately it is also very heavy and bulky... So be advised to take your time when digging through this.
+ * We have a
+ * TODO to make this class more readable and usable
+ * open
+ *
+ * The class is externally called via two static methods. Internally, for convenience, an object is created
+ * and used for the furhter process.
  */
 @groovy.transform.CompileStatic
 class GenericMethod {
 
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(GenericMethod.class.getName());
 
+    /**
+     * This method is basically a wrapper around callGenericToolArray.
+     * Both methods were so similar, that it made no sense to keep both.
+     * callGenericToolArray can handle single job calls very well.
+     * @param toolName The tool id to call
+     * @param input The basic input object TODO should be extended or changed to handle FileGroups as well.
+     * @param additionalInput Any additional input to the job. The input must fit the tool i/o specs in your xml file.
+     * @return
+     */
     public static <F extends FileObject> F callGenericTool(String toolName, BaseFile input, Object... additionalInput) {
         F result = callGenericToolArray(toolName, null, input, additionalInput);
         if (result == null) {
@@ -44,29 +62,65 @@ class GenericMethod {
         return result;
     }
 
+    /**
+     * This is Roddys most magic method!
+     * It uses all the input parameters and the tool description and magically assembles a full job object.
+     * The generated tool object is run() at the end.
+     *
+     * @param toolName The tool id to call
+     * @param arrayIndices If it is an array, we need indices
+     * @param input The basic input object TODO should be extended or changed to handle FileGroups as well.
+     * @param additionalInput Any additional input to the job. The input must fit the tool i/o specs in your xml file.
+     * @return
+     */
     public static <F extends FileObject> F callGenericToolArray(String toolName, List<String> arrayIndices, BaseFile input, Object... additionalInput) {
-        ExecutionContext context = input.getExecutionContext();
-        Configuration cfg = context.getConfiguration();
-        ToolEntry te = cfg.getTools().getValue(toolName);
-        if (!te.isToolGeneric()) {
+        new GenericMethod(toolName, arrayIndices, input, additionalInput)._callGenericToolArray();
+    }
+
+
+    private final ExecutionContext context
+    private final Configuration configuration
+    private final String toolName
+    private final ToolEntry calledTool
+    private final List<String> arrayIndices
+    private final BaseFile inputFile
+    private final Object[] additionalInput
+    private final List<FileObject> allInputValues = []
+    private final List<BaseFile> allInputFiles = [];
+    private final Map<String, Object> parameters = [:]
+    private final List<FileObject> allCreatedObjects = [];
+
+    private GenericMethod(String toolName, List<String> arrayIndices, BaseFile inputFile, Object... additionalInput) {
+        this.additionalInput = additionalInput
+        this.inputFile = inputFile
+        this.allInputValues << inputFile;
+        this.arrayIndices = arrayIndices
+        this.toolName = toolName
+        this.context = inputFile.getExecutionContext();
+        this.configuration = context.getConfiguration();
+        this.calledTool = configuration.getTools().getValue(toolName);
+    }
+
+    private <F extends FileObject> F _callGenericToolArray() {
+
+        // Check if method may be executed
+        if (!calledTool.isToolGeneric()) {
             logger.severe("Tried to call a non generic tool via the generic call method");
             throw new RuntimeException("Not able to context tool " + toolName);
         }
-        Map<String, Object> parameters = [:];
 
+        // Assemble initial parameters
         if (toolName) {
-            parameters[PRM_TOOLS_DIR] = cfg.getProcessingToolPath(context, toolName).getParent();
+            parameters[PRM_TOOLS_DIR] = configuration.getProcessingToolPath(context, toolName).getParent();
             parameters[PRM_TOOL_ID] = toolName;
         }
 
-        List<FileObject> allInput = new LinkedList<FileObject>();
-        allInput << input;
         for (Object entry in additionalInput) {
             if (entry instanceof BaseFile)
-                allInput << (BaseFile) entry;
+                allInputValues << (BaseFile) entry;
             else if (entry instanceof FileGroup) {
                 //Take a group and store all files in that group.
-                allInput << (FileGroup) entry;
+                allInputValues << (FileGroup) entry;
 
             } else {
                 String[] split = entry.toString().split("=");
@@ -76,77 +130,75 @@ class GenericMethod {
             }
         }
 
-        List<BaseFile> pFiles = [];
-        for (FileObject fo in allInput) {
+        for (FileObject fo in allInputValues) {
             if (fo instanceof BaseFile)
-                pFiles << (BaseFile) fo;
+                allInputFiles << (BaseFile) fo;
             else if (fo instanceof FileGroup)
-                pFiles.addAll(((FileGroup) fo).getFilesInGroup());
+                allInputFiles.addAll(((FileGroup) fo).getFilesInGroup());
         }
 
-        for (int i = 0; i < te.getInputParameters(context).size(); i++) {
-            ToolEntry.ToolParameter toolParameter = te.getInputParameters(context)[i];
+        for (int i = 0; i < calledTool.getInputParameters(context).size(); i++) {
+            ToolEntry.ToolParameter toolParameter = calledTool.getInputParameters(context)[i];
             if (toolParameter instanceof ToolEntry.ToolFileParameter) {
                 ToolEntry.ToolFileParameter _tp = (ToolEntry.ToolFileParameter) toolParameter;
                 //TODO Check if input and output parameters match and also check for array indices and item count. Throw a proper error message.
-                if (!allInput[i].class == _tp.fileClass)
-                    logger.severe("Class mismatch for " + allInput[i] + " should be of class " + _tp.fileClass);
+                if (!allInputValues[i].class == _tp.fileClass)
+                    logger.severe("Class mismatch for " + allInputValues[i] + " should be of class " + _tp.fileClass);
                 if (_tp.scriptParameterName) {
-                    String path = ((BaseFile) allInput[i])?.path?.absolutePath;
-                    if (!path) {
-                        context.addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("The parameter ${_tp.scriptParameterName} has no valid value and will be set to <NO_VALUE>."));
-                        path = NO_VALUE;
-                    }
-                    parameters[_tp.scriptParameterName] = path;
+//                    String path = ((BaseFile) allInputValues[i])?.path?.absolutePath;
+//                    if (!path) {
+//                        context.addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("The parameter ${_tp.scriptParameterName} has no valid value and will be set to <NO_VALUE>."));
+//                        path = NO_VALUE;
+//                    }
+                    parameters[_tp.scriptParameterName] = ((BaseFile) allInputValues[i]);
 
                 }
                 _tp.constraints.each {
                     ToolEntry.ToolConstraint constraint ->
-                        constraint.apply(input);
+                        constraint.apply(inputFile);
                 }
             } else if (toolParameter instanceof ToolEntry.ToolTupleParameter) {
                 ToolEntry.ToolTupleParameter _tp = (ToolEntry.ToolTupleParameter) toolParameter;
                 logger.severe("Tuples must not be used as an input parameter for tool ${toolName}.l");
             } else if (toolParameter instanceof ToolEntry.ToolFileGroupParameter) {
                 ToolEntry.ToolFileGroupParameter _tp = (ToolEntry.ToolFileGroupParameter) toolParameter;
-                if (!allInput[i].class == _tp.groupClass)
-                    logger.severe("Class mismatch for ${allInput[i]} should be of class ${_tp.groupClass}");
+                if (!allInputValues[i].class == _tp.groupClass)
+                    logger.severe("Class mismatch for ${allInputValues[i]} should be of class ${_tp.groupClass}");
                 if (_tp.passOptions == ToolEntry.ToolFileGroupParameter.PassOptions.parameters) {
                     int cnt = 0;
-                    for (BaseFile bf in (List<BaseFile>) ((FileGroup) allInput[i]).getFilesInGroup()) {
-                        parameters[_tp.scriptParameterName + "_" + cnt] = bf.getAbsolutePath();
+                    for (BaseFile bf in (List<BaseFile>) ((FileGroup) allInputValues[i]).getFilesInGroup()) {
+                        parameters[_tp.scriptParameterName + "_" + cnt] = bf;
                         cnt++;
                     }
                 } else { //Arrays
                     int cnt = 0;
-                    parameters[_tp.scriptParameterName] = ((FileGroup) allInput[i]).getFilesInGroup();//paths;
+                    parameters[_tp.scriptParameterName] = ((FileGroup) allInputValues[i]).getFilesInGroup();//paths;
                 }
             }
         }
 
-        for (int i = 0; i < te.getOutputParameters(context).size(); i++) {
-            ToolEntry.ToolParameter toolParameter = te.getOutputParameters(context)[i];
+        for (int i = 0; i < calledTool.getOutputParameters(context).size(); i++) {
+            ToolEntry.ToolParameter toolParameter = calledTool.getOutputParameters(context)[i];
             if (toolParameter instanceof ToolEntry.ToolFileParameter) {
                 ToolEntry.ToolFileParameter _tp = (ToolEntry.ToolFileParameter) toolParameter;
                 for (ToolEntry.ToolConstraint constraint in _tp.constraints) {
-                    constraint.apply(input);
+                    constraint.apply(inputFile);
                 }
             }
         }
 
         F outputObject = null;
-        List<FileObject> allCreatedObjects = [];
 
-        outputObject = createOutputObject(te, input, pFiles, parameters, allCreatedObjects);
+        outputObject = createOutputObject();
+        allCreatedObjects << outputObject;
 
-        allCreatedObjects.add(outputObject);
         JobResult jobResult = null;
         //Verifiable output files:
         List<BaseFile> filesToVerify = [];
-        allCreatedObjects.each { FileObject fo -> if (fo instanceof BaseFile && ! ((BaseFile)fo).isTemporaryFile()) filesToVerify << (BaseFile) fo; }
+        allCreatedObjects.each { FileObject fo -> if (fo instanceof BaseFile && !((BaseFile) fo).isTemporaryFile()) filesToVerify << (BaseFile) fo; }
 
         if (arrayIndices != null) {
-            jobResult = new Job(context, context.createJobName(input, toolName), toolName, arrayIndices, parameters, pFiles, filesToVerify).run();
+            jobResult = new Job(context, context.createJobName(inputFile, toolName), toolName, arrayIndices, parameters, allInputFiles, filesToVerify).run();
 
             Map<String, FileObject> outputObjectsByArrayIndex = [:];
             IndexedFileObjects indexedFileObjects = new IndexedFileObjects(arrayIndices, outputObjectsByArrayIndex, context);
@@ -155,7 +207,7 @@ class GenericMethod {
             int i = 1;
             for (String arrayIndex in arrayIndices) {
                 List<FileObject> newObjects = [];
-                outputObjectsByArrayIndex[arrayIndex] = createOutputObject(te, input, pFiles, parameters, newObjects, arrayIndex);
+                outputObjectsByArrayIndex[arrayIndex] = createOutputObject(arrayIndex);
                 JobResult jr = CommandFactory.getInstance().convertToArrayResult(jobResult.job, jobResult, i++);
                 for (FileObject fo : newObjects) {
                     fo.setCreatingJobsResult(jr);
@@ -163,7 +215,7 @@ class GenericMethod {
             }
             return indexedFileObjects;
         }
-        jobResult = new Job(context, context.createJobName(input, toolName), toolName, parameters, pFiles, filesToVerify).run();
+        jobResult = new Job(context, context.createJobName(inputFile, toolName), toolName, parameters, allInputFiles, filesToVerify).run();
 
         try {
             if (allCreatedObjects) {
@@ -180,37 +232,38 @@ class GenericMethod {
         return outputObject;
     }
 
-    private
-    static <F extends FileObject> F createOutputObject(ToolEntry te, BaseFile input, List<BaseFile> allInput, Map<String, Object> parameters, List<FileObject> allCreatedObjects, String arrayIndex = null) {
+    private <F extends FileObject> F createOutputObject(String arrayIndex = null) {
         F outputObject = null;
-        if (te.getOutputParameters(input.getExecutionContext()).size() == 1) {
-            ToolEntry.ToolParameter tparm = te.getOutputParameters(input.getExecutionContext())[0];
+        if (calledTool.getOutputParameters(inputFile.getExecutionContext()).size() == 1) {
+            ToolEntry.ToolParameter tparm = calledTool.getOutputParameters(inputFile.getExecutionContext())[0];
             if (tparm instanceof ToolEntry.ToolFileParameter) {
                 ToolEntry.ToolFileParameter fileParameter = tparm as ToolEntry.ToolFileParameter;
-                BaseFile bf = toolFileParameterToBaseFile(fileParameter, input, allInput, parameters)
-                for(ToolEntry.ToolFileParameter childFileParameter in fileParameter.getChildFiles()) {
-                    if(childFileParameter.parentVariable == null) {
+                BaseFile bf = toolFileParameterToBaseFile(fileParameter, inputFile, allInputFiles)
+                for (ToolEntry.ToolFileParameter childFileParameter in fileParameter.getChildFiles()) {
+                    if (childFileParameter.parentVariable == null) {
                         continue;
                     }
                     java.lang.reflect.Field _field = null;
                     java.lang.reflect.Method _method = null;
                     try {
-                        _field =  bf.getClass().getField(childFileParameter.parentVariable);
-                    } catch (Exception ex) { }
+                        _field = bf.getClass().getField(childFileParameter.parentVariable);
+                    } catch (Exception ex) {
+                    }
                     try {
                         String setterMethod = "set" + childFileParameter.parentVariable[0].toUpperCase() + childFileParameter.parentVariable[1..-1];
                         _method = bf.getClass().getMethod(setterMethod, childFileParameter.fileClass);
-                    } catch(Exception ex) { }
-                    if(_field == null && _method == null) {
+                    } catch (Exception ex) {
+                    }
+                    if (_field == null && _method == null) {
                         try {
-                            input.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_FIELDINACCESSIBLE.expand("Class ${bf.getClass().getName()} field ${childFileParameter.parentVariable}"));
+                            inputFile.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_FIELDINACCESSIBLE.expand("Class ${bf.getClass().getName()} field ${childFileParameter.parentVariable}"));
                         } catch (Exception ex) {
                         }
                         continue;
                     }
-                    BaseFile childFile = toolFileParameterToBaseFile(childFileParameter, bf, [bf], parameters);
+                    BaseFile childFile = toolFileParameterToBaseFile(childFileParameter, bf, [bf]);
                     allCreatedObjects << childFile;
-                    if(_field)
+                    if (_field)
                         _field.set(bf, childFile);
                     else
                         _method.invoke(bf, childFile);
@@ -221,7 +274,7 @@ class GenericMethod {
                 ToolEntry.ToolTupleParameter tfg = tparm as ToolEntry.ToolTupleParameter;
                 List<FileObject> filesInTuple = [];
                 for (ToolEntry.ToolFileParameter fileParameter in tfg.files) {
-                    BaseFile bf = toolFileParameterToBaseFile(fileParameter, input, allInput, parameters);
+                    BaseFile bf = toolFileParameterToBaseFile(fileParameter, inputFile, allInputFiles);
                     filesInTuple << bf;
                     allCreatedObjects << bf;
                 }
@@ -232,7 +285,7 @@ class GenericMethod {
                 List<BaseFile> filesInGroup = [];
 
                 for (ToolEntry.ToolFileParameter fileParameter in tfg.files) {
-                    BaseFile bf = toolFileParameterToBaseFile(fileParameter, input, allInput, parameters)
+                    BaseFile bf = toolFileParameterToBaseFile(fileParameter, inputFile, allInputFiles)
                     filesInGroup << bf;
                     allCreatedObjects << bf;
                 }
@@ -257,9 +310,8 @@ class GenericMethod {
         return outputObject;
     }
 
-    private
-    static BaseFile toolFileParameterToBaseFile(ToolEntry.ToolFileParameter fileParameter, BaseFile input, List<BaseFile> allInput, Map<String, Object> parameters) {
-        Constructor c = getConstructorForOneOf(fileParameter.fileClass, input.class, BaseFile.class);
+    private BaseFile toolFileParameterToBaseFile(ToolEntry.ToolFileParameter fileParameter, BaseFile input, List<BaseFile> allInput) {
+        Constructor c = searchConstructorForOneOf(fileParameter.fileClass, input.class, BaseFile.class);
         BaseFile bf = null;
         try {
             if (c == null) {
@@ -281,63 +333,42 @@ class GenericMethod {
         if (fileParameter.hasSelectionTag())
             bf.overrideFilenameUsingSelectionTag(fileParameter.filenamePatternSelectionTag);
 
-        if(!fileParameter.checkFile)
+        if (!fileParameter.checkFile)
             bf.setAsTemporaryFile();
 
         if (allInput.size() > 1)
             bf.setParentFiles(allInput, true);
 
-        File path = replaceParametersInFilePath(bf, parameters)
-        if (path == null) {
-            bf.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_PATH_NOTSET.expand("File object of type ${bf.class.name} with input ${input.class}.."));
-            path = new File("");
-        }
+//        File path = replaceParametersInFilePath(bf, parameters)
+//        if (path == null && !Roddy.getFeatureToggleValue(AvailableFeatureToggles.AutoFilenames)) {
+//            bf.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_PATH_NOTSET.expand("File object of type ${bf.class.name} with input ${input.class}.."));
+//            //TODO
+//            path = new File("");
+//        }
 
         if (fileParameter.scriptParameterName) {
-            parameters[fileParameter.scriptParameterName] = path;
+            parameters[fileParameter.scriptParameterName] = bf;
         }
         bf
     }
 
-    private static Constructor<BaseFile> getConstructorForOneOf(Class forClass, Class... inputClass) {
+    /**
+     * Searches a constructor for classToSearch which fits to either one of classesToFind
+     * If no constructor is found, null is returned.
+     * @param classToSearch
+     * @param classesToFind
+     * @return
+     */
+    private Constructor<BaseFile> searchConstructorForOneOf(Class classToSearch, Class... classesToFind) {
         Constructor c;
-        for (Class ic in inputClass) {
+        for (Class classToFind in classesToFind) {
             try {
-                c = forClass.getConstructor(ic);
+                c = classToSearch.getConstructor(classToFind);
             } catch (NoSuchMethodException ex) {
             }
             if (c != null)
                 break;
         }
         return c;
-    }
-
-    private static File replaceParametersInFilePath(BaseFile bf, Map<String, Object> parameters) {
-//TODO: It can occur that the regeneration of the filename is not valid!
-
-        // Replace $_JOBPARAMETER items in path with proper values.
-        //TODO: Think how to best place this with parameters into the FilenamePattern class.
-        File path = bf.getPath()
-        if (path == null) {
-            return null;
-        }
-
-        String absolutePath = path.getAbsolutePath()
-        if (absolutePath.contains($_JOBPARAMETER)) {
-            FilenamePattern.Command command = FilenamePattern.extractCommand($_JOBPARAMETER, absolutePath);
-            FilenamePattern.CommandAttribute name = command.attributes.get("name");
-//                    FilenamePattern.CommandAttribute defValue = command.attributes.get("default");
-            if (name != null) {
-                String val = parameters[name.value];
-                if (val == null) {
-                    val = NO_VALUE;
-                    bf.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("A value named " + name.value + " cannot be found in the jobs parameter list for a file of ${bf.class.name}. The value is set to <NO_VALUE>"));
-                }
-                absolutePath = absolutePath.replace(command.name, val);
-            }
-            path = new File(absolutePath);
-            bf.setPath(path);
-        }
-        path
     }
 }

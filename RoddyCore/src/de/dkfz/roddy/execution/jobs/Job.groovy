@@ -2,7 +2,8 @@ package de.dkfz.roddy.execution.jobs
 
 import de.dkfz.roddy.AvailableFeatureToggles;
 import de.dkfz.roddy.Constants
-import de.dkfz.roddy.Roddy;
+import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.config.FilenamePattern;
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.knowledge.files.Tuple2;
 import de.dkfz.roddy.tools.LoggerWrapper;
@@ -20,7 +21,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicLong;
 
-import static de.dkfz.roddy.Constants.NO_VALUE;
+import static de.dkfz.roddy.Constants.NO_VALUE
+import static de.dkfz.roddy.config.FilenamePattern.$_JOBPARAMETER
+import static de.dkfz.roddy.config.FilenamePattern.$_JOBPARAMETER;
 
 @groovy.transform.CompileStatic
 public class Job {
@@ -69,6 +72,11 @@ public class Job {
      * Parameters for the tool you want to call
      */
     private final Map<String, String> parameters;
+
+    /**
+     * Keeps a list of all unchanged, initial parameters, including default job parameters.
+     */
+    private final Map<String, Object> allRawInputParameters;
     /**
      * If you want to generated arrays use this. <p>You can do things like: n-m,
      */
@@ -104,6 +112,8 @@ public class Job {
     private JobResult runResult;
 
     public Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices, Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
+        this.jobName = jobName;
+        this.currentJobState = JobState.UNKNOWN;
         this.context = context;
         this.toolID = toolID;
         this.toolMD5 = toolID ? context.getConfiguration().getProcessingToolMD5(toolID) : "";
@@ -112,6 +122,8 @@ public class Job {
         Map<String, Object> defaultParameters = context.getDefaultJobParameters(toolID);
         if (inputParameters != null)
             defaultParameters.putAll(inputParameters);
+        this.allRawInputParameters = defaultParameters;
+
         for (String k : defaultParameters.keySet()) {
             if (this.parameters.containsKey(k)) continue;
             Object _v = defaultParameters[k];
@@ -139,8 +151,6 @@ public class Job {
             }
         }
         this.filesToVerify = filesToVerify == null ? new LinkedList<BaseFile>() : filesToVerify;
-        this.jobName = jobName;
-        this.currentJobState = JobState.UNKNOWN;
         this.context.addExecutedJob(this);
         if (arrayIndices == null)
             return;
@@ -164,8 +174,20 @@ public class Job {
             newParameters.put(k, ((File) _v).getAbsolutePath());
         } else if (_v instanceof BaseFile) {
             BaseFile bf = (BaseFile) _v;
-            newParameters.put(k, bf.getPath().getAbsolutePath());
-            newParameters.put(k + "_path", bf.getPath().getAbsolutePath());
+            String newPath = replaceParametersInFilePath(bf, allRawInputParameters);
+
+            //Explicitely query newPath for a proper value!
+            if(newPath == null) {
+                // Auto path!
+                int slotPosition = allRawInputParameters.keySet().asList().indexOf(k);
+                File autoPath = new File(context.getOutputDirectory(), [jobName, k, '${RODDY_JOBID}'].join("_") + ".auto")
+                bf.setPath(autoPath)
+                bf.setAsTemporaryFile()
+                newPath = autoPath.absolutePath;
+            }
+
+            newParameters.put(k, newPath);
+            newParameters.put(k + "_path", newPath);
             //TODO Create a toStringList method for filestages. The method should then be very generic.
 //                this.parameters.put(k + "_fileStage_numericIndex", "" + bf.getFileStage().getNumericIndex());
 //                this.parameters.put(k + "_fileStage_index", bf.getFileStage().getIndex());
@@ -195,6 +217,38 @@ public class Job {
         }
         return newParameters;
     }
+
+
+
+    private File replaceParametersInFilePath(BaseFile bf, Map<String, Object> parameters) {
+        //TODO: It can occur that the regeneration of the filename is not valid!
+
+        // Replace $_JOBPARAMETER items in path with proper values.
+        //TODO: Think how to best place this with parameters into the FilenamePattern class.
+        File path = bf.getPath()
+        if (path == null) {
+            return null;
+        }
+
+        String absolutePath = path.getAbsolutePath()
+        if (absolutePath.contains($_JOBPARAMETER)) {
+            FilenamePattern.Command command = FilenamePattern.extractCommand($_JOBPARAMETER, absolutePath);
+            FilenamePattern.CommandAttribute name = command.attributes.get("name");
+//                    FilenamePattern.CommandAttribute defValue = command.attributes.get("default");
+            if (name != null) {
+                String val = parameters[name.value];
+                if (val == null) {
+                    val = NO_VALUE;
+                    bf.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("A value named " + name.value + " cannot be found in the jobs parameter list for a file of ${bf.class.name}. The value is set to <NO_VALUE>"));
+                }
+                absolutePath = absolutePath.replace(command.name, val);
+            }
+            path = new File(absolutePath);
+            bf.setPath(path);
+        }
+        path
+    }
+
 
     public Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices, Map<String, Object> parameters, List<BaseFile> parentFiles) {
         this(context, jobName, toolID, arrayIndices, parameters, parentFiles, null);
@@ -240,36 +294,6 @@ public class Job {
         if (toolID != null && toolID.trim().length() > 0)
             this.toolMD5 = context.getConfiguration().getProcessingToolMD5(toolID);
     }
-
-//    private synchronized void writeObject(java.io.ObjectOutputStream s) throws IOException {
-//        try {
-//            s.writeUTF(jobName);
-//            s.writeUTF(toolID);
-//            s.writeObject(arrayIndices);
-//            s.writeObject(dependencyIDs);
-//            s.writeObject(filesToVerify);
-//            s.writeObject(processingCommand);
-//            s.writeInt(parameters.size());
-//            for (String k : parameters.keySet()) {
-//                Object o = parameters.get(k);
-//                s.writeUTF(k);
-//                s.writeUTF(o.toString());
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
-//
-//    private synchronized void readObject(java.io.ObjectInputStream s) throws IOException, ClassNotFoundException {
-//        try {
-//            s.defaultReadObject();
-//            this.setJobState(JobState.UNKNOWN);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        } catch (ClassNotFoundException e) {
-//            e.printStackTrace();
-//        }
-//    }
 
     private void setJobType(JobType jobType) {
         this.jobType = jobType;
@@ -324,6 +348,20 @@ public class Job {
         }
 
         runResult = new JobResult(context, cmd, cmd.getExecutionID(), runJob, isArrayJob, tool, parameters, parentFiles);
+        //For auto filenames. Get the job id and push propagate it to all filenames.
+
+        if(runResult?.jobID?.shortID) {
+            allRawInputParameters.each { String k, Object o ->
+                BaseFile bf = o instanceof  BaseFile ? (BaseFile)o : null;
+                if(!bf) return;
+
+                String absolutePath = bf.getPath().getAbsolutePath()
+                if(absolutePath.contains('${RODDY_JOBID}')) {
+                    bf.setPath(new File(absolutePath.replace('${RODDY_JOBID}', runResult.jobID.shortID)));
+                }
+            }
+        }
+
         if (isArrayJob) {
             postProcessArrayJob(runResult)
         } else {

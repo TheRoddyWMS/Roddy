@@ -206,8 +206,8 @@ class BashConverter extends ConfigurationConverter {
 //
 //        String workflow = cfgPath[0]
 //
-//        Configuration cfg = loadConfiguration(cfgPath[0])
-//        if (!cfg) {
+//        Configuration configuration = loadConfiguration(cfgPath[0])
+//        if (!configuration) {
 //            throw new RuntimeException("Base configuration ${cfgPath[0]} is not available!")
 //        }
 //
@@ -218,23 +218,23 @@ class BashConverter extends ConfigurationConverter {
 //
 //        switch (depth) {
 //            case 1: L: {
-//                cfg.setConfigurationValues(cValues)
+//                configuration.setConfigurationValues(cValues)
 //                break;
 //            }
 //            case 2: L: {
 //                String project = cfgPath[1]
-//                if (!cfg.hasSubConfiguration(project)) {
-//                    cfg.addSubConfiguration(new Configuration(cfg, project, "", cValues, temp.getConfigurationValueBundles(), basePaths, toolEntries, null))
+//                if (!configuration.hasSubConfiguration(project)) {
+//                    configuration.addSubConfiguration(new Configuration(configuration, project, "", cValues, temp.getConfigurationValueBundles(), basePaths, toolEntries, null))
 //                }
-//                cfg.getSubConfiguration(project).setConfigurationValues(cValues)
+//                configuration.getSubConfiguration(project).setConfigurationValues(cValues)
 //                break;
 //            }
 //            case 3: L: {
 //                String project = cfgPath[1]
-//                if (!cfg.hasSubConfiguration(project)) {
-//                    cfg.addSubConfiguration(new Configuration(cfg, project, "", null, null, basePaths, toolEntries, null))
+//                if (!configuration.hasSubConfiguration(project)) {
+//                    configuration.addSubConfiguration(new Configuration(configuration, project, "", null, null, basePaths, toolEntries, null))
 //                }
-//                Configuration cfgPrj = cfg.getSubConfiguration(project)
+//                Configuration cfgPrj = configuration.getSubConfiguration(project)
 //                String variant = cfgPath[2]
 //                if (!cfgPrj.hasSubConfiguration(variant)) {
 //                    cfgPrj.addSubConfiguration(new Configuration(cfgPrj, variant, "", cValues, temp.getConfigurationValueBundles(), basePaths, toolEntries, null))
@@ -242,7 +242,7 @@ class BashConverter extends ConfigurationConverter {
 //                break;
 //            }
 //        }
-//        writeConfiguration(cfg)
+//        writeConfiguration(configuration)
         //        pipelineConfigurationFiles/$
     }
 
