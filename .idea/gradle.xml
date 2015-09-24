@@ -10,6 +10,11 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/RoddyCore" />
+            <option value="$PROJECT_DIR$/dist" />
+            <option value="$PROJECT_DIR$/dist/plugins" />
+            <option value="$PROJECT_DIR$/dist/plugins/DefaultPlugin" />
+            <option value="$PROJECT_DIR$/dist/plugins/PluginBase" />
           </set>
         </option>
         <option name="useAutoImport" value="true" />
