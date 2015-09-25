@@ -99,6 +99,11 @@ public class Roddy {
      */
     private static boolean displayShortWorkflowList;
 
+    /**
+     * For test reasons, the user can disable this value. Then Roddy won't call System.exit().
+     */
+    private static boolean exitAllowed = true;
+
     private static AppConfig featureToggleConfig;
 
     public static int getRepeatSubmissionAmount() {
@@ -409,6 +414,9 @@ public class Roddy {
     }
 
     private static void performCLIExit(RoddyStartupModes option) {
+        if(commandLineCall.getOptionList().contains(RoddyStartupOptions.disallowexit))
+            return;
+
         if (option == RoddyStartupModes.ui)
             return;
 

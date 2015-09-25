@@ -126,17 +126,19 @@ public class ConfigurationFactory {
                 if (readmeFile.exists())
                     icc.setReadmeFile(readmeFile);
 
-                if (availableConfigurations.containsKey(icc.name)) {
-                    throw new RuntimeException("Configuration with name ${icc.name} already exists! Names must be unique.")
-                }
+                if (!availableConfigurations.containsKey(icc.name)) {
 
-                availableConfigurations[icc.id] = icc;
-                availableConfigurationsByType.get(icc.type, []) << icc;
-                availableConfigurationsByTypeAndID.get(icc.type, [:])[icc.id] = icc;
-                for (InformationalConfigurationContent iccSub in icc.getAllSubContent()) {
-                    availableConfigurations[iccSub.id] = iccSub;
-                }
+                    availableConfigurations[icc.id] = icc;
+                    availableConfigurationsByType.get(icc.type, []) << icc;
+                    availableConfigurationsByTypeAndID.get(icc.type, [:])[icc.id] = icc;
+                    for (InformationalConfigurationContent iccSub in icc.getAllSubContent()) {
+                        availableConfigurations[iccSub.id] = iccSub;
+                    }
 
+                } else {
+                    if(availableConfigurations[icc.name].file != icc.file)
+                        throw new RuntimeException("Configuration with name ${icc.name} already exists! Names must be unique.")
+                }
             } catch (Exception ex) {
                 logger.severe("File ${it.absolutePath} cannot be loaded! Error in config file! ${ex.toString()}");
                 logger.severe(RoddyIOHelperMethods.getStackTraceAsString(ex));
@@ -743,7 +745,13 @@ public class ConfigurationFactory {
     private ConfigurationValue readConfigurationValue(NodeChild cvalueNode, Configuration config) {
         String key = cvalueNode.@name.text();
         String value = cvalueNode.@value.text();
-        String type = extractAttributeText(cvalueNode, "type");
+        String type = extractAttributeText(cvalueNode, "type", "string");
+
+        //OK, here comes some sort of valuable hack. In the past it was so, that sometimes people forgot to set
+        //any directory to "path". In case of the output directories, this was a bad thing! So we know about
+        //this specific type of variable and just set it to path at any time.
+        if(key.endsWith("OutputDirectory"))
+            type = "path";
         String description = extractAttributeText(cvalueNode, "description");
         return new ConfigurationValue(config, key, value, type, description);
     }

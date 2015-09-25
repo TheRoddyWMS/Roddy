@@ -177,7 +177,7 @@ public class Job {
             String newPath = replaceParametersInFilePath(bf, allRawInputParameters);
 
             //Explicitely query newPath for a proper value!
-            if(newPath == null) {
+            if (newPath == null) {
                 // Auto path!
                 int slotPosition = allRawInputParameters.keySet().asList().indexOf(k);
                 File autoPath = new File(context.getOutputDirectory(), [jobName, k, '${RODDY_JOBID}'].join("_") + ".auto")
@@ -217,7 +217,6 @@ public class Job {
         }
         return newParameters;
     }
-
 
 
     private File replaceParametersInFilePath(BaseFile bf, Map<String, Object> parameters) {
@@ -350,13 +349,13 @@ public class Job {
         runResult = new JobResult(context, cmd, cmd.getExecutionID(), runJob, isArrayJob, tool, parameters, parentFiles);
         //For auto filenames. Get the job id and push propagate it to all filenames.
 
-        if(runResult?.jobID?.shortID) {
+        if (runResult?.jobID?.shortID) {
             allRawInputParameters.each { String k, Object o ->
-                BaseFile bf = o instanceof  BaseFile ? (BaseFile)o : null;
-                if(!bf) return;
+                BaseFile bf = o instanceof BaseFile ? (BaseFile) o : null;
+                if (!bf) return;
 
                 String absolutePath = bf.getPath().getAbsolutePath()
-                if(absolutePath.contains('${RODDY_JOBID}')) {
+                if (absolutePath.contains('${RODDY_JOBID}')) {
                     bf.setPath(new File(absolutePath.replace('${RODDY_JOBID}', runResult.jobID.shortID)));
                 }
             }

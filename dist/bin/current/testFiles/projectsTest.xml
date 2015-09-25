@@ -1,16 +1,19 @@
-<configuration configurationType='project' name='testProject' description='Test project' runtimeServiceClass='de.dkfz.roddy.knowledge.examples.SimpleRuntimeService' imports="testProjectImportLvl0">
+<configuration configurationType='project' name='TestProjectForUnitTests' description='Like the name says' runtimeServiceClass='de.dkfz.roddy.knowledge.examples.SimpleRuntimeService' imports="testProjectImportLvl0">
     <availableAnalyses>
-        <analysis id='test' configuration='testAnalysis'/>
+        <analysis id='test' configuration='testAnalysis' useplugin="DefaultPlugin:current" />
         <analysis id="testnative" configuration="testAnalysisNative" />
     </availableAnalyses>
     <configurationvalues>
         <cvalue name='inputBaseDirectory' value='$USERHOME/temp/roddyLocalTest/testproject/vbp' type='path'/>
         <cvalue name='outputBaseDirectory' value='$USERHOME/temp/roddyLocalTest/testproject/rpp' type='path'/>
-        <cvalue name="analysisMethodNameOnOutput" value="genome" type="string"/>
-        <!--<cvalue name='outputAnalysisBaseDirectory' value='${outputBaseDirectory}/${pid}' type="path"/>-->
+        <!--<cvalue name="analysisMethodNameOnOutput" value="genome" type="string"/>-->
+        <cvalue name="outputAnalysisBaseDirectory" value="${outputBaseDirectory}/${pid}" type="path"/>
+        <!--<cvalue name="outputAnalysisBaseDirectory" value="${outputBaseDirectory}/${pid}" type="path"/>-->
+
 
         <cvalue name='isDebugConfiguration' value='true' type="boolean"/>
         <cvalue name='extractSamplesFromOutputFiles' value='true' type="boolean"/>
+        <!--<cvalue name="testOutputDirectory" value="${outputAnalysisBaseDirectory}/testfiles2" type="path"/>-->
 
         <cvalue name='debugOptionsUseVerboseOutput' value='true' type="boolean"/>
         <cvalue name='debugOptionsUseExecuteOutput' value='true' type="boolean"/>
@@ -27,8 +30,6 @@
             </availableAnalyses>
             <configurationvalues>
                 <cvalue name='outputAnalysisBaseDirectory' value='${outputBaseDirectory}/${pid}' type='path'/>
-                <!--<cvalue name="analysisMethodNameOnOutput" value="genome" type="string"/>-->
-                <!--<cvalue name='inputBaseDirectory' value='$USERHOME/temp/roddyLocalTest/testproject_00/vbp' type='path'/>-->
             </configurationvalues>
             <processingTools>
                 <tool name='testScript' value='testScriptSleep.sh' basepath='devel'>

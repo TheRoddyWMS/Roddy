@@ -403,7 +403,7 @@ public class RoddyCLIClient {
         }
     }
 
-    private static Analysis checkAndLoadAnalysis(CommandLineCall clc) {
+    public static Analysis checkAndLoadAnalysis(CommandLineCall clc) {
         if (clc.parameters.size() < 2) {
             logger.postAlwaysInfo("There were no dataset identifiers set, cannot run workflow."); return null;
         }
