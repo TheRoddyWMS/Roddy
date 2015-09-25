@@ -85,6 +85,8 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 == Changelist
 
+* Version update to 2.2.81
+
 - Fix: Output directories will now always be set to type "path". This will prevent errors for
   output files, if users forget to set this particular variables to the proper type.
 
