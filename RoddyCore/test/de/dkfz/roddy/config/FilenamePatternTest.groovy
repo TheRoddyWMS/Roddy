@@ -35,101 +35,24 @@ public class FilenamePatternTest {
 
     }
 //
-//    @Test
-//    public void testAssembleID() throws Exception {
-//        assert false;
+//    public static Tuple2 testCreateFile(ExecutionContext context) {
+//        File srcFilePath = new File("/tmp/srcFilePath.txt");
+//        TextFile srcFile = new TextFile(srcFilePath, context, null, null, new TestFileStageSettings());
+//        TextFile textFileWithDefaultName = new TextFile(srcFile);
+//
+//        TextFile textFileWithSelectionPattern = new TextFile(srcFile);
+//        textFileWithSelectionPattern.overrideFilenameUsingSelectionTag("selectionTag");
+//
+//        return new Tuple2(textFileWithDefaultName, textFileWithSelectionPattern);
 //    }
-//
-//    @Test
-//    public void testAssembleID1() throws Exception {
-//        assert false;
-//    }
-//
-//    @Test
-//    public void testAssembleID2() throws Exception {
-//        assert false;
-//    }
-//
-//    @Test
-//    public void testGetID() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testGetCls() throws Exception {
-//
-////    }
-//
-//    @Test
-//    public void testGetDerivedFromCls() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testGetCalledMethodsName() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testGetCalledMethodsClass() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testGetPattern() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testGetFileStage() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testDoesAcceptFileArrays() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testHasEnforcedArraySize() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testGetEnforcedArraySize() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testGetFilenamePatternDependency() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testHasSelectionTag() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testGetSelectionTag() throws Exception {
-//
-//    }
-
-    public static Tuple2 testCreateFile(ExecutionContext context) {
-        File srcFilePath = new File("/tmp/srcFilePath.txt");
-        TextFile srcFile = new TextFile(srcFilePath, context, null, null, new TestFileStageSettings());
-        TextFile textFileWithDefaultName = new TextFile(srcFile);
-
-        TextFile textFileWithSelectionPattern = new TextFile(srcFile);
-        textFileWithSelectionPattern.overrideFilenameUsingSelectionTag("selectionTag");
-
-        return new Tuple2(textFileWithDefaultName, textFileWithSelectionPattern);
-    }
 
     @Test
     /**
      * This test takes the test analysis and a test project and looks, if the files in the test project will all have valid paths.
      * In this case, the check will if a path is ! null and does not contain any ${ signs.
+     *
+     * Not checked are auto filenames
+     * Not checked are synthetic file classes.
      */
     public void testApply() throws Exception {
         // Normally, the folder should be set by Roddy itself, but in this case, Roddy has no knowledge about itself yet!
