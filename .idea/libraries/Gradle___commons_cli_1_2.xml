@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="Gradle: :commons-cli:1.2">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/dist/bin/current/lib/commons-cli-1.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <LIBRARY_FILE />
+    <SOURCES />
+  </library>
+</component>

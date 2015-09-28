@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module type="JAVA_MODULE" version="4">
+<module external.linked.project.id=":dist:plugins:PluginBase" external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="Roddy/Gradle.dist.plugins" external.system.module.version="unspecified" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="bash" name="BashSupport">
       <configuration>
@@ -7,16 +7,44 @@
       </configuration>
     </facet>
   </component>
-  <component name="NewModuleRootManager" inherit-compiler-output="true">
+  <component name="NewModuleRootManager" inherit-compiler-output="false">
+    <output url="file://$MODULE_DIR$/build/classes/main" />
+    <output-test url="file://$MODULE_DIR$/build/classes/test" />
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/dist/plugins/DefaultPlugin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/groovy" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/resources" type="java-test-resource" />
+      <excludeFolder url="file://$MODULE_DIR$/.gradle" />
+      <excludeFolder url="file://$MODULE_DIR$/build" />
     </content>
     <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="RoddyCore" />
-    <orderEntry type="library" name="bcpg-jdk15on-149" level="project" />
     <orderEntry type="module" module-name="RoddyCore" />
+    <orderEntry type="library" name="Gradle: :groovy-all:2.3.6-indy" level="project" />
+    <orderEntry type="library" name="Gradle: :bcpg-jdk15on:149" level="project" />
+    <orderEntry type="library" name="Gradle: :bcpkix-jdk15on:149" level="project" />
+    <orderEntry type="library" name="Gradle: :bcprov-ext-jdk15on:149" level="project" />
+    <orderEntry type="library" name="Gradle: :bcprov-jdk15on:149" level="project" />
+    <orderEntry type="library" name="Gradle: :commons-cli:1.2" level="project" />
+    <orderEntry type="library" name="Gradle: :commons-codec:1.8" level="project" />
+    <orderEntry type="library" name="Gradle: :commons-io:2.4" level="project" />
+    <orderEntry type="library" name="Gradle: :commons-logging:1.1.1" level="project" />
+    <orderEntry type="library" name="Gradle: :commons-logging-adapters:1.1.1" level="project" />
+    <orderEntry type="library" name="Gradle: :commons-logging-api:1.1.1" level="project" />
+    <orderEntry type="library" name="Gradle: :jzlib:" level="project" />
+    <orderEntry type="library" name="Gradle: :proxy-vole_20131209:" level="project" />
+    <orderEntry type="library" name="Gradle: :reflections:0.9.9-RC1" level="project" />
+    <orderEntry type="library" name="Gradle: :slf4j-api:1.7.2" level="project" />
+    <orderEntry type="library" name="Gradle: :slf4j-jcl:1.7.2" level="project" />
+    <orderEntry type="library" name="Gradle: :SSHJ:" level="project" />
+    <orderEntry type="library" name="Gradle: :xstream:1.4.5" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: junit:junit:4.11" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: :hamcrest-all:1.3" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: :spock-core:1.0-groovy-2.3" level="project" />
   </component>
 </module>
-

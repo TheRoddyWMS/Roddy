@@ -1,6 +1,7 @@
 package de.dkfz.roddy.config;
 
 /**
+ * @Michael: What is the difference between CFG_, RODDY_, CVALUE_ prefixes?
  */
 public class ConfigurationConstants {
     @ConfigurationConstant
@@ -49,4 +50,15 @@ public class ConfigurationConstants {
     public static final String CVALUE_PROCESS_OPTIONS_QUERY_ENV = "processOptionsQueryEnv";
     @ConfigurationConstant
     public static final String CVALUE_PROCESS_OPTIONS_QUERY_ID = "processOptionsQueryID";
+
+    public static final String CFG_ALLOW_ACCESS_RIGHTS_MODIFICATION = "outputAllowAccessRightsModification";
+    public static final String CFG_OUTPUT_ACCESS_RIGHTS_FOR_DIRECTORIES = "outputAccessRightsForDirectories";
+    public static final String CFG_OUTPUT_ACCESS_RIGHTS = "outputAccessRights";
+    public static final String CFG_OUTPUT_FILE_GROUP = "outputFileGroup";
+
+    public static final String CFG_PREVENT_JOB_EXECUTION = "preventJobExecution";
+    public static final String CFG_USE_CENTRAL_ANALYSIS_ARCHIVE = "useCentralAnalysisArchive";
+    public static final String CFG_OUTPUT_UMASK = "outputUMask";
+
+
 }

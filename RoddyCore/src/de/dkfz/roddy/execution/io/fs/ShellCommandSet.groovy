@@ -5,7 +5,7 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 /**
  */
 @groovy.transform.CompileStatic
-public abstract class FileSystemCommandSet {
+public abstract class ShellCommandSet {
 
     public abstract String getFileExistsTestCommand(File f)
 
@@ -17,7 +17,7 @@ public abstract class FileSystemCommandSet {
 
     public abstract String getExecutabilityTestCommand(File f)
 
-    public abstract String getReadibilityTestPositiveResult();
+    public abstract String getReadabilityTestPositiveResult();
 
     public abstract String getUserDirectoryCommand();
 

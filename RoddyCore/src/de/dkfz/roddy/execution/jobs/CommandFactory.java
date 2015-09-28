@@ -5,8 +5,7 @@ import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.config.ToolEntry;
 import de.dkfz.roddy.core.ExecutionContext;
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
-import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommand;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommandFactory;
 import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.knowledge.files.FileGroup;
@@ -199,7 +198,7 @@ public abstract class CommandFactory<C extends Command> {
             code = "C";
         else if (job.getJobState() == JobState.FAILED)
             code = "E";
-        FileSystemInfoProvider.getInstance().appendLineToFile(true, currentContext.getRuntimeService().getNameOfJobStateLogFile(currentContext), String.format("%s:%s:%s", job.getJobID(), code, millis), false);
+        FileSystemAccessProvider.getInstance().appendLineToFile(true, currentContext.getRuntimeService().getNameOfJobStateLogFile(currentContext), String.format("%s:%s:%s", job.getJobID(), code, millis), false);
     }
 
     public String getLogFileName(Job p) {

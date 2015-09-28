@@ -4,9 +4,11 @@ import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
+import de.dkfz.roddy.config.ConfigurationFactory
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.ExecutionService
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.execution.io.fs.BashCommandSet
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.ProcessingCommands
@@ -226,8 +228,7 @@ public class PBSCommand extends Command implements Serializable {
         if (groupList != EMPTY && groupList != "UNDEFINED") {
             qsubCall << getGroupListString(groupList);
         }
-        String outputUMask = configuration.getConfigurationValues().getString("outputUMask", "007");
-        qsubCall << getUmaskString(outputUMask);
+        qsubCall << getUmaskString(executionContext.getUMask());
 
         for (ProcessingCommands pcmd in job.getListOfProcessingCommand()) {
             if (!(pcmd instanceof PBSResourceProcessingCommand)) continue;
@@ -272,7 +273,7 @@ public class PBSCommand extends Command implements Serializable {
                         allLines << "export " << line << "\n";
                 }
                 if (getExecutionContext().getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
-                    FileSystemInfoProvider.getInstance().writeTextFile(parmFile, allLines.toString(), executionContext);
+                    FileSystemAccessProvider.getInstance().writeTextFile(parmFile, allLines.toString(), executionContext);
             } else {
                 qsubCall << StringConstants.COMMA << allParms.join(StringConstants.COMMA);
             }

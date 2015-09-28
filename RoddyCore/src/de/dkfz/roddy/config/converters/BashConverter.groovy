@@ -3,6 +3,7 @@ package de.dkfz.roddy.config.converters
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration
+import de.dkfz.roddy.config.ConfigurationConstant
 import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationFactory
 import de.dkfz.roddy.config.ConfigurationValue
@@ -10,7 +11,7 @@ import de.dkfz.roddy.config.ConfigurationValueBundle
 import de.dkfz.roddy.config.InformationalConfigurationContent
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
 import groovy.transform.CompileStatic
 
@@ -26,10 +27,9 @@ class BashConverter extends ConfigurationConverter {
     //TODO Use a pipeline converter interface with methods like "convertCValues, convertCValueBundles, convertTools"
     @Override
     String convert(ExecutionContext context, Configuration cfg) {
-        final FileSystemInfoProvider provider = FileSystemInfoProvider.getInstance();
+        final FileSystemAccessProvider provider = FileSystemAccessProvider.getInstance();
         final String targetSystemNewLineString = provider.getNewLineString();
         final String separator = Constants.ENV_LINESEPARATOR;
-
 
         def values = cfg.getConfigurationValues().getAllValuesAsList();
         Map<String, ConfigurationValue> listOfUnsortedValues = [:]
@@ -92,6 +92,22 @@ class BashConverter extends ConfigurationConverter {
         StringBuilder text = new StringBuilder();
         text << "#!/bin/bash" << separator; //Add a shebang line
 
+        //TODO The output umask and the group should be taken from a central location.
+        String umask = context.getUMask();
+        String outputFileGroup = context.getOutputGroupString();
+        boolean processSetUserGroup = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, true);
+        boolean processSetUserMask = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERMASK, true);
+        text << separator << 'if [ -z "${PS1-}" ]; then' << separator << "\t echo non interactive process!" << separator << "else" << separator << "\t echo interactive process" << separator
+
+        /* The very first thing to be done is to switch the primary Unix group using 'newgrp -'. The '-' is
+           necessary because some programs otherwise stick to the old primary group before the newgrp (e.g. mkdir -p for
+           parent directories! install!). Note that 'newgrp -' completely re-initializes the environment, so if this
+           command would not be at the start, all later variables would be lost. */
+        //TODO Change to FileSystemAccessProvider!
+        if (processSetUserGroup) text << separator << "\t newgrp - " << outputFileGroup;
+        if (processSetUserMask) text << separator << "\t umask " << umask;
+        text << separator << "fi" << separator << separator;
+
         for (ConfigurationValue cv : listOfSortedValues.values()) {
             boolean isValidationRule = cv.id.contains("cfgValidationRule");
 
@@ -123,24 +139,18 @@ class BashConverter extends ConfigurationConverter {
             text << valueName << '="' << cfg.getProcessingToolPath(context, id) << '"' << separator;
         }
 
-        //TODO The output umask and the group should be taken from a central location.
-        String umask = cfg.getConfigurationValues().getString(ConfigurationFactory.XMLTAG_OUTPUT_UMASK, "007");
-        String outputFileGroup = cfg.getConfigurationValues().getString(ConfigurationFactory.XMLTAG_OUTPUT_FILE_GROUP);
-
         boolean debugPipefail = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.DEBUG_OPTIONS_USE_PIPEFAIL, true);
         boolean debugVerbose = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.DEBUG_OPTIONS_USE_VERBOSE_OUTPUT, true);
         boolean debugXecute = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.DEBUG_OPTIONS_USE_EXECUTE_OUTPUT, true);
         boolean debugUndefVar = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.DEBUG_OPTIONS_USE_UNDEFINED_VARIABLE_BREAK, false);
         boolean debugExitOnError = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.DEBUG_OPTIONS_USE_EXIT_ON_ERROR, false);
         boolean debugParseScripts = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.DEBUG_OPTIONS_PARSE_SCRIPTS, false);
-        boolean processSetUserGroup = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, true);
-        boolean processSetUserMask = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERMASK, true);
         boolean processQueryEnv = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_QUERY_ENV, false);
         boolean processQueryID = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_QUERY_ID, false);
 
         text << separator << separator
 
-        //TODO Convert those following calls to calls to the file system info provider. Otherwise it won't possibly work on different setups.
+        //TODO Convert those following calls to calls to the CommandSet. Otherwise it won't possibly work on different setups.
         //This is very system specific.
         if (debugPipefail) text << separator << "set -o pipefail";
         if (debugVerbose) text << separator << "set -v";
@@ -148,12 +158,6 @@ class BashConverter extends ConfigurationConverter {
         if (debugUndefVar) text << separator << "set -u";
         if (debugExitOnError) text << separator << "set -e";
         if (debugParseScripts) text << separator << "set -n";
-
-        text << separator << 'if [ -z "${PS1-}" ]; then' << separator << "\t echo non interactive process!" << separator << "else" << separator << "\t echo interactive process" << separator
-        //TODO Change to filesysteminfoprovider!
-        if (processSetUserMask) text << separator << 'umask ' << umask;
-        if (processSetUserGroup) text << separator << 'newgrp ' << outputFileGroup;
-        text << separator << "fi";
 
         if (processQueryID) text << separator << "id";
         if (processQueryEnv) text << separator << "env";
@@ -184,7 +188,7 @@ class BashConverter extends ConfigurationConverter {
             text << "${cv.id}=";
             //TODO Important, this is a serious hack! It must be removed soon
             if (tmp.startsWith("bundledFiles/"))
-                text << Roddy.getApplicationDirectory().getAbsolutePath() << FileSystemInfoProvider.getInstance().getPathSeparator();
+                text << Roddy.getApplicationDirectory().getAbsolutePath() << FileSystemAccessProvider.getInstance().getPathSeparator();
             if(cv.isQuoteOnConversionSet()) text << "'";
             text << tmp;
             if(cv.isQuoteOnConversionSet()) text << "'";

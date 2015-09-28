@@ -1,8 +1,6 @@
 package de.dkfz.roddy.knowledge.nativeworkflows;
 
-import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.config.AnalysisConfiguration;
-import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.config.ContextConfiguration;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.ExecutionContextError;
@@ -10,12 +8,10 @@ import de.dkfz.roddy.core.ExecutionContextLevel;
 import de.dkfz.roddy.core.Workflow;
 import de.dkfz.roddy.execution.io.ExecutionResult;
 import de.dkfz.roddy.execution.io.ExecutionService;
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoObject;
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.Command;
 import de.dkfz.roddy.execution.jobs.CommandFactory;
 import de.dkfz.roddy.execution.jobs.Job;
-import de.dkfz.roddy.execution.jobs.JobState;
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand;
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutedCommandFactory;
 import de.dkfz.roddy.plugins.LibrariesFactory;
@@ -94,7 +90,7 @@ public class NativeWorkflow extends Workflow {
 
         ExecutionResult execute = ExecutionService.getInstance().execute(finalCommand);
         //Get the calls file in the temp directory.
-        String[] calls = FileSystemInfoProvider.getInstance().loadTextFile(new File(context.getTemporaryDirectory(), "calls"));
+        String[] calls = FileSystemAccessProvider.getInstance().loadTextFile(new File(context.getTemporaryDirectory(), "calls"));
         Map<String, GenericJobInfo> callsByID = new LinkedHashMap<>();
         Map<String, String> fakeIDWithRealID = new LinkedHashMap<>();
         for (String call : calls) {

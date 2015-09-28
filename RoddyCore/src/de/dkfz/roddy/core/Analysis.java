@@ -3,8 +3,9 @@ package de.dkfz.roddy.core;
 import de.dkfz.roddy.AvailableFeatureToggles;
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.execution.io.ExecutionService;
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.*;
+import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.config.*;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -83,7 +84,7 @@ public class Analysis {
 
     public String getUsername() {
         try {
-            return FileSystemInfoProvider.getInstance().callWhoAmI();
+            return FileSystemAccessProvider.getInstance().callWhoAmI();
         } catch (Exception e) {
             return "UNKNOWN";
         }
@@ -92,12 +93,12 @@ public class Analysis {
     public String getUsergroup() {
         try {
             //Get the default value.
-            String groupID = FileSystemInfoProvider.getInstance().getMyGroup();
+            String groupID = FileSystemAccessProvider.getInstance().getMyGroup();
 
             //If it is configured, get the group id from the config.
             boolean processSetUserGroup = getConfiguration().getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, true);
             if (processSetUserGroup) {
-                groupID = getConfiguration().getConfigurationValues().getString(ConfigurationFactory.XMLTAG_OUTPUT_FILE_GROUP, groupID);
+                groupID = getConfiguration().getConfigurationValues().getString(ConfigurationConstants.CFG_OUTPUT_FILE_GROUP, groupID);
             }
             return groupID;
         } catch (Exception e) {
@@ -212,7 +213,7 @@ public class Analysis {
         for (DataSet ds : selectedDatasets) {
             if (level.isOrWasAllowedToSubmitJobs && !checkJobStartability(ds)) continue;
 
-            ExecutionContext ec = new ExecutionContext(FileSystemInfoProvider.getInstance().callWhoAmI(), this, ds, level, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null, creationCheckPoint);
+            ExecutionContext ec = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, level, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null, creationCheckPoint);
 
             executeRun(ec);
             runs.add(ec);
@@ -234,7 +235,7 @@ public class Analysis {
             DataSet ds = oldContext.getDataSet();
             if (!test && !checkJobStartability(ds)) continue;
 
-            ExecutionContext context = new ExecutionContext(FileSystemInfoProvider.getInstance().callWhoAmI(), this, oldContext.getDataSet(), test ? ExecutionContextLevel.TESTRERUN : ExecutionContextLevel.RERUN, oldContext.getOutputDirectory(), oldContext.getInputDirectory(), null, creationCheckPoint);
+            ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, oldContext.getDataSet(), test ? ExecutionContextLevel.TESTRERUN : ExecutionContextLevel.RERUN, oldContext.getOutputDirectory(), oldContext.getInputDirectory(), null, creationCheckPoint);
 
             context.getAllFilesInRun().addAll(oldContext.getAllFilesInRun());
             executeRun(context);
@@ -325,7 +326,7 @@ public class Analysis {
         for (DataSet ds : getListOfDataSets()) {
             if (!new WildcardFileFilter(pidFilter).accept(ds.getInputFolderForAnalysis(this)))
                 continue;
-            final ExecutionContext context = new ExecutionContext(FileSystemInfoProvider.getInstance().callWhoAmI(), this, ds, executionContextLevel, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null, creationCheckPoint);
+            final ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, executionContextLevel, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null, creationCheckPoint);
             runDeferredContext(context);
             return context;
         }
@@ -386,14 +387,14 @@ public class Analysis {
                 } finally {
                     if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) { //Clean up
                         //Query file validity of all files
-                        FileSystemInfoProvider.getInstance().validateAllFilesInContext(context);
+                        FileSystemAccessProvider.getInstance().validateAllFilesInContext(context);
                     } else {
 
                         //First, check if there were any executed jobs. If not, we can safely delete the the context directory.
                         if (context.getStartedJobs().size() == 0) {
                             logger.postAlwaysInfo("There were no started jobs, the execution directory will be removed.");
                             if (context.getExecutionDirectory().getName().contains(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX))
-                                FileSystemInfoProvider.getInstance().removeDirectory(context.getExecutionDirectory());
+                                FileSystemAccessProvider.getInstance().removeDirectory(context.getExecutionDirectory());
                             else {
                                 throw new RuntimeException("A wrong path would be deleted: " + context.getExecutionDirectory().getAbsolutePath());
                             }
@@ -405,26 +406,33 @@ public class Analysis {
             }
         } catch (Exception e) {
             context.addErrorEntry(ExecutionContextError.EXECUTION_UNCATCHEDERROR.expand(e));
-            logger.log(Level.SEVERE, e.toString());
-            logger.log(Level.SEVERE, RoddyIOHelperMethods.getStackTraceAsString(e));
-        }
-
-        // Look up errors when jobs are executed directly and when there were any started jobs.
-        if (context.getStartedJobs().size() > 0) {
-            for (Job job : context.getExecutedJobs()) {
-                if (job.getJobState() == JobState.FAILED)
-                    context.addErrorEntry(ExecutionContextError.EXECUTION_JOBFAILED.expand("A job execution failed "));
+            logger.postAlwaysInfo("An exception occurred: '" + e.getLocalizedMessage() + "'");
+            if (logger.isVerbosityMedium()) {
+                logger.log(Level.SEVERE, e.toString());
+                logger.log(Level.SEVERE, RoddyIOHelperMethods.getStackTraceAsString(e));
+            } else {
+                logger.postAlwaysInfo("Set --verbositylevel >=" + LoggerWrapper.VERBOSITY_WARNING + " or higher to see stack trace.");
             }
-        }
+        } finally {
 
-        // Print out context errors.
-        if (context.getErrors().size() > 0) {
-            StringBuilder messages = new StringBuilder();
-            messages.append("\nThere were errors for the execution context for dataset " + datasetID);
-            for (ExecutionContextError executionContextError : context.getErrors()) {
-                messages.append("\n\t* ").append(executionContextError.toString());
+            // Look up errors when jobs are executed directly and when there were any started jobs.
+            if (context.getStartedJobs().size() > 0) {
+                for (Job job : context.getExecutedJobs()) {
+                    if (job.getJobState() == JobState.FAILED)
+                        context.addErrorEntry(ExecutionContextError.EXECUTION_JOBFAILED.expand("A job execution failed "));
+                }
             }
-            logger.postAlwaysInfo(messages.toString());
+
+            // Print out context errors.
+            if (context.getErrors().size() > 0) {
+                StringBuilder messages = new StringBuilder();
+                messages.append("\nThere were errors for the execution context for dataset " + datasetID);
+                for (ExecutionContextError executionContextError : context.getErrors()) {
+                    messages.append("\n\t* ").append(executionContextError.toString());
+                }
+                logger.postAlwaysInfo(messages.toString());
+            }
+
         }
     }
 
@@ -443,13 +451,14 @@ public class Analysis {
             // Call a custom cleanup shell script.
             if (((AnalysisConfiguration) getConfiguration()).hasCleanupScript()) {
                 //TODO Think hard if this could be generified and simplified! This is also used in other places in a similar way right?
-                ExecutionContext context = new ExecutionContext(FileSystemInfoProvider.getInstance().callWhoAmI(), this, ds, ExecutionContextLevel.CLEANUP, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null);
+                ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, ExecutionContextLevel.CLEANUP, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null);
                 Job cleanupJob = new Job(context, "cleanup", ((AnalysisConfiguration) getConfiguration()).getCleanupScript(), null);
 //                Command cleanupCmd = CommandFactory.getInstance().createCommand(cleanupJob, cleanupJob.getToolPath(), new LinkedList<>());
                 try {
                     ExecutionService.getInstance().writeFilesForExecution(context);
                     cleanupJob.run();
                 } catch (Exception ex) {
+                    // Philip: We don't want to see any cleanup errors?
                 } finally {
                     ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context);
                 }

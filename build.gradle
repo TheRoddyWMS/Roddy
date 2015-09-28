@@ -1,0 +1,118 @@
+/** Gradle file for Roddy */
+
+
+allprojects {
+
+  apply plugin: 'java'
+  apply plugin: 'groovy'
+  apply plugin: 'idea'
+
+  // Java settings
+  ext.langLevel = 1.8
+  sourceCompatibility = ext.langLevel
+  targetCompatibility = ext.langLevel
+  compileJava.options.fork = true
+  compileJava.options.forkOptions.executable = "${projectDir}/dist/runtimeDevel/jdk"
+
+  repositories {
+    // Manage a local copy of the required libraries.
+    flatDir dirs: ["${rootProject.projectDir}/dist/bin/current/lib/",
+                   "${rootProject.projectDir}/dist/runtimeDevel/groovy/lib",
+                   "${rootProject.projectDir}/dist/runtimeDevel/jdk/lib"]
+  }
+
+  dependencies {
+    compile ':groovy-all:2.3.6-indy'
+
+    // Roddy dependencies
+    compile ':bcpg-jdk15on:149'
+    compile ':bcpkix-jdk15on:149'
+    compile ':bcprov-ext-jdk15on:149'
+    compile ':bcprov-jdk15on:149'
+    compile ':commons-cli:1.2'
+    compile ':commons-codec:1.8'
+    compile ':commons-io:2.4'
+    compile ':commons-logging:1.1.1'
+    compile ':commons-logging-adapters:1.1.1'
+    compile ':commons-logging-api:1.1.1'
+    compile ':jzlib:'
+    compile name: 'proxy-vole_20131209'
+    compile ':reflections:0.9.9-RC1'
+    compile ':slf4j-api:1.7.2'
+    compile ':slf4j-jcl:1.7.2'
+    compile ':SSHJ:'
+    compile ':xstream:1.4.5'
+
+    // Testing libraries
+    testCompile 'junit:junit:4.11'
+    testCompile ':hamcrest-all:1.3'
+    testCompile ':spock-core:1.0-groovy-2.3'
+  }
+}
+
+
+// Subprojects
+project(":RoddyCore") {
+  // The project layout is different from the default of Gradle. It's a mixed Java and Groovy project. The Groovy plugin
+  // can handle both.
+  // TODO Clean up the directory structure to get three separate [sub]project directories.
+  sourceSets {
+    main {
+      groovy {
+        srcDirs = ["${projectDir}/src"]
+      }
+    }
+    test {
+      groovy {
+        srcDirs = ["${projectDir}/test"]
+      }
+    }
+  }
+}
+
+project(":dist:plugins:PluginBase") {
+  sourceSets {
+    main {
+      groovy {
+        srcDirs = ["${projectDir}/dist/plugins/DefaultPlugin"]
+      }
+    }
+  }
+
+  dependencies {
+    compile project(":RoddyCore")
+  }
+}
+
+project(":dist:plugins:DefaultPlugin") {
+  sourceSets {
+    main {
+      groovy {
+        srcDirs = ["${projectDir}/dist/plugins/PluginBase"]
+      }
+    }
+  }
+  dependencies {
+    compile project(":RoddyCore")
+    compile project(":dist:plugins:PluginBase")
+  }
+}
+
+// Global test configuration
+test {
+  maxParallelForks = 5
+  forkEvery = 50
+}
+
+// IntelliJ IDEA
+idea {
+  project {
+    jdkName = langLevel
+    languageLevel = langLevel
+  }
+}
+
+// Gradle Wrapper
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.7'
+}

@@ -10,9 +10,8 @@ import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.execution.jobs.CommandFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
-import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import net.schmizz.sshj.SSHClient
@@ -357,7 +356,9 @@ class SSHExecutionService extends RemoteExecutionService {
                     logger.severe("Command not executed correctly, return code: " + exitStatus +
                                     (cmd.getExitSignal()
                                             ? " Caught signal is " + cmd.getExitSignal().name()
-                                            : "\n\tCommand Str. " + RoddyIOHelperMethods.truncateCommand(command)));
+                                            : "\n\tCommand Str. " + RoddyIOHelperMethods.truncateCommand(command,
+                                                Roddy.getApplicationProperty("commandLogTruncate", '80').toInteger())));
+                    // IOUtils.readFully(cmd.getErrorStream()).toString();
                 }
             } else {
                 content.readLines().each { String line -> output << "" + line }
@@ -371,7 +372,7 @@ class SSHExecutionService extends RemoteExecutionService {
             @Override
             void run() {
                 long id = fireExecutionStartedEvent(command)
-                //Append a newgrp to each command, so that all command context in the proper group context.
+                //Append a newgrp (Philip: better "newgrp -"!) to each command, so that all command context in the proper group context.
                 set.acquire();
                 Session session = sshClient.startSession();
                 Session.Command cmd;
@@ -420,8 +421,9 @@ class SSHExecutionService extends RemoteExecutionService {
                 if (run.getExecutionContextLevel() == ExecutionContextLevel.TESTRERUN) {
                     String pid = String.format("0x%08X", System.nanoTime());
                     res = new ExecutionResult(true, 0, [pid], pid);
-                } else
+                } else {
                     res = execute(cmdString, waitFor);
+                }
                 String exID = "none";
                 if (res.successful) {
                     exID = CommandFactory.getInstance().parseJobID(res.resultLines[0]);
@@ -449,19 +451,21 @@ class SSHExecutionService extends RemoteExecutionService {
     }
 
     @Override
-    void copyFile(File _in, File _out) {
-        copyFile(_in, _out, 0);
+    boolean copyFile(File _in, File _out) {
+        return copyFile(_in, _out, 0);
     }
 
-    void copyFile(File _in, File _out, int retries) {
+    boolean copyFile(File _in, File _out, int retries) {
         boolean retry = false;
         boolean fileCopy = _in.isFile();
         String copyType = fileCopy ? "file" : "directory";
 
         long id = fireExecutionStartedEvent("")
         SSHPoolConnectionSet service = waitForAndAcquireService()
+        boolean result
         try {
             service.sftpClient.getFileTransfer().upload(_in.absolutePath, _out.absolutePath);
+            result = true
         } catch (SFTPException ex) {
             if (retries < 3) {
                 retry = true;
@@ -478,30 +482,31 @@ class SSHExecutionService extends RemoteExecutionService {
         }
         if (retry) {
             logger.warning("Catched no such file exception, attempting to retry copyFile ${_in.absolutePath} to ${_out.absolutePath}")
-            copyFile(_in, _out, retries + 1);
+            result = copyFile(_in, _out, retries + 1);
         }
+        return result
     }
 
     @Override
-    void copyDirectory(File _in, File _out) {
-        copyDirectory(_in, _out, 0);
+    boolean copyDirectory(File _in, File _out) {
+        return copyDirectory(_in, _out, 0);
     }
 
-    void copyDirectory(File _in, File _out, int retries) {
+    boolean copyDirectory(File _in, File _out, int retries) {
         File tempZip = File.createTempFile("roddy_", ".zip");
         tempZip.deleteOnExit();
         tempZip.delete();
         File roddyPath = _in.getParentFile().getAbsoluteFile();
 
+        // TODO Get the following from the CommandSet
         GString gString = "tar -C ${roddyPath.getAbsolutePath()} -zcvf ${tempZip.getAbsolutePath()} ${_in.getName()}"
         Process process = gString.execute()
-        process.waitFor();
-
-        copyFile(tempZip, _out, retries);
         String outPath = "${_out.getAbsolutePath()}/${tempZip.getName()}";
-        execute("tar -C ${_out.getAbsolutePath()} -xzvf ${outPath} && rm ${outPath}", true);
-
+        boolean result = process.waitFor() &&
+                copyFile(tempZip, _out, retries) &&
+                execute("tar -C ${_out.getAbsolutePath()} -xzvf ${outPath} && rm ${outPath}", true);
         tempZip.delete();
+        return result
     }
 
     @Override
@@ -512,8 +517,9 @@ class SSHExecutionService extends RemoteExecutionService {
         SSHPoolConnectionSet service = waitForAndAcquireService()
         boolean result = true;
         try {
-            FileSystemInfoProvider fp = FileSystemInfoProvider.getInstance();
-            if(rightsStr) service.sftpClient.chmod(file.getAbsolutePath(), convertToAccessRights(rightsStr));
+            FileSystemAccessProvider fp = FileSystemAccessProvider.getInstance();
+            if(rightsStr) service.sftpClient.chmod(file.getAbsolutePath(),
+                                                   RoddyIOHelperMethods.symbolicToNumericAccessRights(rightsStr));
             if(groupID) service.sftpClient.chgrp(file.getAbsolutePath(), fp.getGroupID(groupID));
         } catch (Exception ex) {
             logger.severe("Could not set access attributes for ${file.absolutePath}")
@@ -526,40 +532,8 @@ class SSHExecutionService extends RemoteExecutionService {
         return result;
     }
 
-    /**
-     * FIXME Method is currently not setting the access rights relative but absolute.
-     * Also it is not possible to set absolute rights with = (u=rwx)
-     * @param rightsStr
-     * @return
-     */
-    private int convertToAccessRights(String rightsStr) {
-        Map<String, Integer> rights = [u: 07, g: 00, o: 00];
-        String[] split = rightsStr.split(SPLIT_COMMA);
-        for (String s in split) {
-            if (s.contains(StringConstants.PLUS)) {
-                String[] _s = s.split(StringConstants.SPLIT_PLUS);
-                int number = _s[1].contains("r") ? 04 : 0;
-                number += _s[1].contains("w") ? 02 : 0;
-                number += _s[1].contains("x") ? 01 : 0;
-                rights[_s[0]] = number;
-            } else {
-                //Possibly contains a -
-                String[] _s = s.split(StringConstants.SPLIT_MINUS);
-
-                //FIXME By default the value is always set to all and rights are subtracted.
-                int number = 07 - (_s[1].contains("r") ? 04 : 0);
-                number -= _s[1].contains("w") ? 02 : 0;
-                number -= _s[1].contains("x") ? 01 : 0;
-                rights[_s[0]] = number;
-            }
-        }
-
-        int rightsNo = rights["u"] * 0100 + rights["g"] * 010 + rights["o"];
-        rightsNo
-    }
-
     @Override
-    void createFileWithRights(boolean atomic, File file, String accessRights, String groupID, boolean blocking) {
+    public boolean createFileWithRights(boolean atomic, File file, String accessRights, String groupID, boolean blocking) {
         long id = fireExecutionStartedEvent("")
         SSHPoolConnectionSet service = waitForAndAcquireService()
         try {
@@ -568,57 +542,65 @@ class SSHExecutionService extends RemoteExecutionService {
             set.add(OpenMode.WRITE);
             final RemoteFile f = service.sftpClient.open(file.getAbsolutePath(), set);
             f.close();
-            FileSystemInfoProvider fp = FileSystemInfoProvider.getInstance();
-            if(accessRights)
-                service.sftpClient.chmod(file.getAbsolutePath(), convertToAccessRights(accessRights));
-            if(groupID)
+            FileSystemAccessProvider fp = FileSystemAccessProvider.getInstance();
+            if (accessRights)
+                service.sftpClient.chmod(file.getAbsolutePath(), RoddyIOHelperMethods.symbolicToNumericAccessRights(accessRights));
+            if (groupID)
                 service.sftpClient.chgrp(file.getAbsolutePath(), fp.getGroupID(groupID));
         } finally {
             service.release();
             measureStop(id, "touch [sshclient:${service.id}]");
             fireExecutionStoppedEvent(id, "");
         }
-        modifyAccessRights(file, accessRights, groupID);
+        return modifyAccessRights(file, accessRights, groupID);
     }
 
     @Override
-    void removeDirectory(File directory) {
+    boolean removeDirectory(File directory) {
         SSHPoolConnectionSet service = waitForAndAcquireService()
+        boolean result = true
         try {
             waitForService().sftpClient.rmdir(directory.absolutePath)
         } catch (Exception ex) {
-            println(ex);
+            logger.warning("Could not remove directory ${directory.absolutePath}")
+            result = false
         } finally {
             service.release();
         }
+        return result
     }
 
     @Override
-    void removeFile(File file) {
+    boolean removeFile(File file) {
         SSHPoolConnectionSet service = waitForAndAcquireService()
+        boolean result = true
         try {
             waitForService().sftpClient.rm(file.absolutePath)
+            /* Philip: Not removing a file with e.g. patient data is more severe than not removing a directory. Therefore,
+             *         propagate the error. */
         } finally {
             service.release();
         }
+        return result
     }
 
     @Override
-    void appendLinesToFile(boolean atomic, File file, List<String> lines, boolean blocking) {
-        String text = lines.join(FileSystemInfoProvider.getInstance().getNewLineString());
+    boolean appendLinesToFile(boolean atomic, File file, List<String> lines, boolean blocking) {
+        String text = lines.join(FileSystemAccessProvider.getInstance().getNewLineString());
         appendLineToFile(atomic, file, text, blocking);
     }
 
     @Override
-    void appendLineToFile(boolean atomic, File file, String line, boolean blocking) {
+    boolean appendLineToFile(boolean atomic, File file, String line, boolean blocking) {
         long id = fireExecutionStartedEvent("")
         SSHPoolConnectionSet service = waitForAndAcquireService()
+        boolean result
         try {
             Set<OpenMode> set = new HashSet<>();
             set.add(OpenMode.APPEND);
             set.add(OpenMode.CREAT);
             set.add(OpenMode.WRITE);
-            String sep = FileSystemInfoProvider.getInstance().getNewLineString();
+            String sep = FileSystemAccessProvider.getInstance().getNewLineString();
             String lineNew = line + (!line.endsWith(sep) ? sep : "");
             final RemoteFile f = service.sftpClient.open(file.getAbsolutePath(), set);
             f.write(f.length(), lineNew.getBytes(), 0, lineNew.length());
@@ -628,26 +610,29 @@ class SSHExecutionService extends RemoteExecutionService {
             measureStop(id, "append to file [sshclient:${service.id}]");
             fireExecutionStoppedEvent(id, "");
         }
+        return result
     }
 
     private SSHPoolConnectionSet waitForAndAcquireService() {
         final service = waitForService();
         service.acquire();
-        service
+        return service
     }
 
     @Override
-    void writeTextFile(File file, String text) {
-        copyFile(FileSystemInfoProvider.writeTextToTempFile(text), file);
+    boolean writeTextFile(File file, String text) {
+        return copyFile(FileSystemAccessProvider.writeTextToTempFile(text), file);
     }
 
     @Override
-    void writeBinaryFile(File file, Serializable serializable) {
+    boolean writeBinaryFile(File file, Serializable serializable) {
+        boolean result
         try {
-            copyFile(FileSystemInfoProvider.serializeObjectToTempFile(serializable), file);
+            result = copyFile(FileSystemAccessProvider.serializeObjectToTempFile(serializable), file);
         } catch (Exception ex) {
             logger.warning("Could not write or serialize object ${serializable.toString()} to file ${file.absolutePath}. " + ex.toString());
         }
+        return result
     }
 
     private final Map<File, File> tempFileByFile = new LinkedHashMap<>();
@@ -681,7 +666,7 @@ class SSHExecutionService extends RemoteExecutionService {
                     measureStop(t, "transfer file [sshclient:${service.id}] ${file.getAbsolutePath()} from remote");
                     lock.lock();
                     try {
-                        if (FileSystemInfoProvider.getInstance().isCachingAllowed(file))
+                        if (FileSystemAccessProvider.getInstance().isCachingAllowed(file))
                             _fileToTempFileMap.put(file, tempFile);
                     } finally {
                         lock.unlock();
@@ -703,7 +688,7 @@ class SSHExecutionService extends RemoteExecutionService {
     @Override
     Object loadBinaryFile(File file) {
         try {
-            return FileSystemInfoProvider.deserializeObjectFromFile(transferFileFromRemoteToLocal(file, "roddy_sshserver_down", ".tmp"));
+            return FileSystemAccessProvider.deserializeObjectFromFile(transferFileFromRemoteToLocal(file, "roddy_sshserver_down", ".tmp"));
         } catch (Exception ex) {
             logger.warning("Could not read file ${file.absolutePath}");
             return null;
@@ -755,8 +740,14 @@ class SSHExecutionService extends RemoteExecutionService {
             final List<RemoteResourceInfo> ls;
             service.acquire();
             try {
-                // TODO Check first, if the directory is readable and accessible. If not, throw an error.
-                ls = service.sftpClient.ls(file.absolutePath);
+                File parentDir = file.getParentFile()
+                if (directoryExists(parentDir) &&
+                        isFileReadable(parentDir) &&
+                        isFileExecutable(parentDir)) {
+                    ls = service.sftpClient.ls(file.absolutePath);
+                } else {
+                    throw new RuntimeException("Path '" + parentDir.absolutePath + " cannot be accessed.");
+                }
             }
             finally {
                 service.release();

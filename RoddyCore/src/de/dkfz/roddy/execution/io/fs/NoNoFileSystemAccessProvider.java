@@ -12,10 +12,10 @@ import java.util.List;
  * Dummy file system info provider which is used in lean initialization mode.
  * It basically returns empty lists and positive results anywhere.
  */
-public class NoNoFileSystemInfoProvider extends FileSystemInfoProvider {
+public class NoNoFileSystemAccessProvider extends FileSystemAccessProvider {
 
 
-    public NoNoFileSystemInfoProvider() {
+    public NoNoFileSystemAccessProvider() {
         super();
     }
 
@@ -85,23 +85,23 @@ public class NoNoFileSystemInfoProvider extends FileSystemInfoProvider {
     }
 
     @Override
-    public void writeTextFile(File file, String text) {
-
+    public boolean writeTextFile(File file, String text) {
+        return true;
     }
 
     @Override
-    public void writeBinaryFile(File file, Serializable serializable) {
-
+    public boolean writeBinaryFile(File file, Serializable serializable) {
+        return true;
     }
 
     @Override
-    public void copyFile(File _in, File _out) {
-
+    public boolean copyFile(File _in, File _out) {
+        return true;
     }
 
     @Override
-    public void copyDirectory(File _in, File _out) {
-
+    public boolean copyDirectory(File _in, File _out) {
+        return true;
     }
 
     @Override
@@ -130,11 +130,13 @@ public class NoNoFileSystemInfoProvider extends FileSystemInfoProvider {
     }
 
     @Override
-    public void appendLinesToFile(boolean atomic, File filename, List<String> lines, boolean blocking) {
+    public boolean appendLinesToFile(boolean atomic, File filename, List<String> lines, boolean blocking) {
+        return true;
     }
 
     @Override
-    public void appendLineToFile(boolean atomic, File filename, String line, boolean blocking) {
+    public boolean appendLineToFile(boolean atomic, File filename, String line, boolean blocking) {
+        return true;
     }
 
     @Override

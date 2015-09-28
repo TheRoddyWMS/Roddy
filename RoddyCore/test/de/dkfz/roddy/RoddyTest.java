@@ -1,9 +1,8 @@
 package de.dkfz.roddy;
 
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
-import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
 import de.dkfz.roddy.execution.io.ExecutionService;
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.CommandFactory;
 import de.dkfz.roddy.tools.LoggerWrapper;
 import org.junit.Test;
@@ -25,11 +24,12 @@ public class RoddyTest {
 
         Roddy.parseAdditionalStartupOptions(clc);
 
+        // TODO: Currently this needs an applicationProperties.ini in ~/.roddy/.
         Roddy.loadPropertiesFile();
 
         Roddy.initializeServices(true);
 
-        assert FileSystemInfoProvider.getInstance() != null;
+        assert FileSystemAccessProvider.getInstance() != null;
         assert CommandFactory.getInstance() != null;
         assert ExecutionService.getInstance() != null;
     }

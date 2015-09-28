@@ -1,9 +1,6 @@
 package de.dkfz.roddy.config
 
 import de.dkfz.roddy.*
-import de.dkfz.roddy.client.RoddyStartupOptions
-import de.dkfz.roddy.config.converters.XMLConverter
-import de.dkfz.roddy.config.validation.XSDValidator
 import de.dkfz.roddy.knowledge.brawlworkflows.BrawlWorkflow
 import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
 import de.dkfz.roddy.tools.*
@@ -12,16 +9,12 @@ import de.dkfz.roddy.config.Configuration.ConfigurationType
 import de.dkfz.roddy.config.ToolEntry.ToolFileGroupParameter.PassOptions
 import de.dkfz.roddy.config.ToolEntry.ToolStringParameter.ParameterSetbyOptions
 import de.dkfz.roddy.core.*
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
 import de.dkfz.roddy.knowledge.files.*
 import de.dkfz.roddy.plugins.*
-import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.*
-import groovy.xml.MarkupBuilder
 import org.apache.commons.io.filefilter.WildcardFileFilter
 
-import java.lang.annotation.Native
 import java.lang.reflect.*
 import java.util.logging.*
 
@@ -35,13 +28,10 @@ import static de.dkfz.roddy.StringConstants.*
 @groovy.transform.CompileStatic
 public class ConfigurationFactory {
 
+
     public static final String XMLTAG_EXECUTIONSERVICE_SSHUSER = "executionServiceSSHUser";
     public static final String XMLTAG_EXECUTIONSERVICE_SHOW_SSHCALLS = "executionServiceShowSSHCalls";
     public static final String XMLTAG_ATTRIBUTE_INHERITANALYSES = "inheritAnalyses"
-    public static final String XMLTAG_PREVENT_JOB_EXECUTION = "preventJobExecution";
-    public static final String XMLTAG_USE_CENTRAL_ANALYSIS_ARCHIVE = "useCentralAnalysisArchive";
-    public static final String XMLTAG_OUTPUT_FILE_GROUP = "outputFileGroup"
-    public static final String XMLTAG_OUTPUT_UMASK = "outputUMask"
 
     public static final String SYNTHETIC_PACKAGE = "de.dkfz.roddy.synthetic.files"
 

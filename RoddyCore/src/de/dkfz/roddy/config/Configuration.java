@@ -301,15 +301,15 @@ public class Configuration implements ContainerParent<Configuration> {
     }
 
     public boolean getPreventJobExecution() {
-        return configurationValues.getBoolean(ConfigurationFactory.XMLTAG_PREVENT_JOB_EXECUTION);
+        return configurationValues.getBoolean(ConfigurationConstants.CFG_PREVENT_JOB_EXECUTION);
     }
 
     public void disableJobExecution() {
-        configurationValues.add(new ConfigurationValue(ConfigurationFactory.XMLTAG_PREVENT_JOB_EXECUTION, "true"));
+        configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_PREVENT_JOB_EXECUTION, "true"));
     }
 
     public boolean getUseCentralAnalysisArchive() {
-        return configurationValues.getBoolean(ConfigurationFactory.XMLTAG_USE_CENTRAL_ANALYSIS_ARCHIVE, false);
+        return configurationValues.getBoolean(ConfigurationConstants.CFG_USE_CENTRAL_ANALYSIS_ARCHIVE, false);
     }
 
     public String getSSHExecutionUser() {

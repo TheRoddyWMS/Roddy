@@ -1,13 +1,10 @@
 package de.dkfz.roddy.core
 
-import com.sun.javafx.binding.StringConstant
-import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
-import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.LoadedFile
@@ -22,7 +19,7 @@ import static de.dkfz.roddy.StringConstants.SPLIT_COLON
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 
 /**
- * A runtimeservice provides path calculation for file access.
+ * A RuntimeService provides path calculations for file access.
  * Project specific runtime service instances should also provide methods for those projects like the data set collection, information retrieval and caching...
  * Runtime services should not be created directly. Instead use getInstance to get a provider.
  *
@@ -82,10 +79,10 @@ public abstract class RuntimeService extends CacheProvider {
      * @param analysis
      * @return
      */
-    private LinkedList<DataSet> loadDataSetsFromDirectory(File directory, Analysis analysis) {
+    private static LinkedList<DataSet> loadDataSetsFromDirectory(File directory, Analysis analysis) {
         logger.postRareInfo("Looking for datasets in ${directory.absolutePath}.");
 
-        FileSystemInfoProvider fip = FileSystemInfoProvider.getInstance();
+        FileSystemAccessProvider fip = FileSystemAccessProvider.getInstance();
 
         List<DataSet> results = new LinkedList<DataSet>();
         List<File> files = fip.listDirectoriesInDirectory(directory);
@@ -116,7 +113,7 @@ public abstract class RuntimeService extends CacheProvider {
      */
     public ExecutionContext readInExecutionContext(AnalysisProcessingInformation api) {
 //        Roddy.getInstance().queryJobStatus(new LinkedList<String>());
-        FileSystemInfoProvider fip = FileSystemInfoProvider.getInstance();
+        FileSystemAccessProvider fip = FileSystemAccessProvider.getInstance();
 
         File executionDirectory = api.getExecPath();
 
@@ -224,7 +221,7 @@ public abstract class RuntimeService extends CacheProvider {
      * @param jobsStartedInContext
      */
     public Map<String, JobState> readInJobStateLogFile(ExecutionContext context) {
-        FileSystemInfoProvider fip = FileSystemInfoProvider.getInstance();
+        FileSystemAccessProvider fip = FileSystemAccessProvider.getInstance();
         File jobStatesLogFile = context.getRuntimeService().getNameOfJobStateLogFile(context);
         String[] jobStateList = fip.loadTextFile(jobStatesLogFile);
 
@@ -266,10 +263,10 @@ public abstract class RuntimeService extends CacheProvider {
      * @return
      */
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private List<Job> readJobInfoFile(ExecutionContext context) {
+    private static List<Job> readJobInfoFile(ExecutionContext context) {
         List<Job> jobList = new LinkedList<>();
         final File jobInfoFile = context.getRuntimeService().getNameOfJobInfoFile(context);
-        String[] _text = FileSystemInfoProvider.getInstance().loadTextFile(jobInfoFile);
+        String[] _text = FileSystemAccessProvider.getInstance().loadTextFile(jobInfoFile);
         String text = _text.join(EMPTY);
         if (!text)
             return jobList;
@@ -360,11 +357,11 @@ public abstract class RuntimeService extends CacheProvider {
                 }
             }
         }
-        FileSystemInfoProvider.getInstance().writeTextFile(jobInfoFile, writer.toString(), context);
+        FileSystemAccessProvider.getInstance().writeTextFile(jobInfoFile, writer.toString(), context);
     }
 
     public List<String> collectNamesOfRunsForPID(DataSet dataSet) {
-        FileSystemInfoProvider fip = FileSystemInfoProvider.getInstance();
+        FileSystemAccessProvider fip = FileSystemAccessProvider.getInstance();
         List<File> execList = fip.listDirectoriesInDirectory(dataSet.getOutputBaseFolder(), Arrays.asList(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX + "*"));
         List<String> names = new LinkedList<String>();
         for (File f : execList) {
@@ -388,7 +385,7 @@ public abstract class RuntimeService extends CacheProvider {
 
     public File getBaseExecutionDirectory(ExecutionContext context) {
         String outPath = getOutputFolderForDataSetAndAnalysis(context.getDataSet(), context.getAnalysis()).absolutePath
-        String sep = FileSystemInfoProvider.getInstance().getPathSeparator();
+        String sep = FileSystemAccessProvider.getInstance().getPathSeparator();
         return new File("${outPath}${sep}roddyExecutionStore");
     }
 
@@ -397,7 +394,7 @@ public abstract class RuntimeService extends CacheProvider {
             return context.getExecutionDirectory();
 
         String outPath = getOutputFolderForDataSetAndAnalysis(context.getDataSet(), context.getAnalysis()).absolutePath
-        String sep = FileSystemInfoProvider.getInstance().getPathSeparator();
+        String sep = FileSystemAccessProvider.getInstance().getPathSeparator();
 
         String dirPath = "${outPath}${sep}roddyExecutionStore${sep}${ConfigurationConstants.RODDY_EXEC_DIR_PREFIX}${context.getTimeStampString()}_${context.getExecutingUser()}_${context.getAnalysis().getName()}"
         if (context.getExecutionContextLevel() == ExecutionContextLevel.CLEANUP)
@@ -406,11 +403,11 @@ public abstract class RuntimeService extends CacheProvider {
     }
 
     public File getCommonExecutionDirectory(ExecutionContext context) {
-        return new File(getOutputFolderForProject(context).getAbsolutePath() + FileSystemInfoProvider.getInstance().getPathSeparator() + DIRECTORY_RODDY_COMMON_EXECUTION);
+        return new File(getOutputFolderForProject(context).getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + DIRECTORY_RODDY_COMMON_EXECUTION);
     }
 
     public File getAnalysedMD5OverviewFile(ExecutionContext context) {
-        return new File(getCommonExecutionDirectory(context).getAbsolutePath() + FileSystemInfoProvider.getInstance().getPathSeparator() + FILENAME_ANALYSES_MD5_OVERVIEW);
+        return new File(getCommonExecutionDirectory(context).getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + FILENAME_ANALYSES_MD5_OVERVIEW);
     }
 
     public File getLoggingDirectory(ExecutionContext run) {
@@ -422,7 +419,7 @@ public abstract class RuntimeService extends CacheProvider {
     public File getLockFilesDirectory(ExecutionContext run) {
         File f = new File(getTemporaryDirectory(run), "lockfiles");
         return f;
-//        return getDirectory(getExecutionDirFilePrefixString(run) + "temp" + FileSystemInfoProvider.getInstance().getPathSeparator() + "lockfiles", run);
+//        return getDirectory(getExecutionDirFilePrefixString(run) + "temp" + FileSystemAccessManager.getInstance().getPathSeparator() + "lockfiles", run);
     }
 
     public File getTemporaryDirectory(ExecutionContext run) {
@@ -438,9 +435,9 @@ public abstract class RuntimeService extends CacheProvider {
 
     private String getExecutionDirFilePrefixString(ExecutionContext run) {
         try {
-            return String.format("%s%s", run.getExecutionDirectory().getAbsolutePath(), FileSystemInfoProvider.getInstance().getPathSeparator());
+            return String.format("%s%s", run.getExecutionDirectory().getAbsolutePath(), FileSystemAccessProvider.getInstance().getPathSeparator());
         } catch (Exception ex) {
-            return String.format("%s%s", run.getExecutionDirectory().getAbsolutePath(), FileSystemInfoProvider.getInstance().getPathSeparator());
+            return String.format("%s%s", run.getExecutionDirectory().getAbsolutePath(), FileSystemAccessProvider.getInstance().getPathSeparator());
         }
     }
 
@@ -465,11 +462,11 @@ public abstract class RuntimeService extends CacheProvider {
     }
 
     public File getNameOfJobStateLogFile(ExecutionContext run) {
-        return new File(run.getExecutionDirectory().getAbsolutePath() + FileSystemInfoProvider.getInstance().getPathSeparator() + ConfigurationConstants.RODDY_JOBSTATE_LOGFILE);
+        return new File(run.getExecutionDirectory().getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + ConfigurationConstants.RODDY_JOBSTATE_LOGFILE);
     }
 
     public File getNameOfExecCacheFile(Analysis analysis) {
-        return new File(analysis.getOutputBaseDirectory().getAbsolutePath() + FileSystemInfoProvider.getInstance().getPathSeparator() + ConfigurationConstants.RODDY_EXEC_CACHE_FILE);
+        return new File(analysis.getOutputBaseDirectory().getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + ConfigurationConstants.RODDY_EXEC_CACHE_FILE);
     }
 
     public File getNameOfRuntimeFile(ExecutionContext context) {
@@ -479,7 +476,7 @@ public abstract class RuntimeService extends CacheProvider {
     public String extractDataSetIDFromPath(File p, Analysis analysis) {
         //Try new version first, fallback to old version if necessary.
 //        if (!Roddy.getFeatureToggleValue(AvailableFeatureToggles.UseOldDataSetIDExtraction)) {
-//            def instance = FileSystemInfoProvider.getInstance();
+//            def instance = FileSystemAccessManager.getInstance();
 //            //TODO Hack! This will only work on Linux systems using bash. Extract the PID from the realjobcalls file. PID is always a parameter.
 //            def realJobCalls = new File(p, "realJobCalls.txt")
 //            try {
@@ -522,7 +519,7 @@ public abstract class RuntimeService extends CacheProvider {
      */
     public List<AnalysisProcessingInformation> readoutExecCacheFile(Analysis analysis) {
         File cacheFile = getNameOfExecCacheFile(analysis);
-        String[] execCache = FileSystemInfoProvider.getInstance().loadTextFile(cacheFile);
+        String[] execCache = FileSystemAccessProvider.getInstance().loadTextFile(cacheFile);
         List<AnalysisProcessingInformation> processInfo = [];
         List<File> execDirectories = [];
         Arrays.asList(execCache).parallelStream().each {
@@ -570,7 +567,7 @@ public abstract class RuntimeService extends CacheProvider {
 
     public List<File> getAdditionalLogFilesForContext(ExecutionContext executionContext) {
         File loggingDirectory = executionContext.getLoggingDirectory();
-        List<File> files = FileSystemInfoProvider.getInstance().listFilesInDirectory(loggingDirectory);
+        List<File> files = FileSystemAccessProvider.getInstance().listFilesInDirectory(loggingDirectory);
         List<File> notUsed = executionContext.getLogFilesForExecutedJobs();
         for (File f : notUsed)
             files.remove(f);
@@ -579,8 +576,6 @@ public abstract class RuntimeService extends CacheProvider {
 
     public List<File> getResultsFilesForDataSetAndAnalysis(DataSet dataSet, Analysis analysis) {
         File outFolder = getOutputFolderForDataSetAndAnalysis(dataSet, analysis);
-//        FileSystemInfoProvider provider = Roddy.getInstance();
-//        analysis.get
         return [];
     }
 
@@ -597,7 +592,7 @@ public abstract class RuntimeService extends CacheProvider {
     }
 
     public File getInputFolderForDataSetAndAnalysis(DataSet dataSet, Analysis analysis) {
-        File analysisInFolder = new File(getInputFolderForAnalysis(analysis).absolutePath + FileSystemInfoProvider.instance.getPathSeparator() + dataSet.getId());
+        File analysisInFolder = new File(getInputFolderForAnalysis(analysis).absolutePath + FileSystemAccessProvider.instance.getPathSeparator() + dataSet.getId());
         return analysisInFolder;
     }
 
