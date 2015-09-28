@@ -14,96 +14,110 @@
 
 source ${CONFIG_FILE}
 
-[[ ${debugWrapInScript-false} == true ]] && set -xv
-[[ ${debugWrapInScript-false} == false ]] && set +xv
+isOutputFileGroup=${outputFileGroup-false}
 
-#set +xuv # Disable output again
-export RODDY_JOBID=${RODDY_JOBID-$$}
-export RODDY_PARENT_JOBS=${RODDY_PARENT_JOBS-false}
-echo "RODDY_JOBID is set to ${RODDY_JOBID}"
+if [[ $isOutputFileGroup != false ]] && [[ !${newGrpIsCalled-false} == true ]]; then
+  export newGrpIsCalled=true
+  newgrp -c $0 $outputFileGroup
+  exit $?
 
-# Replace #{RODDY_JOBID} in passed variables.
-while read line; do
-  echo $line
-  _temp=$RODDY_JOBID
-  export RODDY_JOBID=`echo $RODDY_JOBID | cut -d "." -f 1`
-  line=${line//-x/};
-  eval ${line//#/\$};
-  export RODDY_JOBID=$_temp
-done <<< `export | grep "#{"`
+else
 
-# Default to the data folder on the node
-defaultScratchDir=${defaultScratchDir-/data/roddyScratch}
-[[ ${RODDY_SCRATCH-x} == "x" ]] && export RODDY_SCRATCH=${defaultScratchDir}/${RODDY_JOBID}
-[[ ! -d ${RODDY_SCRATCH} ]] && mkdir -p ${RODDY_SCRATCH}
-echo "RODDY_SCRATCH is set to ${RODDY_SCRATCH}"
+  [[ ${debugWrapInScript-false} == true ]] && set -xv
+  [[ ${debugWrapInScript-false} == false ]] && set +xv
 
-# Check
-_lock="$jobStateLogFile~"
+  #set +xuv # Disable output again
+  export RODDY_JOBID=${RODDY_JOBID-$$}
+  export RODDY_PARENT_JOBS=${RODDY_PARENT_JOBS-false}
+  echo "RODDY_JOBID is set to ${RODDY_JOBID}"
 
-# Select the proper lock command. lockfile-create is not tested though.
-lockCommand="lockfile -s 1 -r 50"
-unlockCommand="rm -f"
+  # Replace #{RODDY_JOBID} in passed variables.
+  while read line; do
+    echo $line
+    _temp=$RODDY_JOBID
+    export RODDY_JOBID=`echo $RODDY_JOBID | cut -d "." -f 1`
+    line=${line//-x/};
+    eval ${line//#/\$};
+    export RODDY_JOBID=$_temp
+  done <<< `export | grep "#{"`
 
-useLockfile=true
-[[ -z `which lockfile` ]] && useLockfile=false
-[[ ${useLockfile} == false ]] && lockCommand=lockfile-create && unlockCommand=lockfile-remove && echo "Set lockfile commands to lockfile-create and lockfile-remove"
+  # Default to the data folder on the node
+  defaultScratchDir=${defaultScratchDir-/data/roddyScratch}
+  [[ ${RODDY_SCRATCH-x} == "x" ]] && export RODDY_SCRATCH=${defaultScratchDir}/${RODDY_JOBID}
+  [[ ! -d ${RODDY_SCRATCH} ]] && mkdir -p ${RODDY_SCRATCH}
+  echo "RODDY_SCRATCH is set to ${RODDY_SCRATCH}"
 
-startCode=STARTED
+  # Check
+  _lock="$jobStateLogFile~"
 
-# Check if the jobs parent jobs are stored and passed as a parameter. If so Roddy checks the job state logfile
-# if at least one of the parent jobs exited with a value different to 0.
-if [[ ! ${RODDY_PARENT_JOBS} = false ]]
-then
-  # Now check all lines in the file
-  strlen=`expr ${#RODDY_PARENT_JOBS} - 2`
-  RODDY_PARENT_JOBS=${RODDY_PARENT_JOBS:1:strlen}
-  for parentJob in ${RODDY_PARENT_JOBS[@]}; do
-    [[ ${exitCode-} == 250 ]] && continue;
-    result=`cat ${jobStateLogFile} | grep -a "^${parentJob}:" | tail -n 1 | cut -d ":" -f 2`
-    [[ ! $result -eq 0 ]] && echo "At least one of this parents jobs exited with an error code. This job will not run." && startCode="ABORTED"
-  done
+  # Select the proper lock command. lockfile-create is not tested though.
+  lockCommand="lockfile -s 1 -r 50"
+  unlockCommand="rm -f"
+
+  useLockfile=true
+  [[ -z `which lockfile` ]] && useLockfile=false
+  [[ ${useLockfile} == false ]] && lockCommand=lockfile-create && unlockCommand=lockfile-remove && echo "Set lockfile commands to lockfile-create and lockfile-remove"
+
+  startCode=STARTED
+
+  # Check if the jobs parent jobs are stored and passed as a parameter. If so Roddy checks the job state logfile
+  # if at least one of the parent jobs exited with a value different to 0.
+  if [[ ! ${RODDY_PARENT_JOBS} = false ]]
+  then
+    # Now check all lines in the file
+    strlen=`expr ${#RODDY_PARENT_JOBS} - 2`
+    RODDY_PARENT_JOBS=${RODDY_PARENT_JOBS:1:strlen}
+    for parentJob in ${RODDY_PARENT_JOBS[@]}; do
+      [[ ${exitCode-} == 250 ]] && continue;
+      result=`cat ${jobStateLogFile} | grep -a "^${parentJob}:" | tail -n 1 | cut -d ":" -f 2`
+      [[ ! $result -eq 0 ]] && echo "At least one of this parents jobs exited with an error code. This job will not run." && startCode="ABORTED"
+    done
+  fi
+
+  # Check the wrapped script for existence
+  [[ ${WRAPPED_SCRIPT-false} == false || ! -f ${WRAPPED_SCRIPT} ]] && startCode=ABORTED && echo "The wrapped script is not defined or not existing."
+
+  # Put in start in Leetcode
+  ${lockCommand} $_lock;
+  echo "${RODDY_JOBID}:${startCode}:"`date +"%s"`":${TOOL_ID}" >> ${jobStateLogFile};
+  ${unlockCommand} $_lock
+  [[ ${startCode} == 60000 || ${startCode} == "ABORTED" ]] && echo "Exitting because a former job died." && exit 250
+  # Sleep a second before and after executing the wrapped script. Allow the system to get different timestamps.
+  sleep 2
+
+  export WRAPPED_SCRIPT=${WRAPPED_SCRIPT} # Export script so it can identify itself
+  # TODO Integrate automated checkpoint file creation
+  #[[ -f ${FILENAME_CHECKPOINT} ]] && ${FILENAME_CHECKPOINT}
+
+  # Create directories
+  mkdir -p ${DIR_TEMP} 2 > /dev/null
+
+  echo "Calling script ${WRAPPED_SCRIPT}"
+  jobProfilerBinary=${JOB_PROFILER_BINARY-}
+  [[ ${enableJobProfiling-false} == false ]] && jobProfilerBinary=""
+
+  myGroup=`groups  | cut -d " " -f 1`
+  outputFileGroup=${outputFileGroup-$myGroup}
+
+  $jobProfilerBinary bash ${WRAPPED_SCRIPT}
+  exitCode=$?
+  echo "Exited script ${WRAPPED_SCRIPT} with value ${exitCode}"
+
+  [[ ${debugWrapInScript-false} == true ]] && set -xuv
+  [[ ${debugWrapInScript-false} == false ]] && set +xuv
+
+  sleep 2
+
+  ${lockCommand} $_lock;
+  echo "${RODDY_JOBID}:${exitCode}:"`date +"%s"`":${TOOL_ID}" >> ${jobStateLogFile};
+  ${unlockCommand} $_lock
+
+  # Set this in your command factory class, when roddy should clean up the dir for you.
+  [[ ${RODDY_AUTOCLEANUP_SCRATCH-false} == "true" ]] && rm -rf ${RODDY_SCRATCH} && echo "Auto cleaned up RODDY_SCRATCH"
+
+  [[ ${exitCode} -eq 0 ]] && exit 0
+
+  [[ ${exitCode} -eq 100 ]] && Finished script with 99 for compatibility reasons with Sun Grid Engine. 100 is reserved for SGE usage. && exit 99
+  exit $exitCode
+
 fi
-
-# Check the wrapped script for existence
-[[ ${WRAPPED_SCRIPT-false} == false || ! -f ${WRAPPED_SCRIPT} ]] && startCode=ABORTED && echo "The wrapped script is not defined or not existing."
-
-# Put in start in Leetcode
-${lockCommand} $_lock;
-echo "${RODDY_JOBID}:${startCode}:"`date +"%s"`":${TOOL_ID}" >> ${jobStateLogFile};
-${unlockCommand} $_lock
-[[ ${startCode} == 60000 || ${startCode} == "ABORTED" ]] && echo "Exitting because a former job died." && exit 250
-# Sleep a second before and after executing the wrapped script. Allow the system to get different timestamps.
-sleep 2
-
-export WRAPPED_SCRIPT=${WRAPPED_SCRIPT} # Export script so it can identify itself
-# TODO Integrate automated checkpoint file creation
-#[[ -f ${FILENAME_CHECKPOINT} ]] && ${FILENAME_CHECKPOINT}
-
-# Create directories
-mkdir -p ${DIR_TEMP} 2 > /dev/null
-
-echo "Calling script ${WRAPPED_SCRIPT}"
-jobProfilerBinary=${JOB_PROFILER_BINARY-}
-[[ ${enableJobProfiling-false} == false ]] && jobProfilerBinary=""
-$jobProfilerBinary bash ${WRAPPED_SCRIPT}
-exitCode=$?
-echo "Exited script ${WRAPPED_SCRIPT} with value ${exitCode}"
-
-[[ ${debugWrapInScript-false} == true ]] && set -xuv
-[[ ${debugWrapInScript-false} == false ]] && set +xuv
-
-sleep 2
-
-${lockCommand} $_lock;
-echo "${RODDY_JOBID}:${exitCode}:"`date +"%s"`":${TOOL_ID}" >> ${jobStateLogFile};
-${unlockCommand} $_lock
-
-# Set this in your command factory class, when roddy should clean up the dir for you.
-[[ ${RODDY_AUTOCLEANUP_SCRATCH-false} == "true" ]] && rm -rf ${RODDY_SCRATCH} && echo "Auto cleaned up RODDY_SCRATCH"
-
-[[ ${exitCode} -eq 0 ]] && exit 0
-
-[[ ${exitCode} -eq 100 ]] && Finished script with 99 for compatibility reasons with Sun Grid Engine. 100 is reserved for SGE usage. && exit 99
-exit $exitCode
-

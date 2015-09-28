@@ -99,12 +99,6 @@ class BashConverter extends ConfigurationConverter {
         boolean processSetUserMask = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERMASK, true);
         text << separator << 'if [ -z "${PS1-}" ]; then' << separator << "\t echo non interactive process!" << separator << "else" << separator << "\t echo interactive process" << separator
 
-        /* The very first thing to be done is to switch the primary Unix group using 'newgrp -'. The '-' is
-           necessary because some programs otherwise stick to the old primary group before the newgrp (e.g. mkdir -p for
-           parent directories! install!). Note that 'newgrp -' completely re-initializes the environment, so if this
-           command would not be at the start, all later variables would be lost. */
-        //TODO Change to FileSystemAccessProvider!
-        if (processSetUserGroup) text << separator << "\t newgrp - " << outputFileGroup;
         if (processSetUserMask) text << separator << "\t umask " << umask;
         text << separator << "fi" << separator << separator;
 

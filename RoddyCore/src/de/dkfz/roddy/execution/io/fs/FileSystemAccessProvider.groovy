@@ -14,6 +14,9 @@ import de.dkfz.roddy.execution.io.FileAttributes
 import de.dkfz.roddy.knowledge.files.BaseFile
 import org.apache.commons.io.filefilter.WildcardFileFilter
 
+import java.nio.file.FileSystem
+import java.util.concurrent.locks.ReentrantLock
+
 /**
  * This class provides access to the file system and collects information for easy access.
  *
@@ -23,7 +26,19 @@ import org.apache.commons.io.filefilter.WildcardFileFilter
 @groovy.transform.CompileStatic
 public class FileSystemAccessProvider extends CacheProvider {
     private static LoggerWrapper logger = LoggerWrapper.getLogger(FileSystemAccessProvider.getClass().getName());
-    private static FileSystemAccessProvider fileSystemAccessManager = null;
+    private static FileSystemAccessProvider fileSystemAccessProvider = null;
+
+    /**
+     * Do you wonder why this is protected?
+     * Well this  value is to ensure backward compatibility for older Roddy workflows.
+     * Formerly, this class was called FileSystemInfoProvider which is just not the right name for the class.
+     * So we decided to rename it to FileSytemAccessProvider. This name covers everything!
+     * However, the FileSystemInfoProvider class still resides for backward compatibility.
+     * The lock is used in this class and in the FileSystemInfoProvider. It is not on a package level and also should not be!
+     * Also it must not be public or private.
+     * So don't whonder why this one is protected static.
+     */
+    protected static ReentrantLock fileSystemAccessProviderLock = new ReentrantLock();
 
     /**
      * This is the command set assembler for the current target file system.
@@ -35,37 +50,48 @@ public class FileSystemAccessProvider extends CacheProvider {
     /**
      * The current users user name (logon on local or target system)
      */
-    private String _userName;
+    protected String _userName;
 
     /**
      * The first group id in a list of groups on the target system.
      */
-    private String _groupID;
+    protected String _groupID;
 
     /**
      * The current users home directory (logon on local or target system)
      */
-    private File _userHome;
+    protected File _userHome;
 
     /**
      * A small cache which keeps track of checkDirectory queries
      */
-    private Map<String, Boolean> _directoryExistsAndIsAccessible = new LinkedHashMap<>();
+    protected Map<String, Boolean> _directoryExistsAndIsAccessible = new LinkedHashMap<>();
+
+    protected Map<String, Integer> _groupIDsByGroup = [:];
+
+    protected final Map<String, String> uidToUserCache = new HashMap<>();
+
+    protected Object _appendLineToFileLock = new Object();
 
     public FileSystemAccessProvider() {
-        super("FileSystemAccessManager", true);
+        super(getClass().simpleName, true);
     }
 
     public static void initializeProvider(boolean fullSetup) {
-        if (!fullSetup) {
-            fileSystemAccessManager = new NoNoFileSystemAccessProvider();
-        }
+        fileSystemAccessProviderLock.lock();
         try {
-            Class fisClz = LibrariesFactory.getGroovyClassLoader().loadClass(Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS, FileSystemAccessProvider.class.getName()));
-            fileSystemAccessManager = (FileSystemAccessProvider) fisClz.getConstructors()[0].newInstance();
-        } catch (Exception e) {
-            logger.warning("Falling back to default file system info provider");
-            fileSystemAccessManager = new FileSystemAccessProvider();
+            if (!fullSetup) {
+                fileSystemAccessProvider = new NoNoFileSystemAccessProvider();
+            }
+            try {
+                Class fisClz = LibrariesFactory.getGroovyClassLoader().loadClass(Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS, FileSystemAccessProvider.class.getName()));
+                fileSystemAccessProvider = (FileSystemAccessProvider) fisClz.getConstructors()[0].newInstance();
+            } catch (Exception e) {
+                logger.warning("Falling back to default file system info provider");
+                fileSystemAccessProvider = new FileSystemAccessProvider();
+            }
+        } finally {
+            fileSystemAccessProviderLock.unlock();
         }
     }
 
@@ -96,8 +122,25 @@ public class FileSystemAccessProvider extends CacheProvider {
     }
 
     public static FileSystemAccessProvider getInstance() {
-        return fileSystemAccessManager;
+        FileSystemAccessProvider provider;
+        fileSystemAccessProviderLock.lock()
+        try {
+            provider = fileSystemAccessProvider;
+        } finally {
+            fileSystemAccessProviderLock.unlock();
+        }
+        return provider;
     }
+
+    public static void resetFileSystemAccessProvider(FileSystemAccessProvider provider) {
+        fileSystemAccessProviderLock.lock()
+        try {
+            this.fileSystemAccessProvider = provider;
+        } finally {
+            fileSystemAccessProviderLock.unlock();
+        }
+    }
+
 
     @Override
     boolean initialize() {
@@ -366,7 +409,6 @@ public class FileSystemAccessProvider extends CacheProvider {
         return getGroupID(getMyGroup());
     }
 
-    private Map<String, Integer> _groupIDsByGroup = [:];
 
     int getGroupID(String groupID) {
         synchronized (_groupIDsByGroup) {
@@ -378,8 +420,6 @@ public class FileSystemAccessProvider extends CacheProvider {
             return _groupIDsByGroup[groupID];
         }
     }
-
-    private final Map<String, String> uidToUserCache = new HashMap<>();
 
     private String _getOwnerOfPath(File file) {
         String cmd = commandSet.getOwnerOfPathCommand(file);
@@ -587,7 +627,6 @@ public class FileSystemAccessProvider extends CacheProvider {
         }
     }
 
-    private Object _appendLineToFileLock = new Object();
 
     boolean appendLineToFile(boolean atomic, File filename, String line, boolean blocking) {
         try {

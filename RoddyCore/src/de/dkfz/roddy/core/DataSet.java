@@ -190,7 +190,7 @@ public class DataSet extends InfoObject implements Serializable, ExecutionContex
         FileSystemAccessProvider fip = FileSystemAccessProvider.getInstance();
         for (AnalysisProcessingInformation api : information) {
             ExecutionContext detailedProcessingInfo = api.getDetailedProcessingInfo();
-            if (api == null || detailedProcessingInfo == null || detailedProcessingInfo.getExecutedJobs().size() == 0 || !fip.checkDirectory(api.getExecPath(), null, false))
+            if (api == null || detailedProcessingInfo == null || detailedProcessingInfo.getExecutedJobs().size() == 0 || !fip.checkDirectory(api.getExecPath(), detailedProcessingInfo, false))
                 continue;
             return api;
         }
