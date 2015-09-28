@@ -3,7 +3,7 @@ package de.dkfz.roddy.knowledge.examples
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.RuntimeService
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessManager
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.CommandFactory
 import de.dkfz.roddy.knowledge.files.BaseFile
 
@@ -106,8 +106,8 @@ public class SimpleRuntimeService extends RuntimeService {
     public TextFile createInitialTextFile(ExecutionContext ec) {
         TextFile tf = new TextFile(new File(getOutputFolderForDataSetAndAnalysis(ec.getDataSet(), ec.getAnalysis()).getAbsolutePath() + "/textBase.txt"), ec, null, null, new SimpleFileStageSettings(ec.getDataSet(), "100", "R001"));
         tf.setAsSourceFile();
-        if (!FileSystemAccessManager.getInstance().checkFile(tf.getPath()))
-            FileSystemAccessManager.getInstance().createFileWithDefaultAccessRights(true, tf.getPath(), ec, true);
+        if (!FileSystemAccessProvider.getInstance().checkFile(tf.getPath()))
+            FileSystemAccessProvider.getInstance().createFileWithDefaultAccessRights(true, tf.getPath(), ec, true);
         return tf;
     }
 }

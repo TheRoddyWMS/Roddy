@@ -9,8 +9,6 @@ import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.Project
 import de.dkfz.roddy.core.ProjectFactory;
-import de.dkfz.roddy.knowledge.examples.SimpleFileStageSettings;
-import de.dkfz.roddy.knowledge.examples.TextFile
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 
 import java.io.*;
