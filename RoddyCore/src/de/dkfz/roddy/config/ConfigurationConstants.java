@@ -54,6 +54,11 @@ public class ConfigurationConstants {
     public static final String CFG_ALLOW_ACCESS_RIGHTS_MODIFICATION = "outputAllowAccessRightsModification";
     public static final String CFG_OUTPUT_ACCESS_RIGHTS_FOR_DIRECTORIES = "outputAccessRightsForDirectories";
     public static final String CFG_OUTPUT_ACCESS_RIGHTS = "outputAccessRights";
-    public static final String OUTPUT_FILE_GROUP = "outputFileGroup";
+    public static final String CFG_OUTPUT_FILE_GROUP = "outputFileGroup";
+
+    public static final String CFG_PREVENT_JOB_EXECUTION = "preventJobExecution";
+    public static final String CFG_USE_CENTRAL_ANALYSIS_ARCHIVE = "useCentralAnalysisArchive";
+    public static final String CFG_OUTPUT_UMASK = "outputUMask";
+
 
 }

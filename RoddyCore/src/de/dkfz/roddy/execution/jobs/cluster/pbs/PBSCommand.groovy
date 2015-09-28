@@ -44,8 +44,6 @@ public class PBSCommand extends Command implements Serializable {
 
     protected transient Configuration configuration;
 
-    private static BashCommandSet commandSet
-
     /**
      * The qsub log directoy where all output is put
      */
@@ -230,8 +228,7 @@ public class PBSCommand extends Command implements Serializable {
         if (groupList != EMPTY && groupList != "UNDEFINED") {
             qsubCall << getGroupListString(groupList);
         }
-        String outputUMask = configuration.getConfigurationValues().getString(ConfigurationFactory.XMLTAG_OUTPUT_UMASK, commandSet.getDefaultUMask());
-        qsubCall << getUmaskString(outputUMask);
+        qsubCall << getUmaskString(executionContext.getUMask());
 
         for (ProcessingCommands pcmd in job.getListOfProcessingCommand()) {
             if (!(pcmd instanceof PBSResourceProcessingCommand)) continue;

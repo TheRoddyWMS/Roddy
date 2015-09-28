@@ -244,15 +244,13 @@ public abstract class ExecutionService extends CacheProvider {
         Boolean outputIsWriteable = fis.directoryExists(outputBaseDirectory) ? fis.isReadable(outputBaseDirectory) && fis.isWritable(outputBaseDirectory) : null;
         Boolean datasetDirIsWritable = fis.directoryExists(outputDirectory) ? fis.isReadable(outputDirectory) && fis.isWritable(outputDirectory) : null;
 
-        Boolean projectExecCacheFileIsWritable = fis.fileExists(projectExecCacheFile) ? fis.isReadable(projectExecCacheFile) && fis.isWritable(projectExecCacheFile) : null
+        Boolean projectExecCacheFileIsWritable = outputIsWriteable && fis.fileExists(projectExecCacheFile) ? fis.isReadable(projectExecCacheFile) && fis.isWritable(projectExecCacheFile) : null
         Boolean projectExecutionContextDirIsWritable = fis.directoryExists(projectExecutionDirectory) ? fis.isReadable(projectExecutionDirectory) && fis.directoryExists(projectExecutionDirectory) : null;
         Boolean projectToolsMD5SumFileIsWritable = fis.fileExists(projectToolsMD5SumFile) ? fis.isReadable(projectToolsMD5SumFile) && fis.isWritable(projectToolsMD5SumFile) : projectExecutionContextDirIsWritable
         Boolean baseContextDirIsWritable = fis.directoryExists(baseContextExecutionDirectory) ? fis.isReadable(baseContextExecutionDirectory) && fis.isWritable(baseContextExecutionDirectory) : null;
 
         int countErrors = context.getErrors().sum(0) { ExecutionContextError ece -> ece.getErrorLevel() == Level.SEVERE ? 1 : 0 } as Integer
 
-        if (!inputIsReadable)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_INACCESSIBLE.expand("Base input dir is not readable: "));
 
         if (outputIsWriteable == null)
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${outputBaseDirectory}", Level.WARNING));

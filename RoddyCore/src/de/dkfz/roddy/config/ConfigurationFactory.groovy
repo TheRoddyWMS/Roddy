@@ -28,13 +28,10 @@ import static de.dkfz.roddy.StringConstants.*
 @groovy.transform.CompileStatic
 public class ConfigurationFactory {
 
+
     public static final String XMLTAG_EXECUTIONSERVICE_SSHUSER = "executionServiceSSHUser";
     public static final String XMLTAG_EXECUTIONSERVICE_SHOW_SSHCALLS = "executionServiceShowSSHCalls";
     public static final String XMLTAG_ATTRIBUTE_INHERITANALYSES = "inheritAnalyses"
-    public static final String XMLTAG_PREVENT_JOB_EXECUTION = "preventJobExecution";
-    public static final String XMLTAG_USE_CENTRAL_ANALYSIS_ARCHIVE = "useCentralAnalysisArchive";
-    public static final String XMLTAG_OUTPUT_FILE_GROUP = "outputFileGroup"
-    public static final String XMLTAG_OUTPUT_UMASK = "outputUMask"
 
     public static final String SYNTHETIC_PACKAGE = "de.dkfz.roddy.synthetic.files"
 

@@ -372,7 +372,7 @@ class SSHExecutionService extends RemoteExecutionService {
             @Override
             void run() {
                 long id = fireExecutionStartedEvent(command)
-                //Append a newgrp to each command, so that all command context in the proper group context.
+                //Append a newgrp (Philip: better "newgrp -"!) to each command, so that all command context in the proper group context.
                 set.acquire();
                 Session session = sshClient.startSession();
                 Session.Command cmd;
@@ -464,7 +464,8 @@ class SSHExecutionService extends RemoteExecutionService {
         SSHPoolConnectionSet service = waitForAndAcquireService()
         boolean result
         try {
-            result = service.sftpClient.getFileTransfer().upload(_in.absolutePath, _out.absolutePath);
+            service.sftpClient.getFileTransfer().upload(_in.absolutePath, _out.absolutePath);
+            result = true
         } catch (SFTPException ex) {
             if (retries < 3) {
                 retry = true;
@@ -739,8 +740,14 @@ class SSHExecutionService extends RemoteExecutionService {
             final List<RemoteResourceInfo> ls;
             service.acquire();
             try {
-                // TODO Check first, if the directory is readable and accessible. If not, throw an error.
-                ls = service.sftpClient.ls(file.absolutePath);
+                File parentDir = file.getParentFile()
+                if (directoryExists(parentDir) &&
+                        isFileReadable(parentDir) &&
+                        isFileExecutable(parentDir)) {
+                    ls = service.sftpClient.ls(file.absolutePath);
+                } else {
+                    throw new RuntimeException("Path '" + parentDir.absolutePath + " cannot be accessed.");
+                }
             }
             finally {
                 service.release();

@@ -5,6 +5,7 @@ import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.*;
+import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.config.*;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -97,7 +98,7 @@ public class Analysis {
             //If it is configured, get the group id from the config.
             boolean processSetUserGroup = getConfiguration().getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, true);
             if (processSetUserGroup) {
-                groupID = getConfiguration().getConfigurationValues().getString(ConfigurationFactory.XMLTAG_OUTPUT_FILE_GROUP, groupID);
+                groupID = getConfiguration().getConfigurationValues().getString(ConfigurationConstants.CFG_OUTPUT_FILE_GROUP, groupID);
             }
             return groupID;
         } catch (Exception e) {
@@ -405,8 +406,13 @@ public class Analysis {
             }
         } catch (Exception e) {
             context.addErrorEntry(ExecutionContextError.EXECUTION_UNCATCHEDERROR.expand(e));
-            logger.log(Level.SEVERE, e.toString());
-            logger.log(Level.SEVERE, RoddyIOHelperMethods.getStackTraceAsString(e));
+            logger.postAlwaysInfo("An exception occurred: '" + e.getLocalizedMessage() + "'");
+            if (logger.isVerbosityMedium()) {
+                logger.log(Level.SEVERE, e.toString());
+                logger.log(Level.SEVERE, RoddyIOHelperMethods.getStackTraceAsString(e));
+            } else {
+                logger.postAlwaysInfo("Set --verbositylevel >=" + LoggerWrapper.VERBOSITY_WARNING + " or higher to see stack trace.");
+            }
         } finally {
 
             // Look up errors when jobs are executed directly and when there were any started jobs.
@@ -452,6 +458,7 @@ public class Analysis {
                     ExecutionService.getInstance().writeFilesForExecution(context);
                     cleanupJob.run();
                 } catch (Exception ex) {
+                    // Philip: We don't want to see any cleanup errors?
                 } finally {
                     ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context);
                 }

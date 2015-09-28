@@ -2,7 +2,8 @@ package de.dkfz.roddy.core;
 
 import de.dkfz.roddy.Constants;
 import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationConstants;
+import de.dkfz.roddy.config.ConfigurationConstants
+import de.dkfz.roddy.config.ConfigurationFactory;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.*
@@ -428,28 +429,32 @@ public class ExecutionContext implements JobStatusListener {
         return getConfiguration().getConfigurationValues().getBoolean(ConfigurationConstants.CFG_ALLOW_ACCESS_RIGHTS_MODIFICATION, true);
     }
 
-    public FileSystemAccessProvider getFileSystemAccessManager() {
+    public FileSystemAccessProvider getFileSystemAccessProvider() {
         return FileSystemAccessProvider.getInstance()
     }
 
     public String getOutputDirectoryAccess() {
         if (!isAccessRightsModificationAllowed()) return null;
         return getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_ACCESS_RIGHTS_FOR_DIRECTORIES,
-                fileSystemAccessManager.commandSet.getDefaultAccessRightsString()).toString()
+                fileSystemAccessProvider.commandSet.getDefaultAccessRightsString()).toString()
     }
 
     public String getOutputFileAccessRights () {
         if (!isAccessRightsModificationAllowed()) return null;
         return getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_ACCESS_RIGHTS,
-                fileSystemAccessManager.commandSet.getDefaultAccessRightsString()).toString()
+                fileSystemAccessProvider.commandSet.getDefaultAccessRightsString()).toString()
     }
 
     public String getOutputGroupString () {
         if (!isAccessRightsModificationAllowed()) return null;
-        return getConfiguration().getConfigurationValues().get(ConfigurationConstants.OUTPUT_FILE_GROUP)
-                fileSystemAccessManager.getMyGroup().toString()
+        return getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_FILE_GROUP)
+                fileSystemAccessProvider.getMyGroup().toString()
     }
 
+    public String getUMask() {
+        return getConfiguration().getConfigurationValues().getString(ConfigurationConstants.CFG_OUTPUT_UMASK,
+                fileSystemAccessProvider.commandSet.getDefaultUMask());
+    }
 
     public synchronized File getLockFilesDirectory() {
         if (lockFilesDirectory == null)
@@ -641,8 +646,8 @@ public class ExecutionContext implements JobStatusListener {
     }
 
     private boolean checkDirectoryOrFile(File f) {
-        boolean readable = fileSystemAccessManager.isReadable(f);
-        fileSystemAccessManager.isWritable(f);
+        boolean readable = fileSystemAccessProvider.isReadable(f);
+        fileSystemAccessProvider.isWritable(f);
         return true;
     }
 
