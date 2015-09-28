@@ -122,12 +122,14 @@
         <xs:attribute type="xs:string" name="imports" use="optional"/>
         <xs:attribute type="xs:string" name="configurationType" use="required" fixed="analysis"/>
         <xs:attribute type="xs:string" name="class" use="required"/>
-        <xs:attribute type="xs:string" name="workflowClass" use="required"/>
+        <xs:attribute type="xs:string" name="workflowClass" use="optional"/>
         <xs:attribute type="xs:string" name="usedToolFolders" use="required"/>
         <xs:attribute type="xs:string" name="canCreateTestdata" use="optional"/>
         <xs:attribute type="xs:string" name="listOfUsedTools" use="optional"/>
         <xs:attribute type="xs:string" name="cleanupScript" use="optional"/>
         <xs:attribute type="xs:string" name="nativeWorkflowTool" use="optional"/>
         <xs:attribute type="xs:string" name="targetCommandFactory" use="optional"/>
+        <xs:attribute type="xs:string" name="brawlWorkflow" use="optional"/>
+        <xs:attribute type="xs:string" name="brawlBaseWorkflow" use="optional"/>
     </xs:complexType>
 </xs:schema>
