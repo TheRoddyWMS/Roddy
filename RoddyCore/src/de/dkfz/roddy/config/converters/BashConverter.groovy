@@ -98,9 +98,9 @@ class BashConverter extends ConfigurationConverter {
         boolean processSetUserGroup = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, true);
         boolean processSetUserMask = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERMASK, true);
         text << separator << 'if [ -z "${PS1-}" ]; then' << separator << "\t echo non interactive process!" << separator << "else" << separator << "\t echo interactive process" << separator
-
-        if (processSetUserMask) text << separator << "\t umask " << umask;
         text << separator << "fi" << separator << separator;
+
+        if (processSetUserMask) text << "\t umask " << umask << separator;
 
         for (ConfigurationValue cv : listOfSortedValues.values()) {
             boolean isValidationRule = cv.id.contains("cfgValidationRule");
