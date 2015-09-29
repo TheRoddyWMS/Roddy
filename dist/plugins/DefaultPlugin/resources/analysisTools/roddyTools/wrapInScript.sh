@@ -16,7 +16,7 @@ source ${CONFIG_FILE}
 
 isOutputFileGroup=${outputFileGroup-false}
 
-if [[ $isOutputFileGroup != false ]] && [[ !${newGrpIsCalled-false} == true ]]; then
+if [[ $isOutputFileGroup != false && ${newGrpIsCalled-false} == false ]]; then
   export newGrpIsCalled=true
   newgrp -c $0 $outputFileGroup
   exit $?

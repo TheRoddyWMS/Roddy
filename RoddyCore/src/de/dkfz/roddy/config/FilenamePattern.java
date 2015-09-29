@@ -1,5 +1,6 @@
 package de.dkfz.roddy.config;
 
+import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.knowledge.files.FileObject;
@@ -206,6 +207,7 @@ public class FilenamePattern implements RecursiveOverridableMapContainer.Identif
                     ConfigurationValue cval = cfg.getConfigurationValues().get(cvalID);
 
                     String pathSup = cval.getType().equals("path") ? cval.toFile(run).getAbsolutePath() : cval.toString();
+                    pathSup = pathSup.replace(Roddy.getApplicationDirectory().getAbsolutePath() + "/", ""); //Remove Roddy application folder from path...
                     temp = temp.replace(s, pathSup);
                 }
             }

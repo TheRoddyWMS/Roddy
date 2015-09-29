@@ -60,7 +60,11 @@ public class FilenamePatternTest {
         Analysis analysis = RoddyCLIClient.checkAndLoadAnalysis(Roddy.getCommandLineCall());
         List<ExecutionContext> executionContexts = analysis.run(["stds"], ExecutionContextLevel.QUERY_STATUS);
         assert(executionContexts.size() > 0);
-        executionContexts[0].allFilesInRun.each { file -> assert(file != null && !file.absolutePath.contains('${'))}
+        executionContexts[0].allFilesInRun.each { file ->
+            assert(file != null);
+            assert(!file.absolutePath.contains('${'))
+            assert(!file.absolutePath.contains(Roddy.getApplicationDirectory().absolutePath))
+        }
     }
 
     @Test
