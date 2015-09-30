@@ -6,16 +6,12 @@ import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ContextConfiguration
 import de.dkfz.roddy.config.ToolEntry;
 import de.dkfz.roddy.core.*
-import de.dkfz.roddy.knowledge.files.FileObject
-import de.dkfz.roddy.knowledge.files.Tuple2
 import de.dkfz.roddy.knowledge.methods.GenericMethod
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
-import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
 import java.lang.reflect.Field
-import java.lang.reflect.Parameter
 import java.lang.reflect.Type
 
 import static de.dkfz.roddy.Constants.ENV_LINESEPARATOR as NEWLINE
@@ -32,6 +28,8 @@ import java.lang.reflect.Method;
 public class BrawlWorkflow extends Workflow {
     public static final LoggerWrapper logger = LoggerWrapper.getLogger(BrawlWorkflow.class.name);
 
+    private Map<File, Workflow> convertedWorkflows = [:]
+
     @Override
     public boolean execute(ExecutionContext context) {
 
@@ -44,199 +42,203 @@ public class BrawlWorkflow extends Workflow {
 
         //Load the file and convert to a synthetic Java workfow
         File f = context.getConfiguration().getSourceBrawlWorkflow(brawlWorkflow);
+        if(!convertedWorkflows[f]) {
 
-        // Find all lines which are not a comment and not empty
-        def lines = f.readLines();
-        lines = lines.findAll { it.trim() != "" && !it.startsWith("#") }.collect { String s = it.split(StringConstants.SPLIT_HASH)[0].trim(); s.endsWith(";") ? s[0..-2] : s }
+            // Find all lines which are not a comment and not empty
+            def lines = f.readLines();
+            lines = lines.findAll { it.trim() != "" && !it.startsWith("#") }.collect { String s = it.split(StringConstants.SPLIT_HASH)[0].trim(); s.endsWith(";") ? s[0..-2] : s }
 
-        // Extract the Workflow name and the base class
-        // Find the base class.
-        String workflowName = aCfg.getBrawlWorkflow();
-        String baseClass = aCfg.getBrawlBaseWorkflow();
-        Class _baseClass;
-        if (baseClass == Workflow.class.simpleName)
-            _baseClass = Workflow.class;
-        else {
-            //Search all loaded classes...
-            _baseClass = LibrariesFactory.getInstance().searchForClass(baseClass);
-        }
-        classBuilder << "import " << Configuration.class.name << NEWLINE
-        classBuilder << "import de.dkfz.roddy.knowledge.files.*" << NEWLINE << NEWLINE
-
-        // Brawl accepts Java imports.
-        // Search for them and append them.
-        int lineIndex;
-        for (lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
-            if (!lines[lineIndex].startsWith("import"))
-                break;
-            classBuilder << lines[lineIndex] << NEWLINE
-        }
-
-        classBuilder << NEWLINE << "@groovy.transform.CompileStatic" << NEWLINE
-        classBuilder << "public class $workflowName extends ${_baseClass.name} { $NEWLINE  @Override $NEWLINE  public boolean execute(";
-
-        // Now grab the parameters
-        def parms = ["context"]
-
-        // Follow up parameters for the execute code
-        for (; lineIndex < lines.size(); lineIndex++) {
-            if (!lines[lineIndex].startsWith("input"))
-                break;
-            parms << lines[lineIndex][6..-1].trim()
-        }
-        // Find the proper execute method in the base Workflow classes
-        // Go for the parameter count first, then for the parameter names... types are difficult.
-        Collection<Method> listOfMethods = _baseClass.declaredMethods.findAll { method -> method.parameterCount == parms.size() }
-        if (listOfMethods.size() != 1) {
-            // Find by parameter names...
-            logger.severe("More than one execute method found for workflow class ${workflowName}");
-            return false;
-        }
-        if (listOfMethods.size() == 0) {
-            logger.severe("No execute method found for workflow class ${workflowName}");
-            return false;
-        }
-
-        def parmArr = []
-        Map<String, String> knownObjects = [:]
-        for (int j = 0; j < parms.size(); j++) {
-            String pName = parms[j]
-            String pType = listOfMethods[0].parameters[j].type.name
-            parmArr << "${pType} ${pName}";
-            knownObjects[pName] = pType;
-        }
-        knownObjects["configuration"] = ContextConfiguration.class.name
-        classBuilder << parmArr.join(", ") << ") { $NEWLINE"
-        classBuilder << "    Configuration configuration = context.getConfiguration(); $NEWLINE"
-
-        // Find and convert run flags
-        for (; lineIndex < lines.size(); lineIndex++) {
-            if (!lines[lineIndex].startsWith("runflag")) break;
-            String[] values = lines[lineIndex].split(StringConstants.SPLIT_WHITESPACE);
-            if (values.size() < 2) {
-                return false
+            // Extract the Workflow name and the base class
+            // Find the base class.
+            String workflowName = aCfg.getBrawlWorkflow();
+            String baseClass = aCfg.getBrawlBaseWorkflow();
+            Class _baseClass;
+            if (baseClass == Workflow.class.simpleName)
+                _baseClass = Workflow.class;
+            else {
+                //Search all loaded classes...
+                _baseClass = LibrariesFactory.getInstance().searchForClass(baseClass);
             }
-            String flagid = values[1];
-            Boolean defaultValue = values.size() == 4 && values[2] == "default" ? RoddyConversionHelperMethods.toBoolean(values[3], false) : false;
-            classBuilder << "    boolean $flagid = configuration.getConfigurationValues().getBoolean(\"$flagid\", ${defaultValue}); $NEWLINE"
-        }
+            classBuilder << "import " << Configuration.class.name << NEWLINE
+            classBuilder << "import de.dkfz.roddy.knowledge.files.*" << NEWLINE << NEWLINE
 
-        // Load the rest of the code
-        Map<String, String> undefinedVariables = [:];
-        Map<String, String> genericTypesMap = [:];
-        // First, create a list of code blocks... also check, if there are if/fi mismatches.
-        int level = 2;
-        for (; lineIndex < lines.size(); lineIndex++) {
-
-            // Get the line and shape it so it is splitable by whitespace
-            String l = lines[lineIndex].replaceFirst("=", " = ") // Pre-/Append whitespace to the first equals. Don't change equals in parameters...
-                    .replaceAll("!", "! ")  // Append a whitespace to negations
-                    .replaceAll("[(]", ' ( ')  // Prepend a whitespace to braces
-                    .replaceAll("[)]", ' ) ')  // Prepend a whitespace to braces
-                    .replaceAll("\\s+", " ")
-                    .replaceAll("[;]", "; ")
-                    .replaceAll("[ ][(][ ][)][ ]", "()")
-                    .replaceAll("[)][)]", ") )");
-
-            if (!l) continue; //Skip empty lines
-
-            String[] _l = l.split(StringConstants.SEMICOLON)[0].split(StringConstants.SPLIT_WHITESPACE);
-            for (int indent = 0; indent < level; indent++) {
-                classBuilder << "  ";
+            // Brawl accepts Java imports.
+            // Search for them and append them.
+            int lineIndex;
+            for (lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
+                if (!lines[lineIndex].startsWith("import"))
+                    break;
+                classBuilder << lines[lineIndex] << NEWLINE
             }
-            if (l.startsWith("for ") && l.endsWith("; do")) {
-            } else if (l == "done") {
-            } else if (l.startsWith("if ") && l.endsWith(";  then")) {
-                attachIfLine(_l, l, classBuilder)
-                level++;
-            } else if (l == "fi") {
-                classBuilder << "}"
-                level--;
-            } else if (l.startsWith("else if")) {
-                classBuilder << "} else "
-                attachIfLine(_l, l, classBuilder)
-                level++;
-            } else if (l.startsWith("else")) {
-                classBuilder << "} else {"
-            } else if (l.startsWith("return")) {
-                if (_l.size() == 1)
-                    classBuilder << "return true"
-                else
-                    classBuilder << "return " << RoddyConversionHelperMethods.toBoolean(_l[1], false);
-            } else if (l.startsWith("call")) {
-                int indexOfCallCmd = 0;
-                int indexOfCallee = 1
 
-                StringBuilder temp = new StringBuilder();
+            classBuilder << NEWLINE << "@groovy.transform.CompileStatic" << NEWLINE
+            classBuilder << "public class $workflowName extends ${_baseClass.name} { $NEWLINE  @Override $NEWLINE  public boolean execute(";
 
-                assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, context, knownObjects)
+            // Now grab the parameters
+            def parms = ["context"]
 
-                classBuilder << temp.toString()[2..-1] << NEWLINE;
-            } else if (l.startsWith("set ")) {
-                int indexOfAssignment = 2;
-                int indexOfCallCmd = 3;
-                int indexOfCallee = 4
+            // Follow up parameters for the execute code
+            for (; lineIndex < lines.size(); lineIndex++) {
+                if (!lines[lineIndex].startsWith("input"))
+                    break;
+                parms << lines[lineIndex][6..-1].trim()
+            }
+            // Find the proper execute method in the base Workflow classes
+            // Go for the parameter count first, then for the parameter names... types are difficult.
+            Collection<Method> listOfMethods = _baseClass.declaredMethods.findAll { method -> method.parameterCount == parms.size() }
+            if (listOfMethods.size() != 1) {
+                // Find by parameter names...
+                logger.severe("More than one execute method found for workflow class ${workflowName}");
+                return false;
+            }
+            if (listOfMethods.size() == 0) {
+                logger.severe("No execute method found for workflow class ${workflowName}");
+                return false;
+            }
 
-                StringBuilder temp = new StringBuilder();
-                String varname = _l[1];
-                String classOfFileObject = "def" //FileObject.class.name;
+            def parmArr = []
+            Map<String, String> knownObjects = [:]
+            for (int j = 0; j < parms.size(); j++) {
+                String pName = parms[j]
+                String pType = listOfMethods[0].parameters[j].type.name
+                parmArr << "${pType} ${pName}";
+                knownObjects[pName] = pType;
+            }
+            knownObjects["configuration"] = ContextConfiguration.class.name
+            classBuilder << parmArr.join(", ") << ") { $NEWLINE"
+            classBuilder << "    Configuration configuration = context.getConfiguration(); $NEWLINE"
 
-                if (_l.size() > indexOfAssignment && _l[indexOfAssignment] == "=") {
-                    classOfFileObject = assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, context, knownObjects)
+            // Find and convert run flags
+            for (; lineIndex < lines.size(); lineIndex++) {
+                if (!lines[lineIndex].startsWith("runflag")) break;
+                String[] values = lines[lineIndex].split(StringConstants.SPLIT_WHITESPACE);
+                if (values.size() < 2) {
+                    return false
                 }
+                String flagid = values[1];
+                Boolean defaultValue = values.size() == 4 && values[2] == "default" ? RoddyConversionHelperMethods.toBoolean(values[3], false) : false;
+                classBuilder << "    boolean $flagid = configuration.getConfigurationValues().getBoolean(\"$flagid\", ${defaultValue}); $NEWLINE"
+            }
 
-                knownObjects[varname] = classOfFileObject;
-                String alternativeName = "#${knownObjects.size()}#"
-                if (classOfFileObject == "def") {
-                    undefinedVariables[varname] = alternativeName;
+            // Load the rest of the code
+            Map<String, String> undefinedVariables = [:];
+            Map<String, String> genericTypesMap = [:];
+            // First, create a list of code blocks... also check, if there are if/fi mismatches.
+            int level = 2;
+            for (; lineIndex < lines.size(); lineIndex++) {
+
+                // Get the line and shape it so it is splitable by whitespace
+                String l = lines[lineIndex].replaceFirst("=", " = ") // Pre-/Append whitespace to the first equals. Don't change equals in parameters...
+                        .replaceAll("!", "! ")  // Append a whitespace to negations
+                        .replaceAll("[(]", ' ( ')  // Prepend a whitespace to braces
+                        .replaceAll("[)]", ' ) ')  // Prepend a whitespace to braces
+                        .replaceAll("\\s+", " ")
+                        .replaceAll("[;]", "; ")
+                        .replaceAll("[ ][(][ ][)][ ]", "()")
+                        .replaceAll("[)][)]", ") )");
+
+                if (!l) continue; //Skip empty lines
+
+                String[] _l = l.split(StringConstants.SEMICOLON)[0].split(StringConstants.SPLIT_WHITESPACE);
+                for (int indent = 0; indent < level; indent++) {
+                    classBuilder << "  ";
                 }
+                if (l.startsWith("for ") && l.endsWith("; do")) {
+                } else if (l == "done") {
+                } else if (l.startsWith("if ") && l.endsWith(";  then")) {
+                    attachIfLine(_l, l, classBuilder)
+                    level++;
+                } else if (l == "fi") {
+                    classBuilder << "}"
+                    level--;
+                } else if (l.startsWith("else if")) {
+                    classBuilder << "} else "
+                    attachIfLine(_l, l, classBuilder)
+                    level++;
+                } else if (l.startsWith("else")) {
+                    classBuilder << "} else {"
+                } else if (l.startsWith("return")) {
+                    if (_l.size() == 1)
+                        classBuilder << "return true"
+                    else
+                        classBuilder << "return " << RoddyConversionHelperMethods.toBoolean(_l[1], false);
+                } else if (l.startsWith("call")) {
+                    int indexOfCallCmd = 0;
+                    int indexOfCallee = 1
 
-                String result = (classOfFileObject == "def" ? alternativeName : classOfFileObject) + " " + varname + temp;
-                classBuilder << result;
+                    StringBuilder temp = new StringBuilder();
 
-            } else {
-                int indexOfAssignment = 1;
-                int indexOfCallCmd = 2;
-                int indexOfCallee = 3;
+                    assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, context, knownObjects)
 
-                StringBuilder temp = new StringBuilder();
-                String varname = _l[0];
-                String classOfFileObject = "def";
+                    classBuilder << temp.toString()[2..-1] << NEWLINE;
+                } else if (l.startsWith("set ")) {
+                    int indexOfAssignment = 2;
+                    int indexOfCallCmd = 3;
+                    int indexOfCallee = 4
 
-                if (_l.size() > indexOfAssignment && _l[indexOfAssignment] == "=") {
-                    classOfFileObject = assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, context, knownObjects)
-                    classBuilder << varname << temp;
-                }
+                    StringBuilder temp = new StringBuilder();
+                    String varname = _l[1];
+                    String classOfFileObject = "def" //FileObject.class.name;
 
-                if (knownObjects.containsKey(varname) && knownObjects[varname] == "def") {
+                    if (_l.size() > indexOfAssignment && _l[indexOfAssignment] == "=") {
+                        classOfFileObject = assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, context, knownObjects)
+                    }
+
                     knownObjects[varname] = classOfFileObject;
+                    String alternativeName = "#${knownObjects.size()}#"
+                    if (classOfFileObject == "def") {
+                        undefinedVariables[varname] = alternativeName;
+                    }
+
+                    String result = (classOfFileObject == "def" ? alternativeName : classOfFileObject) + " " + varname + temp;
+                    classBuilder << result;
+
+                } else {
+                    int indexOfAssignment = 1;
+                    int indexOfCallCmd = 2;
+                    int indexOfCallee = 3;
+
+                    StringBuilder temp = new StringBuilder();
+                    String varname = _l[0];
+                    String classOfFileObject = "def";
+
+                    if (_l.size() > indexOfAssignment && _l[indexOfAssignment] == "=") {
+                        classOfFileObject = assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, context, knownObjects)
+                        classBuilder << varname << temp;
+                    }
+
+                    if (knownObjects.containsKey(varname) && knownObjects[varname] == "def") {
+                        knownObjects[varname] = classOfFileObject;
+                    }
                 }
+                classBuilder << NEWLINE;
             }
-            classBuilder << NEWLINE;
+
+            classBuilder << "    return true" << NEWLINE << "  } $NEWLINE}"
+
+            String text = classBuilder.toString();
+
+            text = text.replace(", class ", ", ").replace("<class ", "< ");
+
+            undefinedVariables.each { String k, String v ->
+                text = text.replaceAll(v, knownObjects[k]);
+            }
+
+            int lineNo = 1;
+            // eachline would be possible, but at least Intellij Idea always shows up an error, which bugs me a little...
+            text.readLines().each { String line -> println("" + lineNo + ":\t" + line); lineNo++; }
+            try {
+                //Finally load and parse the class, output any errors.
+                GroovyClassLoader groovyClassLoader = LibrariesFactory.getGroovyClassLoader();
+                Class theParsedWorkflow = groovyClassLoader.parseClass(text);
+                convertedWorkflows[f] = ((Workflow)theParsedWorkflow.newInstance());
+            } catch (Exception ex) {
+                println(ex);
+                return false;
+            }
         }
+        convertedWorkflows[f].execute(context);
 
-        classBuilder << "    return true" << NEWLINE << "  } $NEWLINE}"
-
-        String text = classBuilder.toString();
-
-        text = text.replace(", class ", ", ").replace("<class ", "< ");
-
-        undefinedVariables.each { String k, String v ->
-            text = text.replaceAll(v, knownObjects[k]);
-        }
-
-        int lineNo = 1;
-        // eachline would be possible, but at least Intellij Idea always shows up an error, which bugs me a little...
-        text.readLines().each { String line -> println("" + lineNo + ":\t" + line); lineNo++; }
-        try {
-            //Finally load and parse the class, output any errors.
-            GroovyClassLoader groovyClassLoader = LibrariesFactory.getGroovyClassLoader();
-            Class theParsedWorkflow = groovyClassLoader.parseClass(text);
-            ((Workflow) theParsedWorkflow.newInstance()).execute(context);
-        } catch (Exception ex) {
-            println(ex);
-            return false;
-        }
         return true;
     }
 

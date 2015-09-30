@@ -85,6 +85,14 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 == Changelist
 
+- Fix: Fix some bugs regarding brawl workflows.
+
+- Fix: Fix a bug in testrerun where too much jobs were displayed. This should be fixed now.
+
+- Update prepareprojectconfig. create and update still exist but you only need to provide the
+  target project folder. Roddy will take care of the rest. Both update and create will update
+  the configurationDirestories part in the ini file to contain/change the newly created directory
+
 * Version update to 2.2.81
 
 - Fix: Output directories will now always be set to type "path". This will prevent errors for
