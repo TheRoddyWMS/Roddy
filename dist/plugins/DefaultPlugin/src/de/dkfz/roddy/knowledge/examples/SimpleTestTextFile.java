@@ -13,32 +13,32 @@ import java.util.List;
 /**
  * A very simple text file containing nothing or some text.
  */
-public class TextFile extends BaseFile {
+public class SimpleTestTextFile extends BaseFile {
 
-    public TextFile(File path, ExecutionContext executionContext, JobResult jobResult, List parentFiles, FileStageSettings settings) {
+    public SimpleTestTextFile(File path, ExecutionContext executionContext, JobResult jobResult, List parentFiles, FileStageSettings settings) {
         super(path, executionContext, jobResult, parentFiles, settings);
     }
 
-    public TextFile(BaseFile parentFile) {
+    public SimpleTestTextFile(BaseFile parentFile) {
         super(parentFile);
     }
 
-    public TextFile(TextFile parentFile) {
+    public SimpleTestTextFile(SimpleTestTextFile parentFile) {
         super(parentFile);
     }
 
     @ScriptCallingMethod
-    public TextFile test1() {
+    public SimpleTestTextFile test1() {
         return GenericMethod.callGenericTool("testScript", this);
     }
 
     @ScriptCallingMethod
-    public TextFile test2() {
+    public SimpleTestTextFile test2() {
         return GenericMethod.callGenericTool("testScript", this);
     }
 
     @ScriptCallingMethod
-    public TextFile test3() {
+    public SimpleTestTextFile test3() {
         return GenericMethod.callGenericTool("testScriptExitBad", this);
     }
 
