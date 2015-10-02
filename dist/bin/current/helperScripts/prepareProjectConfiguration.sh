@@ -32,7 +32,8 @@ if [[ $mode == "create" ]]; then
 	[[ -d $basePath ]] && echo "The folder ${basePath} is already existing, create mode will not work." && exit 4
 
 	mkdir -p $targetConfigFolder
-	cp ${SCRIPTS_DIR}/skeletonProject.xml $targetConfigFolder/project.xml
+	cp ${SCRIPTS_DIR}/skeletonProject_minimal.xml $targetConfigFolder/project_minimal.xml
+	cp ${SCRIPTS_DIR}/skeletonProject_extended.xml $targetConfigFolder/project_extended.xml
 #	cp ${SCRIPTS_DIR}/skeletonAppProperties.ini $targetConfigFolder/applicationProperties.ini
 
   groovy -e "String cfgDir = new File(\"${SCRIPTS_DIR}/skeletonAppProperties.ini\").text.replace(\"configurationDirectories=\", \"configurationDirectories=${targetConfigFolder}\"); new File(\"${targetConfigFolder}/applicationProperties.ini\").write(cfgDir);"
