@@ -55,7 +55,6 @@ public class FilenamePatternTest {
     public void testApply() throws Exception {
         // Normally, the folder should be set by Roddy itself, but in this case, Roddy has no knowledge about itself yet!
         Roddy.main(["listdatasets", "TestProjectForUnitTests@test", "stds", "--useRoddyVersion=current", "--disallowexit", "--configurationDirectories="+RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current", "testFiles").absolutePath] as String[]);
-        File tempDir = new File("/tmp")
 
         Analysis analysis = RoddyCLIClient.checkAndLoadAnalysis(Roddy.getCommandLineCall());
         List<ExecutionContext> executionContexts = analysis.run(["stds"], ExecutionContextLevel.QUERY_STATUS);

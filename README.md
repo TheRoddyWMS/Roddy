@@ -85,6 +85,8 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 == Changelist
 
+* Version update to 2.2.87
+
 - Fix: Fix some bugs regarding brawl workflows.
 
 - Fix: Fix a bug in testrerun where too much jobs were displayed. This should be fixed now.
