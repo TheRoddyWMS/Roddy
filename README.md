@@ -85,6 +85,32 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 == Changelist
 
+- Fix: Fix some bugs regarding brawl workflows.
+
+- Fix: Fix a bug in testrerun where too much jobs were displayed. This should be fixed now.
+
+- Update prepareprojectconfig. create and update still exist but you only need to provide the
+  target project folder. Roddy will take care of the rest. Both update and create will update
+  the configurationDirestories part in the ini file to contain/change the newly created directory
+
+* Version update to 2.2.81
+
+- Fix: Output directories will now always be set to type "path". This will prevent errors for
+  output files, if users forget to set this particular variables to the proper type.
+
+- (TEST) Roddy can now create auto filenames, if there was no filename pattern for a file.
+  This is currently enabled by default! Auto filenames are placed in the output directory and
+  contain the job name, the parameter name, the job id and the suffix .auto.
+
+- (WIP) add the createworkflow runmode to Roddy.
+
+- (TEST) A working and version of Roddys built in Brawl language. Brawl is be a very basic
+  language to implement simple workflows. Support is e.g. given for if and a lot of typing can be skipped.
+  brawl scripts will be auto converted and compiled to Groovy workflows upon startup. This way it is guaranteed
+  that those scripts are written properly. Still missing is the for loop syntax.
+
+* Version update to 2.2.69
+
 * Version update to 2.2.66
 
 * Version update to 2.2.66

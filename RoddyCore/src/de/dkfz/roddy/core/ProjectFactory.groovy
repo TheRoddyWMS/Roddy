@@ -9,8 +9,9 @@ import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.validation.XSDValidator;
 import de.dkfz.roddy.plugins.LibrariesFactory;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
-import de.dkfz.roddy.tools.Tuple2;
+import de.dkfz.roddy.tools.Tuple2
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -107,7 +108,9 @@ public class ProjectFactory {
             Class analysisClass = LibrariesFactory.getInstance().loadClass(configuration.getConfiguredClass());
             Class workflowClass = LibrariesFactory.getInstance().loadClass(configuration.getWorkflowClass());
             Workflow workflow = (Workflow) workflowClass.getConstructor().newInstance();
-            analysis = (Analysis) analysisClass.getConstructor(String.class, Project.class, Workflow.class, AnalysisConfiguration.class).newInstance(analysisName, project, workflow, configuration);
+
+            def constructor = analysisClass.getConstructor(String.class, Project.class, Workflow.class, AnalysisConfiguration.class)
+            analysis = (Analysis) constructor.newInstance(analysisName, project, workflow, configuration);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (InstantiationException e) {

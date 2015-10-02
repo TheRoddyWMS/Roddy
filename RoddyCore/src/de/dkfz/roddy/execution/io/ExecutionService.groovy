@@ -13,7 +13,7 @@ import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.CommandFactory
 import de.dkfz.roddy.execution.jobs.JobDependencyID
@@ -30,7 +30,7 @@ import static de.dkfz.roddy.StringConstants.TILDE
 import static de.dkfz.roddy.config.ConfigurationConstants.*
 
 /**
- * Execution services context commands locally or remotely. Some specific commands (copy file or directory) are also available as those can (hopefully) be created by all service implementations.
+ * Execution services commands locally or remotely. Some specific commands (copy file or directory) are also available as those can (hopefully) be created by all service implementations.
  * i.e. local file handling is done by Java itself wheres remote handling with ssh is done via the ssh library
  *
  */
@@ -65,7 +65,7 @@ public abstract class ExecutionService extends CacheProvider {
             return;
         }
 
-        ClassLoader classLoader = Roddy.class.getClassLoader();
+        ClassLoader classLoader = LibrariesFactory.getGroovyClassLoader();
 
         String executionServiceClassID = null;
         Roddy.RunMode runMode = Roddy.getRunMode();
@@ -177,16 +177,16 @@ public abstract class ExecutionService extends CacheProvider {
                 if (run.getExecutionContextLevel() == ExecutionContextLevel.TESTRERUN) {
                     String pid = String.format("0x%08X", System.nanoTime());
                     res = new ExecutionResult(true, 0, [pid], pid);
-                } else
+                } else {
                     res = execute(cmdString, waitFor, outputStream);
-
+                }
                 command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.OK);
 
                 if (isLocalService() && command.isBlockingCommand()) {
                     command.setExecutionID(CommandFactory.getInstance().createJobDependencyID(command.getJob(), res.processID));
 
                     File logFile = command.getExecutionContext().getRuntimeService().getLogFileForCommand(command)
-                    FileSystemInfoProvider.getInstance().moveFile(tmpFile, logFile);
+                    FileSystemAccessProvider.getInstance().moveFile(tmpFile, logFile);
                 } else if (res.successful) {
                     String exID = CommandFactory.getInstance().parseJobID(res.resultLines[0]);
                     command.setExecutionID(CommandFactory.getInstance().createJobDependencyID(command.getJob(), exID));
@@ -225,7 +225,7 @@ public abstract class ExecutionService extends CacheProvider {
      * @return
      */
     public boolean checkContextPermissions(ExecutionContext context) {
-        FileSystemInfoProvider fis = FileSystemInfoProvider.getInstance();
+        FileSystemAccessProvider fis = FileSystemAccessProvider.getInstance();
         Analysis analysis = context.getAnalysis()
 
         //First check in and output directories for accessibility
@@ -244,15 +244,13 @@ public abstract class ExecutionService extends CacheProvider {
         Boolean outputIsWriteable = fis.directoryExists(outputBaseDirectory) ? fis.isReadable(outputBaseDirectory) && fis.isWritable(outputBaseDirectory) : null;
         Boolean datasetDirIsWritable = fis.directoryExists(outputDirectory) ? fis.isReadable(outputDirectory) && fis.isWritable(outputDirectory) : null;
 
-        Boolean projectExecCacheFileIsWritable = fis.fileExists(projectExecCacheFile) ? fis.isReadable(projectExecCacheFile) && fis.isWritable(projectExecCacheFile) : null
+        Boolean projectExecCacheFileIsWritable = outputIsWriteable && fis.fileExists(projectExecCacheFile) ? fis.isReadable(projectExecCacheFile) && fis.isWritable(projectExecCacheFile) : null
         Boolean projectExecutionContextDirIsWritable = fis.directoryExists(projectExecutionDirectory) ? fis.isReadable(projectExecutionDirectory) && fis.directoryExists(projectExecutionDirectory) : null;
         Boolean projectToolsMD5SumFileIsWritable = fis.fileExists(projectToolsMD5SumFile) ? fis.isReadable(projectToolsMD5SumFile) && fis.isWritable(projectToolsMD5SumFile) : projectExecutionContextDirIsWritable
         Boolean baseContextDirIsWritable = fis.directoryExists(baseContextExecutionDirectory) ? fis.isReadable(baseContextExecutionDirectory) && fis.isWritable(baseContextExecutionDirectory) : null;
 
         int countErrors = context.getErrors().sum(0) { ExecutionContextError ece -> ece.getErrorLevel() == Level.SEVERE ? 1 : 0 } as Integer
 
-        if (!inputIsReadable)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_INACCESSIBLE.expand("Base input dir is not readable: "));
 
         if (outputIsWriteable == null)
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${outputBaseDirectory}", Level.WARNING));
@@ -313,7 +311,7 @@ public abstract class ExecutionService extends CacheProvider {
     public void writeFilesForExecution(ExecutionContext context) {
         context.setDetailedExecutionContextLevel(ExecutionContextSubLevel.RUN_SETUP_INIT);
 
-        FileSystemInfoProvider provider = FileSystemInfoProvider.getInstance();
+        FileSystemAccessProvider provider = FileSystemAccessProvider.getInstance();
         ConfigurationFactory configurationFactory = ConfigurationFactory.getInstance();
 
         String analysisID = context.getAnalysis().getName();
@@ -356,7 +354,7 @@ public abstract class ExecutionService extends CacheProvider {
         configurationValues.put(RODDY_CVALUE_DIRECTORY_RODDY_APPLICATION, roddyApplicationDirectory.getAbsolutePath(), CVALUE_TYPE_PATH);
         configurationValues.put(RODDY_CVALUE_DIRECTORY_BUNDLED_FILES, roddyBundledFilesDirectory.getAbsolutePath(), CVALUE_TYPE_PATH);
         configurationValues.put(RODDY_CVALUE_DIRECTORY_ANALYSIS_TOOLS, analysisToolsDirectory.getAbsolutePath(), CVALUE_TYPE_PATH);
-        configurationValues.put(RODDY_CVALUE_JOBSTATE_LOGFILE, executionDirectory.getAbsolutePath() + FileSystemInfoProvider.getInstance().getPathSeparator() + RODDY_JOBSTATE_LOGFILE, CVALUE_TYPE_STRING);
+        configurationValues.put(RODDY_CVALUE_JOBSTATE_LOGFILE, executionDirectory.getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + RODDY_JOBSTATE_LOGFILE, CVALUE_TYPE_STRING);
 
         if (!context.getExecutionContextLevel().canSubmitJobs) return;
 
@@ -397,7 +395,7 @@ public abstract class ExecutionService extends CacheProvider {
      * @param context
      */
     private void copyAnalysisToolsForContext(ExecutionContext context) {
-        FileSystemInfoProvider provider = FileSystemInfoProvider.getInstance();
+        FileSystemAccessProvider provider = FileSystemAccessProvider.getInstance();
         Configuration cfg = context.getConfiguration();
         File dstExecutionDirectory = context.getExecutionDirectory();
         File dstAnalysisToolsDirectory = context.getAnalysisToolsDirectory();
@@ -560,7 +558,7 @@ public abstract class ExecutionService extends CacheProvider {
 
         context.setDetailedExecutionContextLevel(ExecutionContextSubLevel.RUN_FINALIZE_CREATE_JOBFILES);
 
-        final FileSystemInfoProvider provider = FileSystemInfoProvider.getInstance();
+        final FileSystemAccessProvider provider = FileSystemAccessProvider.getInstance();
         final String separator = Constants.ENV_LINESEPARATOR;
 
         List<Command> commandCalls = context.getCommandCalls();
@@ -621,27 +619,27 @@ public abstract class ExecutionService extends CacheProvider {
 
     public boolean canQueryFileAttributes() { return false; }
 
-    public void writeTextFile(File file, String text) {}
+    public boolean writeTextFile(File file, String text) {}
 
-    public void writeBinaryFile(File file, Serializable serializable) {}
+    public boolean writeBinaryFile(File file, Serializable serializable) {}
 
-    public void copyFile(File _in, File _out) {}
+    public boolean copyFile(File _in, File _out) {}
 
-    public void copyDirectory(File _in, File _out) {}
+    public boolean copyDirectory(File _in, File _out) {}
 
-    public void moveFile(File _from, File _to) {}
+    public boolean moveFile(File _from, File _to) {}
 
     public boolean modifyAccessRights(File file, String rightsStr, String groupID) {}
 
-    public void createFileWithRights(boolean atomic, File file, String accessRights, String groupID, boolean blocking) {}
+    public boolean createFileWithRights(boolean atomic, File file, String accessRights, String groupID, boolean blocking) {}
 
-    public void removeDirectory(File directory) {}
+    public boolean removeDirectory(File directory) {}
 
-    public void removeFile(File file) {}
+    public boolean removeFile(File file) {}
 
-    public void appendLinesToFile(boolean atomic, File file, List<String> lines, boolean blocking) {}
+    public boolean appendLinesToFile(boolean atomic, File file, List<String> lines, boolean blocking) {}
 
-    public void appendLineToFile(boolean atomic, File file, String line, boolean blocking) {}
+    public boolean appendLineToFile(boolean atomic, File file, String line, boolean blocking) {}
 
     public Object loadBinaryFile(File file) {}
 

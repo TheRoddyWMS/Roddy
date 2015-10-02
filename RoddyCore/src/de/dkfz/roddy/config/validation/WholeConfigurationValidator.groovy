@@ -62,8 +62,8 @@ public class WholeConfigurationValidator extends ConfigurationValidator {
                 logger.severe("Could not validate value " + cval.id);
             }
 //            if (!validateConfiguration(configuration)) {
-//                cfg.setInvalid(true);
-//                logger.severe("Configuration ${cfg.name} is invalid.");
+//                configuration.setInvalid(true);
+//                logger.severe("Configuration ${configuration.name} is invalid.");
 //            }
             valid = unValidatedConfigurationValues.size() == 0;
         } catch (Exception ex) {

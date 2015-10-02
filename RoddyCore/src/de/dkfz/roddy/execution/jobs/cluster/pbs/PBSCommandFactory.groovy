@@ -5,16 +5,15 @@ import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.core.BufferUnit;
 import de.dkfz.roddy.execution.io.ExecutionService;
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.cluster.ClusterCommandFactory;
 import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo;
 import de.dkfz.roddy.tools.*;
 import de.dkfz.roddy.config.*;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.execution.io.ExecutionResult;
-import de.dkfz.roddy.execution.jobs.*;
+import de.dkfz.roddy.execution.jobs.*
 
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -421,12 +420,16 @@ public class PBSCommandFactory extends ClusterCommandFactory<PBSCommand> {
         updateJobStatus(false);
     }
 
+    protected String getQueryCommand() {
+        return PBS_COMMAND_QUERY_STATES;
+    }
+
     protected void updateJobStatus(boolean forceUpdate) {
 
         if (!ExecutionService.getInstance().isAvailable())
             return;
 
-        String queryCommand = PBS_COMMAND_QUERY_STATES;
+        String queryCommand = getQueryCommand();
 
         if (Roddy.queryOnlyStartedJobs() && listOfCreatedCommands.size() < 10) {
             for (Object _l : listOfCreatedCommands) {
@@ -435,7 +438,7 @@ public class PBSCommandFactory extends ClusterCommandFactory<PBSCommand> {
             }
         }
         if (Roddy.isTrackingOfUserJobsEnabled())
-            queryCommand += " -u " + FileSystemInfoProvider.getInstance().callWhoAmI() + " ";
+            queryCommand += " -u " + FileSystemAccessProvider.getInstance().callWhoAmI() + " ";
 
 
         Map<String, JobState> allStatesTemp = new LinkedHashMap<String, JobState>();
@@ -668,7 +671,7 @@ public class PBSCommandFactory extends ClusterCommandFactory<PBSCommand> {
 
     @Override
     public String[] peekLogFile(Job job) {
-        String user = FileSystemInfoProvider.getInstance().callWhoAmI();
+        String user = FileSystemAccessProvider.getInstance().callWhoAmI();
         String id = job.getJobID();
         String searchID = id;
         if (id.contains(SBRACKET_LEFT)) {

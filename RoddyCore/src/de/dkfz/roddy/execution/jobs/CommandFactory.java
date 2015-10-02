@@ -5,12 +5,12 @@ import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.config.ToolEntry;
 import de.dkfz.roddy.core.ExecutionContext;
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
-import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommand;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommandFactory;
 import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.knowledge.files.FileGroup;
 import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo;
+import de.dkfz.roddy.plugins.LibrariesFactory;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -41,7 +41,7 @@ public abstract class CommandFactory<C extends Command> {
         if (!fullSetup)
             return;
 
-        ClassLoader classLoader = Roddy.class.getClassLoader();
+        ClassLoader classLoader = LibrariesFactory.getGroovyClassLoader();
         String commandFactoryClassID = Roddy.getApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS, PBSCommandFactory.class.getName());
         Class commandFactoryClass = classLoader.loadClass(commandFactoryClassID);
         Constructor[] c = commandFactoryClass.getConstructors();
@@ -198,7 +198,7 @@ public abstract class CommandFactory<C extends Command> {
             code = "C";
         else if (job.getJobState() == JobState.FAILED)
             code = "E";
-        FileSystemInfoProvider.getInstance().appendLineToFile(true, currentContext.getRuntimeService().getNameOfJobStateLogFile(currentContext), String.format("%s:%s:%s", job.getJobID(), code, millis), false);
+        FileSystemAccessProvider.getInstance().appendLineToFile(true, currentContext.getRuntimeService().getNameOfJobStateLogFile(currentContext), String.format("%s:%s:%s", job.getJobID(), code, millis), false);
     }
 
     public String getLogFileName(Job p) {

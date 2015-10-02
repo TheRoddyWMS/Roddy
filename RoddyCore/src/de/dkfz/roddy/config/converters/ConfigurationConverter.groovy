@@ -3,10 +3,8 @@ package de.dkfz.roddy.config.converters;
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants;
 import de.dkfz.roddy.core.ExecutionContext;
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
-import de.dkfz.roddy.execution.jobs.CommandFactory;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 
-import java.nio.file.FileSystem;
 import java.util.logging.Logger
 
 import static de.dkfz.roddy.StringConstants.COLON
@@ -25,7 +23,7 @@ public abstract class ConfigurationConverter {
     public abstract String convert(ExecutionContext context, Configuration configuration);
 
     public static String convertAutomatically(ExecutionContext context, Configuration configuration) {
-        return FileSystemInfoProvider.getInstance().getConfigurationConverter().convert(context, configuration);
+        return FileSystemAccessProvider.getInstance().getConfigurationConverter().convert(context, configuration);
     }
 
     /**

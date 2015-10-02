@@ -24,10 +24,6 @@ public enum RoddyStartupModes {
 
     prepareprojectconfig(SCOPE_REDUCED),
 
-    compile(SCOPE_CLI),
-
-    pack(SCOPE_CLI),
-
     printpluginreadme(SCOPE_CLI, [useconfig]),
 
     printanalysisxml(SCOPE_CLI, [useconfig]),
@@ -37,10 +33,6 @@ public enum RoddyStartupModes {
     compileplugin(SCOPE_CLI, [useconfig]),
 
     updateplugin(SCOPE_CLI, [useconfig]),
-
-    packplugin(SCOPE_CLI, [useconfig]),
-
-    showconfig(SCOPE_REDUCED, [useconfig]),
 
     validateconfig(SCOPE_REDUCED, [useconfig]),
 
@@ -68,12 +60,17 @@ public enum RoddyStartupModes {
 
     ui(SCOPE_FULL, [useconfig, verbositylevel]),
 
+    compile(SCOPE_CLI),
+
+    pack(SCOPE_CLI),
+
+    packplugin(SCOPE_CLI, [useconfig]),
+
+    showconfig(SCOPE_REDUCED, [useconfig]),
+
+    createworkflow(SCOPE_REDUCED, [useconfig]),
+
     setup(SCOPE_CLI);
-    //    networksubmissionserver(false),
-
-    //    createtestdata(true),
-
-    //    showstatus(true),
 
     public final int scope;
 

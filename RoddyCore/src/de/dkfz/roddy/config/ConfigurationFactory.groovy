@@ -1,9 +1,7 @@
 package de.dkfz.roddy.config
 
 import de.dkfz.roddy.*
-import de.dkfz.roddy.client.RoddyStartupOptions
-import de.dkfz.roddy.config.converters.XMLConverter
-import de.dkfz.roddy.config.validation.XSDValidator
+import de.dkfz.roddy.knowledge.brawlworkflows.BrawlWorkflow
 import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
 import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.Roddy
@@ -11,18 +9,16 @@ import de.dkfz.roddy.config.Configuration.ConfigurationType
 import de.dkfz.roddy.config.ToolEntry.ToolFileGroupParameter.PassOptions
 import de.dkfz.roddy.config.ToolEntry.ToolStringParameter.ParameterSetbyOptions
 import de.dkfz.roddy.core.*
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
 import de.dkfz.roddy.knowledge.files.*
 import de.dkfz.roddy.plugins.*
-import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.*
-import groovy.xml.MarkupBuilder
 import org.apache.commons.io.filefilter.WildcardFileFilter
 
 import java.lang.reflect.*
 import java.util.logging.*
 
+import static de.dkfz.roddy.Constants.ENV_LINESEPARATOR as NEWLINE
 import static de.dkfz.roddy.StringConstants.*
 
 /**
@@ -32,23 +28,21 @@ import static de.dkfz.roddy.StringConstants.*
 @groovy.transform.CompileStatic
 public class ConfigurationFactory {
 
+
     public static final String XMLTAG_EXECUTIONSERVICE_SSHUSER = "executionServiceSSHUser";
     public static final String XMLTAG_EXECUTIONSERVICE_SHOW_SSHCALLS = "executionServiceShowSSHCalls";
     public static final String XMLTAG_ATTRIBUTE_INHERITANALYSES = "inheritAnalyses"
-    public static final String XMLTAG_PREVENT_JOB_EXECUTION = "preventJobExecution";
-    public static final String XMLTAG_USE_CENTRAL_ANALYSIS_ARCHIVE = "useCentralAnalysisArchive";
-    public static final String XMLTAG_OUTPUT_FILE_GROUP = "outputFileGroup"
-    public static final String XMLTAG_OUTPUT_UMASK = "outputUMask"
 
-    public static final Logger logger = Logger.getLogger(ConfigurationFactory.class.name);
+    public static final String SYNTHETIC_PACKAGE = "de.dkfz.roddy.synthetic.files"
+
+    public static final LoggerWrapper logger = LoggerWrapper.getLogger(ConfigurationFactory.class.name);
+
 
     private static ConfigurationFactory singleton = new ConfigurationFactory();
-
 
     private Map<String, InformationalConfigurationContent> availableConfigurations = [:];
 
     private Map<ConfigurationType, List<InformationalConfigurationContent>> availableConfigurationsByType = [:];
-
     private Map<ConfigurationType, Map<String, InformationalConfigurationContent>> availableConfigurationsByTypeAndID = [:]
 
 
@@ -119,20 +113,22 @@ public class ConfigurationFactory {
             try {
                 def icc = loadInformationalConfigurationContent(it);
                 File readmeFile = RoddyIOHelperMethods.assembleLocalPath(pluginsByFile[it].directory, "README." + icc.id + ".txt");
-                if(readmeFile.exists())
+                if (readmeFile.exists())
                     icc.setReadmeFile(readmeFile);
 
-                if (availableConfigurations.containsKey(icc.name)) {
-                    throw new RuntimeException("Configuration with name ${icc.name} already exists! Names must be unique.")
-                }
+                if (!availableConfigurations.containsKey(icc.name)) {
 
-                availableConfigurations[icc.id] = icc;
-                availableConfigurationsByType.get(icc.type, []) << icc;
-                availableConfigurationsByTypeAndID.get(icc.type, [:])[icc.id] = icc;
-                for (InformationalConfigurationContent iccSub in icc.getAllSubContent()) {
-                    availableConfigurations[iccSub.id] = iccSub;
-                }
+                    availableConfigurations[icc.id] = icc;
+                    availableConfigurationsByType.get(icc.type, []) << icc;
+                    availableConfigurationsByTypeAndID.get(icc.type, [:])[icc.id] = icc;
+                    for (InformationalConfigurationContent iccSub in icc.getAllSubContent()) {
+                        availableConfigurations[iccSub.id] = iccSub;
+                    }
 
+                } else {
+                    if(availableConfigurations[icc.name].file != icc.file)
+                        throw new RuntimeException("Configuration with name ${icc.name} already exists! Names must be unique.")
+                }
             } catch (Exception ex) {
                 logger.severe("File ${it.absolutePath} cannot be loaded! Error in config file! ${ex.toString()}");
                 logger.severe(RoddyIOHelperMethods.getStackTraceAsString(ex));
@@ -198,6 +194,7 @@ public class ConfigurationFactory {
      */
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     private InformationalConfigurationContent _loadInformationalConfigurationContent(File file, String text, NodeChild configurationNode, InformationalConfigurationContent parent) {
+        NodeChild.metaClass.extract = { String id, String defaultValue -> return extractAttributeText((NodeChild) delegate, id, defaultValue) }
         Map<String, Configuration> subConfigurations = [:];
         List<InformationalConfigurationContent> subConf = new LinkedList<InformationalConfigurationContent>();
         InformationalConfigurationContent icc = null;
@@ -345,8 +342,20 @@ public class ConfigurationFactory {
                 }
             }
         } else if (icc.type == ConfigurationType.ANALYSIS) {
+            String brawlWorkflow = extractAttributeText(configurationNode, "brawlWorkflow", null);
+            String brawlBaseWorkflow = extractAttributeText(configurationNode, "brawlBaseWorkflow", Workflow.class.name);
+
+            String workflowTool = extractAttributeText(configurationNode, "nativeWorkflowTool", null);
+            String commandFactoryClass = extractAttributeText(configurationNode, "targetCommandFactory", null);
+
             String workflowClass = extractAttributeText(configurationNode, "workflowClass");
-            String cleanupScript = extractAttributeText(configurationNode, "cleanupScript", null);
+
+            if (workflowTool && commandFactoryClass) {
+                workflowClass = NativeWorkflow.class.name
+            } else if (brawlWorkflow) {
+                workflowClass = BrawlWorkflow.class.name
+            }
+            String cleanupScript = extractAttributeText(configurationNode, "cleanupScript", "cleanupScript");
             String[] _listOfUsedTools = extractAttributeText(configurationNode, "listOfUsedTools").split(SPLIT_COMMA);
             String[] _usedToolFolders = extractAttributeText(configurationNode, "usedToolFolders").split(SPLIT_COMMA);
             List<String> listOfUsedTools = _listOfUsedTools.size() > 0 && _listOfUsedTools[0] ? Arrays.asList(_listOfUsedTools) : null;
@@ -369,13 +378,15 @@ public class ConfigurationFactory {
             }
             config = new AnalysisConfiguration(icc, workflowClass, testdataOptions, parentConfig, listOfUsedTools, usedToolFolders, cleanupScript);
 
-            if (workflowClass == NativeWorkflow.class.name) {
-                //We have a native workflow
-                String workflowTool = extractAttributeText(configurationNode, "nativeWorkflowTool", null);
-                String commandFactoryClass = extractAttributeText(configurationNode, "targetCommandFactory", null);
+            if (workflowTool && commandFactoryClass) {
                 ((AnalysisConfiguration) config).setNativeToolID(workflowTool);
                 ((AnalysisConfiguration) config).setTargetCommandFactory(commandFactoryClass);
             }
+            if (brawlWorkflow) {
+                ((de.dkfz.roddy.config.AnalysisConfiguration) config).setBrawlWorkflow(brawlWorkflow);
+                ((de.dkfz.roddy.config.AnalysisConfiguration) config).setBrawlBaseWorkflow(brawlBaseWorkflow);
+            }
+
         } else {
             config = new Configuration(icc);
         }
@@ -401,19 +412,72 @@ public class ConfigurationFactory {
         Map<String, FilenamePattern> filenamePatterns = config.getFilenamePatterns().getMap();
 
         for (NodeChild filenames in configurationNode.filenames) {
-            String pkg = extractAttributeText(filenames, "package", null);
+            String pkg = extractAttributeText(filenames, "package", this.SYNTHETIC_PACKAGE);
+            boolean packageIsSet = pkg && pkg != this.SYNTHETIC_PACKAGE;
             String filestagesbase = extractAttributeText(filenames, "filestagesbase", null);
 
             for (NodeChild filename in filenames.filename) {
                 try {
-                    String cls = (pkg != null ? pkg + "." : "") + filename.@class.text();
+                    String classSimpleName = filename.@class.text();
+                    String cls;
+                    Class foundClass = !packageIsSet ? LibrariesFactory.instance.searchForClass(classSimpleName) : null;
+                    if (foundClass)
+                        cls = foundClass.name;
+                    else
+                        cls = (pkg != null ? pkg + "." : "") + filename.@class.text();
                     String pattern = filename.@pattern.text();
                     String selectionTag = extractAttributeText(filename, "selectiontag", FilenamePattern.DEFAULT_SELECTION_TAG);
-                    Class<BaseFile> _cls = (Class<BaseFile>) LibrariesFactory.getInstance().loadClass(cls);
+                    Class _classID
+                    try {
+                        _classID = foundClass ?: LibrariesFactory.getInstance().searchForClass(cls);
+                    } catch (Exception ex) {
+                        _classID = null;
+                    }
+
+                    boolean isDerivedFromFile = filename.attributes().get("derivedFrom") != null
+                    if (!_classID) {
+                        //Create a synthetic class...
+                        String constructorClassName = BaseFile.class.name
+                        if (isDerivedFromFile) {
+                            String dfc = filename.@derivedFrom.text();
+                            //(pkg != null ? pkg + "." : "") + filename.@derivedFrom.text();
+                            try {
+                                Class foundDerivedFromClass = LibrariesFactory.instance.searchForClass(dfc.split(StringConstants.SPLIT_SBRACKET_LEFT)[0]);
+                                if (foundDerivedFromClass)
+                                    dfc = foundDerivedFromClass.name;
+                            } catch (Exception ex) {
+                            }
+                            if (!dfc.contains(".")) dfc = pkg + "." + dfc;
+                            if (dfc.contains("[")) {
+                                int openingIndex = dfc.indexOf("[");
+                                int closingIndex = dfc.indexOf("]");
+                                if (closingIndex - 1 > openingIndex) {
+                                    enforcedArraySize = Integer.parseInt(dfc[openingIndex + 1..-2]);
+                                }
+                                dfc = dfc[0..openingIndex - 1];
+                                isArray = true;
+                            }
+                            constructorClassName = dfc;
+                        }
+                        _classID = generateSyntheticFileClassWithParentClass(filename.@class.text(), constructorClassName)
+                    }
+
+                    Class<BaseFile> _cls = (Class<BaseFile>) _classID;
+//                    Class<BaseFile> _cls = (Class<BaseFile>) LibrariesFactory.getInstance().loadClass(cls);
                     FilenamePattern fp = null;
 
-                    if (filename.attributes().get("derivedFrom") != null) {
-                        String dfc = (pkg != null ? pkg + "." : "") + filename.@derivedFrom.text();
+                    if (isDerivedFromFile) {
+                        String fnDerivedFrom = filename.@derivedFrom.text();
+                        String dfc = filename.@derivedFrom.text();
+                        //(pkg != null ? pkg + "." : "") + filename.@derivedFrom.text();
+                        try {
+                            Class foundDerivedFromClass = LibrariesFactory.instance.searchForClass(dfc.split(StringConstants.SPLIT_SBRACKET_LEFT)[0]);
+                            if (foundDerivedFromClass)
+                                dfc = foundDerivedFromClass.name;
+                        } catch (Exception ex) {
+                        }
+                        if (!dfc.contains("."))
+                            dfc = (!fnDerivedFrom.contains(".") && pkg != null ? pkg + "." : "") + fnDerivedFrom;
                         boolean isArray = false;
                         int enforcedArraySize = -1;
                         //Support for arrays of the same file class
@@ -456,6 +520,10 @@ public class ConfigurationFactory {
                         }
 
                         fp = new FilenamePattern(_cls, fs, pattern, selectionTag);
+                    } else if (filename.attributes().get("onScript") != null) {
+                        String scriptName = filename.@onScript.text();
+                        Class<FileObject> calledClass = _cls;
+                        fp = new FilenamePattern(_cls, scriptName, pattern, selectionTag);
                     } else if (filename.attributes().get("onMethod") != null) {
                         String methodName = filename.@onMethod.text();
                         Class<FileObject> calledClass = _cls;
@@ -469,16 +537,8 @@ public class ConfigurationFactory {
                             }
                             if (classPkg == null) classPkg = pkg;
                             String calledClassName = (classPkg != null ? classPkg + "." : "") + className;
-//                            try {
                             calledClass = (Class<FileObject>) LibrariesFactory.getInstance().loadClass(calledClassName);
-//                            } catch (Exception ex) {
-//                                calledClass = null;
-//                            }
                             methodName = stuff[-1];
-//                            if(!calledClass || !methodName) {
-//                                config.addLoadError(new ConfigurationLoadError(config, "FNPATTERN", "A filename pattern is not valid. ", null));
-//                                throw new RuntimeException("A filename pattern was invalid.");
-//                            }
                         }
                         Method _method = null;
                         for (Method m : calledClass.getMethods()) {
@@ -495,13 +555,34 @@ public class ConfigurationFactory {
 //                        try {
 //                            config.addFilenamePattern(fp);
 //                        } catch (Exception ex) {
-//                            throw new RuntimeException("problem with adding fp to cfg");
+//                            throw new RuntimeException("problem with adding fp to configuration");
 //                        }
+//                    ClassLoader.getSystemClassLoader().get
                 } catch (Exception ex) {
                     logger.severe("filename pattern definition is not valid: " + (new groovy.xml.StreamingMarkupBuilder().bindNode(filename) as String));
                 }
             }
         }
+    }
+
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    private Class generateSyntheticFileClassWithParentClass(String syntheticClassName, String parentClassName) {
+        String syntheticFileClass =
+            """
+                package $SYNTHETIC_PACKAGE
+
+                import ${BaseFile.name}
+
+                public class ${syntheticClassName} extends BaseFile {
+                    public ${syntheticClassName}(${parentClassName} baseFile) {
+                        super(baseFile);
+                    }
+                }
+            """
+        GroovyClassLoader groovyClassLoader = LibrariesFactory.getGroovyClassLoader();
+        Class _classID = (Class<BaseFile>) groovyClassLoader.parseClass(syntheticFileClass);
+        LibrariesFactory.getInstance().getSynthetic().addClass(_classID);
+        return _classID
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
@@ -654,7 +735,13 @@ public class ConfigurationFactory {
     private ConfigurationValue readConfigurationValue(NodeChild cvalueNode, Configuration config) {
         String key = cvalueNode.@name.text();
         String value = cvalueNode.@value.text();
-        String type = extractAttributeText(cvalueNode, "type");
+        String type = extractAttributeText(cvalueNode, "type", "string");
+
+        //OK, here comes some sort of valuable hack. In the past it was so, that sometimes people forgot to set
+        //any directory to "path". In case of the output directories, this was a bad thing! So we know about
+        //this specific type of variable and just set it to path at any time.
+        if(key.endsWith("OutputDirectory"))
+            type = "path";
         String description = extractAttributeText(cvalueNode, "description");
         return new ConfigurationValue(config, key, value, type, description);
     }
@@ -691,8 +778,9 @@ public class ConfigurationFactory {
         String type = child.@type.text();
         if (type == "file") { //Load a file
             String cls = child.@typeof.text();
-            Class _cls = LibrariesFactory.getInstance().loadClass(cls);
+            Class _cls = LibrariesFactory.getInstance().searchForClass(cls);
             if (_cls == null) {
+                _cls = generateSyntheticFileClassWithParentClass(cls, BaseFile.class.name)
                 logger.severe("Class ${cls} could not be found!");
             }
             String pName = child.@scriptparameter.text();
@@ -757,7 +845,7 @@ public class ConfigurationFactory {
         }
     }
 
-// TODO Reenable cfg write
+// TODO Reenable configuration write
 //    public void writeConfiguration(Configuration configuration, String path) {
 //        String xmltext = new XMLConverter().convert(null, configuration)
 //        File fw = new File(path)

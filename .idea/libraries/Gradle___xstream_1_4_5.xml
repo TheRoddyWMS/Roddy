@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Gradle: :xstream:1.4.5">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/dist/bin/current/lib/xstream-1.4.5.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

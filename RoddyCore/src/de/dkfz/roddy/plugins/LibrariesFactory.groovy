@@ -3,10 +3,13 @@ package de.dkfz.roddy.plugins
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.client.RoddyStartupModes
+import de.dkfz.roddy.execution.io.ExecutionHelper
 import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.core.Initializable
 import de.dkfz.roddy.core.LibraryEntry
+import org.reflections.Reflections
+import sun.reflect.Reflection
 
 import java.lang.reflect.Method
 
@@ -19,6 +22,9 @@ public class LibrariesFactory extends Initializable {
 
     private static LibrariesFactory librariesFactory;
 
+    public static URLClassLoader urlClassLoader
+    public static GroovyClassLoader centralGroovyClassLoader;
+
     public static final String PLUGIN_VERSION_CURRENT = "current";
     public static final String PLUGIN_BASEPLUGIN = "PluginBase";
     public static final String BUILDINFO_DEPENDENCY = "dependson";
@@ -28,9 +34,27 @@ public class LibrariesFactory extends Initializable {
 
     private List<PluginInfo> loadedPlugins = [];
 
+    private Map<PluginInfo, File> loadedJarsByPlugin = [:]
+
     private Map<String, Map<String, PluginInfo>> mapOfPlugins = [:];
 
     private boolean librariesAreLoaded = false;
+
+    private SyntheticPluginInfo synthetic
+
+    private static class SyntheticPluginInfo extends PluginInfo {
+
+        SyntheticPluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, Map<String, String> dependencies) {
+            super(name, zipFile, directory, developmentDirectory, prodVersion, dependencies)
+        }
+
+        private Map<String, Class> map = [:]
+
+        public void addClass(Class cls) {
+            map[cls.name] = cls;
+            map[cls.simpleName] = cls;
+        }
+    }
 
     /**
      * This resets the singleton and is not thread safe!
@@ -43,10 +67,84 @@ public class LibrariesFactory extends Initializable {
         return librariesFactory;
     }
 
-    /**
-     * Resolve all used / necessary plugins and also look for miscrepancies.
-     * @param usedPlugins
-     */
+    private LibrariesFactory() {
+        synthetic = new SyntheticPluginInfo("Synthetic", null, null, null, "current", [:]);
+    }
+
+    public SyntheticPluginInfo getSynthetic() {
+        return synthetic;
+    }
+
+    public static GroovyClassLoader getGroovyClassLoader() {
+        if (centralGroovyClassLoader == null) {
+//            urlClassLoader = new URLClassLoader(new URL[0], ClassLoader.getSystemClassLoader())
+
+            centralGroovyClassLoader = new GroovyClassLoader(ClassLoader.getSystemClassLoader())
+            urlClassLoader = centralGroovyClassLoader;
+
+//            int frame = 1;
+//            Class c = Reflection.getCallerClass();
+//            while (c != null && !(c.getClassLoader() instanceof GroovyClassLoader)) {
+//                frame++;
+//                c = Reflection.getCallerClass();
+//            }
+//            if (c != null) {
+//                centralGroovyClassLoader = (GroovyClassLoader) c.getClassLoader();
+//
+//            }
+        }
+        return centralGroovyClassLoader;
+    }
+
+    private Map<PluginInfo, List<String>> classListCacheByPlugin = [:];
+
+    public Class searchForClass(String name) {
+        if (name.contains(".")) {
+            return getGroovyClassLoader().loadClass(name);
+        } else {
+            //Search synthetic classes first.
+            if(getSynthetic().map.containsKey(name))
+                return getSynthetic().map[name];
+
+            // SEVERE TODO This is a very quick hack and heavily depends on the existens of jar on the system!
+            List<String> listOfClasses = []
+            synchronized (loadedPlugins) {
+                loadedPlugins.each {
+                    PluginInfo plugin ->
+                        if(!classListCacheByPlugin.containsKey(plugin)) {
+                            String text = ExecutionHelper.execute("jar tvf ${loadedJarsByPlugin[plugin]}")
+                            classListCacheByPlugin[plugin] = text.readLines();
+                        }
+                        classListCacheByPlugin[plugin].each {
+                            String line ->
+                                if (!line.endsWith(".class")) return;
+                                String cls = line.split("[ ]")[-1][0..-7];
+                                if (cls.endsWith("/" + name)) {
+                                    cls = cls.replace("/", ".");
+                                    cls = cls.replace("\\", ".");
+                                    synchronized (listOfClasses) {
+                                        listOfClasses << cls;
+                                    }
+                                }
+                        }
+                }
+            }
+            if (listOfClasses.size() > 1) {
+                logger.severe("Too many available classes, please specify fully, choosing one of the following: ")
+                listOfClasses.each { logger.severe("  " + it) }
+                return null;
+            }
+            if (listOfClasses.size() == 1) {
+                return getGroovyClassLoader().loadClass(listOfClasses[0]);
+            }
+            logger.severe("No class found for ${name}")
+            return null;
+        }
+    }
+/**
+ * Resolve all used / necessary plugins and also look for miscrepancies.
+ * @param usedPlugins
+ */
     public boolean resolveAndLoadPlugins(String[] usedPlugins) {
         Map<String, PluginInfo> pluginsToActivate = [:];
         loadMapOfAvailablePlugins();
@@ -231,9 +329,10 @@ public class LibrariesFactory extends Initializable {
     public static boolean addURL(URL u) throws IOException {
         try {
             Class[] parameters = [URL.class];
-            Method method = URLClassLoader.class.getDeclaredMethod("addURL", parameters);
+            Method method = GroovyClassLoader.class.getDeclaredMethod("addURL", parameters);
             method.setAccessible(true);
-            method.invoke((URLClassLoader) ClassLoader.getSystemClassLoader(), u);
+            method.invoke(getGroovyClassLoader(), u);
+//            method.invoke((URLClassLoader) ClassLoader.getSystemClassLoader(), u);
             return true;
         } catch (Throwable t) {
             logger.severe("A plugin could not be loaded: " + u)
@@ -262,6 +361,7 @@ public class LibrariesFactory extends Initializable {
             logger.postAlwaysInfo(loadInfo)
             synchronized (loadedLibrariesInfo) {
                 loadedLibrariesInfo << loadInfo.toString()
+                loadedJarsByPlugin[pi] = jarFile;
             }
         }
     }
@@ -272,7 +372,8 @@ public class LibrariesFactory extends Initializable {
 
     public Class tryLoadClass(String className) throws ClassNotFoundException {
         try {
-            return ClassLoader.getSystemClassLoader().loadClass(className);
+            return getGroovyClassLoader().loadClass(className);
+//            return ClassLoader.getSystemClassLoader().loadClass(className);
 
         } catch (any) {
             logger.severe("Could not load class className");
@@ -281,7 +382,8 @@ public class LibrariesFactory extends Initializable {
     }
 
     public Class loadClass(String className) throws ClassNotFoundException {
-        return ClassLoader.getSystemClassLoader().loadClass(className);
+        return getGroovyClassLoader().loadClass(className);
+//        return ClassLoader.getSystemClassLoader().loadClass(className);
     }
 
     @Override

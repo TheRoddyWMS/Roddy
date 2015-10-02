@@ -43,7 +43,7 @@ public enum RoddyStartupOptions {
     executionServiceHost(true), 
     executionServiceUser(true),
     
-    detailed;
+    detailed, disallowexit;
 
     public final boolean acceptsParameters;
 

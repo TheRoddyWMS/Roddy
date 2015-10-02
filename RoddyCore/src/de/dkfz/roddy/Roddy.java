@@ -8,7 +8,7 @@ import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
 import de.dkfz.roddy.config.AppConfig;
 import de.dkfz.roddy.core.Initializable;
 import de.dkfz.roddy.execution.io.ExecutionService;
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.Command;
 import de.dkfz.roddy.execution.jobs.CommandFactory;
 import de.dkfz.roddy.client.fxuiclient.RoddyUIController;
@@ -60,9 +60,14 @@ public class Roddy {
      * until the maxim of n running datasets is reached. If one dataset is finished it starts
      * the next one. So it is some sort of controlled submit mode where you can i.e. leave
      * roddy lalone over night.
+     *
+     * This feature was planned and might still be of interest. However, most users created
+     * their own scripts and it might be more feasible to use such a script than a permanent
+     * running Roddy instance.
      */
     private static boolean autosubmitMode = false;
     private static int autosubmitMaxBatchCount = 4;
+
     private static boolean repeatJobSubmission = false;
     private static int repeatJobSubmissionAmount = -1;
     private static int repeatJobSubmissionWait = 10;
@@ -93,6 +98,11 @@ public class Roddy {
      * ICGCeval.dbg@exome
      */
     private static boolean displayShortWorkflowList;
+
+    /**
+     * For test reasons, the user can disable this value. Then Roddy won't call System.exit().
+     */
+    private static boolean exitAllowed = true;
 
     private static AppConfig featureToggleConfig;
 
@@ -337,7 +347,7 @@ public class Roddy {
             // Configure a proxy for internet connection. Used i.e. for codemirror
             initializeProxySettings();
 
-            FileSystemInfoProvider.initializeProvider(fullSetup);
+            FileSystemAccessProvider.initializeProvider(fullSetup);
 
             //Do not touch the calling order, execution service must be set before commandfactory.
             ExecutionService.initializeService(fullSetup);
@@ -404,6 +414,9 @@ public class Roddy {
     }
 
     private static void performCLIExit(RoddyStartupModes option) {
+        if(commandLineCall.getOptionList().contains(RoddyStartupOptions.disallowexit))
+            return;
+
         if (option == RoddyStartupModes.ui)
             return;
 

@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Gradle: :jzlib:">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/dist/bin/current/lib/jzlib.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

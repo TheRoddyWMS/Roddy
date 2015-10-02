@@ -2,6 +2,9 @@ package de.dkfz.roddy.config
 
 import de.dkfz.roddy.StringConstants
 
+import javax.sound.midi.SysexMessage
+import java.util.stream.Collectors
+
 
 /**
  * Java basically provides an ini file loading class. When using this class, there were several problems:
@@ -57,9 +60,14 @@ public class AppConfig {
 
         void setLine(String s) {
             this.line = s;
-            // Split away comments and trim the line
-            // TODO Append comments again, if there was one stored.
-            String[] splitline = line.split(StringConstants.SPLIT_HASH)[0].trim().split(StringConstants.SPLIT_EQUALS, 2)
+            def splitLineByHash = line.split(StringConstants.SPLIT_HASH) as ArrayList<String>
+            if (splitLineByHash.size() > 1) {
+                comment = splitLineByHash.drop(1).inject {
+                    acc, val -> acc + StringConstants.SPLIT_HASH + val
+                }.trim()
+
+            };
+            String[] splitline = splitLineByHash[0].trim().split(StringConstants.SPLIT_EQUALS, 2)
             key = splitline[0];
 
             if(splitline.size() > 1) {
@@ -69,7 +77,6 @@ public class AppConfig {
                 values = [ "" ]
                 value = ""
             }
-
         }
     }
 

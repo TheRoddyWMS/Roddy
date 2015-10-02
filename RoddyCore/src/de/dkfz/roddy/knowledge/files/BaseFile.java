@@ -1,21 +1,21 @@
 package de.dkfz.roddy.knowledge.files;
 
+import de.dkfz.roddy.AvailableFeatureToggles;
+import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.config.FilenamePattern;
 import de.dkfz.roddy.core.ExecutionContext;
-import de.dkfz.roddy.core.ExecutionContextError;
+import de.dkfz.roddy.core.ExecutionContextLevel;
 import de.dkfz.roddy.core.Workflow;
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.Job;
 import de.dkfz.roddy.execution.jobs.JobResult;
 import de.dkfz.roddy.plugins.LibrariesFactory;
 import org.reflections.Reflections;
 import de.dkfz.roddy.tools.Tuple2;
-import de.dkfz.roddy.tools.Tuple3;
 
 import java.io.File;
 import java.util.*;
-import java.util.logging.Level;
 
 /**
  * Basic class for all processed files. Contains information about the storage
@@ -23,10 +23,13 @@ import java.util.logging.Level;
  * which led to the creation of this file. Might also contain a list of files
  * which were created with this file. With this double-list implementation, you
  * can span up a file-creation-tree.
+ * <p>
+ * Remark: This class cannot be converted to groovy, because groovy will have
+ * problems with the constructors. When a stub class is generated, several
+ * constructors will match with the generated "null"-calls.
  *
  * @author michael
  */
-@groovy.transform.CompileStatic
 public abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
 
     public static final String ON_METHOD = "onMethod";
@@ -153,21 +156,6 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
             this.parentFiles.addAll(parentFiles);
         }
     }
-//
-//    private synchronized void writeObject(java.io.ObjectOutputStream s) throws IOException {
-//        s.writeObject(path);
-//        s.writeObject(this.parentFiles);
-//        s.writeObject(this.fileGroups);
-//        s.writeObject(this.fileStageSettings);
-//        s.writeBoolean(this.valid);
-//        s.writeObject(this.listOfParentJobs);
-//        s.writeObject(this.listOfParentProcesses);
-//    }
-//
-//    private synchronized void readObject(java.io.ObjectInputStream s) throws IOException, ClassNotFoundException {
-//
-//    }
-
 
     public final void addFileGroup(FileGroup fg) {
         this.fileGroups.add(fg);
@@ -217,7 +205,7 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
      */
     public final boolean isFileReadable() {
         if (isReadable == null)
-            isReadable = FileSystemInfoProvider.getInstance().isReadable(this);
+            isReadable = FileSystemAccessProvider.getInstance().isReadable(this);
         return isReadable;
     }
 
@@ -359,6 +347,32 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
 
     private static Map<String, Reflections> _reflectionsCache = new LinkedHashMap<>();
     private static Map<Class, LinkedHashMap<String, LinkedList<FilenamePattern>>> _classPatternsCache = new LinkedHashMap<>();
+
+    private static LinkedHashMap<String, LinkedList<FilenamePattern>> loadAVailableFilenamePatterns(BaseFile baseFile, ExecutionContext context) {
+        Configuration cfg = context.getConfiguration();
+        LinkedHashMap<String, LinkedList<FilenamePattern>> availablePatterns = new LinkedHashMap<>();
+        if (!_classPatternsCache.containsKey(baseFile.getClass())) {
+            availablePatterns = new LinkedHashMap<>();
+            _classPatternsCache.put(baseFile.getClass(), availablePatterns);
+            availablePatterns.put(ON_METHOD, new LinkedList<>());
+            availablePatterns.put(SOURCEFILE, new LinkedList<>());
+            availablePatterns.put(FILESTAGE, new LinkedList<>());
+            for (FilenamePattern fp : cfg.getFilenamePatterns().getAllValuesAsList()) {
+                if (fp.getCls() == baseFile.getClass()) {
+                    if (fp.getFilenamePatternDependency() == FilenamePattern.FilenamePatternDependency.MethodName)
+                        availablePatterns.get(ON_METHOD).add(fp);
+                    else if (fp.getFilenamePatternDependency() == FilenamePattern.FilenamePatternDependency.SourceClass)
+                        availablePatterns.get(SOURCEFILE).add(fp);
+                    else if (fp.getFilenamePatternDependency() == FilenamePattern.FilenamePatternDependency.FileStage)
+                        availablePatterns.get(FILESTAGE).add(fp);
+                }
+            }
+        } else {
+            availablePatterns = _classPatternsCache.get(baseFile.getClass());
+        }
+        return availablePatterns;
+    }
+
     /**
      * Looks for the right filename pattern for the new file.
      * <p>
@@ -373,18 +387,7 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
      */
 
     public static Tuple2<File, FilenamePattern> getFilename(BaseFile baseFile, String selectionTag) {
-        Tuple2<File, FilenamePattern> result = _getFilename(baseFile, selectionTag);
-        if (result == null || result.x == null) {
-            //For debugging reasons
-            result = _getFilename(baseFile, selectionTag);
-        }
-        return result;
-    }
-
-    private static Tuple2<File, FilenamePattern> _getFilename(BaseFile baseFile, String selectionTag) {
-
-        File filename = null;
-        FilenamePattern appliedPattern = null;
+        Tuple2<File, FilenamePattern> patternResult = new Tuple2<>(null, null);
         try {
 
             //Find the correct pattern:
@@ -393,133 +396,163 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
             // Look if there is only one available: Easy, use this
             // onMethod, sourcefile, filestage
             ExecutionContext context = baseFile.getExecutionContext();
-            Configuration cfg = context.getConfiguration();
-            LinkedHashMap<String, LinkedList<FilenamePattern>> availablePatterns = new LinkedHashMap<>();
-            if (!_classPatternsCache.containsKey(baseFile.getClass())) {
-                availablePatterns = new LinkedHashMap<>();
-                _classPatternsCache.put(baseFile.getClass(), availablePatterns);
-                availablePatterns.put(ON_METHOD, new LinkedList<>());
-                availablePatterns.put(SOURCEFILE, new LinkedList<>());
-                availablePatterns.put(FILESTAGE, new LinkedList<>());
-                for (FilenamePattern fp : cfg.getFilenamePatterns().getAllValuesAsList()) {
-                    if (fp.getCls() == baseFile.getClass()) {
-                        if (fp.getFilenamePatternDependency() == FilenamePattern.FilenamePatternDependency.MethodName)
-                            availablePatterns.get(ON_METHOD).add(fp);
-                        else if (fp.getFilenamePatternDependency() == FilenamePattern.FilenamePatternDependency.SourceClass)
-                            availablePatterns.get(SOURCEFILE).add(fp);
-                        else if (fp.getFilenamePatternDependency() == FilenamePattern.FilenamePatternDependency.FileStage)
-                            availablePatterns.get(FILESTAGE).add(fp);
-                    }
-                }
-            } else {
-                availablePatterns = _classPatternsCache.get(baseFile.getClass());
-            }
+            LinkedHashMap<String, LinkedList<FilenamePattern>> availablePatterns = loadAVailableFilenamePatterns(baseFile, context);
 
-            //Find the called basefile method, if on_method patterns are available.
-            if (availablePatterns.get(ON_METHOD).size() > 0) {
-                String calledBaseFileMethodName = null;
-                //Walk through the stack to get the method.
-                List<StackTraceElement> steByMethod = new LinkedList<>();
-                boolean constructorPassed = false;
-                for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
-                    try {
-                        //Skip several methods
+            patternResult = findFilenameFromOnMethodPatterns(baseFile, availablePatterns, selectionTag);
 
-                        String methodName = ste.getMethodName();
-                        if (methodName.equals("<init>")
-                                || methodName.endsWith("getFilename")
-                                || methodName.endsWith("getStackTrace")
-                                ) {
-                            continue;
-                        }
-                        //Abort when the workflows execute method is called.
-                        if ((ste.getClassName().equals(ExecutionContext.class.getName())
-                                || Workflow.class.isAssignableFrom(BaseFile.class.getClassLoader().loadClass(ste.getClassName())))
-                                && methodName.equals("execute"))
-                            break;
-
-                        //In all other cases add the method.
-//                    if (constructorPassed)
-                        steByMethod.add(ste);
-                    } catch (Exception ex) {
-
-                    }
-                }
-
-                traceLoop:
-                for (StackTraceElement ste : steByMethod) {
-                    for (FilenamePattern fp : availablePatterns.get(ON_METHOD)) {
-                        String cmName = fp.getCalledMethodsName().getName();
-                        String cmClass = fp.getCalledMethodsClass().getName();
-                        if (cmName.equals(ste.getMethodName())
-                                && cmClass.equals(ste.getClassName())
-                                && fp.getSelectionTag().equals(selectionTag)) {
-                            //OOOOOH LOOK try this!
-                            File tempFN = new File(fp.apply(baseFile));
-                            appliedPattern = fp;
-                            filename = tempFN;
-                            break traceLoop;
-                        }
-                    }
-                }
-            }
+            if (patternResult.x == null)
+                patternResult = findFilenameFromSourcefilePatterns(baseFile, availablePatterns, selectionTag);
 
 
-            if (filename == null && availablePatterns.get(SOURCEFILE).size() > 0 && baseFile.parentFiles.size() > 0) {
-                for (FilenamePattern fp : availablePatterns.get(SOURCEFILE)) {
-                    for (BaseFile bf : (List<BaseFile>) baseFile.parentFiles) {
-                        if (bf.getClass() == fp.getDerivedFromCls() && fp.getSelectionTag().equals(selectionTag)) {
-                            if (fp.doesAcceptFileArrays()) {
-                                filename = new File(fp.apply((BaseFile[]) baseFile.parentFiles.toArray(new BaseFile[0])));
-                            } else {
-                                filename = new File(fp.apply((BaseFile) baseFile.parentFiles.get(0)));
-                            }
-                            appliedPattern = fp;
-                            break;
-                        }
-                    }
-                }
-            }
+            if (patternResult.x == null)
+                patternResult = findFilenameFromGenericPatterns(baseFile, availablePatterns, selectionTag);
 
-            if (filename == null && availablePatterns.get(FILESTAGE).size() > 0) {
-                for (FilenamePattern fp : availablePatterns.get(FILESTAGE)) {
-                    if ((fp.getFileStage() == FileStage.GENERIC || fp.getFileStage() == baseFile.getFileStage().getStage()) && fp.getSelectionTag().equals(selectionTag)) {
-                        filename = new File(fp.apply(baseFile));
-                        appliedPattern = fp;
-                        break;
-                    }
-                }
-            }
-
+            // Do some further checks for selection tags.
             if (selectionTag.equals("default")) {
-                if (filename == null) {
+                if (patternResult.x == null) {
                     throw new RuntimeException("There is no valid filename pattern for this file: " + baseFile);
-                }
-                else {
+                } else {
                     //Check if the path exists and create it if necessary.
-                    if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs && !FileSystemInfoProvider.getInstance().checkDirectory(filename.getParentFile(), context, true)) {
+                    if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs && !FileSystemAccessProvider.getInstance().checkDirectory(patternResult.x.getParentFile(), context, true)) {
                         throw new RuntimeException("Output path could not be created for file: " + baseFile);
                     }
                 }
             } else {
 
-                if (filename == null) {
+                if (patternResult.x == null) {
                     throw new RuntimeException("There is no valid filename pattern for this file: " + baseFile);
                 }
 
                 //Check if the path exists and create it if necessary.
-                if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs && !FileSystemInfoProvider.getInstance().checkDirectory(filename.getParentFile(), context, true)) {
+                if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs && !FileSystemAccessProvider.getInstance().checkDirectory(patternResult.x.getParentFile(), context, true)) {
                     throw new RuntimeException("Output path could not be created for file: " + baseFile);
                 }
             }
         } catch (Exception ex) {
-            //TODO This came up for every file. This is also more or less part of testrun / testrerun
-            //TODO Make it better and see when it should be visible...
-//            baseFile.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_GETJOBNAME_NOT_POSSIBLE.expand("Roddy could not apply or find a filename pattern for class " + baseFile.getClass().getName() + " with selectiontag " + selectionTag));
-            throw ex;
+            if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.AutoFilenames)) {
+                // In case that we did not find a pattern and therefore could not create a filename, we will now apply an automatic filename.
+
+                // This might work for GenericMethod calls! But surely not for other ones...
+
+                // The problem is, that we need to get some sort of jobname and / or an internal job id. But! Jobs normally get created after the files.
+                // Then files get assigned to the job on its creation. However, GenericMethod calls, at least have some info about the running script.
+                // Manual calls might miss this information and it will possibly get ugly to extract info on this.
+            } else {
+                throw ex;
+            }
         } finally {
-            return new Tuple2<>(filename, appliedPattern);
+            return patternResult;
         }
+    }
+
+    private static Tuple2<File, FilenamePattern> findFilenameFromGenericPatterns(BaseFile baseFile, LinkedHashMap<String, LinkedList<FilenamePattern>> availablePatterns, String selectionTag) {
+        Tuple2<File, FilenamePattern> result = new Tuple2<>(null,null);
+        File filename = null;
+        FilenamePattern appliedPattern = null;
+
+        if (availablePatterns.get(FILESTAGE).size() > 0) {
+            for (FilenamePattern fp : availablePatterns.get(FILESTAGE)) {
+                if ((fp.getFileStage() == FileStage.GENERIC || fp.getFileStage() == baseFile.getFileStage().getStage()) && fp.getSelectionTag().equals(selectionTag)) {
+                    filename = new File(fp.apply(baseFile));
+                    appliedPattern = fp;
+                    break;
+                }
+            }
+        }
+        result = new Tuple2<>(filename, appliedPattern);
+        return result;
+    }
+
+    private static Tuple2<File, FilenamePattern> findFilenameFromSourcefilePatterns(BaseFile baseFile, LinkedHashMap<String, LinkedList<FilenamePattern>> availablePatterns, String selectionTag) {
+        Tuple2<File, FilenamePattern> result = new Tuple2<>(null,null);
+        File filename = null;
+        FilenamePattern appliedPattern = null;
+
+        if (availablePatterns.get(SOURCEFILE).size() > 0 && baseFile.parentFiles.size() > 0) {
+            for (FilenamePattern fp : availablePatterns.get(SOURCEFILE)) {
+                for (BaseFile bf : (List<BaseFile>) baseFile.parentFiles) {
+                    if (bf.getClass() == fp.getDerivedFromCls() && fp.getSelectionTag().equals(selectionTag)) {
+                        if (fp.doesAcceptFileArrays()) {
+                            filename = new File(fp.apply((BaseFile[]) baseFile.parentFiles.toArray(new BaseFile[0])));
+                        } else {
+                            filename = new File(fp.apply((BaseFile) baseFile.parentFiles.get(0)));
+                        }
+                        appliedPattern = fp;
+                        break;
+                    }
+                }
+            }
+        }
+        result = new Tuple2<>(filename, appliedPattern);
+        return result;
+    }
+
+    /**
+     * Tries to find a filename from onMethod patterns.
+     * <p>
+     * If none was found, null will be returned.
+     *
+     * @param baseFile
+     * @param availablePatterns
+     * @param selectionTag
+     * @return
+     */
+    private static Tuple2<File, FilenamePattern> findFilenameFromOnMethodPatterns(BaseFile baseFile, LinkedHashMap<String, LinkedList<FilenamePattern>> availablePatterns, String selectionTag) {
+        Tuple2<File, FilenamePattern> result = new Tuple2<>(null,null);
+        File filename = null;
+        FilenamePattern appliedPattern = null;
+
+        //Find the called basefile method, if on_method patterns are available.
+        if (availablePatterns.get(ON_METHOD).size() <= 0) {
+            return result;
+        }
+        String calledBaseFileMethodName = null;
+        //Walk through the stack to get the method.
+        List<StackTraceElement> steByMethod = new LinkedList<>();
+        boolean constructorPassed = false;
+        for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
+            try {
+                //Skip several methods
+
+                String methodName = ste.getMethodName();
+                if (methodName.equals("<init>")
+                        || methodName.endsWith("getFilename")
+                        || methodName.endsWith("getStackTrace")
+                        ) {
+                    continue;
+                }
+                //Abort when the workflows execute method is called.
+                if ((ste.getClassName().equals(ExecutionContext.class.getName())
+                        || Workflow.class.isAssignableFrom(LibrariesFactory.getGroovyClassLoader().loadClass(ste.getClassName())))
+                        && methodName.equals("execute"))
+                    break;
+
+                //In all other cases add the method.
+//                    if (constructorPassed)
+                steByMethod.add(ste);
+            } catch (Exception ex) {
+
+            }
+        }
+
+        traceLoop:
+        for (StackTraceElement ste : steByMethod) {
+            for (FilenamePattern fp : availablePatterns.get(ON_METHOD)) {
+                String cmName = fp.getCalledMethodsName().getName();
+                String cmClass = fp.getCalledMethodsClass().getName();
+                if (cmName.equals(ste.getMethodName())
+                        && cmClass.equals(ste.getClassName())
+                        && fp.getSelectionTag().equals(selectionTag)) {
+                    //OOOOOH LOOK try this!
+                    File tempFN = new File(fp.apply(baseFile));
+                    appliedPattern = fp;
+                    filename = tempFN;
+                    break traceLoop;
+                }
+            }
+        }
+        result = new Tuple2<>(filename, appliedPattern);
+        return result;
     }
 
     /**

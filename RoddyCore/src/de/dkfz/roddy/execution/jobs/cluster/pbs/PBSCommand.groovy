@@ -4,15 +4,16 @@ import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
+import de.dkfz.roddy.config.ConfigurationFactory
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.ExecutionService
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.execution.io.fs.BashCommandSet
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.ProcessingCommands
 
 import java.util.logging.Level
-import java.util.logging.Logger
 
 import static de.dkfz.roddy.StringConstants.*
 
@@ -41,31 +42,31 @@ public class PBSCommand extends Command implements Serializable {
     public static final String PARM_VARIABLES = " -v "
     public static final String PARM_WRAPPED_SCRIPT = "WRAPPED_SCRIPT="
 
-    private transient Configuration configuration;
+    protected transient Configuration configuration;
 
     /**
      * The qsub log directoy where all output is put
      */
-    private File loggingDirectory;
+    protected File loggingDirectory;
     /**
      * Parameters for the qsub command
      */
-    private transient Map<String, String> parameters;
+    protected transient Map<String, String> parameters;
     /**
      * The command which should be called
      */
-    private String command;
+    protected String command;
     /**
      * The job id for the qsub system
      */
-    private String id;
+    protected String id;
     /**
      * Provide a lower and upper array index to make this qsub job an array job
      */
-    private List<String> arrayIndices;
+    protected List<String> arrayIndices;
 
-    private List<String> dependencyIDs;
-    private final List<ProcessingCommands> processingCommands
+    protected List<String> dependencyIDs;
+    protected final List<ProcessingCommands> processingCommands
     /**
      *
      * @param id
@@ -138,6 +139,10 @@ public class PBSCommand extends Command implements Serializable {
 
     String getDependencyParameterName() {
         return AFTEROK;
+    }
+
+    String getVariablesParameter() {
+        return PARM_VARIABLES;
     }
 
     /**
@@ -219,6 +224,65 @@ public class PBSCommand extends Command implements Serializable {
         }
         if (email) qsubCall << getEmailParameter(email);
 
+
+        if (groupList != EMPTY && groupList != "UNDEFINED") {
+            qsubCall << getGroupListString(groupList);
+        }
+        qsubCall << getUmaskString(executionContext.getUMask());
+
+        for (ProcessingCommands pcmd in job.getListOfProcessingCommand()) {
+            if (!(pcmd instanceof PBSResourceProcessingCommand)) continue;
+            PBSResourceProcessingCommand command = (PBSResourceProcessingCommand) pcmd;
+            if (command == null)
+                continue;
+            qsubCall << WHITESPACE << command.getProcessingString();
+        }
+
+        qsubCall << assembleDependencyString()
+
+        qsubCall << assembleVariableExportString();
+
+        qsubCall << " " << configuration.getProcessingToolPath(executionContext, "wrapinScript").getAbsolutePath();
+        return qsubCall
+    }
+
+    protected String assembleVariableExportString() {
+        StringBuilder qsubCall = new StringBuilder();
+        qsubCall << getVariablesParameter() + PARM_WRAPPED_SCRIPT << command;
+        if (parameters.size() > 0) {
+            List<String> allParms = [];
+            StringBuilder parameterSB = new StringBuilder();
+            for (String parm : parameters.keySet()) {
+                String val = parameters.get(parm);
+                if (val.contains("\${") && val.contains(BRACE_RIGHT)) {
+                    val = val.replace("\${", "#{"); // Replace variable names so they can be passed to qsub.
+                }
+                String key = parm;
+                if (val.startsWith("parameterArray=")) {
+                    val = "'" + val.replace("parameterArray=", EMPTY) + SINGLE_QUOTE;
+                }
+                allParms << "${key}${EQUALS}${val}".toString();
+            }
+            if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.ModifiedVariablePassing)) {
+                File parmFile = executionContext.getParameterFilename(this);
+                qsubCall << ",PARAMETER_FILE=" << parmFile;
+                StringBuilder allLines = new StringBuilder();
+                allParms.each {
+                    String line ->
+                        //TODO export is Bash dependent!
+                        allLines << "export " << line << "\n";
+                }
+                if (getExecutionContext().getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
+                    FileSystemAccessProvider.getInstance().writeTextFile(parmFile, allLines.toString(), executionContext);
+            } else {
+                qsubCall << StringConstants.COMMA << allParms.join(StringConstants.COMMA);
+            }
+        }
+        return qsubCall
+    }
+
+    protected String assembleDependencyString() {
+        StringBuilder qsubCall = new StringBuilder("");
         LinkedList<String> tempDependencies = new LinkedList<String>();
         LinkedList<String> tempDependenciesArrays = new LinkedList<String>();
         for (String d in dependencyIDs) {
@@ -230,24 +294,6 @@ public class PBSCommand extends Command implements Serializable {
                 }
             }
         }
-
-        if (groupList != EMPTY && groupList != "UNDEFINED") {
-            qsubCall << getGroupListString(groupList);
-        }
-        String outputUMask = configuration.getConfigurationValues().getString("outputUMask", "007");
-        qsubCall << getUmaskString(outputUMask);
-
-        // Append the epilogue script for job state tracking.
-//        qsubCall << " -l epilogue=" << configuration.getProcessingToolPath(executionContext, "jobEpilogue");
-
-        for (ProcessingCommands pcmd in job.getListOfProcessingCommand()) {
-            if (!(pcmd instanceof PBSResourceProcessingCommand)) continue;
-            PBSResourceProcessingCommand command = (PBSResourceProcessingCommand) pcmd;
-            if (command == null)
-                continue;
-            qsubCall << WHITESPACE << command.getProcessingString();
-        }
-
         if (tempDependencies.size() > 0 || tempDependenciesArrays.size() > 0) {
             StringBuilder depStrBld = new StringBuilder()
             try {
@@ -300,39 +346,6 @@ public class PBSCommand extends Command implements Serializable {
                 logger.log(Level.SEVERE, ex.toString());
             }
         }
-
-        qsubCall << PARM_VARIABLES + PARM_WRAPPED_SCRIPT << command;
-        if (parameters.size() > 0) {
-            List<String> allParms = [];
-            StringBuilder parameterSB = new StringBuilder();
-            for (String parm : parameters.keySet()) {
-                String val = parameters.get(parm);
-                if (val.contains("\${") && val.contains(BRACE_RIGHT)) {
-                    val = val.replace("\${", "#{"); // Replace variable names so they can be passed to qsub.
-                }
-                String key = parm;
-                if (val.startsWith("parameterArray=")) {
-                    val = "'" + val.replace("parameterArray=", EMPTY) + SINGLE_QUOTE;
-                }
-                allParms << "${key}${EQUALS}${val}".toString();
-//                parameterSB << COMMA << key << EQUALS << val
-            }
-            if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.ModifiedVariablePassing)) {
-                File parmFile = executionContext.getParameterFilename(this);
-                qsubCall << ",PARAMETER_FILE=" << parmFile;
-                StringBuilder allLines = new StringBuilder();
-                allParms.each {
-                    String line ->
-                    //TODO export is Bash dependent!
-                    allLines << "export " << line << "\n";
-                }
-                if(getExecutionContext().getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
-                    FileSystemInfoProvider.getInstance().writeTextFile(parmFile, allLines.toString(), executionContext);
-            } else {
-                qsubCall << StringConstants.COMMA << allParms.join(StringConstants.COMMA);
-            }
-        }
-        qsubCall << " " << configuration.getProcessingToolPath(executionContext, "wrapinScript").getAbsolutePath();
-        return qsubCall
+        return qsubCall;
     }
 }

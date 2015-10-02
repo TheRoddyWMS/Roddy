@@ -1,6 +1,6 @@
 package de.dkfz.roddy.client.fxuiclient;
 
-import de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.CommandFactory;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.core.*;
@@ -334,7 +334,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
                 if (file.exists())
                     strings = RoddyIOHelperMethods.loadTextFile(file);
                 else
-                    strings = FileSystemInfoProvider.getInstance().loadTextFile(file);
+                    strings = FileSystemAccessProvider.getInstance().loadTextFile(file);
             } else if (job != null) {
                 strings = CommandFactory.getInstance().peekLogFile(job);
             }
