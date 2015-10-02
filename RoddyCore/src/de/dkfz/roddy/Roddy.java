@@ -174,6 +174,10 @@ public class Roddy {
         }
     }
 
+    public static void resetMainStarted() {
+        mainStarted = false;
+    }
+
     private static long t1 = 0;
     private static long t2 = 0;
 

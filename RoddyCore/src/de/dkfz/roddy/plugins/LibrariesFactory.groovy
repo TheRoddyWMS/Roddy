@@ -61,8 +61,8 @@ public class LibrariesFactory extends Initializable {
      * Actually only creates a new singleton clearing out old values.
      * @return
      */
-    public static LibrariesFactory initializeFactory() {
-        if (!librariesFactory)
+    public static LibrariesFactory initializeFactory(boolean enforceinit = false) {
+        if (!librariesFactory || enforceinit)
             librariesFactory = new LibrariesFactory();
         return librariesFactory;
     }
@@ -270,6 +270,10 @@ public class LibrariesFactory extends Initializable {
                     develEntry = pEntry;
                 }
 
+                if(!prodEntry && !develEntry) { //Now we might have a plugin without a jar file. This is allowed to happen since 2.2.87
+                    prodEntry = pEntry;
+                }
+
                 //Get dependency list from plugin
                 Map<String, String> pluginDependencies = [:];
                 File buildinfoFile = pEntry.listFiles().find { File f -> f.name == BUILDINFO_TEXTFILE };
@@ -354,7 +358,7 @@ public class LibrariesFactory extends Initializable {
             if (!pi.directory)
                 return;
             File jarFile = pi.directory.listFiles().find { File f -> f.name.endsWith(".jar") };
-            if (!jarFile || !addFile(jarFile))
+            if (jarFile && !addFile(jarFile))
                 return;
 
             def loadInfo = "The plugin ${pi.getName()} [ Version: ${pi.getProdVersion()} ] was loaded."
