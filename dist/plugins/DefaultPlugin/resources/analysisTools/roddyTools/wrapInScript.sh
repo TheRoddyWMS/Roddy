@@ -24,7 +24,7 @@ if [[ $isOutputFileGroup != false && ${newGrpIsCalled-false} == false ]]; then
   # cannot call a script with it. Also I do not know whether it is possible to use it in a non
   # interactive session (like qsub). So we just export the variable and import it later on, if it
   # was set earlier.
-  newgrp -c $0 $outputFileGroup
+  newgrp -c "/bin/bash $0" $outputFileGroup
   exit $?
 
 else

@@ -77,21 +77,8 @@ public class LibrariesFactory extends Initializable {
 
     public static GroovyClassLoader getGroovyClassLoader() {
         if (centralGroovyClassLoader == null) {
-//            urlClassLoader = new URLClassLoader(new URL[0], ClassLoader.getSystemClassLoader())
-
             centralGroovyClassLoader = new GroovyClassLoader(ClassLoader.getSystemClassLoader())
             urlClassLoader = centralGroovyClassLoader;
-
-//            int frame = 1;
-//            Class c = Reflection.getCallerClass();
-//            while (c != null && !(c.getClassLoader() instanceof GroovyClassLoader)) {
-//                frame++;
-//                c = Reflection.getCallerClass();
-//            }
-//            if (c != null) {
-//                centralGroovyClassLoader = (GroovyClassLoader) c.getClassLoader();
-//
-//            }
         }
         return centralGroovyClassLoader;
     }
@@ -279,16 +266,16 @@ public class LibrariesFactory extends Initializable {
                 File buildinfoFile = pEntry.listFiles().find { File f -> f.name == BUILDINFO_TEXTFILE };
                 if (buildinfoFile) {
                     for (String line in buildinfoFile.readLines()) {
-                        if (!line.startsWith(BUILDINFO_DEPENDENCY))
-                            return;
-                        String[] split = line.split(StringConstants.SPLIT_EQUALS)[1].split(StringConstants.SPLIT_COLON);
-                        String workflow = split[0];
-                        String version = split.length > 1 ? split[1] : PLUGIN_VERSION_CURRENT;
-                        pluginDependencies.put(workflow, version);
+                        if (line.startsWith(BUILDINFO_DEPENDENCY)) {
+                            String[] split = line.split(StringConstants.SPLIT_EQUALS)[1].split(StringConstants.SPLIT_COLON);
+                            String workflow = split[0];
+                            String version = split.length > 1 ? split[1] : PLUGIN_VERSION_CURRENT;
+                            pluginDependencies.put(workflow, version);
+                        }
                     }
-                    if (!pluginDependencies.containsKey(PLUGIN_BASEPLUGIN))
+                    if (pluginName != "DefaultPlugin" && !pluginDependencies.containsKey(PLUGIN_BASEPLUGIN))
                         pluginDependencies.put(PLUGIN_BASEPLUGIN, PLUGIN_VERSION_CURRENT);
-                    if (!pluginDependencies.containsKey("DefaultPlugin"))
+                    if (pluginName != "DefaultPlugin" && !pluginDependencies.containsKey("DefaultPlugin"))
                         pluginDependencies.put("DefaultPlugin", PLUGIN_VERSION_CURRENT);
                 }
 
@@ -332,11 +319,7 @@ public class LibrariesFactory extends Initializable {
      */
     public static boolean addURL(URL u) throws IOException {
         try {
-            Class[] parameters = [URL.class];
-            Method method = GroovyClassLoader.class.getDeclaredMethod("addURL", parameters);
-            method.setAccessible(true);
-            method.invoke(getGroovyClassLoader(), u);
-//            method.invoke((URLClassLoader) ClassLoader.getSystemClassLoader(), u);
+            getGroovyClassLoader().addURL(u);
             return true;
         } catch (Throwable t) {
             logger.severe("A plugin could not be loaded: " + u)
@@ -376,8 +359,7 @@ public class LibrariesFactory extends Initializable {
 
     public Class tryLoadClass(String className) throws ClassNotFoundException {
         try {
-            return getGroovyClassLoader().loadClass(className);
-//            return ClassLoader.getSystemClassLoader().loadClass(className);
+            return loadClass(className);
 
         } catch (any) {
             logger.severe("Could not load class className");
@@ -387,7 +369,6 @@ public class LibrariesFactory extends Initializable {
 
     public Class loadClass(String className) throws ClassNotFoundException {
         return getGroovyClassLoader().loadClass(className);
-//        return ClassLoader.getSystemClassLoader().loadClass(className);
     }
 
     @Override
