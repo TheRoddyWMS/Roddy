@@ -1,5 +1,0 @@
-set srs = call context.getRuntimeService()
-set initialTextFile = call srs.createInitialTextFile(context)
-set textFile1 = call "testScript"(initialTextFile)
-set textFile2 = call "testScript"(textFile1)
-set textFile3 = call "testScriptExitBad"(textFile2)

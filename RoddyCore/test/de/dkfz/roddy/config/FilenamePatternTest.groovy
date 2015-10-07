@@ -33,17 +33,6 @@ public class FilenamePatternTest {
 
     }
 
-//    public static Tuple2 testCreateFile(ExecutionContext context) {
-//        File srcFilePath = new File("/tmp/srcFilePath.txt");
-//        TextFile srcFile = new TextFile(srcFilePath, context, null, null, new TestFileStageSettings());
-//        TextFile textFileWithDefaultName = new TextFile(srcFile);
-//
-//        TextFile textFileWithSelectionPattern = new TextFile(srcFile);
-//        textFileWithSelectionPattern.overrideFilenameUsingSelectionTag("selectionTag");
-//
-//        return new Tuple2(textFileWithDefaultName, textFileWithSelectionPattern);
-//    }
-
     @Test
     /**
      * This test takes the test analysis and a test project and looks, if the files in the test project will all have valid paths.

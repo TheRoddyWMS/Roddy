@@ -18,11 +18,19 @@ isOutputFileGroup=${outputFileGroup-false}
 
 if [[ $isOutputFileGroup != false && ${newGrpIsCalled-false} == false ]]; then
   export newGrpIsCalled=true
+  export LD_LIB_PATH=$LD_LIBRARY_PATH
+  # OK so something to note for you. newgrp has an undocumented feature (at least in the manpages)
+  # and resets the LD_LIBRARY_PATH to "" if you do -c. -l would work, but is not feasible, as you
+  # cannot call a script with it. Also I do not know whether it is possible to use it in a non
+  # interactive session (like qsub). So we just export the variable and import it later on, if it
+  # was set earlier.
   newgrp -c $0 $outputFileGroup
   exit $?
 
 else
 
+  # Set LD_LIBRARY_PATH to LD_LIB_PATH, if the script was called recursively.
+  [[ ${LD_LIB_PATH-false} != false ]] && export LD_LIBRARY_PATH=$LD_LIB_PATH
   [[ ${debugWrapInScript-false} == true ]] && set -xv
   [[ ${debugWrapInScript-false} == false ]] && set +xv
 
