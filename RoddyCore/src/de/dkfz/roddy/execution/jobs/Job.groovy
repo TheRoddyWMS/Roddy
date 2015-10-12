@@ -85,6 +85,8 @@ public class Job {
      * Provide a list of files if you want to generate job dependencies.
      */
     public transient final List<BaseFile> parentFiles;
+
+    private Map<String, Object> initialInputParameters = [:]
     /**
      * You should provide i.e. job ids of qsub jobs to automatically create job
      * dependencies.
@@ -135,9 +137,11 @@ public class Job {
                 this.parameters.putAll(newParameters);
             }
         }
+        if(inputParameters != null)
+            initialInputParameters.putAll(inputParameters);
 
-        this.arrayIndices = arrayIndices == null ? new LinkedList<String>() : arrayIndices;
-        this.parentFiles = parentFiles == null ? new LinkedList<BaseFile>() : parentFiles;
+        this.arrayIndices = arrayIndices ?: new LinkedList<String>();
+        this.parentFiles = parentFiles ?: new LinkedList<BaseFile>();
         if (parentFiles != null) {
             for (BaseFile bf : parentFiles) {
                 try {
@@ -150,7 +154,7 @@ public class Job {
                 }
             }
         }
-        this.filesToVerify = filesToVerify == null ? new LinkedList<BaseFile>() : filesToVerify;
+        this.filesToVerify = filesToVerify ?: new LinkedList<BaseFile>();
         this.context.addExecutedJob(this);
         if (arrayIndices == null)
             return;
@@ -180,7 +184,19 @@ public class Job {
             if (newPath == null) {
                 // Auto path!
                 int slotPosition = allRawInputParameters.keySet().asList().indexOf(k);
-                File autoPath = new File(context.getOutputDirectory(), [jobName, k, '${RODDY_JOBID}'].join("_") + ".auto")
+                String completeString = jobName + k + slotPosition;
+                if(parentFiles)
+                    parentFiles.each {
+                        BaseFile p ->
+                            if(!p instanceof  BaseFile) return;
+
+                            BaseFile _bf = (BaseFile)p;
+                            completeString += ("" + _bf.getAbsolutePath())
+
+                    }
+
+                File autoPath = new File(context.getOutputDirectory(), [jobName, k, completeString.hashCode().abs(), slotPosition].join("_") + ".auto")
+//                File autoPath = new File(context.getOutputDirectory(), [jobName, k, '${RODDY_JOBID}', slotPosition].join("_") + ".auto")
                 bf.setPath(autoPath)
                 bf.setAsTemporaryFile()
                 newPath = autoPath.absolutePath;
