@@ -1,118 +1,245 @@
 /** Gradle file for Roddy */
 
+import de.dkfz.roddy.Version
+import de.dkfz.roddy.VersionIO.*
+
+// TODO Release RoddyCore jar creates versioned bin directory
+// TODO Pack jar zips versioned directory or current directory
+
+// TODO Release plugin jar creates versioned plugin directory
+// TODO Pack plugin zips versioned directory or current directory
+
+// TODO Mark core/plugin releases as revisions (preserve semantics, minor changes)
+// TODO Mark core/plugin releases as extensions (preserve semantics but make additions)
+
+// TODO Get git short hash
+// TODO Release only with clean git
+
+// TODO Clean up the directory structure to get three separate [sub]project directories. Move PluginBase and DefaultPlugin out of dist/.
+
+
+// The Directory for the final Roddy.jar and the execution of tests.
+def roddyCurrentDir = new File(rootProject.projectDir, "dist/bin/current")
 
 allprojects {
 
-  apply plugin: 'java'
-  apply plugin: 'groovy'
-  apply plugin: 'idea'
+    apply plugin: 'java'
+    apply plugin: 'groovy'
+    apply plugin: 'idea'
+    apply plugin: 'distribution'
 
-  // Java settings
-  ext.langLevel = 1.8
-  sourceCompatibility = ext.langLevel
-  targetCompatibility = ext.langLevel
-  compileJava.options.fork = true
-  compileJava.options.forkOptions.executable = "${projectDir}/dist/runtimeDevel/jdk"
+    // Java settings
+    ext.langLevel = 1.8
+    sourceCompatibility = ext.langLevel
+    targetCompatibility = ext.langLevel
+    compileJava.options.fork = true
+    compileJava.options.forkOptions.executable = "${rootProject.projectDir}/dist/runtimeDevel/jdk"
 
-  repositories {
-    // Manage a local copy of the required libraries.
-    flatDir dirs: ["${rootProject.projectDir}/dist/bin/current/lib/",
-                   "${rootProject.projectDir}/dist/runtimeDevel/groovy/lib",
-                   "${rootProject.projectDir}/dist/runtimeDevel/jdk/lib"]
-  }
+    // Set -Punchecked on the command line to change this compiler parameter.
+    if (project.hasProperty("unchecked")) {
+        compileJava.options.compilerArgs = ["-F Xlint:unchecked"]
+    }
 
-  dependencies {
-    compile ':groovy-all:2.3.6-indy'
+    // The following keeps the Gradle build files separate from the one build by IntelliJ or roddy.sh.
+    buildDir = "${projectDir}/gradleBuild"
 
-    // Roddy dependencies
-    compile ':bcpg-jdk15on:149'
-    compile ':bcpkix-jdk15on:149'
-    compile ':bcprov-ext-jdk15on:149'
-    compile ':bcprov-jdk15on:149'
-    compile ':commons-cli:1.2'
-    compile ':commons-codec:1.8'
-    compile ':commons-io:2.4'
-    compile ':commons-logging:1.1.1'
-    compile ':commons-logging-adapters:1.1.1'
-    compile ':commons-logging-api:1.1.1'
-    compile ':jzlib:'
-    compile name: 'proxy-vole_20131209'
-    compile ':reflections:0.9.9-RC1'
-    compile ':slf4j-api:1.7.2'
-    compile ':slf4j-jcl:1.7.2'
-    compile ':SSHJ:'
-    compile ':xstream:1.4.5'
+    repositories {
+        // Manage a local copy of the required libraries.
+        flatDir dirs: ["${rootProject.projectDir}/dist/bin/current/lib/",
+                       "${rootProject.projectDir}/dist/runtimeDevel/groovy/lib",
+                       "${rootProject.projectDir}/dist/runtimeDevel/jdk/lib"]
+    }
 
-    // Testing libraries
-    testCompile 'junit:junit:4.11'
-    testCompile ':hamcrest-all:1.3'
-    testCompile ':spock-core:1.0-groovy-2.3'
-  }
+    dependencies {
+        compile ':groovy-all:2.3.6-indy'
+        //compile ':groovy-all:2.4.5-indy'
+
+        // Roddy dependencies
+        compile ':bcpg-jdk15on:149'
+        compile ':bcpkix-jdk15on:149'
+        compile ':bcprov-ext-jdk15on:149'
+        compile ':bcprov-jdk15on:149'
+        compile ':commons-cli:1.2'
+        compile ':commons-codec:1.8'
+        compile ':commons-io:2.4'
+        compile ':commons-logging:1.1.1'
+        compile ':commons-logging-adapters:1.1.1'
+        compile ':commons-logging-api:1.1.1'
+        compile ':jzlib:'
+        compile name: 'proxy-vole_20131209'
+        compile ':reflections:0.9.9-RC1'
+        compile ':slf4j-api:1.7.2'
+        compile ':slf4j-jcl:1.7.2'
+        compile ':SSHJ:'
+        compile ':xstream:1.4.5'
+
+        // Testing libraries
+        testCompile 'junit:junit:4.11'
+        testCompile ':hamcrest-all:1.3'
+        testCompile ':spock-core:1.0-groovy-2.3'
+    }
+
+    test {
+        //maxParallelForks = 5
+        //forkEvery = 50
+        workingDir = rootProject.projectDir
+        ignoreFailures = true
+        testLogging {
+            events "started", "skipped", "failed"
+            exceptionFormat "full"
+            showStandardStreams true
+        }
+    }
+
 }
-
 
 // Subprojects
 project(":RoddyCore") {
-  // The project layout is different from the default of Gradle. It's a mixed Java and Groovy project. The Groovy plugin
-  // can handle both.
-  // TODO Clean up the directory structure to get three separate [sub]project directories.
-  sourceSets {
-    main {
-      groovy {
-        srcDirs = ["${projectDir}/src"]
-      }
+
+    Version versionObj = VersionIO.readCoreVersion(project.rootDir)
+
+    sourceSets {
+        main {
+            groovy {
+                srcDirs = ["${projectDir}/src"]
+            }
+        }
+        test {
+            groovy {
+                srcDirs = ["${projectDir}/test"]
+            }
+        }
     }
-    test {
-      groovy {
-        srcDirs = ["${projectDir}/test"]
-      }
+
+    // The current JAR
+    jar {
+        baseName = "Roddy"
+        destinationDir = roddyCurrentDir
+
+        manifest {
+            // TODO Consider signing the manifest.
+            attributes("Main-Class": "de.dkfz.roddy.Roddy",
+                    "Implementation-Title": "Roddy",
+                    "Implementation-Vendor": "DKFZ",
+                    "Implementation-Version": versionObj.toString() + "-devel")
+        }
+
+        // Add GUI files.
+        from(fileTree('src').include('**/*.fxml'))
+        from(fileTree('src').include('**/*.css'))
+        into("imgs") {
+            from(fileTree(dir: 'src/imgs'))
+        }
     }
-  }
+
+
+    distributions {
+        main {
+            basename = "Roddy"
+            contents {
+                from(roddyCurrentDir)
+            }
+        }
+    }
+
+    // What to do about buildinfo.txt dependson?
+    // The release process:
+    // Ensure clean git (no dirty files)
+    // Increase Version number
+    // Persist Version number (buildinfo.txt, .java)
+    // Check in versioned files
+    // Clean + Build full project
+    // Create Jar with updated Implementation-Version
+    // Make a git tag with the version "Release x.y.z"
+    // Copy all files from current to Roddy-x.y.z.
+    // Zip with version number
 }
 
-project(":dist:plugins:PluginBase") {
-  sourceSets {
-    main {
-      groovy {
-        srcDirs = ["${projectDir}/dist/plugins/DefaultPlugin"]
-      }
+    project(":PluginBase") {
+
+    Version versionObj = VersionIO.readBasePluginVersion(project.rootDir)
+
+    sourceSets {
+        main {
+            groovy {
+                srcDirs = ["${projectDir}/src"]
+            }
+        }
     }
-  }
 
-  dependencies {
-    compile project(":RoddyCore")
-  }
-}
-
-project(":dist:plugins:DefaultPlugin") {
-  sourceSets {
-    main {
-      groovy {
-        srcDirs = ["${projectDir}/dist/plugins/PluginBase"]
-      }
+    dependencies {
+        compile project(":RoddyCore")
     }
-  }
-  dependencies {
-    compile project(":RoddyCore")
-    compile project(":dist:plugins:PluginBase")
-  }
+
+    // The current JAR
+    jar {
+        baseName = "PluginBase"
+        destinationDir = rootProject.projectDir
+
+        manifest {
+            // TODO Consider signing the manifest.
+            attributes("Main-Class": "de.dkfz.roddy.Roddy",
+                    "Implementation-Title": "Roddy PluginBase",
+                    "Implementation-Vendor": "DKFZ",
+                    "Implementation-Version": versionObj.toString() + "-devel")
+        }
+
+    }
+
 }
 
-// Global test configuration
-test {
-  maxParallelForks = 5
-  forkEvery = 50
+project(":DefaultPlugin") {
+
+    Version versionObj = VersionIO.readDefaultPluginVersion(project.rootDir)
+
+    sourceSets {
+        main {
+            groovy {
+                srcDirs = ["${projectDir}/src"]
+            }
+        }
+    }
+
+    dependencies {
+        compile project(":RoddyCore")
+        compile project(":PluginBase")
+    }
+
+    // The current JAR
+    jar {
+        baseName = "DefaultPlugin"
+        destinationDir = rootProject.projectDir
+
+        manifest {
+            // TODO Consider signing the manifest.
+            attributes("Main-Class": "de.dkfz.roddy.Roddy",
+                    "Implementation-Title": "Roddy DefaultPlugin",
+                    "Implementation-Vendor": "DKFZ",
+                    "Implementation-Version": versionObj.toString() + "-devel")
+        }
+
+    }
+
 }
+
 
 // IntelliJ IDEA
 idea {
-  project {
-    jdkName = langLevel
-    languageLevel = langLevel
-  }
+    project {
+        jdkName = langLevel
+        languageLevel = langLevel
+    }
 }
 
 // Gradle Wrapper
 task wrapper(type: Wrapper) {
     gradleVersion = '2.7'
+}
+
+
+task version << {
+    description "Print Groovy, Gradle and Java Version used for the compilation."
+    println "Java version:   " + org.gradle.api.JavaVersion.current();
+    println "Groovy version: " + GroovySystem.getVersion()
+    println "Gradle version: " + project.getGradle().getGradleVersion()
 }
