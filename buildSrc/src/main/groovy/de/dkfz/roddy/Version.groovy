@@ -1,35 +1,37 @@
+package de.dkfz.roddy
+
 class Version {
 
     public Integer major
     public Integer minor
-    public Integer build
+    public Integer patch
 
-    public Version (major, minor, build) {
+    public Version (Integer major, Integer minor, Integer patch) {
         this.major = major
         this.minor = minor
-        this.build = build
+        this.patch = patch
     }
 
     public Version increaseMajor() {
         ++major
         minor = 0
-        build = 0
+        patch = 0
         return this
     }
 
     public Version increaseMinor() {
         ++minor
-        build = 0
+        patch = 0
         return this
     }
 
-    public Version increaseBuild() {
-        ++build
+    public Version increasePatch() {
+        ++patch
         return this
     }
 
     public String toString() {
-        return "${major}.${minor}.${build}"
+        return "${major}.${minor}.${patch}"
 
     }
 
@@ -37,15 +39,15 @@ class Version {
         versionString.split("\\.").each { it.toInteger() }.with {
             major = getAt(0)
             minor = getAt(1)
-            build = getAt(2)
+            patch = getAt(2)
         }
     }
 
     public getAt (int idx) {
         if (idx == 0) major
         else if (idx == 1) minor
-        else if (idx == 2) build
-        else throw new IndexOutOfBoundsException("major.minor.build")
+        else if (idx == 2) patch
+        else throw new IndexOutOfBoundsException("major.minor.patch")
     }
 }
 

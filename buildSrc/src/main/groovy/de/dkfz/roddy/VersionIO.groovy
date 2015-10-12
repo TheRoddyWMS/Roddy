@@ -1,10 +1,9 @@
-import Version
-
+package de.dkfz.roddy
 
 class VersionIO {
 
     static String toBuildInfo (Version version) {
-        return "${version.major}.${version.minor}" + System.getProperty("line.separator") + version.build + System.getProperty("line.separator")
+        return "${version.major}.${version.minor}" + System.getProperty("line.separator") + version.patch + System.getProperty("line.separator")
     }
 
     static Version fromBuildInfo (List<String> buildInfo) {

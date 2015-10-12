@@ -1,11 +1,12 @@
 /** Gradle file for Roddy */
 
 import de.dkfz.roddy.Version
-import de.dkfz.roddy.VersionIO.*
+import de.dkfz.roddy.VersionIO
 
 // TODO Release RoddyCore jar creates versioned bin directory
 // TODO Pack jar zips versioned directory or current directory
 
+// TODO Move plugin buildGradle directories out of rootProject.projectDir.
 // TODO Release plugin jar creates versioned plugin directory
 // TODO Pack plugin zips versioned directory or current directory
 
@@ -36,7 +37,7 @@ allprojects {
     compileJava.options.forkOptions.executable = "${rootProject.projectDir}/dist/runtimeDevel/jdk"
 
     // Set -Punchecked on the command line to change this compiler parameter.
-    if (project.hasProperty("unchecked")) {
+    if (!project.hasProperty("checkedFlag")) {
         compileJava.options.compilerArgs = ["-F Xlint:unchecked"]
     }
 
@@ -135,7 +136,7 @@ project(":RoddyCore") {
 
     distributions {
         main {
-            basename = "Roddy"
+            baseName = "Roddy"
             contents {
                 from(roddyCurrentDir)
             }
@@ -155,7 +156,7 @@ project(":RoddyCore") {
     // Zip with version number
 }
 
-    project(":PluginBase") {
+project(":PluginBase") {
 
     Version versionObj = VersionIO.readBasePluginVersion(project.rootDir)
 
