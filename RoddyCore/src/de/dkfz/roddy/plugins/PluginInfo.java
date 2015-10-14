@@ -17,6 +17,27 @@ import java.util.zip.ZipFile;
  */
 public class PluginInfo {
 
+    public enum PluginInfoConnection {
+        /**
+         * Revisions mark plugins which contain smaller bugfixes but not extensions. In overall, the revision
+         * does not introduce extensions or functional changes.
+         */
+        REVISION,
+
+        /**
+         * Extension plugins are plugins, which add functionality or bugfixes to an existing plugin.
+         * They are considered as compatible to their precursors and plugins using the precursors. However
+         * plugins referencing these plugins are not allowed to use older versions of the plugin.
+         */
+        EXTENSION,
+
+        /**
+         * Plugin versions which are marked incompatible to their precursor will not be considered for
+         * auto version select by Roddy.
+         */
+        INCOMPATIBLE
+    }
+
     private String name;
     private File directory;
     private File developmentDirectory;
@@ -24,6 +45,21 @@ public class PluginInfo {
     private Map<String, String> dependencies;
     private String devVersion;
     private final File zipFile;
+
+    /**
+     * Stores the next entry in the plugin chain or null if there is nor further plugin available.
+     */
+    private PluginInfo nextInChain;
+    /**
+     * Stores the previous entry in the plugin chain or null if there is no precursor.
+     */
+    private PluginInfo previousInChain;
+    /**
+     * Stores the connection type of this PI object relative to its precursor.
+     */
+    private PluginInfoConnection previousInChainConnectionType;
+
+
     private Map<String, File> listOfToolDirectories = new LinkedHashMap<>();
 
     public PluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, Map<String, String> dependencies) {
