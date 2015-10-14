@@ -7,11 +7,6 @@ import de.dkfz.roddy.execution.io.ExecutionHelper
 import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.core.Initializable
-import de.dkfz.roddy.core.LibraryEntry
-import org.reflections.Reflections
-import sun.reflect.Reflection
-
-import java.lang.reflect.Method
 
 /**
  * Factory to load and integrate plugins.
@@ -28,6 +23,8 @@ public class LibrariesFactory extends Initializable {
     public static final String PLUGIN_VERSION_CURRENT = "current";
     public static final String PLUGIN_BASEPLUGIN = "PluginBase";
     public static final String BUILDINFO_DEPENDENCY = "dependson";
+    public static final String BUILDINFO_EXTENSIONS = "extends";
+    public static final String BUILDINFO_REVISION = "revises";
     public static final String BUILDINFO_TEXTFILE = "buildinfo.txt";
 
     private List<String> loadedLibrariesInfo = [];
@@ -90,7 +87,7 @@ public class LibrariesFactory extends Initializable {
             return getGroovyClassLoader().loadClass(name);
         } else {
             //Search synthetic classes first.
-            if(getSynthetic().map.containsKey(name))
+            if (getSynthetic().map.containsKey(name))
                 return getSynthetic().map[name];
 
             // SEVERE TODO This is a very quick hack and heavily depends on the existens of jar on the system!
@@ -98,7 +95,7 @@ public class LibrariesFactory extends Initializable {
             synchronized (loadedPlugins) {
                 loadedPlugins.each {
                     PluginInfo plugin ->
-                        if(!classListCacheByPlugin.containsKey(plugin)) {
+                        if (!classListCacheByPlugin.containsKey(plugin)) {
                             String text = ExecutionHelper.execute("jar tvf ${loadedJarsByPlugin[plugin]}")
                             classListCacheByPlugin[plugin] = text.readLines();
                         }
@@ -207,11 +204,13 @@ public class LibrariesFactory extends Initializable {
         }
 
         //Search all plugin folders and also try to join those if possible.
+        List<Tuple2<File, String[]>> collectedPluginDirectories = [];
         List<File> pluginDirectories = Roddy.getPluginDirectories();
         def blacklist = [".idea", "out", "Template", ".svn"]
 
         for (File pBaseDirectory : pluginDirectories) {
-            for (File pEntry in pBaseDirectory.listFiles().sort()) {
+            File[] directoryList = pBaseDirectory.listFiles().sort()
+            for (File pEntry in directoryList) {
                 String dirName = pEntry.getName();
                 boolean isZip = dirName.endsWith(".zip");
                 if (isZip)
@@ -220,69 +219,89 @@ public class LibrariesFactory extends Initializable {
                 String pluginName = splitName[0];
                 if ((!pEntry.isDirectory() && !isZip) || !pluginName || blacklist.contains(pluginName))
                     continue;
-
-                String pluginVersion = splitName.length > 1 ? splitName[1] : PLUGIN_VERSION_CURRENT;
-
-                boolean helpMode = Roddy.getCommandLineCall().startupMode == RoddyStartupModes.help
-
-                File develEntry = null;
-                File prodEntry = null;
-                File zipFile = null;
-
-                if (pEntry.getName().endsWith(".zip")) { // Zip files are handled differently and cannot be checked for contents!
-                    zipFile = pEntry;
-                    if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.UnzipZippedPlugins)) {
-                        if (!new File(zipFile.getAbsolutePath()[0..-5]).exists()) {
-                            if (!helpMode) logger.postAlwaysInfo("Unzipping zipped plugin (this is done unchecked and unlocked, processes could interfere with each other!)")
-                            (new RoddyIOHelperMethods.NativeLinuxZipCompressor()).decompress(zipFile, null, zipFile.getParentFile());
-                        }
-                    }
-                    continue;
-                }
-
-                if (zipFile != null) { // Only "releases" / packages have a zip file and need not to be dissected further.
-                    continue;
-                }
-
-                // TODO Sort file list before validation?
-                // TODO Get version also from directory in case that the zip file is missing?
-
-                File prodJarFile = pEntry.listFiles().find { File f -> f.name.endsWith ".jar"; }
-                if (prodJarFile) {
-                    prodEntry = pEntry;
-                }
-
-                File devSrcPath = pEntry.listFiles().find { File f -> f.name == "src"; }
-                if (devSrcPath) {
-                    develEntry = pEntry;
-                }
-
-                if(!prodEntry && !develEntry) { //Now we might have a plugin without a jar file. This is allowed to happen since 2.2.87
-                    prodEntry = pEntry;
-                }
-
-                //Get dependency list from plugin
-                Map<String, String> pluginDependencies = [:];
-                File buildinfoFile = pEntry.listFiles().find { File f -> f.name == BUILDINFO_TEXTFILE };
-                if (buildinfoFile) {
-                    for (String line in buildinfoFile.readLines()) {
-                        if (line.startsWith(BUILDINFO_DEPENDENCY)) {
-                            String[] split = line.split(StringConstants.SPLIT_EQUALS)[1].split(StringConstants.SPLIT_COLON);
-                            String workflow = split[0];
-                            String version = split.length > 1 ? split[1] : PLUGIN_VERSION_CURRENT;
-                            pluginDependencies.put(workflow, version);
-                        }
-                    }
-                    if (pluginName != "DefaultPlugin" && !pluginDependencies.containsKey(PLUGIN_BASEPLUGIN))
-                        pluginDependencies.put(PLUGIN_BASEPLUGIN, PLUGIN_VERSION_CURRENT);
-                    if (pluginName != "DefaultPlugin" && !pluginDependencies.containsKey("DefaultPlugin"))
-                        pluginDependencies.put("DefaultPlugin", PLUGIN_VERSION_CURRENT);
-                }
-
-                mapOfPlugins.get(pluginName, [:])[pluginVersion] = new PluginInfo(pluginName, zipFile, prodEntry, develEntry, pluginVersion, pluginDependencies);
+                collectedPluginDirectories << new Tuple2<File, String[]>(pEntry, splitName);
             }
         }
-        mapOfPlugins
+
+        mapOfPlugins.putAll(loadPluginsFromDirectories(collectedPluginDirectories))
+        return mapOfPlugins
+    }
+
+    /**
+     * Loads all available plugins (including revisions and versions) from a set of directories.
+     * @param collectedPluginDirectories
+     * @return
+     */
+    private LinkedHashMap<String, Map<String, PluginInfo>> loadPluginsFromDirectories(ArrayList<Tuple2<File, String[]>> collectedPluginDirectories) {
+        Map<String, Map<String, PluginInfo>> _mapOfPlugins = [:];
+        for (Tuple2<File, String[]> _entry : collectedPluginDirectories) {
+            File pEntry = _entry.x;
+            String[] splitName = _entry.y;//pEntry.getName().split(StringConstants.SPLIT_UNDERSCORE); //First split for .zip then for the version
+
+            String pluginName = splitName[0];
+            String[] pluginVersionInfo = splitName.length > 1 ? splitName[1].split(StringConstants.SPLIT_MINUS) : [PLUGIN_VERSION_CURRENT];
+            String pluginVersion = pluginVersionInfo[0];
+            String pluginRevision = pluginVersionInfo.length > 1 ? pluginVersionInfo[1] : "0";
+
+            boolean helpMode = Roddy.getCommandLineCall().startupMode == RoddyStartupModes.help
+
+            File develEntry = null;
+            File prodEntry = null;
+            File zipFile = null;
+
+            if (pEntry.getName().endsWith(".zip")) { // Zip files are handled differently and cannot be checked for contents!
+                zipFile = pEntry;
+                if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.UnzipZippedPlugins)) {
+                    if (!new File(zipFile.getAbsolutePath()[0..-5]).exists()) {
+                        if (!helpMode) logger.postAlwaysInfo("Unzipping zipped plugin (this is done unchecked and unlocked, processes could interfere with each other!)")
+                        (new RoddyIOHelperMethods.NativeLinuxZipCompressor()).decompress(zipFile, null, zipFile.getParentFile());
+                    }
+                }
+                continue;
+            }
+
+            if (zipFile != null) { // Only "releases" / packages have a zip file and need not to be dissected further.
+                continue;
+            }
+
+            // TODO Sort file list before validation?
+            // TODO Get version also from directory in case that the zip file is missing?
+
+            File prodJarFile = pEntry.listFiles().find { File f -> f.name.endsWith ".jar"; }
+            if (prodJarFile) {
+                prodEntry = pEntry;
+            }
+
+            File devSrcPath = pEntry.listFiles().find { File f -> f.name == "src"; }
+            if (devSrcPath) {
+                develEntry = pEntry;
+            }
+
+            if (!prodEntry && !develEntry) { //Now we might have a plugin without a jar file. This is allowed to happen since 2.2.87
+                prodEntry = pEntry;
+            }
+
+            //Get dependency list from plugin
+            Map<String, String> pluginDependencies = [:];
+            File buildinfoFile = pEntry.listFiles().find { File f -> f.name == BUILDINFO_TEXTFILE };
+            if (buildinfoFile) {
+                for (String line in buildinfoFile.readLines()) {
+                    if (line.startsWith(BUILDINFO_DEPENDENCY)) {
+                        String[] split = line.split(StringConstants.SPLIT_EQUALS)[1].split(StringConstants.SPLIT_COLON);
+                        String workflow = split[0];
+                        String version = split.length > 1 ? split[1] : PLUGIN_VERSION_CURRENT;
+                        pluginDependencies.put(workflow, version);
+                    }
+                }
+                if (pluginName != "DefaultPlugin" && !pluginDependencies.containsKey(PLUGIN_BASEPLUGIN))
+                    pluginDependencies.put(PLUGIN_BASEPLUGIN, PLUGIN_VERSION_CURRENT);
+                if (pluginName != "DefaultPlugin" && !pluginDependencies.containsKey("DefaultPlugin"))
+                    pluginDependencies.put("DefaultPlugin", PLUGIN_VERSION_CURRENT);
+            }
+
+            _mapOfPlugins.get(pluginName, [:])[pluginVersion] = new PluginInfo(pluginName, zipFile, prodEntry, develEntry, pluginVersion, pluginDependencies);
+        }
+        return _mapOfPlugins
     }
 
     /**

@@ -6,6 +6,7 @@ import de.dkfz.roddy.core.Analysis
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
+import de.dkfz.roddy.tools.Tuple2
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -60,5 +61,19 @@ public class LibrariesFactoryTest {
         } finally {
             LibrariesFactory.initializeFactory(true);
         }
+    }
+
+    @Test
+    public void testLoadPluginsFromDirectories() {
+        List<List<String>> testPluginsList = [
+                [ "1.0.24", "current" ],
+                [ "1.0.1", "1.0.2", "1.0.2-1", "1.0.2-2,b", "1.0.3,c" ],
+                [ "1.0.1", "1.0.2,c", "1.0.3", "current,c" ],
+                [ "1.0.1", "1.0.2", "1.0.2-1", "1.0.3" ],
+        ]
+
+        ArrayList<Tuple2<File, String[]>> collectedPluginDirectories = [ ]
+
+
     }
 }
