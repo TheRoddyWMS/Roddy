@@ -152,7 +152,7 @@ public class ProjectFactory {
 
         //Validate the project icc
         if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.XMLValidation))
-            XSDValidator.validate(iccProject);
+            XSDValidator.validateTree(iccProject);
 
         String fullAnalysisID = iccProject.getListOfAnalyses().find { String aID -> aID.split("[:][:]")[0] == analysisID; }
 
@@ -201,7 +201,7 @@ public class ProjectFactory {
         ProjectConfiguration projectConfiguration = fac.getProjectConfiguration(projectID);
         InformationalConfigurationContent iccAnalysis = ((AnalysisConfigurationProxy) projectConfiguration.getAnalysis(analysisID)).informationalConfigurationContent;
         if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.XMLValidation))
-            XSDValidator.validate(iccAnalysis);
+            XSDValidator.validateTree(iccAnalysis);
         Project project = loadConfiguration(projectConfiguration);
 
         AnalysisConfiguration ac = projectConfiguration.getAnalysis(analysisID);

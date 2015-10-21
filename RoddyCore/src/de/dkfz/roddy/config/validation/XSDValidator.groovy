@@ -1,8 +1,10 @@
 package de.dkfz.roddy.config.validation
 
 import com.stackoverflow.questions.xmlvalidation.ResourceResolver
-import de.dkfz.roddy.Roddy;
-import de.dkfz.roddy.config.Configuration;
+import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.StringConstants;
+import de.dkfz.roddy.config.Configuration
+import de.dkfz.roddy.config.ConfigurationFactory;
 import de.dkfz.roddy.config.InformationalConfigurationContent;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import org.xml.sax.ErrorHandler
@@ -21,9 +23,24 @@ public class XSDValidator {
 
     private static List<File> alreadyChecked = [];
 
+    public static boolean validateTree(InformationalConfigurationContent icc) {
+        boolean validated = validate(icc);
+        if(icc.imports) {
+            for (it in icc.imports.split(StringConstants.SPLIT_COMMA)) {
+                InformationalConfigurationContent iccSub = ConfigurationFactory.getInstance().getAllAvailableConfigurations()[it]
+                if(iccSub)
+                    validated &= validate(iccSub);
+                else
+                    logger.postSometimesInfo("Skipped configuration with id ${it}, not available.")
+            }
+        }
+        return validated;
+    }
+
     public static boolean validate(InformationalConfigurationContent icc) {
         if(alreadyChecked.contains(icc.file))
             return true;
+        logger.postSometimesInfo("Will validate configuration ${icc.id}.")
         alreadyChecked << icc.file;
         String xsdString
         String xmlString
