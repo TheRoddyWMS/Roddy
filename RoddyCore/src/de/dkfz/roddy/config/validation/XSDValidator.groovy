@@ -25,8 +25,14 @@ public class XSDValidator {
 
     public static boolean validateTree(InformationalConfigurationContent icc) {
         boolean validated = validate(icc);
-        if(icc.imports) {
-            for (it in icc.imports.split(StringConstants.SPLIT_COMMA)) {
+
+        String imports = icc.imports     //Get the imports of the topmost parent config
+        for(InformationalConfigurationContent iccP = icc; iccP; iccP = iccP.getParent()) {
+            imports = iccP.imports;
+        }
+
+        if(imports) {
+            for (it in imports.split(StringConstants.SPLIT_COMMA)) {
                 InformationalConfigurationContent iccSub = ConfigurationFactory.getInstance().getAllAvailableConfigurations()[it]
                 if(iccSub)
                     validated &= validate(iccSub);
