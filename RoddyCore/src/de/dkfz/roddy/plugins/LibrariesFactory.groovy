@@ -209,7 +209,7 @@ public class LibrariesFactory extends Initializable {
         def blacklist = [".idea", "out", "Template", ".svn"]
 
         for (File pBaseDirectory : pluginDirectories) {
-            File[] directoryList = pBaseDirectory.listFiles().sort()
+            File[] directoryList = pBaseDirectory.listFiles().sort() as File[];
             for (File pEntry in directoryList) {
                 String dirName = pEntry.getName();
                 boolean isZip = dirName.endsWith(".zip");
@@ -223,7 +223,7 @@ public class LibrariesFactory extends Initializable {
             }
         }
 
-        mapOfPlugins.putAll(loadPluginsFromDirectories(collectedPluginDirectories))
+        mapOfPlugins = loadPluginsFromDirectories(collectedPluginDirectories)
         return mapOfPlugins
     }
 
@@ -232,7 +232,7 @@ public class LibrariesFactory extends Initializable {
      * @param collectedPluginDirectories
      * @return
      */
-    private LinkedHashMap<String, Map<String, PluginInfo>> loadPluginsFromDirectories(ArrayList<Tuple2<File, String[]>> collectedPluginDirectories) {
+    public static Map<String, Map<String, PluginInfo>> loadPluginsFromDirectories(List<Tuple2<File, String[]>> collectedPluginDirectories) {
         Map<String, Map<String, PluginInfo>> _mapOfPlugins = [:];
         for (Tuple2<File, String[]> _entry : collectedPluginDirectories) {
             File pEntry = _entry.x;

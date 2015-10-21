@@ -1,6 +1,7 @@
 package de.dkfz.roddy.plugins
 
 import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient
 import de.dkfz.roddy.core.Analysis
 import de.dkfz.roddy.core.ExecutionContext
@@ -9,7 +10,9 @@ import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.Tuple2
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 
 @groovy.transform.CompileStatic
 /**
@@ -63,17 +66,31 @@ public class LibrariesFactoryTest {
         }
     }
 
+    @Rule
+    public TemporaryFolder pluginsBaseDir = new TemporaryFolder();
+
     @Test
     public void testLoadPluginsFromDirectories() {
-        List<List<String>> testPluginsList = [
-                [ "1.0.24", "current" ],
-                [ "1.0.1", "1.0.2", "1.0.2-1", "1.0.2-2,b", "1.0.3,c" ],
-                [ "1.0.1", "1.0.2,c", "1.0.3", "current,c" ],
-                [ "1.0.1", "1.0.2", "1.0.2-1", "1.0.3" ],
+        Map<String, List<String>> testPluginsList = [
+                A: ["1.0.24", "current"],
+                B: ["1.0.1", "1.0.2", "1.0.2-1", "1.0.2-2,b", "1.0.3,c"],
+                C: ["1.0.1", "1.0.2,c", "1.0.3", "current,c"],
+                D: ["1.0.1", "1.0.2", "1.0.2-1", "1.0.3"],
         ]
 
-        ArrayList<Tuple2<File, String[]>> collectedPluginDirectories = [ ]
+        testPluginsList.each {
+            plugin, listOfVersions ->
+                listOfVersions.each {
+                    version ->
+                        String[] vString = version.split(StringConstants.SPLIT_COMMA)
+                        File pFolder = pluginsBaseDir.newFolder([plugin, vString[0]].join("_"));
 
+                }
+        }
+
+        ArrayList<Tuple2<File, String[]>> collectedPluginDirectories = []
+
+        LibrariesFactory.loadPluginsFromDirectories(collectedPluginDirectories);
 
     }
 }
