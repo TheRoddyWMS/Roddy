@@ -43,7 +43,6 @@ public class PluginInfo {
     private File developmentDirectory;
     private String prodVersion;
     private Map<String, String> dependencies;
-    private String devVersion;
     private final File zipFile;
 
     /**
@@ -68,7 +67,6 @@ public class PluginInfo {
         this.developmentDirectory = developmentDirectory;
         this.prodVersion = prodVersion;
         this.dependencies = dependencies;
-        this.devVersion = devVersion;
         this.zipFile = zipFile;
         fillListOfToolDirectories();
     }
@@ -126,16 +124,8 @@ public class PluginInfo {
         return directory;
     }
 
-    public File getDevelopmentDirectory() {
-        return developmentDirectory;
-    }
-
     public String getProdVersion() {
         return prodVersion;
-    }
-
-    public String getDevVersion() {
-        return devVersion;
     }
 
     public Map<String, File> getToolsDirectories() {
