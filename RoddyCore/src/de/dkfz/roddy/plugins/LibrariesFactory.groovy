@@ -3,6 +3,7 @@ package de.dkfz.roddy.plugins
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.client.RoddyStartupModes
+import de.dkfz.roddy.client.cliclient.CommandLineCall
 import de.dkfz.roddy.execution.io.ExecutionHelper
 import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.StringConstants
@@ -23,8 +24,7 @@ public class LibrariesFactory extends Initializable {
     public static final String PLUGIN_VERSION_CURRENT = "current";
     public static final String PLUGIN_BASEPLUGIN = "PluginBase";
     public static final String BUILDINFO_DEPENDENCY = "dependson";
-    public static final String BUILDINFO_EXTENSIONS = "extends";
-    public static final String BUILDINFO_REVISION = "revises";
+    public static final String BUILDINFO_COMPATIBILITY = "compatibleto";
     public static final String BUILDINFO_TEXTFILE = "buildinfo.txt";
 
     private List<String> loadedLibrariesInfo = [];
@@ -232,18 +232,19 @@ public class LibrariesFactory extends Initializable {
      * @param collectedPluginDirectories
      * @return
      */
-    public static Map<String, Map<String, PluginInfo>> loadPluginsFromDirectories(List<Tuple2<File, String[]>> collectedPluginDirectories) {
+    private static Map<String, Map<String, PluginInfo>> loadPluginsFromDirectories(List<Tuple2<File, String[]>> collectedPluginDirectories) {
         Map<String, Map<String, PluginInfo>> _mapOfPlugins = [:];
         for (Tuple2<File, String[]> _entry : collectedPluginDirectories) {
             File pEntry = _entry.x;
             String[] splitName = _entry.y;//pEntry.getName().split(StringConstants.SPLIT_UNDERSCORE); //First split for .zip then for the version
 
             String pluginName = splitName[0];
-            String[] pluginVersionInfo = splitName.length > 1 ? splitName[1].split(StringConstants.SPLIT_MINUS) : [PLUGIN_VERSION_CURRENT];
+            String[] pluginVersionInfo = splitName.length > 1 ? splitName[1].split(StringConstants.SPLIT_MINUS) : [PLUGIN_VERSION_CURRENT] as String[];
             String pluginVersion = pluginVersionInfo[0];
             String pluginRevision = pluginVersionInfo.length > 1 ? pluginVersionInfo[1] : "0";
 
-            boolean helpMode = Roddy.getCommandLineCall().startupMode == RoddyStartupModes.help
+            CommandLineCall clc = Roddy.getCommandLineCall();
+            boolean helpMode = clc ? clc.startupMode == RoddyStartupModes.help : false
 
             File develEntry = null;
             File prodEntry = null;
@@ -291,6 +292,8 @@ public class LibrariesFactory extends Initializable {
                         String workflow = split[0];
                         String version = split.length > 1 ? split[1] : PLUGIN_VERSION_CURRENT;
                         pluginDependencies.put(workflow, version);
+                    } else if(line.startsWith(BUILDINFO_COMPATIBILITY)) {
+
                     }
                 }
                 if (pluginName != "DefaultPlugin" && !pluginDependencies.containsKey(PLUGIN_BASEPLUGIN))
