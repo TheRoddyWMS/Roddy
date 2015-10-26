@@ -39,6 +39,10 @@ public class LibrariesFactory extends Initializable {
 
     private SyntheticPluginInfo synthetic
 
+    /**
+     * The synthetic plugin info object is solely used for automatically created synthetic file classes.
+     * It is not usable for other purposes.
+     */
     private static class SyntheticPluginInfo extends PluginInfo {
 
         SyntheticPluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, Map<String, String> dependencies) {
