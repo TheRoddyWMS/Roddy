@@ -13,6 +13,7 @@
       <module fileurl="file://$PROJECT_DIR$/dist/dist.iml" filepath="$PROJECT_DIR$/dist/dist.iml" />
       <module fileurl="file://$PROJECT_DIR$/dist/plugins/plugins.iml" filepath="$PROJECT_DIR$/dist/plugins/plugins.iml" />
       <module fileurl="file://$PROJECT_DIR$/roddy.iml" filepath="$PROJECT_DIR$/roddy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../RoddyGithubWiki/RoddyGithubWiki.iml" filepath="$PROJECT_DIR$/../RoddyGithubWiki/RoddyGithubWiki.iml" />
     </modules>
   </component>
 </project>
