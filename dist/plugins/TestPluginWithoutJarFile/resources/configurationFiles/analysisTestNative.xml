@@ -1,8 +1,8 @@
-<configuration name='testAnalysisNative' description='A test analsis invoking a native pbs workflow.'
-               configurationType='analysis' class='de.dkfz.roddy.core.Analysis' workflowClass='de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow'
+<configuration configurationType='analysis'
+               name='testAnalysisNative' description='A test analsis invoking a native pbs workflow.'
+               class='de.dkfz.roddy.core.Analysis' workflowClass='de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow'
                listOfUsedTools="nativeWorkflow" usedToolFolders="roddyTests"
-               nativeWorkflowTool="nativeWorkflow" targetCommandFactory="de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommandFactory"
-               >
+               nativeWorkflowTool="nativeWorkflow" targetCommandFactory="de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommandFactory">
     <configurationvalues>
         <cvalue name='analysisMethodNameOnInput' value='testAnalysis' type='string'/>
         <cvalue name='analysisMethodNameOnOutput' value='testAnalysis' type='string'/>
@@ -11,9 +11,9 @@
     </configurationvalues>
     <processingTools>
         <!--<tool name="cleanupScript" value="cleanupScript.sh" basepath="roddyTests" >-->
-            <!--<resourcesets>-->
-                <!--<rset size="l" memory="0.1" cores="1" nodes="1" walltime="1"/>-->
-            <!--</resourcesets>-->
+        <!--<resourcesets>-->
+        <!--<rset size="l" memory="0.1" cores="1" nodes="1" walltime="1"/>-->
+        <!--</resourcesets>-->
         <!--</tool>-->
         <tool name='nativeWorkflow' value='NativeTestWorkflow.sh' basepath='roddyTests'>
             <resourcesets>
