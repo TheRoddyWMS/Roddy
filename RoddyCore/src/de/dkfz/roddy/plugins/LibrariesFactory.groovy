@@ -246,6 +246,7 @@ public class LibrariesFactory extends Initializable {
             String[] pluginVersionInfo = splitName.length > 1 ? splitName[1].split(StringConstants.SPLIT_MINUS) : [PLUGIN_VERSION_CURRENT] as String[];
             String pluginVersion = pluginVersionInfo[0];
             String pluginRevision = pluginVersionInfo.length > 1 ? pluginVersionInfo[1] : "0";
+            String pluginFullVersion = pluginVersion + "_" + pluginRevision;
 
             CommandLineCall clc = Roddy.getCommandLineCall();
             boolean helpMode = clc ? clc.startupMode == RoddyStartupModes.help : false
@@ -306,7 +307,7 @@ public class LibrariesFactory extends Initializable {
                     pluginDependencies.put("DefaultPlugin", PLUGIN_VERSION_CURRENT);
             }
 
-            _mapOfPlugins.get(pluginName, [:])[pluginVersion] = new PluginInfo(pluginName, zipFile, prodEntry, develEntry, pluginVersion, pluginDependencies);
+            _mapOfPlugins.get(pluginName, [:])[pluginFullVersion ] = new PluginInfo(pluginName, zipFile, prodEntry, develEntry, pluginVersion, pluginDependencies);
         }
         return _mapOfPlugins
     }

@@ -74,6 +74,13 @@ public class LibrariesFactoryTest {
 
     @Test
     public void testLoadPluginsFromDirectories() {
+        // Build up test data
+        // First, create a map of plugins and versions
+        //  x.y.z / current (version)
+        //  -n (revision)
+        //  ,b (beta)
+        //  ,c (compatible)
+        //  ,bc (beta and compatible)
         Map<String, List<String>> testPluginsList = [
                 A: ["1.0.24", "current"],
                 B: ["1.0.1", "1.0.2", "1.0.2-1", "1.0.2-2,bc", "1.0.3,c"],
@@ -81,8 +88,11 @@ public class LibrariesFactoryTest {
                 D: ["1.0.1", "1.0.2", "1.0.2-1", "1.0.3"],
         ]
 
+        Map<String>
+
         ArrayList<Tuple2<File, String[]>> collectedPluginDirectories = []
 
+        // Create the folder and file structure so that the loadPluginsFromDirectories method will work.
         for (String plugin : testPluginsList.keySet()) {
             List<String> listOfVersions = testPluginsList[plugin];
             for (int i = 0; i < listOfVersions.size(); i++) {
@@ -96,21 +106,36 @@ public class LibrariesFactoryTest {
                 File pFolder = pluginsBaseDir.newFolder(folderName);
                 collectedPluginDirectories << new Tuple2<File, String[]>(pFolder, pFolder.getName().split(StringConstants.SPLIT_UNDERSCORE));
                 File buildinfo = new File(pFolder, "buildinfo.txt");
-                if (vString.size() > 1) {
-                    if (vString[1].contains("b"))
-                        buildinfo << "status=beta\n"
 
-                    if (vString[1].contains("c") && i > 0)
-                        buildinfo << "compatibleto=${listOfVersions[i - 1].split(StringConstants.SPLIT_COMMA)[0]}\n"
-                }
+                // Check, if there are additions to the versioning string.
+                if (!(vString.size() > 1)) continue
+
+                if (vString[1].contains("b"))
+                    buildinfo << "status=beta\n"
+
+                if (vString[1].contains("c") && i > 0)
+                    buildinfo << "compatibleto=${listOfVersions[i - 1].split(StringConstants.SPLIT_COMMA)[0]}\n"
             }
         }
 
-
+        // The method is static and private and should stay that way, so get it via reflection.
         Method loadPluginsFromDirectories = LibrariesFactory.getDeclaredMethod("loadPluginsFromDirectories", List.class);
         loadPluginsFromDirectories.setAccessible(true);
 
-        def res = loadPluginsFromDirectories.invoke(null, collectedPluginDirectories);
+        // Invoke the method and check the results.
+        Map<String, Map<String, PluginInfo>> res = loadPluginsFromDirectories.invoke(null, collectedPluginDirectories) as Map<String, Map<String, PluginInfo>>;
+
+        // Check, if all plugins were recognized and if the version count matches.
+        assert res.size() == testPluginsList.size()
+        res.keySet().each {
+            String pID ->
+            assert testPluginsList[pID].size() == res[pID].size();
+        }
+
+
+        // Now test several plugin chains for consistency and expected results.
+
+
         println(res)
 
     }
