@@ -203,7 +203,7 @@ public class Job {
             }
 
             newParameters.put(k, newPath);
-            newParameters.put(k + "_path", newPath);
+//            newParameters.put(k + "_path", newPath);
             //TODO Create a toStringList method for filestages. The method should then be very generic.
 //                this.parameters.put(k + "_fileStage_numericIndex", "" + bf.getFileStage().getNumericIndex());
 //                this.parameters.put(k + "_fileStage_index", bf.getFileStage().getIndex());

@@ -481,13 +481,13 @@ public class ConfigurationFactory {
                         boolean isArray = false;
                         int enforcedArraySize = -1;
                         //Support for arrays of the same file class
-                        if (dfc.contains("[")) {
-                            int openingIndex = dfc.indexOf("[");
-                            int closingIndex = dfc.indexOf("]");
+                        if (fnDerivedFrom.contains("[")) {
+                            int openingIndex = fnDerivedFrom.indexOf("[");
+                            int closingIndex = fnDerivedFrom.indexOf("]");
                             if (closingIndex - 1 > openingIndex) {
-                                enforcedArraySize = Integer.parseInt(dfc[openingIndex + 1..-2]);
+                                enforcedArraySize = Integer.parseInt(fnDerivedFrom[openingIndex + 1..-2]);
                             }
-                            dfc = dfc[0..openingIndex - 1];
+//                            dfc = dfc[0..openingIndex - 1];
                             isArray = true;
                         }
 
@@ -552,12 +552,6 @@ public class ConfigurationFactory {
                         throw new RuntimeException("filename pattern is not valid: ")
                     }
                     filenamePatterns.put(fp.getID(), fp);
-//                        try {
-//                            config.addFilenamePattern(fp);
-//                        } catch (Exception ex) {
-//                            throw new RuntimeException("problem with adding fp to configuration");
-//                        }
-//                    ClassLoader.getSystemClassLoader().get
                 } catch (Exception ex) {
                     logger.severe("filename pattern definition is not valid: " + (new groovy.xml.StreamingMarkupBuilder().bindNode(filename) as String));
                 }
