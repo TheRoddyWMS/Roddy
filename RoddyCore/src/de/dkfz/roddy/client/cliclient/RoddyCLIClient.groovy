@@ -437,7 +437,7 @@ public class RoddyCLIClient {
         List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(clc.parameters[1].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
         if (testrerun) executionContexts = analysis.rerun(executionContexts, true);
 
-        outputRerunResult(executionContexts, false)
+        outputRerunResult(executionContexts, testrerun)
     }
 
     /**
@@ -461,7 +461,7 @@ public class RoddyCLIClient {
             sb << "  Output directory    : ${ec.getOutputDirectory()}" << separator;
             sb << "  Execution directory : ${ec.getExecutionDirectory()}" << separator;
 
-            Collection<Job> collectedJobs = ec.getExecutedJobs().findAll { Job job -> job.getJobID() != null && (rerun ? job.getJobState() == JobState.UNSTARTED : true)  }
+            Collection<Job> collectedJobs = ec.getExecutedJobs().findAll { Job job -> job.getJobID() != null && (rerun ? job.runResult?.wasExecuted : true)  }
             sb << "  #FWHITE#List of jobs (${collectedJobs.size()}):#CLEAR#" << separator;
             for (Job job : collectedJobs) {
 

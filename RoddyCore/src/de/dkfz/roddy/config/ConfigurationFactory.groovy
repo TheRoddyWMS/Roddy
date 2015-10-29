@@ -683,7 +683,6 @@ public class ConfigurationFactory {
         return availableAnalyses;
     }
 
-//    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public AnalysisConfiguration lazyLoadAnalysisConfiguration(AnalysisConfigurationProxy proxy) {
         String analysisID = proxy.getAnalysisID();
         String analysisCfg = proxy.getAnalysisCfg();

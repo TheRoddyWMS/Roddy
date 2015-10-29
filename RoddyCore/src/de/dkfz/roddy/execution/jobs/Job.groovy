@@ -68,6 +68,8 @@ public class Job {
 
     public String toolMD5;
 
+    private boolean isDirty;
+
     /**
      * Parameters for the tool you want to call
      */
@@ -436,13 +438,16 @@ public class Job {
             knownFilesCnt = (Integer) res[1];
         }
 
-        boolean rerunIsNecessary = fileUnverified || parentFileIsDirty;
+        boolean parentJobIsDirty = getParentJobs().collect { Job job -> job.isDirty }.any { boolean dirty -> dirty};
+
+        boolean rerunIsNecessary = fileUnverified || parentFileIsDirty || parentJobIsDirty;
 
         if (isVerbosityHigh) dbgMessage << "\tverification was successful ? " << !rerunIsNecessary << sep;
         //If all files could be found rerun if necessary otherwise rerun it definitive.
         if (knownFilesCnt != filesToVerify.size() ? true : rerunIsNecessary) {
             //More detailed if then because of enhanced debug / breakpoint possibilities
             if (isVerbosityHigh) dbgMessage << "\tjob will be rerun because either the number of existing files does not match with the number of files which should be created or because something could not be verified." << sep;
+            isDirty = true;
             return true;
         }
         if (isVerbosityHigh) dbgMessage << "\tjob will not be rerun.";
@@ -546,6 +551,10 @@ public class Job {
             return new LinkedList<>(parentFiles);
         else
             return new LinkedList<>();
+    }
+
+    public List<Job> getParentJobs() {
+        return dependencyIDs.collect { JobDependencyID jid -> jid?.job }.findAll { Job job -> job != null} as List<Job>
     }
 
     public List<BaseFile> getFilesToVerify() {
