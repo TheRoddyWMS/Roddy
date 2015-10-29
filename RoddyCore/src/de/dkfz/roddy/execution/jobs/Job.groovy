@@ -5,24 +5,19 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.FilenamePattern;
 import de.dkfz.roddy.execution.io.ExecutionService
-import de.dkfz.roddy.knowledge.files.Tuple2;
 import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.ExecutionContextError;
 import de.dkfz.roddy.core.ExecutionContextLevel;
-import de.dkfz.roddy.knowledge.files.BaseFile;
+import de.dkfz.roddy.knowledge.files.BaseFile
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicLong;
 
 import static de.dkfz.roddy.Constants.NO_VALUE
-import static de.dkfz.roddy.config.FilenamePattern.$_JOBPARAMETER
 import static de.dkfz.roddy.config.FilenamePattern.$_JOBPARAMETER;
 
 @groovy.transform.CompileStatic
@@ -139,7 +134,7 @@ public class Job {
                 this.parameters.putAll(newParameters);
             }
         }
-        if(inputParameters != null)
+        if (inputParameters != null)
             initialInputParameters.putAll(inputParameters);
 
         this.arrayIndices = arrayIndices ?: new LinkedList<String>();
@@ -187,12 +182,12 @@ public class Job {
                 // Auto path!
                 int slotPosition = allRawInputParameters.keySet().asList().indexOf(k);
                 String completeString = jobName + k + slotPosition;
-                if(parentFiles)
+                if (parentFiles)
                     parentFiles.each {
                         BaseFile p ->
-                            if(!p instanceof  BaseFile) return;
+                            if (!p instanceof BaseFile) return;
 
-                            BaseFile _bf = (BaseFile)p;
+                            BaseFile _bf = (BaseFile) p;
                             completeString += ("" + _bf.getAbsolutePath())
 
                     }
@@ -342,7 +337,7 @@ public class Job {
             runJob = true; //The job is always executed if run is selected
             jobDetailsLine << "  Running job " + jobName;
         } else if (contextLevel == ExecutionContextLevel.RERUN || contextLevel == ExecutionContextLevel.TESTRERUN) {
-            runJob = handleRerunJob(dbgMessage);
+            runJob = checkIfJobShouldRerun(dbgMessage);
             jobDetailsLine << "  Rerun job " + jobName;
         } else {
             return handleDifferentJobRun(dbgMessage);
@@ -413,7 +408,12 @@ public class Job {
         return runResult;
     }
 
-    private boolean handleRerunJob(StringBuilder dbgMessage) {
+    /**
+     * Checks, if a job needs to be rerun.
+     * @param dbgMessage
+     * @return
+     */
+    private boolean checkIfJobShouldRerun(StringBuilder dbgMessage) {
         def isVerbosityHigh = logger.isVerbosityHigh()
         String sep = Constants.ENV_LINESEPARATOR;
         if (isVerbosityHigh) dbgMessage << "Rerunning job " + jobName
@@ -438,20 +438,33 @@ public class Job {
             knownFilesCnt = (Integer) res[1];
         }
 
-        boolean parentJobIsDirty = getParentJobs().collect { Job job -> job.isDirty }.any { boolean dirty -> dirty};
+        boolean parentJobIsDirty = getParentJobs().collect { Job job -> job.isDirty }.any { boolean dirty -> dirty };
 
-        boolean rerunIsNecessary = fileUnverified || parentFileIsDirty || parentJobIsDirty;
+        boolean knownFilesCountMismatch = knownFilesCnt != filesToVerify.size()
 
-        if (isVerbosityHigh) dbgMessage << "\tverification was successful ? " << !rerunIsNecessary << sep;
+        boolean rerunIsNecessary = fileUnverified || parentFileIsDirty || parentJobIsDirty || knownFilesCountMismatch;
+
+        if (isVerbosityHigh && rerunIsNecessary) dbgMessage << "\tJob will rerun" << sep;
+
         //If all files could be found rerun if necessary otherwise rerun it definitive.
-        if (knownFilesCnt != filesToVerify.size() ? true : rerunIsNecessary) {
-            //More detailed if then because of enhanced debug / breakpoint possibilities
-            if (isVerbosityHigh) dbgMessage << "\tjob will be rerun because either the number of existing files does not match with the number of files which should be created or because something could not be verified." << sep;
-            isDirty = true;
-            return true;
+        if (!rerunIsNecessary) {
+            if (isVerbosityHigh) dbgMessage << "\tJob was verified and will not be rerun" << sep;
+            return false;
         }
-        if (isVerbosityHigh) dbgMessage << "\tjob will not be rerun.";
-        return false;
+
+        //More detailed if then because of enhanced debug / breakpoint possibilities
+        if (isVerbosityHigh) {
+            if(parentJobIsDirty)
+                dbgMessage << "\t* Job is set to rerun because a parent job is marked dirty" << sep;
+            if (knownFilesCountMismatch)
+                dbgMessage << "\t* The number of existing files does not match with the number of files which should be created" << sep
+            if(fileUnverified)
+                dbgMessage << "\t* One or more files could not be verified" << sep;
+            if(parentFileIsDirty)
+                dbgMessage << "\t* One or more of the jobs parent files could not be verified" << sep;
+        }
+        isDirty = true;
+        return true;
     }
 
     private List verifyFiles(StringBuilder dbgMessage) {
@@ -554,7 +567,7 @@ public class Job {
     }
 
     public List<Job> getParentJobs() {
-        return dependencyIDs.collect { JobDependencyID jid -> jid?.job }.findAll { Job job -> job != null} as List<Job>
+        return dependencyIDs.collect { JobDependencyID jid -> jid?.job }.findAll { Job job -> job != null } as List<Job>
     }
 
     public List<BaseFile> getFilesToVerify() {
