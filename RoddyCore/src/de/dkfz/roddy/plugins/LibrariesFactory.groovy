@@ -8,6 +8,7 @@ import de.dkfz.roddy.execution.io.ExecutionHelper
 import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.core.Initializable
+import groovy.transform.TypeCheckingMode
 
 /**
  * Factory to load and integrate plugins.
@@ -26,6 +27,8 @@ public class LibrariesFactory extends Initializable {
     public static final String BUILDINFO_DEPENDENCY = "dependson";
     public static final String BUILDINFO_COMPATIBILITY = "compatibleto";
     public static final String BUILDINFO_TEXTFILE = "buildinfo.txt";
+    public static final String BUILDINFO_STATUS = "status"
+    public static final String BUILDINFO_STATUS_BETA = "beta"
 
     private List<String> loadedLibrariesInfo = [];
 
@@ -134,30 +137,49 @@ public class LibrariesFactory extends Initializable {
  * @param usedPlugins
  */
     public boolean resolveAndLoadPlugins(String[] usedPlugins) {
-        Map<String, PluginInfo> pluginsToActivate = [:];
-        loadMapOfAvailablePlugins();
+        Map<String, Map<String, PluginInfo>> mapOfPlugins = loadMapOfAvailablePlugins();
+        loadLibraries(buildupPluginQueue(mapOfPlugins, usedPlugins) as List);
+        librariesAreLoaded = true;
+        return true;
+    }
 
+    public static Map<String, PluginInfo> buildupPluginQueue(Map<String, Map<String, PluginInfo>> mapOfPlugins, String[] usedPlugins) {
+        List<String> usedPluginsCorrected = [];
         Map<String, String> pluginsToCheck = usedPlugins.collectEntries { String requestedPlugin ->
-            String[] pSplit = requestedPlugin.split(StringConstants.SPLIT_COLON);
+            List<String> pSplit = requestedPlugin.split("[:-]") as List;
             String id = pSplit[0];
-            String version = "current";
-            if (pSplit.length >= 2)
-                version = pSplit[1];
-            [id, version];
+            String version = pSplit[1] ?: "current";
+            String revision = pSplit[2] ?: "0"
+            usedPluginsCorrected << [id, version + "-" + revision].join(":");
+            [id, version + "-" + revision];
         }
+        usedPlugins = usedPluginsCorrected;
 
+        Map<String, PluginInfo> pluginsToActivate = [:];
         while (pluginsToCheck.size() > 0) {
 
             String id = pluginsToCheck.keySet()[0]
-            String version = pluginsToCheck[id];
+            String version = pluginsToCheck[id]
+            if (version != "current" && !version.contains("-")) version += "-0";
             pluginsToCheck.remove(id, version);
 
             if (!mapOfPlugins[id] || !mapOfPlugins[id][version]) {
                 logger.severe("The plugin ${id}:${version} could not be found, are the plugin paths properly set?");
-                return false;
+                return null;
             }
 
+            // Set pInfo to a valid instance.
             PluginInfo pInfo = mapOfPlugins[id][version];
+
+            // Now, if the plugin is not in usedPlugins (and therefore not fixed), we search the newest compatible
+            // version of it which may either be a revision (x:x.y-[0..n] or a higher compatible version.
+            // Search the last valid entry in the chain.
+            if (!usedPlugins.contains("${id}:${version}")) {
+                for (; pInfo.nextInChain != null; pInfo = pInfo.nextInChain) {
+                    version = pInfo.prodVersion;
+                }
+            }
+
             if (pInfo == null)
                 pInfo = mapOfPlugins[id][PLUGIN_VERSION_CURRENT]
             if (pInfo == null)
@@ -165,19 +187,21 @@ public class LibrariesFactory extends Initializable {
             if (pluginsToActivate[id] != null) {
                 if (pluginsToActivate[id].prodVersion != version) {
                     logger.severe("There is a version mismatch for plugin dependencies! Not starting up.");
-                    return false;
+                    return null;
                 } else {
                     //Not checking again!
                 }
             } else {
-                pluginsToCheck.putAll(pInfo.getDependencies());
+                Map<String, String> dependencies = pInfo.getDependencies()
+                dependencies.each { String k, String v ->
+                    if (v != "current" && !v.contains("-")) v += "-0";
+                    pluginsToCheck[k] = v;
+                }
+//                pluginsToCheck.putAll(dependencies);
                 pluginsToActivate[id] = pInfo;
             }
         }
-        loadedPlugins = pluginsToActivate.values() as List;
-        loadLibraries(loadedPlugins);
-        librariesAreLoaded = true;
-        return true;
+        return pluginsToActivate;
     }
 
     public boolean areLibrariesLoaded() {
@@ -233,10 +257,56 @@ public class LibrariesFactory extends Initializable {
 
     /**
      * Loads all available plugins (including revisions and versions) from a set of directories.
+     * Type checking mode is set to skip for this method, because Groovy does not likes Generics and Comparisons in a combination...
+     * return tLeft.x.compareTo(tRight.x) * 10000 +
+     * tLeft.y.compareTo(tRight.y) * 1000 +
+     * tLeft.z.compareTo(tRight.z) * 100 +
+     * tLeft.w.compareTo(tRight.w) * 10 +
+     * tLeft.q.compareTo(tRight.q) * 1;
+     *
+     * Will not work!
+     *
      * @param collectedPluginDirectories
      * @return
      */
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     private static Map<String, Map<String, PluginInfo>> loadPluginsFromDirectories(List<Tuple2<File, String[]>> collectedPluginDirectories) {
+        //First, check, if a plugin name is valid or not.
+        List<Tuple2<File, String[]>> collectedTemporary = [];
+        collectedPluginDirectories.each { tuple ->
+            String rev = (tuple.x.name.split("[-]") as List)[1];
+            if (rev?.isNumber() || !rev) collectedTemporary << tuple
+            else logger.severe("Filtered out plugin ${tuple.x.name}, as the revision id is not numeric.")
+        }
+        collectedPluginDirectories = collectedTemporary;
+
+        //Make sure, that the plugin directories are properly sorted before we start. This is especially useful
+        // if we search for revisions and extensions.
+        collectedPluginDirectories = collectedPluginDirectories.sort {
+            Tuple2<File, String[]> left, Tuple2<File, String[]> right ->
+                List<String> splitLeft = left.x.name.split("[_:.-]") as List;
+                List<String> splitRight = right.x.name.split("[_:.-]") as List;
+                Tuple5<String, Integer, Integer, Integer, Integer> tLeft = new Tuple5<>(
+                        splitLeft[0],
+                        (splitLeft[1] ?: Integer.MAX_VALUE) as Integer,
+                        (splitLeft[2] ?: Integer.MAX_VALUE) as Integer,
+                        (splitLeft[3] ?: Integer.MAX_VALUE) as Integer,
+                        (splitLeft[4] ?: 0) as Integer
+                );
+                Tuple5<String, Integer, Integer, Integer, Integer> tRight = new Tuple5<>(
+                        splitRight[0],
+                        (splitRight[1] ?: Integer.MAX_VALUE) as Integer,
+                        (splitRight[2] ?: Integer.MAX_VALUE) as Integer,
+                        (splitRight[3] ?: Integer.MAX_VALUE) as Integer,
+                        (splitRight[4] ?: 0) as Integer
+                );
+                if (tLeft.x != tRight.x) return tLeft.x.compareTo(tRight.x);
+                if (tLeft.y != tRight.y) return tLeft.y.compareTo(tRight.y);
+                if (tLeft.z != tRight.z) return tLeft.z.compareTo(tRight.z);
+                if (tLeft.w != tRight.w) return tLeft.w.compareTo(tRight.w);
+                if (tLeft.q != tRight.q) return tLeft.q.compareTo(tRight.q);
+                return 0;
+        }
         Map<String, Map<String, PluginInfo>> _mapOfPlugins = [:];
         for (Tuple2<File, String[]> _entry : collectedPluginDirectories) {
             File pEntry = _entry.x;
@@ -246,7 +316,10 @@ public class LibrariesFactory extends Initializable {
             String[] pluginVersionInfo = splitName.length > 1 ? splitName[1].split(StringConstants.SPLIT_MINUS) : [PLUGIN_VERSION_CURRENT] as String[];
             String pluginVersion = pluginVersionInfo[0];
             String pluginRevision = pluginVersionInfo.length > 1 ? pluginVersionInfo[1] : "0";
-            String pluginFullVersion = pluginVersion + "_" + pluginRevision;
+            String pluginFullVersion = pluginVersion + "-" + pluginRevision;
+            if (pluginVersion == "current") pluginFullVersion = "current";
+
+            int revisionNumber = pluginRevision as Integer;
 
             CommandLineCall clc = Roddy.getCommandLineCall();
             boolean helpMode = clc ? clc.startupMode == RoddyStartupModes.help : false
@@ -287,18 +360,36 @@ public class LibrariesFactory extends Initializable {
                 prodEntry = pEntry;
             }
 
+
+            def pluginMap = _mapOfPlugins.get(pluginName, new LinkedHashMap<String, PluginInfo>())
+
+            PluginInfo previousPlugin = pluginMap.values().size() > 0 ? pluginMap.values().last() : null;
+            boolean isRevisionOfPlugin = previousPlugin?.getMajorAndMinor() == pluginVersion && previousPlugin?.getRevision() == revisionNumber - 1;
+            boolean isCompatible = false;
+            boolean isBetaPlugin = false
+
             //Get dependency list from plugin
             Map<String, String> pluginDependencies = [:];
             File buildinfoFile = pEntry.listFiles().find { File f -> f.name == BUILDINFO_TEXTFILE };
             if (buildinfoFile) {
                 for (String line in buildinfoFile.readLines()) {
+                    List<String> split = ((line.split(StringConstants.SPLIT_EQUALS) as List)[1]?.split(StringConstants.SPLIT_COLON)) as List;
                     if (line.startsWith(BUILDINFO_DEPENDENCY)) {
-                        String[] split = line.split(StringConstants.SPLIT_EQUALS)[1].split(StringConstants.SPLIT_COLON);
                         String workflow = split[0];
-                        String version = split.length > 1 ? split[1] : PLUGIN_VERSION_CURRENT;
+                        String version = split.size() > 1 ? split[1] : PLUGIN_VERSION_CURRENT;
                         pluginDependencies.put(workflow, version);
-                    } else if(line.startsWith(BUILDINFO_COMPATIBILITY)) {
-
+                    } else if (line.startsWith(BUILDINFO_COMPATIBILITY)) {
+                        // Not revision but compatible. Check, if the former plugin id (excluding the revision number) is
+                        // set as compatible.
+                        if (!split[0].contains("-")) split[0] = split[0] + "-0";
+                        if (previousPlugin?.getProdVersion() == split[0])
+                            isCompatible = true;
+                        else
+                            logger.info("Could not find entry for compatibility ${split[0]}");
+                    } else if (line.startsWith(BUILDINFO_STATUS)) {
+                        if (split[0] == BUILDINFO_STATUS_BETA) {
+                            isBetaPlugin = true;
+                        }
                     }
                 }
                 if (pluginName != "DefaultPlugin" && !pluginDependencies.containsKey(PLUGIN_BASEPLUGIN))
@@ -307,7 +398,21 @@ public class LibrariesFactory extends Initializable {
                     pluginDependencies.put("DefaultPlugin", PLUGIN_VERSION_CURRENT);
             }
 
-            _mapOfPlugins.get(pluginName, [:])[pluginFullVersion ] = new PluginInfo(pluginName, zipFile, prodEntry, develEntry, pluginVersion, pluginDependencies);
+
+            PluginInfo newPluginInfo = new PluginInfo(pluginName, zipFile, prodEntry, develEntry, pluginFullVersion, pluginDependencies)
+            pluginMap[pluginFullVersion] = newPluginInfo;
+            if (isRevisionOfPlugin || isCompatible) {
+                newPluginInfo.previousInChain = previousPlugin;
+                previousPlugin.nextInChain = newPluginInfo;
+            }
+
+            if (isRevisionOfPlugin)
+                newPluginInfo.previousInChainConnectionType = PluginInfo.PluginInfoConnection.REVISION;
+            else if (isCompatible)
+                newPluginInfo.previousInChainConnectionType = PluginInfo.PluginInfoConnection.EXTENSION;
+
+            if (isBetaPlugin)
+                newPluginInfo.isBetaPlugin = true;
         }
         return _mapOfPlugins
     }
