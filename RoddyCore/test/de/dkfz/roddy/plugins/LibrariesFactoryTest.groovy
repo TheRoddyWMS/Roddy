@@ -168,8 +168,8 @@ public class LibrariesFactoryTest {
         assert res["B"]["1.0.3-0"]?.previousInChain == res["B"]["1.0.2-2"] && res["B"]["1.0.3-0"]?.previousInChainConnectionType == PluginInfo.PluginInfoConnection.EXTENSION
 
         // Now test several plugin chains for consistency and expected results.
-        Map<String, PluginInfo> pluginQueueOK = LibrariesFactory.buildupPluginQueue(res, ["D:1.0.2-1"] as String[]);
         Map<String, PluginInfo> pluginQueueFaulty = LibrariesFactory.buildupPluginQueue(res, ["D:1.0.2"] as String[]);
+        Map<String, PluginInfo> pluginQueueOK = LibrariesFactory.buildupPluginQueue(res, ["D:1.0.2-1"] as String[]);
         Map<String, PluginInfo> pluginQueueCompatible = LibrariesFactory.buildupPluginQueue(res, ["D:1.0.3"] as String[]);
 
         //Finally validate several plugin chains and look if all to-be-loaded versions are properly found.
@@ -183,7 +183,7 @@ public class LibrariesFactoryTest {
         assert pluginQueueFaulty == null;
         assert pluginQueueCompatible != null;
         assert pluginQueueCompatible["D"].prodVersion == "1.0.3-0" &&
-                pluginQueueCompatible["C"].prodVersion == "1.0.3-0" &&
+                pluginQueueCompatible["C"].prodVersion == "current" &&
                 pluginQueueCompatible["B"].prodVersion == "1.0.3-0" &&
                 pluginQueueCompatible["A"].prodVersion == "current" &&
                 pluginQueueCompatible["PluginBase"].prodVersion == "current" &&

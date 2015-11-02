@@ -145,23 +145,23 @@ public class LibrariesFactory extends Initializable {
 
     public static Map<String, PluginInfo> buildupPluginQueue(Map<String, Map<String, PluginInfo>> mapOfPlugins, String[] usedPlugins) {
         List<String> usedPluginsCorrected = [];
-        Map<String, String> pluginsToCheck = usedPlugins.collectEntries { String requestedPlugin ->
+        List<Tuple2<String, String>> pluginsToCheck = usedPlugins.collect { String requestedPlugin ->
             List<String> pSplit = requestedPlugin.split("[:-]") as List;
             String id = pSplit[0];
             String version = pSplit[1] ?: "current";
             String revision = pSplit[2] ?: "0"
             usedPluginsCorrected << [id, version + "-" + revision].join(":");
-            [id, version + "-" + revision];
+            return new Tuple2(id, version + "-" + revision);
         }
         usedPlugins = usedPluginsCorrected;
 
         Map<String, PluginInfo> pluginsToActivate = [:];
         while (pluginsToCheck.size() > 0) {
 
-            String id = pluginsToCheck.keySet()[0]
-            String version = pluginsToCheck[id]
+            String id = pluginsToCheck[0].x;
+            String version = pluginsToCheck[0].y;
             if (version != "current" && !version.contains("-")) version += "-0";
-            pluginsToCheck.remove(id, version);
+            pluginsToCheck.remove(0);
 
             if (!mapOfPlugins[id] || !mapOfPlugins[id][version]) {
                 logger.severe("The plugin ${id}:${version} could not be found, are the plugin paths properly set?");
@@ -195,7 +195,7 @@ public class LibrariesFactory extends Initializable {
                 Map<String, String> dependencies = pInfo.getDependencies()
                 dependencies.each { String k, String v ->
                     if (v != "current" && !v.contains("-")) v += "-0";
-                    pluginsToCheck[k] = v;
+                    pluginsToCheck << new Tuple2(k, v);
                 }
 //                pluginsToCheck.putAll(dependencies);
                 pluginsToActivate[id] = pInfo;
