@@ -81,23 +81,40 @@ public class LibrariesFactoryTest {
         //  ,b (beta)
         //  ,c (compatible)
         //  ,bc (beta and compatible)
-        Map<String, List<String>> testPluginsList = [
-                A: ["1.0.24", "current"],
-                B: ["1.0.1", "1.0.2", "1.0.2-1", "1.0.2-2,bc", "1.0.3,c"],
-                C: ["1.0.1", "1.0.2,c", "1.0.3", "current,c"],
-                D: ["1.0.1", "1.0.2", "1.0.2-1", "1.0.3"],
+        LinkedHashMap<String, LinkedHashMap<String, List<String>>> testPluginsList = [
+                A: ["1.0.24" : ["PluginBase:1.0.24", "DefaultPlugin:1.0.28"],
+                    "current": ["PluginBase:current", "DefaultPlugin:current"]
+                ],
+                B: ["1.0.1"    : ["A:1.0.24"],
+                    "1.0.1-r"  : [],   // Is not valid and will be filtered
+                    "1.0.2"    : ["A:1.0.24"],
+                    "1.0.2-1"  : ["A:1.0.24"],
+                    "1.0.2-2,b": ["A:1.0.24"],
+                    "1.0.3,c"  : ["A:current"]
+                ],
+                C: ["1.0.1"    : ["B:1.0.1"],
+                    "1.0.2,c"  : ["B:1.0.2-1"],
+                    "1.0.3"    : ["B:1.0.3"],
+                    "current,c": ["B:1.0.3"]
+                ],
+                D: ["1.0.1"  : ["C:1.0.1"],
+                    "1.0.2"  : ["C:1.0.2", "B:1.0.1"],
+                    "1.0.2-1": ["C:1.0.2"],
+                    "1.0.3"  : ["C:1.0.3", "B:1.0.2"],
+                    "current": ["C:current"]
+                ],
         ]
-
-        Map<String>
 
         ArrayList<Tuple2<File, String[]>> collectedPluginDirectories = []
 
         // Create the folder and file structure so that the loadPluginsFromDirectories method will work.
         for (String plugin : testPluginsList.keySet()) {
-            List<String> listOfVersions = testPluginsList[plugin];
+            Map<String, List<String>> pluginInfoMap = testPluginsList[plugin];
+            List<String> listOfVersions = pluginInfoMap.keySet() as List<String>;
             for (int i = 0; i < listOfVersions.size(); i++) {
                 String version = listOfVersions[i];
-                String[] vString = version.split(StringConstants.SPLIT_COMMA)
+                List<String> vString = version.split(StringConstants.SPLIT_COMMA) as List<String>
+                List<String> importList = pluginInfoMap[version];
 
                 String folderName = plugin
                 if (vString[0] != "current")
@@ -108,15 +125,29 @@ public class LibrariesFactoryTest {
                 File buildinfo = new File(pFolder, "buildinfo.txt");
 
                 // Check, if there are additions to the versioning string.
-                if (!(vString.size() > 1)) continue
-
-                if (vString[1].contains("b"))
+                if (vString[1]?.contains("b"))
                     buildinfo << "status=beta\n"
 
-                if (vString[1].contains("c") && i > 0)
+                if (vString[1]?.contains("c") && i > 0)
                     buildinfo << "compatibleto=${listOfVersions[i - 1].split(StringConstants.SPLIT_COMMA)[0]}\n"
+
+                importList.each {
+                    buildinfo << "dependson=${it}\n"
+                }
             }
         }
+
+        //Add additional "native" plugins (DefaultPlugin, PluginBase)
+        List<File> baseplugins = [
+                new File(Roddy.getApplicationDirectory(), "/dist/plugins/DefaultPlugin"),
+                new File(Roddy.getApplicationDirectory(), "/dist/plugins/DefaultPlugin_1.0.29"),
+                new File(Roddy.getApplicationDirectory(), "/dist/plugins/DefaultPlugin_1.0.28"),
+                new File(Roddy.getApplicationDirectory(), "/dist/plugins/PluginBase"),
+                new File(Roddy.getApplicationDirectory(), "/dist/plugins/PluginBase_1.0.24")
+        ]
+        collectedPluginDirectories.addAll(baseplugins.collect { File pdir ->
+            return new Tuple2<File, String[]>(pdir, pdir.name.split(StringConstants.SPLIT_UNDERSCORE))
+        });
 
         // The method is static and private and should stay that way, so get it via reflection.
         Method loadPluginsFromDirectories = LibrariesFactory.getDeclaredMethod("loadPluginsFromDirectories", List.class);
@@ -126,15 +157,37 @@ public class LibrariesFactoryTest {
         Map<String, Map<String, PluginInfo>> res = loadPluginsFromDirectories.invoke(null, collectedPluginDirectories) as Map<String, Map<String, PluginInfo>>;
 
         // Check, if all plugins were recognized and if the version count matches.
-        assert res.size() == testPluginsList.size()
-        res.keySet().each {
-            String pID ->
-            assert testPluginsList[pID].size() == res[pID].size();
-        }
+        assert res.size() == testPluginsList.size() + 2; // Take the additional plugins into account
+        assert res["PluginBase"]["current-0"] == null && res["PluginBase"]["current"] != null
+        assert testPluginsList["A"].size() == res["A"].size();
+        assert testPluginsList["B"].size() == res["B"].size() + 1; // Lacks one filtered entry.
+        assert testPluginsList["C"].size() == res["C"].size();
+        assert testPluginsList["D"].size() == res["D"].size();
 
+        assert res["B"]["1.0.2-1"]?.previousInChain == res["B"]["1.0.2-0"] && res["B"]["1.0.2-1"]?.previousInChainConnectionType == PluginInfo.PluginInfoConnection.REVISION
+        assert res["B"]["1.0.3-0"]?.previousInChain == res["B"]["1.0.2-2"] && res["B"]["1.0.3-0"]?.previousInChainConnectionType == PluginInfo.PluginInfoConnection.EXTENSION
 
         // Now test several plugin chains for consistency and expected results.
+        Map<String, PluginInfo> pluginQueueOK = LibrariesFactory.buildupPluginQueue(res, ["D:1.0.2-1"] as String[]);
+        Map<String, PluginInfo> pluginQueueFaulty = LibrariesFactory.buildupPluginQueue(res, ["D:1.0.2"] as String[]);
+        Map<String, PluginInfo> pluginQueueCompatible = LibrariesFactory.buildupPluginQueue(res, ["D:1.0.3"] as String[]);
 
+        //Finally validate several plugin chains and look if all to-be-loaded versions are properly found.
+        assert pluginQueueOK != null;
+        assert pluginQueueOK["D"].prodVersion == "1.0.2-1" &&
+                pluginQueueOK["C"].prodVersion == "1.0.2-0" &&
+                pluginQueueOK["B"].prodVersion == "1.0.3-0" &&
+                pluginQueueOK["A"].prodVersion == "current" &&
+                pluginQueueOK["PluginBase"].prodVersion == "current" &&
+                pluginQueueOK["DefaultPlugin"].prodVersion == "current";
+        assert pluginQueueFaulty == null;
+        assert pluginQueueCompatible != null;
+        assert pluginQueueCompatible["D"].prodVersion == "1.0.3-0" &&
+                pluginQueueCompatible["C"].prodVersion == "1.0.3-0" &&
+                pluginQueueCompatible["B"].prodVersion == "1.0.3-0" &&
+                pluginQueueCompatible["A"].prodVersion == "current" &&
+                pluginQueueCompatible["PluginBase"].prodVersion == "current" &&
+                pluginQueueCompatible["DefaultPlugin"].prodVersion == "current";
 
         println(res)
 

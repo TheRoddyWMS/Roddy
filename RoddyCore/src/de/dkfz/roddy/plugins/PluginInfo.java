@@ -1,6 +1,7 @@
 package de.dkfz.roddy.plugins;
 
 import de.dkfz.roddy.StringConstants;
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 
 import java.io.File;
@@ -48,16 +49,17 @@ public class PluginInfo {
     /**
      * Stores the next entry in the plugin chain or null if there is nor further plugin available.
      */
-    private PluginInfo nextInChain;
+    private PluginInfo nextInChain = null;
     /**
      * Stores the previous entry in the plugin chain or null if there is no precursor.
      */
-    private PluginInfo previousInChain;
+    private PluginInfo previousInChain = null;
     /**
      * Stores the connection type of this PI object relative to its precursor.
      */
-    private PluginInfoConnection previousInChainConnectionType;
+    private PluginInfoConnection previousInChainConnectionType = PluginInfoConnection.INCOMPATIBLE;
 
+    private boolean isBetaPlugin = false;
 
     private Map<String, File> listOfToolDirectories = new LinkedHashMap<>();
 
@@ -108,7 +110,6 @@ public class PluginInfo {
                 }
             }
         } catch (Exception ex) {
-//            System.out.println("The plugin " + name + " in directory " + directory + " could not be loaded properly. listFiles() in " + toolsBaseDir + " did not work.");
         }
     }
 
@@ -134,5 +135,29 @@ public class PluginInfo {
 
     public Map<String, String> getDependencies() {
         return dependencies;
+    }
+
+    public PluginInfo getNextInChain() {
+        return nextInChain;
+    }
+
+    public PluginInfo getPreviousInChain() {
+        return previousInChain;
+    }
+
+    public PluginInfoConnection getPreviousInChainConnectionType() {
+        return previousInChainConnectionType;
+    }
+
+    public String getFullID() {
+        return name + ":" + prodVersion;
+    }
+
+    public String getMajorAndMinor() {
+        return prodVersion.split("[-]")[0];
+    }
+
+    public int getRevision() {
+        return RoddyConversionHelperMethods.toInt(prodVersion.split("[-]")[1], 0);
     }
 }
