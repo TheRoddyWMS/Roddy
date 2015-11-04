@@ -4,6 +4,7 @@ import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.tools.LoggerWrapper
 
 import java.util.logging.Logger
 
@@ -18,7 +19,7 @@ import static de.dkfz.roddy.StringConstants.UNDERSCORE;
  */
 @groovy.transform.CompileStatic
 public abstract class ConfigurationConverter {
-    public static final Logger logger = Logger.getLogger(ConfigurationConverter.class.getName());
+    public static final LoggerWrapper logger = LoggerWrapper.getLogger(ConfigurationConverter.class.getSimpleName());
 
     public abstract String convert(ExecutionContext context, Configuration configuration);
 

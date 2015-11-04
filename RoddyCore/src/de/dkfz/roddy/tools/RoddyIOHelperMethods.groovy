@@ -109,7 +109,7 @@ class RoddyIOHelperMethods {
         }
     }
 
-    private static Logger logger = Logger.getLogger(RoddyIOHelperMethods.class.name);
+    private static LoggerWrapper logger  = LoggerWrapper.getLogger(RoddyIOHelperMethods.class.getSimpleName());
 
     private static Compressor compressor = new NativeLinuxZipCompressor();
 

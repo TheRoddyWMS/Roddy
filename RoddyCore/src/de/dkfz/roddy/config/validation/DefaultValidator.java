@@ -13,7 +13,7 @@ import java.util.logging.Logger;
  * boolean
  */
 public class DefaultValidator extends ConfigurationValueValidator {
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(DefaultValidator.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(DefaultValidator.class.getSimpleName());
 
     public DefaultValidator(Configuration cfg) {
         super(cfg);

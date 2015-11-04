@@ -44,7 +44,7 @@ import java.util.*;
 public class DataSetView extends CustomControlOnBorderPane implements Initializable, ExecutionContextListener, DataSetListener {
 
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(DataSetView.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(DataSetView.class.getSimpleName());
 
     @FXML
     private ListView lstRuns;

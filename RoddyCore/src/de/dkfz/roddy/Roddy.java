@@ -43,7 +43,7 @@ public class Roddy {
 
     public static final String FEATURE_TOGGLE_ENABLE_XML_VALIDATION = "enableXMLValidation";
 
-    private static final LoggerWrapper logger = LoggerWrapper.getLogger(Roddy.class.getName());
+    private static final LoggerWrapper logger = LoggerWrapper.getLogger(Roddy.class.getSimpleName());
     private static AppConfig applicationProperties;
 
     private static RunMode runMode;

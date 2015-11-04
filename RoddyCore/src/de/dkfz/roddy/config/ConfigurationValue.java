@@ -22,7 +22,7 @@ import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BASH_ARRAY
  */
 public class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiable {
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(ConfigurationValue.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(ConfigurationValue.class.getSimpleName());
 
     public final String id;
     public final String value;

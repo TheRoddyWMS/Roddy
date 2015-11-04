@@ -12,7 +12,7 @@ import java.util.logging.Logger;
  * boolean
  */
 public class FileSystemValidator extends ConfigurationValueValidator {
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(FileSystemValidator.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(FileSystemValidator.class.getSimpleName());
 
     public FileSystemValidator(Configuration cfg) {
         super(cfg);

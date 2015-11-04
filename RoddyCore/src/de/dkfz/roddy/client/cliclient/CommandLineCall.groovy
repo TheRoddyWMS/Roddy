@@ -14,7 +14,7 @@ import static de.dkfz.roddy.client.RoddyStartupModes.help
  */
 @groovy.transform.CompileStatic
 public class CommandLineCall {
-    private static LoggerWrapper logger = LoggerWrapper.getLogger(RoddyCLIClient.class.name);
+    private static LoggerWrapper logger = LoggerWrapper.getLogger(RoddyCLIClient.class.getSimpleName());
     public final RoddyStartupModes startupMode;
     private final List<String> arguments;
     private final List<String> parameters;

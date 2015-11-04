@@ -25,7 +25,7 @@ import java.util.logging.Level;
  */
 public class Analysis {
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(Analysis.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(Analysis.class.getSimpleName());
 
     /**
      * An analysis should have a unique name like i.e. whole_genome_processing or exome_analysis

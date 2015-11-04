@@ -158,6 +158,22 @@ public class PluginInfo {
     }
 
     public int getRevision() {
-        return RoddyConversionHelperMethods.toInt(prodVersion.split("[-]")[1], 0);
+        int result = 0;
+        try {
+            String[] split = prodVersion.split("[-]");
+            if (split.length == 1)
+                return 0;
+            else
+                result = RoddyConversionHelperMethods.toInt(split[1], 0);
+        } catch (Exception e) {
+            System.out.println("Error for revision fetch of " + this.name + " in " + this.directory);
+//            e.printStackTrace();
+        }
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return getFullID();
     }
 }

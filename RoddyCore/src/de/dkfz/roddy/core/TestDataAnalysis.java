@@ -12,7 +12,7 @@
 //*/
 //public class TestDataAnalysis extends Analysis {
 //
-//    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(TestDataAnalysis.class.getName());
+//    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(TestDataAnalysis.class.getSimpleName());
 //    private final Analysis parentProductiveAnalysis;
 //    private final TestDataOption testDataOption;
 //

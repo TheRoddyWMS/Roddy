@@ -35,7 +35,7 @@ public class ConfigurationFactory {
 
     public static final String SYNTHETIC_PACKAGE = "de.dkfz.roddy.synthetic.files"
 
-    public static final LoggerWrapper logger = LoggerWrapper.getLogger(ConfigurationFactory.class.name);
+    public static final LoggerWrapper logger = LoggerWrapper.getLogger(ConfigurationFactory.class.getSimpleName());
 
 
     private static ConfigurationFactory singleton = new ConfigurationFactory();

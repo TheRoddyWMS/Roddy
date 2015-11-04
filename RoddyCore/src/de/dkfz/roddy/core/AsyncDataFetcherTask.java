@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 */
 public abstract class AsyncDataFetcherTask<T> implements Runnable {
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(AsyncDataFetcherTask.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(AsyncDataFetcherTask.class.getSimpleName());
 
     private static synchronized final long getID() {
         return System.nanoTime();

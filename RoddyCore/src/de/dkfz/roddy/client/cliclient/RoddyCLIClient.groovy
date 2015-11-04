@@ -34,7 +34,7 @@ import static de.dkfz.roddy.client.RoddyStartupModes.*;
 @groovy.transform.CompileStatic
 public class RoddyCLIClient {
 
-    private static LoggerWrapper logger = LoggerWrapper.getLogger(RoddyCLIClient.class.name);
+    private static LoggerWrapper logger = LoggerWrapper.getLogger(RoddyCLIClient.class.getSimpleName());
 
     private static class ProjectTreeItem {
 

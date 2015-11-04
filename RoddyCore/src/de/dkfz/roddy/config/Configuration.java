@@ -53,7 +53,7 @@ public class Configuration implements ContainerParent<Configuration> {
         PROJECT
     }
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(Configuration.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(Configuration.class.getSimpleName());
     /**
      * The prototype with basic information about this configuration
      */

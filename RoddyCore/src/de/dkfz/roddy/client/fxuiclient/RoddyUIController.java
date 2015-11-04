@@ -62,7 +62,7 @@ import java.util.logging.Level;
  */
 public class RoddyUIController extends BorderPane implements ExecutionServiceListener, Initializable, ProjectTreeItemCellListener {
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(RoddyUIController.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(RoddyUIController.class.getSimpleName());
     private static final String APP_PROPERTY_LAST_OPEN_PROJECT_PATH = "lastOpenProjectPath";
     private static final String APP_PROPERTY_FILTER_ANALYSISID = "projectFilterAnalysisID";
     private static final String APP_PROPERTY_FILTER_PROJECTID = "projectFilterProjectID";

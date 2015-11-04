@@ -27,7 +27,7 @@ import static de.dkfz.roddy.config.ConfigurationConstants.CFG_OUTPUT_BASE_DIRECT
  */
 public class ProjectFactory {
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(ProjectFactory.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(ProjectFactory.class.getSimpleName());
 
     private static final ProjectFactory singleton = new ProjectFactory();
 

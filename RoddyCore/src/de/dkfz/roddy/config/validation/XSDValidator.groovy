@@ -19,7 +19,7 @@ import java.util.logging.Logger;
  * Created by michael on 30.04.15.
  */
 public class XSDValidator {
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(XSDValidator.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(XSDValidator.class.getSimpleName());
 
     private static List<File> alreadyChecked = [];
 

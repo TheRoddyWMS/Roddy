@@ -19,7 +19,7 @@ import static de.dkfz.roddy.StringConstants.*;
  * Filename patterns are stored in a configuration file. They are project specific and should be fully configurable.
  */
 public class FilenamePattern implements RecursiveOverridableMapContainer.Identifiable {
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(FilenamePattern.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(FilenamePattern.class.getSimpleName());
     public static final String $_SOURCEFILE_ATOMIC_PREFIX = "${sourcefileAtomicPrefix";
     public static final String $_SOURCEFILE_PROPERTY = "${sourcefileProperty";
     public static final String $_CVALUE = "${cvalue";
