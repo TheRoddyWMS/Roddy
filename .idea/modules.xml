@@ -7,13 +7,8 @@
       <module fileurl="file://$PROJECT_DIR$/RoddyCore/RoddyCore.iml" filepath="$PROJECT_DIR$/RoddyCore/RoddyCore.iml" />
       <module fileurl="file://$PROJECT_DIR$/../RoddyGithubWiki/RoddyGithubWiki.iml" filepath="$PROJECT_DIR$/../RoddyGithubWiki/RoddyGithubWiki.iml" />
       <module fileurl="file://$PROJECT_DIR$/Roddy_Gradle.iml" filepath="$PROJECT_DIR$/Roddy_Gradle.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Roddy_Gradle.iml" filepath="$PROJECT_DIR$/Roddy_Gradle.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Roddy_Gradle.iml" filepath="$PROJECT_DIR$/Roddy_Gradle.iml" />
-      <module fileurl="file://$PROJECT_DIR$/dist/dist.iml" filepath="$PROJECT_DIR$/dist/dist.iml" />
-      <module fileurl="file://$PROJECT_DIR$/dist/dist.iml" filepath="$PROJECT_DIR$/dist/dist.iml" />
       <module fileurl="file://$PROJECT_DIR$/dist/dist.iml" filepath="$PROJECT_DIR$/dist/dist.iml" />
       <module fileurl="file://$PROJECT_DIR$/dist/plugins/plugins.iml" filepath="$PROJECT_DIR$/dist/plugins/plugins.iml" />
-      <module fileurl="file://$PROJECT_DIR$/roddy.iml" filepath="$PROJECT_DIR$/roddy.iml" />
     </modules>
   </component>
 </project>
