@@ -41,7 +41,7 @@ import static de.dkfz.roddy.Constants.NO_VALUE;
 @groovy.transform.CompileStatic
 class GenericMethod {
 
-    private static final LoggerWrapper logger = LoggerWrapper.getLogger(GenericMethod.class.getName());
+    private static final LoggerWrapper logger = LoggerWrapper.getLogger(GenericMethod.class.getSimpleName());
 
     /**
      * This method is basically a wrapper around callGenericToolArray.

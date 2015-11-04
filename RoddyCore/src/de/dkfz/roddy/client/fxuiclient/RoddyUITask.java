@@ -19,7 +19,7 @@ import java.util.logging.Logger;
  */
 public abstract class RoddyUITask<T> extends Task<T> {
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(RoddyUITask.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(RoddyUITask.class.getSimpleName());
     private static final ReentrantLock activeTaskCountLock = new ReentrantLock();
     private static final ReentrantLock taskIDCounterLock = new ReentrantLock();
     private static final ReentrantLock lightWeightTaskIDCounterLock = new ReentrantLock();

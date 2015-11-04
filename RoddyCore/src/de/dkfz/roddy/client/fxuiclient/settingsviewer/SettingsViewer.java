@@ -38,7 +38,7 @@ import static de.dkfz.roddy.StringConstants.SPLIT_COMMA;
  */
 public class SettingsViewer extends CustomControlOnGridPane {
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(SettingsViewer.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(SettingsViewer.class.getSimpleName());
 
     public static final String INVALID_CREDENTIALS = "Please provide proper credentials.";
 

@@ -27,7 +27,7 @@ import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
  */
 @CompileStatic
 public abstract class RuntimeService extends CacheProvider {
-    private static LoggerWrapper logger = LoggerWrapper.getLogger(RuntimeService.class.getName());
+    private static LoggerWrapper logger = LoggerWrapper.getLogger(RuntimeService.class.getSimpleName());
     public static final String FILENAME_RUNTIME_INFO = "versionsInfo.txt"
     public static final String FILENAME_RUNTIME_CONFIGURATION = "runtimeConfig.sh"
     public static final String FILENAME_RUNTIME_CONFIGURATION_XML = "runtimeConfig.xml"

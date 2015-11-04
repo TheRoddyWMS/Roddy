@@ -18,7 +18,7 @@ import java.util.logging.Logger;
  */
 public class Project implements Serializable {
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(Project.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(Project.class.getSimpleName());
 
     /**
      * A list of analyses related to this project

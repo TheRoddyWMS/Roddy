@@ -13,7 +13,7 @@ import java.util.logging.Logger;
  * The class extends the standard configuration to add analysis related methods and fields.
  */
 public class AnalysisConfiguration extends Configuration {
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(AnalysisConfiguration.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(AnalysisConfiguration.class.getSimpleName());
 
     private final String workflowClass;
     private final List<String> listOfUsedTools;

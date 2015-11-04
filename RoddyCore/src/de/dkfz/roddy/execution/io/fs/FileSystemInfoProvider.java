@@ -12,7 +12,7 @@ import de.dkfz.roddy.tools.LoggerWrapper;
  * Also a deprecation message is shown.
  */
 public class FileSystemInfoProvider extends FileSystemAccessProvider {
-    private static LoggerWrapper logger = LoggerWrapper.getLogger(FileSystemAccessProvider.class.getName());
+    private static LoggerWrapper logger = LoggerWrapper.getLogger(FileSystemAccessProvider.class.getSimpleName());
 
     private FileSystemInfoProvider(FileSystemAccessProvider provider) {
         logger.postAlwaysInfo("FileSystemInfoProvider is deprecated. Please use the FileSystemAccessProvider class in the future.");

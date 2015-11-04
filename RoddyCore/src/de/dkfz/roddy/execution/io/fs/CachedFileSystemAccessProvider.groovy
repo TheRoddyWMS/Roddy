@@ -2,6 +2,7 @@ package de.dkfz.roddy.execution.io.fs
 
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.execution.io.ExecutionService
+import de.dkfz.roddy.tools.LoggerWrapper
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.WildcardFileFilter
 
@@ -23,7 +24,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING
 @groovy.transform.CompileStatic
 public class CachedFileSystemAccessProvider extends FileSystemAccessProvider {
 
-    private static Logger logger = java.util.logging.Logger.getLogger(CachedFileSystemAccessProvider.getClass().getName());
+    private static LoggerWrapper logger = LoggerWrapper.getLogger(CachedFileSystemAccessProvider.getClass().getSimpleName());
     private static final String TBL_FILECHACHEINFO = (CachedFileSystemAccessProvider.class.getSimpleName() + "_fileCacheInfo").toUpperCase();
     private static final String TBL_RUNOWNER = (CachedFileSystemAccessProvider.class.getSimpleName() + "_runOwner").toUpperCase();
     public static final String FORMATSTRING_FILELISTENTRY = "fileList_%08X"

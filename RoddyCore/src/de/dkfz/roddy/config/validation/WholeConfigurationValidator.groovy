@@ -15,7 +15,7 @@ import de.dkfz.roddy.plugins.LibrariesFactory
 @groovy.transform.CompileStatic
 public class WholeConfigurationValidator extends ConfigurationValidator {
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(WholeConfigurationValidator.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(WholeConfigurationValidator.class.getSimpleName());
 
     /**
      * Keep a list of known validators for various class names

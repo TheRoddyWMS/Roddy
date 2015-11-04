@@ -39,7 +39,7 @@ import java.util.logging.Logger;
 
 public class ConfigurationViewer extends CustomControlOnBorderPane {
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(ConfigurationViewer.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(ConfigurationViewer.class.getSimpleName());
 
     @FXML
     private TitledPane tpConfigurationGraph;

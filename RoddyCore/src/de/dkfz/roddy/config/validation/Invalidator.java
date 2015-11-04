@@ -9,7 +9,7 @@ import java.util.logging.Logger;
  * This validator invalidates everything. It is used if a validator class could not be loaded.
  */
 public class Invalidator extends ConfigurationValueValidator {
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(Invalidator.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(Invalidator.class.getSimpleName());
 
     public Invalidator(Configuration cfg) {
         super(cfg);

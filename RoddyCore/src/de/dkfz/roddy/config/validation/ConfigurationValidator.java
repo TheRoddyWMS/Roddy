@@ -10,7 +10,7 @@ import java.util.logging.Logger;
  * Base class for validators on the configuration level
  */
 public abstract class ConfigurationValidator {
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(ConfigurationValidator.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(ConfigurationValidator.class.getSimpleName());
 
     protected final Configuration configuration;
 

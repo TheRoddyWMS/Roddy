@@ -30,7 +30,7 @@ import java.util.ResourceBundle;
 /**
  */
 public class JobOverviewControl extends CustomControlOnBorderPane implements Initializable, JobStatusListener {
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(JobOverviewControl.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(JobOverviewControl.class.getSimpleName());
 
     @FXML
     private Label lblJobID;

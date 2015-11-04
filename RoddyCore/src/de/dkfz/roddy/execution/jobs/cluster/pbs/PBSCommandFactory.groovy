@@ -27,7 +27,7 @@ import static de.dkfz.roddy.StringConstants.*;
 @groovy.transform.CompileStatic
 public class PBSCommandFactory extends ClusterCommandFactory<PBSCommand> {
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(PBSCommandFactory.class.getName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(PBSCommandFactory.class.getSimpleName());
 
     public static final String PBS_JOBSTATE_RUNNING = "R";
     public static final String PBS_JOBSTATE_HOLD = "H";
