@@ -23,6 +23,7 @@ public class LibrariesFactory extends Initializable {
     public static GroovyClassLoader centralGroovyClassLoader;
 
     public static final String PLUGIN_VERSION_CURRENT = "current";
+    public static final String PLUGIN_DEFAULT = "DefaultPlugin";
     public static final String PLUGIN_BASEPLUGIN = "PluginBase";
     public static final String BUILDINFO_DEPENDENCY = "dependson";
     public static final String BUILDINFO_COMPATIBILITY = "compatibleto";
@@ -274,7 +275,7 @@ public class LibrariesFactory extends Initializable {
             String pluginVersion = pluginVersionInfo[0];
             String pluginRevision = pluginVersionInfo.length > 1 ? pluginVersionInfo[1] : "0";
             String pluginFullVersion = pluginVersion + "-" + pluginRevision;
-            if (pluginVersion == "current") pluginFullVersion = "current";
+            if (pluginVersion == PLUGIN_VERSION_CURRENT) pluginFullVersion = PLUGIN_VERSION_CURRENT;
 
             int revisionNumber = pluginRevision as Integer;
 
@@ -349,10 +350,6 @@ public class LibrariesFactory extends Initializable {
                         }
                     }
                 }
-//                if (pluginName != "DefaultPlugin" && !pluginDependencies.containsKey(PLUGIN_BASEPLUGIN))
-//                    pluginDependencies.put(PLUGIN_BASEPLUGIN, PLUGIN_VERSION_CURRENT);
-//                if (pluginName != "DefaultPlugin" && !pluginDependencies.containsKey("DefaultPlugin"))
-//                    pluginDependencies.put("DefaultPlugin", PLUGIN_VERSION_CURRENT);
             }
 
 
@@ -379,9 +376,9 @@ public class LibrariesFactory extends Initializable {
         List<Tuple2<String, String>> pluginsToCheck = usedPlugins.collect { String requestedPlugin ->
             List<String> pSplit = requestedPlugin.split("[:-]") as List;
             String id = pSplit[0];
-            String version = pSplit[1] ?: "current";
+            String version = pSplit[1] ?: PLUGIN_VERSION_CURRENT;
             String revision = pSplit[2] ?: "0"
-            String fullVersion = version + (version != "current" ? "-" + revision : "")
+            String fullVersion = version + (version != PLUGIN_VERSION_CURRENT ? "-" + revision : "")
 
             usedPluginsCorrected << [id, fullVersion].join(":");
             return new Tuple2(id, fullVersion);
@@ -393,7 +390,7 @@ public class LibrariesFactory extends Initializable {
 
             String id = pluginsToCheck[0].x;
             String version = pluginsToCheck[0].y;
-            if (version != "current" && !version.contains("-")) version += "-0";
+            if (version != PLUGIN_VERSION_CURRENT && !version.contains("-")) version += "-0";
 
             if (!mapOfPlugins[id] || !mapOfPlugins[id][version]) {
                 logger.severe("The plugin ${id}:${version} could not be found, are the plugin paths properly set?");
@@ -429,18 +426,18 @@ public class LibrariesFactory extends Initializable {
             } else {
                 Map<String, String> dependencies = pInfo.getDependencies()
                 dependencies.each { String k, String v ->
-                    if (v != "current" && !v.contains("-")) v += "-0";
+                    if (v != PLUGIN_VERSION_CURRENT && !v.contains("-")) v += "-0";
                     pluginsToCheck << new Tuple2(k, v);
                 }
                 pluginsToActivate[id] = pInfo;
             }
             //Load default plugins, if necessary.
             if (!pluginsToCheck) {
-                if (!pluginsToActivate.containsKey("DefaultPlugin")) {
-                    pluginsToActivate["DefaultPlugin"] = mapOfPlugins["DefaultPlugin"]["current"];
+                if (!pluginsToActivate.containsKey(PLUGIN_DEFAULT)) {
+                    pluginsToActivate[PLUGIN_DEFAULT] = mapOfPlugins[PLUGIN_DEFAULT][PLUGIN_VERSION_CURRENT];
                 }
-                if (!pluginsToActivate.containsKey("PluginBase")) {
-                    pluginsToActivate["PluginBase"] = mapOfPlugins["PluginBase"]["current"];
+                if (!pluginsToActivate.containsKey(PLUGIN_BASEPLUGIN)) {
+                    pluginsToActivate[PLUGIN_BASEPLUGIN] = mapOfPlugins[PLUGIN_BASEPLUGIN][PLUGIN_VERSION_CURRENT];
                 }
             }
         }
