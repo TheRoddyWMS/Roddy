@@ -104,7 +104,7 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
     Workflow-1.0.24/buildinfo.txt
       extendsversion=1.0.23
       
-  ![Dependency graph](documentation/readme_images/dependencygraph.jpg)
+  ![Dependency graph]("documentation/readme_images/Roddy Plan_0.jpg")
 
 * Version update to 2.2.87
 
