@@ -85,6 +85,9 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 # Changelist
 
+- We introduce a new branching scheme from now on. There will be the master branch and an additional development branch.
+  The master branch should only contain stable and tested releases of Roddy. development will be there for everything else.
+
 - (WIP) Roddy will now support plugin revisions and compatibility tracks. This is useful, if you have a plugin
   which depends on other plugins and which you do not want to recompile/ repack, just because another plugin
   was extended.
