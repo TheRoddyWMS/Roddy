@@ -10,6 +10,8 @@ import static de.dkfz.roddy.knowledge.files.GenericFileGroup.*
 import static ResourceSetSize.*;
 import java.lang.reflect.Method
 
+import java.lang.reflect.Method
+
 /**
  * Tests for ConfigurationFactory
  */
