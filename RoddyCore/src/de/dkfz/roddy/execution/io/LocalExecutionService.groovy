@@ -31,21 +31,12 @@ public class LocalExecutionService extends ExecutionService {
         configuration.getConfigurationValues().add(new ConfigurationValue(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, "false"));
         configuration.getConfigurationValues().add(new ConfigurationValue(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERMASK, "false"));
         configuration.getConfigurationValues().add(new ConfigurationValue(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_QUERY_ID, "false"));
-//        configuration.getConfigurationValues().setValue(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, false)
     }
 
     @Override
     boolean isLocalService() {
         return true;
     }
-//
-//    protected List<String> _execute(String command, boolean waitFor) {
-//        return _execute(command, waitFor, false, null);
-//    }
-//
-//    protected List<String> _execute(String command, boolean waitFor, OutputStream outputStream) {
-//        return _execute(command, waitFor, false, outputStream);
-//    }
 
 //    @Override
     protected List<String> _execute(String command, boolean waitFor, boolean ignoreErrors, OutputStream outputStream = null) {

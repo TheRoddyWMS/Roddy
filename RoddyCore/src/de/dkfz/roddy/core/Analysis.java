@@ -21,7 +21,7 @@ import java.util.logging.Level;
  * Each project can have several analysis. So i.e. prostate can have whole_genome_analysis or exome_analysis.
  * Each found input dataset in the project can then be processed by all the projects analysis.
  * <p>
- * TODO Enable a refresh (cache erase?) to make it possible to reset data sets and data set states for an analysis.
+ * TODO Enable a initialize (cache erase?) to make it possible to reset data sets and data set states for an analysis.
  */
 public class Analysis {
 

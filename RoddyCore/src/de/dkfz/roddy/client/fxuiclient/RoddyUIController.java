@@ -845,7 +845,7 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
     }
 
     public void reloadProjectView(ActionEvent actionEvent) {
-        ConfigurationFactory.getInstance().refresh();
+        ConfigurationFactory.getInstance().initialize();
         loadProjects();
     }
 

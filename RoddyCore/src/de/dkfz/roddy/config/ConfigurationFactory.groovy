@@ -18,7 +18,6 @@ import org.apache.commons.io.filefilter.WildcardFileFilter
 import java.lang.reflect.*
 import java.util.logging.*
 
-import static de.dkfz.roddy.Constants.ENV_LINESEPARATOR as NEWLINE
 import static de.dkfz.roddy.StringConstants.*
 
 /**
@@ -28,9 +27,10 @@ import static de.dkfz.roddy.StringConstants.*
 @groovy.transform.CompileStatic
 public class ConfigurationFactory {
 
-
     public static final String XMLTAG_EXECUTIONSERVICE_SSHUSER = "executionServiceSSHUser";
+
     public static final String XMLTAG_EXECUTIONSERVICE_SHOW_SSHCALLS = "executionServiceShowSSHCalls";
+
     public static final String XMLTAG_ATTRIBUTE_INHERITANALYSES = "inheritAnalyses"
 
     public static final String SYNTHETIC_PACKAGE = "de.dkfz.roddy.synthetic.files"
@@ -38,31 +38,45 @@ public class ConfigurationFactory {
     public static final LoggerWrapper logger = LoggerWrapper.getLogger(ConfigurationFactory.class.getSimpleName());
 
 
-    private static ConfigurationFactory singleton = new ConfigurationFactory();
+    private static ConfigurationFactory singleton;
+
+    private List<File> configurationDirectories = [];
 
     private Map<String, InformationalConfigurationContent> availableConfigurations = [:];
 
     private Map<ConfigurationType, List<InformationalConfigurationContent>> availableConfigurationsByType = [:];
+
     private Map<ConfigurationType, Map<String, InformationalConfigurationContent>> availableConfigurationsByTypeAndID = [:]
 
 
+    public static void initialize(List<File> configurationDirectories = null) {
+        singleton = new ConfigurationFactory(configurationDirectories);
+    }
+
     public static ConfigurationFactory getInstance() {
+        if(!singleton)
+            initialize();
         return singleton;
     }
 
-    private ConfigurationFactory() {
-//        long test = System.nanoTime();
+    private ConfigurationFactory(List<File> configurationDirectories = null) {
+        if (!configurationDirectories)
+            configurationDirectories = Roddy.getConfigurationDirectories();
+
+        this.configurationDirectories.addAll(configurationDirectories);
+
         loadAvailableProjectConfigurationFiles()
-//        println((System.nanoTime() - test));
     }
 
     private void loadAvailableProjectConfigurationFiles() {
-        List<File> pipelineDirectories = Roddy.getConfigurationDirectories();
-
         List<File> allFiles = []
-        pipelineDirectories.parallelStream().each {
+        configurationDirectories.parallelStream().each {
             File baseDir ->
                 logger.log(Level.CONFIG, "Searching for configuration files in: " + baseDir.toString());
+                if(!baseDir.canRead()) {
+                    logger.log(Level.SEVERE, "Cannot read from configuration directory ${baseDir.absolutePath}, does the folder exist und do you have access rights to it?")
+                    return;
+                }
                 File[] files = baseDir.listFiles((FileFilter) new WildcardFileFilter("*.xml"));
                 if (files == null) {
                     logger.info("No configuration files found in path ${baseDir.getAbsolutePath()}");
@@ -126,7 +140,7 @@ public class ConfigurationFactory {
                     }
 
                 } else {
-                    if(availableConfigurations[icc.name].file != icc.file)
+                    if (availableConfigurations[icc.name].file != icc.file)
                         throw new RuntimeException("Configuration with name ${icc.name} already exists! Names must be unique.")
                 }
             } catch (Exception ex) {
@@ -134,10 +148,6 @@ public class ConfigurationFactory {
                 logger.severe(RoddyIOHelperMethods.getStackTraceAsString(ex));
             }
         }
-    }
-
-    public void refresh() {
-        singleton = new ConfigurationFactory();
     }
 
     public Map<String, InformationalConfigurationContent> getAllAvailableConfigurations() {
@@ -562,7 +572,7 @@ public class ConfigurationFactory {
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     private Class generateSyntheticFileClassWithParentClass(String syntheticClassName, String parentClassName) {
         String syntheticFileClass =
-            """
+                """
                 package $SYNTHETIC_PACKAGE
 
                 import ${BaseFile.name}
@@ -733,7 +743,7 @@ public class ConfigurationFactory {
         //OK, here comes some sort of valuable hack. In the past it was so, that sometimes people forgot to set
         //any directory to "path". In case of the output directories, this was a bad thing! So we know about
         //this specific type of variable and just set it to path at any time.
-        if(key.endsWith("OutputDirectory"))
+        if (key.endsWith("OutputDirectory"))
             type = "path";
         String description = extractAttributeText(cvalueNode, "description");
         return new ConfigurationValue(config, key, value, type, description);
@@ -837,16 +847,6 @@ public class ConfigurationFactory {
             return tsp;
         }
     }
-
-// TODO Reenable configuration write
-//    public void writeConfiguration(Configuration configuration, String path) {
-//        String xmltext = new XMLConverter().convert(null, configuration)
-//        File fw = new File(path)
-//        BufferedWriter bw = fw.newWriter()
-//        bw.write(xmltext)
-//        bw.flush()
-//        bw.close()
-//    }
 
     ProjectConfiguration getProjectConfiguration(String s) {
         return getConfiguration(s) as ProjectConfiguration;

@@ -134,8 +134,7 @@ public abstract class ExecutionService extends CacheProvider {
         this.listOfListeners.clear();
     }
 
-    protected
-    abstract List<String> _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream);
+    protected abstract List<String> _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream);
 
     public ExecutionResult execute(String string, boolean waitFor = true, OutputStream outputStream = null) {
         ExecutionResult er = null;

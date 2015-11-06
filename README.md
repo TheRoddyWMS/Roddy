@@ -85,6 +85,9 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 # Changelist
 
+- More checkups will occur, when Roddy starts up. E.g. Roddy will check the accessibility of plugin and configuration
+  directories.
+
 - We introduce a new branching scheme from now on. There will be the master branch and an additional development branch.
   The master branch should only contain stable and tested releases of Roddy. development will be there for everything else.
 

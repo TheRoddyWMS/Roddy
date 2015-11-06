@@ -350,13 +350,6 @@ public class LibrariesFactory extends Initializable {
                         }
                     }
                 }
-<<<<<<< HEAD
-=======
-//                if (pluginName != "DefaultPlugin" && !pluginDependencies.containsKey(PLUGIN_BASEPLUGIN))
-//                    pluginDependencies.put(PLUGIN_BASEPLUGIN, PLUGIN_VERSION_CURRENT);
-//                if (pluginName != "DefaultPlugin" && !pluginDependencies.containsKey("DefaultPlugin"))
-//                    pluginDependencies.put("DefaultPlugin", PLUGIN_VERSION_CURRENT);
->>>>>>> e9f6f5b415eaba6ae21b7ac75b8e5f925936e71e
             }
 
 
@@ -383,15 +376,9 @@ public class LibrariesFactory extends Initializable {
         List<Tuple2<String, String>> pluginsToCheck = usedPlugins.collect { String requestedPlugin ->
             List<String> pSplit = requestedPlugin.split("[:-]") as List;
             String id = pSplit[0];
-<<<<<<< HEAD
             String version = pSplit[1] ?: PLUGIN_VERSION_CURRENT;
             String revision = pSplit[2] ?: "0"
             String fullVersion = version + (version != PLUGIN_VERSION_CURRENT ? "-" + revision : "")
-=======
-            String version = pSplit[1] ?: "current";
-            String revision = pSplit[2] ?: "0"
-            String fullVersion = version + (version != "current" ? "-" + revision : "")
->>>>>>> e9f6f5b415eaba6ae21b7ac75b8e5f925936e71e
 
             usedPluginsCorrected << [id, fullVersion].join(":");
             return new Tuple2(id, fullVersion);
@@ -403,11 +390,7 @@ public class LibrariesFactory extends Initializable {
 
             String id = pluginsToCheck[0].x;
             String version = pluginsToCheck[0].y;
-<<<<<<< HEAD
             if (version != PLUGIN_VERSION_CURRENT && !version.contains("-")) version += "-0";
-=======
-            if (version != "current" && !version.contains("-")) version += "-0";
->>>>>>> e9f6f5b415eaba6ae21b7ac75b8e5f925936e71e
 
             if (!mapOfPlugins[id] || !mapOfPlugins[id][version]) {
                 logger.severe("The plugin ${id}:${version} could not be found, are the plugin paths properly set?");
@@ -443,30 +426,18 @@ public class LibrariesFactory extends Initializable {
             } else {
                 Map<String, String> dependencies = pInfo.getDependencies()
                 dependencies.each { String k, String v ->
-<<<<<<< HEAD
                     if (v != PLUGIN_VERSION_CURRENT && !v.contains("-")) v += "-0";
-=======
-                    if (v != "current" && !v.contains("-")) v += "-0";
->>>>>>> e9f6f5b415eaba6ae21b7ac75b8e5f925936e71e
                     pluginsToCheck << new Tuple2(k, v);
                 }
                 pluginsToActivate[id] = pInfo;
             }
             //Load default plugins, if necessary.
             if (!pluginsToCheck) {
-<<<<<<< HEAD
                 if (!pluginsToActivate.containsKey(PLUGIN_DEFAULT)) {
                     pluginsToActivate[PLUGIN_DEFAULT] = mapOfPlugins[PLUGIN_DEFAULT][PLUGIN_VERSION_CURRENT];
                 }
                 if (!pluginsToActivate.containsKey(PLUGIN_BASEPLUGIN)) {
                     pluginsToActivate[PLUGIN_BASEPLUGIN] = mapOfPlugins[PLUGIN_BASEPLUGIN][PLUGIN_VERSION_CURRENT];
-=======
-                if (!pluginsToActivate.containsKey("DefaultPlugin")) {
-                    pluginsToActivate["DefaultPlugin"] = mapOfPlugins["DefaultPlugin"]["current"];
-                }
-                if (!pluginsToActivate.containsKey("PluginBase")) {
-                    pluginsToActivate["PluginBase"] = mapOfPlugins["PluginBase"]["current"];
->>>>>>> e9f6f5b415eaba6ae21b7ac75b8e5f925936e71e
                 }
             }
         }
