@@ -3,11 +3,10 @@ package de.dkfz.roddy.config
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import groovy.util.slurpersupport.NodeChild
 import org.junit.BeforeClass
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder
-
 import static de.dkfz.roddy.knowledge.files.GenericFileGroup.*
+import java.lang.reflect.Method
 
 /**
  * Tests for ConfigurationFactory
@@ -124,6 +123,46 @@ public class ConfigurationFactoryTest {
         assert tparm.isGeneric()
         assert tparm.getGenericClassString() == "de.dkfz.roddy.synthetic.files.GenericFileGroup2<de.dkfz.roddy.synthetic.files.TestFile>"
         assert tparm.passOptions == ToolEntry.ToolFileGroupParameter.PassOptions.parameters;
+    }
+
+    private NodeChild getValidToolResourceSetNodeChild() {
+        NodeChild xml = (NodeChild) new XmlSlurper().parseText(
+                """
+                    <resourcesetsample>
+                        <rset size="s" memory="3" cores="2" nodes="1" walltime="00:04"/>
+                        <rset size="m" memory="3g" cores="1" nodes="1" walltime="12:00"/>
+                        <rset size="l" memory="300M" cores="2" nodes="1" walltime="120m"/>
+                        <rset size="xl" memory="4G" cores="2" nodes="1" walltime="180h"/>
+                    </resourcesetsample>
+                """
+        );
+        return xml;
+    }
+
+    private NodeChild getInvalidToolResourceSetNodeChild() {
+        NodeChild xml = (NodeChild) new XmlSlurper().parseText(
+                """
+                    <resourcesetsample>
+                        <rset size="a" memory="3" cores="2" nodes="1" walltime="00:04"/>
+                        <rset size="m" memory="3g" cores="1" nodes="1" walltime="12:00"/>
+                        <rset size="l" memory="300M" cores="2" nodes="1" walltime="120m"/>
+                        <rset size="xl" memory="4G" cores="2" nodes="1" walltime="180h"/>
+                    </resourcesetsample>
+                """
+        );
+        return xml;
+    }
+
+    @Test
+    public void testParseToolResourceSet() {
+        Method parseToolResourceSet = ConfigurationFactory.getDeclaredMethod("parseToolResourceSet", NodeChild, Configuration);
+        parseToolResourceSet.setAccessible(true);
+
+        def resourceSetNodeChild = getValidToolResourceSetNodeChild()
+        resourceSetNodeChild.rset.each { rset ->
+            def result = parseToolResourceSet.invoke(null, rset, null);
+            assert result;
+        }
     }
 }
 

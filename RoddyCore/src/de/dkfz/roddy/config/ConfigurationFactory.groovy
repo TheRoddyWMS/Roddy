@@ -591,26 +591,9 @@ public class ConfigurationFactory {
 
                     if (cName == "resourcesets") {
                         for (NodeChild rset in child.rset) {
-                            try {
-                                ToolEntry.ResourceSetSize rsetSize = rset.@size.text();
-                                //Is it short defined or long defined?
-                                String valueList = extractAttributeText(rset, "values", "");
-                                if (!valueList) { //Must be fully specified.
-                                    Float rsetUsedMemory = extractAttributeText(rset, "memory", null)?.toFloat();
-                                    Integer rsetUsedCores = extractAttributeText(rset, "cores", null)?.toInteger();
-                                    Integer rsetUsedNodes = extractAttributeText(rset, "nodes", null)?.toInteger();
-                                    Integer rsetUsedWalltime = extractAttributeText(rset, "walltime", null)?.toInteger();
-                                    String rsetUsedQueue = extractAttributeText(rset, "queue", null);
-                                    String rsetUsedNodeFlag = extractAttributeText(rset, "nodeflag", null);
-                                    resourceSets << new ToolEntry.ResourceSet(rsetSize, rsetUsedMemory, rsetUsedCores, rsetUsedNodes, rsetUsedWalltime, null, rsetUsedQueue, rsetUsedNodeFlag);
-                                } else {
-                                    String[] split = valueList.split(":");
-                                    Integer[] splitInt = split.collect { String s -> return s.toInteger(); }
-                                    resourceSets << new ToolEntry.ResourceSet(rsetSize, splitInt[0], splitInt[1], splitInt[2], splitInt[3], null, null, null);
-                                }
-                            } catch (Exception ex) {
-                                config.addLoadError(new ConfigurationError("Resource set could not be read", config, "", ex));
-                            }
+                            ToolEntry.ResourceSet tempSet = parseToolResourceSet(rset, config)
+                            if(tempSet)
+                                resourceSets << tempSet;
                         }
                     } else if (cName == "input") {
                         inputParameters << parseToolParameter(toolID, child);
@@ -622,6 +605,32 @@ public class ConfigurationFactory {
             }
             toolEntries[toolID] = currentEntry;
         }
+    }
+
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    private static ToolEntry.ResourceSet parseToolResourceSet(NodeChild rset, Configuration config) {
+        ToolEntry.ResourceSet tempSet = null;
+        try {
+            ToolEntry.ResourceSetSize rsetSize = rset.@size.text();
+            //Is it short defined or long defined?
+            String valueList = extractAttributeText(rset, "values", "");
+            if (!valueList) { //Must be fully specified.
+                Float rsetUsedMemory = extractAttributeText(rset, "memory", null)?.toFloat();
+                Integer rsetUsedCores = extractAttributeText(rset, "cores", null)?.toInteger();
+                Integer rsetUsedNodes = extractAttributeText(rset, "nodes", null)?.toInteger();
+                Integer rsetUsedWalltime = extractAttributeText(rset, "walltime", null)?.toInteger();
+                String rsetUsedQueue = extractAttributeText(rset, "queue", null);
+                String rsetUsedNodeFlag = extractAttributeText(rset, "nodeflag", null);
+                tempSet = new ToolEntry.ResourceSet(rsetSize, rsetUsedMemory, rsetUsedCores, rsetUsedNodes, rsetUsedWalltime, null, rsetUsedQueue, rsetUsedNodeFlag);
+            } else {
+                String[] split = valueList.split(":");
+                Integer[] splitInt = split.collect { String s -> return s.toInteger(); }
+                tempSet = new ToolEntry.ResourceSet(rsetSize, splitInt[0], splitInt[1], splitInt[2], splitInt[3], null, null, null);
+            }
+        } catch (Exception ex) {
+            if(config != null) config.addLoadError(new ConfigurationError("Resource set could not be read", config, "", ex));
+        }
+        return tempSet
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
@@ -730,7 +739,7 @@ public class ConfigurationFactory {
     }
 
 
-    private String extractAttributeText(NodeChild node, String id, String defaultText = "") {
+    private static String extractAttributeText(NodeChild node, String id, String defaultText = "") {
 
         try {
             if (node.attributes().get(id) != null) {
@@ -743,7 +752,7 @@ public class ConfigurationFactory {
     }
 
 
-    private String extractAttributeText(NodeChildren nodeChildren, String id, String defaultText = "") {
+    private static String extractAttributeText(NodeChildren nodeChildren, String id, String defaultText = "") {
         String name = nodeChildren.name();
         Object o = nodeChildren.parent().children().find { NodeChild child -> child.name() == name }
         if (o instanceof NodeChild)
