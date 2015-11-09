@@ -87,7 +87,7 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
-    public ToolEntry.ResourceSetSize getResourcesSize() {
+    public ResourceSetSize getResourcesSize() {
         return checkAnalysisConfig().getResourcesSize();
     }
 

@@ -1,13 +1,9 @@
 package de.dkfz.roddy.config;
 
-import de.dkfz.roddy.core.Project;
-
-import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * The class extends the standard configuration to add analysis related methods and fields.
@@ -107,7 +103,7 @@ public class AnalysisConfiguration extends Configuration {
     }
 
     @Override
-    public ToolEntry.ResourceSetSize getResourcesSize() {
+    public ResourceSetSize getResourcesSize() {
         for (Configuration configuration : getContainerParents()) {
             if(configuration instanceof ProjectConfiguration)
                 return configuration.getResourcesSize();

@@ -1,15 +1,18 @@
 package de.dkfz.roddy.config
 
+import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.NodeChild
 import org.junit.BeforeClass
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder
+import static ResourceSetSize.*;
 
 import java.lang.reflect.Method
 
 /**
  * Tests for ConfigurationFactory
  */
+@groovy.transform.CompileStatic
 public class ConfigurationFactoryTest {
 
     public static TemporaryFolder tempFolder = new TemporaryFolder();
@@ -34,7 +37,7 @@ public class ConfigurationFactoryTest {
         testFolder4 = tempFolder.newFolder("buggyCfgFolder2");
 
 
-        Map<String, String> configurationFiles = [
+        LinkedHashMap<String, File> configurationFiles = [
                 "project_A"  : testFolder1,
                 "project_B"  : testFolder1,
                 "project_C"  : testFolder1,
@@ -92,28 +95,33 @@ public class ConfigurationFactoryTest {
         NodeChild xml = (NodeChild) new XmlSlurper().parseText(
                 """
                     <resourcesetsample>
-                        <rset size="s" memory="3" cores="2" nodes="1" walltime="00:04"/>
-                        <rset size="m" memory="3g" cores="1" nodes="1" walltime="12:00"/>
+                        <rset size="s" memory="3" cores="2" walltime="00:04" queue="ultrafast" nodeflag="testweise"/>
+                        <rset size="m" memory="3g" cores="1" nodes="1" walltime="12"/>
                         <rset size="l" memory="300M" cores="2" nodes="1" walltime="120m"/>
-                        <rset size="xl" memory="4G" cores="2" nodes="1" walltime="180h"/>
+                        <rset size="xl" cores="2T" nodes="1" walltime="180h"/>
                     </resourcesetsample>
                 """
         );
         return xml;
     }
-
-    private NodeChild getInvalidToolResourceSetNodeChild() {
-        NodeChild xml = (NodeChild) new XmlSlurper().parseText(
-                """
-                    <resourcesetsample>
-                        <rset size="a" memory="3" cores="2" nodes="1" walltime="00:04"/>
-                        <rset size="m" memory="3g" cores="1" nodes="1" walltime="12:00"/>
-                        <rset size="l" memory="300M" cores="2" nodes="1" walltime="120m"/>
-                        <rset size="xl" memory="4G" cores="2" nodes="1" walltime="180h"/>
-                    </resourcesetsample>
-                """
-        );
-        return xml;
+//
+//    private NodeChild getInvalidToolResourceSetNodeChild() {
+//        NodeChild xml = (NodeChild) new XmlSlurper().parseText(
+//                """
+//                    <resourcesetsample>
+//                        <rset size="a" memory="3" cores="2" nodes="1" walltime="00:04"/><!-- Wrong size -->
+//                        <rset size="m" memory="3k" cores="1" nodes="1" walltime="12:00"/><!-- Wrong mem size -->
+//                        <rset size="l" memory="300M" cores="2" nodes="1" walltime="120m"/>
+//                        <rset size="xl" memory="4G" cores="2" nodes="1" walltime="180h"/>
+//                    </resourcesetsample>
+//                """
+//        );
+//        return xml;
+//    }
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    private Collection<NodeChild> getNodeChildsOfValidResourceEntries() {
+        def resourceSetNodeChild = getValidToolResourceSetNodeChild()
+        return resourceSetNodeChild.rset as Collection<NodeChild>;
     }
 
     @Test
@@ -121,11 +129,37 @@ public class ConfigurationFactoryTest {
         Method parseToolResourceSet = ConfigurationFactory.getDeclaredMethod("parseToolResourceSet", NodeChild, Configuration);
         parseToolResourceSet.setAccessible(true);
 
-        def resourceSetNodeChild = getValidToolResourceSetNodeChild()
-        resourceSetNodeChild.rset.each { rset ->
-            def result = parseToolResourceSet.invoke(null, rset, null);
+        Map<ResourceSetSize, ToolEntry.ResourceSet> rsets = [:];
+
+        getNodeChildsOfValidResourceEntries().each { rset ->
+            ToolEntry.ResourceSet result = (ToolEntry.ResourceSet) parseToolResourceSet.invoke(null, rset, null);
             assert result;
+            assert result.size; //Check if the size has a valid value.
+
+            rsets[result.size] = result;
         }
+
+        // Check the example datasets and see, if all necessary values were set and converted properly.
+
+        assert rsets[s].mem instanceof Integer && rsets[s].mem == 3 * 1024; // Check 3 gigabyte
+        assert rsets[s].cores instanceof Integer && rsets[s].cores == 2;
+        assert rsets[s].walltime instanceof String && rsets[s].walltime == "00:04";
+        assert rsets[s].queue instanceof String && rsets[s].queue == "ultrafast";
+        assert rsets[s].queue instanceof String && rsets[s].queue == "testweise";
+
+        assert rsets[m].mem instanceof Integer && rsets[m].mem == 3 * 1024; // Check 3 gigabyte
+        assert rsets[m].cores instanceof Integer && rsets[m].cores == 1;
+        assert rsets[m].nodes instanceof Integer && rsets[m].nodes == 1;
+        assert rsets[m].walltime instanceof String && rsets[m].walltime == "12:00";
+
+        assert rsets[l].mem instanceof Integer && rsets[l].mem == 300; // 300 megabyte
+        assert rsets[l].cores instanceof Integer && rsets[l].cores == 2;
+        assert rsets[l].nodes instanceof Integer && rsets[l].nodes == 1;
+        assert rsets[l].walltime instanceof String && rsets[l].walltime == "02:00"; // 120m == 2h
+
+        assert rsets[xl].cores instanceof Integer && rsets[xl].cores == 1;
+        assert rsets[xl].nodes instanceof Integer && rsets[xl].nodes == 1;
+        assert rsets[xl].walltime instanceof String && rsets[xl].walltime == "180:00"; // 180h
     }
 }
 

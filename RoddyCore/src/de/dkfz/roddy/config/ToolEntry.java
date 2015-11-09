@@ -4,7 +4,6 @@ import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.knowledge.files.FileGroup;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
-import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 
 import java.lang.reflect.Method;
 import java.util.LinkedList;
@@ -16,14 +15,6 @@ import static de.dkfz.roddy.Constants.NO_VALUE;
  * @author michael
  */
 public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
-
-    /**
-     * A tool can have one or more entries for resource sets.
-     * They range from xs (xtra small) to xl (xtra large).
-     */
-    public static enum ResourceSetSize {
-        t, xs, s, m, l, xl
-    }
 
     /**
      * A resource set describes a list of resource values which are used by a script.
