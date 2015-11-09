@@ -20,6 +20,11 @@ import java.util.Map;
  * Created by michael on 20.05.14.
  */
 public class SGECommandFactory extends PBSCommandFactory {
+
+    public SGECommandFactory(boolean createDaemon) {
+        super(createDaemon);
+    }
+
     @Override
     public SGECommand createCommand(Job job, ExecutionContext run, String jobName, List<ProcessingCommands> processingCommands, File tool, Map<String, String> parameters, List<String> dependencies, List<String> arraySettings) {
         SGECommand command = new SGECommand(job, run, ExecutionService.getInstance(), jobName, processingCommands, parameters, arraySettings, dependencies, tool.getAbsolutePath());
