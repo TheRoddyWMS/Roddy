@@ -21,9 +21,9 @@ class InformationalConfigurationContent {
 
     private final List<InformationalConfigurationContent> subConf;
     private final List<String> analyses;
-    public final ToolEntry.ResourceSetSize usedresourcessize;
+    public final ResourceSetSize usedresourcessize;
 
-    InformationalConfigurationContent(InformationalConfigurationContent parent, Configuration.ConfigurationType type, String name, String description, String className, NodeChild configurationNode, String imports, ToolEntry.ResourceSetSize usedresourcessize, List<String> analyses, List<InformationalConfigurationContent> subContent, File file, String text) {
+    InformationalConfigurationContent(InformationalConfigurationContent parent, Configuration.ConfigurationType type, String name, String description, String className, NodeChild configurationNode, String imports, ResourceSetSize usedresourcessize, List<String> analyses, List<InformationalConfigurationContent> subContent, File file, String text) {
         this(parent, type, name, description, className, configurationNode, imports, subContent, file, text, usedresourcessize);
         if (analyses != null)
             this.analyses = analyses;
@@ -31,7 +31,7 @@ class InformationalConfigurationContent {
             this.analyses = [];
     }
 
-    InformationalConfigurationContent(InformationalConfigurationContent parent, Configuration.ConfigurationType type, String name, String description, String className, NodeChild configurationNode, String imports, List<InformationalConfigurationContent> subContent, File file, String text, ToolEntry.ResourceSetSize usedresourcessize = null) {
+    InformationalConfigurationContent(InformationalConfigurationContent parent, Configuration.ConfigurationType type, String name, String description, String className, NodeChild configurationNode, String imports, List<InformationalConfigurationContent> subContent, File file, String text, ResourceSetSize usedresourcessize = null) {
         this.type = type
         this.name = name
         this.className = className

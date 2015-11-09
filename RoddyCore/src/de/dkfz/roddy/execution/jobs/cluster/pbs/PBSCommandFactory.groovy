@@ -36,10 +36,12 @@ public class PBSCommandFactory extends ClusterCommandFactory<PBSCommand> {
     public static final String PBS_COMMAND_DELETE_JOBS = "qdel";
     public static final String PBS_LOGFILE_WILDCARD = "*.o";
 
-    public PBSCommandFactory() {
+    public PBSCommandFactory(boolean createDaemon = true) {
         //Create a daemon thread which automatically calls queryJobStatus from time to time...
-        int interval = Integer.parseInt(Roddy.getApplicationProperty("commandFactoryUpdateInterval", "60"));
-        createUpdateDaemonThread(interval);
+        if (createDaemon) {
+            int interval = Integer.parseInt(Roddy.getApplicationProperty("commandFactoryUpdateInterval", "60"));
+            createUpdateDaemonThread(interval);
+        }
     }
 
     @Override
@@ -89,6 +91,7 @@ public class PBSCommandFactory extends ClusterCommandFactory<PBSCommand> {
         updateDaemonThread.setDaemon(true);
         updateDaemonThread.start();
     }
+
 
     @Override
     public PBSCommand createCommand(GenericJobInfo jobInfo) {
