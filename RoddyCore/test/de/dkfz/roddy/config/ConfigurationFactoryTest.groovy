@@ -6,9 +6,7 @@ import groovy.util.slurpersupport.NodeChild
 import org.junit.BeforeClass
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder
-import static de.dkfz.roddy.knowledge.files.GenericFileGroup.*
 import static ResourceSetSize.*;
-import java.lang.reflect.Method
 
 import java.lang.reflect.Method
 
@@ -157,6 +155,7 @@ public class ConfigurationFactoryTest {
 //        );
 //        return xml;
 //    }
+
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     private Collection<NodeChild> getNodeChildsOfValidResourceEntries() {
         def resourceSetNodeChild = getValidToolResourceSetNodeChild()
