@@ -60,7 +60,7 @@ public class Roddy {
      * until the maxim of n running datasets is reached. If one dataset is finished it starts
      * the next one. So it is some sort of controlled submit mode where you can i.e. leave
      * roddy lalone over night.
-     *
+     * <p>
      * This feature was planned and might still be of interest. However, most users created
      * their own scripts and it might be more feasible to use such a script than a permanent
      * running Roddy instance.
@@ -253,7 +253,7 @@ public class Roddy {
                     useCustomIODirectories = true;
 
                     List<String> directories = clc.getOptionList(startupOption);
-                    if (directories.size()== 0 || directories.size()> 2) {
+                    if (directories.size() == 0 || directories.size() > 2) {
                         throw new RuntimeException("Arguments for useasiodir are wrong");
                     }
 
@@ -418,7 +418,7 @@ public class Roddy {
     }
 
     private static void performCLIExit(RoddyStartupModes option) {
-        if(commandLineCall.getOptionList().contains(RoddyStartupOptions.disallowexit))
+        if (commandLineCall.getOptionList().contains(RoddyStartupOptions.disallowexit))
             return;
 
         if (option == RoddyStartupModes.ui)
@@ -495,8 +495,13 @@ public class Roddy {
 
     public static String getApplicationProperty(String pName, String defaultValue) {
 
+        //TODO Check, if the behaviour is right (more unit tests...)
+        if (applicationProperties == null)
+            return defaultValue;
+
         if (!applicationProperties.containsKey(pName))
             applicationProperties.setProperty(pName, defaultValue);
+
         return applicationProperties.getProperty(pName, defaultValue);
     }
 

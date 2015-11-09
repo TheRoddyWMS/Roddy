@@ -175,7 +175,7 @@ public class Configuration implements ContainerParent<Configuration> {
         return informationalConfigurationContent.className;
     }
 
-    public ToolEntry.ResourceSetSize getResourcesSize() {
+    public ResourceSetSize getResourcesSize() {
         return informationalConfigurationContent.usedresourcessize;
     }
 

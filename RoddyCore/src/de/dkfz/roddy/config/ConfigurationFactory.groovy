@@ -223,7 +223,7 @@ public class ConfigurationFactory {
             } else {
                 analyses = parent.getListOfAnalyses();
             }
-            ToolEntry.ResourceSetSize setSize = ToolEntry.ResourceSetSize.valueOf(extractAttributeText(configurationNode, "usedresourcessize", "l"));
+            ResourceSetSize setSize = ResourceSetSize.valueOf(extractAttributeText(configurationNode, "usedresourcessize", "l"));
             icc = new InformationalConfigurationContent(parent, type, name, description, cls, configurationNode, imports, setSize, analyses, subConf, file, text);
         } else {
             icc = new InformationalConfigurationContent(parent, type, name, description, cls, configurationNode, imports, subConf, file, text);
@@ -611,7 +611,7 @@ public class ConfigurationFactory {
     private static ToolEntry.ResourceSet parseToolResourceSet(NodeChild rset, Configuration config) {
         ToolEntry.ResourceSet tempSet = null;
         try {
-            ToolEntry.ResourceSetSize rsetSize = rset.@size.text();
+            ResourceSetSize rsetSize = rset.@size.text();
             //Is it short defined or long defined?
             String valueList = extractAttributeText(rset, "values", "");
             if (!valueList) { //Must be fully specified.
