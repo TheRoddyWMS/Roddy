@@ -110,6 +110,10 @@ public class ExecutionContext implements JobStatusListener {
      */
     private File commonExecutionDirectory;
     /**
+     * The file containing a list of all known copied analysis tools archives and their md5 sum.
+     */
+    private File md5OverviewFile
+    /**
      * The path in which a copy of the analysis tools are put to.
      */
     private File analysisToolsDirectory;
@@ -130,7 +134,7 @@ public class ExecutionContext implements JobStatusListener {
         this.outputDirectory = outputDirectory;
         this.inputDirectory = inputDirectory;
         this.creationCheckPoint = creationCheckPoint;
-        this.project = analysis.getProject();
+        this.project = analysis?.getProject();
         this.analysis = analysis;
         this.executionContextLevel = executionContextLevel;
         this.dataSet = dataSet;
@@ -150,7 +154,7 @@ public class ExecutionContext implements JobStatusListener {
         this.executionDirectory = api.getExecPath();
         this.dataSet = api.getDataSet();
         this.analysis = api.getAnalysis();
-        this.project = analysis.getProject();
+        this.project = analysis?.getProject();
         this.executionContextLevel = ExecutionContextLevel.READOUT;
         this.inputDirectory = dataSet.getInputFolderForAnalysis(analysis);
         this.outputDirectory = dataSet.getOutputFolderForAnalysis(analysis);
@@ -412,11 +416,13 @@ public class ExecutionContext implements JobStatusListener {
     }
 
     public File getFileForAnalysisToolsArchiveOverview() {
-        return new File(getCommonExecutionDirectory(), RuntimeService.FILENAME_ANALYSES_MD5_OVERVIEW);
+        if (!md5OverviewFile)
+            md5OverviewFile = project.getRuntimeService().getAnalysedMD5OverviewFile(this)
+        return md5OverviewFile;
     }
 
     public synchronized File getCommonExecutionDirectory() {
-        if (commonExecutionDirectory == null)
+        if (!commonExecutionDirectory)
             commonExecutionDirectory = project.getRuntimeService().getCommonExecutionDirectory(this);
         return commonExecutionDirectory;
     }
@@ -439,16 +445,16 @@ public class ExecutionContext implements JobStatusListener {
                 fileSystemAccessProvider.commandSet.getDefaultAccessRightsString()).toString()
     }
 
-    public String getOutputFileAccessRights () {
+    public String getOutputFileAccessRights() {
         if (!isAccessRightsModificationAllowed()) return null;
         return getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_ACCESS_RIGHTS,
                 fileSystemAccessProvider.commandSet.getDefaultAccessRightsString()).toString()
     }
 
-    public String getOutputGroupString () {
+    public String getOutputGroupString() {
         if (!isAccessRightsModificationAllowed()) return null;
         return getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_FILE_GROUP)
-                fileSystemAccessProvider.getMyGroup().toString()
+        fileSystemAccessProvider.getMyGroup().toString()
     }
 
     public String getUMask() {
@@ -571,7 +577,7 @@ public class ExecutionContext implements JobStatusListener {
 
                 def state = rj.getJobState()
                 if (state.isPlannedOrRunning()) {
-                    if(state.isRunning())
+                    if (state.isRunning())
                         return true;
                     else {
                         //Check previous jobs... Or just wait for the next step???

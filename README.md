@@ -85,6 +85,10 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 # Changelist
 
+- Setting the location of .roddyExecutionDirectory is possible. 
+  Set RODDY_EXECUTION_DIRECTORY to a (valid) path of your choice in your configuration files.
+  The normal behaviour stays, which is to setup this directory in the project output folder. 
+
 - More checkups will occur, when Roddy starts up. E.g. Roddy will check the accessibility of plugin and configuration
   directories.
 

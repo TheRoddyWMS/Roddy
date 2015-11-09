@@ -37,6 +37,7 @@ public abstract class RuntimeService extends CacheProvider {
     public static final String FILENAME_ANALYSES_MD5_OVERVIEW = "zippedAnalysesMD5.txt"
     public static final String DIRECTORY_RODDY_COMMON_EXECUTION = ".roddyExecutionDirectory"
     public static final String DIRNAME_ANALYSIS_TOOLS = "analysisTools"
+    public static final String RODDY_CENTRAL_EXECUTION_DIRECTORY = "RODDY_CENTRAL_EXECUTION_DIRECTORY"
 
     /**
      * Loads a list of input data set for the specified analysis.
@@ -403,23 +404,23 @@ public abstract class RuntimeService extends CacheProvider {
     }
 
     public File getCommonExecutionDirectory(ExecutionContext context) {
+        File configuredPath = context.getConfiguration().getConfigurationValues().get(RODDY_CENTRAL_EXECUTION_DIRECTORY).toFile(context);
+        if (configuredPath)
+            return configuredPath;
         return new File(getOutputFolderForProject(context).getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + DIRECTORY_RODDY_COMMON_EXECUTION);
     }
 
     public File getAnalysedMD5OverviewFile(ExecutionContext context) {
-        return new File(getCommonExecutionDirectory(context).getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + FILENAME_ANALYSES_MD5_OVERVIEW);
+        return new File(getCommonExecutionDirectory(context).getAbsolutePath(), FILENAME_ANALYSES_MD5_OVERVIEW);
     }
 
-    public File getLoggingDirectory(ExecutionContext run) {
-        return getExecutionDirectory(run);
-//        String path = getTemporaryDirectory(context).getAbsolutePath();
-//        return new File(path + Roddy.getInstance().getPathSeparator() + "logs");
+    public File getLoggingDirectory(ExecutionContext context) {
+        return getExecutionDirectory(context);
     }
 
-    public File getLockFilesDirectory(ExecutionContext run) {
-        File f = new File(getTemporaryDirectory(run), "lockfiles");
+    public File getLockFilesDirectory(ExecutionContext context) {
+        File f = new File(getTemporaryDirectory(context), "lockfiles");
         return f;
-//        return getDirectory(getExecutionDirFilePrefixString(run) + "temp" + FileSystemAccessManager.getInstance().getPathSeparator() + "lockfiles", run);
     }
 
     public File getTemporaryDirectory(ExecutionContext run) {
@@ -427,8 +428,6 @@ public abstract class RuntimeService extends CacheProvider {
     }
 
     public Date extractDateFromExecutionDirectory(File dir) {
-        String path = dir.getAbsolutePath();
-//        int index = path.indexOf(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX);
         String[] splitted = dir.getName().split(StringConstants.SPLIT_UNDERSCORE);
         return InfoObject.parseTimestampString(splitted[1] + StringConstants.SPLIT_UNDERSCORE + splitted[2]);
     }
