@@ -1,4 +1,4 @@
-package de.dkfz.roddy.execution.jobs.cluster.pbs;
+package de.dkfz.roddy.execution.jobs.cluster.sge;
 
 import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.config.InformationalConfigurationContent;
@@ -6,13 +6,14 @@ import de.dkfz.roddy.config.ResourceSetSize;
 import de.dkfz.roddy.config.ToolEntry;
 import de.dkfz.roddy.execution.jobs.CommandFactory;
 import de.dkfz.roddy.execution.jobs.ProcessingCommands;
+import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSResourceProcessingCommand;
 import org.junit.Test;
 
 import java.io.File;
 
 /**
  */
-public class PBSCommandFactoryTest {
+public class SGECommandFactoryTest {
 
     @Test
     public void testConvertToolEntryToPBSCommandParameters() {
@@ -22,15 +23,15 @@ public class PBSCommandFactoryTest {
 
         Configuration cfg = new Configuration(new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null));
 
-        CommandFactory cFactory = new PBSCommandFactory(false);
+        CommandFactory cFactory = new SGECommandFactory(false);
         PBSResourceProcessingCommand test = (PBSResourceProcessingCommand) cFactory.convertResourceSet(cfg, rset1);
-        assert test.getProcessingString().equals(" -l mem=1024m -l nodes=1:ppn=2 -l walltime=01:00");
+        assert test.getProcessingString().equals(" -V -l s_data=1024M -l nodes=1:ppn=2 -l walltime=01:00");
 
         test = (PBSResourceProcessingCommand) cFactory.convertResourceSet(cfg, rset2);
-        assert test.getProcessingString().equals(" -l nodes=1:ppn=1 -l walltime=01:00");
+        assert test.getProcessingString().equals(" -V -l nodes=1:ppn=1 -l walltime=01:00");
 
         test = (PBSResourceProcessingCommand) cFactory.convertResourceSet(cfg, rset3);
-        assert test.getProcessingString().equals(" -l mem=1024m -l nodes=1:ppn=2");
+        assert test.getProcessingString().equals(" -V -l mem=1024M -l nodes=1:ppn=2");
 
     }
 
