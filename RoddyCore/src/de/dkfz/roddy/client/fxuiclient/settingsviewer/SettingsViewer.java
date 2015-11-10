@@ -2,6 +2,7 @@ package de.dkfz.roddy.client.fxuiclient.settingsviewer;
 
 import de.dkfz.roddy.Constants;
 import de.dkfz.roddy.Roddy;
+import de.dkfz.roddy.RunMode;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.LocalExecutionService;
 import de.dkfz.roddy.execution.io.SSHExecutionService;
@@ -88,7 +89,7 @@ public class SettingsViewer extends CustomControlOnGridPane {
         cbbCLIExecutionService.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
             @Override
             public void changed(ObservableValue observableValue, Object oldObject, Object newObject) {
-                Roddy.RunMode mode = Roddy.RunMode.CLI;
+                RunMode mode = RunMode.CLI;
                 if(newObject.equals(SSHExecutionService.class.getName())) {
                     SSHExecutionServiceSettingsPanelControl cPanel = new SSHExecutionServiceSettingsPanelControl(mode);
                     settingsBox.getChildren().add(settingsBox.getChildren().indexOf(overlayRoddySubSystemsSettings) + 1, cPanel);
@@ -105,7 +106,7 @@ public class SettingsViewer extends CustomControlOnGridPane {
         cbbGUIExecutionService.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
             @Override
             public void changed(ObservableValue observableValue, Object oldObject, Object newObject) {
-                Roddy.RunMode mode = Roddy.RunMode.UI;
+                RunMode mode = RunMode.UI;
                 if(newObject.equals(SSHExecutionService.class.getName())) {
                     SSHExecutionServiceSettingsPanelControl cPanel = new SSHExecutionServiceSettingsPanelControl(mode);
                     settingsBox.getChildren().add(settingsBox.getChildren().indexOf(executionServiceSetup), cPanel);
@@ -119,8 +120,8 @@ public class SettingsViewer extends CustomControlOnGridPane {
             }
         });
 
-        cbbCLIExecutionService.getSelectionModel().select(Roddy.getApplicationProperty(Roddy.RunMode.CLI, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, LocalExecutionService.class.getName()));
-        cbbGUIExecutionService.getSelectionModel().select(Roddy.getApplicationProperty(Roddy.RunMode.UI, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, LocalExecutionService.class.getName()));
+        cbbCLIExecutionService.getSelectionModel().select(Roddy.getApplicationProperty(RunMode.CLI, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, LocalExecutionService.class.getName()));
+        cbbGUIExecutionService.getSelectionModel().select(Roddy.getApplicationProperty(RunMode.UI, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, LocalExecutionService.class.getName()));
 
         RoddyUITask.runTask(new RoddyUITask("Load settings to settings viewer.", false) {
             @Override
@@ -181,8 +182,8 @@ public class SettingsViewer extends CustomControlOnGridPane {
             workflowPaths = workflowPaths.substring(1);
         Roddy.setApplicationProperty(Constants.APP_PROPERTY_CONFIGURATION_DIRECTORIES, workflowPaths);
         Roddy.setApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS, txtCommandFactory.getText());
-        Roddy.setApplicationProperty(Roddy.RunMode.CLI, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, cbbCLIExecutionService.getSelectionModel().getSelectedItem().toString());
-        Roddy.setApplicationProperty(Roddy.RunMode.UI, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, cbbGUIExecutionService.getSelectionModel().getSelectedItem().toString());
+        Roddy.setApplicationProperty(RunMode.CLI, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, cbbCLIExecutionService.getSelectionModel().getSelectedItem().toString());
+        Roddy.setApplicationProperty(RunMode.UI, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, cbbGUIExecutionService.getSelectionModel().getSelectedItem().toString());
         for(SSHExecutionServiceSettingsPanelControl pnl : createdSSHExecutionServicePanels.values()) {
             pnl.writeToApplicationSettings();
         }

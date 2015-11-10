@@ -430,9 +430,16 @@ public class ExecutionContext implements JobStatusListener {
     public boolean hasExecutionDirectory() {
         return executionDirectory != null;
     }
+    Boolean checkedIfAccessRightsCanBeSet = null;
 
     public boolean isAccessRightsModificationAllowed() {
-        return getConfiguration().getConfigurationValues().getBoolean(ConfigurationConstants.CFG_ALLOW_ACCESS_RIGHTS_MODIFICATION, true);
+        // Include an additional check, if the target filesystem allows the modification and disable this, if necessary.
+        boolean modAllowed = getConfiguration().getConfigurationValues().getBoolean(ConfigurationConstants.CFG_ALLOW_ACCESS_RIGHTS_MODIFICATION, true)
+        if (modAllowed && !checkedIfAccessRightsCanBeSet) {
+            checkedIfAccessRightsCanBeSet = FileSystemAccessProvider.getInstance().checkIfAccessRightsCanBeSet(this)
+            if (!checkedIfAccessRightsCanBeSet) modAllowed = false;
+        }
+        return modAllowed;
     }
 
     public FileSystemAccessProvider getFileSystemAccessProvider() {

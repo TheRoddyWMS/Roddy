@@ -3,6 +3,7 @@ package de.dkfz.roddy.client.cliclient
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.client.RoddyStartupModes
 import de.dkfz.roddy.client.RoddyStartupOptions
@@ -12,7 +13,6 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.validation.ValidationError
 import de.dkfz.roddy.config.validation.WholeConfigurationValidator
 import de.dkfz.roddy.core.*
-import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.SSHExecutionService
 import de.dkfz.roddy.execution.jobs.CommandFactory
@@ -648,7 +648,7 @@ public class RoddyCLIClient {
             ScannerWrapper sc = new ScannerWrapper();
             System.out.println("Setup roddy for command line processing.\n========================================\n");
 
-            Roddy.RunMode runMode = Roddy.getRunMode();
+            RunMode runMode = Roddy.getRunMode();
 
             boolean useProxyForInternetConnection = Boolean.parseBoolean(Roddy.getApplicationProperty(Constants.APP_PROPERTY_NET_USEPROXY, false.toString()));
             useProxyForInternetConnection = sc.getBooleanYN("Does your internet connection require a proxy:", useProxyForInternetConnection);

@@ -512,9 +512,32 @@ public class FileSystemAccessProvider extends CacheProvider {
         if (eService.canCopyFiles()) { //Let the execution service do this.
             return eService.copyDirectory(_in, _out);
         } else {
-            return eService.execute(commandSet.getCopyDirectoryCommand(_in, _out))
+
+            def executionResult = eService.execute(commandSet.getCopyDirectoryCommand(_in, _out))
+            return executionResult.successful
         };
 
+    }
+
+    /**
+     * This check tries to find out whether access rights can be set on the target file system (or not).
+     * This check can be quite hard, because not all folders and files for a context might be on the same
+     * file system or root folder. Thus the check concentrates on files and folders in the project output
+     * folder.
+     *
+     * The test is also performed in such a way that it tests both permissions and owner / group changes.
+     * If one of both is not working, then false is returned.
+     * @param context
+     * @return
+     */
+    public boolean checkIfAccessRightsCanBeSet(ExecutionContext context) {
+
+        def outputDirectory = context.getOutputDirectory()
+
+        ExecutionService eService = ExecutionService.getInstance();
+        String command = commandSet.getCheckChangeOfPermissionsPossibilityCommand(outputDirectory, context.getExecutingUser(), getMyGroup());
+        def executionResult = eService.execute(command, true);
+        return executionResult.successful && executionResult.firstLine && executionResult.firstLine == BashCommandSet.TRUE;
     }
 
     public boolean setDefaultAccessRightsRecursively(File path, ExecutionContext context) {

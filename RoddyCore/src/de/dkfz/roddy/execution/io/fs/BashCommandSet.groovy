@@ -96,6 +96,12 @@ public class BashCommandSet extends ShellCommandSet {
     }
 
     @Override
+    String getCheckChangeOfPermissionsPossibilityCommand(File f, String user, String group) {
+        File testFile = new File(f, ".roddyPermissionsTestFile");
+        return "touch ${testFile}; chmod u+rw ${testFile} &> /dev/null && chown ${user}:${group} ${testFile} &> /dev/null && echo ${TRUE}; rm ${testFile}";
+    }
+
+    @Override
     String getSetAccessRightsCommand(File f, String rightsForFiles, String fileGroup) {
         return "chmod ${rightsForFiles} ${f.absolutePath}; chgrp ${fileGroup} ${f.absolutePath}";
     }

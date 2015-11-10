@@ -35,6 +35,8 @@ public abstract class ShellCommandSet {
 
     public abstract String getCheckAndCreateDirectoryCommand(File f, String onCreateAccessRights, String onCreateFileGroup)
 
+    public abstract String getCheckChangeOfPermissionsPossibilityCommand(File f, String user, String group)
+
     public abstract String getSetAccessRightsCommand(File f, String rightsForFiles, String fileGroup);
 
     public abstract String getSetAccessRightsRecursivelyCommand(File f, String rightsForDirectories, String rightsForFiles, String fileGroup);
@@ -78,4 +80,5 @@ public abstract class ShellCommandSet {
     public abstract String getRemoveFileCommand(File file);
 
     public abstract ConfigurationConverter getConfigurationConverter();
+
 }

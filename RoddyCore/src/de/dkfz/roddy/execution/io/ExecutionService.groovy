@@ -3,6 +3,7 @@ package de.dkfz.roddy.execution.io
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient
 import de.dkfz.roddy.config.AnalysisConfiguration
@@ -58,21 +59,9 @@ public abstract class ExecutionService extends CacheProvider {
      */
     protected boolean allJobsBlocked = false;
 
-    public static void initializeService(boolean fullSetup) {
-
-        if (!fullSetup) {
-            executionService = new NoNoExecutionService();
-            return;
-        }
-
-        ClassLoader classLoader = LibrariesFactory.getGroovyClassLoader();
-
-        String executionServiceClassID = null;
-        Roddy.RunMode runMode = Roddy.getRunMode();
-        executionServiceClassID = Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, SSHExecutionService.class.getName());
-        Class executionServiceClass = classLoader.loadClass(executionServiceClassID);
+    public static void initializeService(Class executionServiceClass, RunMode runMode) {
         executionService = (ExecutionService) executionServiceClass.getConstructors()[0].newInstance();
-        if (runMode == Roddy.RunMode.CLI) {
+        if (runMode == RunMode.CLI) {
             boolean isConnected = executionService.tryInitialize(true);
             if (!isConnected) {
                 int queryCount = 0;
@@ -92,6 +81,22 @@ public abstract class ExecutionService extends CacheProvider {
         } else {
             executionService.initialize();
         }
+    }
+
+    public static void initializeService(boolean fullSetup) {
+
+        if (!fullSetup) {
+            executionService = new NoNoExecutionService();
+            return;
+        }
+
+        ClassLoader classLoader = LibrariesFactory.getGroovyClassLoader();
+
+        String executionServiceClassID = null;
+        RunMode runMode = Roddy.getRunMode();
+        executionServiceClassID = Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, SSHExecutionService.class.getName());
+        Class executionServiceClass = classLoader.loadClass(executionServiceClassID);
+        initializeService(executionServiceClass, runMode);
     }
 
     public ExecutionService() {

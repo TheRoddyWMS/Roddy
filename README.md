@@ -85,6 +85,12 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 # Changelist
 
+- Change the behaviour of file access rights setting:
+   
+    - Only output one error message instead of many
+  
+    - Test on startup if access right setting is possible and disable the feature by setting outputAllowAccessRightsModification to false
+
 - Setting the location of .roddyExecutionDirectory is possible. 
   Set RODDY_EXECUTION_DIRECTORY to a (valid) path of your choice in your configuration files.
   The normal behaviour stays, which is to setup this directory in the project output folder. 
@@ -138,12 +144,6 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
       language to implement simple workflows. Support is e.g. given for if and a lot of typing can be skipped.
       brawl scripts will be auto converted and compiled to Groovy workflows upon startup. This way it is guaranteed
       that those scripts are written properly. Still missing is the for loop syntax.
-
-* Version update to 2.2.69
-
-* Version update to 2.2.66
-
-* Version update to 2.2.66
 
 * Version update to 2.2.66
 

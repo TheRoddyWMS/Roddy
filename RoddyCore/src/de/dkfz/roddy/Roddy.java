@@ -650,9 +650,4 @@ public class Roddy {
         return commandLineCall;
     }
 
-    public enum RunMode {
-        UI,
-        CLI
-    }
-
 }

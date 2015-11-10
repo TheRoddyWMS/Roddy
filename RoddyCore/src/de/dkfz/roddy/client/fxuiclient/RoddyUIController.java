@@ -1,6 +1,7 @@
 package de.dkfz.roddy.client.fxuiclient;
 
 import de.dkfz.roddy.Roddy;
+import de.dkfz.roddy.RunMode;
 import de.dkfz.roddy.StringConstants;
 import de.dkfz.roddy.config.AnalysisConfiguration;
 import de.dkfz.roddy.config.ConfigurationFactory;
@@ -214,9 +215,9 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
         listViewDataSets.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         listViewDataSets.getSelectionModel().selectedItemProperty().addListener((observableValue, old, newValue) -> selectedDataSetsChanged());
 
-        String txtAnalysisIDFilter = Roddy.getApplicationProperty(Roddy.RunMode.UI, APP_PROPERTY_FILTER_ANALYSISID, StringConstants.EMPTY);
-        String txtIDFilter = Roddy.getApplicationProperty(Roddy.RunMode.UI, APP_PROPERTY_FILTER_PROJECTID, StringConstants.EMPTY);
-        Boolean filterHideUnprocessable = Boolean.parseBoolean(Roddy.getApplicationProperty(Roddy.RunMode.UI, APP_PROPERTY_FILTER_HIDE_UNPROCESSABLE, Boolean.FALSE.toString()));
+        String txtAnalysisIDFilter = Roddy.getApplicationProperty(RunMode.UI, APP_PROPERTY_FILTER_ANALYSISID, StringConstants.EMPTY);
+        String txtIDFilter = Roddy.getApplicationProperty(RunMode.UI, APP_PROPERTY_FILTER_PROJECTID, StringConstants.EMPTY);
+        Boolean filterHideUnprocessable = Boolean.parseBoolean(Roddy.getApplicationProperty(RunMode.UI, APP_PROPERTY_FILTER_HIDE_UNPROCESSABLE, Boolean.FALSE.toString()));
 
         txtProjectFilterByAnalysis.setText(txtAnalysisIDFilter);
         txtProjectFilterByID.setText(txtIDFilter);
@@ -224,9 +225,9 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
         txtProjectFilterByID.textProperty().addListener((observableValue, oldValue, newValue) -> refreshProjectView(null));
         cbProjectFilterHideUnprocessable.setSelected(filterHideUnprocessable);
 
-        txtProjectFilterByAnalysis.textProperty().addListener((observableValue, oldValue, newValue) -> Roddy.setApplicationProperty(Roddy.RunMode.UI, APP_PROPERTY_FILTER_ANALYSISID, newValue));
-        txtProjectFilterByID.textProperty().addListener((observableValue, oldValue, newValue) -> Roddy.setApplicationProperty(Roddy.RunMode.UI, APP_PROPERTY_FILTER_ANALYSISID, newValue));
-        cbProjectFilterHideUnprocessable.selectedProperty().addListener((observableValue, aBoolean, newValue) -> Roddy.setApplicationProperty(Roddy.RunMode.UI, APP_PROPERTY_FILTER_HIDE_UNPROCESSABLE, newValue.toString()));
+        txtProjectFilterByAnalysis.textProperty().addListener((observableValue, oldValue, newValue) -> Roddy.setApplicationProperty(RunMode.UI, APP_PROPERTY_FILTER_ANALYSISID, newValue));
+        txtProjectFilterByID.textProperty().addListener((observableValue, oldValue, newValue) -> Roddy.setApplicationProperty(RunMode.UI, APP_PROPERTY_FILTER_ANALYSISID, newValue));
+        cbProjectFilterHideUnprocessable.selectedProperty().addListener((observableValue, aBoolean, newValue) -> Roddy.setApplicationProperty(RunMode.UI, APP_PROPERTY_FILTER_HIDE_UNPROCESSABLE, newValue.toString()));
 
         setupTitlePaneExpansionProcessing(tpProjectFilterSettings, APP_PROPERTY_PROJECT_FILTER_SETTINGS_OPENED, Boolean.TRUE);
         setupTitlePaneExpansionProcessing(tpProjectSettings, APP_PROPERTY_PROJECT_SETTINGS_OPENED, Boolean.TRUE);
@@ -237,8 +238,8 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
     }
 
     public static void setupTitlePaneExpansionProcessing(TitledPane tp, String id, Boolean defaultValue) {
-        tp.setExpanded(Boolean.parseBoolean(Roddy.getApplicationProperty(Roddy.RunMode.UI, id, defaultValue.toString())));
-        tp.expandedProperty().addListener((obs, oldV, newV) -> Roddy.setApplicationProperty(Roddy.RunMode.UI, id, "" + tp.isExpanded()));
+        tp.setExpanded(Boolean.parseBoolean(Roddy.getApplicationProperty(RunMode.UI, id, defaultValue.toString())));
+        tp.expandedProperty().addListener((obs, oldV, newV) -> Roddy.setApplicationProperty(RunMode.UI, id, "" + tp.isExpanded()));
     }
 
     public ConfigurationViewer getConfigurationViewer() {
@@ -352,7 +353,7 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
      */
     private void loadProjectsRec(final TreeItem<FXICCWrapper> root, List<InformationalConfigurationContent> availableProjectConfigurations) {
         int count = 0;
-        String path = Roddy.getApplicationProperty(Roddy.RunMode.UI, RoddyUIController.APP_PROPERTY_LAST_OPEN_PROJECT_PATH, "");
+        String path = Roddy.getApplicationProperty(RunMode.UI, RoddyUIController.APP_PROPERTY_LAST_OPEN_PROJECT_PATH, "");
 
         for (InformationalConfigurationContent icc : availableProjectConfigurations) {
             FXICCWrapper fpw = new FXICCWrapper(icc, count++);
@@ -382,7 +383,7 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
                     //Upon expand close all other nodes.
                     for (TreeItem<FXICCWrapper> sister : root.getChildren()) {
                         if (treeItem == sister) {
-                            Roddy.setApplicationProperty(Roddy.RunMode.UI, RoddyUIController.APP_PROPERTY_LAST_OPEN_PROJECT_PATH, treeItem.getValue().getID());
+                            Roddy.setApplicationProperty(RunMode.UI, RoddyUIController.APP_PROPERTY_LAST_OPEN_PROJECT_PATH, treeItem.getValue().getID());
 
                         } else {
                             sister.setExpanded(false);

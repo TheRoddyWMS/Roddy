@@ -2,6 +2,7 @@ package de.dkfz.roddy.client.fxuiclient.settingsviewer;
 
 import de.dkfz.roddy.Constants;
 import de.dkfz.roddy.Roddy;
+import de.dkfz.roddy.RunMode;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.CustomControlOnGridPane;
 import javafx.fxml.FXML;
@@ -39,9 +40,9 @@ public class SSHExecutionServiceSettingsPanelControl extends CustomControlOnGrid
     @FXML
     private Label lblHeaderRunmode;
 
-    private Roddy.RunMode runMode;
+    private RunMode runMode;
 
-    public SSHExecutionServiceSettingsPanelControl(Roddy.RunMode mode) {
+    public SSHExecutionServiceSettingsPanelControl(RunMode mode) {
         super();
         this.runMode = mode;
         this.lblHeaderRunmode.setText(mode.name());
