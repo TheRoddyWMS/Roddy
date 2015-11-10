@@ -1,6 +1,6 @@
 package de.dkfz.roddy.knowledge.nativeworkflows;
 
-import de.dkfz.roddy.core.BufferUnit;
+import de.dkfz.roddy.tools.BufferUnit;
 import de.dkfz.roddy.core.ExecutionContext;
 
 import java.util.List;

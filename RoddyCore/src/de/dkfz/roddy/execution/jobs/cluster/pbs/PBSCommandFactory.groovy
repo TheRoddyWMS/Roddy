@@ -3,7 +3,7 @@ package de.dkfz.roddy.execution.jobs.cluster.pbs;
 import de.dkfz.roddy.Constants;
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
-import de.dkfz.roddy.core.BufferUnit;
+import de.dkfz.roddy.tools.BufferUnit;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.cluster.ClusterCommandFactory;
@@ -310,7 +310,7 @@ public class PBSCommandFactory extends ClusterCommandFactory<PBSCommand> {
             skriptIndex = commandString.lastIndexOf(" ");
         }
 
-        String skript = commandString[skriptIndex..-1].trim();
+        String script = commandString[skriptIndex..-1].trim();
         commandString = commandString[5..skriptIndex].trim();
         String[] options = (" " + commandString).split(" [-]");   //Put " " in front of the string so that every command can be recognized properly beginning with the first one.
         String jobName = "not readable";

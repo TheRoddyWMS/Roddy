@@ -1,4 +1,4 @@
-package de.dkfz.roddy.core;
+package de.dkfz.roddy.tools;
 
 /**
  * Some buffer units like M(egabyte), G(igagbyte), T(erabyte)
@@ -20,4 +20,6 @@ public enum BufferUnit {
     BufferUnit(long multiplier) {
         this.multiplier = multiplier;
     }
+
+
 }
