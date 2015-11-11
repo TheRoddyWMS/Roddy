@@ -535,7 +535,7 @@ public class FileSystemAccessProvider extends CacheProvider {
         def outputDirectory = context.getOutputDirectory()
 
         ExecutionService eService = ExecutionService.getInstance();
-        String command = commandSet.getCheckChangeOfPermissionsPossibilityCommand(outputDirectory, context.getExecutingUser(), getMyGroup());
+        String command = commandSet.getCheckChangeOfPermissionsPossibilityCommand(outputDirectory, getMyGroup());
         def executionResult = eService.execute(command, true);
         return executionResult.successful && executionResult.firstLine && executionResult.firstLine == BashCommandSet.TRUE;
     }
@@ -715,5 +715,11 @@ public class FileSystemAccessProvider extends CacheProvider {
 
     ConfigurationConverter getConfigurationConverter() {
         return commandSet.getConfigurationConverter();
+    }
+
+    int getDefaultUserMask() {
+        String command = commandSet.getGetUsermaskCommand();
+        ExecutionResult executionResult = ExecutionService.getInstance().execute(command);
+        return Integer.decode(executionResult.firstLine);
     }
 }

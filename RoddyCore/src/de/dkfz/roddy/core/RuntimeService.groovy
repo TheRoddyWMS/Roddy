@@ -404,7 +404,7 @@ public abstract class RuntimeService extends CacheProvider {
     }
 
     public File getCommonExecutionDirectory(ExecutionContext context) {
-        File configuredPath = context.getConfiguration().getConfigurationValues().get(RODDY_CENTRAL_EXECUTION_DIRECTORY).toFile(context);
+        File configuredPath = context.getConfiguration().getConfigurationValues().get(RODDY_CENTRAL_EXECUTION_DIRECTORY, null)?.toFile(context);
         if (configuredPath)
             return configuredPath;
         return new File(getOutputFolderForProject(context).getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + DIRECTORY_RODDY_COMMON_EXECUTION);

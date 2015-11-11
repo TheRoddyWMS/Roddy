@@ -25,6 +25,8 @@ public abstract class ShellCommandSet {
 
     public abstract String getMyGroupCommand();
 
+    public abstract String getGetUsermaskCommand();
+
     public abstract String getGroupIDCommand(String groupID);
 
     public abstract String getOwnerOfPathCommand(File f);
@@ -35,7 +37,7 @@ public abstract class ShellCommandSet {
 
     public abstract String getCheckAndCreateDirectoryCommand(File f, String onCreateAccessRights, String onCreateFileGroup)
 
-    public abstract String getCheckChangeOfPermissionsPossibilityCommand(File f, String user, String group)
+    public abstract String getCheckChangeOfPermissionsPossibilityCommand(File f, String group)
 
     public abstract String getSetAccessRightsCommand(File f, String rightsForFiles, String fileGroup);
 
@@ -80,5 +82,4 @@ public abstract class ShellCommandSet {
     public abstract String getRemoveFileCommand(File file);
 
     public abstract ConfigurationConverter getConfigurationConverter();
-
 }

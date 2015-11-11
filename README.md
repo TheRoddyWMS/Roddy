@@ -75,11 +75,12 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 - (WIP) Roddy accepts a lot more parameters which might otherwise be configured with the
   application properties file:
-    useRoddyVersion (ok), usePluginVersion,
-    pluginDirectories, configurationDirectories
-    commandFactoryClass,
-    executionServiceClass, executionServiceAuth, executionServiceHost, executionServiceUser
-  Those parameters all override the settings in the application properties file
+    - useRoddyVersion (ok), usePluginVersion,
+    - pluginDirectories, configurationDirectories
+    - commandFactoryClass,
+    - executionServiceClass, executionServiceAuth, executionServiceHost, executionServiceUser
+    
+    Those parameters all override the settings in the application properties file
 
 - (WIP) Integrate slurm as a cluster backend
 
@@ -88,8 +89,8 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 - Change the behaviour of file access rights setting:
    
     - Only output one error message instead of many
-  
     - Test on startup if access right setting is possible and disable the feature by setting outputAllowAccessRightsModification to false
+    - Roddy will check, if the project output folder exists. If it does not exist, it will refuse to run a dataset. This way, the user is forced to create this directory explicitely.
 
 - Setting the location of .roddyExecutionDirectory is possible. 
   Set RODDY_EXECUTION_DIRECTORY to a (valid) path of your choice in your configuration files.
@@ -105,17 +106,17 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
   which depends on other plugins and which you do not want to recompile/ repack, just because another plugin
   was extended.
   
-  Plugins can be extended in two ways 
-    horicontal for e.g. hotfixes / revisions and 
-    vertical, for extensions. 
+    - Plugins can be extended in two ways 
+        - horicontal for e.g. hotfixes / revisions and 
+        - vertical, for extensions. 
   
-  Vertical Plugin compatibility is done for hotfixes via the directory name:
-    Workflow-1.0.23 (original)
-    Workflow-1.0.23-r1 (revision 1)
+    - Vertical Plugin compatibility is done for hotfixes via the directory name:
+        - Workflow-1.0.23 (original)
+        - Workflow-1.0.23-r1 (revision 1)
     
-  Horicontal Plugin compatibility is done via the buildinfo.txt file:
-    Workflow-1.0.24/buildinfo.txt
-      extendsversion=1.0.23
+    - Horicontal Plugin compatibility is done via the buildinfo.txt file:
+        - Workflow-1.0.24/buildinfo.txt
+            - extendsversion=1.0.23
       
   ![Dependency graph]("documentation/readme_images/Roddy Plan_0.jpg")
 

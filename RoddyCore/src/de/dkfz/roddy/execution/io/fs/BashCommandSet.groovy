@@ -74,6 +74,11 @@ public class BashCommandSet extends ShellCommandSet {
     }
 
     @Override
+    String getGetUsermaskCommand() {
+        return "umask";
+    }
+
+    @Override
     String getCheckDirectoryCommand(File f) {
         return getCheckDirectoryCommand(f, false, null, null);
     }
@@ -96,9 +101,9 @@ public class BashCommandSet extends ShellCommandSet {
     }
 
     @Override
-    String getCheckChangeOfPermissionsPossibilityCommand(File f, String user, String group) {
+    String getCheckChangeOfPermissionsPossibilityCommand(File f, String group) {
         File testFile = new File(f, ".roddyPermissionsTestFile");
-        return "touch ${testFile}; chmod u+rw ${testFile} &> /dev/null && chown ${user}:${group} ${testFile} &> /dev/null && echo ${TRUE}; rm ${testFile}";
+        return "touch ${testFile}; chmod u+rw ${testFile} &> /dev/null && chgrp ${group} ${testFile} &> /dev/null && echo ${TRUE}; rm ${testFile}";
     }
 
     @Override
@@ -244,4 +249,5 @@ public class BashCommandSet extends ShellCommandSet {
     ConfigurationConverter getConfigurationConverter() {
         return new BashConverter();
     }
+
 }
