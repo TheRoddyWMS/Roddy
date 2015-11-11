@@ -90,7 +90,7 @@ public class BashCommandSet extends ShellCommandSet {
     @Override
     String getCheckAndCreateDirectoryCommand(File f, String onCreateAccessRights, String onCreateFileGroup) {
         if (onCreateAccessRights && onCreateFileGroup)
-            return "install -g ${onCreateFileGroup} -m ${onCreateAccessRights} -d ${f.absolutePath}";
+            return "sg ${onCreateFileGroup} -c \"umask ${} && mkdir -p ${f.absolutePath}\"";
         else
             return "install -d ${f.absolutePath}";
     }

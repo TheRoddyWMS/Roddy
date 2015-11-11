@@ -257,27 +257,27 @@ public abstract class ExecutionService extends CacheProvider {
 
 
         if (outputIsWriteable == null)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${outputBaseDirectory}", Level.WARNING));
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${outputBaseDirectory}, please create with proper access rights and ownership.", Level.SEVERE));
         else if (outputIsWriteable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("Output dir is not writable: ${outputBaseDirectory}"));
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("Output dir is not writable: ${outputBaseDirectory}, please change access rights and ownership."));
 
         if (datasetDirIsWritable == null)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${outputDirectory}", Level.WARNING));
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${outputDirectory}", Level.INFO));
         else if (datasetDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("Output dir is not writable: ${outputDirectory}"));
 
         if (projectExecCacheFileIsWritable == null)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output file is missing: ${projectExecCacheFile}", Level.WARNING));
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output file is missing: ${projectExecCacheFile}", Level.INFO));
         else if (projectExecCacheFileIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("The projects exec cache file is not writable: ${projectExecCacheFile}"));
 
         if (projectExecutionContextDirIsWritable == null)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${projectExecutionDirectory}", Level.WARNING));
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${projectExecutionDirectory}", Level.INFO));
         else if (projectExecutionContextDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("The project execution store is not writable: ${projectExecutionDirectory}"));
 
         if (projectToolsMD5SumFileIsWritable == null)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output file is missing: ${projectToolsMD5SumFile}", Level.WARNING));
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output file is missing: ${projectToolsMD5SumFile}", Level.INFO));
         else if (projectToolsMD5SumFileIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("The project md5sum file is not writable: ${projectToolsMD5SumFile}"));
 
