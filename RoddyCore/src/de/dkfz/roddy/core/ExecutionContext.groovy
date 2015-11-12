@@ -7,6 +7,7 @@ import de.dkfz.roddy.config.ConfigurationFactory;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.*
+import de.dkfz.roddy.tools.LoggerWrapper
 
 import java.util.*;
 
@@ -35,6 +36,8 @@ import java.util.*;
  */
 @groovy.transform.CompileStatic
 public class ExecutionContext implements JobStatusListener {
+
+    private static final LoggerWrapper logger = LoggerWrapper.getLogger(ExecutionContext.class.name);
 
     private static final List<ExecutionContextListener> staticListeners = new LinkedList<>();
     /**
@@ -435,9 +438,12 @@ public class ExecutionContext implements JobStatusListener {
     public boolean isAccessRightsModificationAllowed() {
         // Include an additional check, if the target filesystem allows the modification and disable this, if necessary.
         boolean modAllowed = getConfiguration().getConfigurationValues().getBoolean(ConfigurationConstants.CFG_ALLOW_ACCESS_RIGHTS_MODIFICATION, true)
-        if (modAllowed && !checkedIfAccessRightsCanBeSet) {
+        if (modAllowed && checkedIfAccessRightsCanBeSet == null) {
             checkedIfAccessRightsCanBeSet = FileSystemAccessProvider.getInstance().checkIfAccessRightsCanBeSet(this)
-            if (!checkedIfAccessRightsCanBeSet) modAllowed = false;
+            if (!checkedIfAccessRightsCanBeSet) {
+                modAllowed = false
+                logger.severe("Access rights modification was disabled. The test on the file system raised an error.");
+            };
         }
         return modAllowed;
     }

@@ -2,6 +2,7 @@ package de.dkfz.roddy.execution.io.fs
 
 import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.config.converters.ConfigurationConverter
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
 /**
  * Provides a command generator for linux file systems / bash
@@ -95,7 +96,7 @@ public class BashCommandSet extends ShellCommandSet {
     @Override
     String getCheckAndCreateDirectoryCommand(File f, String onCreateAccessRights, String onCreateFileGroup) {
         if (onCreateAccessRights && onCreateFileGroup)
-            return "sg ${onCreateFileGroup} -c \"umask ${} && mkdir -p ${f.absolutePath}\"";
+            return "sg ${onCreateFileGroup} -c \"umask ${RoddyIOHelperMethods.symbolicToNumericAccessRights(onCreateAccessRights)} && mkdir -p ${f.absolutePath}\"";
         else
             return "install -d ${f.absolutePath}";
     }

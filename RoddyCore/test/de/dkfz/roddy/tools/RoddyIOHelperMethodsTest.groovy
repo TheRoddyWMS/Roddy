@@ -22,19 +22,22 @@ public class RoddyIOHelperMethodsTest {
         FileSystemAccessProvider.resetFileSystemAccessProvider(new FileSystemAccessProvider() {
             @Override
             int getDefaultUserMask() {
-                return 0022; // Mock this value to a default value. This might otherwise change from system to system.
+                return 0022; // Mock this value to a default value. This might otherwise change from system to system.    rwx,r,r
             }
         });
 
-        Map<String, Integer> valuesAndExpectedMap = [
-                "u=rwx,g=rwx,o=rwx": 0000,
-                "u=rwx,g=rwx,o-rwx": 0007,
-                "u+rwx,g+rwx,o-rwx": 0007,
-                "u+rw,g-rw,o-rwx"  : 0077,
+        Map<String, String> valuesAndExpectedMap = [
+                "u=rwx,g=rwx,o=rwx": "0000", //rwx,rwx,rwx
+                "u=rwx,g=rwx,o-rwx": "0007", //rwx,rwx,---
+                "u+rwx,g+rwx,o-rwx": "0007", //rwx,rwx,---
+                "u+rw,g-rw,o-rwx"  : "0067", //rwx,---,---
+                "u+rw,g+rw,o-rwx"  : "0007", //rwx,rw-,---
+                "u+rw,g+rw"        : "0002", //rwx,rw-,r--
+                "u-w,g+rw,u-r"     : "0602", //rwx,rw-,r--
         ]
 
         valuesAndExpectedMap.each {
-            String rights, Integer res ->
+            String rights, String res ->
                 assert res == RoddyIOHelperMethods.symbolicToNumericAccessRights(rights);
         }
     }
