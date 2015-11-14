@@ -294,9 +294,8 @@ public class FileSystemAccessProvider extends CacheProvider {
 
     public boolean checkDirectories(List<File> files, ExecutionContext context, boolean createMissing) {
         boolean result = true;
-        files.parallelStream().each {
-            File f ->
-                result &= checkDirectory(f, context, createMissing);
+        for (File f in files) {
+            result &= checkDirectory(f, context, createMissing);
         }
         return result;
     }

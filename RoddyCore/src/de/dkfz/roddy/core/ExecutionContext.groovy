@@ -437,6 +437,8 @@ public class ExecutionContext implements JobStatusListener {
 
     public boolean isAccessRightsModificationAllowed() {
         // Include an additional check, if the target filesystem allows the modification and disable this, if necessary.
+        if(checkedIfAccessRightsCanBeSet != null)
+            return checkedIfAccessRightsCanBeSet;
         boolean modAllowed = getConfiguration().getConfigurationValues().getBoolean(ConfigurationConstants.CFG_ALLOW_ACCESS_RIGHTS_MODIFICATION, true)
         if (modAllowed && checkedIfAccessRightsCanBeSet == null) {
             checkedIfAccessRightsCanBeSet = FileSystemAccessProvider.getInstance().checkIfAccessRightsCanBeSet(this)

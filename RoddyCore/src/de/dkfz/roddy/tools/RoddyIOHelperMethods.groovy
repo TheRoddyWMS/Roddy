@@ -1,15 +1,11 @@
 package de.dkfz.roddy.tools
 
 import de.dkfz.roddy.Constants
-import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.execution.io.ExecutionHelper
-import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import groovy.io.FileType
 import org.apache.commons.codec.digest.DigestUtils
-
-import java.util.logging.Logger
 
 //import de.dkfz.roddy.core.RunService
 /**
@@ -234,9 +230,25 @@ class RoddyIOHelperMethods {
         return result;
     }
 
-    private static final String symbolicToNumericAccessRightsWithBash(String rightsStr) {
+    private static final String calculateUMaskFromStringWithBash(String rightsStr) {
         def defaultRights = numericToHashAccessRights(FileSystemAccessProvider.getInstance().getDefaultUserMask())
         return ExecutionHelper.executeSingleCommand("umask ${defaultRights}; umask ${rightsStr}; umask");
+    }
+
+    public static final String convertUMaskToAccessRights(String umask) {
+        String ars = new String("0")
+        for (int i = 1; i < umask.length(); i++) {
+            ars += "" + (7 - umask[i].toInteger())
+        }
+        return ars;
+    }
+
+    public static final int getIntegerValueFromOctalAccessRights(String octalAccessRights) {
+        return Integer.decode(octalAccessRights);
+    }
+
+    public static final int symbolicToIntegerAccessRights(String rightsStr) {
+        return getIntegerValueFromOctalAccessRights(symbolicToNumericAccessRights(rightsStr));
     }
 
     /** Convert symbolic to numeric access rights.
@@ -249,7 +261,7 @@ class RoddyIOHelperMethods {
      */
     public static String symbolicToNumericAccessRights(String rightsStr) {
 
-        return symbolicToNumericAccessRightsWithBash(rightsStr)
+        return convertUMaskToAccessRights(calculateUMaskFromStringWithBash(rightsStr))
 
 //
 //        def defaultRights = numericToHashAccessRights(FileSystemAccessProvider.getInstance().getDefaultUserMask())

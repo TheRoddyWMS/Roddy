@@ -42,8 +42,19 @@ public class RoddyIOHelperMethodsTest {
         }
     }
 
-//    @Test
-//    public void testNumericToHashAccessRights() throws Exception {
-//        assert [u:RoddyIOHelperMethods.numericToHashAccessRights(0777);
-//    }
+    @Test
+    public void testConvertUMaskToAccessRights() throws Exception {
+        Map<String, String> valuesAndResults = [
+                "0000" : "0777",
+                "0007" : "0770",
+                "0067" : "0710",
+                "0002" : "0775",
+                "0602" : "0175",
+        ]
+
+        valuesAndResults.each {
+            String rights, String res ->
+                assert res == RoddyIOHelperMethods.convertUMaskToAccessRights(rights);
+        }
+    }
 }

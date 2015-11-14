@@ -96,7 +96,7 @@ public class BashCommandSet extends ShellCommandSet {
     @Override
     String getCheckAndCreateDirectoryCommand(File f, String onCreateAccessRights, String onCreateFileGroup) {
         if (onCreateAccessRights && onCreateFileGroup)
-            return "sg ${onCreateFileGroup} -c \"umask ${RoddyIOHelperMethods.symbolicToNumericAccessRights(onCreateAccessRights)} && mkdir -p ${f.absolutePath}\"";
+            return "sg ${onCreateFileGroup} -c \"umask ${onCreateAccessRights} && mkdir -p ${f.absolutePath}\"";
         else
             return "install -d ${f.absolutePath}";
     }
