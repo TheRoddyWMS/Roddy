@@ -141,6 +141,12 @@ public abstract class ExecutionService extends CacheProvider {
 
     protected abstract List<String> _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream);
 
+    public List<String> executeTool(ExecutionContext context, String toolID) {
+        File path = context.getConfiguration().getProcessingToolPath(context, toolID);
+        ExecutionResult executionResult = execute(path.absolutePath, true);
+        executionResult.resultLines;
+    }
+
     public ExecutionResult execute(String string, boolean waitFor = true, OutputStream outputStream = null) {
         ExecutionResult er = null;
         if (string) {
