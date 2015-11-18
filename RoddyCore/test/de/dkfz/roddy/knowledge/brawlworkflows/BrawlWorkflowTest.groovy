@@ -15,9 +15,21 @@ import static org.junit.Assert.*;
 public class BrawlWorkflowTest {
 
     @Test
+    public void testPrepareAndReformatLine() {
+
+    }
+
+    @Test
     public void testAssembleCall() {
-        Method assembleCall = BrawlWorkflow.class.getDeclaredMethod("_assembleCall", String[], int, int, StringBuilder, ContextConfiguration, ExecutionContext, LinkedHashMap);
+        Method assembleCall = BrawlWorkflow.class.getDeclaredMethod("_assembleCall", String[], int, StringBuilder, ContextConfiguration, ExecutionContext, LinkedHashMap);
         assembleCall.setAccessible(true);
+
+    }
+
+    @Test
+    public void testAssembleLoadFilesCall() {
+        Method assembleLoadFilesCall = BrawlWorkflow.class.getDeclaredMethod("_assembleLoadFilesCall", int, StringBuilder, ContextConfiguration, ExecutionContext, LinkedHashMap);
+        assembleLoadFilesCall.setAccessible(true);
 
 
     }
