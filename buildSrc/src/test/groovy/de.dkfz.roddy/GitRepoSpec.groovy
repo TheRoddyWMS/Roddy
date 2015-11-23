@@ -76,4 +76,13 @@ class GitRepoSpec extends Specification {
         !repo.isDirty()
     }
 
+    def "tagging a commit" () {
+        when:
+        GitRepo repo = GitRepo.initialize(tmpDir)
+        repo.add([tmpFile])
+        repo.commit("testmessage")
+        then:
+        repo.tag("testtag", "testmessage", false)
+    }
+
 }

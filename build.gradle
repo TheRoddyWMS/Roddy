@@ -15,6 +15,14 @@ apply plugin: "idea"
 // TODO "gradle release" should not release anything. Only explicitly released subprojects, so "gradle roddy:release"
 // TODO Use subproject { ... } for building external plugins configured on the command line. Then maybe remove explicit projects PluginBase and DefaultPlugin.
 // TODO Sometimes repo.isDirty() test fails
+// TODO Print general help information with "gradlew help"
+
+/**
+ * -PignoreFailedTests                  Continue despite failed tests.
+ * -PreleaseLevel={major,minor,patch}   When releasing, increase the build number major.minor.patch number.
+ * -PallowDirtyRepo=true                Continue release despite dirty repo.
+ * -Pchecked=false                      Turn off -F Xlint:unchecked
+ */
 
 String buildVersionFilename = "buildversion.txt"
 ext.repo = new GitRepo (rootProject.projectDir)
@@ -47,7 +55,7 @@ void increaseVersion (Project project) {
             buildVersion."${methodName}"()
             System.err.println("Increasing ${project.name} ${oldBuildVersion} to ${buildVersion}")
             VersionIO.writeBuildVersion(buildVersion)
-            // repo.commit([buildVersion.buildVersionFile], "Updated ${buildVersion.buildVersionFile} for ${name}")
+            // repo.commit([buildVersion.buildVersionFile], "Updated to ${buildVersion} for ${name}")
         } else {
             System.err.println("Not increasing build version for ${project.name} ${buildVersion} -- you may want to use -PreleaseLevel={major,minor,patch}")
         }
@@ -58,7 +66,7 @@ void tagWithBuildVersion (Project project) {
     configure(project) {
         String tag = "${project.name} ${buildVersion}"
         System.err.println("Tagging current commit '${repo.currentCommit(allowDirtyRepo)}' as '${tag}'")
-        // repo.tag(tag, allowDirtyRepo)
+        // repo.tag(tag, "Release ${project.name} ${tag}", allowDirtyRepo)
         System.err.println("Don't forget to push the tag: git push origin '${tag}'")
     }
 }
@@ -213,9 +221,6 @@ allprojects {
     }
 
     test {
-        inputs.dir new File (project.rootDir, "test")
-        //maxParallelForks = 5
-        //forkEvery = 50
         workingDir = rootProject.projectDir
         ignoreFailures = project.hasProperty("ignoreFailedTests")
         testLogging {
