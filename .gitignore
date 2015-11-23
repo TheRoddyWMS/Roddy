@@ -7,3 +7,5 @@ gradle
 .nfo
 .gradle
 .idea/encodings.xml
+manifest.tmp
+
