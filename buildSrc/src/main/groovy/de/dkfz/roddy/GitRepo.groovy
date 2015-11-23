@@ -96,13 +96,13 @@ class GitRepo {
         return modifiedObjects().size() != 0 || stagedObjects().size() != 0
     }
 
-    void tag (String tagName, boolean allowDirty=false) {
+    void tag (String tagName, String tagMessage, boolean allowDirty=false) {
         assert allowDirty || !isDirty()
-        execute(gitCommand("tag -m 'Release tag' '${tagName}'"))
+        execute(gitCommand("tag -m '${tagMessage}' ${tagName}"))
     }
 
     void commit (Collection<File> files, String message) {
-        execute(gitCommand("commit -m '${message}' -- ${files.each { "'${it.absolutePath}'"}}"))
+        execute(gitCommand("commit -m '${message}' -- ${files.each { "'${it.absolutePath}'"}.join(" ")}"))
     }
 
 }
