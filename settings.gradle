@@ -1,4 +1,7 @@
 rootProject.name = "RoddyGradle"
-include "RoddyCore"
+include "Roddy"
+project(":Roddy").projectDir = file("RoddyCore")
 include "PluginBase"
+project(":PluginBase").projectDir = file("dist/plugins/PluginBase")
 include "DefaultPlugin"
+project(":DefaultPlugin").projectDir = file("dist/plugins/DefaultPlugin")

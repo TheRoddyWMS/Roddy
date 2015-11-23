@@ -2,48 +2,42 @@ package de.dkfz.roddy
 
 class VersionIO {
 
-    static String toBuildInfo (Version version) {
-        return "${version.major}.${version.minor}" + System.getProperty("line.separator") + version.patch + System.getProperty("line.separator")
+    public static Version fromBuildInfo (List<String> buildInfo) {
+        if (buildInfo.size() == 2) {
+            return new Version(
+                    buildInfo[0].split("\\.")[0].toInteger(),
+                    buildInfo[0].split("\\.")[1].toInteger(),
+                    buildInfo[1].toInteger(),
+            )
+        } else {
+             throw new RuntimeException("Could not parse build information from '${buildInfo}'")
+        }
     }
 
-    static Version fromBuildInfo (List<String> buildInfo) {
-        assert buildInfo.size() == 2
-        return new Version (buildInfo[0].split("\\.")[0].toInteger(),
-                buildInfo[0].split("\\.")[1].toInteger(),
-                buildInfo[1].toInteger())
+    public static String toBuildVersion(Version version) {
+        List<String> buildVersion = ["${version.major}.${version.minor}",
+                                  version.patch]
+        return buildVersion.join("\n")
     }
 
-    static Version readVersion(File buildInfoFile) {
+    public static Version readBuildVersion(File buildInfoFile) {
         if (!buildInfoFile.canRead()) {
             throw new RuntimeException("Cannot read '${buildInfoFile}'")
         } else {
-            return fromBuildInfo(buildInfoFile.readLines())
+            Version version = fromBuildInfo(buildInfoFile.readLines())
+            version.buildVersionFile = buildInfoFile
+            return version
         }
     }
 
-    static Version readCoreVersion(File projectRoot) {
-        return readVersion(new File(projectRoot, "RoddyCore/rbuildversions.txt"))
-    }
-
-    static Version readBasePluginVersion(File projectRoot) {
-        return readVersion(new File(projectRoot, "dist/plugins/PluginBase/buildversion.txt"))
-    }
-
-    static Version readDefaultPluginVersion(File projectRoot) {
-        return readVersion(new File(projectRoot, "dist/plugins/DefaultPlugin/buildversion.txt"))
-    }
-
-    /*
-     * Gets the version name from the latest Git tag
-     * http://ryanharter.com/blog/2013/07/30/automatic-versioning-with-git-and-gradle/
-     */
-    static String getVersionName () {
-        def stdout = new ByteArrayOutputStream()
-        exec {
-            commandLine 'git', 'describe', '--tags'
-            standardOutput = stdout
+    public static boolean writeBuildVersion(Version version) {
+        if (version.buildInfoFile == null) {
+            throw new RuntimeException("Version object (${version}) has empty buildInfoFile property")
         }
-        return stdout.toString().trim()
+        if (!version.buildInfoFile.canWrite()) {
+            throw new RuntimeException("Cannot write '${version.buildInfoFile}'")
+        }
+        version.buildVersionFile.write(String.join(System.getProperty("line.separator"), toBuildVersion(version)))
     }
 
 }

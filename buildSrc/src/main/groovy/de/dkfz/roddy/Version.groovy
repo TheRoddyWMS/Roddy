@@ -1,45 +1,71 @@
 package de.dkfz.roddy
 
+import java.util.regex.Pattern
+import java.util.regex.Matcher
+
 class Version {
 
     public Integer major
     public Integer minor
     public Integer patch
+    public Integer revision
 
-    public Version (Integer major, Integer minor, Integer patch) {
+    public File buildVersionFile = null
+
+    public Version (Integer major, Integer minor, Integer patch, Integer revision = 0) {
         this.major = major
         this.minor = minor
         this.patch = patch
+        this.revision = revision
     }
 
     public Version increaseMajor() {
         ++major
         minor = 0
         patch = 0
+        revision = 0
         return this
     }
 
     public Version increaseMinor() {
         ++minor
         patch = 0
+        revision = 0
         return this
     }
 
     public Version increasePatch() {
         ++patch
+        revision = 0
+        return this
+    }
+
+    public Version increaseRevision() {
+        ++revision
         return this
     }
 
     public String toString() {
-        return "${major}.${minor}.${patch}"
-
+        if (revision == 0) {
+            return "${major}.${minor}.${patch}"
+        } else {
+            return "${major}.${minor}.${patch}-r${revision}"
+        }
     }
 
+    private static final versionPattern = Pattern.compile(/^(\d+)\.(\d+)\.(\d+)(-r(\d+))?$/)
+
     public static Version fromString (String versionString) {
-        versionString.split("\\.").each { it.toInteger() }.with {
-            major = getAt(0)
-            minor = getAt(1)
-            patch = getAt(2)
+        Matcher matcher = versionPattern.matcher(versionString)
+        if (matcher.find()) {
+            return new Version (
+                    matcher.group(1),
+                    matcher.group(2),
+                    matcher.group(3),
+                    matcher.group(5),
+            )
+        } else {
+            return null
         }
     }
 
@@ -47,7 +73,8 @@ class Version {
         if (idx == 0) major
         else if (idx == 1) minor
         else if (idx == 2) patch
-        else throw new IndexOutOfBoundsException("major.minor.patch")
+        else if (idx == 3) revision
+        else throw new IndexOutOfBoundsException("1.2.3-r4")
     }
 }
 

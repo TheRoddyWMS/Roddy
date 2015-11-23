@@ -1,0 +1,31 @@
+/*
+The build.gradle file for the Gradle code.
+ */
+
+
+apply plugin: 'groovy'
+apply plugin: 'idea'
+
+repositories {
+    // Manage a local copy of the required libraries.
+    flatDir dirs: ["${rootProject.projectDir}/../dist/bin/current/lib/",
+                   "${rootProject.projectDir}/../dist/runtimeDevel/groovy/lib",
+                   "${rootProject.projectDir}/../dist/runtimeDevel/jdk/lib"]
+}
+
+dependencies {
+    compile ':groovy-all:2.3.6-indy'
+    testCompile ':spock-core:1.0-groovy-2.3'
+}
+
+test {
+    //maxParallelForks = 5
+    //forkEvery = 50
+    workingDir = rootProject.projectDir
+    ignoreFailures = true
+    testLogging {
+        events "started", "skipped", "failed"
+        exceptionFormat "full"
+        showStandardStreams true
+    }
+}
