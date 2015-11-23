@@ -82,7 +82,7 @@ class GitRepoSpec extends Specification {
         repo.add([tmpFile])
         repo.commit("testmessage")
         then:
-        repo.tag("testtag", "testmessage", false)
+        repo.tag("testname", "testmessage", false)
     }
 
 }
