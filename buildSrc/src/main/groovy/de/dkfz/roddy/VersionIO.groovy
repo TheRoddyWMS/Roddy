@@ -2,15 +2,15 @@ package de.dkfz.roddy
 
 class VersionIO {
 
-    public static Version fromBuildInfo (List<String> buildInfo) {
-        if (buildInfo.size() == 2) {
+    public static Version fromBuildVersion(List<String> buildVersion) {
+        if (buildVersion.size() == 2) {
             return new Version(
-                    buildInfo[0].split("\\.")[0].toInteger(),
-                    buildInfo[0].split("\\.")[1].toInteger(),
-                    buildInfo[1].toInteger(),
+                    buildVersion[0].split("\\.")[0].toInteger(),
+                    buildVersion[0].split("\\.")[1].toInteger(),
+                    buildVersion[1].toInteger(),
             )
         } else {
-             throw new RuntimeException("Could not parse build information from '${buildInfo}'")
+             throw new RuntimeException("Could not parse build information from '${buildVersion}'")
         }
     }
 
@@ -20,22 +20,22 @@ class VersionIO {
         return buildVersion.join("\n")
     }
 
-    public static Version readBuildVersion(File buildInfoFile) {
-        if (!buildInfoFile.canRead()) {
-            throw new RuntimeException("Cannot read '${buildInfoFile}'")
+    public static Version readBuildVersion(File buildVersionFile) {
+        if (!buildVersionFile.canRead()) {
+            throw new RuntimeException("Cannot read '${buildVersionFile}'")
         } else {
-            Version version = fromBuildInfo(buildInfoFile.readLines())
-            version.buildVersionFile = buildInfoFile
+            Version version = fromBuildVersion(buildVersionFile.readLines())
+            version.buildVersionFile = buildVersionFile
             return version
         }
     }
 
     public static boolean writeBuildVersion(Version version) {
-        if (version.buildInfoFile == null) {
-            throw new RuntimeException("Version object (${version}) has empty buildInfoFile property")
+        if (version.buildVersionFile == null) {
+            throw new RuntimeException("Version object (${version}) has empty buildVersionFile property")
         }
-        if (!version.buildInfoFile.canWrite()) {
-            throw new RuntimeException("Cannot write '${version.buildInfoFile}'")
+        if (!version.buildVersionFile.canWrite()) {
+            throw new RuntimeException("Cannot write '${version.buildVersionFile}'")
         }
         version.buildVersionFile.write(String.join(System.getProperty("line.separator"), toBuildVersion(version)))
     }
