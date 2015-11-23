@@ -64,9 +64,9 @@ void increaseVersion (Project project) {
 
 void tagWithBuildVersion (Project project) {
     configure(project) {
-        String tag = "${project.name} ${buildVersion}"
+        String tag = "${project.name}-${buildVersion}"
         System.err.println("Tagging current commit '${repo.currentCommit(allowDirtyRepo)}' as '${tag}'")
-        // repo.tag(tag, "Release ${project.name} ${tag}", allowDirtyRepo)
+        // repo.tag(tag, "Release ${tag}", allowDirtyRepo)
         System.err.println("Don't forget to push the tag: git push origin '${tag}'")
     }
 }

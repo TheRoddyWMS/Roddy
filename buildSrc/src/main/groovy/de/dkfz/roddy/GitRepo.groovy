@@ -98,7 +98,7 @@ class GitRepo {
 
     void tag (String tagName, String tagMessage, boolean allowDirty=false) {
         assert allowDirty || !isDirty()
-        execute(gitCommand("tag -m '${tagMessage}' ${tagName}"))
+        execute(gitCommand("tag -m '${tagMessage}' '${tagName}'"))
     }
 
     void commit (Collection<File> files, String message) {
