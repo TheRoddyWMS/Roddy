@@ -12,6 +12,9 @@ apply plugin: "idea"
 // TODO Release only with clean git
 // TODO Put git short hash into manifests
 // TODO Clean up the directory structure to get three separate [sub]project directories. Move PluginBase and DefaultPlugin out of dist/.
+// TODO "gradle release" should not release anything. Only explicitly released subprojects, so "gradle roddy:release"
+// TODO Use subproject { ... } for building external plugins configured on the command line. Then maybe remove explicit projects PluginBase and DefaultPlugin.
+// TODO Sometimes repo.isDirty() test fails
 
 String buildVersionFilename = "buildversion.txt"
 ext.repo = new GitRepo (rootProject.projectDir)
@@ -35,7 +38,6 @@ def getVersionIncreaseMethodName () {
 
 void increaseVersion (Project project) {
     if (!allowDirtyRepo && repo.isDirty()) {
-        // TODO Let task fail instead of exception.
         throw new RuntimeException("Dirty repo. Cannot release!")
     }
     String methodName = getVersionIncreaseMethodName()
@@ -45,7 +47,7 @@ void increaseVersion (Project project) {
             buildVersion."${methodName}"()
             System.err.println("Increasing ${project.name} ${oldBuildVersion} to ${buildVersion}")
             VersionIO.writeBuildVersion(buildVersion)
-            // repo.commit([buildVersion.buildInfoFile], "Updated ${buildVersion.buildInfoFile} for ${name}")
+            // repo.commit([buildVersion.buildVersionFile], "Updated ${buildVersion.buildVersionFile} for ${name}")
         } else {
             System.err.println("Not increasing build version for ${project.name} ${buildVersion} -- you may want to use -PreleaseLevel={major,minor,patch}")
         }
@@ -211,10 +213,11 @@ allprojects {
     }
 
     test {
+        inputs.dir new File (project.rootDir, "test")
         //maxParallelForks = 5
         //forkEvery = 50
         workingDir = rootProject.projectDir
-        ignoreFailures = true
+        ignoreFailures = project.hasProperty("ignoreFailedTests")
         testLogging {
             events "started", "skipped", "failed"
             exceptionFormat "full"
@@ -257,9 +260,7 @@ project(":Roddy") {
         }
     }
 
-
     jar {
-        inputs.dir developmentDir
         baseName = "Roddy"
         destinationDir = developmentDir
         manifest {
@@ -293,7 +294,6 @@ project(":PluginBase") {
     def projectManifest = manifest {
         attributes("Implementation-Title": name)
     }
-
 
     // The current JAR
     jar {

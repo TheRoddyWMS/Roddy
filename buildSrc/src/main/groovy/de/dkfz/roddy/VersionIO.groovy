@@ -16,7 +16,7 @@ class VersionIO {
 
     public static String toBuildVersion(Version version) {
         List<String> buildVersion = ["${version.major}.${version.minor}",
-                                  version.patch]
+                                     version.patch]
         return buildVersion.join("\n")
     }
 

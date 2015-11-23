@@ -19,10 +19,8 @@ dependencies {
 }
 
 test {
-    //maxParallelForks = 5
-    //forkEvery = 50
     workingDir = rootProject.projectDir
-    ignoreFailures = true
+    ignoreFailures = project.hasProperty("ignoreFailedTests")
     testLogging {
         events "started", "skipped", "failed"
         exceptionFormat "full"

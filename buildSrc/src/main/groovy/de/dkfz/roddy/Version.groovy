@@ -76,5 +76,10 @@ class Version {
         else if (idx == 3) revision
         else throw new IndexOutOfBoundsException("1.2.3-r4")
     }
+
+    public equals (Version other) {
+        return this.major == other.major && this.minor == other.minor && this.patch == other.patch
+    }
+
 }
 
