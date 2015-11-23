@@ -8,4 +8,4 @@ gradle
 .gradle
 .idea/encodings.xml
 manifest.tmp
-
+*~
