@@ -55,9 +55,9 @@ if [[ "$parm1" == "compile" ]]; then
     source ${SCRIPTS_DIR}/compile.sh
     exit 0
 elif [[ "$parm1" == "pack" ]]; then
-    groovy ${SCRIPTS_DIR}/addChangelistVersionTag.groovy README.md RoddyCore/rbuildversions.txt
-    major=`head RoddyCore/rbuildversions.txt -n 1`
-    minor=`tail RoddyCore/rbuildversions.txt -n 1`
+    groovy ${SCRIPTS_DIR}/addChangelistVersionTag.groovy README.md RoddyCore/buildversions.txt
+    major=`head RoddyCore/buildversions.txt -n 1`
+    minor=`tail RoddyCore/buildversions.txt -n 1`
 
     packedRoddyDir=${RODDY_DIRECTORY}/dist/bin/${major}.${minor}
     packedZip=${RODDY_DIRECTORY}/dist/bin/Roddy_${major}.${minor}.zip

@@ -17,7 +17,7 @@ JDK_HOME=$JAVA_HOME
 PATH=$JDK_HOME/bin:$GROOVY_HOME/bin:$PATH
 
 echo "Increasing build number and date"
-groovy ${SCRIPTS_DIR}/IncreaseAndSetBuildVersion.groovy RoddyCore/rbuildversions.txt RoddyCore/src/de/dkfz/roddy/Constants.java &
+groovy ${SCRIPTS_DIR}/IncreaseAndSetBuildVersion.groovy RoddyCore/buildversions.txt RoddyCore/src/de/dkfz/roddy/Constants.java &
 
 echo "Searching source files"
 test=`find RoddyCore/src/ -type f \( -name "*.groovy" -or -name "*.java"  \)`
