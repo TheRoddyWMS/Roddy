@@ -6,8 +6,8 @@ import java.util.List;
  * A generic file group for different purposes. Use this class if thou needst a file group and you do not have your own one.
  * Created by kleinhei on 6/23/14.
  */
-public class GenericFileGroup extends FileGroup {
-    public GenericFileGroup(List files) {
+public class GenericFileGroup<F extends BaseFile> extends FileGroup<F> {
+    public GenericFileGroup(List<F> files) {
         super(files);
     }
 }

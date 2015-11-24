@@ -163,7 +163,7 @@ public class BrawlWorkflow extends Workflow {
 
                     StringBuilder temp = new StringBuilder();
 
-                    assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, context, knownObjects)
+                    assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, knownObjects)
 
                     classBuilder << temp.toString()[2..-1] << NEWLINE;
                 } else if (l.startsWith("set ")) {
@@ -176,7 +176,7 @@ public class BrawlWorkflow extends Workflow {
                     String classOfFileObject = "def" //FileObject.class.name;
 
                     if (_l.size() > indexOfAssignment && _l[indexOfAssignment] == "=") {
-                        classOfFileObject = assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, context, knownObjects)
+                        classOfFileObject = assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, knownObjects)
                     }
 
                     knownObjects[varname] = classOfFileObject;
@@ -198,7 +198,7 @@ public class BrawlWorkflow extends Workflow {
                     String classOfFileObject = "def";
 
                     if (_l.size() > indexOfAssignment && _l[indexOfAssignment] == "=") {
-                        classOfFileObject = assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, context, knownObjects)
+                        classOfFileObject = assembleCall(_l, indexOfCallCmd, indexOfCallee, temp, configuration, knownObjects)
                         classBuilder << varname << temp;
                     }
 
@@ -237,15 +237,31 @@ public class BrawlWorkflow extends Workflow {
         return true;
     }
 
-    private String prepareAndReformatLine(String line) {
+    private static String prepareAndReformatLine(String line) {
+        Map<String, String> replacedMap = [:]
+        line.findAll("(\".+?\")").each {
+            String found ->
+                String id = "somestring_" + ("" + replacedMap.size()).padLeft(4, "0")
+                replacedMap[id] = found;
+                line = line.replace(found, id)
+        }
+
         String l = line.replaceFirst("=", " = ") // Pre-/Append whitespace to the first equals. Don't change equals in parameters...
                 .replaceAll("!", "! ")  // Append a whitespace to negations
                 .replaceAll("[(]", ' ( ')  // Prepend a whitespace to braces
                 .replaceAll("[)]", ' ) ')  // Prepend a whitespace to braces
-                .replaceAll("\\s+", " ")
+                .replaceAll("[=]", " = ")
                 .replaceAll("[;]", "; ")
-                .replaceAll("[ ][(][ ][)][ ]", "()")
-                .replaceAll("[)][)]", ") )");
+                .replaceAll("\\s+", " ")
+                .replaceAll("[ ][;]", ";")
+//                .replaceAll("[ ][(]", "(")
+                .replaceAll("[)][)]", ") )")
+                .replaceAll("[=][ ][=]", "==")
+                .trim();
+        replacedMap.each {
+            String k, String v ->
+                l = l.replace(k, v);
+        }
         return l
     }
 
@@ -265,13 +281,13 @@ public class BrawlWorkflow extends Workflow {
     /**
      * Wrapper method for _assembleCall to have a cheap try catch around it.
      */
-    private static String assembleCall(String[] _l, int indexOfCallCmd, int indexOfCallee, StringBuilder temp, ContextConfiguration configuration, ExecutionContext context, LinkedHashMap<String, String> knownObjects) {
+    private static String assembleCall(String[] _l, int indexOfCallCmd, int indexOfCallee, StringBuilder temp, ContextConfiguration configuration, LinkedHashMap<String, String> knownObjects) {
         try {
 
             if (_l[indexOfCallCmd] == "call")
-                return _assembleCall(_l, indexOfCallee, temp, configuration, context, knownObjects);
+                return _assembleCall(_l, indexOfCallee, temp, configuration, knownObjects);
             else if (_l[indexOfCallCmd] == "loadFilesWith")
-                return _assembleLoadFilesCall(_l, indexOfCallee, temp, configuration, context, knownObjects);
+                return _assembleLoadFilesCall(_l, indexOfCallee, temp, configuration, knownObjects);
             else
                 logger.severe("Something is wrong!");
         } catch (Exception ex) {
@@ -279,12 +295,12 @@ public class BrawlWorkflow extends Workflow {
         }
     }
 
-    private static String _assembleCall(String[] _l, int indexOfCallee, StringBuilder temp, ContextConfiguration configuration, ExecutionContext context, LinkedHashMap<String, String> knownObjects) {
+    private static String _assembleCall(String[] _l, int indexOfCallee, StringBuilder temp, ContextConfiguration configuration, LinkedHashMap<String, String> knownObjects) {
         String classOfFileObject = "def" //FileObject.class.name;
 
         if (_l[indexOfCallee][0] == '"') { // We call a tool!
             //Find out via tool id
-            classOfFileObject = getClassOfOutputParameters(configuration.getTools().getValue(_l[indexOfCallee].replaceAll('"', "")), context)
+            classOfFileObject = getClassOfOutputParameters(configuration.getTools().getValue(_l[indexOfCallee].replaceAll('"', "")), configuration)
             temp << " = (" << classOfFileObject << ") " << GenericMethod.class.name
             temp << ".callGenericTool(" << _l[indexOfCallee] << ", " << _l[indexOfCallee + 2..-2].join(" ") << ")";
         } else {
@@ -309,8 +325,8 @@ public class BrawlWorkflow extends Workflow {
         classOfFileObject
     }
 
-    private static String getClassOfOutputParameters(ToolEntry toolEntry, ExecutionContext context) {
-        List<ToolEntry.ToolParameter> outputParameters = toolEntry.getOutputParameters(context);
+    private static String getClassOfOutputParameters(ToolEntry toolEntry, Configuration configuration) {
+        List<ToolEntry.ToolParameter> outputParameters = toolEntry.getOutputParameters(configuration);
         String classOfFileObject;
 
         if (outputParameters.size() == 1) {
@@ -328,9 +344,12 @@ public class BrawlWorkflow extends Workflow {
         return classOfFileObject
     }
 
-    private static String _assembleLoadFilesCall(String[] _l, int indexOfCallee, StringBuilder temp, ContextConfiguration configuration, ExecutionContext context, LinkedHashMap<String, String> knownObjects) {
-        String classOfFileObject = getClassOfOutputParameters(context.getConfiguration().getTools().getValue(_l[indexOfCallee]), context);
-        """ = List<File> files = ExecutionService.getInstance().executeTool(context, ${_l[indexOfCallee]}.replaceAll('"', "")).collect { it -> new File(it) };"""
+    private static String _assembleLoadFilesCall(String[] _l, int indexOfCallee, StringBuilder temp, ContextConfiguration configuration, LinkedHashMap<String, String> knownObjects) {
+        String toolID = _l[indexOfCallee].replaceAll('"', "");
+        ToolEntry toolEntry = configuration.getTools().getValue(toolID);
+        String classOfFileObject = getClassOfOutputParameters(toolEntry, configuration);
+
+        String loadFilesCall = """ = List<File> files = ExecutionService.getInstance().executeTool(context, ${toolID}).collect { it -> new File(it) };"""
         classOfFileObject
     }
 

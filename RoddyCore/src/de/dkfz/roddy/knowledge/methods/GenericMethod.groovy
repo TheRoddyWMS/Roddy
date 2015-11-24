@@ -177,8 +177,8 @@ class GenericMethod {
             }
         }
 
-        for (int i = 0; i < calledTool.getOutputParameters(context).size(); i++) {
-            ToolEntry.ToolParameter toolParameter = calledTool.getOutputParameters(context)[i];
+        for (int i = 0; i < calledTool.getOutputParameters(context.getConfiguration()).size(); i++) {
+            ToolEntry.ToolParameter toolParameter = calledTool.getOutputParameters(context.getConfiguration())[i];
             if (toolParameter instanceof ToolEntry.ToolFileParameter) {
                 ToolEntry.ToolFileParameter _tp = (ToolEntry.ToolFileParameter) toolParameter;
                 for (ToolEntry.ToolConstraint constraint in _tp.constraints) {
@@ -234,8 +234,9 @@ class GenericMethod {
 
     private <F extends FileObject> F createOutputObject(String arrayIndex = null) {
         F outputObject = null;
-        if (calledTool.getOutputParameters(inputFile.getExecutionContext()).size() == 1) {
-            ToolEntry.ToolParameter tparm = calledTool.getOutputParameters(inputFile.getExecutionContext())[0];
+        def configuration = inputFile.getExecutionContext().getConfiguration()
+        if (calledTool.getOutputParameters(configuration).size() == 1) {
+            ToolEntry.ToolParameter tparm = calledTool.getOutputParameters(configuration)[0];
             if (tparm instanceof ToolEntry.ToolFileParameter) {
                 ToolEntry.ToolFileParameter fileParameter = tparm as ToolEntry.ToolFileParameter;
                 BaseFile bf = toolFileParameterToBaseFile(fileParameter, inputFile, allInputFiles)

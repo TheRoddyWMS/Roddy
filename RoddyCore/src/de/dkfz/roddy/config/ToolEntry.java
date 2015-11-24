@@ -417,9 +417,9 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         return inputParameters;
     }
 
-    public List<ToolParameter> getOutputParameters(ExecutionContext context) {
-        return getOutputParameters(context.getConfiguration());
-    }
+//    public List<ToolParameter> getOutputParameters(ExecutionContext context) {
+//        return getOutputParameters(context.getConfiguration());
+//    }
 
     public List<ToolParameter> getOutputParameters(Configuration configuration) {
         if(overridesResourceSets) {
