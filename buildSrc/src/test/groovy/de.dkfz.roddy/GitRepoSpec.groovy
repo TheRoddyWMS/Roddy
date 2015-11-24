@@ -16,21 +16,22 @@ class GitRepoSpec extends Specification {
 
     def "check initializing new repo" () {
         when:
-        GitRepo repo = GitRepo.initialize(tmpDir)
+        GitRepo repo = new GitRepo(tmpDir)
+        repo.initialize()
         then:
         repo.repoDir.exists() && new File (repo.repoDir, ".git").exists()
     }
 
     def "adding a file" () {
         when:
-        GitRepo repo = GitRepo.initialize(tmpDir)
+        GitRepo repo = new GitRepo(tmpDir).initialize()
         then:
         repo.add([tmpFile])
     }
 
     def "committing a file" () {
         when:
-        GitRepo repo = GitRepo.initialize(tmpDir)
+        GitRepo repo = new GitRepo (tmpDir).initialize()
         repo.add([tmpFile])
         then:
         repo.commit("testfile")
@@ -38,7 +39,7 @@ class GitRepoSpec extends Specification {
 
     def "checking current commit" () {
         when:
-        GitRepo repo = GitRepo.initialize(tmpDir)
+        GitRepo repo = new GitRepo (tmpDir).initialize()
         repo.add([tmpFile])
         repo.commit("testfile")
         then:
@@ -47,7 +48,7 @@ class GitRepoSpec extends Specification {
 
     def "listing modified files" () {
         when:
-        GitRepo repo = GitRepo.initialize(tmpDir)
+        GitRepo repo = new GitRepo (tmpDir).initialize()
         repo.add([tmpFile])
         repo.commit("testfile")
         tmpFile.write("hallo")
@@ -57,7 +58,7 @@ class GitRepoSpec extends Specification {
 
     def "checking current commit date" () {
         when:
-        GitRepo repo = GitRepo.initialize(tmpDir)
+        GitRepo repo = new GitRepo (tmpDir).initialize()
         repo.add([tmpFile])
         repo.commit("testfile")
         then:
@@ -66,7 +67,7 @@ class GitRepoSpec extends Specification {
 
     def "recognizing dirty repo" () {
         when:
-        GitRepo repo = GitRepo.initialize(tmpDir)
+        GitRepo repo = new GitRepo (tmpDir).initialize()
         repo.add([tmpFile])
         then:
         repo.isDirty()
@@ -78,7 +79,7 @@ class GitRepoSpec extends Specification {
 
     def "tagging a commit" () {
         when:
-        GitRepo repo = GitRepo.initialize(tmpDir)
+        GitRepo repo = new GitRepo (tmpDir).initialize()
         repo.add([tmpFile])
         repo.commit("testmessage")
         then:
