@@ -102,7 +102,7 @@ class GitRepo {
     }
 
     void commit (Collection<File> files, String message) {
-        execute(gitCommand(["commit", "-m '${message}'", "--"].toList() + files.each { "'${it.absolutePath}'"}))
+        execute(gitCommand(["commit", "-m '${message}'", "--"] + files.each { "'${it.absolutePath}'"} as String[]))
     }
 
 }
