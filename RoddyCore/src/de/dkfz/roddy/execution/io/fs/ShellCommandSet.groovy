@@ -82,4 +82,6 @@ public abstract class ShellCommandSet {
     public abstract String getRemoveFileCommand(File file);
 
     public abstract ConfigurationConverter getConfigurationConverter();
+
+    public abstract String getExecuteScriptCommand(File file);
 }

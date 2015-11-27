@@ -12,7 +12,7 @@
 
 [[ ${PARAMETER_FILE-false} != false ]] && source ${PARAMETER_FILE}
 
-source ${CONFIG_FILE}
+[[ ${CONFIG_FILE-false} != false ]] && source ${CONFIG_FILE}
 
 isOutputFileGroup=${outputFileGroup-false}
 

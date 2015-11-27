@@ -17,8 +17,11 @@ import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.CommandFactory
+import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobDependencyID
 import de.dkfz.roddy.execution.jobs.JobState
+import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
+import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutedCommandFactory
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -141,10 +144,14 @@ public abstract class ExecutionService extends CacheProvider {
 
     protected abstract List<String> _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream);
 
-    public List<String> executeTool(ExecutionContext context, String toolID) {
+    public List<String> executeTool(ExecutionContext context, String toolID, String jobNameExtension = "_executedScript:") {
         File path = context.getConfiguration().getProcessingToolPath(context, toolID);
-        ExecutionResult executionResult = execute(path.absolutePath, true);
-        executionResult.resultLines;
+
+//        Job wrapperJob = new Job(context, context.getTimeStampString() + jobNameExtension + toolID, toolID, null);
+//        DirectSynchronousExecutedCommandFactory dcfac = new DirectSynchronousExecutedCommandFactory();
+//        DirectCommand wrapperJobCommand = dcfac.createCommand(wrapperJob, context.getConfiguration().getProcessingToolPath(context, toolID), new LinkedList<>());
+        String cmd = FileSystemAccessProvider.getInstance().commandSet.getExecuteScriptCommand(path);
+        return execute(cmd).resultLines;
     }
 
     public ExecutionResult execute(String string, boolean waitFor = true, OutputStream outputStream = null) {

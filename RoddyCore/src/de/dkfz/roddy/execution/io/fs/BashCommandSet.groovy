@@ -251,4 +251,8 @@ public class BashCommandSet extends ShellCommandSet {
         return new BashConverter();
     }
 
+    @Override
+    String getExecuteScriptCommand(File file) {
+        return "/bin/bash ${file.absolutePath}";
+    }
 }
