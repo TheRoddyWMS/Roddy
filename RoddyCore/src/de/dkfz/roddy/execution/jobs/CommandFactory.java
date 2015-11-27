@@ -37,6 +37,10 @@ public abstract class CommandFactory<C extends Command> {
     public CommandFactory() {
     }
 
+    public static void initializeFactory(CommandFactory factory) {
+        commandFactory = factory;
+    }
+
     public static void initializeFactory(boolean fullSetup) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, InstantiationException {
         if (!fullSetup)
             return;

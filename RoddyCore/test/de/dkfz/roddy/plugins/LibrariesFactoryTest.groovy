@@ -148,16 +148,10 @@ public class LibrariesFactoryTest {
 
         //Add additional "native" plugins (DefaultPlugin, PluginBase) and the temporary plugin folder
         List<File> pluginDirectories = [
-                new File(Roddy.getApplicationDirectory(), "/dist/plugins/"),
                 pluginsBaseDir.root
         ]
 
-        // The method is static and private and should stay that way, so get it via reflection.
-        Method loadMapOfAvailablePlugins = LibrariesFactory.getDeclaredMethod("loadMapOfAvailablePlugins", List.class);
-        loadMapOfAvailablePlugins.setAccessible(true);
-
-        // Invoke the method and check the results.
-        mapOfAvailablePlugins = loadMapOfAvailablePlugins.invoke(null, pluginDirectories) as Map<String, Map<String, PluginInfo>>;
+        mapOfAvailablePlugins = callLoadMapOfAvailablePlugins(pluginDirectories)
 
         // Check, if all plugins were recognized and if the version count matches.
         assert mapOfAvailablePlugins.size() >= mapWithTestPlugins.size(); // Take the additional plugins into account
@@ -169,6 +163,19 @@ public class LibrariesFactoryTest {
 
         assert mapOfAvailablePlugins["B"]["1.0.2-1"]?.previousInChain == mapOfAvailablePlugins["B"]["1.0.2-0"] && mapOfAvailablePlugins["B"]["1.0.2-1"]?.previousInChainConnectionType == PluginInfo.PluginInfoConnection.REVISION
         assert mapOfAvailablePlugins["B"]["1.0.3-0"]?.previousInChain == mapOfAvailablePlugins["B"]["1.0.2-2"] && mapOfAvailablePlugins["B"]["1.0.3-0"]?.previousInChainConnectionType == PluginInfo.PluginInfoConnection.EXTENSION
+    }
+
+    public static Map<String, Map<String, PluginInfo>> callLoadMapOfAvailablePlugins(List<File> additionalPluginDirectories = []) {
+        List<File> pluginDirectories = [new File(Roddy.getApplicationDirectory(), "/dist/plugins/")]
+        pluginDirectories += additionalPluginDirectories
+
+        // The method is static and private and should stay that way, so get it via reflection.
+        Method loadMapOfAvailablePlugins = LibrariesFactory.getDeclaredMethod("loadMapOfAvailablePlugins", List.class);
+        loadMapOfAvailablePlugins.setAccessible(true);
+
+        // Invoke the method and check the results.
+        mapOfAvailablePlugins = loadMapOfAvailablePlugins.invoke(null, pluginDirectories) as Map<String, Map<String, PluginInfo>>;
+        return mapOfAvailablePlugins
     }
 
     @Test

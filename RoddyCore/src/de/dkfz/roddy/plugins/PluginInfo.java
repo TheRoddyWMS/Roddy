@@ -117,6 +117,8 @@ public class PluginInfo {
         return new File(new File(directory, "resources"), "brawlworkflows");
     }
 
+    public File getConfigurationDirectory() { return new File(new File(directory, "resources"), "configurationFiles"); }
+
     public String getName() {
         return name;
     }
