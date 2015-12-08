@@ -332,8 +332,9 @@ public class BrawlWorkflow extends Workflow {
         if (outputParameters.size() == 1) {
             if (outputParameters[0] instanceof ToolEntry.ToolFileParameter)
                 classOfFileObject = ((ToolEntry.ToolFileParameter) outputParameters[0]).fileClass.name;
-            if (outputParameters[0] instanceof ToolEntry.ToolFileGroupParameter)
-                classOfFileObject = ((ToolEntry.ToolFileGroupParameter) outputParameters[0]).groupClass.name;
+            if (outputParameters[0] instanceof ToolEntry.ToolFileGroupParameter) {
+                classOfFileObject = ((ToolEntry.ToolFileGroupParameter) outputParameters[0]).getGenericClassString()
+            }
             if (outputParameters[0] instanceof ToolEntry.ToolTupleParameter) {
 
                 ToolEntry.ToolTupleParameter tupleParameter = (ToolEntry.ToolTupleParameter) outputParameters[0]
@@ -349,7 +350,12 @@ public class BrawlWorkflow extends Workflow {
         ToolEntry toolEntry = configuration.getTools().getValue(toolID);
         String classOfFileObject = getClassOfOutputParameters(toolEntry, configuration);
 
-        String loadFilesCall = """ = List<File> files = ExecutionService.getInstance().executeTool(context, ${toolID}).collect { it -> new File(it) };"""
+        def loadFilesCall = " = ${classOfFileObject} inputfiles =\n" +
+                            "       new ${classOfFileObject}(ExecutionService.getInstance().executeTool(context, ${toolID}\n" +
+                            "           .replaceAll('\"', ''))\n" +
+                            "           .collect { it -> new TestFile(it) });"
+
+        temp << loadFilesCall
         classOfFileObject
     }
 

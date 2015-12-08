@@ -243,7 +243,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
             this.checkFile = checkFile;
             this.filenamePatternSelectionTag = filenamePatternSelectionTag;
             this.childFiles = childFiles;
-            if(this.childFiles == null) this.childFiles = new LinkedList<>();
+            if (this.childFiles == null) this.childFiles = new LinkedList<>();
             this.parentVariable = parentVariable;
         }
 
@@ -292,6 +292,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
      */
     public static class ToolFileGroupParameter extends ToolParameter<ToolFileGroupParameter> {
         public final Class<FileGroup> groupClass;
+        public final Class<BaseFile> genericFileClass;
         public final List<ToolFileParameter> files;
         public final PassOptions passOptions;
 
@@ -300,11 +301,12 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
             array
         }
 
-        public ToolFileGroupParameter(Class<FileGroup> groupClass, List<ToolFileParameter> files, String scriptParameterName, PassOptions passas) {
+        public ToolFileGroupParameter(Class<FileGroup> groupClass, Class<BaseFile> genericFileClass, List<ToolFileParameter> files, String scriptParameterName, PassOptions passas) {
             super(scriptParameterName);
             this.groupClass = groupClass;
             this.files = files;
             this.passOptions = passas;
+            this.genericFileClass = genericFileClass;
         }
 
         @Override
@@ -313,7 +315,19 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
             for (ToolFileParameter tf : files) {
                 _files.add(tf.clone());
             }
-            return new ToolFileGroupParameter(groupClass, _files, scriptParameterName, passOptions);
+            return new ToolFileGroupParameter(groupClass, genericFileClass, _files, scriptParameterName, passOptions);
+        }
+
+        public boolean isGeneric() {
+            return genericFileClass != null;
+        }
+
+        public String getGenericClassString() {
+            if (isGeneric()) {
+                return groupClass.getName() + "<" + genericFileClass.getName() + ">";
+            } else {
+                return groupClass.getName();
+            }
         }
     }
 
@@ -341,7 +355,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
     }
 
     public boolean isToolGeneric() {
-        return overridesResourceSets ||  (inputParameters.size() > 0 || outputParameters.size() > 0);
+        return overridesResourceSets || (inputParameters.size() > 0 || outputParameters.size() > 0);
     }
 
     public void setGenericOptions(List<ToolParameter> input, List<ToolParameter> output, List<ResourceSet> resourceSets) {
@@ -365,7 +379,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         }
         ToolEntry te = new ToolEntry(id, basePathId, path, computationResourcesFlags);
         te.setGenericOptions(_inp, _outp, _rsets);
-        if(overridesResourceSets) te.setOverridesResourceSets();
+        if (overridesResourceSets) te.setOverridesResourceSets();
         return te;
     }
 
@@ -396,21 +410,25 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         return null;
     }
 
-    public void setOverridesResourceSets() { overridesResourceSets = true; }
+    public void setOverridesResourceSets() {
+        overridesResourceSets = true;
+    }
 
-    public boolean doesOverrideResourceSets() { return overridesResourceSets; }
+    public boolean doesOverrideResourceSets() {
+        return overridesResourceSets;
+    }
 
     public List<ToolParameter> getInputParameters(ExecutionContext context) {
         return getInputParameters(context.getConfiguration());
     }
 
     public List<ToolParameter> getInputParameters(Configuration configuration) {
-        if(overridesResourceSets) {
+        if (overridesResourceSets) {
             List<ToolEntry> containerParents = configuration.getTools().getInheritanceList(this.id);
-            if(containerParents.size() == 1)
+            if (containerParents.size() == 1)
                 return inputParameters;
-            for (int i = containerParents.size() - 2; i >= 0 ; i--) {
-                if(!containerParents.get(i).overridesResourceSets)
+            for (int i = containerParents.size() - 2; i >= 0; i--) {
+                if (!containerParents.get(i).overridesResourceSets)
                     return containerParents.get(i).inputParameters;
             }
         }
@@ -422,11 +440,11 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
 //    }
 
     public List<ToolParameter> getOutputParameters(Configuration configuration) {
-        if(overridesResourceSets) {
+        if (overridesResourceSets) {
             List<ToolEntry> containerParents = configuration.getTools().getInheritanceList(this.id);
-            if(containerParents.size() == 1)
+            if (containerParents.size() == 1)
                 return outputParameters;
-            for (int i = containerParents.size() - 2; i >= 0 ; i--) {
+            for (int i = containerParents.size() - 2; i >= 0; i--) {
                 if (!containerParents.get(i).overridesResourceSets)
                     return containerParents.get(i).outputParameters;
             }

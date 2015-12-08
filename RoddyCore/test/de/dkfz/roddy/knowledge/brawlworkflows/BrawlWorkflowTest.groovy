@@ -1,13 +1,16 @@
 package de.dkfz.roddy.knowledge.brawlworkflows
 
-import de.dkfz.roddy.config.AnalysisConfiguration;
+import de.dkfz.roddy.config.AnalysisConfiguration
+import de.dkfz.roddy.config.ConfigurationFactory;
 import de.dkfz.roddy.config.ContextConfiguration
 import de.dkfz.roddy.config.ProjectConfiguration
 import de.dkfz.roddy.config.ToolEntry;
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
+import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
+import de.dkfz.roddy.plugins.LibrariesFactory
 import groovy.transform.TypeCheckingMode;
 import org.junit.Test;
 
@@ -55,7 +58,7 @@ public class BrawlWorkflowTest {
         Method assembleCall = BrawlWorkflow.class.getDeclaredMethod("_assembleCall", String[], int, StringBuilder, ContextConfiguration, LinkedHashMap);
         assembleCall.setAccessible(true);
 
-        return (String)assembleCall.invoke(null, _l, indexOfCallee, temp, configuration, knownObjects);
+        return (String) assembleCall.invoke(null, _l, indexOfCallee, temp, configuration, knownObjects);
     }
 
     @Test
@@ -67,13 +70,9 @@ public class BrawlWorkflowTest {
     private String callAssembleLoadFilesCall(String[] _l, int indexOfCallee, StringBuilder temp, ContextConfiguration configuration, LinkedHashMap<String, String> knownObjects) {
         Method assembleLoadFilesCall = BrawlWorkflow.class.getDeclaredMethod("_assembleLoadFilesCall", String[], int, StringBuilder, ContextConfiguration, LinkedHashMap);
         assembleLoadFilesCall.setAccessible(true);
-        return (String)assembleLoadFilesCall.invoke(null, _l, indexOfCallee, temp, configuration, knownObjects);
-    }
+        String result = assembleLoadFilesCall.invoke(null, _l, indexOfCallee, temp, configuration, knownObjects);
 
-    static class TestFile extends BaseFile {
-        TestFile(BaseFile parentFile) {
-            super(parentFile)
-        }
+        return result as String;
     }
 
     @Test
@@ -84,17 +83,28 @@ public class BrawlWorkflowTest {
         def pCfg = new ProjectConfiguration(null, null, null, null)
         ContextConfiguration cc = new ContextConfiguration(aCfg, pCfg);
 
+        Class<BaseFile> testFileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass("TestFile", BaseFile.class as Class<FileObject>);
         def loadFastqFiles = new ToolEntry(LOAD_FASTQ_FILES, "testtools", "/tmp/testtools/${LOAD_FASTQ_FILES}.sh")
-
-        loadFastqFiles.getOutputParameters(cc).add(new ToolEntry.ToolFileGroupParameter(GenericFileGroup.getClass() as Class<FileGroup>, [new ToolEntry.ToolFileParameter(TestFile.class as Class<BaseFile>, new LinkedList<ToolEntry.ToolConstraint>(), "FUZZY", true)], "FUZZY_GROUP", ToolEntry.ToolFileGroupParameter.PassOptions.parameters));
+        loadFastqFiles.getOutputParameters(cc).add(
+                new ToolEntry.ToolFileGroupParameter(
+                        (new GenericFileGroup([] as List)).class as Class<FileGroup>,
+                        testFileClass,
+                        null,
+                        "FUZZY_GROUP",
+                        ToolEntry.ToolFileGroupParameter.PassOptions.parameters));
         cc.getTools().add(loadFastqFiles)
 
         String[] _l = callPrepareAndFormatLine("""set inputfiles = loadfilesWith "${LOAD_FASTQ_FILES}"()'""").split("[ ]")
         int indexOfCallee = 4;
 
-        def expected = """ = de.dkfz.roddy.knowledge.files.GenericFileGroup<TestFile> inputfiles = new de.dkfz.roddy.knowledge.files.GenericFileGroup(ExecutionService.getInstance().executeTool(context, ${LOAD_FASTQ_FILES}.replaceAll('"', "")).collect { it -> new TestFile(it) });"""
+        def expected = " = de.dkfz.roddy.knowledge.files.GenericFileGroup<de.dkfz.roddy.synthetic.files.TestFile> inputfiles =\n" +
+                       "       new de.dkfz.roddy.knowledge.files.GenericFileGroup<de.dkfz.roddy.synthetic.files.TestFile>(ExecutionService.getInstance().executeTool(context, ${LOAD_FASTQ_FILES}\n" +
+                       "           .replaceAll('\"', ''))\n" +
+                       "           .collect { it -> new TestFile(it) });"
+
         def foundClass = callAssembleLoadFilesCall(_l, indexOfCallee, tempBuilder, cc, null);
-        assert foundClass == "de.dkfz.roddy.knowledge.files.GenericFileGroup<TestFile>"
+
+        assert foundClass == "de.dkfz.roddy.knowledge.files.GenericFileGroup<de.dkfz.roddy.synthetic.files.TestFile>"
         assert expected == tempBuilder.toString();
     }
 
