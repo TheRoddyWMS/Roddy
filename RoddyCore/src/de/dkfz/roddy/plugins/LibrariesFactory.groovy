@@ -5,6 +5,8 @@ import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.client.RoddyStartupModes
 import de.dkfz.roddy.client.cliclient.CommandLineCall
 import de.dkfz.roddy.execution.io.ExecutionHelper
+import de.dkfz.roddy.knowledge.files.BaseFile
+import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.core.Initializable
@@ -21,6 +23,8 @@ public class LibrariesFactory extends Initializable {
 
     public static URLClassLoader urlClassLoader
     public static GroovyClassLoader centralGroovyClassLoader;
+
+    public static final String SYNTHETIC_PACKAGE = "de.dkfz.roddy.synthetic.files"
 
     public static final String PLUGIN_VERSION_CURRENT = "current";
     public static final String PLUGIN_DEFAULT = "DefaultPlugin";
@@ -133,6 +137,36 @@ public class LibrariesFactory extends Initializable {
             return null;
         }
     }
+
+    public Class loadRealOrSyntheticClass(String classOfFileObject, Class<FileObject> baseClassOfFileObject) {
+        Class<BaseFile> _cls = searchForClass(classOfFileObject);
+        if (_cls == null) {
+            _cls = generateSyntheticFileClassWithParentClass(classOfFileObject, baseClassOfFileObject.name)
+            logger.severe("Class ${classOfFileObject} could not be found, created synthetic class ${_cls.name}.");
+        }
+        return _cls
+    }
+
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    private Class generateSyntheticFileClassWithParentClass(String syntheticClassName, String parentClassName) {
+        String syntheticFileClass =
+                """
+                package $SYNTHETIC_PACKAGE
+
+                import ${BaseFile.name}
+
+                public class ${syntheticClassName} extends BaseFile {
+                    public ${syntheticClassName}(${parentClassName} baseFile) {
+                        super(baseFile);
+                    }
+                }
+            """
+        GroovyClassLoader groovyClassLoader = LibrariesFactory.getGroovyClassLoader();
+        Class _classID = (Class<BaseFile>) groovyClassLoader.parseClass(syntheticFileClass);
+        LibrariesFactory.getInstance().getSynthetic().addClass(_classID);
+        return _classID
+    }
+
 /**
  * Resolve all used / necessary plugins and also look for miscrepancies.
  * @param usedPlugins

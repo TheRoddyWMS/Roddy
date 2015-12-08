@@ -33,7 +33,6 @@ public class ConfigurationFactory {
 
     public static final String XMLTAG_ATTRIBUTE_INHERITANALYSES = "inheritAnalyses"
 
-    public static final String SYNTHETIC_PACKAGE = "de.dkfz.roddy.synthetic.files"
 
     public static final LoggerWrapper logger = LoggerWrapper.getLogger(ConfigurationFactory.class.getSimpleName());
 
@@ -54,13 +53,13 @@ public class ConfigurationFactory {
     }
 
     public static ConfigurationFactory getInstance() {
-        if(!singleton)
+        if (!singleton)
             initialize();
         return singleton;
     }
 
     private ConfigurationFactory(List<File> configurationDirectories = null) {
-        if (!configurationDirectories)
+        if (configurationDirectories == null)
             configurationDirectories = Roddy.getConfigurationDirectories();
 
         this.configurationDirectories.addAll(configurationDirectories);
@@ -73,7 +72,7 @@ public class ConfigurationFactory {
         configurationDirectories.parallelStream().each {
             File baseDir ->
                 logger.log(Level.CONFIG, "Searching for configuration files in: " + baseDir.toString());
-                if(!baseDir.canRead()) {
+                if (!baseDir.canRead()) {
                     logger.log(Level.SEVERE, "Cannot read from configuration directory ${baseDir.absolutePath}, does the folder exist und do you have access rights to it?")
                     return;
                 }
@@ -569,25 +568,6 @@ public class ConfigurationFactory {
         }
     }
 
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private Class generateSyntheticFileClassWithParentClass(String syntheticClassName, String parentClassName) {
-        String syntheticFileClass =
-                """
-                package $SYNTHETIC_PACKAGE
-
-                import ${BaseFile.name}
-
-                public class ${syntheticClassName} extends BaseFile {
-                    public ${syntheticClassName}(${parentClassName} baseFile) {
-                        super(baseFile);
-                    }
-                }
-            """
-        GroovyClassLoader groovyClassLoader = LibrariesFactory.getGroovyClassLoader();
-        Class _classID = (Class<BaseFile>) groovyClassLoader.parseClass(syntheticFileClass);
-        LibrariesFactory.getInstance().getSynthetic().addClass(_classID);
-        return _classID
-    }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     private void readProcessingTools(NodeChild configurationNode, Configuration config) {
@@ -780,60 +760,11 @@ public class ConfigurationFactory {
     private ToolEntry.ToolParameter parseToolParameter(String toolID, NodeChild child) {
         String type = child.@type.text();
         if (type == "file") { //Load a file
-            String cls = child.@typeof.text();
-            Class _cls = LibrariesFactory.getInstance().searchForClass(cls);
-            if (_cls == null) {
-                _cls = generateSyntheticFileClassWithParentClass(cls, BaseFile.class.name)
-                logger.severe("Class ${cls} could not be found!");
-            }
-            String pName = child.@scriptparameter.text();
-            String fnpSelTag = extractAttributeText(child, "fnpatternselectiontag", FilenamePattern.DEFAULT_SELECTION_TAG);
-            boolean check = Boolean.parseBoolean(extractAttributeText(child, "check", "true"));
-            String parentFileVariable = extractAttributeText(child, "variable", null); //This is only the case for child files.
-
-            List<ToolEntry.ToolConstraint> constraints = new LinkedList<ToolEntry.ToolConstraint>();
-            for (constraint in child.constraint) {
-                String method = constraint.@method.text();
-                String methodonfail = constraint.@methodonfail.text();
-                constraints << new ToolEntry.ToolConstraint(_cls.getMethod(methodonfail), _cls.getMethod(method));
-            }
-
-            // A file can have several defined child files
-            List<ToolEntry.ToolFileParameter> subParameters = new LinkedList<ToolEntry.ToolFileParameter>();
-            for (NodeChild fileChild in child.children()) {
-                subParameters << (ToolEntry.ToolFileParameter) parseToolParameter(toolID, fileChild);
-            }
-            ToolEntry.ToolFileParameter tp = new ToolEntry.ToolFileParameter(_cls, constraints, pName, check, fnpSelTag, subParameters, parentFileVariable);
-
-            return tp;
+            return parseFile(child, toolID)
         } else if (type == "tuple") {
-            int tupleSize = child.children().size();
-            if (!FileObjectTupleFactory.isValidSize(tupleSize)) {
-                logger.severe("Tuple is of wrong size for tool ${toolID}.")
-            }
-            List<ToolEntry.ToolFileParameter> subParameters = new LinkedList<ToolEntry.ToolFileParameter>();
-            for (NodeChild fileChild in child.children()) {
-                subParameters << (ToolEntry.ToolFileParameter) parseToolParameter(toolID, fileChild);
-            }
-            return new ToolEntry.ToolTupleParameter(subParameters);
+            return parseTuple(child, toolID)
         } else if (type == "filegroup") {
-            String cls = child.@typeof.text();
-            PassOptions passas = Enum.valueOf(PassOptions.class, extractAttributeText(child, "passas", PassOptions.parameters.name()));
-            String pName = child.@scriptparameter.text();
-            Class _cls = LibrariesFactory.getInstance().loadClass(cls);
-
-            if (_cls == null) {
-                logger.severe("Class ${cls} could not be found!");
-            }
-            List<ToolEntry.ToolFileParameter> subParameters = new LinkedList<ToolEntry.ToolFileParameter>();
-            int childCount = child.children().size();
-            if (childCount == 0 && passas != PassOptions.array)
-                logger.severe("No files in the file group. Configuration is not valid.")
-            for (NodeChild fileChild in child.children()) {
-                subParameters << (ToolEntry.ToolFileParameter) parseToolParameter(toolID, fileChild);
-            }
-            ToolEntry.ToolFileGroupParameter tpg = new ToolEntry.ToolFileGroupParameter(_cls, subParameters, pName, passas);
-            return tpg;
+            return parseFileGroup(child, toolID)
         } else if (type == "string") {
             ParameterSetbyOptions setby = Enum.valueOf(ParameterSetbyOptions.class, extractAttributeText(child, "setby", ParameterSetbyOptions.callingCode.name()))
             String pName = child.@scriptparameter.text();
@@ -846,6 +777,70 @@ public class ConfigurationFactory {
             }
             return tsp;
         }
+    }
+
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    private ToolEntry.ToolFileParameter parseFile(NodeChild child, String toolID) {
+        String cls = child.@typeof.text();
+        Class _cls = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, BaseFile.class)
+
+        String pName = child.@scriptparameter.text();
+        String fnpSelTag = extractAttributeText(child, "fnpatternselectiontag", FilenamePattern.DEFAULT_SELECTION_TAG);
+        boolean check = Boolean.parseBoolean(extractAttributeText(child, "check", "true"));
+        String parentFileVariable = extractAttributeText(child, "variable", null); //This is only the case for child files.
+
+        List<ToolEntry.ToolConstraint> constraints = new LinkedList<ToolEntry.ToolConstraint>();
+        for (constraint in child.constraint) {
+            String method = constraint.@method.text();
+            String methodonfail = constraint.@methodonfail.text();
+            constraints << new ToolEntry.ToolConstraint(_cls.getMethod(methodonfail), _cls.getMethod(method));
+        }
+
+        // A file can have several defined child files
+        List<ToolEntry.ToolFileParameter> subParameters = new LinkedList<ToolEntry.ToolFileParameter>();
+        for (NodeChild fileChild in child.children()) {
+            subParameters << (ToolEntry.ToolFileParameter) parseToolParameter(toolID, fileChild);
+        }
+        ToolEntry.ToolFileParameter tp = new ToolEntry.ToolFileParameter(_cls, constraints, pName, check, fnpSelTag, subParameters, parentFileVariable);
+
+        return tp;
+    }
+
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    private ToolEntry.ToolTupleParameter parseTuple(NodeChild child, String toolID) {
+        int tupleSize = child.children().size();
+        if (!FileObjectTupleFactory.isValidSize(tupleSize)) {
+            logger.severe("Tuple is of wrong size for tool ${toolID}.")
+        }
+        List<ToolEntry.ToolFileParameter> subParameters = new LinkedList<ToolEntry.ToolFileParameter>();
+        for (NodeChild fileChild in child.children()) {
+            subParameters << (ToolEntry.ToolFileParameter) parseToolParameter(toolID, fileChild);
+        }
+        return new ToolEntry.ToolTupleParameter(subParameters);
+    }
+
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    public ToolEntry.ToolFileGroupParameter parseFileGroup(NodeChild child, String toolID) {
+        String cls = child.@typeof.text();
+        Class filegroupClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, FileGroup.class);
+
+        PassOptions passas = Enum.valueOf(PassOptions.class, extractAttributeText(child, "passas", PassOptions.parameters.name()));
+        Class genericFileClass = null
+        String fileclass = extractAttributeText(child, "fileclass", null);
+        if (fileclass) {
+            genericFileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(fileclass, BaseFile.class)
+        }
+        String pName = child.@scriptparameter.text();
+
+        List<ToolEntry.ToolFileParameter> subParameters = new LinkedList<ToolEntry.ToolFileParameter>();
+        int childCount = child.children().size();
+        if (childCount == 0 && passas != PassOptions.array)
+            logger.severe("No files in the file group. Configuration is not valid.")
+        for (NodeChild fileChild in child.children()) {
+            subParameters << (ToolEntry.ToolFileParameter) parseToolParameter(toolID, fileChild);
+        }
+        ToolEntry.ToolFileGroupParameter tpg = new ToolEntry.ToolFileGroupParameter(filegroupClass, genericFileClass, subParameters, pName, passas);
+        return tpg;
     }
 
     ProjectConfiguration getProjectConfiguration(String s) {
