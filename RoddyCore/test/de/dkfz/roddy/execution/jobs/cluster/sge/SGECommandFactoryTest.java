@@ -28,14 +28,14 @@ public class SGECommandFactoryTest {
 
         CommandFactory cFactory = new SGECommandFactory(false);
         PBSResourceProcessingCommand test = (PBSResourceProcessingCommand) cFactory.convertResourceSet(cfg, rset1);
-        assert test.getProcessingString().equals(" -V -l s_data=1024M -l nodes=1:ppn=2 -l walltime=00:01:00:00");
+        assert test.getProcessingString().trim().equals("-V -l s_data=1024M");
 
         test = (PBSResourceProcessingCommand) cFactory.convertResourceSet(cfg, rset2);
-        assert test.getProcessingString().equals(" -V -l nodes=1:ppn=1 -l walltime=00:01:00:00");
+        assert test.getProcessingString().equals(" -V");
 
         test = (PBSResourceProcessingCommand) cFactory.convertResourceSet(cfg, rset3);
-        assert test.getProcessingString().equals(" -V -l mem=1024M -l nodes=1:ppn=2");
-
+        assert test.getProcessingString().equals(" -V -l s_data=1024M");
     }
+
 
 }

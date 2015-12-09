@@ -52,12 +52,12 @@ public class BufferValue {
     }
 
     public BufferValue(Integer value, BufferUnit unit = BufferUnit.G, BufferUnit baseUnit = BufferUnit.K) {
-        this.alignedValue = (value * unit.multiplier) as Long;
+        this.alignedValue = (value * unit.multiplier / baseUnit.multiplier) as Long;
         this.baseUnit = baseUnit;
     }
 
     public BufferValue(Float value, BufferUnit unit = BufferUnit.G, BufferUnit baseUnit = BufferUnit.K) {
-        this.alignedValue = (value * unit.multiplier) as Long;
+        this.alignedValue = (value * unit.multiplier / baseUnit.multiplier) as Long;
         this.baseUnit = baseUnit;
     }
 

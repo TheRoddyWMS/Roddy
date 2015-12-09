@@ -22,6 +22,7 @@ public class TimeUnitTest {
     private static Map<String, String> validAndExpectedValuesWithUnit = [
             "s"   : "00:00:00:01",
             "m"   : "00:00:01:00",
+            "h"   : "00:01:00:00",
             "4m"  : "00:00:04:00",
             "120m": "00:02:00:00",
             "180h": "07:12:00:00",

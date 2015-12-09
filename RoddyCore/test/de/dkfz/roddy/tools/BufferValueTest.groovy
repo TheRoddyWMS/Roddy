@@ -37,6 +37,7 @@ public class BufferValueTest {
             "3.5G": 3584,
     ]
 
+
     @Test(expected = NumberFormatException)
     public void testInvalidStringParseWithInvalidUnit() {
         new BufferValue("3F")
@@ -45,6 +46,14 @@ public class BufferValueTest {
     @Test(expected = NumberFormatException)
     public void testInvalidStringParseWithMultiUnit() {
         new BufferValue("3kk")
+    }
+
+    @Test
+    public void testToStringWithIntInput() {
+        assert new BufferValue(1, BufferUnit.G).toString(BufferUnit.M) == "1024M"
+        assert new BufferValue(1, BufferUnit.M).toString(BufferUnit.M) == "1M"
+        assert new BufferValue(1, BufferUnit.T).toString(BufferUnit.M) == "1048576M"
+        assert new BufferValue(1, BufferUnit.G).toString(BufferUnit.G) == "1G"
     }
 
     @Test

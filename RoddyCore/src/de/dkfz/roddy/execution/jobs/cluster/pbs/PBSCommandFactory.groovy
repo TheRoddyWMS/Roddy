@@ -212,23 +212,25 @@ public class PBSCommandFactory extends ClusterCommandFactory<PBSCommand> {
             String memo = resourceSet.getMem().toString(BufferUnit.M);
             sb.append(" -l mem=").append(memo)
         }
-        if (resourceSet.isCoresSet() && resourceSet.isNodesSet()) {
+        if (resourceSet.isCoresSet() || resourceSet.isNodesSet()) {
+            int nodes = resourceSet.isNodesSet() ? resourceSet.getNodes() : 1;
+            int cores = resourceSet.isCoresSet() ? resourceSet.getCores() : 1;
             String enforceSubmissionNodes = configuration.getConfigurationValues().getString(CVALUE_ENFORCE_SUBMISSION_TO_NODES, null);
             if (!enforceSubmissionNodes) {
-                sb.append(" -l nodes=").append(resourceSet.getNodes()).append(":ppn=").append(resourceSet.getCores());
+                sb.append(" -l nodes=").append(nodes).append(":ppn=").append(cores);
                 if (resourceSet.isAdditionalNodeFlagSet()) {
                     sb.append(":").append(resourceSet.getAdditionalNodeFlag());
                 }
             } else {
-                String[] nodes = enforceSubmissionNodes.split(StringConstants.SPLIT_SEMICOLON);
-                nodes.each {
+                String[] nodesArr = enforceSubmissionNodes.split(StringConstants.SPLIT_SEMICOLON);
+                nodesArr.each {
                     String node ->
                         sb.append(" -l nodes=").append(node).append(":ppn=").append(resourceSet.getCores());
                 }
             }
         }
         if (resourceSet.isWalltimeSet()) {
-            sb.append(" -l walltime=").append(resourceSet.getWalltime()).append(":00:00");
+            sb.append(" -l walltime=").append(resourceSet.getWalltime());
         }
         if (resourceSet.isStorageSet()) {
 //            sb.append(" -l mem=").append(resourceSet.getMem()).append("g");
