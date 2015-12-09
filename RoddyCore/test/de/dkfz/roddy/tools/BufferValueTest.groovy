@@ -10,21 +10,40 @@ import static org.junit.Assert.*;
 public class BufferValueTest {
 
     private static Map<String, String> validAndExpectedValues = [
+            "2.4t": "2516582M",
+            ""  : "1024M",
             "3k"  : "3K",
             "3K"  : "3K",
             "50g" : "51200M",
             "4t"  : "4194304M",
             "4T"  : "4194304M",
-            "1"   : "1M",
-            "1000": "1000M",
-            "3.5G": "35840M",
-            "2.4t": "2516582M"
+            "1"   : "1024M",
+            "1000": "1024000M",
+            "3.5G": "3584M",
     ]
 
-
-    private static List<String> invalidValues = [
-            "3kb", "g", "3z"
+    private static Map<String, String> validAndExpectedNumberValues = [
+            "3k"  : 3,
+            "2.4t": 2516582,
+            ""  :   1024,
+            "3K"  : 3,
+            "50g" : 51200,
+            "4t"  : 4194304,
+            "4T"  : 4194304,
+            "1"   : 1024,
+            "1000": 1024000,
+            "3.5G": 3584,
     ]
+
+    @Test(expected = NumberFormatException)
+    public void testInvalidStringParseWithInvalidUnit() {
+        new BufferValue("3F")
+    }
+
+    @Test(expected = NumberFormatException)
+    public void testInvalidStringParseWithMultiUnit() {
+        new BufferValue("3kk")
+    }
 
     @Test
     public void testToString() throws Exception {
@@ -37,9 +56,10 @@ public class BufferValueTest {
 
     @Test
     public void testToNumber() throws Exception {
-//        invalidValues.each {
-//            String value ->
-//
-//        }
+        validAndExpectedNumberValues.each {
+            String value, long expectedValue ->
+                BufferValue testValue = new BufferValue(value);
+                assert testValue.toNumber() == expectedValue;
+        }
     }
 }

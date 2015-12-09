@@ -179,18 +179,18 @@ public class ConfigurationFactoryTest {
 
         // Check the example datasets and see, if all necessary values were set and converted properly.
 
-        assert rsets[s].mem instanceof Integer && rsets[s].mem == 3 * 1024; // Check 3 gigabyte
+        assert rsets[s].mem instanceof Integer && rsets[s].mem == "" + 3 * 1024 + "M"; // Check 3 gigabyte
         assert rsets[s].cores instanceof Integer && rsets[s].cores == 2;
         assert rsets[s].walltime instanceof String && rsets[s].walltime == "00:04";
         assert rsets[s].queue instanceof String && rsets[s].queue == "ultrafast";
         assert rsets[s].queue instanceof String && rsets[s].queue == "testweise";
 
-        assert rsets[m].mem instanceof Integer && rsets[m].mem == 3 * 1024; // Check 3 gigabyte
+        assert rsets[m].mem instanceof Integer && rsets[m].mem == rsets[s].mem; // Check 3 gigabyte
         assert rsets[m].cores instanceof Integer && rsets[m].cores == 1;
         assert rsets[m].nodes instanceof Integer && rsets[m].nodes == 1;
         assert rsets[m].walltime instanceof String && rsets[m].walltime == "12:00";
 
-        assert rsets[l].mem instanceof Integer && rsets[l].mem == 300; // 300 megabyte
+        assert rsets[l].mem instanceof Integer && rsets[l].mem == "300M"; // 300 megabyte
         assert rsets[l].cores instanceof Integer && rsets[l].cores == 2;
         assert rsets[l].nodes instanceof Integer && rsets[l].nodes == 1;
         assert rsets[l].walltime instanceof String && rsets[l].walltime == "02:00"; // 120m == 2h

@@ -58,7 +58,7 @@ public class ConfigurationFactory {
         return singleton;
     }
 
-    private ConfigurationFactory(List<File> configurationDirectories = null) {
+    public ConfigurationFactory(List<File> configurationDirectories = null) {
         if (configurationDirectories == null)
             configurationDirectories = Roddy.getConfigurationDirectories();
 
@@ -615,7 +615,10 @@ public class ConfigurationFactory {
             //Is it short defined or long defined?
             String valueList = extractAttributeText(rset, "values", "");
             if (!valueList) { //Must be fully specified.
-                Float rsetUsedMemory = extractAttributeText(rset, "memory", null)?.toFloat();
+                // Only parse the memory value, if it is set.
+                String rsetUsedMemory = extractAttributeText(rset, "memory", null);
+                if(rsetUsedMemory != null) rsetUsedMemory = new BufferValue(rsetUsedMemory).toString();
+
                 Integer rsetUsedCores = extractAttributeText(rset, "cores", null)?.toInteger();
                 Integer rsetUsedNodes = extractAttributeText(rset, "nodes", null)?.toInteger();
                 Integer rsetUsedWalltime = extractAttributeText(rset, "walltime", null)?.toInteger();

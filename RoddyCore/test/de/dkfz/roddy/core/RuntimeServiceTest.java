@@ -1,9 +1,6 @@
 package de.dkfz.roddy.core;
 
-import de.dkfz.roddy.config.Configuration;
-import de.dkfz.roddy.config.ConfigurationValue;
-import de.dkfz.roddy.config.InformationalConfigurationContent;
-import de.dkfz.roddy.config.ToolEntry;
+import de.dkfz.roddy.config.*;
 import de.dkfz.roddy.knowledge.files.BaseFile;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -55,7 +52,7 @@ public class RuntimeServiceTest {
             }
         };
 
-        final Configuration mockupConfig = new Configuration(new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ToolEntry.ResourceSetSize.l, null, null, null, null));
+        final Configuration mockupConfig = new Configuration(new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null));
 
         mockupConfig.getConfigurationValues().add(new ConfigurationValue(RuntimeService.RODDY_CENTRAL_EXECUTION_DIRECTORY, "/tmp/roddyCentralDirectory"));
 
