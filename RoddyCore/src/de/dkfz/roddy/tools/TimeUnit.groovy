@@ -30,7 +30,7 @@ public class TimeUnit {
     public TimeUnit(String str) {
         // Catch empty strings and resolve to 1 hour.
         if (!str) {
-            originalString = timeString = "01:00:00";
+            originalString = timeString = "00:01:00:00";
             return;
         }
 
@@ -40,7 +40,7 @@ public class TimeUnit {
         }
 
         if (str.isNumber()) { //Else would not work,e.g. 4m would become 4mm
-            str = str + "s";
+            str = str + "h";
         }
 
         // Check for malformed string with multiple chars at the end.
@@ -96,9 +96,9 @@ public class TimeUnit {
 
             listOfCorrectedValues = listOfCorrectedValues.reverse()
 
-            while (listOfCorrectedValues[0].toInteger() == 0) {
-                listOfCorrectedValues.remove(0);
-            }
+//            while (listOfCorrectedValues[0].toInteger() == 0) {
+//                listOfCorrectedValues.remove(0);
+//            }
 
             // Always append the seconds!
             timeString = listOfCorrectedValues.join(":")

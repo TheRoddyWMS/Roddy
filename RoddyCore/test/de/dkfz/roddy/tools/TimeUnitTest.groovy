@@ -12,18 +12,18 @@ import static org.junit.Assert.*;
 public class TimeUnitTest {
 
     private static Map<String, String> validAndExpectedValuesWithoutUnit = [
-            ""         : "01:00:00",
-            "4"        : "04",
-            "04"       : "04",
-            "120:00"   : "02:00:00",
+            ""         : "00:01:00:00",
+            "4"        : "00:04:00:00",
+            "04"       : "00:04:00:00",
+            "120:00"   : "00:02:00:00",
             "180:00:00": "07:12:00:00",
     ]
 
     private static Map<String, String> validAndExpectedValuesWithUnit = [
-            "s"   : "01",
-            "m"   : "01:00",
-            "4m"  : "04:00",
-            "120m": "02:00:00",
+            "s"   : "00:00:00:01",
+            "m"   : "00:00:01:00",
+            "4m"  : "00:00:04:00",
+            "120m": "00:02:00:00",
             "180h": "07:12:00:00",
             "180H": "07:12:00:00",
             "5d"  : "05:00:00:00",
@@ -31,11 +31,11 @@ public class TimeUnitTest {
     ]
 
     private static Map<String, String> validAndExpectedValuesWithFractions = [
-            "5.25m"  : "05:15",
-            "5.25d"  : "05:06:00:00",
-            "5.25.5d": "05:06:30:00",
+            "5.25m"    : "00:00:05:15",
+            "5.25d"    : "05:06:00:00",
+            "5.25.5d"  : "05:06:30:00",
             "5.25.5.5d": "05:06:30:30",
-            "3.5h"   : "03:30:00",
+            "3.5h"     : "00:03:30:00",
     ]
 
     @Test
