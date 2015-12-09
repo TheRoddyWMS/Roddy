@@ -1,6 +1,8 @@
 package de.dkfz.roddy.config
 
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
+import de.dkfz.roddy.tools.BufferValue
+import de.dkfz.roddy.tools.TimeUnit
 import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.NodeChild
 import org.junit.BeforeClass
@@ -135,7 +137,7 @@ public class ConfigurationFactoryTest {
                         <rset size="s" memory="3" cores="2" walltime="00:04" queue="ultrafast" nodeflag="testweise"/>
                         <rset size="m" memory="3g" cores="1" nodes="1" walltime="12"/>
                         <rset size="l" memory="300M" cores="2" nodes="1" walltime="120m"/>
-                        <rset size="xl" cores="2T" nodes="1" walltime="180h"/>
+                        <rset size="xl" memory="2T" cores="2" nodes="1" walltime="180h"/>
                     </resourcesetsample>
                 """
         );
@@ -179,25 +181,26 @@ public class ConfigurationFactoryTest {
 
         // Check the example datasets and see, if all necessary values were set and converted properly.
 
-        assert rsets[s].mem instanceof Integer && rsets[s].mem == "" + 3 * 1024 + "M"; // Check 3 gigabyte
+        assert rsets[s].mem instanceof BufferValue && rsets[s].mem.toString() == "3072M"; // Check 3 gigabyte
         assert rsets[s].cores instanceof Integer && rsets[s].cores == 2;
-        assert rsets[s].walltime instanceof String && rsets[s].walltime == "00:04";
+        assert rsets[s].walltime instanceof TimeUnit && rsets[s].walltime.toString() == "00:00:00:04";
         assert rsets[s].queue instanceof String && rsets[s].queue == "ultrafast";
-        assert rsets[s].queue instanceof String && rsets[s].queue == "testweise";
+//        assert rsets[s].queue instanceof TimeUnit && rsets[s].queue == "testweise";
 
-        assert rsets[m].mem instanceof Integer && rsets[m].mem == rsets[s].mem; // Check 3 gigabyte
+        assert rsets[m].mem instanceof BufferValue && rsets[m].mem.toString() == "3072M"; // Check 3 gigabyte
         assert rsets[m].cores instanceof Integer && rsets[m].cores == 1;
         assert rsets[m].nodes instanceof Integer && rsets[m].nodes == 1;
-        assert rsets[m].walltime instanceof String && rsets[m].walltime == "12:00";
+        assert rsets[m].walltime instanceof TimeUnit && rsets[m].walltime.toString() == "00:12:00:00";
 
-        assert rsets[l].mem instanceof Integer && rsets[l].mem == "300M"; // 300 megabyte
+        assert rsets[l].mem instanceof BufferValue && rsets[l].mem.toString() == "300M"; // 300 megabyte
         assert rsets[l].cores instanceof Integer && rsets[l].cores == 2;
         assert rsets[l].nodes instanceof Integer && rsets[l].nodes == 1;
-        assert rsets[l].walltime instanceof String && rsets[l].walltime == "02:00"; // 120m == 2h
+        assert rsets[l].walltime instanceof TimeUnit && rsets[l].walltime.toString() == "00:02:00:00"; // 120m == 2h
 
-        assert rsets[xl].cores instanceof Integer && rsets[xl].cores == 1;
+        assert rsets[xl].mem instanceof BufferValue && rsets[xl].mem.toString() == "2097152M"; // 300 megabyte
+        assert rsets[xl].cores instanceof Integer && rsets[xl].cores == 2;
         assert rsets[xl].nodes instanceof Integer && rsets[xl].nodes == 1;
-        assert rsets[xl].walltime instanceof String && rsets[xl].walltime == "180:00"; // 180h
+        assert rsets[xl].walltime instanceof TimeUnit && rsets[xl].walltime.toString() == "07:12:00:00"; // 180h
     }
 }
 

@@ -209,9 +209,8 @@ public class PBSCommandFactory extends ClusterCommandFactory<PBSCommand> {
     public ProcessingCommands convertResourceSet(Configuration configuration, ToolEntry.ResourceSet resourceSet) {
         StringBuilder sb = new StringBuilder();
         if (resourceSet.isMemSet()) {
-            Float memo = resourceSet.getMem();
-            int memoryInMB = (int) (memo * 1024);
-            sb.append(" -l mem=").append(memoryInMB).append("m");
+            String memo = resourceSet.getMem().toString(BufferUnit.M);
+            sb.append(" -l mem=").append(memo)
         }
         if (resourceSet.isCoresSet() && resourceSet.isNodesSet()) {
             String enforceSubmissionNodes = configuration.getConfigurationValues().getString(CVALUE_ENFORCE_SUBMISSION_TO_NODES, null);

@@ -10,6 +10,7 @@ import de.dkfz.roddy.execution.jobs.Job;
 import de.dkfz.roddy.execution.jobs.ProcessingCommands;
 import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommandFactory;
 import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSResourceProcessingCommand;
+import de.dkfz.roddy.tools.BufferUnit;
 
 import java.io.File;
 import java.util.Arrays;
@@ -56,10 +57,9 @@ public class SGECommandFactory extends PBSCommandFactory {
         StringBuilder sb = new StringBuilder();
         sb.append(" -V"); //TODO Think if default SGE options should go somewhere else?
         if (resourceSet.isMemSet()) {
-            Float memo = resourceSet.getMem();
-            int memoryInMB = (int)(memo * 1024);
+            String memoryInMB = resourceSet.getMem().toString(BufferUnit.M);
             String memfield = configuration.getConfigurationValues().getString("SGEDefaultMemoryResource", "s_data");
-            sb.append(" -l ").append(memfield).append("=").append(memoryInMB).append("M");
+            sb.append(" -l ").append(memfield).append("=").append(memoryInMB);
         }
 //        if (resourceSet.isCoresSet() && resourceSet.isNodesSet()) {
 //            sb.append(" -l nodes=").append(resourceSet.getNodes()).append(":ppn=").append(resourceSet.getCores());

@@ -3,7 +3,9 @@ package de.dkfz.roddy.config;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.knowledge.files.FileGroup;
+import de.dkfz.roddy.tools.BufferValue;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
+import de.dkfz.roddy.tools.TimeUnit;
 
 import java.lang.reflect.Method;
 import java.util.LinkedList;
@@ -28,23 +30,23 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         /**
          * The target memory value.
          */
-        private Float mem;
-        private Integer memMax;
+        private BufferValue mem;
+        private BufferValue memMax;
 
         private Integer cores;
         private Integer coresMax;
         private Integer nodes;
         private Integer nodesMax;
-        private Integer walltime;
+        private TimeUnit walltime;
 
         /**
          * Hard disk storage used.
          */
-        private Integer storage;
-        private Integer storageMax;
+        private BufferValue storage;
+        private BufferValue storageMax;
         private String additionalNodeFlag;
 
-        public ResourceSet(ResourceSetSize size, Float mem, Integer cores, Integer nodes, Integer walltime, Integer storage, String queue, String additionalNodeFlag) {
+        public ResourceSet(ResourceSetSize size, BufferValue mem, Integer cores, Integer nodes, TimeUnit walltime, BufferValue storage, String queue, String additionalNodeFlag) {
             this.size = size;
             this.mem = mem;
             this.cores = cores;
@@ -63,7 +65,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
             return new ResourceSet(size, mem, cores, nodes, walltime, storage, queue, additionalNodeFlag);
         }
 
-        public Float getMem() {
+        public BufferValue getMem() {
             return mem;
         }
 
@@ -75,7 +77,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
             return nodes;
         }
 
-        public Integer getStorage() {
+        public BufferValue getStorage() {
             return storage;
         }
 
@@ -95,7 +97,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
             return storage != null;
         }
 
-        public Integer getWalltime() {
+        public TimeUnit getWalltime() {
             return walltime;
         }
 

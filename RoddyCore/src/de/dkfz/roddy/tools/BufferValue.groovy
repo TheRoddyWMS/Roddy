@@ -62,7 +62,7 @@ public class BufferValue {
     }
 
     public String toString(BufferUnit unit = BufferUnit.M) {
-        if (alignedValue < unit.multiplier) {
+        if (alignedValue * baseUnit.multiplier < unit.multiplier) {
             return "" + alignedValue + baseUnit.name();
         }
         return "" + (alignedValue * baseUnit.multiplier / unit.multiplier as Long) + unit.name()

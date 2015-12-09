@@ -616,22 +616,28 @@ public class ConfigurationFactory {
             String valueList = extractAttributeText(rset, "values", "");
             if (!valueList) { //Must be fully specified.
                 // Only parse the memory value, if it is set.
-                String rsetUsedMemory = extractAttributeText(rset, "memory", null);
-                if(rsetUsedMemory != null) rsetUsedMemory = new BufferValue(rsetUsedMemory).toString();
+                BufferValue rsetUsedMemory;
+                String _rsetUsedMemory = extractAttributeText(rset, "memory", null);
+                if(_rsetUsedMemory != null) rsetUsedMemory = new BufferValue(_rsetUsedMemory);
 
                 Integer rsetUsedCores = extractAttributeText(rset, "cores", null)?.toInteger();
                 Integer rsetUsedNodes = extractAttributeText(rset, "nodes", null)?.toInteger();
-                Integer rsetUsedWalltime = extractAttributeText(rset, "walltime", null)?.toInteger();
+
+                TimeUnit rsetUsedWalltime;
+                String _rsetUsedWalltime = extractAttributeText(rset, "walltime", null);
+                if(_rsetUsedWalltime != null) rsetUsedWalltime = new TimeUnit(_rsetUsedWalltime);
+
                 String rsetUsedQueue = extractAttributeText(rset, "queue", null);
                 String rsetUsedNodeFlag = extractAttributeText(rset, "nodeflag", null);
                 tempSet = new ToolEntry.ResourceSet(rsetSize, rsetUsedMemory, rsetUsedCores, rsetUsedNodes, rsetUsedWalltime, null, rsetUsedQueue, rsetUsedNodeFlag);
-            } else {
-                String[] split = valueList.split(":");
-                Integer[] splitInt = split.collect { String s -> return s.toInteger(); }
-                tempSet = new ToolEntry.ResourceSet(rsetSize, splitInt[0], splitInt[1], splitInt[2], splitInt[3], null, null, null);
             }
+//            else {
+//                String[] split = valueList.split(":");
+//                Integer[] splitInt = split.collect { String s -> return s.toInteger(); }
+//                tempSet = new ToolEntry.ResourceSet(rsetSize, new BufferValue(splitInt[0]), splitInt[1], new TimeUnit(split[2]), splitInt[3], null, null, null);
+//            }
         } catch (Exception ex) {
-            if(config != null) config.addLoadError(new ConfigurationError("Resource set could not be read", config, "", ex));
+            if(config != null) config.addLoadError(new ConfigurationLoadError(config, "Resource set could not be read", "", ex));
         }
         return tempSet
     }

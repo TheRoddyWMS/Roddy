@@ -11,7 +11,8 @@ public class BufferValueTest {
 
     private static Map<String, String> validAndExpectedValues = [
             "2.4t": "2516582M",
-            ""  : "1024M",
+            "2T"  : "2097152M",
+            ""    : "1024M",
             "3k"  : "3K",
             "3K"  : "3K",
             "50g" : "51200M",
@@ -19,13 +20,14 @@ public class BufferValueTest {
             "4T"  : "4194304M",
             "1"   : "1024M",
             "1000": "1024000M",
+            "300M": "300M",
             "3.5G": "3584M",
     ]
 
     private static Map<String, String> validAndExpectedNumberValues = [
             "3k"  : 3,
             "2.4t": 2516582,
-            ""  :   1024,
+            ""    : 1024,
             "3K"  : 3,
             "50g" : 51200,
             "4t"  : 4194304,
