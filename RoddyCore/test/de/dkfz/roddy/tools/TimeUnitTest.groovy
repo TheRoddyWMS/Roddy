@@ -39,6 +39,8 @@ public class TimeUnitTest {
             "3.5h"     : "00:03:30:00",
     ]
 
+    //TODO  "3:5.25"    : "00:00:05:15", => Would raise an error
+
     @Test
     public void testToString() throws Exception {
         validAndExpectedValuesWithUnit.each {

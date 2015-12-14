@@ -506,6 +506,29 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
         if (availablePatterns.get(ON_METHOD).size() <= 0) {
             return result;
         }
+        List<StackTraceElement> steByMethod = getStackElements();
+
+        traceLoop:
+        for (StackTraceElement ste : steByMethod) {
+            for (FilenamePattern fp : availablePatterns.get(ON_METHOD)) {
+                String cmName = fp.getCalledMethodsName().getName();
+                String cmClass = fp.getCalledMethodsClass().getName();
+                if (cmName.equals(ste.getMethodName())
+                        && cmClass.equals(ste.getClassName())
+                        && fp.getSelectionTag().equals(selectionTag)) {
+                    //OOOOOH LOOK try this!
+                    File tempFN = new File(fp.apply(baseFile));
+                    appliedPattern = fp;
+                    filename = tempFN;
+                    break traceLoop;
+                }
+            }
+        }
+        result = new Tuple2<>(filename, appliedPattern);
+        return result;
+    }
+
+    private static List<StackTraceElement> getStackElements() {
         String calledBaseFileMethodName = null;
         //Walk through the stack to get the method.
         List<StackTraceElement> steByMethod = new LinkedList<>();
@@ -534,25 +557,7 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
 
             }
         }
-
-        traceLoop:
-        for (StackTraceElement ste : steByMethod) {
-            for (FilenamePattern fp : availablePatterns.get(ON_METHOD)) {
-                String cmName = fp.getCalledMethodsName().getName();
-                String cmClass = fp.getCalledMethodsClass().getName();
-                if (cmName.equals(ste.getMethodName())
-                        && cmClass.equals(ste.getClassName())
-                        && fp.getSelectionTag().equals(selectionTag)) {
-                    //OOOOOH LOOK try this!
-                    File tempFN = new File(fp.apply(baseFile));
-                    appliedPattern = fp;
-                    filename = tempFN;
-                    break traceLoop;
-                }
-            }
-        }
-        result = new Tuple2<>(filename, appliedPattern);
-        return result;
+        return steByMethod;
     }
 
     /**
