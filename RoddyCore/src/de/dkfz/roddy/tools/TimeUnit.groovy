@@ -52,6 +52,13 @@ public class TimeUnit {
         if (str.contains(".") || !str[-1].isNumber()) { //Check things like 4m 3.5d etc. and convert them to xx:xx:xx which is then parsed again.
             String[] newStrList = ["00", "00", "00", "00"];
 
+            //Check if the string contains anything else than the unit and dots.
+            String validationString = str[-1].isNumber() ? str : str[0 .. -2];
+            for (int i = 0; i < validationString.size(); i++) {
+                if(validationString[i].isNumber() || validationString == ".") continue;
+                throw new NumberFormatException("The unit string ${validationString} may only contain dots and number followed by a unit.")
+            }
+
             String unit = str[-1];
             String timeStr = str[0..-2];
             if (mapOfValidTimeUnits[unit] == null)

@@ -5,7 +5,6 @@ import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.config.FilenamePattern;
 import de.dkfz.roddy.core.ExecutionContext;
-import de.dkfz.roddy.core.ExecutionContextLevel;
 import de.dkfz.roddy.core.Workflow;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.Job;
@@ -506,7 +505,7 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
         if (availablePatterns.get(ON_METHOD).size() <= 0) {
             return result;
         }
-        List<StackTraceElement> steByMethod = getStackElements();
+        List<StackTraceElement> steByMethod = getAndFilterStackElementsToWorkflowInstance();
 
         traceLoop:
         for (StackTraceElement ste : steByMethod) {
@@ -528,7 +527,11 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
         return result;
     }
 
-    private static List<StackTraceElement> getStackElements() {
+    /**
+     * As the method name states, the method fetches a filtered list of all stack trace elements until the workflows execute method.
+     * @return
+     */
+    private static List<StackTraceElement> getAndFilterStackElementsToWorkflowInstance() {
         String calledBaseFileMethodName = null;
         //Walk through the stack to get the method.
         List<StackTraceElement> steByMethod = new LinkedList<>();
