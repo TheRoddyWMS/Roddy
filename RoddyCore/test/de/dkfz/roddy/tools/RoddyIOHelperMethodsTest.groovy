@@ -27,13 +27,13 @@ public class RoddyIOHelperMethodsTest {
         });
 
         Map<String, String> valuesAndExpectedMap = [
-                "u=rwx,g=rwx,o=rwx": "0000", //rwx,rwx,rwx
-                "u=rwx,g=rwx,o-rwx": "0007", //rwx,rwx,---
-                "u+rwx,g+rwx,o-rwx": "0007", //rwx,rwx,---
-                "u+rw,g-rw,o-rwx"  : "0067", //rwx,---,---
-                "u+rw,g+rw,o-rwx"  : "0007", //rwx,rw-,---
-                "u+rw,g+rw"        : "0002", //rwx,rw-,r--
-                "u-w,g+rw,u-r"     : "0602", //rwx,rw-,r--
+                "u=rwx,g=rwx,o=rwx": "0777", //rwx,rwx,rwx
+                "u=rwx,g=rwx,o-rwx": "0770", //rwx,rwx,---
+                "u+rwx,g+rwx,o-rwx": "0770", //rwx,rwx,---
+                "u+rw,g-rw,o-rwx"  : "0710", //rwx,---,---
+                "u+rw,g+rw,o-rwx"  : "0770", //rwx,rw-,---
+                "u+rw,g+rw"        : "0775", //rwx,rw-,r--
+                "u-w,g+rw,u-r"     : "0175", //--x,rwx,r-x  Careful here, u ist set two times!
         ]
 
         valuesAndExpectedMap.each {

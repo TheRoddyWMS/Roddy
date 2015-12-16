@@ -64,7 +64,7 @@ public class LibrariesFactoryTest {
      */
     private static final LinkedHashMap<String, LinkedHashMap<String, List<String>>> mapWithTestPlugins = [
             A: ["1.0.1"  : [],
-                "1.0.24" : ["PluginBase:1.0.24", "DefaultPlugin:1.0.28"],
+                "1.0.24" : ["PluginBase:current", "DefaultPlugin:current"],
                 "current": ["PluginBase:current", "DefaultPlugin:current"]
             ],
             B: ["0.9.0"    : ["A:1.0.1"],
@@ -228,8 +228,8 @@ public class LibrariesFactoryTest {
                 pluginQueueFixatedEntriesOK["C"].prodVersion == "1.0.2-0" &&
                 pluginQueueFixatedEntriesOK["B"].prodVersion == "1.0.2-1" &&
                 pluginQueueFixatedEntriesOK["A"].prodVersion == "1.0.24-0" &&
-                pluginQueueFixatedEntriesOK["PluginBase"].prodVersion == "1.0.24-0" &&
-                pluginQueueFixatedEntriesOK["DefaultPlugin"].prodVersion == "1.0.28-0";
+                pluginQueueFixatedEntriesOK["PluginBase"].prodVersion == "current" &&
+                pluginQueueFixatedEntriesOK["DefaultPlugin"].prodVersion == "current";
 
     }
 

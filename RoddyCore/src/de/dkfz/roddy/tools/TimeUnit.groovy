@@ -55,7 +55,7 @@ public class TimeUnit {
             //Check if the string contains anything else than the unit and dots.
             String validationString = str[-1].isNumber() ? str : str[0 .. -2];
             for (int i = 0; i < validationString.size(); i++) {
-                if(validationString[i].isNumber() || validationString == ".") continue;
+                if(validationString[i].isNumber() || validationString[i] == ".") continue;
                 throw new NumberFormatException("The unit string ${validationString} may only contain dots and number followed by a unit.")
             }
 

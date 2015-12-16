@@ -5,6 +5,7 @@ import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationFactory
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.InformationalConfigurationContent
+import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextLevel
@@ -45,10 +46,10 @@ public class ExecutionServiceTest {
         LibrariesFactory.getInstance().loadLibraries(LibrariesFactory.buildupPluginQueue(LibrariesFactoryTest.callLoadMapOfAvailablePlugins(), "DefaultPlugin").values() as List);
         ConfigurationFactory.initialize(LibrariesFactory.getInstance().getLoadedPlugins().collect { it -> it.getConfigurationDirectory() })
 
-        final Configuration mockupConfig = new Configuration(new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ToolEntry.ResourceSetSize.l, null, null, null, null), ConfigurationFactory.getInstance().getConfiguration("default")) {
+        final Configuration mockupConfig = new Configuration(new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null), ConfigurationFactory.getInstance().getConfiguration("default")) {
             @Override
             File getSourceToolPath(String tool) {
-                if(tool == "wrapinScript")
+                if (tool == "wrapinScript")
                     return super.getSourceToolPath(tool);
                 return new File("/tmp/RoddyTests/RoddyTestScript_ExecutionServiceTest.sh")
             }
@@ -151,14 +152,14 @@ public class ExecutionServiceTest {
 
         def scriptsFolder = new File(testFolder, "exec_dir/analysisTools/roddyTools/")
         scriptsFolder.mkdirs()
-        def sourceToolpath = config.getSourceToolPath( "wrapinScript");
+        def sourceToolpath = config.getSourceToolPath("wrapinScript");
         def targetToolpath = new File(scriptsFolder, sourceToolpath.name)
         targetToolpath.delete();
         targetToolpath << sourceToolpath.text;
         targetToolpath.setExecutable(true, true);
 
         ToolEntry toolEntry = new ToolEntry("RoddyTests", "RoddyTests", "RoddyTestScript_ExecutionServiceTest.sh");
-        toolEntry.getOutputParameters(config).add(new ToolEntry.ToolFileGroupParameter(GenericFileGroup, [], "TEST", ToolEntry.ToolFileGroupParameter.PassOptions.parameters))
+        toolEntry.getOutputParameters(config).add(new ToolEntry.ToolFileGroupParameter(GenericFileGroup, null, [], "TEST", ToolEntry.ToolFileGroupParameter.PassOptions.parameters))
         config.getTools().add(toolEntry);
 
         // Initialize with fallback provider! Don't worry about errors at this point.
@@ -170,6 +171,6 @@ public class ExecutionServiceTest {
 
         // Check the output contents
         assert executeTool.size() == 4;
-        assert executeTool == [ "${testScriptPrefix}_a", "${testScriptPrefix}_b", "${testScriptPrefix}_c", "${testScriptPrefix}_d" ]
+        assert executeTool == ["${testScriptPrefix}_a", "${testScriptPrefix}_b", "${testScriptPrefix}_c", "${testScriptPrefix}_d"]
     }
 }

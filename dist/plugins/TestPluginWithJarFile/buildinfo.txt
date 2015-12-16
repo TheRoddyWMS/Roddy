@@ -1,1 +1,1 @@
-dependson=PluginBase:1.0.24
+dependson=PluginBase:current
