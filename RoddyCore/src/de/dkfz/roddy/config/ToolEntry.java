@@ -231,7 +231,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         public ToolFileParameter(Class<BaseFile> fileClass, List<ToolConstraint> constraints, String scriptParameterName, boolean checkFile, String filenamePatternSelectionTag, List<ToolFileParameter> childFiles, String parentVariable) {
             super(scriptParameterName);
             this.fileClass = fileClass;
-            this.constraints = constraints;
+            this.constraints = constraints != null ? constraints : new LinkedList<>();
             this.scriptParameterName = scriptParameterName;
             this.checkFile = checkFile;
             this.filenamePatternSelectionTag = filenamePatternSelectionTag;

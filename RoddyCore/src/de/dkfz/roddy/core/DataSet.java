@@ -47,7 +47,6 @@ public class DataSet extends InfoObject implements Serializable, ExecutionContex
      */
     private Map<Analysis, List<AnalysisProcessingInformation>> processingInformation = new HashMap<>();
 
-    private Map<Analysis, Map<TestDataOption, TestDataSet>> testdataContainer = new HashMap<>();
     /**
      * Marks a dataset as being only in the output directory.
      */

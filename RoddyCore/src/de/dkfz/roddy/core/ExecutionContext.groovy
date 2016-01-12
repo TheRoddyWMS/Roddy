@@ -3,6 +3,7 @@ package de.dkfz.roddy.core;
 import de.dkfz.roddy.Constants;
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
+import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.*
@@ -122,6 +123,7 @@ public class ExecutionContext implements JobStatusListener {
     private File analysisToolsDirectory;
     private ExecutionContextLevel executionContextLevel;
     private ExecutionContextSubLevel executionContextSubLevel = ExecutionContextSubLevel.RUN_UNINITIALIZED;
+    private ToolEntry currentExecutedTool;
     private ProcessingFlag processingFlag = ProcessingFlag.STORE_EVERYTHING;
     /**
      * The user who created the context (if known)
@@ -359,6 +361,14 @@ public class ExecutionContext implements JobStatusListener {
         this.executionContextSubLevel = subLevel;
         if (temp != subLevel)
             raiseDetailedExecutionContextLevelChanged();
+    }
+
+    public void setCurrentExecutedTool(ToolEntry toolEntry) {
+        this.currentExecutedTool = toolEntry;
+    }
+
+    public ToolEntry getCurrentExecutedTool() {
+        return currentExecutedTool;
     }
 
     public ProcessingFlag getProcessingFlag() {

@@ -138,25 +138,36 @@ public class LibrariesFactory extends Initializable {
         }
     }
 
-    public Class loadRealOrSyntheticClass(String classOfFileObject, Class<FileObject> baseClassOfFileObject) {
+    public Class loadRealOrSyntheticClass(String classOfFileObject, String baseClassOfFileObject) {
         Class<BaseFile> _cls = searchForClass(classOfFileObject);
         if (_cls == null) {
-            _cls = generateSyntheticFileClassWithParentClass(classOfFileObject, baseClassOfFileObject.name)
+            _cls = generateSyntheticFileClassWithParentClass(classOfFileObject, baseClassOfFileObject)
             logger.severe("Class ${classOfFileObject} could not be found, created synthetic class ${_cls.name}.");
         }
         return _cls
     }
 
+    public Class loadRealOrSyntheticClass(String classOfFileObject, Class<FileObject> constructorClass) {
+        return loadRealOrSyntheticClass(classOfFileObject, constructorClass.name);
+    }
+
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private Class generateSyntheticFileClassWithParentClass(String syntheticClassName, String parentClassName) {
+    private Class generateSyntheticFileClassWithParentClass(String syntheticClassName, String constructorClassName) {
         String syntheticFileClass =
                 """
                 package $SYNTHETIC_PACKAGE
 
                 import ${BaseFile.name}
+                import de.dkfz.roddy.core.ExecutionContext
+                import de.dkfz.roddy.knowledge.files.FileStageSettings
 
                 public class ${syntheticClassName} extends BaseFile {
-                    public ${syntheticClassName}(${parentClassName} baseFile) {
+
+                    public ${syntheticClassName}(ExecutionContext context, FileStageSettings settings) {
+                        super(context, settings);
+                    }
+
+                    public ${syntheticClassName}(${constructorClassName} baseFile) {
                         super(baseFile);
                     }
                 }
@@ -422,18 +433,19 @@ public class LibrariesFactory extends Initializable {
         Map<String, PluginInfo> pluginsToActivate = [:];
         while (pluginsToCheck.size() > 0) {
 
-            String id = pluginsToCheck[0].x;
+            final String id = pluginsToCheck[0].x;
             String version = pluginsToCheck[0].y;
-            if (version != PLUGIN_VERSION_CURRENT && !version.contains("-")) version += "-0";
+            //There are now some  as String conversions which are just there for the Idea code view... They'll be shown as faulty otherwise.
+            if (version != PLUGIN_VERSION_CURRENT && !(version as String).contains("-")) version += "-0";
 
-            if (!mapOfPlugins[id] || !mapOfPlugins[id][version]) {
+            if (!mapOfPlugins[id as String] || !mapOfPlugins[id as String][version as String]) {
                 logger.severe("The plugin ${id}:${version} could not be found, are the plugin paths properly set?");
                 return null;
             }
             pluginsToCheck.remove(0);
 
             // Set pInfo to a valid instance.
-            PluginInfo pInfo = mapOfPlugins[id][version];
+            PluginInfo pInfo = mapOfPlugins[id as String][version as String];
 
             // Now, if the plugin is not in usedPlugins (and therefore not fixed), we search the newest compatible
             // version of it which may either be a revision (x:x.y-[0..n] or a higher compatible version.
@@ -447,11 +459,11 @@ public class LibrariesFactory extends Initializable {
             }
 
             if (pInfo == null)
-                pInfo = mapOfPlugins[id][PLUGIN_VERSION_CURRENT]
+                pInfo = mapOfPlugins[id as String][PLUGIN_VERSION_CURRENT]
             if (pInfo == null)
                 continue;
-            if (pluginsToActivate[id] != null) {
-                if (pluginsToActivate[id].prodVersion != version) {
+            if (pluginsToActivate[id as String] != null) {
+                if (pluginsToActivate[id as String].prodVersion != version) {
                     logger.severe("There is a version mismatch for plugin dependencies! Not starting up.");
                     return null;
                 } else {
@@ -463,7 +475,7 @@ public class LibrariesFactory extends Initializable {
                     if (v != PLUGIN_VERSION_CURRENT && !v.contains("-")) v += "-0";
                     pluginsToCheck << new Tuple2(k, v);
                 }
-                pluginsToActivate[id] = pInfo;
+                pluginsToActivate[id as String] = pInfo;
             }
             //Load default plugins, if necessary.
             if (!pluginsToCheck) {

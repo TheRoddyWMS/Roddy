@@ -1,6 +1,7 @@
 #!/bin/bash
 #TODO Build in additional configured plugin folders!
 
+set -xuv
 set -e
 increasebuildonly=${increasebuildonly-false}
 

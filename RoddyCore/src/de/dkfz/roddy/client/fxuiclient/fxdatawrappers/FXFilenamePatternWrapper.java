@@ -22,7 +22,7 @@ public class FXFilenamePatternWrapper implements Comparable<FXFilenamePatternWra
     public FXFilenamePatternWrapper(FilenamePattern pattern) {
         id.set(pattern.getID());
         cls.set(pattern.getCls().toString());
-        dependency.set(pattern.getFilenamePatternDependency().toString());
+//        dependency.set(pattern.getFilenamePatternDependency().toString());
     }
 
     public final StringProperty idProperty() {

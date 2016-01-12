@@ -33,6 +33,7 @@ import java.nio.file.Files;
 
 import static org.junit.Assert.*;
 
+
 /**
  * Created by heinold on 25.11.15.
  */
@@ -123,19 +124,12 @@ public class ExecutionServiceTest {
         };
     }
 
-    static class TestFile extends BaseFile {
-        TestFile(BaseFile parentFile) {
-            super(parentFile)
-        }
-    }
-
     @Test
     public void testExecuteTool() throws Exception {
 
         // Create a test script which outputs several file paths
         def testFolder = "/tmp/RoddyTests"
         def testScriptPrefix = testFolder + "/RoddyTestScript_ExecutionServiceTest"
-        def testScriptPath = testScriptPrefix + ".sh"
         def testScriptsFolder = new File(testFolder, "exec_dir/analysisTools/RoddyTests")
         testScriptsFolder.mkdirs()
         (new File(testFolder)).mkdir()

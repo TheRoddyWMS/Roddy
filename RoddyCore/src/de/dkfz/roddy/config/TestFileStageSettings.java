@@ -14,12 +14,12 @@ public class TestFileStageSettings extends FileStageSettings {
 
     @Override
     public FileStageSettings copy() {
-        return null;
+        return new TestFileStageSettings();
     }
 
     @Override
     public FileStageSettings decreaseLevel() {
-        return null;
+        return new TestFileStageSettings();
     }
 
     @Override

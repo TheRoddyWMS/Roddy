@@ -8,4 +8,6 @@ gradle
 .gradle
 .idea/encodings.xml
 manifest.tmp
+coverage/
+.idea/gradle.xml
 

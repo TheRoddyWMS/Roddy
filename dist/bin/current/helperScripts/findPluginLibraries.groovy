@@ -7,21 +7,28 @@
 // - The working directory for the current plugin
 // i.e. def args = ["pluginDirectories=/data/michael/Projekte/Roddy/Plugins", "/data/michael/Projekte/Roddy/Plugins/COExperimentalWorkflows"]
 
-//TODO The script only takes one level of depth! Sync with the code from the Roddy binary! Maybe call that binay instead?
-
 def roddyDirectory = args[1]
 def workingDirectory = args[2]
-def pluginLine = ["${roddyDirectory}/dist/plugins"]
-pluginLine.addAll(args[0].split("[=]")[1].split("[,][:]"))
+def pluginDirectories = args[0]
+def pluginLine = ["${roddyDirectory}/dist/plugins"]  // Add the Roddy directory
+pluginLine.addAll(pluginDirectories.split("[=]")[1].split("[,:]")) // Add lines from ini file
+pluginLine = pluginLine.unique() // Filter the list to get rid of doublettes.
+
 def dependencies =  (new File("${workingDirectory}/buildinfo.txt")).readLines().findAll { it.startsWith("dependson") }.collect { it.split("[=]")[1];};
-def libs = []
-def collectedJars = dependencies.collect { 
+def possibleJars = []
+
+dependencies.each {
 	dep ->
-	path = dep.replace(":", "_");
-	id = dep.split("[:]")[0];
-	path = path.replace("_current", "");
-	pluginLine.collect { File f = new File(new File(it, path), "${id}.jar");
-	return f
-}.each { if(it.exists()) libs << it } }
-println libs.join(":")
+		path = dep.replace(":", "_");
+		id = dep.split("[:]")[0];
+		path = path.replace("_current", "");
+		possibleJars += pluginLine.collect { File f = new File(new File(it, path), "${id}.jar"); }
+}
+
+def libs = possibleJars.findAll() { it.exists()  }
+
+if(!libs.size() == dependencies.size())
+	System.exit(5);
+
+println(libs.join(":"))
 return

@@ -348,11 +348,9 @@ public class Analysis {
      * @param ec The execution context which will be context in a separate thread.
      */
     public void runDeferredContext(final ExecutionContext ec) {
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                executeRun(ec);
-            }
+//        ThreadGroup
+        Thread t = new Thread(() -> {
+            executeRun(ec);
         });
         t.setName(String.format("Deferred execution context execution for pid %s", ec.getDataSet().getId()));
         t.start();

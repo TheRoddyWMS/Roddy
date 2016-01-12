@@ -2,6 +2,10 @@ package de.dkfz.roddy.config
 
 import de.dkfz.roddy.*
 import de.dkfz.roddy.knowledge.brawlworkflows.BrawlWorkflow
+import de.dkfz.roddy.knowledge.files.BaseFile
+import de.dkfz.roddy.knowledge.files.FileGroup
+import de.dkfz.roddy.knowledge.files.FileObject
+import de.dkfz.roddy.knowledge.files.FileStage
 import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
 import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.Roddy
@@ -9,7 +13,8 @@ import de.dkfz.roddy.config.Configuration.ConfigurationType
 import de.dkfz.roddy.config.ToolEntry.ToolFileGroupParameter.PassOptions
 import de.dkfz.roddy.config.ToolEntry.ToolStringParameter.ParameterSetbyOptions
 import de.dkfz.roddy.core.*
-import de.dkfz.roddy.knowledge.files.*
+
+//import de.dkfz.roddy.knowledge.files.*
 import de.dkfz.roddy.plugins.*
 import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.*
@@ -302,7 +307,7 @@ public class ConfigurationFactory {
             }
 
             try {
-                readFilenamePatterns(configurationNode, config)
+                config.filenamePatterns.map.putAll(readFilenamePatterns(configurationNode));
             } catch (Exception ex) {
                 config.addLoadError(new ConfigurationLoadError(config, "cValues", "Could not read filename patterns for configuration ${icc.id}", ex));
             }
@@ -417,145 +422,25 @@ public class ConfigurationFactory {
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private void readFilenamePatterns(NodeChild configurationNode, Configuration config) {
-        Map<String, FilenamePattern> filenamePatterns = config.getFilenamePatterns().getMap();
+    private static Map<String, FilenamePattern> readFilenamePatterns(NodeChild configurationNode) {
+        Map<String, FilenamePattern> filenamePatterns = [:];
 
         for (NodeChild filenames in configurationNode.filenames) {
-            String pkg = extractAttributeText(filenames, "package", this.SYNTHETIC_PACKAGE);
-            boolean packageIsSet = pkg && pkg != this.SYNTHETIC_PACKAGE;
+            String pkg = extractAttributeText(filenames, "package", LibrariesFactory.SYNTHETIC_PACKAGE);
             String filestagesbase = extractAttributeText(filenames, "filestagesbase", null);
 
             for (NodeChild filename in filenames.filename) {
                 try {
-                    String classSimpleName = filename.@class.text();
-                    String cls;
-                    Class foundClass = !packageIsSet ? LibrariesFactory.instance.searchForClass(classSimpleName) : null;
-                    if (foundClass)
-                        cls = foundClass.name;
-                    else
-                        cls = (pkg != null ? pkg + "." : "") + filename.@class.text();
-                    String pattern = filename.@pattern.text();
-                    String selectionTag = extractAttributeText(filename, "selectiontag", FilenamePattern.DEFAULT_SELECTION_TAG);
-                    Class _classID
-                    try {
-                        _classID = foundClass ?: LibrariesFactory.getInstance().searchForClass(cls);
-                    } catch (Exception ex) {
-                        _classID = null;
-                    }
-
-                    boolean isDerivedFromFile = filename.attributes().get("derivedFrom") != null
-                    if (!_classID) {
-                        //Create a synthetic class...
-                        String constructorClassName = BaseFile.class.name
-                        if (isDerivedFromFile) {
-                            String dfc = filename.@derivedFrom.text();
-                            //(pkg != null ? pkg + "." : "") + filename.@derivedFrom.text();
-                            try {
-                                Class foundDerivedFromClass = LibrariesFactory.instance.searchForClass(dfc.split(StringConstants.SPLIT_SBRACKET_LEFT)[0]);
-                                if (foundDerivedFromClass)
-                                    dfc = foundDerivedFromClass.name;
-                            } catch (Exception ex) {
-                            }
-                            if (!dfc.contains(".")) dfc = pkg + "." + dfc;
-                            if (dfc.contains("[")) {
-                                int openingIndex = dfc.indexOf("[");
-                                int closingIndex = dfc.indexOf("]");
-                                if (closingIndex - 1 > openingIndex) {
-                                    enforcedArraySize = Integer.parseInt(dfc[openingIndex + 1..-2]);
-                                }
-                                dfc = dfc[0..openingIndex - 1];
-                                isArray = true;
-                            }
-                            constructorClassName = dfc;
-                        }
-                        _classID = generateSyntheticFileClassWithParentClass(filename.@class.text(), constructorClassName)
-                    }
-
-                    Class<BaseFile> _cls = (Class<BaseFile>) _classID;
-//                    Class<BaseFile> _cls = (Class<BaseFile>) LibrariesFactory.getInstance().loadClass(cls);
                     FilenamePattern fp = null;
 
-                    if (isDerivedFromFile) {
-                        String fnDerivedFrom = filename.@derivedFrom.text();
-                        String dfc = filename.@derivedFrom.text();
-                        //(pkg != null ? pkg + "." : "") + filename.@derivedFrom.text();
-                        try {
-                            Class foundDerivedFromClass = LibrariesFactory.instance.searchForClass(dfc.split(StringConstants.SPLIT_SBRACKET_LEFT)[0]);
-                            if (foundDerivedFromClass)
-                                dfc = foundDerivedFromClass.name;
-                        } catch (Exception ex) {
-                        }
-                        if (!dfc.contains("."))
-                            dfc = (!fnDerivedFrom.contains(".") && pkg != null ? pkg + "." : "") + fnDerivedFrom;
-                        boolean isArray = false;
-                        int enforcedArraySize = -1;
-                        //Support for arrays of the same file class
-                        if (fnDerivedFrom.contains("[")) {
-                            int openingIndex = fnDerivedFrom.indexOf("[");
-                            int closingIndex = fnDerivedFrom.indexOf("]");
-                            if (closingIndex - 1 > openingIndex) {
-                                enforcedArraySize = Integer.parseInt(fnDerivedFrom[openingIndex + 1..-2]);
-                            }
-//                            dfc = dfc[0..openingIndex - 1];
-                            isArray = true;
-                        }
-
-                        Class<BaseFile> _dfc = (Class<BaseFile>) LibrariesFactory.getInstance().loadClass(dfc);
-                        fp = new FilenamePattern(_cls, _dfc, pattern, selectionTag, isArray, enforcedArraySize);
+                    if (filename.attributes().get("derivedFrom") != null) {
+                        fp = readDerivedFromFilenamePattern(pkg, filename)
                     } else if (filename.attributes().get("fileStage") != null) {
-                        String fileStage = filename.@fileStage.text();
-                        FileStage fs = null;
-
-                        if (fileStage.contains(".")) { //Load without a base package / class
-                            int index = fileStage.lastIndexOf(".");
-
-                            filestagesbase = fileStage[0..index - 1];
-                            fileStage = fileStage[index + 1..-1];
-                        }
-
-                        if (!filestagesbase) {
-                            throw new RuntimeException("Filestage was not specified correctly. Need a base package/class or full qualified name.")
-                        }
-
-                        Class baseClass = LibrariesFactory.getInstance().tryLoadClass(filestagesbase);
-                        if (baseClass) {
-                            Field f = baseClass.getDeclaredField(fileStage);
-                            boolean isStatic = Modifier.isStatic(f.getModifiers());
-                            if (!isStatic)
-                                throw new RuntimeException("A filestage must be either a new object or a static field of a class.");
-                            fs = (FileStage) f.get(null);
-                        } else {
-                            fs = LibrariesFactory.getInstance().loadClass(filestagesbase + "." + fileStage);
-                        }
-
-                        fp = new FilenamePattern(_cls, fs, pattern, selectionTag);
+                        fp = readFileStageFilenamePattern(pkg, filestagesbase, filename)
                     } else if (filename.attributes().get("onScript") != null) {
-                        String scriptName = filename.@onScript.text();
-                        Class<FileObject> calledClass = _cls;
-                        fp = new FilenamePattern(_cls, scriptName, pattern, selectionTag);
+                        fp = readOnScriptFilenamePattern(pkg, filename)
                     } else if (filename.attributes().get("onMethod") != null) {
-                        String methodName = filename.@onMethod.text();
-                        Class<FileObject> calledClass = _cls;
-                        if (methodName.contains(".")) { //Different class as source class!
-                            String[] stuff = methodName.split(SPLIT_STOP);
-                            String className = stuff[0];
-                            String classPkg = null;
-                            if (stuff.length > 2) { //We have a package specified.
-                                classPkg = stuff[0..-3].join(".");
-                                className = stuff[-2];
-                            }
-                            if (classPkg == null) classPkg = pkg;
-                            String calledClassName = (classPkg != null ? classPkg + "." : "") + className;
-                            calledClass = (Class<FileObject>) LibrariesFactory.getInstance().loadClass(calledClassName);
-                            methodName = stuff[-1];
-                        }
-                        Method _method = null;
-                        for (Method m : calledClass.getMethods()) {
-                            if (m.name == methodName) {
-                                _method = m;
-                            }
-                        }
-                        fp = new FilenamePattern(_cls, calledClass, _method, pattern, selectionTag);
+                        fp = readOnMethodFilenamePattern(pkg, filename)
                     }
                     if (fp == null) {
                         throw new RuntimeException("filename pattern is not valid: ")
@@ -566,6 +451,134 @@ public class ConfigurationFactory {
                 }
             }
         }
+        return filenamePatterns;
+    }
+
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    public static FilenamePattern readDerivedFromFilenamePattern(String pkg, NodeChild filename) {
+        String classSimpleName = filename.@class.text();
+        String fnDerivedFrom = filename.@derivedFrom.text();
+        String pattern = filename.@pattern.text();
+        String selectionTag = extractAttributeText(filename, "selectiontag", FilenamePattern.DEFAULT_SELECTION_TAG);
+
+        Tuple3<Class, Boolean, Integer> parentClassResult = loadPatternClass(pkg, fnDerivedFrom)
+        Tuple3<Class, Boolean, Integer> classResult = loadPatternClass(pkg, classSimpleName, parentClassResult.x)
+
+        FilenamePattern fp = new DerivedFromFilenamePattern(classResult.x, parentClassResult.x, pattern, selectionTag, classResult.y, classResult.z);
+        return fp;
+    }
+
+    public static Tuple3<Class, Boolean, Integer> loadPatternClass(String pkg, String className, Class constructorClass = null) {
+
+        String cls
+        boolean packageIsSet = pkg && pkg != LibrariesFactory.SYNTHETIC_PACKAGE;
+        Class foundClass = !packageIsSet ? LibrariesFactory.instance.searchForClass(className) : null;
+        if (foundClass)
+            cls = foundClass.name;
+        else
+            cls = (pkg != null ? pkg + "." : "") + className;
+
+
+        int enforcedArraySize = -1;
+        boolean isArray = false;
+        if (cls.contains("[")) {
+            int openingIndex = cls.indexOf("[");
+            int closingIndex = cls.indexOf("]");
+            if (closingIndex - 1 > openingIndex) {
+                enforcedArraySize = Integer.parseInt(cls[openingIndex + 1..-2]);
+            }
+            cls = cls[0..openingIndex - 1];
+            className = className.split("\\[")[0]
+            isArray = true;
+        }
+
+        Class _classID
+        try {
+            _classID = foundClass ?: LibrariesFactory.getInstance().searchForClass(cls);
+        } catch (Exception ex) {
+            _classID = null;
+        }
+
+        if (!_classID) {
+            //Create a synthetic class...
+            String constructorClassName = constructorClass ? constructorClass.name : BaseFile.class.name
+            _classID = LibrariesFactory.getInstance().loadRealOrSyntheticClass(className, constructorClassName);
+        }
+        return new Tuple3<Class, Boolean, Integer>(_classID, isArray, enforcedArraySize);
+    }
+
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    public static FilenamePattern readOnMethodFilenamePattern(String pkg, NodeChild filename) {
+        String methodName = filename.@onMethod.text();
+        String pattern = filename.@pattern.text();
+        String selectionTag = extractAttributeText(filename, "selectiontag", FilenamePattern.DEFAULT_SELECTION_TAG);
+        Class<FileObject> _cls = loadPatternClass(pkg, filename.@class.text(), BaseFile).x;
+        Class<FileObject> calledClass = _cls;
+        if (methodName.contains(".")) { //Different class as source class!
+            String[] stuff = methodName.split(SPLIT_STOP);
+            String className = stuff[0];
+            String classPkg = null;
+            if (stuff.length > 2) { //We have a package specified.
+                classPkg = stuff[0..-3].join(".");
+                className = stuff[-2];
+            }
+            if (classPkg == null) classPkg = pkg;
+            String calledClassName = (classPkg != null ? classPkg + "." : "") + className;
+            calledClass = (Class<FileObject>) LibrariesFactory.getInstance().loadClass(calledClassName);
+            methodName = stuff[-1];
+        }
+        Method _method = null;
+        for (Method m : calledClass.getMethods()) {
+            if (m.name == methodName) {
+                _method = m;
+            }
+        }
+        FilenamePattern fp = new OnMethodFilenamePattern(_cls, calledClass, _method, pattern, selectionTag);
+        return fp;
+    }
+
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    public static FilenamePattern readOnScriptFilenamePattern(String pkg, NodeChild filename) {
+        Class<FileObject> _cls = loadPatternClass(pkg, filename.@class.text(), BaseFile).x;
+        String scriptName = filename.@onScript.text();
+        String pattern = filename.@pattern.text();
+        String selectionTag = extractAttributeText(filename, "selectiontag", FilenamePattern.DEFAULT_SELECTION_TAG);
+        FilenamePattern fp = new OnToolFilenamePattern(_cls, scriptName, pattern, selectionTag);
+        return fp;
+    }
+
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    public static FilenamePattern readFileStageFilenamePattern(String pkg, String filestagesbase, NodeChild filename) {
+        Class<FileObject> _cls = loadPatternClass(pkg, filename.@class.text(), BaseFile).x;
+        String fileStage = filename.@fileStage.text();
+        String pattern = filename.@pattern.text();
+        String selectionTag = extractAttributeText(filename, "selectiontag", FilenamePattern.DEFAULT_SELECTION_TAG);
+        FileStage fs = null;
+
+        if (fileStage.contains(".")) { //Load without a base package / class
+            int index = fileStage.lastIndexOf(".");
+
+            filestagesbase = fileStage[0..index - 1];
+            fileStage = fileStage[index + 1..-1];
+        }
+
+        if (!filestagesbase) {
+            throw new RuntimeException("Filestage was not specified correctly. Need a base package/class or full qualified name.")
+        }
+
+        Class baseClass = LibrariesFactory.getInstance().tryLoadClass(filestagesbase);
+        if (baseClass) {
+            Field f = baseClass.getDeclaredField(fileStage);
+            boolean isStatic = Modifier.isStatic(f.getModifiers());
+            if (!isStatic)
+                throw new RuntimeException("A filestage must be either a new object or a static field of a class.");
+            fs = (FileStage) f.get(null);
+        } else {
+            fs = LibrariesFactory.getInstance().loadClass(filestagesbase + "." + fileStage);
+        }
+
+        FilenamePattern fp = new FileStageFilenamePattern(_cls, fs, pattern, selectionTag);
+        return fp;
     }
 
 
@@ -592,7 +605,7 @@ public class ConfigurationFactory {
                     if (cName == "resourcesets") {
                         for (NodeChild rset in child.rset) {
                             ToolEntry.ResourceSet tempSet = parseToolResourceSet(rset, config)
-                            if(tempSet)
+                            if (tempSet)
                                 resourceSets << tempSet;
                         }
                     } else if (cName == "input") {
@@ -618,14 +631,14 @@ public class ConfigurationFactory {
                 // Only parse the memory value, if it is set.
                 BufferValue rsetUsedMemory;
                 String _rsetUsedMemory = extractAttributeText(rset, "memory", null);
-                if(_rsetUsedMemory != null) rsetUsedMemory = new BufferValue(_rsetUsedMemory);
+                if (_rsetUsedMemory != null) rsetUsedMemory = new BufferValue(_rsetUsedMemory);
 
                 Integer rsetUsedCores = extractAttributeText(rset, "cores", null)?.toInteger();
                 Integer rsetUsedNodes = extractAttributeText(rset, "nodes", null)?.toInteger();
 
                 TimeUnit rsetUsedWalltime;
                 String _rsetUsedWalltime = extractAttributeText(rset, "walltime", null);
-                if(_rsetUsedWalltime != null) rsetUsedWalltime = new TimeUnit(_rsetUsedWalltime);
+                if (_rsetUsedWalltime != null) rsetUsedWalltime = new TimeUnit(_rsetUsedWalltime);
 
                 String rsetUsedQueue = extractAttributeText(rset, "queue", null);
                 String rsetUsedNodeFlag = extractAttributeText(rset, "nodeflag", null);
@@ -637,7 +650,7 @@ public class ConfigurationFactory {
 //                tempSet = new ToolEntry.ResourceSet(rsetSize, new BufferValue(splitInt[0]), splitInt[1], new TimeUnit(split[2]), splitInt[3], null, null, null);
 //            }
         } catch (Exception ex) {
-            if(config != null) config.addLoadError(new ConfigurationLoadError(config, "Resource set could not be read", "", ex));
+            if (config != null) config.addLoadError(new ConfigurationLoadError(config, "Resource set could not be read", "", ex));
         }
         return tempSet
     }
