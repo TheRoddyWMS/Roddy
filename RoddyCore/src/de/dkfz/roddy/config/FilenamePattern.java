@@ -3,15 +3,12 @@ package de.dkfz.roddy.config;
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.knowledge.files.BaseFile;
-import de.dkfz.roddy.knowledge.files.FileObject;
-import de.dkfz.roddy.knowledge.files.FileStage;
 import de.dkfz.roddy.knowledge.files.FileStageSettings;
 
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import static de.dkfz.roddy.StringConstants.*;
 
@@ -21,10 +18,10 @@ import static de.dkfz.roddy.StringConstants.*;
 public abstract class FilenamePattern implements RecursiveOverridableMapContainer.Identifiable {
 
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(FilenamePattern.class.getSimpleName());
-    public static final String $_SOURCEFILE_ATOMIC_PREFIX = "${sourcefileAtomicPrefix";
-    public static final String $_SOURCEFILE_PROPERTY = "${sourcefileProperty";
-    public static final String $_CVALUE = "${cvalue";
-    public static final String $_JOBPARAMETER = "${jobParameter";
+    public static final String PLACEHOLDER_SOURCEFILE_ATOMIC_PREFIX = "${sourcefileAtomicPrefix";
+    public static final String PLACEHOLDER_SOURCEFILE_PROPERTY = "${sourcefileProperty";
+    public static final String PLACEHOLDER_CVALUE = "${cvalue";
+    public static final String PLACEHOLDER_JOBPARAMETER = "${jobParameter";
     public static final String DEFAULT_SELECTION_TAG = "default";
 
     protected final Class<BaseFile> cls;
@@ -92,8 +89,8 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
             }
         }
 
-        while (temp.contains($_CVALUE)) {
-            Command command = extractCommand($_CVALUE, temp);
+        while (temp.contains(PLACEHOLDER_CVALUE)) {
+            Command command = extractCommand(PLACEHOLDER_CVALUE, temp);
             CommandAttribute name = command.attributes.get("name");
             CommandAttribute def = command.attributes.get("default");
             if (name != null) {
@@ -169,8 +166,8 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
                 File sourcepath = sourceFile.getPath();
                 temp = temp.replace("${sourcefile}", sourcepath.getAbsolutePath());
                 temp = temp.replace("${sourcefileAtomic}", sourcepath.getName());
-                if (temp.contains($_SOURCEFILE_PROPERTY)) { //Replace the string with a property value
-                    Command command = extractCommand($_SOURCEFILE_PROPERTY, temp);
+                if (temp.contains(PLACEHOLDER_SOURCEFILE_PROPERTY)) { //Replace the string with a property value
+                    Command command = extractCommand(PLACEHOLDER_SOURCEFILE_PROPERTY, temp);
                     String pName = command.attributes.keySet().toArray()[0].toString();
 
                     String accessorName = "get" + pName.substring(0, 1).toUpperCase() + pName.substring(1);
@@ -178,8 +175,8 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
                     String value = accessorMethod.invoke(sourceFile).toString();
                     temp = temp.replace(command.name, value);
                 }
-                if (temp.contains($_SOURCEFILE_ATOMIC_PREFIX)) {
-                    Command command = extractCommand($_SOURCEFILE_ATOMIC_PREFIX, temp);
+                if (temp.contains(PLACEHOLDER_SOURCEFILE_ATOMIC_PREFIX)) {
+                    Command command = extractCommand(PLACEHOLDER_SOURCEFILE_ATOMIC_PREFIX, temp);
                     CommandAttribute att = command.attributes.get("delimiter");
                     if (att != null) {
                         String sourcename = sourcepath.getName();

@@ -3,6 +3,7 @@ package de.dkfz.roddy.client;
 /**
  * Created by michael on 31.03.15.
  */
+@groovy.transform.CompileStatic
 public class RoddyStartupModeScopes {
 
     /**

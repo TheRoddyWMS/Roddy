@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicLong;
 
 import static de.dkfz.roddy.Constants.NO_VALUE
-import static de.dkfz.roddy.config.FilenamePattern.$_JOBPARAMETER;
+import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER;
 
 @groovy.transform.CompileStatic
 public class Job {
@@ -243,8 +243,8 @@ public class Job {
         }
 
         String absolutePath = path.getAbsolutePath()
-        if (absolutePath.contains($_JOBPARAMETER)) {
-            FilenamePattern.Command command = FilenamePattern.extractCommand($_JOBPARAMETER, absolutePath);
+        if (absolutePath.contains(PLACEHOLDER_JOBPARAMETER)) {
+            FilenamePattern.Command command = FilenamePattern.extractCommand(PLACEHOLDER_JOBPARAMETER, absolutePath);
             FilenamePattern.CommandAttribute name = command.attributes.get("name");
 //                    FilenamePattern.CommandAttribute defValue = command.attributes.get("default");
             if (name != null) {

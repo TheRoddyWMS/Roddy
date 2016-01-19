@@ -8,6 +8,7 @@ import de.dkfz.roddy.execution.io.ExecutionHelper
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.tools.*
+import de.dkfz.roddy.tools.Tuple2
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.core.Initializable
 import groovy.transform.TypeCheckingMode

@@ -128,8 +128,10 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
             this.fileStageSettings = settings ?: (FS) (parent as BaseFile)?.fileStageSettings ?: null;
         }
         Tuple2<File, FilenamePattern> fnresult = getFilename(this);
-        this.path = fnresult.x;
-        this.appliedFilenamePattern = fnresult.y;
+        if (fnresult) {
+            this.path = fnresult.x;
+            this.appliedFilenamePattern = fnresult.y;
+        }
         this.setCreatingJobsResult(jobResult);
     }
 
@@ -439,8 +441,8 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
             }
         }
 
-        result = new Tuple2<>(filename, appliedPattern);
-        return result;
+        if (!filename || !appliedPattern) return null;
+        return new Tuple2<>(filename, appliedPattern);
     }
 
     private static Tuple2<File, FilenamePattern> findFilenameFromSourcefilePatterns(BaseFile baseFile, LinkedList<FilenamePattern> availablePatterns, String selectionTag) {
@@ -463,8 +465,8 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
                 }
             }
         }
-        result = new Tuple2<>(filename, appliedPattern);
-        return result;
+        if (!filename || !appliedPattern) return null;
+        return new Tuple2<>(filename, appliedPattern);
     }
 
     /**
@@ -505,8 +507,8 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
                 }
             }
         }
-        result = new Tuple2<>(filename, appliedPattern);
-        return result;
+        if (!filename || !appliedPattern) return null;
+        return new Tuple2<>(filename, appliedPattern);
     }
 
     /**
@@ -537,8 +539,8 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
                 break;
             }
         }
-        result = new Tuple2<>(filename, appliedPattern);
-        return result;
+        if (!filename || !appliedPattern) return null;
+        return new Tuple2<>(filename, appliedPattern);
     }
 
     /**

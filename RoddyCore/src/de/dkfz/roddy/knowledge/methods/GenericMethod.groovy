@@ -282,33 +282,37 @@ class GenericMethod {
         ToolEntry.ToolFileParameter fileParameter = tparm as ToolEntry.ToolFileParameter;
         BaseFile bf = convertToolFileParameterToBaseFile(fileParameter, inputFile, allInputFiles)
         for (ToolEntry.ToolFileParameter childFileParameter in fileParameter.getChildFiles()) {
-            if (childFileParameter.parentVariable == null) {
-                continue;
-            }
-            Field _field = null;
-            Method _method = null;
             try {
-                _field = bf.getClass().getField(childFileParameter.parentVariable);
-            } catch (Exception ex) {
-            }
-            try {
-                String setterMethod = "set" + childFileParameter.parentVariable[0].toUpperCase() + childFileParameter.parentVariable[1..-1];
-                _method = bf.getClass().getMethod(setterMethod, childFileParameter.fileClass);
-            } catch (Exception ex) {
-            }
-            if (_field == null && _method == null) {
+                if (childFileParameter.parentVariable == null) {
+                    continue;
+                }
+                Field _field = null;
+                Method _method = null;
                 try {
-                    inputFile.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_FIELDINACCESSIBLE.expand("Class ${bf.getClass().getName()} field ${childFileParameter.parentVariable}"));
+                    _field = bf.getClass().getField(childFileParameter.parentVariable);
                 } catch (Exception ex) {
                 }
-                continue;
+                try {
+                    String setterMethod = "set" + childFileParameter.parentVariable[0].toUpperCase() + childFileParameter.parentVariable[1..-1];
+                    _method = bf.getClass().getMethod(setterMethod, childFileParameter.fileClass);
+                } catch (Exception ex) {
+                }
+                if (_field == null && _method == null) {
+                    try {
+                        inputFile.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_FIELDINACCESSIBLE.expand("Class ${bf.getClass().getName()} field ${childFileParameter.parentVariable}"));
+                    } catch (Exception ex) {
+                    }
+                    continue;
+                }
+                BaseFile childFile = convertToolFileParameterToBaseFile(childFileParameter, bf, [bf]);
+                allCreatedObjects << childFile;
+                if (_field)
+                    _field.set(bf, childFile);
+                else
+                    _method.invoke(bf, childFile);
+            } catch (Exception ex) {
+                println ex;
             }
-            BaseFile childFile = convertToolFileParameterToBaseFile(childFileParameter, bf, [bf]);
-            allCreatedObjects << childFile;
-            if (_field)
-                _field.set(bf, childFile);
-            else
-                _method.invoke(bf, childFile);
         }
         return fileParameter.fileClass.cast(bf) as FileObject;
     }
@@ -380,7 +384,7 @@ class GenericMethod {
     }
 
     private BaseFile convertToolFileParameterToBaseFile(ToolEntry.ToolFileParameter fileParameter, BaseFile input, List<BaseFile> allInput) {
-        Constructor c = searchConstructorForOneOf(fileParameter.fileClass, input.class, BaseFile.class);
+        Constructor c = searchConstructorForOneOf(fileParameter.fileClass, fileParameter.filenamePatternSelectionTag, input.class);
         BaseFile bf;
         try {
             if (c == null) {
@@ -390,7 +394,10 @@ class GenericMethod {
                 input.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_NOCONSTRUCTOR.expand("File object of type ${fileParameter?.fileClass} with input ${input?.class}."));
                 throw new RuntimeException("Could not find valid constructor for type  ${fileParameter?.fileClass} with input ${input?.class}.");
             } else {
-                bf = c.newInstance(input);
+                if (c.parameterCount == 1) // without selection tag
+                    bf = c.newInstance(input);
+                else// with selection tag
+                    bf = c.newInstance(input, fileParameter.filenamePatternSelectionTag)
             }
         } catch (Exception ex) {
             input.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_NOCONSTRUCTOR.expand("Error during constructor call."));
@@ -412,20 +419,49 @@ class GenericMethod {
         bf
     }
 
+
+    private static Constructor tryGetConstructor(Class classToSearch, Class... parameterTypes) {
+        try {
+            if (parameterTypes.size() == 1)
+                return classToSearch.getConstructor(parameterTypes[0])
+            else
+                return classToSearch.getConstructor(parameterTypes[0], parameterTypes[1])
+        } catch (NoSuchMethodException ex) {
+            return null;
+        }
+    }
+
     /**
      * Searches a constructor for classToSearch which fits to either one of classesToFind
      * If no constructor is found, null is returned.
+     *
+     * This method specifically searches for constructors for BaseFile derived classes.
+     * It will also try to accomplish that for several levels of class layers. e.g.
+     * FT3 extends FT2, FT2 extends BaseFile
+     * If there is a constructor for FT2 but not for FT3, then the default behaviour will be to look for
+     * FT2 (and BaseFile in the end). If you don't want that, then you can disable it by
+     * setting classesToFind to e.g. [ FT3, BaseFile ]. In this example, the method would return the
+     * constructor accepting BaseFile.
+     *
      * @param classToSearch
      * @param classesToFind
      * @return
      */
-    private Constructor<BaseFile> searchConstructorForOneOf(Class classToSearch, Class... classesToFind) {
+    public static Constructor<BaseFile> searchConstructorForOneOf(Class classToSearch, String selectiontag, Class... classesToFind) {
         Constructor c;
-        for (Class classToFind in classesToFind) {
-            try {
-                c = classToSearch.getConstructor(classToFind);
-            } catch (NoSuchMethodException ex) {
-            }
+        List<Class> newList = [] + (classesToFind as List<Class>);
+        classesToFind.each {
+            Class<BaseFile> cls ->
+                for (Class c2 = cls; ; c2 = c2.superclass) {
+                    if (!newList.contains(c2)) newList.add(c2);
+                    if (c2 == BaseFile) break;
+                }
+        }
+        for (Class classToFind in newList) {
+            if (selectiontag && selectiontag != "default")
+                c = tryGetConstructor(classToSearch, classToFind, String);
+            if (c == null)
+                c = tryGetConstructor(classToSearch, classToFind);
             if (c != null)
                 break;
         }

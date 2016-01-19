@@ -1,8 +1,8 @@
 package de.dkfz.roddy.client;
 
 import de.dkfz.roddy.Constants;
-import static RoddyStartupOptions.*;
-import static RoddyStartupModeScopes.*;
+import static de.dkfz.roddy.client.RoddyStartupOptions.*;
+import static de.dkfz.roddy.client.RoddyStartupModeScopes.*;
 
 /**
  * Contains the possible startup modes for Roddy.
