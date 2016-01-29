@@ -11,6 +11,7 @@ import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.knowledge.files.FileGroup;
 import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo;
 import de.dkfz.roddy.plugins.LibrariesFactory;
+import de.dkfz.roddy.tools.LoggerWrapper;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -27,7 +28,9 @@ import java.util.Map;
  */
 public abstract class CommandFactory<C extends Command> {
 
+    private static final LoggerWrapper logger = LoggerWrapper.getLogger(CommandFactory.class.getSimpleName());
     private static CommandFactory commandFactory;
+
 
     protected Thread updateDaemonThread;
 
@@ -41,15 +44,21 @@ public abstract class CommandFactory<C extends Command> {
         commandFactory = factory;
     }
 
-    public static void initializeFactory(boolean fullSetup) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    public static void initializeFactory(boolean fullSetup) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
+        logger.postSometimesInfo("public static void initializeFactory(boolean fullSetup)");
         if (!fullSetup)
             return;
 
-        ClassLoader classLoader = LibrariesFactory.getGroovyClassLoader();
-        String commandFactoryClassID = Roddy.getApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS, PBSCommandFactory.class.getName());
-        Class commandFactoryClass = classLoader.loadClass(commandFactoryClassID);
-        Constructor[] c = commandFactoryClass.getConstructors();
-        Constructor first = c[0];
+        ClassLoader classLoader;
+        String commandFactoryClassID;
+        Class commandFactoryClass;
+
+        classLoader = LibrariesFactory.getGroovyClassLoader();
+        commandFactoryClassID = Roddy.getApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS, PBSCommandFactory.class.getName());
+        commandFactoryClass = classLoader.loadClass(commandFactoryClassID);
+
+        /** Get the constructor which comes with no parameters */
+        Constructor first = commandFactoryClass.getDeclaredConstructor();
         commandFactory = (CommandFactory) first.newInstance();
     }
 

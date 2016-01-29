@@ -38,9 +38,13 @@ public class PBSCommandFactory extends ClusterCommandFactory<PBSCommand> {
 
     public PBSCommandFactory(boolean createDaemon = true) {
         //Create a daemon thread which automatically calls queryJobStatus from time to time...
-        if (createDaemon) {
-            int interval = Integer.parseInt(Roddy.getApplicationProperty("commandFactoryUpdateInterval", "60"));
-            createUpdateDaemonThread(interval);
+        try {
+            if (createDaemon) {
+                int interval = Integer.parseInt(Roddy.getApplicationProperty("commandFactoryUpdateInterval", "60"));
+                createUpdateDaemonThread(interval);
+            }
+        } catch (Exception ex) {
+            logger.severe("Creating the command factory daemon failed for some reason. Roddy will not be able to query the job system.", ex);
         }
     }
 

@@ -87,6 +87,7 @@ public abstract class ExecutionService extends CacheProvider {
     }
 
     public static void initializeService(boolean fullSetup) {
+        logger.postSometimesInfo("public static void initializeService(boolean fullSetup)")
 
         if (!fullSetup) {
             executionService = new NoNoExecutionService();
@@ -95,9 +96,8 @@ public abstract class ExecutionService extends CacheProvider {
 
         ClassLoader classLoader = LibrariesFactory.getGroovyClassLoader();
 
-        String executionServiceClassID = null;
         RunMode runMode = Roddy.getRunMode();
-        executionServiceClassID = Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, SSHExecutionService.class.getName());
+        String executionServiceClassID = Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, SSHExecutionService.class.getName());
         Class executionServiceClass = classLoader.loadClass(executionServiceClassID);
         initializeService(executionServiceClass, runMode);
     }
