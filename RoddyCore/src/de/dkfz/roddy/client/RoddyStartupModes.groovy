@@ -38,6 +38,8 @@ public enum RoddyStartupModes {
 
     printruntimeconfig(SCOPE_FULL, [useconfig]),
 
+    printidlessruntimeconfig(SCOPE_REDUCED, [useconfig]),
+
     listworkflows(SCOPE_REDUCED, [useconfig, shortlist]),
 
     listdatasets(SCOPE_FULL, [useconfig]),

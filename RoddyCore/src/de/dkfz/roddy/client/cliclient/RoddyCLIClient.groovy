@@ -111,6 +111,9 @@ public class RoddyCLIClient {
             case printruntimeconfig:
                 printRuntimeConfiguration(clc);
                 break;
+            case printidlessruntimeconfig:
+                printReducedRuntimeConfiguration(clc);
+                break;
             case listworkflows:
                 listWorkflows(clc);
                 break;
@@ -208,7 +211,7 @@ public class RoddyCLIClient {
         Analysis analysis = ProjectFactory.getInstance().loadAnalysis(commandLineCall.getArguments()[1]);
 
         def text = analysis.getReadmeFile()?.text
-        if(text) {
+        if (text) {
             println("Print readme file for analysis ${analysis.getName()}: \n\t" + analysis.getReadmeFile());
             println(text);
         }
@@ -268,14 +271,22 @@ public class RoddyCLIClient {
         System.out.println(getFormatter().formatAll(sb.toString()));
     }
 
-    public static void printRuntimeConfiguration(CommandLineCall commandLineCall) {
+    public static void printReducedRuntimeConfiguration(CommandLineCall commandLineCall) {
         Analysis analysis = ProjectFactory.getInstance().loadAnalysis(commandLineCall.getArguments()[1]);
         if (!analysis) return;
 
-        if (commandLineCall.getParameters().size() < 2) {
-            logger.postAlwaysInfo("There must be a valid dataset id / pid.")
-            return;
-        }
+        ExecutionContext context = new ExecutionContext("DUMMY", analysis, null, ExecutionContextLevel.QUERY_STATUS, null, null, new File("/tmp/Roddy_DUMMY_Directory")) {
+            @Override
+            String getOutputGroupString() {
+                return "NOGROUP"
+            }
+        };
+        System.out.println(ConfigurationConverter.convertAutomatically(context, analysis.getConfiguration()));
+    }
+
+    public static void printRuntimeConfiguration(CommandLineCall commandLineCall) {
+        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(commandLineCall.getArguments()[1]);
+        if (!analysis) return;
 
         List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(commandLineCall.getArguments()[2].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
         for (it in executionContexts) {
@@ -284,8 +295,6 @@ public class RoddyCLIClient {
     }
 
     public static void listWorkflows(CommandLineCall clc) {
-//        RoddyCLIClient.checkParameterCount(args, 1);
-
         String filter = clc.hasParameters() ? clc.getParameters().get(0) : "";
 
         final String separator = Constants.ENV_LINESEPARATOR;
@@ -461,7 +470,7 @@ public class RoddyCLIClient {
             sb << "  Output directory    : ${ec.getOutputDirectory()}" << separator;
             sb << "  Execution directory : ${ec.getExecutionDirectory()}" << separator;
 
-            Collection<Job> collectedJobs = ec.getExecutedJobs().findAll { Job job -> job.getJobID() != null && (rerun ? job.runResult?.wasExecuted : true)  }
+            Collection<Job> collectedJobs = ec.getExecutedJobs().findAll { Job job -> job.getJobID() != null && (rerun ? job.runResult?.wasExecuted : true) }
             sb << "  #FWHITE#List of jobs (${collectedJobs.size()}):#CLEAR#" << separator;
             for (Job job : collectedJobs) {
 
@@ -529,7 +538,7 @@ public class RoddyCLIClient {
         sb << "Note, that only 'valid' information is processed and display. Empty execution folders and ";
         sb << "folders containing no job information will be skipped." << NEWLINE << NEWLINE << "[outDir]: " << outputDirectory << NEWLINE;
 
-        if(!dataSets)
+        if (!dataSets)
             return;
 
         //Get padding length for pid.
@@ -553,7 +562,7 @@ public class RoddyCLIClient {
                 if (information)
                     context = information.getDetailedProcessingInfo();
 
-                if(!datasetprinted) {
+                if (!datasetprinted) {
                     sb << ds.getId().padRight(padSize) << "  ";
                     datasetprinted = true;
                 } else {
