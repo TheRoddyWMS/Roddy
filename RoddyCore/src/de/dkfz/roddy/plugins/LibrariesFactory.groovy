@@ -85,6 +85,10 @@ public class LibrariesFactory extends Initializable {
         return synthetic;
     }
 
+    /**
+     * TODO Leave this static? Or make it a libraries factory based thing?
+     * @return
+     */
     public static GroovyClassLoader getGroovyClassLoader() {
         if (centralGroovyClassLoader == null) {
             centralGroovyClassLoader = new GroovyClassLoader(ClassLoader.getSystemClassLoader())
@@ -142,7 +146,8 @@ public class LibrariesFactory extends Initializable {
     public Class loadRealOrSyntheticClass(String classOfFileObject, String baseClassOfFileObject) {
         Class<BaseFile> _cls = searchForClass(classOfFileObject);
         if (_cls == null) {
-            _cls = generateSyntheticFileClassWithParentClass(classOfFileObject, baseClassOfFileObject)
+            _cls = generateSyntheticFileClassWithParentClass(classOfFileObject, baseClassOfFileObject, LibrariesFactory.getGroovyClassLoader())
+            LibrariesFactory.getInstance().getSynthetic().addClass(_cls);
             logger.severe("Class ${classOfFileObject} could not be found, created synthetic class ${_cls.name}.");
         }
         return _cls
@@ -153,29 +158,20 @@ public class LibrariesFactory extends Initializable {
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private Class generateSyntheticFileClassWithParentClass(String syntheticClassName, String constructorClassName) {
+    public static Class generateSyntheticFileClassWithParentClass(String syntheticClassName, String constructorClassName, GroovyClassLoader classLoader = null) {
         String syntheticFileClass =
                 """
                 package $SYNTHETIC_PACKAGE
 
-                import ${BaseFile.name}
-                import de.dkfz.roddy.core.ExecutionContext
-                import de.dkfz.roddy.knowledge.files.FileStageSettings
+                public class ${syntheticClassName} extends de.dkfz.roddy.knowledge.files.BaseFile {
 
-                public class ${syntheticClassName} extends BaseFile {
-
-                    public ${syntheticClassName}(ExecutionContext context, FileStageSettings settings) {
-                        super(context, settings);
-                    }
-
-                    public ${syntheticClassName}(${constructorClassName} baseFile) {
-                        super(baseFile);
+                    public ${syntheticClassName}(de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForBaseFiles helper) {
+                        super(helper);
                     }
                 }
             """
-        GroovyClassLoader groovyClassLoader = LibrariesFactory.getGroovyClassLoader();
+        GroovyClassLoader groovyClassLoader = classLoader ?: new GroovyClassLoader();
         Class _classID = (Class<BaseFile>) groovyClassLoader.parseClass(syntheticFileClass);
-        LibrariesFactory.getInstance().getSynthetic().addClass(_classID);
         return _classID
     }
 

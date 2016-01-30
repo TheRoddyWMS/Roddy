@@ -7,7 +7,7 @@ package de.dkfz.roddy.knowledge.files;
  * Use the onMethod filename pattern.
  */
 public class GenericFile extends BaseFile {
-    public GenericFile(BaseFile parentFile) {
-        super(parentFile);
+    public GenericFile(ConstructionHelperForBaseFiles helper) {
+        super( helper);
     }
 }

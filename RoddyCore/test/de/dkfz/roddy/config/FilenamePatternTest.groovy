@@ -19,6 +19,7 @@ import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.execution.jobs.ProcessingCommands
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
+import de.dkfz.roddy.knowledge.files.GenericFile
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.knowledge.methods.GenericMethod
 import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo
@@ -158,7 +159,8 @@ public class FilenamePatternTest {
     @Test
     public void testFilenamePatternWithSelectionByToolID() {
         FilenamePattern fp = new OnToolFilenamePattern(testClass, "RoddyTests", "/tmp/RoddyTests/testFileResult.sh", "default");
-        String filename = fp.apply((BaseFile) testClass.newInstance(mockedContext, new TestFileStageSettings()));
+        BaseFile.ConstructionHelperForGenericCreation helper = new BaseFile.ConstructionHelperForGenericCreation(mockedContext, mockedContext.getConfiguration().getTools().getValue("RoddyTests"), "RoddyTests", null, null, new TestFileStageSettings(), null);
+        String filename = fp.apply((BaseFile) testClass.newInstance(helper));
         assert filename == "/tmp/RoddyTests/testFileResult.sh";
     }
 
@@ -283,7 +285,7 @@ public class FilenamePatternTest {
 
         FilenamePattern fp = new OnToolFilenamePattern(testClass, "RoddyTests", "/tmp/RoddyTests/testFileResult.sh", "default");
         mockedContext.getConfiguration().getFilenamePatterns().add(fp);
-        BaseFile sourceFile = new BaseFile(new File("/tmp/RoddyTests/output/abcfile"), mockedContext, null, null, new TestFileStageSettings()) {};
+        BaseFile sourceFile = BaseFile.constructSourceFile(GenericFile, new File("/tmp/RoddyTests/output/abcfile"), mockedContext);
         BaseFile result = (BaseFile) GenericMethod.callGenericTool("RoddyTests", sourceFile);
         assert result != null
         assert result.class == testClass;

@@ -18,40 +18,6 @@ import java.lang.reflect.Method
 @groovy.transform.CompileStatic
 public class LibrariesFactoryTest {
 
-//    private static Object testLock = new Object();
-
-//    @Test
-//    /**
-//     * Test, if the plugin chain with "full" plugins is loading.
-//     */
-//    public void testLoadLibraryChainWithJarFile() {
-//        try {
-//            synchronized (testLock) {
-//                Roddy.resetMainStarted();
-//                Roddy.main(["testrun", "TestProjectForUnitTests@test", "stds", "--useRoddyVersion=current", "--disallowexit", "--configurationDirectories=" + RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current", "testFiles").absolutePath] as String[]);
-//                assert (LibrariesFactory.getInstance().getLoadedLibrariesInfoList().size() == 3)
-//            }
-//        } finally {
-//            LibrariesFactory.initializeFactory(true);
-//        }
-//    }
-//
-//    @Test
-//    /**
-//     * Test, if the plugin chain with "mixed/empty" plugins is loading. Empty plugins are such, that have no jar file.
-//     */
-//    public void testLoadLibraryChainWithoutJarFile() {
-//        try {
-//            synchronized (testLock) {
-//                Roddy.resetMainStarted();
-//                Roddy.main(["testrun", "TestProjectForUnitTests@testWithoutJar", "stds", "--useRoddyVersion=current", "--disallowexit", "--configurationDirectories=" + RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current", "testFiles").absolutePath] as String[]);
-//                assert (LibrariesFactory.getInstance().getLoadedLibrariesInfoList().size() == 4)
-//            }
-//        } finally {
-//            LibrariesFactory.initializeFactory(true);
-//        }
-//    }
-
     /**
      * Test data map for plugin chain loading mechanims
      * The map contains various plugins, versions and dependencies to other plugins.
@@ -241,4 +207,12 @@ public class LibrariesFactoryTest {
                 pluginQueueWODefaultLibs["DefaultPlugin"].prodVersion == "current";
     }
 
+
+    @Test
+    public void testGenerateSyntheticFileClassWithParentClass() {
+        Class _cls = LibrariesFactory.generateSyntheticFileClassWithParentClass("TestClass", "BaseFile", new GroovyClassLoader());
+        assert _cls != null && _cls.name.equals(LibrariesFactory.SYNTHETIC_PACKAGE + ".TestClass");
+        assert _cls.getDeclaredConstructors().size() == 1;
+        assert _cls.getDeclaredConstructors()[0].parameterTypes[0] == de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForBaseFiles
+    }
 }

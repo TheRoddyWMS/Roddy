@@ -71,11 +71,6 @@ public class ExecutionContext implements JobStatusListener {
      */
     private final long creationCheckPoint;
     /**
-     * Lockfiles are a central process locking and synchronization mechanism.
-     * Therefore they are stored in this central position.
-     */
-    private final Map<Object, LockFile> lockFiles = new HashMap<Object, LockFile>();
-    /**
      * Keeps a list of errors which happen either on read back or on execution.
      * The list is not stored and rebuilt if necessary, so not all errors might be available.
      */
@@ -188,7 +183,6 @@ public class ExecutionContext implements JobStatusListener {
         this.allFilesInRun.addAll(p.getAllFilesInRun());
         this.jobsForProcess.addAll(p.jobsForProcess);
         this.commandCalls.addAll(p.commandCalls);
-        this.lockFiles.putAll(p.lockFiles);
         this.errors.addAll(p.errors);
         creationCheckPoint = -1;
     }
@@ -210,46 +204,6 @@ public class ExecutionContext implements JobStatusListener {
         return new ExecutionContext(this);
     }
 
-    /**
-     * Create a group of locked files for a file group. The files are create in a Job.
-     *
-     * @return
-     */
-    public LockFileGroup createLockFiles(FileGroup fileGroup) {
-        return createLockFiles(fileGroup.getFilesInGroup() as List<Object>);
-    }
-
-    /**
-     * Create a group of locked files for a file group. The files are create in a Job.
-     *
-     * @return
-     */
-    public LockFileGroup createLockFiles(List<Object> identifiers) {
-        LockFileGroup lfg = new LockFileGroup(null);
-        for (int i = 0; i < identifiers.size(); i++) {
-            LockFile lockfile = new LockFile(this, new File(getLockFilesDirectory().getAbsolutePath() + File.separator + "~" + System.nanoTime()));
-            lfg.addFile(lockfile);
-            lockFiles.put(identifiers.get(i), lockfile);
-        }
-
-        ExecutionContext run = this;
-
-        final String TOOL = Constants.TOOLID_CREATE_LOCKFILES;
-        run.getDefaultJobParameters(TOOL);
-        Map<String, Object> parameters = getDefaultJobParameters(TOOL);
-        int i = 0;
-        for (BaseFile bf : lfg.getFilesInGroup()) {
-            parameters.put("LOCKFILE_" + (i++), bf.getPath().getAbsolutePath());
-        }
-
-        Job job = new Job(run, CommandFactory.createJobName(run, "roddy_lockfile_creation"), TOOL, parameters);
-
-        JobResult jobResult = job.run();
-        for (BaseFile bf : lfg.getFilesInGroup())
-            bf.setCreatingJobsResult(jobResult);
-        return lfg;
-    }
-
     public Map<String, Object> getDefaultJobParameters(String TOOLID) {
         return getRuntimeService().getDefaultJobParameters(this, TOOLID);
     }
@@ -268,68 +222,6 @@ public class ExecutionContext implements JobStatusListener {
 
     public String createJobName(BaseFile p, String TOOLID, boolean reduceLevel, List<BaseFile> inputFilesForSizeCalculatio) {
         return getRuntimeService().createJobName(this, p, TOOLID, reduceLevel);
-    }
-
-    /**
-     * Returns an (available) lockfile for the passed identifier.
-     *
-     * @param identifier
-     * @return
-     */
-    public LockFile getLockFile(Object identifier) {
-        return lockFiles.get(identifier);
-    }
-
-    /**
-     * This creates a job for memory or other n x n buffers.
-     * This should be a bit more flexible (much more!) so it is really only temporary.
-     * TODO Create a versatile buffer and locking logic.
-     */
-    public StreamingBufferFileGroup runStreamingBuffer(LockFileGroup lockfilesInput, LockFileGroup lockfilesOutput, int buffers, int sizePerBuffer, BufferUnit unit) {
-        ExecutionContext run = this;
-
-        final String TOOL = Constants.TOOLID_STREAM_BUFFER;
-
-        List<File> inFileNames = new LinkedList<File>();
-        List<File> outFileNames = new LinkedList<File>();
-        List<StreamingBufferConnectionFile> inFiles = new LinkedList<StreamingBufferConnectionFile>();
-        List<StreamingBufferConnectionFile> outFiles = new LinkedList<StreamingBufferConnectionFile>();
-
-        Map<String, Object> parameters = getDefaultJobParameters(TOOL);
-        int i = 0;
-        for (BaseFile bf : lockfilesInput.getFilesInGroup()) {
-            parameters.put("IN_LOCKFILE_" + i, bf.getPath().getAbsolutePath());
-            i++;
-        }
-        i = 0;
-        for (BaseFile bf : lockfilesOutput.getFilesInGroup()) {
-            parameters.put("OUT_LOCKFILE_" + i, bf.getPath().getAbsolutePath());
-            i++;
-        }
-        for (i = 0; i < buffers; i++) {
-            File inFile = new File(run.getTemporaryDirectory().getAbsolutePath() + File.separator + System.nanoTime() + "_portExchange.tmp");
-            File outFile = new File(run.getTemporaryDirectory().getAbsolutePath() + File.separator + System.nanoTime() + "_portExchange.tmp");
-            inFileNames.add(inFile);
-            outFileNames.add(outFile);
-            parameters.put("PORTEXCHANGE_INFILE_" + i, inFile.getAbsolutePath());
-            parameters.put("PORTEXCHANGE_OUTFILE_" + i, outFile.getAbsolutePath());
-        }
-
-        parameters.put("BUFFER_COUNT", "" + buffers);
-        parameters.put("BUFFER_SIZE", "" + sizePerBuffer);
-        parameters.put("BUFFER_UNIT", "" + unit);
-
-        List<BaseFile> pFiles = new LinkedList<BaseFile>(lockfilesInput.getFilesInGroup());
-        pFiles.addAll(lockfilesOutput.getFilesInGroup());
-
-//        StreamingBufferFileGroup
-
-        JobResult jr = (new Job(this, CommandFactory.createJobName(run, "roddy_streamingbuffer_" + buffers + "x" + sizePerBuffer + unit), TOOL, parameters, pFiles)).run();
-        for (i = 0; i < buffers; i++) {
-            inFiles.add(new StreamingBufferConnectionFile(inFileNames.get(i), this, jr, null, lockfilesInput.getFilesInGroup().get(0).getFileStage()));
-            outFiles.add(new StreamingBufferConnectionFile(outFileNames.get(i), this, jr, null, lockfilesInput.getFilesInGroup().get(0).getFileStage()));
-        }
-        return new StreamingBufferFileGroup(inFiles, outFiles);
     }
 
     public File getInputDirectory() {
@@ -705,15 +597,6 @@ public class ExecutionContext implements JobStatusListener {
      */
     public boolean execute() {
         return analysis.getWorkflow().execute(this);
-    }
-
-    /**
-     * Create testdata for the stored dataset.
-     *
-     * @return
-     */
-    public boolean createTestdata() {
-        return analysis.getWorkflow().createTestdata(this);
     }
 
     public void registerContextListener(ExecutionContextListener ecl) {

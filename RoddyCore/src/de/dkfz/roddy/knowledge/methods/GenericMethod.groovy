@@ -384,28 +384,26 @@ class GenericMethod {
     }
 
     private BaseFile convertToolFileParameterToBaseFile(ToolEntry.ToolFileParameter fileParameter, BaseFile input, List<BaseFile> allInput) {
-        Constructor c = searchConstructorForOneOf(fileParameter.fileClass, fileParameter.filenamePatternSelectionTag, input.class);
+        Constructor c = searchBaseFileConstructorForConstructionHelperObject(fileParameter.fileClass);
         BaseFile bf;
         try {
             if (c == null) {
+                // Actually this must not be the case! If a developer has its custom class, it must provide this constructor.
+
                 //TODO URGENT
                 //The underlying error is that a configuration file has e.g. a typo, or not? Such kind of errors are user errors, where there is a clear cause (line X in file Y contains garbage Z). Ideally we would just display an error message with as much information possible to allow the user to fix the error, but no stack trace.
                 //Do you think it would make sense to separate out two groups of Exceptions, one that shows only the error message containing all information required to fix the input problem caused by the user, and the othor more fatal class of exceptions raised by the workflow or RoddyCore, that indicates real programming errors and are displayed with a full stack trace?
-                input.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_NOCONSTRUCTOR.expand("File object of type ${fileParameter?.fileClass} with input ${input?.class}."));
+
+                input.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_NOCONSTRUCTOR.expand("File object of type ${fileParameter?.fileClass} with input ${input?.class} needs a constructor which takes a ConstuctionHelper object."));
                 throw new RuntimeException("Could not find valid constructor for type  ${fileParameter?.fileClass} with input ${input?.class}.");
             } else {
-                if (c.parameterCount == 1) // without selection tag
-                    bf = c.newInstance(input);
-                else// with selection tag
-                    bf = c.newInstance(input, fileParameter.filenamePatternSelectionTag)
+                BaseFile.ConstructionHelperForGenericCreation helper = new BaseFile.ConstructionHelperForGenericCreation(input, allInput as List<FileObject>, calledTool, toolName, fileParameter.scriptParameterName, fileParameter.filenamePatternSelectionTag, input.fileStage, null);
+                bf = c.newInstance(helper);
             }
         } catch (Exception ex) {
             input.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_NOCONSTRUCTOR.expand("Error during constructor call."));
             throw (ex);
         }
-
-        if (fileParameter.hasSelectionTag())
-            bf.overrideFilenameUsingSelectionTag(fileParameter.filenamePatternSelectionTag);
 
         if (!fileParameter.checkFile)
             bf.setAsTemporaryFile();
@@ -419,52 +417,16 @@ class GenericMethod {
         bf
     }
 
-
-    private static Constructor tryGetConstructor(Class classToSearch, Class... parameterTypes) {
-        try {
-            if (parameterTypes.size() == 1)
-                return classToSearch.getConstructor(parameterTypes[0])
-            else
-                return classToSearch.getConstructor(parameterTypes[0], parameterTypes[1])
-        } catch (NoSuchMethodException ex) {
-            return null;
-        }
-    }
-
     /**
-     * Searches a constructor for classToSearch which fits to either one of classesToFind
-     * If no constructor is found, null is returned.
-     *
-     * This method specifically searches for constructors for BaseFile derived classes.
-     * It will also try to accomplish that for several levels of class layers. e.g.
-     * FT3 extends FT2, FT2 extends BaseFile
-     * If there is a constructor for FT2 but not for FT3, then the default behaviour will be to look for
-     * FT2 (and BaseFile in the end). If you don't want that, then you can disable it by
-     * setting classesToFind to e.g. [ FT3, BaseFile ]. In this example, the method would return the
-     * constructor accepting BaseFile.
-     *
+     * Get the BaseFile extending classes constructor for Construction Helper Objects
      * @param classToSearch
-     * @param classesToFind
      * @return
      */
-    public static Constructor<BaseFile> searchConstructorForOneOf(Class classToSearch, String selectiontag, Class... classesToFind) {
-        Constructor c;
-        List<Class> newList = [] + (classesToFind as List<Class>);
-        classesToFind.each {
-            Class<BaseFile> cls ->
-                for (Class c2 = cls; ; c2 = c2.superclass) {
-                    if (!newList.contains(c2)) newList.add(c2);
-                    if (c2 == BaseFile) break;
-                }
+    public static Constructor<BaseFile> searchBaseFileConstructorForConstructionHelperObject(Class classToSearch) {
+        try {
+            return classToSearch.getConstructor(BaseFile.ConstructionHelperForBaseFiles);
+        } finally {
+            logger.severe("There was no valid constructor found for class ${classToSearch?.name}! Roddy needs a constructor which accepts a construction helper object.")
         }
-        for (Class classToFind in newList) {
-            if (selectiontag && selectiontag != "default")
-                c = tryGetConstructor(classToSearch, classToFind, String);
-            if (c == null)
-                c = tryGetConstructor(classToSearch, classToFind);
-            if (c != null)
-                break;
-        }
-        return c;
     }
 }
