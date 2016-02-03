@@ -8,7 +8,6 @@ apply plugin: "java"
 apply plugin: "groovy"
 apply plugin: "idea"
 
-
 // TODO Implement -rX revisioning system
 // TODO Move plugin buildGradle directories out of rootProject.projectDir.
 // TODO Release only with clean git
@@ -18,7 +17,6 @@ apply plugin: "idea"
 // TODO Use subproject { ... } for building external plugins configured on the command line. Then maybe remove explicit projects PluginBase and DefaultPlugin.
 // TODO Sometimes repo.isDirty() test fails
 // TODO Print general help information with "gradlew help"
-
 // TODO Describe how to set up idea for gradle debugging.
 
 /**
