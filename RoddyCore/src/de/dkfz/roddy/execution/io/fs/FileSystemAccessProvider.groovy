@@ -78,6 +78,7 @@ public class FileSystemAccessProvider extends CacheProvider {
     }
 
     public static void initializeProvider(boolean fullSetup) {
+        logger.postSometimesInfo("public static void initializeProvider(boolean fullSetup)")
         fileSystemAccessProviderLock.lock();
         try {
             if (!fullSetup) {

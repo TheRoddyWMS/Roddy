@@ -183,7 +183,7 @@ public class Roddy {
 
     private static void time(String info) {
         t2 = System.nanoTime();
-        if (info != null) logger.postRareInfo("Timing " + info + ": " + ((t2 - t1) / 1000000) + " ms");
+        if (info != null) logger.postSometimesInfo("Timing " + info + ": " + ((t2 - t1) / 1000000) + " ms");
         t1 = t2;
     }
 
@@ -193,8 +193,10 @@ public class Roddy {
         time("ftoggleini");
         List<String> list = Arrays.asList(args);
         time("clc .1");
+
         CommandLineCall clc = new CommandLineCall(list);
         commandLineCall = clc;
+
         time("setup");
         initializeFeatureToggles();
         time("clc");
@@ -204,12 +206,18 @@ public class Roddy {
         time("parseopt");
         loadPropertiesFile();
         time("loadprop");
-        initializeServices(clc.startupMode.needsFullInit());
-        time("initserv");
-        parseRoddyStartupModeAndRun(clc);
-        time("parsemode");
-        performCLIExit(clc.startupMode);
+
+        if (initializeServices(clc.startupMode.needsFullInit())) {
+            time("initserv");
+            parseRoddyStartupModeAndRun(clc);
+            time("parsemode");
+            performCLIExit(clc.startupMode);
+        } else {
+            logger.postAlwaysInfo("Could not initialize services. Roddy will not execute jobs.");
+            performCLIExit(clc.startupMode, 1);
+        }
         time("exit");
+
 
     }
 
@@ -347,20 +355,24 @@ public class Roddy {
      * The execution service has two configuration settings, one for command line interface and one for the ui based instance.
      */
     public static final boolean initializeServices(boolean fullSetup) {
+        String currentStep = "Initialize proxy settings";
         try {
             // Configure a proxy for internet connection. Used i.e. for codemirror
             initializeProxySettings();
 
+            currentStep = "Initialize file system access provider";
             FileSystemAccessProvider.initializeProvider(fullSetup);
 
             //Do not touch the calling order, execution service must be set before commandfactory.
+            currentStep = "Initialize execution service";
             ExecutionService.initializeService(fullSetup);
 
+            currentStep = "Initialize command factory";
             CommandFactory.initializeFactory(fullSetup);
 
             return true;
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, null, ex);
+            logger.severe("initializeServices failed with an unhandled error. The step in which the error occurred was: " + currentStep + "\nSee the following stacktrace for more details.", ex);
             return false;
         }
     }
@@ -418,6 +430,10 @@ public class Roddy {
     }
 
     private static void performCLIExit(RoddyStartupModes option) {
+        performCLIExit(option, 0);
+    }
+
+    private static void performCLIExit(RoddyStartupModes option, int exitCode) {
         if (commandLineCall.getOptionList().contains(RoddyStartupOptions.disallowexit))
             return;
 
@@ -427,8 +443,7 @@ public class Roddy {
         if (!option.needsFullInit())
             return;
 
-        int exitCode = 0;
-        if (!CommandFactory.getInstance().executesWithoutJobSystem() && waitForJobsToFinish) {
+        if (CommandFactory.getInstance() != null && !CommandFactory.getInstance().executesWithoutJobSystem() && waitForJobsToFinish) {
             exitCode = performWaitforJobs();
         } else {
             List<Command> listOfCreatedCommands = CommandFactory.getInstance().getListOfCreatedCommands();
