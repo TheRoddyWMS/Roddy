@@ -41,15 +41,14 @@ public abstract class CommandFactory<C extends Command> {
         commandFactory = factory;
     }
 
-    public static void initializeFactory(boolean fullSetup) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    public static void initializeFactory(boolean fullSetup) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
         if (!fullSetup)
             return;
 
         ClassLoader classLoader = LibrariesFactory.getGroovyClassLoader();
         String commandFactoryClassID = Roddy.getApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS, PBSCommandFactory.class.getName());
         Class commandFactoryClass = classLoader.loadClass(commandFactoryClassID);
-        Constructor[] c = commandFactoryClass.getConstructors();
-        Constructor first = c[0];
+        Constructor first = commandFactoryClass.getDeclaredConstructor();
         commandFactory = (CommandFactory) first.newInstance();
     }
 

@@ -63,11 +63,17 @@ public class Analysis {
      */
     private List<DataSet> listOfAnalysisDataSets;
 
-    public Analysis(String name, Project project, Workflow workflow, AnalysisConfiguration configuration) {
+    /**
+     * Runtime service is set in the analysis config. But the user can also set it for a project. The project then goes first, afterwards the analysis.
+     */
+    private RuntimeService runtimeService;
+
+    public Analysis(String name, Project project, Workflow workflow, RuntimeService runtimeService, AnalysisConfiguration configuration) {
         this.name = name;
         this.project = project;
         this.workflow = workflow;
         this.configuration = configuration;
+        this.runtimeService = runtimeService;
     }
 
     public String getName() {
@@ -130,7 +136,7 @@ public class Analysis {
 
     public List<DataSet> getListOfDataSets(TestDataOption testDataOption) {
 
-        RuntimeService rs = project.getRuntimeService();
+        RuntimeService rs = getRuntimeService();
         if (listOfAnalysisDataSets == null)
             listOfAnalysisDataSets = rs.loadCombinedListOfDataSets(this);
 
@@ -160,7 +166,7 @@ public class Analysis {
      */
     public File getInputBaseDirectory() {
         if (inputBaseDirectory == null)
-            inputBaseDirectory = project.getRuntimeService().getInputFolderForAnalysis(this);
+            inputBaseDirectory = getRuntimeService().getInputFolderForAnalysis(this);
         return inputBaseDirectory;
     }
 
@@ -170,7 +176,7 @@ public class Analysis {
      * @return
      */
     public File getOutputBaseDirectory() {
-        return project.getRuntimeService().getOutputFolderForAnalysis(this);
+        return getRuntimeService().getOutputFolderForAnalysis(this);
     }
 
     /**
@@ -179,7 +185,7 @@ public class Analysis {
      * @return
      */
     public File getOutputAnalysisBaseDirectory() {
-        return project.getRuntimeService().getOutputFolderForAnalysis(this);
+        return getRuntimeService().getOutputFolderForAnalysis(this);
 //        if (outputBaseDirectory == null)
 //            outputBaseDirectory = getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY).toFile(this);
 //        return outputBaseDirectory;
@@ -193,7 +199,9 @@ public class Analysis {
     }
 
     public RuntimeService getRuntimeService() {
-        return project.getRuntimeService();
+        RuntimeService rs = project.getRuntimeService();
+        if (rs == null) rs = runtimeService;
+        return rs;
     }
 
     /**

@@ -10,7 +10,7 @@ public class ContextConfiguration extends AnalysisConfiguration {
     private final ProjectConfiguration projectConfiguration;
 
     public ContextConfiguration(AnalysisConfiguration configuration, ProjectConfiguration projectConfiguration) {
-        super(configuration.getInformationalConfigurationContent(), configuration.getWorkflowClass(), null, configuration, configuration.getListOfUsedTools(), configuration.getUsedToolFolders(), configuration.getCleanupScript());
+        super(configuration.getInformationalConfigurationContent(), configuration.getWorkflowClass(), configuration.getRuntimeServiceClass(), null, configuration, configuration.getListOfUsedTools(), configuration.getUsedToolFolders(), configuration.getCleanupScript());
         this.analysisConfiguration = configuration;
         this.projectConfiguration = projectConfiguration;
         addParent(analysisConfiguration);

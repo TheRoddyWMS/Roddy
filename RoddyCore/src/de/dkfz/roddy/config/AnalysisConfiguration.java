@@ -21,11 +21,12 @@ public class AnalysisConfiguration extends Configuration {
     private String targetCommandFactory;
     private String brawlWorkflow;
     private String brawlBaseWorkflow;
+    private String runtimeServiceClass;
 
     /**
      * For main configurations
      */
-    public AnalysisConfiguration(InformationalConfigurationContent informationalConfigurationContent, String workflowClass, Map<String, TestDataOption> testdataOptions, Configuration parentConfiguration, List<String> listOfUsedTools, List<String> usedToolFolders, String cleanupScript) {
+    public AnalysisConfiguration(InformationalConfigurationContent informationalConfigurationContent, String workflowClass, String runtimeServiceClass, Map<String, TestDataOption> testdataOptions, Configuration parentConfiguration, List<String> listOfUsedTools, List<String> usedToolFolders, String cleanupScript) {
         super(informationalConfigurationContent, parentConfiguration);
         this.workflowClass = workflowClass;
         this.listOfUsedTools = listOfUsedTools;
@@ -33,6 +34,7 @@ public class AnalysisConfiguration extends Configuration {
         if(testdataOptions != null)
             this.testDataOptions.putAll(testdataOptions);
         this.cleanupScript = cleanupScript;
+        this.runtimeServiceClass = runtimeServiceClass;
     }
 
 
@@ -193,6 +195,10 @@ public class AnalysisConfiguration extends Configuration {
 
     public void setBrawlBaseWorkflow(String brawlBaseWorkflow) {
         this.brawlBaseWorkflow = brawlBaseWorkflow;
+    }
+
+    public String getRuntimeServiceClass() {
+        return runtimeServiceClass;
     }
 }
 

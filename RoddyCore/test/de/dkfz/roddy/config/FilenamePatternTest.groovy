@@ -118,7 +118,7 @@ public class FilenamePatternTest {
 
             @Override
             DataSet getDataSet() {
-                return new DataSet(new Analysis("Test", null, null, null), "TEST_PID", new File(getOutputDirectory(), "TEST_PID"));
+                return new DataSet(new Analysis("Test", null, null, null, null), "TEST_PID", new File(getOutputDirectory(), "TEST_PID"));
             }
 
             @Override

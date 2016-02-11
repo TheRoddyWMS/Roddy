@@ -79,7 +79,7 @@ public class BrawlWorkflowTest {
     public void testAssembleLoadFilesCall() {
         StringBuilder tempBuilder = new StringBuilder();
 
-        def aCfg = new AnalysisConfiguration(null, null, null, null, null, null, null)
+        def aCfg = new AnalysisConfiguration(null, null, null, null, null, null, null, null)
         def pCfg = new ProjectConfiguration(null, null, null, null)
         ContextConfiguration cc = new ContextConfiguration(aCfg, pCfg);
 

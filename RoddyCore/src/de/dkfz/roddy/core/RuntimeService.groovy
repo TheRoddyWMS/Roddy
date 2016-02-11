@@ -528,7 +528,7 @@ public abstract class RuntimeService extends CacheProvider {
                 if (info.length < 2) return;
                 File path = new File(info[0]);
                 execDirectories << path;
-                String dataSetID = analysis.getProject().getRuntimeService().extractDataSetIDFromPath(path, analysis);
+                String dataSetID = analysis.getRuntimeService().extractDataSetIDFromPath(path, analysis);
                 Analysis dataSetAnalysis = analysis.getProject().getAnalysis(info[1])
                 DataSet ds = analysis.getDataSet(dataSetID);
                 if (dataSetAnalysis == analysis) {

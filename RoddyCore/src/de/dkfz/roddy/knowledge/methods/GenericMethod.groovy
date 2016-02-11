@@ -425,8 +425,10 @@ class GenericMethod {
     public static Constructor<BaseFile> searchBaseFileConstructorForConstructionHelperObject(Class classToSearch) {
         try {
             return classToSearch.getConstructor(BaseFile.ConstructionHelperForBaseFiles);
-        } finally {
+        } catch(Exception ex) {
             logger.severe("There was no valid constructor found for class ${classToSearch?.name}! Roddy needs a constructor which accepts a construction helper object.")
+//            throw ex;
+            return null;
         }
     }
 }
