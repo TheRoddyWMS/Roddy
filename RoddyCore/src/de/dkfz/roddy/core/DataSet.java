@@ -79,11 +79,11 @@ public class DataSet extends InfoObject implements Serializable, ExecutionContex
     }
 
     public File getInputFolderForAnalysis(Analysis analysis) {
-        return project.getRuntimeService().getInputFolderForDataSetAndAnalysis(this, analysis);
+        return analysis.getRuntimeService().getInputFolderForDataSetAndAnalysis(this, analysis);
     }
 
     public File getOutputFolderForAnalysis(Analysis analysis) {
-        return project.getRuntimeService().getOutputFolderForDataSetAndAnalysis(this, analysis);
+        return analysis.getRuntimeService().getOutputFolderForDataSetAndAnalysis(this, analysis);
     }
 
     /**

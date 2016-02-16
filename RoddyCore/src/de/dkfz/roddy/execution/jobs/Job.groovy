@@ -635,7 +635,7 @@ public class Job {
      */
     public synchronized File getLogFile() {
         if (_logFile == null)
-            _logFile = this.getExecutionContext().getProject().getRuntimeService().getLogFileForJob(this);
+            _logFile = this.getExecutionContext().getRuntimeService().getLogFileForJob(this);
         return _logFile;
     }
 
@@ -643,7 +643,7 @@ public class Job {
         if (getJobState().isPlannedOrRunning())
             return false;
         if (_logFile == null)
-            return this.getExecutionContext().getProject().getRuntimeService().hasLogFileForJob(this);
+            return this.getExecutionContext().getRuntimeService().hasLogFileForJob(this);
         return true;
     }
 

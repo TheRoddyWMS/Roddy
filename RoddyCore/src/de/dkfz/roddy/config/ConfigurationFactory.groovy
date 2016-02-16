@@ -358,6 +358,7 @@ public class ConfigurationFactory {
         } else if (icc.type == ConfigurationType.ANALYSIS) {
             String brawlWorkflow = extractAttributeText(configurationNode, "brawlWorkflow", null);
             String brawlBaseWorkflow = extractAttributeText(configurationNode, "brawlBaseWorkflow", Workflow.class.name);
+            String runtimeServiceClass = extractAttributeText(configurationNode, "runtimeServiceClass", null);
 
             String workflowTool = extractAttributeText(configurationNode, "nativeWorkflowTool", null);
             String commandFactoryClass = extractAttributeText(configurationNode, "targetCommandFactory", null);
@@ -390,7 +391,7 @@ public class ConfigurationFactory {
                 TestDataOption tdo = new TestDataOption(tdId, size, ratio, path, outputPath);
                 testdataOptions[tdId] = tdo;
             }
-            config = new AnalysisConfiguration(icc, workflowClass, testdataOptions, parentConfig, listOfUsedTools, usedToolFolders, cleanupScript);
+            config = new AnalysisConfiguration(icc, workflowClass, runtimeServiceClass, testdataOptions, parentConfig, listOfUsedTools, usedToolFolders, cleanupScript);
 
             if (workflowTool && commandFactoryClass) {
                 ((AnalysisConfiguration) config).setNativeToolID(workflowTool);

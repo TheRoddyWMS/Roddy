@@ -25,6 +25,7 @@ import static de.dkfz.roddy.config.ConfigurationConstants.CFG_OUTPUT_BASE_DIRECT
  * The project factory converts a configuration to a project/analysis. It stores a reference to already loaded projects and reuses them if possible.
  * A project can have multiple analyses
  */
+@groovy.transform.CompileStatic
 public class ProjectFactory {
 
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(ProjectFactory.class.getSimpleName());
@@ -81,8 +82,11 @@ public class ProjectFactory {
             logger.postSometimesInfo("Found project class " + _projectClass);
             logger.postSometimesInfo("Found runtime service class " + _runtimeServiceClass);
             projectClass = LibrariesFactory.getInstance().loadClass(_projectClass);
-            runtimeServiceClass = LibrariesFactory.getInstance().loadClass(_runtimeServiceClass);
-            RuntimeService runtimeService = (RuntimeService) runtimeServiceClass.getConstructor().newInstance();
+            RuntimeService runtimeService
+            if (_runtimeServiceClass) {
+                runtimeServiceClass = LibrariesFactory.getInstance().loadClass(_runtimeServiceClass);
+                runtimeService = (RuntimeService) runtimeServiceClass.getConstructor().newInstance();
+            }
             Project project = (Project) projectClass.getConstructor(ProjectConfiguration.class, RuntimeService.class, List.class, List.class).newInstance(configuration, runtimeService, subProjects, analyses);
 
             return project;
@@ -107,10 +111,16 @@ public class ProjectFactory {
         try {
             Class analysisClass = LibrariesFactory.getInstance().loadClass(configuration.getConfiguredClass());
             Class workflowClass = LibrariesFactory.getInstance().loadClass(configuration.getWorkflowClass());
+            String _runtimeServiceClass = configuration.getRuntimeServiceClass();
             Workflow workflow = (Workflow) workflowClass.getConstructor().newInstance();
+            RuntimeService runtimeService
 
-            def constructor = analysisClass.getConstructor(String.class, Project.class, Workflow.class, AnalysisConfiguration.class)
-            analysis = (Analysis) constructor.newInstance(analysisName, project, workflow, configuration);
+            if (_runtimeServiceClass) {
+                Class runtimeServiceClass = LibrariesFactory.getInstance().loadClass(_runtimeServiceClass);
+                runtimeService = (RuntimeService) runtimeServiceClass.getConstructor().newInstance();
+            }
+            def constructor = analysisClass.getConstructor(String.class, Project.class, Workflow.class, RuntimeService.class, AnalysisConfiguration.class)
+            analysis = (Analysis) constructor.newInstance(analysisName, project, workflow, runtimeService, configuration);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (InstantiationException e) {
@@ -138,7 +148,7 @@ public class ProjectFactory {
         String[] splitProjectAnalysis = configurationIdentifier.split(StringConstants.SPLIT_AT);
         String projectID = splitProjectAnalysis[0];
         if (splitProjectAnalysis.length == 1) {
-            RoddyCLIClient.logger.postAlwaysInfo("There was no analysis specified for configuration " + splitProjectAnalysis[0] + "\n\t Please specify the configuration string as [configuration_id]@[analysis_id].");
+            logger.postAlwaysInfo("There was no analysis specified for configuration " + splitProjectAnalysis[0] + "\n\t Please specify the configuration string as [configuration_id]@[analysis_id].");
             return null;
         }
         String analysisID = splitProjectAnalysis[1];

@@ -23,7 +23,7 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     private NodeChild analysisNode;
 
     public AnalysisConfigurationProxy(AnalysisConfiguration parentConfiguration, String analysisID, String analysisCfg, NodeChild analysisNode) {
-        super(null, null, null, null, null, null, null);
+        super(null, null, null, null, null, null, null, null);
         this.analysisNode = analysisNode;
 
 //        InformationalConfigurationContent informationalConfigurationContent, String
@@ -124,6 +124,11 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     @Override
     public List<String> getListOfUsedTools() {
         return checkAnalysisConfig().getListOfUsedTools();
+    }
+
+    @Override
+    public String getRuntimeServiceClass() {
+        return checkAnalysisConfig().getRuntimeServiceClass();
     }
 
     @Override

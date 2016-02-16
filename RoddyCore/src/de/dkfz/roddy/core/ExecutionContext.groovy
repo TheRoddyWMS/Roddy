@@ -233,7 +233,7 @@ public class ExecutionContext implements JobStatusListener {
     }
 
     public RuntimeService getRuntimeService() {
-        return project.getRuntimeService();
+        return analysis.getRuntimeService();
     }
 
     public ExecutionContextLevel getExecutionContextLevel() {
@@ -316,19 +316,19 @@ public class ExecutionContext implements JobStatusListener {
      */
     public synchronized File getExecutionDirectory() {
         if (executionDirectory == null)
-            executionDirectory = project.getRuntimeService().getExecutionDirectory(this);
+            executionDirectory = analysis.getRuntimeService().getExecutionDirectory(this);
         return executionDirectory;
     }
 
     public File getFileForAnalysisToolsArchiveOverview() {
         if (!md5OverviewFile)
-            md5OverviewFile = project.getRuntimeService().getAnalysedMD5OverviewFile(this)
+            md5OverviewFile = analysis.getRuntimeService().getAnalysedMD5OverviewFile(this)
         return md5OverviewFile;
     }
 
     public synchronized File getCommonExecutionDirectory() {
         if (!commonExecutionDirectory)
-            commonExecutionDirectory = project.getRuntimeService().getCommonExecutionDirectory(this);
+            commonExecutionDirectory = analysis.getRuntimeService().getCommonExecutionDirectory(this);
         return commonExecutionDirectory;
     }
 
@@ -381,25 +381,25 @@ public class ExecutionContext implements JobStatusListener {
 
     public synchronized File getLockFilesDirectory() {
         if (lockFilesDirectory == null)
-            lockFilesDirectory = project.getRuntimeService().getLockFilesDirectory(this);
+            lockFilesDirectory = analysis.getRuntimeService().getLockFilesDirectory(this);
         return lockFilesDirectory;
     }
 
     public synchronized File getTemporaryDirectory() {
         if (temporaryDirectory == null)
-            temporaryDirectory = project.getRuntimeService().getTemporaryDirectory(this);
+            temporaryDirectory = analysis.getRuntimeService().getTemporaryDirectory(this);
         return temporaryDirectory;
     }
 
     public synchronized File getLoggingDirectory() {
         if (loggingDirectory == null)
-            loggingDirectory = project.getRuntimeService().getLoggingDirectory(this);
+            loggingDirectory = analysis.getRuntimeService().getLoggingDirectory(this);
         return loggingDirectory;
     }
 
     public synchronized File getAnalysisToolsDirectory() {
         if (analysisToolsDirectory == null)
-            analysisToolsDirectory = project.getRuntimeService().getAnalysisToolsDirectory(this);
+            analysisToolsDirectory = analysis.getRuntimeService().getAnalysisToolsDirectory(this);
         return analysisToolsDirectory;
     }
 
