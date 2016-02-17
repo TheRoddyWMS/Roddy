@@ -247,15 +247,18 @@ public class ProjectFactory {
             configurationValues.add(new ConfigurationValue(CFG_OUTPUT_BASE_DIRECTORY, Roddy.getCustomBaseOutputDirectory(), "path"));
         }
 
-        if (analysis != null) {
-            return analysis;
-        } else {
+        // Check if an analysis is available and if the runtime service is setup properly.
+        if (analysis == null) {
             StringBuilder sb = new StringBuilder();
             sb << "Could not load analysis ${configurationIdentifier}, try one of those: " << Constants.ENV_LINESEPARATOR;
             for (String aID : projectConfiguration.listOfAnalysisIDs) {
                 sb << "  " << projectID << "@" << aID << Constants.ENV_LINESEPARATOR;
             }
             throw new RuntimeException(sb.toString());
+        } else if (analysis.getRuntimeService() == null) {
+            throw new RuntimeException("There is no runtime service class set for the selected analysis. This has to be set in either the project configuration or the analysis configuration.");
+        } else {
+            return analysis;
         }
     }
 }
