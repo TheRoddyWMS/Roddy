@@ -373,8 +373,8 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
         if (resetFilename) {
             File temp = path;
             Tuple2<File, FilenamePattern> fnresult = getFilename(this);
-            this.path = fnresult.x;
-            this.appliedFilenamePattern = fnresult.y;
+            this.path = fnresult?.x;
+            this.appliedFilenamePattern = fnresult?.y;
             if (path == null) {
                 //TODO Also this should be handled somehow else. It is occurring much too often.
 //                getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_PATH_NOTSET.expand("Setting a new filename with parent files returned null for " + this.getClass().getName() + " returning to " + (temp != null ? temp.getAbsolutePath() : "null"), Level.WARNING));

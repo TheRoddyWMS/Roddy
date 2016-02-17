@@ -5,6 +5,7 @@ import de.dkfz.roddy.knowledge.brawlworkflows.BrawlWorkflow
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.knowledge.files.FileObject
+import de.dkfz.roddy.knowledge.files.FileObjectTupleFactory
 import de.dkfz.roddy.knowledge.files.FileStage
 import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
 import de.dkfz.roddy.tools.*
@@ -260,7 +261,7 @@ public class ConfigurationFactory {
         InformationalConfigurationContent icc = availableConfigurations[usedConfiguration];
 
         if (icc == null) {
-            throw new RuntimeException("Configuration path ${usedConfiguration} is not valid or the configuration is not existing.")
+            throw new RuntimeException("The configuration identified by \"${usedConfiguration}\" cannot be found, is the identifier correct? Is the configuration available?.")
         }
 
         loadConfiguration(icc);
@@ -589,35 +590,40 @@ public class ConfigurationFactory {
 
         for (NodeChild tool in configurationNode.processingTools.tool) {
             String toolID = tool.@name.text()
-            String path = tool.@value.text()
-            String basePathId = tool.@basepath.text()
-            boolean overrideresourcesets = extractAttributeText(tool, "overrideresourcesets", "false").toBoolean();
-            ToolEntry currentEntry = new ToolEntry(toolID, basePathId, path);
-            if (overrideresourcesets)
-                currentEntry.setOverridesResourceSets();
-            int noOfChildren = tool.children().size();
-            if (noOfChildren > 0) {
-                List<ToolEntry.ToolParameter> inputParameters = new LinkedList<>();
-                List<ToolEntry.ToolParameter> outputParameters = new LinkedList<>();
-                List<ToolEntry.ResourceSet> resourceSets = new LinkedList<>();
-                for (NodeChild child in tool.children()) {
-                    String cName = child.name();
+            logger.postRareInfo("Processing tool ${toolID}");
+            try {
+                String path = tool.@value.text()
+                String basePathId = tool.@basepath.text()
+                boolean overrideresourcesets = extractAttributeText(tool, "overrideresourcesets", "false").toBoolean();
+                ToolEntry currentEntry = new ToolEntry(toolID, basePathId, path);
+                if (overrideresourcesets)
+                    currentEntry.setOverridesResourceSets();
+                int noOfChildren = tool.children().size();
+                if (noOfChildren > 0) {
+                    List<ToolEntry.ToolParameter> inputParameters = new LinkedList<>();
+                    List<ToolEntry.ToolParameter> outputParameters = new LinkedList<>();
+                    List<ToolEntry.ResourceSet> resourceSets = new LinkedList<>();
+                    for (NodeChild child in tool.children()) {
+                        String cName = child.name();
 
-                    if (cName == "resourcesets") {
-                        for (NodeChild rset in child.rset) {
-                            ToolEntry.ResourceSet tempSet = parseToolResourceSet(rset, config)
-                            if (tempSet)
-                                resourceSets << tempSet;
+                        if (cName == "resourcesets") {
+                            for (NodeChild rset in child.rset) {
+                                ToolEntry.ResourceSet tempSet = parseToolResourceSet(rset, config)
+                                if (tempSet)
+                                    resourceSets << tempSet;
+                            }
+                        } else if (cName == "input") {
+                            inputParameters << parseToolParameter(toolID, child);
+                        } else if (cName == "output") {
+                            outputParameters << parseToolParameter(toolID, child);
                         }
-                    } else if (cName == "input") {
-                        inputParameters << parseToolParameter(toolID, child);
-                    } else if (cName == "output") {
-                        outputParameters << parseToolParameter(toolID, child);
                     }
+                    currentEntry.setGenericOptions(inputParameters, outputParameters, resourceSets);
                 }
-                currentEntry.setGenericOptions(inputParameters, outputParameters, resourceSets);
+                toolEntries[toolID] = currentEntry;
+            } catch (Exception ex) {
+                println(ex);
             }
-            toolEntries[toolID] = currentEntry;
         }
     }
 

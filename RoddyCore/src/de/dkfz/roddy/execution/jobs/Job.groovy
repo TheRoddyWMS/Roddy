@@ -141,6 +141,7 @@ public class Job {
         this.parentFiles = parentFiles ?: new LinkedList<BaseFile>();
         if (parentFiles != null) {
             for (BaseFile bf : parentFiles) {
+                if(bf.isSourceFile() && bf.getCreatingJobsResult() == null) continue;
                 try {
                     JobDependencyID jobid = bf.getCreatingJobsResult().getJobID();
                     if (jobid.isValidID()) {
