@@ -16,6 +16,10 @@ public enum RoddyStartupOptions {
      */
     shortlist,
     extendedlist,
+    /**
+     * Shows entry values and source files for e.g. printruntimeconfig
+     */
+    showentrysources,
     autocleanup,
     useconfig(true),
     usefeaturetoggleconfig(true),

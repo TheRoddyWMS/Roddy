@@ -36,7 +36,7 @@ public enum RoddyStartupModes {
 
     validateconfig(SCOPE_REDUCED, [useconfig]),
 
-    printruntimeconfig(SCOPE_FULL, [useconfig]),
+    printruntimeconfig(SCOPE_FULL, [useconfig, showentrysources, extendedlist]),
 
     printidlessruntimeconfig(SCOPE_REDUCED, [useconfig]),
 
@@ -122,7 +122,7 @@ public enum RoddyStartupModes {
         printCommand(RoddyStartupModes.validateconfig, "(configuration@analysis) [--useconfig={file}]", "Tries to find errors in the specified configuration and shows them.");
         printCommand(RoddyStartupModes.listworkflows, "[filter word] [--shortlist] [--useconfig={file}]", "Shows a list of available configurations and analyses.", "If a filter word is specified, then the whole configuration tree is only printed", "if at least one configuration id in the tree contains the word.");
         printCommand(RoddyStartupModes.listdatasets, "(configuration@analysis) [--useconfig={file}]", "Lists the available datasets for a configuration.");
-        printCommand(RoddyStartupModes.printruntimeconfig, "(configuration@analysis) [--useconfig={file}]", "Basically calls testrun but prints out the converted / prepared runtime configuration script content.");
+        printCommand(RoddyStartupModes.printruntimeconfig, "(configuration@analysis) [--useconfig={file}] [--extendedlist] [--showentrysources]", "Basically calls testrun but prints out the converted / prepared runtime configuration script content.", "--extendedlist shows all stored values (also e.g. tool entries. Works only in combination with --showentrysources", "--showentrysources shows the source file of the entry in addition to the value.");
         printCommand(RoddyStartupModes.testrun, "(configuration@analysis) [pid_0,..,pid_n] [--useconfig={file}]", "Displays the current workflow status for the given datasets.");
         printCommand(RoddyStartupModes.testrerun, "(configuration@analysis) [pid_0,..,pid_n] [--useconfig={file}]", "Displays the current workflow status for the given datasets.");
         printCommand(RoddyStartupModes.run, "(configuration@analysis) [pid_0,..,pid_n] [--waitforjobs] [--useconfig={file}]", "Runs a workflow with the configured Jobfactory.", "Does not check if the workflow is already running on the cluster.");
