@@ -6,7 +6,6 @@ import de.dkfz.roddy.StringConstants;
 import de.dkfz.roddy.config.AnalysisConfiguration;
 import de.dkfz.roddy.config.ConfigurationFactory;
 import de.dkfz.roddy.config.InformationalConfigurationContent;
-import de.dkfz.roddy.config.TestDataOption;
 import de.dkfz.roddy.core.*;
 import de.dkfz.roddy.execution.io.ExecutionResult;
 import de.dkfz.roddy.execution.io.ExecutionService;
@@ -358,12 +357,17 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
         for (InformationalConfigurationContent icc : availableProjectConfigurations) {
             FXICCWrapper fpw = new FXICCWrapper(icc, count++);
             TreeItem<FXICCWrapper> newItem = new TreeItem<>(fpw);
-            root.getChildren().add(newItem);
-            for (String analysisID : fpw.getAnalyses()) {
-                FXICCWrapper fpwAnalysis = new FXICCWrapper(icc, analysisID, count++);
-                newItem.getChildren().add(new TreeItem<>(fpwAnalysis));
+            root.getChildren().add(newItem);           try {
+
+                Map<String, String> analyses = fpw.getAnalyses();
+                for (String analysisID : analyses.keySet()) {
+                    FXICCWrapper fpwAnalysis = new FXICCWrapper(icc, analysisID, count++);
+                    newItem.getChildren().add(new TreeItem<>(fpwAnalysis));
+                }
+                loadProjectsRec(newItem, icc.getSubContent());
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            loadProjectsRec(newItem, icc.getSubContent());
         }
 
         //Add an expand listener to the topmost nodes
@@ -405,25 +409,26 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
 
         RoddyUITask.runTask(new RoddyUITask<Void>(UIConstants.UITASK_CHANGE_PROJECT) {
             Analysis newAnalysis = null;
-            List<Analysis> analysesList = null;
+            List<String> analysesList = null;
 
             @Override
             public Void _call() throws Exception {
                 long t1 = ExecutionService.measureStart();
                 currentProjectWrapper = pWrapper;
                 long t2 = ExecutionService.measureStart();
-                currentProject = ProjectFactory.getInstance().loadConfiguration(currentProjectWrapper.getICC());
+//                currentProject = ProjectFactory.getInstance().loadConfiguration(currentProjectWrapper.getICC());
+
                 ExecutionService.measureStop(t2, UIConstants.UITASK_MP_LOADCONFIGURATION);
 
-                analysesList = currentProject.getAnalyses();
+                analysesList = currentProjectWrapper.getICC().getListOfAnalyses();
                 String analysisID = pWrapper.getAnalysisID();
                 ExecutionService.measureStop(t2, UIConstants.UITASK_MP_LOAD_ANALYSIS_LIST);
-                if (analysisID != null) {
-                    newAnalysis = currentProject.getAnalysis(analysisID);
-                }
-                if (newAnalysis == null && analysesList.size() > 0) {
-                    newAnalysis = analysesList.get(0);
-                }
+//                if (analysisID != null) {
+//                    newAnalysis = currentProject.getAnalysis(analysisID);
+//                }
+//                if (newAnalysis == null && analysesList.size() > 0) {
+//                    newAnalysis = analysesList.get(0);
+//                }
 //                ConfigurationFactory.getInstance().validateConfiguration(newAnalysis.getConfiguration());
                 ExecutionService.measureStop(t1, UIConstants.UITASK_CHANGE_PROJECT);
                 return null;
@@ -434,12 +439,12 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
 
                 vboxAvailableAnalyses.getChildren().clear();
                 ToggleGroup tgAnalyses = new ToggleGroup();
-                for (Analysis analysis : analysesList) {
-                    RadioButton rb = new RadioButton(analysis.getName());
+                for (String analysis : analysesList) {
+                    RadioButton rb = new RadioButton(analysis);
                     rb.setUserData(analysis);
                     rb.setToggleGroup(tgAnalyses);
-                    if (analysis == newAnalysis)
-                        rb.setSelected(true);
+//                    if (analysis == newAnalysis)
+//                        rb.setSelected(true);
                     vboxAvailableAnalyses.getChildren().add(rb);
                 }
                 tgAnalyses.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
@@ -512,12 +517,6 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
                 RadioButton rbProductive = (RadioButton) vboxProcessingMode.getChildren().get(0);
                 vboxProcessingMode.getChildren().clear();
                 vboxProcessingMode.getChildren().add(rbProductive);
-                for (TestDataOption tdo : ((AnalysisConfiguration) currentAnalysis.getConfiguration()).getTestdataOptions()) {
-                    RadioButton rbPM = new RadioButton("Debug: " + tdo.getId());
-                    rbPM.setUserData(tdo);
-                    rbPM.setToggleGroup(rbProductive.getToggleGroup());
-                    vboxProcessingMode.getChildren().add(rbPM);
-                }
                 String string = UIConstants.ERRSTR_PATHNOTFOUND;
                 fillTextFieldWithObjectValue(txtAnalysisOutputDirectory, currentAnalysis.getOutputAnalysisBaseDirectory(), string);
                 fillTextFieldWithObjectValue(txtAnalysisInputDirectory, currentAnalysis.getInputBaseDirectory(), string);
@@ -531,8 +530,6 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
 
             }
         });
-
-
     }
 
     /**

@@ -15,7 +15,6 @@ public class AnalysisConfiguration extends Configuration {
     private final List<String> listOfUsedTools;
     private final List<String> usedToolFolders;
 
-    private final Map<String, TestDataOption> testDataOptions = new HashMap<>();
     private String cleanupScript;
     private String nativeToolID;
     private String targetCommandFactory;
@@ -26,13 +25,11 @@ public class AnalysisConfiguration extends Configuration {
     /**
      * For main configurations
      */
-    public AnalysisConfiguration(InformationalConfigurationContent informationalConfigurationContent, String workflowClass, String runtimeServiceClass, Map<String, TestDataOption> testdataOptions, Configuration parentConfiguration, List<String> listOfUsedTools, List<String> usedToolFolders, String cleanupScript) {
+    public AnalysisConfiguration(InformationalConfigurationContent informationalConfigurationContent, String workflowClass, String runtimeServiceClass, Configuration parentConfiguration, List<String> listOfUsedTools, List<String> usedToolFolders, String cleanupScript) {
         super(informationalConfigurationContent, parentConfiguration);
         this.workflowClass = workflowClass;
         this.listOfUsedTools = listOfUsedTools;
         this.usedToolFolders = usedToolFolders != null ? usedToolFolders : new LinkedList<>();
-        if(testdataOptions != null)
-            this.testDataOptions.putAll(testdataOptions);
         this.cleanupScript = cleanupScript;
         this.runtimeServiceClass = runtimeServiceClass;
     }
@@ -42,68 +39,6 @@ public class AnalysisConfiguration extends Configuration {
         return workflowClass;
     }
 
-    /**
-     * Returns a list of all the available test data options
-     *
-     * @return
-     */
-    public List<String> getListOfTestdataOptions() {
-        LinkedList<String> result = new LinkedList<>();
-        for (Configuration c : getContainerParents()) {
-            if (!(c instanceof AnalysisConfiguration)) continue;
-            AnalysisConfiguration parent = (AnalysisConfiguration) c;//getParent() != null && getParent() instanceof AnalysisConfiguration ? (AnalysisConfiguration) getParent() : null;
-            if (parent != null) {
-                result.addAll(parent.getListOfTestdataOptions());
-            }
-        }
-        result.addAll(testDataOptions.keySet());
-        return result;
-    }
-
-    /**
-     * Returns a list of all the stored test data options
-     *
-     * @return
-     */
-    public List<TestDataOption> getTestdataOptions() {
-        LinkedList<TestDataOption> result = new LinkedList<>();
-        for (Configuration c : getContainerParents()) {
-            if (!(c instanceof AnalysisConfiguration)) continue;
-            AnalysisConfiguration parent = (AnalysisConfiguration) c;//getParent() != null && getParent() instanceof AnalysisConfiguration ? (AnalysisConfiguration) getParent() : null;
-
-            if (parent != null) {
-                result.addAll(parent.getTestdataOptions());
-            }
-        }
-        result.addAll(testDataOptions.values());
-        return result;
-    }
-
-    /**
-     * Returns a specific test data option
-     *
-     * @param id
-     * @return
-     */
-    public TestDataOption getTestdataOption(String id) {
-        if (!hasTestdataOption(id)) {
-            logger.severe("AnalysisConfiguration " + this.getID() + " does not know about test data option " + id);
-        }
-
-        for (Configuration c : getContainerParents()) {
-            if (!(c instanceof AnalysisConfiguration)) continue;
-            AnalysisConfiguration parent = (AnalysisConfiguration) c;//getParent() != null && getParent() instanceof AnalysisConfiguration ? (AnalysisConfiguration) getParent() : null;
-            if (!testDataOptions.containsKey(id)) {
-                if (parent != null) {
-                    return parent.getTestdataOption(id);
-                } else {
-                    throw new RuntimeException("AnalysisConfiguration " + this.getID() + " has no proper object for test data option " + id);
-                }
-            }
-        }
-        return testDataOptions.get(id);
-    }
-
     @Override
     public ResourceSetSize getResourcesSize() {
         for (Configuration configuration : getContainerParents()) {
@@ -111,26 +46,6 @@ public class AnalysisConfiguration extends Configuration {
                 return configuration.getResourcesSize();
         }
         return getContainerParents().get(0).getResourcesSize();
-    }
-
-    public boolean hasTestdataOption(String id) {
-        if (testDataOptions.containsKey(id)) {
-
-            return true;
-        } else {
-            for (Configuration c : getContainerParents()) {
-                if (!(c instanceof AnalysisConfiguration)) continue;
-                if (((AnalysisConfiguration) c).hasTestdataOption(id)) return true;
-            }
-            return false;
-        }
-    }
-
-    public void addTestDataOptions(List<TestDataOption> options) {
-        for (TestDataOption tdo : options) {
-            if (!this.testDataOptions.containsKey(tdo.getId()))
-                this.testDataOptions.put(tdo.getId(), tdo);
-        }
     }
 
     /**

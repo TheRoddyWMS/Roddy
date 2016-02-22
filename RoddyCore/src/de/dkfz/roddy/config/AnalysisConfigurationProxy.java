@@ -23,7 +23,7 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     private NodeChild analysisNode;
 
     public AnalysisConfigurationProxy(AnalysisConfiguration parentConfiguration, String analysisID, String analysisCfg, NodeChild analysisNode) {
-        super(null, null, null, null, null, null, null, null);
+        super(null, null, null, null, null, null, null);
         this.analysisNode = analysisNode;
 
 //        InformationalConfigurationContent informationalConfigurationContent, String
@@ -72,28 +72,8 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
-    public List<String> getListOfTestdataOptions() {
-        return checkAnalysisConfig().getListOfTestdataOptions();
-    }
-
-    @Override
-    public List<TestDataOption> getTestdataOptions() {
-        return checkAnalysisConfig().getTestdataOptions();
-    }
-
-    @Override
-    public TestDataOption getTestdataOption(String id) {
-        return checkAnalysisConfig().getTestdataOption(id);
-    }
-
-    @Override
     public ResourceSetSize getResourcesSize() {
         return checkAnalysisConfig().getResourcesSize();
-    }
-
-    @Override
-    public boolean hasTestdataOption(String id) {
-        return checkAnalysisConfig().hasTestdataOption(id);
     }
 
     @Override
@@ -114,11 +94,6 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     @Override
     public void setBrawlBaseWorkflow(String brawlBaseWorkflow) {
         checkAnalysisConfig().setBrawlBaseWorkflow(brawlBaseWorkflow);
-    }
-
-    @Override
-    public void addTestDataOptions(List<TestDataOption> options) {
-        checkAnalysisConfig().addTestDataOptions(options);
     }
 
     @Override

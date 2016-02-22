@@ -376,23 +376,8 @@ public class ConfigurationFactory {
             String[] _usedToolFolders = extractAttributeText(configurationNode, "usedToolFolders").split(SPLIT_COMMA);
             List<String> listOfUsedTools = _listOfUsedTools.size() > 0 && _listOfUsedTools[0] ? Arrays.asList(_listOfUsedTools) : null;
             List<String> usedToolFolders = _usedToolFolders.size() > 0 && _usedToolFolders[0] ? Arrays.asList(_usedToolFolders) : null;
-            Map<String, TestDataOption> testdataOptions = new HashMap<>();
 
-            for (NodeChild testdataoption in configurationNode.testdataoptions.testdataoption) {
-                String tdId = extractAttributeText((NodeChild) testdataoption, "id", "small");
-                String tdSize = extractAttributeText((NodeChild) testdataoption, "size", "10000");
-                String tdRatio = extractAttributeText((NodeChild) testdataoption, "ratio", "absolute");
-                String tdPath = extractAttributeText((NodeChild) testdataoption, "testDataPath", '${testDataDirectory}');
-                String tdOutPath = extractAttributeText((NodeChild) testdataoption, "outputPath", '${testDataOutputBaseDirectory}');
-
-                int size = Integer.parseInt(tdSize);
-                TestDataOption.Ratio ratio = tdRatio.toLowerCase();
-                ConfigurationValue path = new ConfigurationValue(config, "path", tdPath, "path");
-                ConfigurationValue outputPath = new ConfigurationValue(config, "outputPath", tdOutPath, "path");
-                TestDataOption tdo = new TestDataOption(tdId, size, ratio, path, outputPath);
-                testdataOptions[tdId] = tdo;
-            }
-            config = new AnalysisConfiguration(icc, workflowClass, runtimeServiceClass, testdataOptions, parentConfig, listOfUsedTools, usedToolFolders, cleanupScript);
+            config = new AnalysisConfiguration(icc, workflowClass, runtimeServiceClass, parentConfig, listOfUsedTools, usedToolFolders, cleanupScript);
 
             if (workflowTool && commandFactoryClass) {
                 ((AnalysisConfiguration) config).setNativeToolID(workflowTool);

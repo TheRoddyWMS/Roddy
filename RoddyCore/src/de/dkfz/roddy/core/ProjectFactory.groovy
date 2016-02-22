@@ -143,33 +143,23 @@ public class ProjectFactory {
      */
     public Analysis loadAnalysis(String configurationIdentifier) {
 
-        LibrariesFactory.initializeFactory();
-
         String[] splitProjectAnalysis = configurationIdentifier.split(StringConstants.SPLIT_AT);
         String projectID = splitProjectAnalysis[0];
         if (splitProjectAnalysis.length == 1) {
             logger.postAlwaysInfo("There was no analysis specified for configuration " + splitProjectAnalysis[0] + "\n\t Please specify the configuration string as [configuration_id]@[analysis_id].");
             return null;
         }
+
         String analysisID = splitProjectAnalysis[1];
+
+        InformationalConfigurationContent iccProject = loadAndValidateProjectICC(projectID);
+
+        String fullAnalysisID = loadFullAnalysisID(iccProject, analysisID);
+
+
+        LibrariesFactory.initializeFactory();
         ConfigurationFactory fac = ConfigurationFactory.getInstance();
-        InformationalConfigurationContent iccProject = fac.getAllAvailableConfigurations()[projectID];
 
-        if (iccProject == null) {
-            logger.postAlwaysInfo("The project configuration \"${projectID}\" could not be found.")
-            return null;
-        }
-
-        //Validate the project icc
-        if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.XMLValidation))
-            XSDValidator.validateTree(iccProject);
-
-        String fullAnalysisID = iccProject.getListOfAnalyses().find { String aID -> aID.split("[:][:]")[0] == analysisID; }
-
-        if (fullAnalysisID == null) {
-            logger.postAlwaysInfo("The analysis \"${analysisID}\" could not be found.")
-            return null;
-        }
 
         String[] splitEntries = fullAnalysisID?.split("[:][:]");
 
@@ -259,6 +249,30 @@ public class ProjectFactory {
             throw new RuntimeException("There is no runtime service class set for the selected analysis. This has to be set in either the project configuration or the analysis configuration.");
         } else {
             return analysis;
+        }
+    }
+
+    public static InformationalConfigurationContent loadAndValidateProjectICC(String projectID) {
+        ConfigurationFactory fac = ConfigurationFactory.getInstance();
+        InformationalConfigurationContent iccProject = fac.getAllAvailableConfigurations()[projectID];
+
+        if (iccProject == null) {
+            logger.postAlwaysInfo("The project configuration \"${projectID}\" could not be found.")
+            return null;
+        }
+
+        //Validate the project icc
+        if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.XMLValidation))
+            XSDValidator.validateTree(iccProject);
+        return iccProject;
+    }
+
+    public static String loadFullAnalysisID(InformationalConfigurationContent iccProject, String analysisID) {
+        String fullAnalysisID = iccProject.getListOfAnalyses().find { String aID -> aID.split("[:][:]")[0] == analysisID; }
+
+        if (fullAnalysisID == null) {
+            logger.postAlwaysInfo("The analysis \"${analysisID}\" could not be found.")
+            return null;
         }
     }
 }

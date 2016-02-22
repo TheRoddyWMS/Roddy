@@ -131,10 +131,6 @@ public class Analysis {
      * @return
      */
     public List<DataSet> getListOfDataSets() {
-        return getListOfDataSets(null); // Call productive
-    }
-
-    public List<DataSet> getListOfDataSets(TestDataOption testDataOption) {
 
         RuntimeService rs = getRuntimeService();
         if (listOfAnalysisDataSets == null)

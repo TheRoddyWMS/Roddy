@@ -1,6 +1,5 @@
 package de.dkfz.roddy.core;
 
-import de.dkfz.roddy.config.TestDataOption;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.Job;
 
