@@ -9,5 +9,7 @@ gradle
 .idea/encodings.xml
 manifest.tmp
 coverage/
+.idea/codeStyleSettings.xml
 .idea/gradle.xml
+
 
