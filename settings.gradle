@@ -1,4 +1,0 @@
-rootProject.name = "Roddy/Gradle"
-include "RoddyCore"
-include "dist:plugins:PluginBase"
-include "dist:plugins:DefaultPlugin"

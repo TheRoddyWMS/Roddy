@@ -17,26 +17,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="RoddyCore" />
-    <orderEntry type="library" name="Gradle: :groovy-all:2.3.6-indy" level="project" />
-    <orderEntry type="library" name="Gradle: :bcpg-jdk15on:149" level="project" />
-    <orderEntry type="library" name="Gradle: :bcpkix-jdk15on:149" level="project" />
-    <orderEntry type="library" name="Gradle: :bcprov-ext-jdk15on:149" level="project" />
-    <orderEntry type="library" name="Gradle: :bcprov-jdk15on:149" level="project" />
-    <orderEntry type="library" name="Gradle: :commons-cli:1.2" level="project" />
-    <orderEntry type="library" name="Gradle: :commons-codec:1.8" level="project" />
-    <orderEntry type="library" name="Gradle: :commons-io:2.4" level="project" />
-    <orderEntry type="library" name="Gradle: :commons-logging:1.1.1" level="project" />
-    <orderEntry type="library" name="Gradle: :commons-logging-adapters:1.1.1" level="project" />
-    <orderEntry type="library" name="Gradle: :commons-logging-api:1.1.1" level="project" />
-    <orderEntry type="library" name="Gradle: :jzlib:" level="project" />
-    <orderEntry type="library" name="Gradle: :proxy-vole_20131209:" level="project" />
-    <orderEntry type="library" name="Gradle: :reflections:0.9.9-RC1" level="project" />
-    <orderEntry type="library" name="Gradle: :slf4j-api:1.7.2" level="project" />
-    <orderEntry type="library" name="Gradle: :slf4j-jcl:1.7.2" level="project" />
-    <orderEntry type="library" name="Gradle: :SSHJ:" level="project" />
-    <orderEntry type="library" name="Gradle: :xstream:1.4.5" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: :hamcrest-all:1.3" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: :spock-core:1.0-groovy-2.3" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: junit:junit:4.11" level="project" />
+    <orderEntry type="library" name="roddyBundledLibraries" level="project" />
   </component>
 </module>

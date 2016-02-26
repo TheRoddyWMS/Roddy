@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="Gradle: :proxy-vole_20131209:">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/dist/bin/current/lib/proxy-vole_20131209.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

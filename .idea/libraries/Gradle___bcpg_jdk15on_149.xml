@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="Gradle: :bcpg-jdk15on:149">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/dist/bin/current/lib/bcpg-jdk15on-149.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
