@@ -274,5 +274,6 @@ public class ProjectFactory {
             logger.postAlwaysInfo("The analysis \"${analysisID}\" could not be found.")
             return null;
         }
+        return fullAnalysisID
     }
 }
