@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="roddyBundledLibraries">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/dist/bin/current/lib" />
+    </CLASSES>
+    <JAVADOC />
+    <LIBRARY_FILE />
+    <SOURCES />
+    <jarDirectory url="file://$PROJECT_DIR$/dist/bin/current/lib" recursive="false" />
+  </library>
+</component>
