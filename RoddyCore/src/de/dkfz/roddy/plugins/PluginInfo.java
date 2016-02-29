@@ -48,7 +48,6 @@ public class PluginInfo {
     private final String groovyVersion;
     private Map<String, String> dependencies;
     private final File zipFile;
-    private boolean compatibleToRuntimeSystem;
 
     /**
      * Stores the next entry in the plugin chain or null if there is nor further plugin available.
@@ -67,7 +66,7 @@ public class PluginInfo {
 
     private Map<String, File> listOfToolDirectories = new LinkedHashMap<>();
 
-    public PluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, String roddyAPIVersion, String jdkVersion, String groovyVersion, Map<String, String> dependencies, boolean compatibleToRuntimeSystem) {
+    public PluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, String roddyAPIVersion, String jdkVersion, String groovyVersion, Map<String, String> dependencies) {
         this.name = name;
         this.directory = directory;
         this.developmentDirectory = developmentDirectory;
@@ -77,7 +76,6 @@ public class PluginInfo {
         this.groovyVersion = groovyVersion;
         this.dependencies = dependencies;
         this.zipFile = zipFile;
-        this.compatibleToRuntimeSystem = compatibleToRuntimeSystem;
         fillListOfToolDirectories();
     }
 
