@@ -10,8 +10,8 @@ public class Constants {
     // Application constants
     /////////////////////////
 
-    public static final String APP_CURRENT_VERSION_STRING = "2.3.45";
-    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Fri Feb 26 13:49:58 CET 2016";
+    public static final String APP_CURRENT_VERSION_STRING = "2.3.50";
+    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Thu Mar 03 14:07:01 CET 2016";
     public static final String APP_PROPERTY_COMMAND_FACTORY_CLASS = "commandFactoryClass";
     public static final String APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS = "fileSystemAccessManagerClass";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_CLASS = "executionServiceClass";
@@ -41,6 +41,8 @@ public class Constants {
     public static final String ERR_MSG_ONLY_ONE_JOB_ALLOWED = "A job object is not allowed to run several times.";
     public static final String ERR_MSG_WRONG_PARAMETER_COUNT = "You did not provide proper parameters, args.length = ";
     public static final String ERR_MSG_NO_APPLICATION_PROPERTY_FILE = "Configuration does not exist. Cannot start application.";
+
+//    public static final String APP_EXITCODE_
 
     /////////////////////////
     // Environment settings

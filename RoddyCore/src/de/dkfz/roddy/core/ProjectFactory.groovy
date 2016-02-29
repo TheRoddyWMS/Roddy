@@ -192,7 +192,7 @@ public class ProjectFactory {
 
         // If this is also not set, exit with an error code!
         if (!pluginsAreLoaded) {
-            logger.severe("Could not find plugin for analysis ${analysisID}");
+            logger.severe("Unrecoverable errors, could not load plugins for analysis ${analysisID}");
             Roddy.exit(2)
         }
 
