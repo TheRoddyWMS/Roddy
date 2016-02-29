@@ -375,14 +375,6 @@ public class LibrariesFactory extends Initializable {
             //Get dependency list from plugin
             Map<String, String> pluginDependencies = [:];
 
-            String jdkVersion = 1.8 // For backward compatibility, the api versions are set for older plugins
-            String groovyVersion = 2.3 // Groovy was 2.3.x for a long time.
-            String roddyAPIVersion = 2.2 // API level checks and jdk/groovy updates were performed with 2.3+ so stick to 2.2. per default
-
-            String groovyRuntimeVersion = println(GroovySystem.version.split("[.]")[0..1].join("."))
-            String javaRuntimeVersion = println(System.getProperty("java.version").split("[.]")[0..1].join("."))
-            String roddyRuntimeVersion = Constants.APP_CURRENT_VERSION_STRING.split("[.]")[0..1].join(".");
-
             File buildinfoFile = pEntry.listFiles().find { File f -> f.name == BUILDINFO_TEXTFILE };
             if (buildinfoFile) {
                 for (String line in buildinfoFile.readLines()) {
@@ -403,20 +395,11 @@ public class LibrariesFactory extends Initializable {
                         if (split[0] == BUILDINFO_STATUS_BETA) {
                             isBetaPlugin = true;
                         }
-                    } else if (line.startsWith(BUILDINFO_RUNTIME_JDKVERSION)) {
-                        jdkVersion = split[0];
-                    } else if (line.startsWith(BUILDINFO_RUNTIME_GROOVYVERSION)) {
-                        groovyVersion = split[0];
-                    } else if (line.startsWith(BUILDINFO_RUNTIME_APIVERSION)) {
-                        roddyAPIVersion = split[0];
                     }
                 }
             }
 
-            //Easy compatibility check.
-            boolean pluginIsCompatible = jdkVersion == javaRuntimeVersion && groovyVersion == groovyRuntimeVersion && roddyAPIVersion == roddyRuntimeVersion;
-
-            PluginInfo newPluginInfo = new PluginInfo(pluginName, zipFile, prodEntry, develEntry, pluginFullVersion, roddyAPIVersion, jdkVersion, groovyVersion, pluginDependencies, pluginIsCompatible)
+            PluginInfo newPluginInfo = new PluginInfo(pluginName, zipFile, prodEntry, develEntry, pluginFullVersion, pluginDependencies)
             pluginMap[pluginFullVersion] = newPluginInfo;
             if (isRevisionOfPlugin || isCompatible) {
                 newPluginInfo.previousInChain = previousPlugin;
