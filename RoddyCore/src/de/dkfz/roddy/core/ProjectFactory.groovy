@@ -205,8 +205,10 @@ public class ProjectFactory {
         Project project = loadConfiguration(projectConfiguration);
 
         AnalysisConfiguration ac = projectConfiguration.getAnalysis(analysisID);
-        if (killSwitches.contains(AnalysisImportKillSwitch.FilenameSection))
+        if (killSwitches.contains(AnalysisImportKillSwitch.FilenameSection)) {
+            logger.postSometimesInfo("Killswitch for filename patterns is ACTIVE! Please see, if filenames are properly set.")
             ac.removeFilenamePatternsRecursively();
+        }
 
         Analysis analysis = null;
         if (ac != null)
@@ -257,8 +259,8 @@ public class ProjectFactory {
         InformationalConfigurationContent iccProject = fac.getAllAvailableConfigurations()[projectID];
 
         if (iccProject == null) {
-            logger.postAlwaysInfo("The project configuration \"${projectID}\" could not be found.")
-            return null;
+            logger.postAlwaysInfo("The project configuration \"${projectID}\" could not be found (call Roddy with listworkflows)")
+            Roddy.exit(1)
         }
 
         //Validate the project icc
@@ -271,8 +273,8 @@ public class ProjectFactory {
         String fullAnalysisID = iccProject.getListOfAnalyses().find { String aID -> aID.split("[:][:]")[0] == analysisID; }
 
         if (fullAnalysisID == null) {
-            logger.postAlwaysInfo("The analysis \"${analysisID}\" could not be found.")
-            return null;
+            logger.postAlwaysInfo("The analysis \"${analysisID}\" could not be found in (call Roddy with listworkflows)")
+            Roddy.exit(1)
         }
         return fullAnalysisID
     }
