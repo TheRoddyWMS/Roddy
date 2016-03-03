@@ -371,38 +371,6 @@ public class LibrariesFactory extends Initializable {
 
             PluginInfo previousPlugin = pluginMap.values().size() > 0 ? pluginMap.values().last() : null;
             boolean isRevisionOfPlugin = previousPlugin?.getMajorAndMinor() == pluginVersion && previousPlugin?.getRevision() == revisionNumber - 1;
-<<<<<<< HEAD
-            boolean isCompatible = false;
-            boolean isBetaPlugin = false
-
-            //Get dependency list from plugin
-            Map<String, String> pluginDependencies = [:];
-
-            File buildinfoFile = pEntry.listFiles().find { File f -> f.name == BUILDINFO_TEXTFILE };
-            if (buildinfoFile) {
-                for (String line in buildinfoFile.readLines()) {
-                    List<String> split = ((line.split(StringConstants.SPLIT_EQUALS) as List)[1]?.split(StringConstants.SPLIT_COLON)) as List;
-                    if (line.startsWith(BUILDINFO_DEPENDENCY)) {
-                        String workflow = split[0];
-                        String version = split.size() > 1 ? split[1] : PLUGIN_VERSION_CURRENT;
-                        pluginDependencies.put(workflow, version);
-                    } else if (line.startsWith(BUILDINFO_COMPATIBILITY)) {
-                        // Not revision but compatible. Check, if the former plugin id (excluding the revision number) is
-                        // set as compatible.
-                        if (!split[0].contains("-")) split[0] = split[0] + "-0";
-                        if (previousPlugin?.getProdVersion() == split[0])
-                            isCompatible = true;
-                        else
-                            logger.info("Could not find entry for compatibility ${pluginName}:${split[0]}");
-                    } else if (line.startsWith(BUILDINFO_STATUS)) {
-                        if (split[0] == BUILDINFO_STATUS_BETA) {
-                            isBetaPlugin = true;
-                        }
-                    }
-                }
-            }
-
-            PluginInfo newPluginInfo = new PluginInfo(pluginName, zipFile, prodEntry, develEntry, pluginFullVersion, pluginDependencies)
             boolean isCompatible = biHelper.isCompatibleTo(previousPlugin);
             boolean isBetaPlugin = biHelper.isBetaPlugin();
 
