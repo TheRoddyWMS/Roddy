@@ -2,9 +2,9 @@ package de.dkfz.roddy.plugins
 
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.tools.RuntimeTools
 import org.junit.AfterClass
 import org.junit.BeforeClass
-import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
@@ -140,8 +140,20 @@ public class LibrariesFactoryTest {
         loadMapOfAvailablePlugins.setAccessible(true);
 
         // Invoke the method and check the results.
-        mapOfAvailablePlugins = loadMapOfAvailablePlugins.invoke(null, pluginDirectories) as Map<String, Map<String, PluginInfo>>;
+        mapOfAvailablePlugins = LibrariesFactory.loadMapOfAvailablePlugins(pluginDirectories)
         return mapOfAvailablePlugins
+    }
+
+    @Test
+    public void testPerformCompatibleAPIChecks() {
+        assert LibrariesFactory.performAPIChecks([new PluginInfo("MasterMax", null, null, null, "1.0.10-0", RuntimeTools.roddyRuntimeVersion, RuntimeTools.getJavaRuntimeVersion(), RuntimeTools.getGroovyRuntimeVersion(), null)])
+    }
+
+    @Test
+    public void testPerformIncompatibleAPIChecks() {
+        assert false == LibrariesFactory.performAPIChecks([
+                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", RuntimeTools.roddyRuntimeVersion, RuntimeTools.javaRuntimeVersion, RuntimeTools.groovyRuntimeVersion, null),
+                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", "1.3", null)])
     }
 
     @Test
@@ -170,12 +182,12 @@ public class LibrariesFactoryTest {
     public void testBuildupPluginQueueContainingCompatibleEntries() {
         Map<String, PluginInfo> pluginQueueCompatible = LibrariesFactory.buildupPluginQueue(mapOfAvailablePlugins, ["D:1.0.3"] as String[]);
         assert pluginQueueCompatible != null;
-        assert pluginQueueCompatible["D"].prodVersion == "1.0.3-0" &&
-                pluginQueueCompatible["C"].prodVersion == "current" &&
-                pluginQueueCompatible["B"].prodVersion == "1.0.3-0" &&
-                pluginQueueCompatible["A"].prodVersion == "current" &&
-                pluginQueueCompatible["PluginBase"].prodVersion == "current" &&
-                pluginQueueCompatible["DefaultPlugin"].prodVersion == "current";
+        assert pluginQueueCompatible["D"].prodVersion == "1.0.3-0";
+        assert pluginQueueCompatible["C"].prodVersion == "current";
+        assert pluginQueueCompatible["B"].prodVersion == "1.0.3-0";
+        assert pluginQueueCompatible["A"].prodVersion == "current";
+        assert pluginQueueCompatible["PluginBase"].prodVersion == "current";
+        assert pluginQueueCompatible["DefaultPlugin"].prodVersion == "current";
 
     }
 

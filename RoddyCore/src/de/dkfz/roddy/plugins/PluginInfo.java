@@ -3,6 +3,7 @@ package de.dkfz.roddy.plugins;
 import de.dkfz.roddy.StringConstants;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
+import de.dkfz.roddy.tools.RuntimeTools;
 
 import java.io.File;
 import java.io.IOException;
@@ -87,6 +88,7 @@ public class PluginInfo {
                     String toolsDir = file.getName();
                     listOfToolDirectories.put(toolsDir, file);
                 }
+
             } else { //Otherwise, finally look into the zip file. (Which must be existing at this point!)
                 directory = RoddyIOHelperMethods.assembleLocalPath(zipFile.getParent(), zipFile.getName().split(".zip")[0]);
                 toolsBaseDir = RoddyIOHelperMethods.assembleLocalPath(directory, "resources", "analysisTools");
@@ -117,7 +119,9 @@ public class PluginInfo {
         return new File(new File(directory, "resources"), "brawlworkflows");
     }
 
-    public File getConfigurationDirectory() { return new File(new File(directory, "resources"), "configurationFiles"); }
+    public File getConfigurationDirectory() {
+        return new File(new File(directory, "resources"), "configurationFiles");
+    }
 
     public String getName() {
         return name;
@@ -157,6 +161,29 @@ public class PluginInfo {
 
     public String getMajorAndMinor() {
         return prodVersion.split("[-]")[0];
+    }
+
+    public boolean isCompatibleToRuntimeSystem() {
+        return jdkVersion == RuntimeTools.getJavaRuntimeVersion()
+                && groovyVersion == RuntimeTools.getRoddyRuntimeVersion()
+                && roddyAPIVersion == RuntimeTools.getGroovyRuntimeVersion();
+    }
+
+    public boolean isJavaProject() {
+        File srcFolder = new File(directory, "src");
+        // Java projects need a valid jar file
+        // Scan for java files?? Only in src?
+        return false;
+    }
+
+    public boolean isGroovyProject() {
+        // Scan for groovy files?? Only in src?
+        return false;
+    }
+
+    public boolean hasValidJarFile() {
+        // Check
+        return false;
     }
 
     public int getRevision() {

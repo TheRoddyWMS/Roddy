@@ -1,7 +1,6 @@
 package de.dkfz.roddy.plugins
 
 import de.dkfz.roddy.AvailableFeatureToggles
-import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.client.RoddyStartupModes
 import de.dkfz.roddy.client.cliclient.CommandLineCall
@@ -13,6 +12,8 @@ import de.dkfz.roddy.tools.Tuple2
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.core.Initializable
 import groovy.transform.TypeCheckingMode
+
+import java.util.regex.Pattern
 
 /**
  * Factory to load and integrate plugins.
@@ -59,7 +60,7 @@ public class LibrariesFactory extends Initializable {
     private static class SyntheticPluginInfo extends PluginInfo {
 
         SyntheticPluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, Map<String, String> dependencies) {
-            super(name, zipFile, directory, developmentDirectory, prodVersion, dependencies)
+            super(name, zipFile, directory, developmentDirectory, prodVersion, RuntimeTools.getRoddyRuntimeVersion(), RuntimeTools.getJavaRuntimeVersion(), RuntimeTools.getGroovyRuntimeVersion(), dependencies);
         }
 
         private Map<String, Class> map = [:]
@@ -179,17 +180,16 @@ public class LibrariesFactory extends Initializable {
         return _classID
     }
 
-/**
- * Resolve all used / necessary plugins and also look for miscrepancies.
- * @param usedPlugins
- */
+    /**
+     * Resolve all used / necessary plugins and also look for miscrepancies.
+     * @param usedPlugins
+     */
     public boolean resolveAndLoadPlugins(String[] usedPlugins) {
         Map<String, Map<String, PluginInfo>> mapOfPlugins = loadMapOfAvailablePluginsForInstance();
 
         def queue = buildupPluginQueue(mapOfPlugins, usedPlugins)
-        loadLibraries(queue.values() as List);
-        librariesAreLoaded = true;
-        return true;
+        librariesAreLoaded = loadLibraries(queue.values() as List);
+        return librariesAreLoaded;
     }
 
     public boolean areLibrariesLoaded() {
@@ -219,7 +219,7 @@ public class LibrariesFactory extends Initializable {
      *
      * @return
      */
-    private static Map<String, Map<String, PluginInfo>> loadMapOfAvailablePlugins(List<File> pluginDirectories) {
+    static Map<String, Map<String, PluginInfo>> loadMapOfAvailablePlugins(List<File> pluginDirectories) {
 
         //Search all plugin folders and also try to join those if possible.
         List<Tuple2<File, String[]>> collectedPluginDirectories = [];
@@ -367,8 +367,11 @@ public class LibrariesFactory extends Initializable {
 
             def pluginMap = _mapOfPlugins.get(pluginName, new LinkedHashMap<String, PluginInfo>())
 
+            BuildInfoFileHelper biHelper = new BuildInfoFileHelper(pluginName, pEntry.listFiles().find { File f -> f.name == BUILDINFO_TEXTFILE })
+
             PluginInfo previousPlugin = pluginMap.values().size() > 0 ? pluginMap.values().last() : null;
             boolean isRevisionOfPlugin = previousPlugin?.getMajorAndMinor() == pluginVersion && previousPlugin?.getRevision() == revisionNumber - 1;
+<<<<<<< HEAD
             boolean isCompatible = false;
             boolean isBetaPlugin = false
 
@@ -400,6 +403,12 @@ public class LibrariesFactory extends Initializable {
             }
 
             PluginInfo newPluginInfo = new PluginInfo(pluginName, zipFile, prodEntry, develEntry, pluginFullVersion, pluginDependencies)
+            boolean isCompatible = biHelper.isCompatibleTo(previousPlugin);
+            boolean isBetaPlugin = biHelper.isBetaPlugin();
+
+            //Create a helper object which parses the buildinfo text file
+
+            PluginInfo newPluginInfo = new PluginInfo(pluginName, zipFile, prodEntry, develEntry, pluginFullVersion, biHelper.getRoddyAPIVersion(), biHelper.getJDKVersion(), biHelper.getGroovyVersion(), biHelper.getDependencies())
             pluginMap[pluginFullVersion] = newPluginInfo;
             if (isRevisionOfPlugin || isCompatible) {
                 newPluginInfo.previousInChain = previousPlugin;
@@ -542,13 +551,28 @@ public class LibrariesFactory extends Initializable {
         return librariesFactory;
     }
 
-    public void loadLibraries(List<PluginInfo> pluginInfo) {
+    public boolean loadLibraries(List<PluginInfo> pluginInfo) {
+        if (!performAPIChecks(pluginInfo))
+            return false;
+
+        // TODO Cover with a unit or integration test (if not already done...)
+        List<String> errors = [];
+        //All is right? Let's go
         pluginInfo.parallelStream().each { PluginInfo pi ->
-            if (!pi.directory)
+            if (!pi.directory) {
+                synchronized (errors) {
+                    errors << "Ignored ${pi.fullID}, directory not found.".toString();
+                }
                 return;
+            }
+
             File jarFile = pi.directory.listFiles().find { File f -> f.name.endsWith(".jar") };
-            if (jarFile && !addFile(jarFile))
+            if (jarFile && !addFile(jarFile)) {
+                synchronized (errors) {
+                    errors << "Ignored ${pi.fullID}, Jar file was not available.".toString();
+                }
                 return;
+            }
 
             def loadInfo = "The plugin ${pi.getName()} [ Version: ${pi.getProdVersion()} ] was loaded."
             logger.postAlwaysInfo(loadInfo)
@@ -558,6 +582,31 @@ public class LibrariesFactory extends Initializable {
                 loadedJarsByPlugin[pi] = jarFile;
             }
         }
+
+        if (errors) {
+            logger.severe("Some plugins were not loaded:\n\t" + errors.join("\n\t"));
+        }
+        return !errors;
+    }
+
+    /**
+     * Perform checks, if all API versions match the current runtime setup.
+     * Includes Groovy, Java and Roddy.
+     */
+    public static boolean performAPIChecks(List<PluginInfo> pluginInfo) {
+        List<PluginInfo> incompatiblePlugins = []
+        for (pi in pluginInfo) {
+            if (!(RuntimeTools.groovyRuntimeVersion == pi.getGroovyVersion() &&
+                    RuntimeTools.javaRuntimeVersion == pi.getJdkVersion() &&
+                    RuntimeTools.roddyRuntimeVersion == pi.getRoddyAPIVersion()))
+                incompatiblePlugins << pi;
+        }
+        if (incompatiblePlugins) {
+            logger.severe("Could not load plugins, runtime API versions mismatch! (Current Groovy: ${RuntimeTools.groovyRuntimeVersion}, JDK ${RuntimeTools.javaRuntimeVersion}, Roddy ${RuntimeTools.getRoddyRuntimeVersion()}\n"
+                    + incompatiblePlugins.collect { PluginInfo pi -> pi.fullID }.join("\n\t")
+            )
+        }
+        return !incompatiblePlugins;
     }
 
     public List<String> getLoadedLibrariesInfoList() {
@@ -576,6 +625,44 @@ public class LibrariesFactory extends Initializable {
 
     public Class loadClass(String className) throws ClassNotFoundException {
         return getGroovyClassLoader().loadClass(className);
+    }
+
+    public static boolean isVersionStringValid(String s) {
+        Pattern patternOfPluginIdentifier = ~/([0-9]*[.][0-9]*[.][0-9]*([-][0-9]){0,}|[:]current)/
+        return s ==~ patternOfPluginIdentifier;
+    }
+
+    /**
+     * A helper method to identify whether a workflow identification string is valid, e.g.:
+     *       "COWorkflows:1.0.1-0:current": false,
+     *       "COWorkflows:1.0.1-0"        : true,
+     *       "COWorkflows:1.0.1-3"        : true,
+     *       "COWorkflows"                : true,
+     *       "COWorkflows:current"        : true
+     * @param s
+     * @return
+     */
+    public static boolean isPluginIdentifierValid(String s) {
+        //Pattern patternOfPluginIdentifier = ~/[a-zA-Z]*[:]{1,1}[0-9]*[.][0-9]*[.][0-9]*([-][0-9]){0,}|[a-zA-Z]*[:]current|[a-zA-Z]*/
+        Pattern patternOfPluginIdentifier = ~/([a-zA-Z]*)([:]{1,1}[0-9]*[.][0-9]*[.][0-9]*([-][0-9]){0,}|[:]current|$)/
+        return s ==~ patternOfPluginIdentifier;
+    }
+
+    /**
+     * A helper method to identify whether a plugin directory name is valid, e.g.:
+     *        "COWorkflows_1.0.1-0:current": false,
+     *        "COWorkflows:1.0.1-r"        : false,
+     *        "COWorkflows:1.0.1-3"        : false,
+     *        "COWorkflows_1.0.1-3"        : true,
+     *        "COWorkflows"                : true,
+     *        "COWorkflows_current"        : false
+     * @param s
+     * @return
+     */
+    public static boolean isPluginDirectoryNameValid(String s) {
+        //Pattern patternOfPluginIdentifier = ~/[a-zA-Z]*[_]{1,1}[0-9]*[.][0-9]*[.][0-9]*[-][0-9]{1,}|[a-zA-Z]*[_]{1,1}[0-9]*[.][0-9]*[.][0-9]*|[a-zA-Z]*/
+        Pattern patternOfPluginIdentifier = ~/([a-zA-Z]*)([_]{1,1}[0-9]*[.][0-9]*[.][0-9]*[-][0-9]{1,}|[_]{1,1}[0-9]*[.][0-9]*[.][0-9]*|$)/
+        return s ==~ patternOfPluginIdentifier;
     }
 
     @Override
