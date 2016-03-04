@@ -378,6 +378,7 @@ public class Analysis {
         logger.postSometimesInfo("" + context.getExecutionContextLevel());
         boolean isExecutable;
         String datasetID = context.getDataSet().getId();
+        Exception eCopy = null;
         try {
             isExecutable = ExecutionService.getInstance().checkContextPermissions(context) && context.checkExecutability();
             if (!isExecutable) {
@@ -407,15 +408,19 @@ public class Analysis {
                 }
             }
         } catch (Exception e) {
+            eCopy = e;
             context.addErrorEntry(ExecutionContextError.EXECUTION_UNCATCHEDERROR.expand(e));
-            logger.postAlwaysInfo("An exception occurred: '" + e.getLocalizedMessage() + "'");
-            if (logger.isVerbosityMedium()) {
-                logger.log(Level.SEVERE, e.toString());
-                logger.log(Level.SEVERE, RoddyIOHelperMethods.getStackTraceAsString(e));
-            } else {
-                logger.postAlwaysInfo("Set --verbositylevel >=" + LoggerWrapper.VERBOSITY_WARNING + " or higher to see stack trace.");
-            }
+
         } finally {
+            if (eCopy != null) {
+                logger.postAlwaysInfo("An exception occurred: '" + eCopy.getLocalizedMessage() + "'");
+                if (logger.isVerbosityMedium()) {
+                    logger.log(Level.SEVERE, eCopy.toString());
+                    logger.log(Level.SEVERE, RoddyIOHelperMethods.getStackTraceAsString(eCopy));
+                } else {
+                    logger.postAlwaysInfo("Set --verbositylevel >=" + LoggerWrapper.VERBOSITY_WARNING + " or higher to see stack trace.");
+                }
+            }
 
             // Look up errors when jobs are executed directly and when there were any started jobs.
             if (context.getStartedJobs().size() > 0) {
