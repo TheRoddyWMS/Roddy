@@ -71,7 +71,7 @@ public class BuildInfoFileHelper {
         // Not revision but compatible. Check, if the former plugin id (excluding the revision number) is
         // set as compatible.
         // Ignore malformed entries!! Use a regex for that.
-        boolean isCompatible;
+        boolean isCompatible = false;
         String entry = entries.get(BUILDINFO_COMPATIBILITY, [])[0] as String;
         if (!(entry ==~ ~/.*-\d+$/)) //Ends with something like -123 or so... if not append it.
             entry += "-0";
