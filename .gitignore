@@ -1,7 +1,6 @@
 .idea/workspace.xml
 RoddyCore/build
 dist/build
-dist/plugins/DefaultPlugin_*
 build
 gradle
 .nfo
