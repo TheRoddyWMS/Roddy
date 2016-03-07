@@ -570,7 +570,7 @@ public class LibrariesFactory extends Initializable {
                 incompatiblePlugins << pi;
         }
         if (incompatiblePlugins) {
-            logger.severe("Could not load plugins, runtime API versions mismatch! (Current Groovy: ${RuntimeTools.groovyRuntimeVersion}, JDK ${RuntimeTools.javaRuntimeVersion}, Roddy ${RuntimeTools.getRoddyRuntimeVersion()}\n"
+            logger.severe("Could not load plugins, runtime API versions mismatch! (Current Groovy: ${RuntimeTools.groovyRuntimeVersion}, JDK ${RuntimeTools.javaRuntimeVersion}, Roddy ${RuntimeTools.getRoddyRuntimeVersion()})\n"
                     + incompatiblePlugins.collect { PluginInfo pi -> pi.fullID }.join("\n\t")
             )
         }
