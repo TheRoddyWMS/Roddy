@@ -254,23 +254,8 @@ public class LibrariesFactory extends Initializable {
         return loadPluginsFromDirectories(collectedPluginDirectories)
     }
 
-    /**
-     * Loads all available plugins (including revisions and versions) from a set of directories.
-     * Type checking mode is set to skip for this method, because Groovy does not likes Generics and Comparisons in a combination...
-     * return tLeft.x.compareTo(tRight.x) * 10000 +
-     * tLeft.y.compareTo(tRight.y) * 1000 +
-     * tLeft.z.compareTo(tRight.z) * 100 +
-     * tLeft.w.compareTo(tRight.w) * 10 +
-     * tLeft.q.compareTo(tRight.q) * 1;
-     *
-     * Will not work!
-     *
-     * @param collectedPluginDirectories
-     * @return
-     */
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private static Map<String, Map<String, PluginInfo>> loadPluginsFromDirectories(List<Tuple2<File, String[]>> collectedPluginDirectories) {
-        //First, check, if a plugin name is valid or not.
+    private static List<Tuple2<File, String[]>> checkValidPluginNames (List<Tuple2<File, String[]>> collectedPluginDirectories) {
         List<Tuple2<File, String[]>> collectedTemporary = [];
         collectedPluginDirectories.each { tuple ->
             String rev = (tuple.x.name.split("[-]") as List)[1]
@@ -282,10 +267,14 @@ public class LibrariesFactory extends Initializable {
             if (rev?.isNumber() || !rev) collectedTemporary << tuple
             else logger.severe("Filtered out plugin ${tuple.x.name}, as the revision id is not numeric.")
         }
-        collectedPluginDirectories = collectedTemporary;
+        return collectedTemporary
+    }
 
-        //Make sure, that the plugin directories are properly sorted before we start. This is especially useful
-        // if we search for revisions and extensions.
+    /** Make sure that the plugin directories are properly sorted before we start. This is especially useful
+     *  if we search for revisions and extensions.
+     */
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    private static List<Tuple2<File, String[]>> sortPluginDirectories(List<Tuple2<File, String[]>> collectedPluginDirectories) {
         collectedPluginDirectories = collectedPluginDirectories.sort {
             Tuple2<File, String[]> left, Tuple2<File, String[]> right ->
                 List<String> splitLeft = left.x.name.split("[_:.-]") as List;
@@ -311,6 +300,27 @@ public class LibrariesFactory extends Initializable {
                 if (tLeft.q != tRight.q) return tLeft.q.compareTo(tRight.q);
                 return 0;
         }
+        return collectedPluginDirectories
+    }
+
+    /**
+     * Loads all available plugins (including revisions and versions) from a set of directories.
+     * Type checking mode is set to skip for this method, because Groovy does not likes Generics and Comparisons in a combination...
+     * return tLeft.x.compareTo(tRight.x) * 10000 +
+     * tLeft.y.compareTo(tRight.y) * 1000 +
+     * tLeft.z.compareTo(tRight.z) * 100 +
+     * tLeft.w.compareTo(tRight.w) * 10 +
+     * tLeft.q.compareTo(tRight.q) * 1;
+     *
+     * Will not work!
+     *
+     * @param collectedPluginDirectories
+     * @return
+     */
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    private static Map<String, Map<String, PluginInfo>> loadPluginsFromDirectories(List<Tuple2<File, String[]>> collectedPluginDirectories) {
+        collectedPluginDirectories = sortPluginDirectories(checkValidPluginNames(collectedPluginDirectories))
+
         Map<String, Map<String, PluginInfo>> _mapOfPlugins = [:];
         for (Tuple2<File, String[]> _entry : collectedPluginDirectories) {
             File pEntry = _entry.x;

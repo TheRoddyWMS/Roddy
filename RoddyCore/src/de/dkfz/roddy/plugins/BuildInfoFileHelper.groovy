@@ -34,14 +34,15 @@ public class BuildInfoFileHelper {
         if (!lines) lines = []
         for (String _line in lines) {
             String[] line = _line.split(StringConstants.SPLIT_EQUALS);
-            if (!validEntries.contains(line[0]))
+            if (!validEntries.contains(line[0])) {
                 invalid << line[0]
-            else
+            } else {
                 entries.get(line[0], []) << line[1];
+            }
         }
 
         if (invalid)
-            logger.postSometimesInfo("There are invalid entries in file buildinfo.txt for plugin ${pluginName}:\n  " + invalid.join("\n "));
+            logger.postAlwaysInfo("There are invalid entries in file buildinfo.txt for plugin ${pluginName}:\n  " + invalid.join("\n "));
 
 //            assert entries[BUILDINFO_RUNTIME_GROOVYVERSION].findIn
     }
@@ -82,7 +83,7 @@ public class BuildInfoFileHelper {
                 checkMatchingAPIVersions(previousPlugin)) {
             isCompatible = true;
         } else
-            logger.info("Could not find entry for compatibility ${pluginName}:${entry} or ");
+            logger.info("Could not find entry for compatibility ${pluginName}:${entry}");
         return isCompatible;
     }
 
