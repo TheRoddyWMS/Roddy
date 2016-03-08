@@ -5,7 +5,7 @@
 # If a plugin is backward compatible, then you can set this via compatibleto. Roddy then knows, that other plugins referring to a previous
 # version of this one, are also allowed to use the newest version. Also the potential mixup of several plugin version would then basically
 # be possible.
-compatibleto=1.0.29
+compatibleto=1.0.33
 
 # Versions of the runtime environment, including the Roddy API version.
 JDKVersion=1.8

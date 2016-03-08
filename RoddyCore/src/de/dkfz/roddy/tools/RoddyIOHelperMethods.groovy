@@ -151,7 +151,9 @@ class RoddyIOHelperMethods {
 
     public static String getStackTraceAsString(Exception exception) {
         try {
-            StackTraceElement[] stackTrace = exception.getStackTrace();
+            StackTraceElement[] stackTrace = null;
+            for (int i = 0; i < 3 && stackTrace == null; i++)
+                stackTrace = exception.getStackTrace();
             if (stackTrace != null)
                 return joinArray(stackTrace, Constants.ENV_LINESEPARATOR);
         } catch (Exception ex) {

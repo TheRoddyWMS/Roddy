@@ -17,6 +17,7 @@ public class BuildInfoFileHelper {
 
     private Map<String, List<String>> entries = [:];
     private final String pluginName
+    private final String pluginVersion;
 
     public static String[] validEntries = [
             LibrariesFactory.BUILDINFO_RUNTIME_APIVERSION, // Full reference, otherwise Groovy makes a String out of the entry and does not take the constants content
@@ -28,11 +29,16 @@ public class BuildInfoFileHelper {
     ]
 
     /** This constructor is mainly for testing **/
-    BuildInfoFileHelper(String pluginName, List<String> lines) {
+    BuildInfoFileHelper(String pluginName, String pluginVersion, List<String> lines) {
         this.pluginName = pluginName
+        this.pluginVersion = pluginVersion;
         def invalid = []
         if (!lines) lines = []
         for (String _line in lines) {
+            _line = _line.trim();
+            if(!_line) continue;
+            if(_line.startsWith("#")) continue;
+
             String[] line = _line.split(StringConstants.SPLIT_EQUALS);
             if (!validEntries.contains(line[0])) {
                 invalid << line[0]
@@ -48,8 +54,8 @@ public class BuildInfoFileHelper {
     }
 
     /** This constructor is the "real" constructor **/
-    BuildInfoFileHelper(String pluginName, File buildinfoFile) {
-        this(pluginName, buildinfoFile.readLines())
+    BuildInfoFileHelper(String pluginName, String pluginVersion, File buildinfoFile) {
+        this(pluginName, pluginVersion, buildinfoFile.readLines())
     }
 
     Map<String, List<String>> getEntries() {
@@ -72,19 +78,29 @@ public class BuildInfoFileHelper {
         // Not revision but compatible. Check, if the former plugin id (excluding the revision number) is
         // set as compatible.
         // Ignore malformed entries!! Use a regex for that.
-        boolean isCompatible = false;
-        String entry = entries.get(BUILDINFO_COMPATIBILITY, [])[0] as String;
+
+        if(previousPlugin == null) return false; // The value is not set
+
+        def _entries = entries.get(BUILDINFO_COMPATIBILITY, [])
+        if(!_entries) return false; // There is no entry in the buildinfo.txt file.
+
+        String entry = _entries[0] as String;
         if (!(entry ==~ ~/.*-\d+$/)) //Ends with something like -123 or so... if not append it.
             entry += "-0";
 
         if (!isVersionStringValid(entry)) {
-            logger.postAlwaysInfo("Version string ${entry} is invalid.")
-        } else if (previousPlugin?.getProdVersion() == entry &&
-                checkMatchingAPIVersions(previousPlugin)) {
-            isCompatible = true;
-        } else
-            logger.info("Could not find entry for compatibility ${pluginName}:${entry}");
-        return isCompatible;
+            logger.postSometimesInfo("Version string ${entry} is invalid.")
+            return false;
+        }
+        if (previousPlugin?.getProdVersion() != entry) {
+            logger.postSometimesInfo("The compatibility entry ${entry} points to a not existing version for ${pluginName}, the last known entry is ${previousPlugin?.getProdVersion()}")
+            return false;
+        }
+        if(!checkMatchingAPIVersions(previousPlugin)) {
+            logger.postSometimesInfo("The plugin version ${pluginVersion} for ${pluginName} is incompatible to ${previousPlugin?.getProdVersion()}, because of mismatching API versions.")
+            return false;
+        }
+        return true;
     }
 
     boolean checkMatchingAPIVersions(PluginInfo pluginInfo) {

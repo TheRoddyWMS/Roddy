@@ -14,6 +14,33 @@
       <excludeFolder url="file://$MODULE_DIR$/.gradle" />
       <excludeFolder url="file://$MODULE_DIR$/build" />
     </content>
+    <content url="file://$MODULE_DIR$/../dist/bin">
+      <sourceFolder url="file://$MODULE_DIR$/../dist/bin/current/helperScripts" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dist/bin/2.1.5/helperScripts" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dist/bin/2.2.49/helperScripts" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dist/bin/2.2.112/helperScripts" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dist/bin/2.1.24/helperScripts" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dist/bin/2.1.26/helperScripts" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dist/bin/2.1.14/helperScripts" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dist/bin/2.1.28/helperScripts" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dist/bin/2.1.7/helperScripts" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dist/bin/2.0.469/helperScripts" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dist/bin/2.2.66/helperScripts" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dist/bin/2.2.87/helperScripts" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dist/bin/2.2.10/helperScripts" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.0.469" />
+      <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.1.14" />
+      <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.1.24" />
+      <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.1.26" />
+      <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.1.28" />
+      <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.1.5" />
+      <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.1.7" />
+      <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.2.10" />
+      <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.2.112" />
+      <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.2.49" />
+      <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.2.66" />
+      <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.2.87" />
+    </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="roddyBundledLibraries" level="project" />

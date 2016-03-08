@@ -416,7 +416,7 @@ public class Analysis {
                 logger.postAlwaysInfo("An exception occurred: '" + eCopy.getLocalizedMessage() + "'");
                 if (logger.isVerbosityMedium()) {
                     logger.log(Level.SEVERE, eCopy.toString());
-                    logger.log(Level.SEVERE, RoddyIOHelperMethods.getStackTraceAsString(eCopy));
+                    logger.postAlwaysInfo( RoddyIOHelperMethods.getStackTraceAsString(eCopy));
                 } else {
                     logger.postAlwaysInfo("Set --verbositylevel >=" + LoggerWrapper.VERBOSITY_WARNING + " or higher to see stack trace.");
                 }

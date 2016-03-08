@@ -1,7 +1,10 @@
 package de.dkfz.roddy.tools;
 
-import de.dkfz.roddy.Constants;
-import groovy.lang.GroovySystem;
+import de.dkfz.roddy.Constants
+import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.StringConstants;
+import groovy.lang.GroovySystem
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 /**
  * A class which gives you access to several runtime specific values (e.g. from System.getProperty...)
@@ -21,7 +24,8 @@ public final class RuntimeTools {
     }
 
     public static String getGroovyRuntimeVersion() {
-        String groovyRuntimeVersion = GroovySystem.version.split("[.]")[0..1].join(".")
-        groovyRuntimeVersion
+        File f = new File(Roddy.getRoddyBinaryFolder(), "lib").listFiles((FilenameFilter)new WildcardFileFilter("groovy*.jar"))[0]
+        String version = f.name.split(StringConstants.SPLIT_MINUS)[2].split("[.]")[0..1].join(".")
+        return version;
     }
 }

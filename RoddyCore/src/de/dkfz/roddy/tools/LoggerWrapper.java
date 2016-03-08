@@ -84,12 +84,12 @@ public class LoggerWrapper {
     }
 
     public void log(Level lvl, String text) {
-        if (getVerbosityLevelFor(lvl) >= verbosityLevel)
+        if (getVerbosityLevelFor(lvl) <= verbosityLevel)
             logger.log(lvl, text);
     }
 
     public void log(Level lvl, String text, Throwable ex) {
-        if (getVerbosityLevelFor(lvl) >= verbosityLevel)
+        if (getVerbosityLevelFor(lvl) <= verbosityLevel)
             logger.log(lvl, text, ex);
     }
 

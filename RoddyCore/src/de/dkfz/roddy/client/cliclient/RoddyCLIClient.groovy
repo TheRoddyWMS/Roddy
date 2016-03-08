@@ -499,14 +499,20 @@ public class RoddyCLIClient {
             ConfigurationConverter.convertAutomatically(ec, configuration);
             StringBuilder sb = new StringBuilder();
 
-            sb << "#FWHITE##BGBLUE#Information about run test for dataset: " << ec.getDataSet().getId() << "#CLEAR#" << separator;
-
-            sb << "  Input directory     : ${ec.getInputDirectory()}" << separator;
-            sb << "  Output directory    : ${ec.getOutputDirectory()}" << separator;
-            sb << "  Execution directory : ${ec.getExecutionDirectory()}" << separator;
 
             Collection<Job> collectedJobs = ec.getExecutedJobs().findAll { Job job -> job.getJobID() != null && (rerun ? job.runResult?.wasExecuted : true) }
-            sb << "  #FWHITE#List of jobs (${collectedJobs.size()}):#CLEAR#" << separator;
+            def numberOfJobs = collectedJobs.size()
+
+            if(numberOfJobs > 0) {
+            sb << "#FWHITE##BGBLUE#Information about run test for dataset: " << ec.getDataSet().getId() << "#CLEAR#" << separator;
+                sb << "  Input directory     : ${ec.getInputDirectory()}" << separator;
+                sb << "  Output directory    : ${ec.getOutputDirectory()}" << separator;
+                sb << "  Execution directory : ${ec.getExecutionDirectory()}" << separator;
+                sb << "  #FWHITE#List of jobs (${numberOfJobs}):#CLEAR#" << separator;
+            } else {
+                sb << "There were no executed jobs for dataset " << ec.getDataSet().getId() << separator;
+            }
+
             for (Job job : collectedJobs) {
 
                 String resources = "Unknown resource entry";

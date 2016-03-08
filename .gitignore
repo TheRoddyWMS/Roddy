@@ -1,5 +1,6 @@
 .idea/workspace.xml
 RoddyCore/build
+dist/bin/2*
 dist/build
 build
 gradle
@@ -10,5 +11,4 @@ manifest.tmp
 coverage/
 .idea/codeStyleSettings.xml
 .idea/gradle.xml
-
-
+README.md~

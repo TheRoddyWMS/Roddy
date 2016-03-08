@@ -17,6 +17,7 @@ import de.dkfz.roddy.plugins.LibrariesFactory;
 import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
+import de.dkfz.roddy.tools.RuntimeTools;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -190,6 +191,7 @@ public class Roddy {
     private static void startup(String[] args) {
         time(null);
         LoggerWrapper.setup();
+        logger.postAlwaysInfo("Roddy version " + Constants.APP_CURRENT_VERSION_STRING);
         time("ftoggleini");
         List<String> list = Arrays.asList(args);
         time("clc .1");
@@ -217,8 +219,6 @@ public class Roddy {
             performCLIExit(clc.startupMode, 1);
         }
         time("exit");
-
-
     }
 
     public static void performInitialSetup(String[] args, RoddyStartupModes option) {
