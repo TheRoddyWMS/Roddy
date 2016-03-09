@@ -667,6 +667,8 @@ public class Roddy {
     }
 
     public static CommandLineCall getCommandLineCall() {
+        if(commandLineCall == null)
+            return new CommandLineCall(new LinkedList<>());
         return commandLineCall;
     }
 

@@ -22,12 +22,12 @@ public class BuildInfoFileHelperTest {
                 "betfa=true", //Spell error
                 LibrariesFactory.BUILDINFO_COMPATIBILITY + "=1.0.10"
         ]
-        return new BuildInfoFileHelper("MasterMax", entries);
+        return new BuildInfoFileHelper("MasterMax", "1.0.11", entries);
     }
 
     @Test
     public void constructObjectWithNullInput() {
-        BuildInfoFileHelper buildInfoFileHelper = new BuildInfoFileHelper("Maximaxi", null);
+        BuildInfoFileHelper buildInfoFileHelper = new BuildInfoFileHelper("Maximaxi", "1.0.11", null);
     }
 
     @Test
