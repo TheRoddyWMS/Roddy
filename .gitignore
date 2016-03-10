@@ -2,6 +2,8 @@
 RoddyCore/build
 dist/bin/2*
 dist/build
+dist/plugins/DefaultPlugin_*
+dist/plugins/*/build
 build
 gradle
 .nfo

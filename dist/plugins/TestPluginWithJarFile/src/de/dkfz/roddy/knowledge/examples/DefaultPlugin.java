@@ -7,8 +7,8 @@ import de.dkfz.roddy.plugins.BasePlugin;
 
 public class DefaultPlugin extends BasePlugin {
 
-    public static final String CURRENT_VERSION_STRING = "1.0.30";
-    public static final String CURRENT_VERSION_BUILD_DATE = "Fri Oct 02 16:56:51 CEST 2015";
+    public static final String CURRENT_VERSION_STRING = "1.0.35";
+    public static final String CURRENT_VERSION_BUILD_DATE = "Tue Feb 23 14:00:10 CET 2016";
 
     @Override
     public String getVersionInfo() {

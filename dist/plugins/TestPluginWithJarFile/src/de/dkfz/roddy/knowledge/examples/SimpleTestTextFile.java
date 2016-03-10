@@ -15,16 +15,8 @@ import java.util.List;
  */
 public class SimpleTestTextFile extends BaseFile {
 
-    public SimpleTestTextFile(File path, ExecutionContext executionContext, JobResult jobResult, List parentFiles, FileStageSettings settings) {
-        super(path, executionContext, jobResult, parentFiles, settings);
-    }
-
-    public SimpleTestTextFile(BaseFile parentFile) {
-        super(parentFile);
-    }
-
-    public SimpleTestTextFile(SimpleTestTextFile parentFile) {
-        super(parentFile);
+    public SimpleTestTextFile(ConstructionHelperForBaseFiles helper) {
+        super(helper);
     }
 
     @ScriptCallingMethod
