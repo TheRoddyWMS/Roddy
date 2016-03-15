@@ -390,11 +390,11 @@ public abstract class ExecutionService extends CacheProvider {
 
         //Current version info strings.
         String versionInfo = "Roddy version: " + Roddy.getUsedRoddyVersion() + "\nLibrary info:\n" + LibrariesFactory.getInstance().getLoadedLibrariesInfoList().join("\n");
-        provider.writeTextFile(context.getProject().getRuntimeService().getNameOfRuntimeFile(context), versionInfo, context);
+        provider.writeTextFile(context.getRuntimeService().getNameOfRuntimeFile(context), versionInfo, context);
 
         //Current config
         String configText = ConfigurationConverter.convertAutomatically(context, cfg);
-        provider.writeTextFile(context.getProject().getRuntimeService().getNameOfConfigurationFile(context), configText, context);
+        provider.writeTextFile(context.getRuntimeService().getNameOfConfigurationFile(context), configText, context);
 
         //The application ini
         provider.copyFile(Roddy.getPropertiesFilePath(), new File(executionDirectory, "applicationProperties.ini"), context);
@@ -402,7 +402,7 @@ public abstract class ExecutionService extends CacheProvider {
 
         //Current configs xml files (default, user, pipeline config file)
         String configXML = new XMLConverter().convert(context, cfg);
-        provider.writeTextFile(context.getProject().getRuntimeService().getNameOfXMLConfigurationFile(context), configXML, context);
+        provider.writeTextFile(context.getRuntimeService().getNameOfXMLConfigurationFile(context), configXML, context);
         context.setDetailedExecutionContextLevel(ExecutionContextSubLevel.RUN_RUN);
     }
 
