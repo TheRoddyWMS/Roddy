@@ -1,6 +1,8 @@
 #!/bin/sh
 # As of version 2.1.1, Roddy supports mutliple binary and plugin versions. So the useconfig option is already resolved here (and also in the roddy binary).
 
+# IMPORTANT: The file needs to be called by roddy.sh to work as designed
+
 customconfigfile=applicationProperties.ini
 
 for option in $@
@@ -31,9 +33,17 @@ then
     fi
 fi
 
+set -xv
 if [[ -z ${RODDY_BINARY_DIR-} ]]
 then
     RODDY_BINARY_DIR=${RODDY_DIRECTORY}/dist/bin/current
     RODDY_BINARY=$RODDY_BINARY_DIR/Roddy.jar
     RODDY_BSCRIPT=$RODDY_BINARY_DIR/roddy.sh
 fi
+
+# Resolve used groovy and java version
+# Reads out the 7th byte and translates JDK 1.8 is 52.
+
+# note: 16# outputs the hexadecimal number as decimal!
+JDK_VERSION=$(( 16#`unzip -p $RODDY_BINARY de/dkfz/roddy/Constants.class | hexdump  --length=8  | cut -d " " -f 5  | head -n 1 | cut -b 1-2` ))
+GROOVY_VERSION=$( basename `ls $RODDY_BINARY_DIR/lib/groovy-*.jar` | cut -d "-" -f 3  | cut -d "." -f 1-2 )
