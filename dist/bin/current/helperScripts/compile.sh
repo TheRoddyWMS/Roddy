@@ -2,20 +2,6 @@
 
 #set -xuv
 
-GROOVY_HOME=`ls -d ${PWD}/dist/runtime*/groovy 2> /dev/null`
-JAVA_HOME=`ls -d ${PWD}/dist/runtime*/jdk 2> /dev/null`
-
-if [[ -z $JAVA_HOME ]] 
-then
-	GROOVY_HOME=`ls -d ~/.roddy/runtime*/groovy 2> /dev/null`
-	JAVA_HOME=`ls -d ~/.roddy/runtime*/jdk 2> /dev/null`
-fi
-
-[[ ! -d $JAVA_HOME ]] && echo "There was no java runtime environment or jdk setup. Roddy cannot be compiled." && exit 1
-
-JDK_HOME=$JAVA_HOME
-PATH=$JDK_HOME/bin:$GROOVY_HOME/bin:$PATH
-
 echo "Increasing build number and date"
 groovy ${SCRIPTS_DIR}/IncreaseAndSetBuildVersion.groovy RoddyCore/rbuildversions.txt RoddyCore/src/de/dkfz/roddy/Constants.java &
 
