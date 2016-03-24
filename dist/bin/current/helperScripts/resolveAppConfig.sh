@@ -9,7 +9,7 @@ for option in $@
 do
     [[ $option == --useconfig* ]] && customconfigfile=${option:12:800}
 done
-set -xv
+#set -xv
 
 if [[ ${customconfigfile-false} != false ]]
 then
@@ -64,6 +64,6 @@ fi
 # Resolve used groovy and java version
 # Reads out the 7th byte and translates JDK 1.8 is 52.
 # note: 16# outputs the hexadecimal number as decimal!
-JDK_VERSION=$(( 16#`unzip -p $RODDY_BINARY de/dkfz/roddy/Constants.class | hexdump  --length=8  | cut -d " " -f 5  | head -n 1 | cut -b 1-2` ))
+JDK_VERSION=$(( 16#`unzip -p $RODDY_BINARY de/dkfz/roddy/Constants.class | hexdump  -n 8  | cut -d " " -f 5  | head -n 1 | cut -b 1-2` ))
 GROOVY_VERSION=$( basename `ls $RODDY_BINARY_DIR/lib/groovy-*.jar` | cut -d "-" -f 3  | cut -d "." -f 1-2 )
-set +xv
+#set +xv
