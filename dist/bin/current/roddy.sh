@@ -32,12 +32,12 @@ done
 
 if [[ "$parm1" == "compile" ]]; then
     [[ ! -d $JDK_HOME ]] && echo "There was no JDK home found. Roddy cannot compile workflows." && exit 1
-    source ${SCRIPTS_DIR}/compile.sh
+    source ${SCRIPTS_DIR}/compileRoddyBinary.sh
     exit 0
 elif [[ "$parm1" == "pack" ]]; then
-    groovy ${SCRIPTS_DIR}/addChangelistVersionTag.groovy README.md RoddyCore/rbuildversions.txt
-    major=`head RoddyCore/rbuildversions.txt -n 1`
-    minor=`tail RoddyCore/rbuildversions.txt -n 1`
+    groovy ${SCRIPTS_DIR}/addChangelistVersionTag.groovy README.md RoddyCore/buildversion.txt
+    major=`head RoddyCore/buildversion.txt -n 1`
+    minor=`tail RoddyCore/buildversion.txt -n 1`
 
     packedRoddyDir=${RODDY_DIRECTORY}/dist/bin/${major}.${minor}
     packedZip=${RODDY_DIRECTORY}/dist/bin/Roddy_${major}.${minor}.zip
@@ -60,13 +60,13 @@ elif [[ "$parm1" == "pack" ]]; then
 elif [[ "$parm1" == "compileplugin" ]]; then
     echo "Using Roddy binary "`basename ${RODDY_BINARY}`
     [[ ! -d $JDK_HOME ]] && echo "There was no JDK home found. Roddy cannot compile workflows." && exit 1
-    source ${SCRIPTS_DIR}/compileToJarFile.sh
+    source ${SCRIPTS_DIR}/compileRoddyPlugin.sh
     exit 0
 elif [[ "$parm1" == "packplugin" || "$parm1" == "testpackplugin" ]]; then
     [[ "$parm1" == "testpackplugin" ]] && set -xuv
     increasebuildonly=true
 #    set -xuv
-    source ${SCRIPTS_DIR}/compileToJarFile.sh
+    source ${SCRIPTS_DIR}/compileRoddyPlugin.sh
 
     # Test pack does not put things to svn so it is safe to use. Test will not change the zip file but will increase the buildnumber.
     source ${SCRIPTS_DIR}/resolveAppConfig.sh

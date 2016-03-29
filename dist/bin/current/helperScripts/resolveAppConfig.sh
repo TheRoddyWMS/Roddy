@@ -66,4 +66,10 @@ fi
 # note: 16# outputs the hexadecimal number as decimal!
 JDK_VERSION=$(( 16#`unzip -p $RODDY_BINARY de/dkfz/roddy/Constants.class | hexdump  -n 8  | cut -d " " -f 5  | head -n 1 | cut -b 1-2` ))
 GROOVY_VERSION=$( basename `ls $RODDY_BINARY_DIR/lib/groovy-*.jar` | cut -d "-" -f 3  | cut -d "." -f 1-2 )
+
+RODDY_API=$( basename $RODDY_BINARY_DIR  | cut -d "." -f 1-2 )
+if [[ $RODDY_API != *.* || $RODDY_API == "current" ]]; then
+  [[ -f $RODDY_BINARY_DIR/buildinfo.txt ]] && RODDY_API=`grep RoddyAPIVersion $RODDY_BINARY_DIR/buildinfo.txt | cut -d "=" -f 2`
+  [[ ! -f $RODDY_BINARY_DIR/buildinfo.txt ]] && RODDY_API=`head RoddyCore/buildversion.txt -n 1`
+fi
 #set +xv

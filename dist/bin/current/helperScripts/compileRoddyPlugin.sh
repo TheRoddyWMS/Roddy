@@ -1,7 +1,5 @@
 #!/bin/bash
-#TODO Build in additional configured plugin folders!
 
-set -xuv
 set -e
 increasebuildonly=${increasebuildonly-false}
 
@@ -13,6 +11,9 @@ pluginDirectories=`grep pluginDirectories ${customconfigfile}`
 pluginID=$2
 srcDirectory=`groovy ${SCRIPTS_DIR}/findPluginFolders.groovy ${pluginDirectories} ${RODDY_DIRECTORY} ${pluginID}`
 cd $srcDirectory
+requestedAPIVersion=`grep RoddyAPIVersion buildinfo.txt | cut -d "=" -f 2`
+[[ ! $RODDY_API == $requestedAPIVersion ]] && echo "Mismatch between used Roddy version ${RODDY_API} and requested version ${requestedAPIVersion}. Will not compile plugin." && exit 1
+#cat buildinfo.txt
 
 echo "Increasing build number and date"
 pluginClass=`find $srcDirectory -name "*Plugin.java" | head -n 1`
@@ -72,6 +73,8 @@ then
 
     echo "Compressing files to "`readlink -f $outputDirectory/$libName.jar`
     jar cf $outputDirectory/$libName.jar $classFiles
-    svn add $outputDirectory/$libName.jar 2> /dev/null
-    cd ../..
+    cd $outputDirectory
+    [[ -d ".svn" ]] && svn add $libName.jar buildversion.txt #2> /dev/null
+    [[ -d ".git" ]] && git add $libName.jar buildversion.txt `git st | grep Plugin.java | cut -d ":" -f 2` #2> /dev/null
+    rm manifest.tmp
 fi

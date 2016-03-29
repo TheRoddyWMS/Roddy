@@ -1,9 +1,15 @@
 #!/bin/bash
 
 #set -xuv
+set -e
 
 echo "Increasing build number and date"
-groovy ${SCRIPTS_DIR}/IncreaseAndSetBuildVersion.groovy RoddyCore/rbuildversions.txt RoddyCore/src/de/dkfz/roddy/Constants.java &
+groovy ${SCRIPTS_DIR}/IncreaseAndSetBuildVersion.groovy RoddyCore/buildversion.txt RoddyCore/src/de/dkfz/roddy/Constants.java &
+
+echo "Storing buildinfo for the new Roddy jar file"
+echo JDKVersion=$JDK_VERSION > dist/bin/current/buildinfo.txt
+echo GroovyVersion=$GROOVY_VERSION >> dist/bin/current/buildinfo.txt
+echo RoddyAPIVersion=`head RoddyCore/buildversion.txt -n 1` >> dist/bin/current/buildinfo.txt
 
 echo "Searching source files"
 test=`find RoddyCore/src/ -type f \( -name "*.groovy" -or -name "*.java"  \)`
@@ -68,5 +74,8 @@ javapackager -createjar -srcdir dist/bin/current -srcfiles Roddy.jar -outdir dis
 mv dist/bin/current/RoddyPacked.jar ${NEW_RODDY_BINARY}
 
 [ $? -ne 0 ] && "Error during compression" && exit $?
+
+# Auto add changed files to staging area
+git add dist/bin/current/Roddy.jar dist/bin/current/buildinfo.txt RoddyCore/buildversion.txt RoddyCore/src/de/dkfz/roddy/Constants.java dist/bin/current/buildinfo.txt
 
 
