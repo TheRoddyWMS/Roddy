@@ -89,11 +89,14 @@ class GenericMethod {
     private final List<String> arrayIndices
 
     /**
-     * The primary input file. It must not be null! The context object is taken from this input object.
-     *
-     * TODO It needs to be possible to have other input objects like file groups.
+     * The primary input object. It must not be null! The context object is taken from this input object.
      */
-    private final BaseFile inputFile
+    private final FileObject inputObject
+
+    /**
+     * Currently supported are filegroups and basefiles as input objects. In both cases this variable is filled being inputObject for BaseFile objects and .getFirst() for FileGroups
+     */
+    private final BaseFile firstInputFile
 
     /**
      * Any additional passed input objects like filegroups or string parameters.
@@ -120,13 +123,21 @@ class GenericMethod {
      */
     private final List<FileObject> allCreatedObjects = [];
 
-    private GenericMethod(String toolName, List<String> arrayIndices, BaseFile inputFile, Object... additionalInput) {
+    private GenericMethod(String toolName, List<String> arrayIndices, FileObject inputObject, Object... additionalInput) {
         this.additionalInput = additionalInput
-        this.inputFile = inputFile
-        this.allInputValues << inputFile;
+        this.inputObject = inputObject
+        this.allInputValues << inputObject;
+        if (inputObject instanceof FileGroup) {
+            this.firstInputFile = (inputObject as FileGroup).getFilesInGroup().get(0); // Might be null at some point... Should we throw something?
+        } else if (inputObject instanceof BaseFile) {
+            this.firstInputFile = inputObject as BaseFile
+        } else {
+            // This is not supported yet! Throw an exception.
+            throw new RuntimeException("It is not allowed to use GenericMethod objects without input objects.")
+        }
+        this.context = inputObject.getExecutionContext();
         this.arrayIndices = arrayIndices
         this.toolName = toolName
-        this.context = inputFile.getExecutionContext();
         this.configuration = context.getConfiguration();
         this.calledTool = configuration.getTools().getValue(toolName);
     }
@@ -214,7 +225,7 @@ class GenericMethod {
                 }
                 _tp.constraints.each {
                     ToolEntry.ToolConstraint constraint ->
-                        constraint.apply(inputFile);
+                        constraint.apply(firstInputFile);
                 }
             } else if (toolParameter instanceof ToolEntry.ToolTupleParameter) {
                 ToolEntry.ToolTupleParameter _tp = (ToolEntry.ToolTupleParameter) toolParameter;
@@ -243,7 +254,7 @@ class GenericMethod {
             if (toolParameter instanceof ToolEntry.ToolFileParameter) {
                 ToolEntry.ToolFileParameter _tp = (ToolEntry.ToolFileParameter) toolParameter;
                 for (ToolEntry.ToolConstraint constraint in _tp.constraints) {
-                    constraint.apply(inputFile);
+                    constraint.apply(firstInputFile);
                 }
             }
         }
@@ -251,7 +262,7 @@ class GenericMethod {
 
     private <F extends FileObject> F createOutputObject(String arrayIndex = null) {
         F outputObject = null;
-        def configuration = inputFile.getExecutionContext().getConfiguration()
+        def configuration = firstInputFile.getExecutionContext().getConfiguration()
         if (calledTool.getOutputParameters(configuration).size() == 1) {
             ToolEntry.ToolParameter tparm = calledTool.getOutputParameters(configuration)[0];
             if (tparm instanceof ToolEntry.ToolFileParameter) {
@@ -279,8 +290,8 @@ class GenericMethod {
     }
 
     private FileObject createOutputFile(ToolEntry.ToolFileParameter tparm) {
-        ToolEntry.ToolFileParameter fileParameter = tparm as ToolEntry.ToolFileParameter;
-        BaseFile bf = convertToolFileParameterToBaseFile(fileParameter, inputFile, allInputFiles)
+        ToolEntry.ToolFileParameter fileParameter = tparm;
+        BaseFile bf = convertToolFileParameterToBaseFile(fileParameter)
         for (ToolEntry.ToolFileParameter childFileParameter in fileParameter.getChildFiles()) {
             try {
                 if (childFileParameter.parentVariable == null) {
@@ -299,7 +310,7 @@ class GenericMethod {
                 }
                 if (_field == null && _method == null) {
                     try {
-                        inputFile.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_FIELDINACCESSIBLE.expand("Class ${bf.getClass().getName()} field ${childFileParameter.parentVariable}"));
+                        context.addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_FIELDINACCESSIBLE.expand("Class ${bf.getClass().getName()} field ${childFileParameter.parentVariable}"));
                     } catch (Exception ex) {
                     }
                     continue;
@@ -321,7 +332,7 @@ class GenericMethod {
         //TODO Auto recognize tuples?
         List<FileObject> filesInTuple = [];
         for (ToolEntry.ToolFileParameter fileParameter in tfg.files) {
-            BaseFile bf = convertToolFileParameterToBaseFile(fileParameter, inputFile, allInputFiles);
+            BaseFile bf = convertToolFileParameterToBaseFile(fileParameter);
             filesInTuple << bf;
             allCreatedObjects << bf;
         }
@@ -332,7 +343,7 @@ class GenericMethod {
         List<BaseFile> filesInGroup = [];
 
         for (ToolEntry.ToolFileParameter fileParameter in tfg.files) {
-            BaseFile bf = convertToolFileParameterToBaseFile(fileParameter, inputFile, allInputFiles)
+            BaseFile bf = convertToolFileParameterToBaseFile(fileParameter)
             filesInGroup << bf;
             allCreatedObjects << bf;
         }
@@ -353,7 +364,7 @@ class GenericMethod {
     }
 
     private FileObject createAndRunArrayJob(List<BaseFile> filesToVerify) {
-        JobResult jobResult = new Job(context, context.createJobName(inputFile, toolName), toolName, arrayIndices, parameters, allInputFiles, filesToVerify).run();
+        JobResult jobResult = new Job(context, context.createJobName(firstInputFile, toolName), toolName, arrayIndices, parameters, allInputFiles, filesToVerify).run();
 
         Map<String, FileObject> outputObjectsByArrayIndex = [:];
         IndexedFileObjects indexedFileObjects = new IndexedFileObjects(arrayIndices, outputObjectsByArrayIndex, context);
@@ -371,7 +382,7 @@ class GenericMethod {
     }
 
     private FileObject createAndRunSingleJob(List<BaseFile> filesToVerify, FileObject outputObject) {
-        JobResult jobResult = new Job(context, context.createJobName(inputFile, toolName), toolName, parameters, allInputFiles, filesToVerify).run();
+        JobResult jobResult = new Job(context, context.createJobName(firstInputFile, toolName), toolName, parameters, allInputFiles, filesToVerify).run();
 
         if (allCreatedObjects) {
             for (FileObject fo in allCreatedObjects) {
@@ -383,7 +394,11 @@ class GenericMethod {
         return outputObject;
     }
 
-    private BaseFile convertToolFileParameterToBaseFile(ToolEntry.ToolFileParameter fileParameter, BaseFile input, List<BaseFile> allInput) {
+    private BaseFile convertToolFileParameterToBaseFile(ToolEntry.ToolFileParameter fileParameter) {
+        convertToolFileParameterToBaseFile(fileParameter, firstInputFile, allInputFiles)
+    }
+
+    private BaseFile convertToolFileParameterToBaseFile(ToolEntry.ToolFileParameter fileParameter, BaseFile firstInputFile, List<BaseFile> allInputFiles) {
         Constructor c = searchBaseFileConstructorForConstructionHelperObject(fileParameter.fileClass);
         BaseFile bf;
         try {
@@ -394,22 +409,22 @@ class GenericMethod {
                 //The underlying error is that a configuration file has e.g. a typo, or not? Such kind of errors are user errors, where there is a clear cause (line X in file Y contains garbage Z). Ideally we would just display an error message with as much information possible to allow the user to fix the error, but no stack trace.
                 //Do you think it would make sense to separate out two groups of Exceptions, one that shows only the error message containing all information required to fix the input problem caused by the user, and the othor more fatal class of exceptions raised by the workflow or RoddyCore, that indicates real programming errors and are displayed with a full stack trace?
 
-                input.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_NOCONSTRUCTOR.expand("File object of type ${fileParameter?.fileClass} with input ${input?.class} needs a constructor which takes a ConstuctionHelper object."));
-                throw new RuntimeException("Could not find valid constructor for type  ${fileParameter?.fileClass} with input ${input?.class}.");
+                context.addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_NOCONSTRUCTOR.expand("File object of type ${fileParameter?.fileClass} with input ${firstInputFile?.class} needs a constructor which takes a ConstuctionHelper object."));
+                throw new RuntimeException("Could not find valid constructor for type  ${fileParameter?.fileClass} with input ${firstInputFile?.class}.");
             } else {
-                BaseFile.ConstructionHelperForGenericCreation helper = new BaseFile.ConstructionHelperForGenericCreation(input, allInput as List<FileObject>, calledTool, toolName, fileParameter.scriptParameterName, fileParameter.filenamePatternSelectionTag, input.fileStage, null);
+                BaseFile.ConstructionHelperForGenericCreation helper = new BaseFile.ConstructionHelperForGenericCreation(firstInputFile, allInputFiles as List<FileObject>, calledTool, toolName, fileParameter.scriptParameterName, fileParameter.filenamePatternSelectionTag, firstInputFile.fileStage, null);
                 bf = c.newInstance(helper);
             }
         } catch (Exception ex) {
-            input.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_NOCONSTRUCTOR.expand("Error during constructor call."));
+            context.addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_NOCONSTRUCTOR.expand("Error during constructor call."));
             throw (ex);
         }
 
         if (!fileParameter.checkFile)
             bf.setAsTemporaryFile();
 
-        if (allInput.size() > 1)
-            bf.setParentFiles(allInput, true);
+        if (allInputFiles.size() > 1)
+            bf.setParentFiles(allInputFiles, true);
 
         if (fileParameter.scriptParameterName) {
             parameters[fileParameter.scriptParameterName] = bf;
@@ -425,7 +440,7 @@ class GenericMethod {
     public static Constructor<BaseFile> searchBaseFileConstructorForConstructionHelperObject(Class classToSearch) {
         try {
             return classToSearch.getConstructor(BaseFile.ConstructionHelperForBaseFiles);
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             logger.severe("There was no valid constructor found for class ${classToSearch?.name}! Roddy needs a constructor which accepts a construction helper object.")
 //            throw ex;
             return null;

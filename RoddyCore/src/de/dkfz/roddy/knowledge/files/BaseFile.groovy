@@ -90,7 +90,6 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
             this.slotID = slotID
             this.toolID = toolID
             this.creatingTool = creatingTool
-            this.parentObject = parentObject
         }
     }
 
