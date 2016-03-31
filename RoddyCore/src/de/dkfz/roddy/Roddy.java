@@ -570,6 +570,13 @@ public class Roddy {
         return settingsDirectory;
     }
 
+    public static File getApplicationLogDirectory() {
+        File logDir = new File(getSettingsDirectory(), "logs");
+        if(!logDir.exists())
+            logDir.mkdir();
+        return logDir;
+    }
+
     public static File getCompressedAnalysisToolsDirectory() {
         return new File(getSettingsDirectory(), "compressedAnalysisTools");
     }

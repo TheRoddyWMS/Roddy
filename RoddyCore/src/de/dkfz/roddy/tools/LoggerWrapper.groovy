@@ -1,7 +1,12 @@
 package de.dkfz.roddy.tools;
 
 import de.dkfz.roddy.Constants;
+import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.core.InfoObject;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.logging.*;
@@ -10,6 +15,7 @@ import java.util.logging.*;
  * This class wraps around javas logger class and implements a verbosity level structure.
  * Created by michael on 28.05.14.
  */
+@groovy.transform.CompileStatic
 public class LoggerWrapper {
     public static final int VERBOSITY_INFO = 5;
     public static final int VERBOSITY_WARNING = 3;
@@ -21,10 +27,12 @@ public class LoggerWrapper {
     public static final int VERBOSITY_SOMETIMES = 3;
     public static final int VERBOSITY_ALWAYS = 1;
     private static int verbosityLevel = VERBOSITY_LOW;
-    private Logger logger;
+    private Logger consoleLogger;
+    private static File logFile;
+    private static InfoObject applicationStartupTimestamp = new InfoObject();
 
     public LoggerWrapper(String name) {
-        logger = Logger.getLogger(name);
+        consoleLogger = Logger.getLogger(name);
     }
 
     public static LoggerWrapper getLogger(String name) {
@@ -77,20 +85,70 @@ public class LoggerWrapper {
         return Level.SEVERE;
     }
 
+    /**
+     * Erases all the oldest logfiles in the log directory down to a count of 32(by default).
+     */
+    private static void manageLogFileCount() {
+        try {
+            File applicationLogDirectory = Roddy.getApplicationLogDirectory();
+            int maximumLogFilesPerPrefix = RoddyConversionHelperMethods.toInt(Roddy.getApplicationProperty("maximumLogFilesPerPrefix"), 32);
+            String logFilesPrefix = getLogfilesPrefix()
+
+            File[] files = applicationLogDirectory.listFiles((FilenameFilter) new WildcardFileFilter(logFilesPrefix + "*")).sort() as File[];
+            if (files.length > maximumLogFilesPerPrefix) {
+                // Remove old files
+                for (int i = 0; i < files.length - maximumLogFilesPerPrefix + 1; i++) {
+                    LoggerWrapper.getLogger(LoggerWrapper.class).postSometimesInfo("Deleted old logfile ${files[i]}.")
+                    files[i].delete();
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static String getLogfilesPrefix() {
+        String logFilesPrefix = Roddy.getApplicationProperty("logFilesPrefix", "default");
+        logFilesPrefix
+    }
+
+    private static synchronized File getLogFile() {
+        if (logFile == null) {
+            String logfilesPrefix = getLogfilesPrefix()
+            String timestamp = InfoObject.formatTimestamp(applicationStartupTimestamp.getTimeStamp())
+            File applicationLogDirectory = Roddy.getApplicationLogDirectory();
+            logFile = new File(applicationLogDirectory, [logfilesPrefix, timestamp].join("_") + ".tsv");
+            manageLogFileCount();
+        }
+
+        return logFile;
+    }
+
+    private synchronized void logToLogFile(Level level, String text, Throwable ex) {
+        try {
+            if (!RoddyConversionHelperMethods.toBoolean(Roddy.getApplicationProperty("logExtensively", "true"), true)) return;
+            getLogFile() << [this.consoleLogger.getName(), level, text, ex?:"NoExceptionThrown"].join("\t") << Constants.ENV_LINESEPARATOR;
+        } catch (Exception ignored) {
+        }
+    }
+
     public void log(int lvl, String text) {
-        if(verbosityLevel >= lvl) {
-            logger.log(getVerbosityLevelObject(lvl), text);
+        def level = getVerbosityLevelObject(lvl)
+        logToLogFile(level, text, null);
+        if (verbosityLevel >= lvl) {
+            consoleLogger.log(level, text);
         }
     }
 
     public void log(Level lvl, String text) {
+        logToLogFile(lvl, text, null);
         if (getVerbosityLevelFor(lvl) <= verbosityLevel)
-            logger.log(lvl, text);
+            consoleLogger.log(lvl, text);
     }
 
     public void log(Level lvl, String text, Throwable ex) {
+        logToLogFile(lvl, text, null);
         if (getVerbosityLevelFor(lvl) <= verbosityLevel)
-            logger.log(lvl, text, ex);
+            consoleLogger.log(lvl, text, ex);
     }
 
     public void severe(String text) {
@@ -111,18 +169,21 @@ public class LoggerWrapper {
     }
 
     public void postRareInfo(String text) {
-        if(verbosityLevel >= VERBOSITY_RARE)
-            logger.log(Level.INFO, text);
+        logToLogFile(Level.INFO, text, null);
+        if (verbosityLevel >= VERBOSITY_RARE)
+            consoleLogger.log(Level.INFO, text);
     }
 
     public void postAlwaysInfo(String text) {
-        if(verbosityLevel >= VERBOSITY_ALWAYS)
-            logger.log(Level.INFO, text);
+        logToLogFile(Level.INFO, text, null);
+        if (verbosityLevel >= VERBOSITY_ALWAYS)
+            consoleLogger.log(Level.INFO, text);
     }
 
     public void postSometimesInfo(String text) {
-        if(verbosityLevel >= VERBOSITY_SOMETIMES)
-            logger.log(Level.INFO, text);
+        logToLogFile(Level.INFO, text, null);
+        if (verbosityLevel >= VERBOSITY_SOMETIMES)
+            consoleLogger.log(Level.INFO, text);
     }
 
     /**
