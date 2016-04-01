@@ -1,3 +1,5 @@
+package de.dkfz.roddy.knowledge.examples;
+
 import de.dkfz.roddy.plugins.BasePlugin;
 
 /**
@@ -5,7 +7,7 @@ import de.dkfz.roddy.plugins.BasePlugin;
  * It shows you, how a plugin declaration should look like, especially if you want to incorporate version strings.
  */
 
-public class DefaultPlugin extends BasePlugin {
+public class TestPlugin extends BasePlugin {
 
     public static final String CURRENT_VERSION_STRING = "1.0.35";
     public static final String CURRENT_VERSION_BUILD_DATE = "Tue Feb 23 14:00:10 CET 2016";

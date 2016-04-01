@@ -1,4 +1,4 @@
-* DefaultPlugin Release 1.0.33
+* TestPlugin Release 1.0.33
 
   * JDK 1.8
   * Groovy 2.4
