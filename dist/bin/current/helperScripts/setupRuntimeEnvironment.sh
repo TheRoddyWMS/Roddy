@@ -1,12 +1,13 @@
 #!/bin/bash
 
 # Convert read out JDK version entry to a readable version entry.
-
+set -xuv
 jdkIsSet=false
-[[ ${JDK_VERSION-52} == 52 ]] && JDK_VERSION=1.8 && jdkIsSet=true
+[[ ${JDK_VERSION-52} == 52 ]] && JDK_VERSION=1.8
+[[ ${JDK_VERSION} == 1.8 ]] && jdkIsSet=true;
 
-[[ $jdkIsSet == false ]] && echo "The requested Java runtime version ${jdkIsSet} is not supported." && exit 1
-
+[[ $jdkIsSet == false ]] && echo "The requested Java runtime version ${JDK_VERSION} is not supported." && exit 1
+set +xuv
 echo Required JRE/JDK: $JDK_VERSION
 echo Required Groovy:  $GROOVY_VERSION
 

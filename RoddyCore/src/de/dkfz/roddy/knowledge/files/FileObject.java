@@ -38,7 +38,7 @@ public abstract class FileObject implements Serializable {
         this.creatingJobsResult = jr;
     }
 
-    protected void setExecutionContext(ExecutionContext newContext) { this.executionContext = executionContext; }
+    protected void setExecutionContext(ExecutionContext newContext) { this.executionContext = newContext; }
 
     public ExecutionContext getExecutionContext() {
         return executionContext;
