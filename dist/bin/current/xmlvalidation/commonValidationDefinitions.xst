@@ -32,6 +32,8 @@
                 <xs:attribute type="xs:string" name="derivedFrom" use="optional"/>
                 <xs:attribute type="xs:string" name="fileStage" use="optional"/>
                 <xs:attribute type="xs:string" name="onMethod" use="optional"/>
+                <xs:attribute type="xs:string" name="onTool" use="optional"/>
+                <xs:attribute type="xs:string" name="onScriptParameter" use="optional"/>
                 <xs:attribute type="xs:string" name="selectiontag" use="optional"/>
                 <xs:attribute type="xs:string" name="pattern" use="optional"/>
             </xs:extension>

@@ -1,6 +1,5 @@
 package de.dkfz.roddy.config
 
-import de.dkfz.roddy.*
 import de.dkfz.roddy.knowledge.brawlworkflows.BrawlWorkflow
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
@@ -419,15 +418,16 @@ public class ConfigurationFactory {
             for (NodeChild filename in filenames.filename) {
                 try {
                     FilenamePattern fp = null;
-
                     if (filename.attributes().get("derivedFrom") != null) {
                         fp = readDerivedFromFilenamePattern(pkg, filename)
                     } else if (filename.attributes().get("fileStage") != null) {
                         fp = readFileStageFilenamePattern(pkg, filestagesbase, filename)
-                    } else if (filename.attributes().get("onScript") != null) {
-                        fp = readOnScriptFilenamePattern(pkg, filename)
+                    } else if (filename.attributes().get("onTool") != null) {
+                        fp = readOnToolFilenamePattern(pkg, filename)
                     } else if (filename.attributes().get("onMethod") != null) {
                         fp = readOnMethodFilenamePattern(pkg, filename)
+                    } else if (filename.attributes().get("onScriptParameter") != null) {
+                        fp = readOnScriptParameterFilenamePattern(pkg, filename)
                     }
                     if (fp == null) {
                         throw new RuntimeException("filename pattern is not valid: ")
@@ -525,9 +525,41 @@ public class ConfigurationFactory {
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    public static FilenamePattern readOnScriptFilenamePattern(String pkg, NodeChild filename) {
+    public static FilenamePattern readOnScriptParameterFilenamePattern(String pkg, NodeChild filename) {
+        String scriptParameter = filename.@onScriptParameter.text();
+        String pattern = filename.@pattern.text();
+        String toolName, parameterName;
+        String[] splitResult = scriptParameter.trim().split(":")
+        if (splitResult.size() == 1) {
+            //any tool and param
+            toolName= null
+            (parameterName) = splitResult
+        } else if (splitResult.size() == 2){
+            (toolName, parameterName) = splitResult
+
+            if (toolName.equals("[ANY]") || toolName.equals("")) {
+                //only param OR [ANY] tool and param
+                toolName = null
+            } else if (toolName.startsWith("[")) {
+                throw new RuntimeException("Illegal Argument '[..]': ${toolName}")
+            }
+
+        } else {
+            throw new RuntimeException("Too many colons: ${scriptParameter}")
+        }
+        if (filename.@class == "") {
+            throw new RuntimeException("Missing 'class' attribute for onScriptParameter in: ${groovy.xml.XmlUtil.serialize(filename)}")
+        }
         Class<FileObject> _cls = loadPatternClass(pkg, filename.@class.text(), BaseFile).x;
-        String scriptName = filename.@onScript.text();
+
+        FilenamePattern fp = new OnScriptParameterFilenamePattern(_cls, toolName, parameterName, pattern);
+        return fp;
+    }
+
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    public static FilenamePattern readOnToolFilenamePattern(String pkg, NodeChild filename) {
+        Class<FileObject> _cls = loadPatternClass(pkg, filename.@class.text(), BaseFile).x;
+        String scriptName = filename.@onTool.text();
         String pattern = filename.@pattern.text();
         String selectionTag = extractAttributeText(filename, "selectiontag", FilenamePattern.DEFAULT_SELECTION_TAG);
         FilenamePattern fp = new OnToolFilenamePattern(_cls, scriptName, pattern, selectionTag);

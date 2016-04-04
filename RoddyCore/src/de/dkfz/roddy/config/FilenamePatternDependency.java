@@ -7,5 +7,6 @@ public enum FilenamePatternDependency {
     derivedFrom,
     FileStage,
     onMethod,
+    onScriptParameter,
     onTool;
 }
