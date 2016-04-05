@@ -3,6 +3,7 @@ package de.dkfz.roddy.core;
 import de.dkfz.roddy.Constants;
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
+import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.*
@@ -295,6 +296,10 @@ public class ExecutionContext implements JobStatusListener {
 
     public Configuration getConfiguration() {
         return analysis.getConfiguration();
+    }
+
+    public RecursiveOverridableMapContainerForConfigurationValues getConfigurationValues () {
+        return configuration.getConfigurationValues()
     }
 
     public void setTimestamp(Date timestamp) {

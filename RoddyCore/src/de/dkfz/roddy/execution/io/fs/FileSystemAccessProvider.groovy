@@ -33,8 +33,8 @@ public class FileSystemAccessProvider extends CacheProvider {
      * Well this  value is to ensure backward compatibility for older Roddy workflows.
      * Formerly, this class was called FileSystemInfoProvider which is just not the right name for the class.
      * So we decided to rename it to FileSytemAccessProvider. This name covers everything!
-     * However, the FileSystemInfoProvider class still resides for backward compatibility.
-     * The lock is used in this class and in the FileSystemInfoProvider. It is not on a package level and also should not be!
+     * However, the FileSystemAccessProvider class still resides for backward compatibility.
+     * The lock is used in this class and in the FileSystemAccessProvider. It is not on a package level and also should not be!
      * Also it must not be public or private.
      * So don't whonder why this one is protected static.
      */

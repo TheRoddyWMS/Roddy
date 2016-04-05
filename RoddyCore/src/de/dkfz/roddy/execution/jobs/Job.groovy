@@ -143,12 +143,14 @@ public class Job {
             for (BaseFile bf : parentFiles) {
                 if(bf.isSourceFile() && bf.getCreatingJobsResult() == null) continue;
                 try {
-                    JobDependencyID jobid = bf.getCreatingJobsResult().getJobID();
-                    if (jobid.isValidID()) {
+                    JobDependencyID jobid = bf.getCreatingJobsResult()?.getJobID();
+                    if (jobid?.isValidID()) {
                         dependencyIDs << jobid;
                     }
                 } catch (Exception ex) {
                     logger.severe("Something is wrong for file: " + bf);
+                    logger.postSometimesInfo(ex.message)
+                    logger.postSometimesInfo(RoddyIOHelperMethods.getStackTraceAsString(ex))
                 }
             }
         }

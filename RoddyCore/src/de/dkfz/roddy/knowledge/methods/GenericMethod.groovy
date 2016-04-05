@@ -440,10 +440,11 @@ class GenericMethod {
     public static Constructor<BaseFile> searchBaseFileConstructorForConstructionHelperObject(Class classToSearch) {
         try {
             return classToSearch.getConstructor(BaseFile.ConstructionHelperForBaseFiles);
-        } catch (Exception ex) {
+        } catch (Exception e) {
             logger.severe("There was no valid constructor found for class ${classToSearch?.name}! Roddy needs a constructor which accepts a construction helper object.")
-//            throw ex;
-            return null;
+            logger.postSometimesInfo(e.message)
+            logger.postSometimesInfo(RoddyIOHelperMethods.getStackTraceAsString(e))
+            return null
         }
     }
 }

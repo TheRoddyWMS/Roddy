@@ -451,7 +451,7 @@ public class RoddyCLIClient {
         if (clc.parameters.size() < 2) {
             logger.postAlwaysInfo("There were no dataset identifiers set, cannot run workflow."); return null;
         }
-        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(clc.parameters[0]);
+        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(clc.getAnalysisID());
         return analysis;
     }
 
@@ -459,14 +459,14 @@ public class RoddyCLIClient {
         Analysis analysis = checkAndLoadAnalysis(clc);
         if (!analysis) return;
 
-        analysis.run(Arrays.asList(clc.parameters[1].split(SPLIT_COMMA)), ExecutionContextLevel.RUN);
+        analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.RUN);
     }
 
     public static List<ExecutionContext> rerun(CommandLineCall clc) {
         Analysis analysis = checkAndLoadAnalysis(clc);
         if (!analysis) return;
 
-        List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(clc.parameters[1].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
+        List<ExecutionContext> executionContexts = analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.QUERY_STATUS);
         return analysis.rerun(executionContexts, false);
     }
 
@@ -478,7 +478,7 @@ public class RoddyCLIClient {
         Analysis analysis = checkAndLoadAnalysis(clc);
         if (!analysis) return;
 
-        List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(clc.parameters[1].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
+        List<ExecutionContext> executionContexts = analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.QUERY_STATUS);
         if (testrerun) executionContexts = analysis.rerun(executionContexts, true);
 
         outputRerunResult(executionContexts, testrerun)
@@ -647,10 +647,10 @@ public class RoddyCLIClient {
     }
 
     static void cleanupWorkflow(CommandLineCall clc) {
-        def analysisID = clc.getParameters().get(0)
+        def analysisID = clc.getAnalysisID()
         Analysis analysis = ProjectFactory.getInstance().loadAnalysis(analysisID);
         if (!analysis) return;
-        List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getParameters()[1].split(SPLIT_COMMA) : null;
+        List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getDatasetSpecifications() : null;
         if (dFilter == null) {
             println("There were no valid pids specified.")
             return;
@@ -659,10 +659,10 @@ public class RoddyCLIClient {
     }
 
     static void abortWorkflow(CommandLineCall clc) {
-        def analysisID = clc.getParameters().get(0)
+        def analysisID = clc.getAnalysisID()
         Analysis analysis = ProjectFactory.getInstance().loadAnalysis(analysisID);
         if (!analysis) return;
-        List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getParameters()[1].split(SPLIT_COMMA) : null;
+        List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getDatasetSpecifications() : null;
         if (dFilter == null) {
             println("There were no valid pids specified.")
             return;

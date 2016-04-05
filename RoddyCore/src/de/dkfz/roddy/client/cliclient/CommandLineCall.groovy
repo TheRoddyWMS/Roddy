@@ -6,6 +6,7 @@ import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.tools.LoggerWrapper
 
+import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 import static de.dkfz.roddy.client.RoddyStartupModes.help
 
 /**
@@ -81,6 +82,14 @@ public class CommandLineCall {
 
     List<String> getParameters() {
         return new LinkedList(parameters);
+    }
+
+    String getAnalysisID() {
+        return parameters[0];
+    }
+
+    List<String> getDatasetSpecifications() {
+        return Arrays.asList(parameters[1].split(SPLIT_COMMA));
     }
 
     public boolean hasParameters() {
