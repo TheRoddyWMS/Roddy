@@ -56,10 +56,10 @@ public class RoddyCLIClient {
             boolean isLinux = env.get("OSTYPE") == "linux";
             boolean isBash = env.get("SHELL")?.contains("bash");
 
-//        if (isLinux && isBash) { //Simple check if we are using linux and a color code aware console
-//            if (System.console() != null)
-//                return new BashFormatter();
-//        }
+        if (isLinux && isBash) { //Simple check if we are using linux and a color code aware console
+            if (System.console() != null)
+                return new BashFormatter();
+        }
             _formatter = new NoColorsFormatter();
         }
         return _formatter;

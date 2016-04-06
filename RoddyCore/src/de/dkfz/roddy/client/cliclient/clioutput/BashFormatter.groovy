@@ -6,7 +6,7 @@ package de.dkfz.roddy.client.cliclient.clioutput;
 public class BashFormatter extends ConsoleStringFormatter {
     public String formatAll(String str) {
         for (BashColours bc in BashColours.values()) {
-            str = bc.format(str);
+            str = "" + (char)27 + bc.format(str);
         }
         return str;
     }

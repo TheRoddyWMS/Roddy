@@ -37,7 +37,7 @@ public enum BashColours {
     BashColours(String colourString) {
         this.colourString = colourString
         this.colourFormatString = "#" + name() + "#";
-        this.colourFinalString = "\\033[" + colourString;
+        this.colourFinalString = "" + (char)27 + "[" + colourString;
     }
 
     public String format(String str) {
