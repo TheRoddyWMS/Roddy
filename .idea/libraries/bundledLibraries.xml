@@ -21,6 +21,7 @@
       <root url="jar://$PROJECT_DIR$/dist/bin/current/lib/groovy-all-2.3.6-indy.jar!/" />
     </CLASSES>
     <JAVADOC />
+    <LIBRARY_FILE />
     <SOURCES>
       <root url="file://$PROJECT_DIR$/../SSHJ/src/main/java" />
     </SOURCES>

@@ -4,6 +4,7 @@
       <root url="jar://$APPLICATION_HOME_DIR$/lib/junit-4.11.jar!/" />
     </CLASSES>
     <JAVADOC />
+    <LIBRARY_FILE />
     <SOURCES />
   </library>
 </component>
