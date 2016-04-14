@@ -1,9 +1,12 @@
 package de.dkfz.roddy.core
 
 import de.dkfz.roddy.Constants
+import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
+import de.dkfz.roddy.execution.io.BaseMetadataTable
+import de.dkfz.roddy.execution.io.MetadataTableFactory
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
@@ -58,18 +61,29 @@ public abstract class RuntimeService extends CacheProvider {
     }
 
     public List<DataSet> loadCombinedListOfDataSets(Analysis analysis) {
-        List<DataSet> lid = loadListOfInputDataSets(analysis);
-        List<DataSet> lod = loadListOfOutputDataSets(analysis);
 
-        //Now combine lid and lod.
-        Collection<DataSet> additional = lod.findAll {
-            DataSet ds -> !lid.find { DataSet inLid -> inLid.getId() == ds.getId(); };
+        if(Roddy.isMetadataCLOptionSet()) {
+
+            BaseMetadataTable table = MetadataTableFactory.getTable()
+            List<String> _datasets = table.listDatasets();
+            String pOut = analysis.getOutputBaseDirectory().getAbsolutePath() + File.separator;
+            return _datasets.collect { new DataSet(analysis, it, new File(pOut + it)) }
+
+        } else {
+
+            List<DataSet> lid = loadListOfInputDataSets(analysis);
+            List<DataSet> lod = loadListOfOutputDataSets(analysis);
+
+            //Now combine lid and lod.
+            Collection<DataSet> additional = lod.findAll {
+                DataSet ds -> !lid.find { DataSet inLid -> inLid.getId() == ds.getId(); };
+            }
+            lid += additional.each { DataSet ds -> ds.setAsAvailableInOutputOnly(); }
+            lid.removeAll { DataSet ds -> ds.getId().startsWith(".roddy"); } //Filter out roddy specific files or folders.
+            lid.sort { DataSet a, DataSet b -> a.getId().compareTo(b.getId()); }
+            logger.postAlwaysInfo("Found ${lid.size()} datasets in the in- and output directories.")
+            return lid;
         }
-        lid += additional.each { DataSet ds -> ds.setAsAvailableInOutputOnly(); }
-        lid.removeAll { DataSet ds -> ds.getId().startsWith(".roddy"); } //Filter out roddy specific files or folders.
-        lid.sort { DataSet a, DataSet b -> a.getId().compareTo(b.getId()); }
-        logger.postAlwaysInfo("Found ${lid.size()} datasets in the in- and output directories.")
-        return lid;
     }
 
     /**

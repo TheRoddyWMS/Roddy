@@ -7,6 +7,7 @@ import de.dkfz.roddy.client.cliclient.CommandLineCall;
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
 import de.dkfz.roddy.config.AppConfig;
 import de.dkfz.roddy.core.Initializable;
+import de.dkfz.roddy.execution.io.BaseMetadataTable;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.Command;
@@ -17,7 +18,6 @@ import de.dkfz.roddy.plugins.LibrariesFactory;
 import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
-import de.dkfz.roddy.tools.RuntimeTools;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -25,7 +25,6 @@ import java.net.ProxySelector;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.logging.*;
 
 import static de.dkfz.roddy.StringConstants.FALSE;
 
@@ -143,6 +142,10 @@ public class Roddy {
 
     public static String getCustomBaseOutputDirectory() {
         return baseOutputDirectory;
+    }
+
+    public static boolean isMetadataCLOptionSet() {
+        return getCommandLineCall().isOptionSet(RoddyStartupOptions.usemetadatatable);
     }
 
     /**
@@ -572,7 +575,7 @@ public class Roddy {
 
     public static File getApplicationLogDirectory() {
         File logDir = new File(getSettingsDirectory(), "logs");
-        if(!logDir.exists())
+        if (!logDir.exists())
             logDir.mkdir();
         return logDir;
     }
@@ -674,7 +677,7 @@ public class Roddy {
     }
 
     public static CommandLineCall getCommandLineCall() {
-        if(commandLineCall == null)
+        if (commandLineCall == null)
             return new CommandLineCall(new LinkedList<>());
         return commandLineCall;
     }

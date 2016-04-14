@@ -1,5 +1,7 @@
 package de.dkfz.roddy.core;
 
+import de.dkfz.roddy.execution.io.BaseMetadataTable;
+import de.dkfz.roddy.execution.io.MetadataTableFactory;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.Job;
 
@@ -51,6 +53,11 @@ public class DataSet extends InfoObject implements Serializable, ExecutionContex
      */
     private boolean onlyAvailableInOutputDirectory;
 
+    /**
+     * The metadata table instance specific for this dataset.
+     */
+    private BaseMetadataTable metadataTable;
+
     public DataSet(Analysis analysis, String id, File outputBaseFolder) {
 
         this.id = id;
@@ -68,6 +75,15 @@ public class DataSet extends InfoObject implements Serializable, ExecutionContex
         return project;
     }
 
+    /**
+     * Get the metadata table for this dataset.
+     * @return
+     */
+    public BaseMetadataTable getMetadataTable() {
+        if(metadataTable == null)
+            metadataTable = MetadataTableFactory.getTable().subsetByDataset(this.id);
+        return metadataTable;
+    }
     /**
      * Returns a folder like i.e. results_per_pid/ICGC_PCA0xxx
      *

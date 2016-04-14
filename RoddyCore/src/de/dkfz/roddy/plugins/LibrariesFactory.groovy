@@ -112,7 +112,7 @@ public class LibrariesFactory extends Initializable {
             if (getSynthetic().map.containsKey(name))
                 return getSynthetic().map[name];
 
-            // SEVERE TODO This is a very quick hack and heavily depends on the existens of jar on the system!
+            // SEVERE TODO This is a very quick hack and heavily depends on the existence of jar on the system!
             List<String> listOfClasses = []
             synchronized (loadedPlugins) {
                 loadedPlugins.each {

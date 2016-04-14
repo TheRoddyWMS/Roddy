@@ -3,7 +3,6 @@ package de.dkfz.roddy.config.converters
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationConstant
 import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationFactory
 import de.dkfz.roddy.config.ConfigurationValue

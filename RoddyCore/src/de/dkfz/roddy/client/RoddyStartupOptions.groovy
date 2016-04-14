@@ -28,6 +28,7 @@ public enum RoddyStartupOptions {
     waitforjobs,
     test,
     useiodir(true),
+    usemetadatatable(true),
     disabletrackonlyuserjobs,
     trackonlystartedjobs,
     resubmitjobonerror,

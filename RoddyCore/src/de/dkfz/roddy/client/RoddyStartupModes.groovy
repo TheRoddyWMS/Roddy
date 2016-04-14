@@ -142,13 +142,19 @@ public enum RoddyStartupModes {
         println("================================")
         System.out.println(Constants.ENV_LINESEPARATOR + Constants.ENV_LINESEPARATOR + "Common additional options");
         System.out.println("    --useconfig={file}              - Use {file} as the application configuration.\n" +
-                "                                      The order is: full path, .roddy folder, Roddy directory.");
+                           "                                      The order is: full path, .roddy folder, Roddy directory.");
         System.out.println("    --useiodir=[fileIn],{fileOut}   - Use fileIn/fileOut as the base input and output directories for your project.\n" +
-                "                                      If fileOut is not specified, fileIn is used for that as well.");
+                           "                                      If fileOut is not specified, fileIn is used for that as well.\n" +
+                           "                                      format can be: tsv, csv or excel");
+        System.out.println("    --usemetadatatable={file},[format]\n" +
+                           "                                    - Tell Roddy to use an input table to load metadata and input data and available datasets.\n");
         System.out.println("    --waitforjobs                   - Let Roddy wait for all submitted jobs to finish.");
         System.out.println("    --disabletrackonlyuserjobs      - Default for command line mode is that Roddy only tracks user jobs. This can be changed with this switch.");
         System.out.println("    --useRoddyVersion=(version no)  - Use a specific roddy version.");
         System.out.println("    --usePluginVersion=(...,...)    - Supply a list of used plugins and versions.");
+        System.out.println("    --configurationDirectories={path},... \n" +
+                           "                                    - Supply a list of configurationdirectories.");
+        System.out.println("    --pluginDirectories={path},...  - Supply a list of plugin directories.");
         System.out.println(Constants.ENV_LINESEPARATOR + Constants.ENV_LINESEPARATOR + "Roddy version " + Constants.APP_CURRENT_VERSION_STRING + " build at " + Constants.APP_CURRENT_VERSION_BUILD_DATE);
     }
 

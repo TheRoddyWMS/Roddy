@@ -1,0 +1,9 @@
+PID	File
+a	a_tumor_lib1_run1_R1.fastq.gz
+a	a_tumor_lib1_run2_R2.fastq.gz
+b	a_tumor_lib2_run3_R1.fastq.gz
+b	a_tumor_lib2_run4_R2.fastq.gz
+a	a_control_lib1_run5_R1.fastq.gz
+a	a_control_lib1_run6_R2.fastq.gz
+c	a_control_lib2_run7_R1.fastq.gz
+c	a_control_lib2_run8_R2.fastq.gz
