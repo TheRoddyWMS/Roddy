@@ -126,7 +126,7 @@ public class LibrariesFactory extends Initializable {
         def blacklist = [".idea", "out", "Template", ".svn"]
 
         for (File pBaseDirectory : pluginDirectories) {
-            for (File pEntry in pBaseDirectory.listFiles().sort()) {
+            PLUGIN_DIR: for (File pEntry in pBaseDirectory.listFiles().sort()) {
                 String dirName = pEntry.getName();
                 boolean isZip = dirName.endsWith(".zip");
                 if (isZip)
@@ -152,11 +152,11 @@ public class LibrariesFactory extends Initializable {
                             (new RoddyIOHelperMethods.NativeLinuxZipCompressor()).decompress(zipFile, null, zipFile.getParentFile());
                         }
                     }
-                    continue;
+                    continue PLUGIN_DIR;
                 }
 
                 if (zipFile != null) { // Only "releases" / packages have a zip file and need not to be dissected further.
-                    continue;
+                    continue PLUGIN_DIR;
                 }
 
                 // TODO Sort file list before validation?
@@ -177,8 +177,10 @@ public class LibrariesFactory extends Initializable {
                 File buildinfoFile = pEntry.listFiles().find { File f -> f.name == BUILDINFO_TEXTFILE };
                 if (buildinfoFile) {
                     for (String line in buildinfoFile.readLines()) {
-                        if (!line.startsWith(BUILDINFO_DEPENDENCY))
-                            return;
+                        if (!line.startsWith(BUILDINFO_DEPENDENCY)) {
+                            logger.severe("Parse error for buildinfo file '${buildinfoFile}' -- skipping plugin ${pluginName}:${pluginVersion}!")
+                            continue PLUGIN_DIR;
+                        }
                         String[] split = line.split(StringConstants.SPLIT_EQUALS)[1].split(StringConstants.SPLIT_COLON);
                         String workflow = split[0];
                         String version = split.length > 1 ? split[1] : PLUGIN_VERSION_CURRENT;
