@@ -533,7 +533,7 @@ public class ConfigurationFactory {
         if (splitResult.size() == 1) {
             //any tool and param
             toolName= null
-            (parameterName) = splitResult
+            parameterName = splitResult
         } else if (splitResult.size() == 2){
             (toolName, parameterName) = splitResult
 

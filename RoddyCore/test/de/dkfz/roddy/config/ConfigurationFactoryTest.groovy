@@ -326,7 +326,7 @@ public class ConfigurationFactoryTest {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_FAILED)
         OnScriptParameterFilenamePattern fpattern = ConfigurationFactory.readOnScriptParameterFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as OnScriptParameterFilenamePattern;
         assert fpattern.filenamePatternDependency == FilenamePatternDependency.onScriptParameter;
-        assert fpattern.pattern == "/tmp/onScript"
+        comparePattern(fpattern.pattern)
         assert fpattern.cls.name.endsWith("TestOnScriptParameter");
     }
 
@@ -337,7 +337,7 @@ public class ConfigurationFactoryTest {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_WITHOUT_CLASS)
         OnScriptParameterFilenamePattern fpattern = ConfigurationFactory.readOnScriptParameterFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as OnScriptParameterFilenamePattern;
         assert fpattern.filenamePatternDependency == FilenamePatternDependency.onScriptParameter;
-        assert fpattern.pattern == "/tmp/onScript"
+        comparePattern(fpattern.pattern)
         assert fpattern.cls.name.endsWith("TestOnScriptParameter");
     }
 
@@ -347,7 +347,7 @@ public class ConfigurationFactoryTest {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_ONLY_COLON_AND_PARAMNAME)
         OnScriptParameterFilenamePattern fpattern = ConfigurationFactory.readOnScriptParameterFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as OnScriptParameterFilenamePattern;
         assert fpattern.filenamePatternDependency == FilenamePatternDependency.onScriptParameter;
-        assert fpattern.pattern == "/tmp/onScript"
+        comparePattern(fpattern.pattern)
         assert fpattern.cls.name.endsWith("TestOnScriptParameter");
     }
 
@@ -357,7 +357,7 @@ public class ConfigurationFactoryTest {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_ONLY_PARAMNAME)
         OnScriptParameterFilenamePattern fpattern = ConfigurationFactory.readOnScriptParameterFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as OnScriptParameterFilenamePattern;
         assert fpattern.filenamePatternDependency == FilenamePatternDependency.onScriptParameter;
-        assert fpattern.pattern == "/tmp/onScript"
+        comparePattern(fpattern.pattern)
         assert fpattern.cls.name.endsWith("TestOnScriptParameter");
     }
 
@@ -368,7 +368,7 @@ public class ConfigurationFactoryTest {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_WITH_TOOL_AND_PARAMNAME)
         OnScriptParameterFilenamePattern fpattern = ConfigurationFactory.readOnScriptParameterFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as OnScriptParameterFilenamePattern;
         assert fpattern.filenamePatternDependency == FilenamePatternDependency.onScriptParameter;
-        assert fpattern.pattern == "/tmp/onScript"
+        comparePattern(fpattern.pattern)
         assert fpattern.cls.name.endsWith("TestOnScriptParameter");
     }
 
@@ -378,8 +378,13 @@ public class ConfigurationFactoryTest {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_WITH_ANY_AND_PARAMNAME)
         OnScriptParameterFilenamePattern fpattern = ConfigurationFactory.readOnScriptParameterFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as OnScriptParameterFilenamePattern;
         assert fpattern.filenamePatternDependency == FilenamePatternDependency.onScriptParameter;
-        assert fpattern.pattern == "/tmp/onScript"
+        comparePattern(fpattern.pattern)
         assert fpattern.cls.name.endsWith("TestOnScriptParameter");
+    }
+
+
+    private void comparePattern(String pattern){
+        assert pattern == "/tmp/onScript"
     }
 }
 
