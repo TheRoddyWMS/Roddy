@@ -398,7 +398,7 @@ public abstract class ExecutionService extends CacheProvider {
 
         //The application ini
         provider.copyFile(Roddy.getPropertiesFilePath(), new File(executionDirectory, "applicationProperties.ini"), context);
-        provider.writeTextFile(new File(executionDirectory, "roddyCall.sh"), Roddy.getApplicationDirectory().getAbsolutePath() + "/roddy.sh" + Roddy.getCommandLineCall().getArguments().join(StringConstants.WHITESPACE), context);
+        provider.writeTextFile(new File(executionDirectory, "roddyCall.sh"), Roddy.getApplicationDirectory().getAbsolutePath() + "/roddy.sh " + Roddy.getCommandLineCall().getArguments().join(StringConstants.WHITESPACE), context);
 
         //Current configs xml files (default, user, pipeline config file)
         String configXML = new XMLConverter().convert(context, cfg);

@@ -684,10 +684,9 @@ public class ConfigurationFactory {
         for (NodeChild analysis in nAnalyses.analysis) {
             String analysisID = extractAttributeText((NodeChild) analysis, "id");
             String analysisCfg = extractAttributeText((NodeChild) analysis, "configuration");
-            AnalysisConfiguration ac = new AnalysisConfigurationProxy(parentConfiguration, analysisID, analysisCfg, analysis); //
+            AnalysisConfiguration ac = new AnalysisConfigurationProxy(parentConfiguration, analysisID, analysisCfg, analysis);
             availableAnalyses[analysisID] = ac;
 
-//        availableAnalyses[analysisID] = ac;
             _loadAnalyses(analysis.subanalyses, ac).each {
                 String k, AnalysisConfiguration subConfig ->
                     availableAnalyses[analysisID + "-" + k] = subConfig;
@@ -742,6 +741,7 @@ public class ConfigurationFactory {
         String key = cvalueNode.@name.text();
         String value = cvalueNode.@value.text();
         String type = extractAttributeText(cvalueNode, "type", "string");
+        List<String> tags = extractAttributeText(cvalueNode, "tags", null)?.split(StringConstants.COMMA);
 
         //OK, here comes some sort of valuable hack. In the past it was so, that sometimes people forgot to set
         //any directory to "path". In case of the output directories, this was a bad thing! So we know about
@@ -749,7 +749,7 @@ public class ConfigurationFactory {
         if (key.endsWith("OutputDirectory"))
             type = "path";
         String description = extractAttributeText(cvalueNode, "description");
-        return new ConfigurationValue(config, key, value, type, description);
+        return new ConfigurationValue(config, key, value, type, description, tags);
     }
 
 

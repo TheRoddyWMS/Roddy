@@ -76,15 +76,6 @@ public class DataSet extends InfoObject implements Serializable, ExecutionContex
     }
 
     /**
-     * Get the metadata table for this dataset.
-     * @return
-     */
-    public BaseMetadataTable getMetadataTable() {
-        if(metadataTable == null)
-            metadataTable = MetadataTableFactory.getTable().subsetByDataset(this.id);
-        return metadataTable;
-    }
-    /**
      * Returns a folder like i.e. results_per_pid/ICGC_PCA0xxx
      *
      * @return

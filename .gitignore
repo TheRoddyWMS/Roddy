@@ -1,4 +1,5 @@
 .idea/workspace.xml
+out
 RoddyCore/build
 dist/bin/2*
 dist/build

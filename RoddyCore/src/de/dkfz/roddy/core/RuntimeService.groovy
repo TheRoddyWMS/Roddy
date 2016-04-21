@@ -64,7 +64,7 @@ public abstract class RuntimeService extends CacheProvider {
 
         if(Roddy.isMetadataCLOptionSet()) {
 
-            BaseMetadataTable table = MetadataTableFactory.getTable()
+            BaseMetadataTable table = MetadataTableFactory.getTable(analysis)
             List<String> _datasets = table.listDatasets();
             String pOut = analysis.getOutputBaseDirectory().getAbsolutePath() + File.separator;
             return _datasets.collect { new DataSet(analysis, it, new File(pOut + it)) }

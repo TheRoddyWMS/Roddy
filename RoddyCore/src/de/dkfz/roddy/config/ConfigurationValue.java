@@ -34,6 +34,8 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
      * A description or comment for a configuration value.
      */
     private final String description;
+    private final List<String> tags = new LinkedList<>();
+
     private boolean invalid = false;
 
     public ConfigurationValue(String id, String value) {
@@ -49,15 +51,17 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
     }
 
     public ConfigurationValue(Configuration config, String id, String value, String type) {
-        this(config, id, value, type, "");
+        this(config, id, value, type, "", null);
     }
 
-    public ConfigurationValue(Configuration config, String id, String value, String type, String description) {
+    public ConfigurationValue(Configuration config, String id, String value, String type, String description, List<String> tags) {
         this.id = id;
         this.value = value;
         this.configuration = config;
         this.type = type;
         this.description = description;
+        if (tags != null)
+            this.tags.addAll(tags);
     }
 
     public Configuration getConfiguration() {
@@ -115,7 +119,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
 
             if (userID != null)
                 temp = replaceString(temp, "$USERNAME", userID);
-            if( groupID != null)
+            if (groupID != null)
                 temp = replaceString(temp, "$USERGROUP", groupID);
 
             String ud = FileSystemAccessProvider.getInstance().getUserDirectory().getAbsolutePath();
@@ -145,7 +149,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         try {
             String temp = toFile(context.getAnalysis(), context.getDataSet()).getAbsolutePath();
             temp = checkAndCorrectPath(temp);
-            if(value.startsWith("${DIR_BUNDLED_FILES}") || value.startsWith("${DIR_RODDY}"))
+            if (value.startsWith("${DIR_BUNDLED_FILES}") || value.startsWith("${DIR_RODDY}"))
                 temp = Roddy.getApplicationDirectory().getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + temp;
 
             if (temp.contains(ConfigurationConstants.CVALUE_PLACEHOLDER_EXECUTION_DIRECTORY)) {
@@ -228,7 +232,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         String temp = value;
         if (configuration != null) {
             List<String> valueIDs = getIDsForParrentValues();
-            for(String vName : valueIDs) {
+            for (String vName : valueIDs) {
                 if (configuration.getConfigurationValues().hasValue(vName))
                     temp = temp.replace("${" + vName + '}', configuration.getConfigurationValues().get(vName).toString());
             }
@@ -251,6 +255,14 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
 
     public String getType() {
         return type;
+    }
+
+    public List<String> getListOfTags() {
+        return tags;
+    }
+
+    public boolean hasTag(String tag) {
+        return tags.contains(tag);
     }
 
     public EnumerationValue getEnumerationValueType() {
@@ -339,7 +351,9 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         return value;
     }
 
-    public String getDescription() { return description; }
+    public String getDescription() {
+        return description;
+    }
 
     public boolean isQuoteOnConversionSet() {
         return quoteOnConversion;

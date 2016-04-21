@@ -1,6 +1,5 @@
 package de.dkfz.roddy.execution.io
 
-import de.dkfz.roddy.plugins.LibrariesFactory
 import groovy.transform.CompileStatic
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
@@ -15,7 +14,7 @@ import org.apache.commons.csv.CSVParser
  * Created by heinold on 13.04.16.
  */
 @CompileStatic
-public class BaseMetadataTable<T extends BaseMetadataTable> {
+public class BaseMetadataTable {
 
     /**
      * Type of input table. Can be a file or a database (but this is not supported yet)
@@ -25,22 +24,63 @@ public class BaseMetadataTable<T extends BaseMetadataTable> {
         Database,
     }
 
-    private Map<String, Integer> headerMap
-    private List<Map<String, String>> records
-    public static final String INPUT_TABLE_DATASET = "PID";
-    public static final String INPUT_TABLE_FILE = "File";
-    public static final String CVALUE_INPUT_TABLE = "inputTable";
-    public static final String CVALUE_INPUT_TABLE_FORMAT = "inputTableFormat";
+    // A map translating "external" table column ids to "internal" ones.
+    // The mapping is via standard values from some xml files.
+    protected Map<String, String> internal2CustomIDMap = [:]
+    protected Map<String, String> custom2InternalIDMap = [:]
+    protected List<String> mandatoryColumns = [];
 
+    // A map which links column id and column position.
+    // The table uses internal column ids
+    protected Map<String, Integer> headerMap = [:]
+    protected List<Map<String, String>> records = []
 
-    BaseMetadataTable(Map<String, Integer> headerMap, List<Map<String, String>> records) {
-        // The following code is much more complex than it should be. Theoretically, it should be possible to output everything
-        // in one line.
+    public static final String INPUT_TABLE_DATASET = "datasetCol";
+    public static final String INPUT_TABLE_FILE = "fileCol";
+
+    /**
+     *  Copy constructor for subclasses
+     */
+    public BaseMetadataTable(BaseMetadataTable origin) {
+        this.internal2CustomIDMap += origin.internal2CustomIDMap
+        this.custom2InternalIDMap += origin.custom2InternalIDMap
+        this.mandatoryColumns += origin.mandatoryColumns
+        this.headerMap += origin.headerMap
+        this.records += origin.records
+    }
+
+    /**
+     * Copy construct copies with subsetByColumn. This won't work with the other constructors.
+     */
+    protected BaseMetadataTable(BaseMetadataTable origin, List<Map<String, String>> records) {
+        this.internal2CustomIDMap += origin.internal2CustomIDMap
+        this.custom2InternalIDMap += origin.custom2InternalIDMap
+        this.mandatoryColumns += origin.mandatoryColumns
+        this.headerMap += origin.headerMap
+        this.records += records;
+    }
+
+    BaseMetadataTable(Map<String, Integer> headerMap, Map<String, String> internal2CustomIDMap, List<String> mandatoryColumns, List<Map<String, String>> records) {
+        this.internal2CustomIDMap = internal2CustomIDMap;
+        this.internal2CustomIDMap.each {
+            String key, String val -> custom2InternalIDMap[val] = key;
+        }
+        this.mandatoryColumns = mandatoryColumns;
         def collect = records.collect {
             Map<String, String> record ->
-                def clone = [:]
-                clone += record;
-                clone as Map<String, String>
+                Map<String, String> clone = [:] as Map<String, String>
+                for (String header in internal2CustomIDMap.keySet())
+                    clone[header] = (String) null;
+                for (String key in record.keySet()) {
+                    String val = record[key];
+
+                    def internalKey = custom2InternalIDMap[key]
+                    if (internalKey == null)
+                        throw new RuntimeException("The metadata table key '${key}' could not be mapped to an internal key!")
+
+                    clone[internalKey] = val;
+                }
+                return clone;
         };
         def list = collect as List<Map<String, String>>;
 
@@ -48,78 +88,20 @@ public class BaseMetadataTable<T extends BaseMetadataTable> {
         this.records = list
     }
 
-    public static BaseMetadataTable readTSVTable(String file) {
-        return readTable(new FileReader(new File(file)), "tsv")
-    }
-
-    public static BaseMetadataTable readTable(File file, String format) {
-        Reader instream = new FileReader(file)
-        BaseMetadataTable inputTable = readTable(instream, format)
-        instream.close()
-        return inputTable
-    }
-
-    public static BaseMetadataTable readTable(InputStream stream, String format) {
-        return readTable(new InputStreamReader(stream), format)
-    }
-
-    public static BaseMetadataTable readTable(Reader reader, String format) {
-        CSVFormat tableFormat = convertFormat(format)
-        tableFormat = tableFormat.withCommentMarker('#' as char)
-                .withIgnoreEmptyLines()
-                .withHeader();
-        CSVParser parser = tableFormat.parse(reader)
-        def map = parser.headerMap as Map<String, Integer>
-        def collect = parser.records.collect { it.toMap() }
-        def inputTable = new BaseMetadataTable<T>(map, collect)
-        return inputTable
-    }
-
-    private static CSVFormat convertFormat(String format) {
-        if (format == null || format == "") format = "tsv";
-        CSVFormat tableFormat
-        switch (format.toLowerCase()) {
-            case "tsv":
-                tableFormat = CSVFormat.TDF
-                break
-            case "excel":
-                tableFormat = CSVFormat.EXCEL
-                break
-            case "csv":
-                tableFormat = CSVFormat.RFC4180
-                break
-            default:
-                throw new IllegalArgumentException("Value '${format}' is not a valid for ${CVALUE_INPUT_TABLE_FORMAT}. Use 'tsv', 'csv' or 'excel' (case-insensitive)!")
-        }
-        tableFormat
-    }
-
     public List<String> getMandatoryColumnNames() {
-        def list = [INPUT_TABLE_DATASET,         // individual ID, cohort name, often pseudonym of patient
-                    INPUT_TABLE_FILE];
-        list += _getAdditionalMandatoryColumnNames()
-        return list as List<String>;
-    }
-
-    /**
-     * Can be overriden
-     * @return
-     */
-    protected List<String> _getAdditionalMandatoryColumnNames() {
-        []
+        return new LinkedList<String>(mandatoryColumns);
     }
 
     public List<String> getOptionalColumnNames() {
-        return [] as List<String>
-    }
-
-    public List<String> getRelevantColumnNames() {
-        return mandatoryColumnNames + optionalColumnNames
+        return internal2CustomIDMap.keySet() - mandatoryColumns as List<String>;
     }
 
     private void assertValidRecord(Map<String, String> record) {
-        if (!record.keySet().equals(headerMap.keySet())) {
+        if (!record.keySet().equals(internal2CustomIDMap.keySet())) {
             throw new RuntimeException("Record has columns inconsistent with header: ${record}")
+        }
+        if (record.size() != headerMap.size()) {
+            throw new RuntimeException("Record has the wrong size: ${record}")
         }
         mandatoryColumnNames.each {
             if (!record.containsKey(it) && record.get(it) != "") {
@@ -130,7 +112,7 @@ public class BaseMetadataTable<T extends BaseMetadataTable> {
 
     private void assertHeader() {
         mandatoryColumnNames.each {
-            if (!headerMap.containsKey(it)) {
+            if (!headerMap.containsKey(internal2CustomIDMap[it])) {
                 throw new RuntimeException("Field '${it}' is missing")
             }
         }
@@ -139,10 +121,6 @@ public class BaseMetadataTable<T extends BaseMetadataTable> {
     public void assertValidTable() {
         assertHeader()
         records.each { assertValidRecord(it) }
-    }
-
-    protected void _assertCustom() {
-
     }
 
     public Map<String, Integer> getHeaderMap() {
@@ -156,6 +134,18 @@ public class BaseMetadataTable<T extends BaseMetadataTable> {
         return headerMap.entrySet().collect { it.key } as List<String>
     }
 
+    public Map<String, String> getColumnIDMappingMap() {
+//        return internal2CustomIDMap.collectEntries { String key, String val -> ["${key}".toString(): val] } as Map<String, String>
+        Map<String, String> collect = internal2CustomIDMap.collectEntries {
+            String key, String val ->
+                def clone = [:]
+                clone[key] = val;
+                clone as Map<String, String>
+        } as Map<String, String>;
+        return collect
+    }
+
+
     public List<Map<String, String>> getTable() {
         return records.collect { it.clone() } as List<Map<String, String>>
     }
@@ -163,10 +153,12 @@ public class BaseMetadataTable<T extends BaseMetadataTable> {
     public BaseMetadataTable subsetByColumn(String columnName, String value) {
 
         // Look into internal mapping table for headernames to varnames
-
-        return new BaseMetadataTable(headerMap, records.findAll { Map<String, String> row ->
-            row.get(columnName) == value
-        })
+        return new BaseMetadataTable(
+                this,
+                records.findAll { Map<String, String> row ->
+                    row.get(columnName) == value
+                }
+        )
     }
 
     public BaseMetadataTable subsetByDataset(String datasetId) {

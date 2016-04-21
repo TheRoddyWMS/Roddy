@@ -7,8 +7,6 @@ import de.dkfz.roddy.core.Analysis;
 import de.dkfz.roddy.core.DataSet;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.ExecutionContextLevel
-import de.dkfz.roddy.core.Project
-import de.dkfz.roddy.core.ProjectFactory
 import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.CommandFactory

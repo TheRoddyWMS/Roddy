@@ -6,7 +6,8 @@ import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
 import de.dkfz.roddy.config.*
-import de.dkfz.roddy.config.validation.XSDValidator;
+import de.dkfz.roddy.config.validation.XSDValidator
+import de.dkfz.roddy.execution.io.MetadataTableFactory;
 import de.dkfz.roddy.plugins.LibrariesFactory;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.Tuple2
@@ -250,6 +251,9 @@ public class ProjectFactory {
         } else if (analysis.getRuntimeService() == null) {
             throw new RuntimeException("There is no runtime service class set for the selected analysis. This has to be set in either the project configuration or the analysis configuration.");
         } else {
+
+            // Try to build up the metadata table from here on. Project and analysis are ready.
+            MetadataTableFactory.getTable(analysis);
             return analysis;
         }
     }
