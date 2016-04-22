@@ -433,7 +433,15 @@ public class Analysis {
             // Print out context errors.
             if (context.getErrors().size() > 0) {
                 StringBuilder messages = new StringBuilder();
-                messages.append("\nThere were errors for the execution context for dataset " + datasetID);
+                boolean warningsOnly = true;
+                for (ExecutionContextError executionContextError : context.getErrors()) {
+                    if(executionContextError.getErrorLevel().intValue() > Level.WARNING.intValue())
+                        warningsOnly = false;
+                }
+                if(warningsOnly)
+                    messages.append("\nThere were warnings for the execution context for dataset " + datasetID);
+                else
+                    messages.append("\nThere were errors for the execution context for dataset " + datasetID);
                 for (ExecutionContextError executionContextError : context.getErrors()) {
                     messages.append("\n\t* ").append(executionContextError.toString());
                 }

@@ -12,38 +12,43 @@ public class BashCommandSet extends ShellCommandSet {
 
     public static final String TRUE = "TRUE"
 
+    public static final String FALSE = "FALSE"
+
     public static final String SEPARATOR = "/";
 
     public static final String NEWLINE = "\n";
 
+    public static final String TRUE_OR_FALSE = "&& echo ${TRUE} || echo ${FALSE}"
+
     @Override
     public String getFileExistsTestCommand(File f) {
         String path = f.getAbsolutePath();
-        return "[[ -f ${path} ]] && echo ${TRUE}";
+
+        return "[[ -f ${path} ]] " + TRUE_OR_FALSE;
     }
 
     @Override
     String getDirectoryExistsTestCommand(File f) {
         String path = f.getAbsolutePath();
-        return "[[ -d ${path} ]] && echo ${TRUE}";
+        return "[[ -d ${path} ]]" + TRUE_OR_FALSE;
     }
 
     @Override
     public String getReadabilityTestCommand(File f) {
         String path = f.getAbsolutePath();
-        return "[[ -e ${path} && -r ${path} ]] && echo ${TRUE}";
+        return "[[ -e ${path} && -r ${path} ]]" + TRUE_OR_FALSE;
     }
 
     @Override
     String getWriteabilityTestCommand(File f) {
         String path = f.getAbsolutePath();
-        return "[[ -e ${path} && -w ${path} ]] && echo ${TRUE}";
+        return "[[ -e ${path} && -w ${path} ]]" + TRUE_OR_FALSE;
     }
 
     @Override
     public String getExecutabilityTestCommand(File f) {
         String path = f.getAbsolutePath();
-        return "[[ -e ${path} && -x ${path} ]] && echo ${TRUE}";
+        return "[[ -e ${path} && -x ${path} ]]" + TRUE_OR_FALSE;
     }
 
     @Override
@@ -88,7 +93,7 @@ public class BashCommandSet extends ShellCommandSet {
     String getCheckDirectoryCommand(File file, boolean createMissing, String onCreateAccessRights, String onCreateFileGroup) {
         String path = file.absolutePath;
         if (!createMissing)
-            return "[[ -e ${path} && -d ${path} && -r ${path} ]] && echo ${TRUE}";
+            return "[[ -e ${path} && -d ${path} && -r ${path} ]]" + TRUE_OR_FALSE;
         else
             return getCheckAndCreateDirectoryCommand(file, onCreateFileGroup, onCreateAccessRights);
     }
@@ -104,7 +109,7 @@ public class BashCommandSet extends ShellCommandSet {
     @Override
     String getCheckChangeOfPermissionsPossibilityCommand(File f, String group) {
         File testFile = new File(f, ".roddyPermissionsTestFile");
-        return "touch ${testFile}; chmod u+rw ${testFile} &> /dev/null && chgrp ${group} ${testFile} &> /dev/null && echo ${TRUE}; rm ${testFile}";
+        return "(touch ${testFile}; chmod u+rw ${testFile} &> /dev/null && chgrp ${group} ${testFile} &> /dev/null) $TRUE_OR_FALSE; rm ${testFile} 2>/dev/null; echo ''";
     }
 
     @Override

@@ -351,7 +351,7 @@ public class ExecutionContext implements JobStatusListener {
             checkedIfAccessRightsCanBeSet = FileSystemAccessProvider.getInstance().checkIfAccessRightsCanBeSet(this)
             if (!checkedIfAccessRightsCanBeSet) {
                 modAllowed = false
-                logger.severe("Access rights modification was disabled. The test on the file system raised an error.");
+                addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("Access rights modification was disabled. The test on the file system raised an error."))
             };
         }
         return modAllowed;

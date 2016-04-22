@@ -350,7 +350,8 @@ class SSHExecutionService extends RemoteExecutionService {
 
             if (exitStatus > 0) {
                 if (ignoreError) {
-                    logger.severe("Command not executed correctly, return code: " + exitStatus + ", error was ignored on purpose.");
+                    // In case the command is ignored, a warning is sent out instead of a severe error.
+                    logger.warning("Command not executed correctly, return code: " + exitStatus + ", error was ignored on purpose.");
                     content.readLines().each { String line -> output << "" + line }
                 } else {
                     logger.severe("Command not executed correctly, return code: " + exitStatus +
