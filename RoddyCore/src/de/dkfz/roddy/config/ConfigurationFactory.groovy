@@ -432,9 +432,12 @@ public class ConfigurationFactory {
                     if (fp == null) {
                         throw new RuntimeException("filename pattern is not valid: ")
                     }
-                    filenamePatterns.put(fp.getID(), fp);
+                    if (filenamePatterns.containsKey(fp.getID())) {
+                        logger.severe("Duplicate filename pattern: " + (new groovy.xml.StreamingMarkupBuilder().bindNode(filename) as String));
+                    }
+                        filenamePatterns.put(fp.getID(), fp);
                 } catch (Exception ex) {
-                    logger.severe("filename pattern definition is not valid: " + (new groovy.xml.StreamingMarkupBuilder().bindNode(filename) as String));
+                    logger.severe("${ex.message}: " + (new groovy.xml.StreamingMarkupBuilder().bindNode(filename) as String));
                 }
             }
         }

@@ -193,17 +193,17 @@ public class ConfigurationFactoryTest {
     // @Michael: Should the two following derived from pattern map to the same pattern ID if the same class attribute value is used?
     private static final String STR_VALID_DERIVEDFROM_PATTERN = "<filename class='TestFileWithParent' derivedFrom='TestParentFile' pattern='/tmp/onderivedFile'/>"
     private static final String STR_VALID_DERIVEDFROM_PATTERN_WITH_ARR = "<filename class='TestFileWithParentArr' derivedFrom='TestParentFile[2]' pattern='/tmp/onderivedFile'/>"
-    private static final String STR_VALID_ONMETHOD_PATTERN = "<filename class='TestFileOnMethod' onMethod='de.dkfz.roddy.knowledge.files.BaseFile.getFilename' pattern='/tmp/onMethod'/>"
-    private static final String STR_VALID_ONMETHOD_PATTERN_WITH_BASEFILE = "<filename class='TestFileOnMethod' onMethod='BaseFile.getFilename' pattern='/tmp/onMethod'/>"
-    private static final String STR_VALID_ONMETHOD_PATTERN_WITH_FILENAME = "<filename class='TestFileOnMethod' onMethod='getFilename' pattern='/tmp/onMethod'/>"
+    private static final String STR_VALID_ONMETHOD_PATTERN_FQN = "<filename class='TestFileOnMethod' onMethod='de.dkfz.roddy.knowledge.files.BaseFile.getFilename' pattern='/tmp/onMethod'/>"
+    private static final String STR_VALID_ONMETHOD_PATTERN_WITH_CLASSNAME = "<filename class='TestFileOnMethod' onMethod='BaseFile.getFilename' pattern='/tmp/onMethodwithClassName'/>"
+    private static final String STR_VALID_ONMETHOD_PATTERN_WITH_METHODNAME = "<filename class='TestFileOnMethod' onMethod='getFilename' pattern='/tmp/onMethod'/>"
     private static final String STR_VALID_ONTOOL_PATTERN = "<filename class='TestFileOnTool' onTool='testScript' pattern='/tmp/onTool'/>"
     private static final String STR_VALID_FILESTAGE_PATTERN = "<filename class='FileWithFileStage' fileStage=\"GENERIC\" pattern='/tmp/filestage'/>"
     private static final String STR_VALID_ONSCRIPTPARAMETER_WITH_TOOL_AND_PARAMNAME =  "<filename class='TestOnScriptParameter' onScriptParameter='testScript:BAM_INDEX_FILE' pattern='/tmp/onScript' />"
-    private static final String STR_VALID_ONSCRIPTPARAMETER_ONLY_PARAMNAME = "<filename class='TestOnScriptParameter' onScriptParameter='BAM_INDEX_FILE' pattern='/tmp/onScript' />"
-    private static final String STR_VALID_ONSCRIPTPARAMETER_ONLY_COLON_AND_PARAMNAME = "<filename class='TestOnScriptParameter' onScriptParameter=':BAM_INDEX_FILE' pattern='/tmp/onScript' />"
-    private static final String STR_VALID_ONSCRIPTPARAMETER_WITH_ANY_AND_PARAMNAME = "<filename class='TestOnScriptParameter' onScriptParameter='[ANY]:BAM_INDEX_FILE' pattern='/tmp/onScript' />"
-    private static final String STR_VALID_ONSCRIPTPARAMETER_FAILED = "<filename class='TestOnScriptParameter' onScriptParameter='[AffY]:BAM_INDEX_FILE' pattern='/tmp/onScript' />" // Error!!
-    private static final String STR_VALID_ONSCRIPTPARAMETER_WITHOUT_CLASS=  "<filename onScriptParameter='testScript:BAM_INDEX_FILE' pattern='/tmp/onScript' />"
+    private static final String STR_VALID_ONSCRIPTPARAMETER_ONLY_PARAMNAME = "<filename class='TestOnScriptParameter' onScriptParameter='BAM_INDEX_FILE2' pattern='/tmp/onScript' />"
+    private static final String STR_VALID_ONSCRIPTPARAMETER_ONLY_COLON_AND_PARAMNAME = "<filename class='TestOnScriptParameter' onScriptParameter=':BAM_INDEX_FILE3' pattern='/tmp/onScript' />"
+    private static final String STR_VALID_ONSCRIPTPARAMETER_WITH_ANY_AND_PARAMNAME = "<filename class='TestOnScriptParameter' onScriptParameter='[ANY]:BAM_INDEX_FILE4' pattern='/tmp/onScript' />"
+    private static final String STR_VALID_ONSCRIPTPARAMETER_FAILED = "<filename class='TestOnScriptParameter' onScriptParameter='[AffY]:BAM_INDEX_FILE5' pattern='/tmp/onScript' />" // Error!!
+    private static final String STR_VALID_ONSCRIPTPARAMETER_WITHOUT_CLASS=  "<filename onScriptParameter='testScript:BAM_INDEX_FILE6' pattern='/tmp/onScript' />"
 
     private static NodeChild parseXML(String xml) {
         return (NodeChild) new XmlSlurper().parseText(xml);
@@ -213,12 +213,12 @@ public class ConfigurationFactoryTest {
         return parseXML(
                 """
                     <xml>
-                        <filenames filestagesbase='de.dkfz.roddy.knowledge.files.FileStage'>
+                        <filenames package='de.dkfz.roddy.knowledge.files' filestagesbase='de.dkfz.roddy.knowledge.files.FileStage'>
                             ${STR_VALID_DERIVEDFROM_PATTERN}
                             ${STR_VALID_DERIVEDFROM_PATTERN_WITH_ARR}
-                            ${STR_VALID_ONMETHOD_PATTERN}
-                            ${STR_VALID_ONMETHOD_PATTERN_WITH_BASEFILE}
-                            ${STR_VALID_ONMETHOD_PATTERN_WITH_FILENAME}
+                            ${STR_VALID_ONMETHOD_PATTERN_FQN}
+                            ${STR_VALID_ONMETHOD_PATTERN_WITH_CLASSNAME}
+                            ${STR_VALID_ONMETHOD_PATTERN_WITH_METHODNAME}
                             ${STR_VALID_ONTOOL_PATTERN}
                             ${STR_VALID_FILESTAGE_PATTERN}
                             ${STR_VALID_ONSCRIPTPARAMETER_WITH_TOOL_AND_PARAMNAME}
@@ -227,6 +227,19 @@ public class ConfigurationFactoryTest {
                             ${STR_VALID_ONSCRIPTPARAMETER_WITH_ANY_AND_PARAMNAME}
                             ${STR_VALID_ONSCRIPTPARAMETER_FAILED}
                             ${STR_VALID_ONSCRIPTPARAMETER_WITHOUT_CLASS}
+                        </filenames>
+                    </xml>
+                """
+        );
+    }
+
+    private NodeChild getInvalidFilenamePatternsNodeChild() {
+        return parseXML(
+                """
+                    <xml>
+                        <filenames package='de.dkfz.roddy.knowledge.files' filestagesbase='de.dkfz.roddy.knowledge.files.FileStage'>
+                            ${STR_VALID_ONMETHOD_PATTERN_FQN}
+                            ${STR_VALID_ONMETHOD_PATTERN_WITH_CLASSNAME}
                         </filenames>
                     </xml>
                 """
@@ -249,53 +262,64 @@ public class ConfigurationFactoryTest {
     }
 
     @Test
-    public void testReadFilenamePatterns() {
+    public void testReadInvalidFilenamePatternDefinition() {
+        Map<String, FilenamePattern> filenamePatterns = readFilenamePatterns(getInvalidFilenamePatternsNodeChild());
+        assert filenamePatterns.size() == 1;
+        assert filenamePatterns.values()[0].pattern == "/tmp/onMethodwithClassName";
+
+    }
+
+    @Test
+    public void testReadValidFilenamePatternDefinition() {
         Map<String, FilenamePattern> filenamePatterns = readFilenamePatterns(getValidFilenamePatternsNodeChild());
-        assert filenamePatterns.size() == 7;
+        assert filenamePatterns.size() == 9;
     }
 
     @Test
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternsForDerivedFromPatternType() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_DERIVEDFROM_PATTERN)
-        DerivedFromFilenamePattern fpattern = ConfigurationFactory.readDerivedFromFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as DerivedFromFilenamePattern;
-        assert fpattern.filenamePatternDependency == FilenamePatternDependency.derivedFrom;
-        assert fpattern.derivedFromCls.name.endsWith("TestParentFile");
-        assert fpattern.cls.name.endsWith("TestFileWithParent");
+        testReadFilenamePatternsForDerivedFromPatternType_base(xml,"TestFileWithParent" )
     }
 
     @Test
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternsForDerivedFromPatternType_WithArr() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_DERIVEDFROM_PATTERN_WITH_ARR)
+        testReadFilenamePatternsForDerivedFromPatternType_base(xml,"TestFileWithParentArr" )
+    }
+
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    public void testReadFilenamePatternsForDerivedFromPatternType_base(NodeChild xml, String testfileEnding) {
         DerivedFromFilenamePattern fpattern = ConfigurationFactory.readDerivedFromFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as DerivedFromFilenamePattern;
         assert fpattern.filenamePatternDependency == FilenamePatternDependency.derivedFrom;
         assert fpattern.derivedFromCls.name.endsWith("TestParentFile");
-        assert fpattern.cls.name.endsWith("TestFileWithParentArr");
+        assert fpattern.cls.name.endsWith(testfileEnding);
     }
 
     @Test
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternsForOnMethodPatternType() {
-        NodeChild xml = getParsedFilenamePattern(STR_VALID_ONMETHOD_PATTERN)
-        OnMethodFilenamePattern fpattern = ConfigurationFactory.readOnMethodFilenamePattern("de.dkfz.roddy.knowledge.files", xml.filename.getAt(0)) as OnMethodFilenamePattern;
-        assert fpattern.filenamePatternDependency == FilenamePatternDependency.onMethod;
-        assert fpattern.cls.name.endsWith("TestFileOnMethod");
+        NodeChild xml = getParsedFilenamePattern(STR_VALID_ONMETHOD_PATTERN_FQN)
+        testReadFilenamePatternsForOnMethodPatternType_base(xml)
     }
 
     @Test
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternsForOnMethodPatternType_WithBaseFile() {
-        NodeChild xml = getParsedFilenamePattern(STR_VALID_ONMETHOD_PATTERN_WITH_BASEFILE)
-        OnMethodFilenamePattern fpattern = ConfigurationFactory.readOnMethodFilenamePattern("de.dkfz.roddy.knowledge.files", xml.filename.getAt(0)) as OnMethodFilenamePattern;
-        assert fpattern.filenamePatternDependency == FilenamePatternDependency.onMethod;
-        assert fpattern.cls.name.endsWith("TestFileOnMethod");
+        NodeChild xml = getParsedFilenamePattern(STR_VALID_ONMETHOD_PATTERN_WITH_CLASSNAME)
+        testReadFilenamePatternsForOnMethodPatternType_base(xml)
     }
 
     @Test
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternsForOnMethodPatternType_WithFileName() {
-        NodeChild xml = getParsedFilenamePattern(STR_VALID_ONMETHOD_PATTERN_WITH_FILENAME)
+        NodeChild xml = getParsedFilenamePattern(STR_VALID_ONMETHOD_PATTERN_WITH_METHODNAME)
+        testReadFilenamePatternsForOnMethodPatternType_base(xml)
+    }
+
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    public void testReadFilenamePatternsForOnMethodPatternType_base(NodeChild xml) {
         OnMethodFilenamePattern fpattern = ConfigurationFactory.readOnMethodFilenamePattern("de.dkfz.roddy.knowledge.files", xml.filename.getAt(0)) as OnMethodFilenamePattern;
         assert fpattern.filenamePatternDependency == FilenamePatternDependency.onMethod;
         assert fpattern.cls.name.endsWith("TestFileOnMethod");
@@ -324,10 +348,11 @@ public class ConfigurationFactoryTest {
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternForOnScriptParameterPatternType_Failed() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_FAILED)
-        OnScriptParameterFilenamePattern fpattern = ConfigurationFactory.readOnScriptParameterFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as OnScriptParameterFilenamePattern;
-        assert fpattern.filenamePatternDependency == FilenamePatternDependency.onScriptParameter;
-        comparePattern(fpattern.pattern)
-        assert fpattern.cls.name.endsWith("TestOnScriptParameter");
+        try{
+            testReadFilenamePatternForOnScriptParameterPatternType_base(xml)
+        }catch(RuntimeException exp){
+            assert exp.message.equals("Illegal Argument '[..]': [AffY]")
+        }
     }
 
 
@@ -335,30 +360,25 @@ public class ConfigurationFactoryTest {
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternForOnScriptParameterPatternType_WithoutClass() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_WITHOUT_CLASS)
-        OnScriptParameterFilenamePattern fpattern = ConfigurationFactory.readOnScriptParameterFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as OnScriptParameterFilenamePattern;
-        assert fpattern.filenamePatternDependency == FilenamePatternDependency.onScriptParameter;
-        comparePattern(fpattern.pattern)
-        assert fpattern.cls.name.endsWith("TestOnScriptParameter");
+        try{
+            testReadFilenamePatternForOnScriptParameterPatternType_base(xml)
+        }catch(RuntimeException exp){
+            assert exp.message.startsWith("Missing 'class' attribute for onScriptParameter in:")
+        }
     }
 
     @Test
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternForOnScriptParameterPatternType_OnlyColonAndParamName() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_ONLY_COLON_AND_PARAMNAME)
-        OnScriptParameterFilenamePattern fpattern = ConfigurationFactory.readOnScriptParameterFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as OnScriptParameterFilenamePattern;
-        assert fpattern.filenamePatternDependency == FilenamePatternDependency.onScriptParameter;
-        comparePattern(fpattern.pattern)
-        assert fpattern.cls.name.endsWith("TestOnScriptParameter");
+        testReadFilenamePatternForOnScriptParameterPatternType_base(xml)
     }
 
     @Test
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternForOnScriptParameterPatternType_OnlyParamName() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_ONLY_PARAMNAME)
-        OnScriptParameterFilenamePattern fpattern = ConfigurationFactory.readOnScriptParameterFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as OnScriptParameterFilenamePattern;
-        assert fpattern.filenamePatternDependency == FilenamePatternDependency.onScriptParameter;
-        comparePattern(fpattern.pattern)
-        assert fpattern.cls.name.endsWith("TestOnScriptParameter");
+        testReadFilenamePatternForOnScriptParameterPatternType_base(xml)
     }
 
 
@@ -366,25 +386,22 @@ public class ConfigurationFactoryTest {
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternForOnScriptParameterPatternType_WithToolAndParamName() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_WITH_TOOL_AND_PARAMNAME)
-        OnScriptParameterFilenamePattern fpattern = ConfigurationFactory.readOnScriptParameterFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as OnScriptParameterFilenamePattern;
-        assert fpattern.filenamePatternDependency == FilenamePatternDependency.onScriptParameter;
-        comparePattern(fpattern.pattern)
-        assert fpattern.cls.name.endsWith("TestOnScriptParameter");
+        testReadFilenamePatternForOnScriptParameterPatternType_base(xml)
     }
 
     @Test
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternForOnScriptParameterPatternType_WithAnyAndParamName() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_WITH_ANY_AND_PARAMNAME)
-        OnScriptParameterFilenamePattern fpattern = ConfigurationFactory.readOnScriptParameterFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as OnScriptParameterFilenamePattern;
-        assert fpattern.filenamePatternDependency == FilenamePatternDependency.onScriptParameter;
-        comparePattern(fpattern.pattern)
-        assert fpattern.cls.name.endsWith("TestOnScriptParameter");
+        testReadFilenamePatternForOnScriptParameterPatternType_base(xml)
     }
 
-
-    private void comparePattern(String pattern){
-        assert pattern == "/tmp/onScript"
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    private void testReadFilenamePatternForOnScriptParameterPatternType_base(NodeChild xml){
+        OnScriptParameterFilenamePattern fpattern = ConfigurationFactory.readOnScriptParameterFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as OnScriptParameterFilenamePattern;
+        assert fpattern.filenamePatternDependency == FilenamePatternDependency.onScriptParameter;
+        assert fpattern.pattern == "/tmp/onScript"
+        assert fpattern.cls.name.endsWith("TestOnScriptParameter");
     }
 }
 
