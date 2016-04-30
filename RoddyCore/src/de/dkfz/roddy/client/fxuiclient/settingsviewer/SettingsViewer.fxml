@@ -64,7 +64,7 @@
                         <Label id="SettingsHeader" GridPane.hgrow="ALWAYS" alignment="TOP_LEFT" text="Job and execution settings" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="3" style="-fx-font-weight:bold;"/>
 
                         <Label text="Execution subsystem" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                        <TextField fx:id="txtCommandFactory" text="de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommandFactory" GridPane.columnIndex="2" GridPane.rowIndex="1" editable="false"/>
+                        <TextField fx:id="txtJobManager" text="de.dkfz.roddy.execution.jobs.cluster.pbs.PBSJobManager" GridPane.columnIndex="2" GridPane.rowIndex="1" editable="false"/>
                         <Label text="Job subsystem" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
                         <TextField fx:id="txtExecutionService" text="de.dkfz.roddy.execution.io.SSHExecutionService" GridPane.columnIndex="2" GridPane.rowIndex="2" editable="false"/>
                         <Label text="I/O command set" GridPane.columnIndex="1" GridPane.rowIndex="3"/>

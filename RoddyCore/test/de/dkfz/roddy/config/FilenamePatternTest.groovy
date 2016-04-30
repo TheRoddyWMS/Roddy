@@ -1,39 +1,30 @@
 package de.dkfz.roddy.config
 
-import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.client.cliclient.CommandLineCall
-import de.dkfz.roddy.client.cliclient.RoddyCLIClient
 import de.dkfz.roddy.core.Analysis;
 import de.dkfz.roddy.core.DataSet;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.execution.jobs.Command
-import de.dkfz.roddy.execution.jobs.CommandFactory
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobDependencyID
+import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.execution.jobs.JobResult
 import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.execution.jobs.ProcessingCommands
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.GenericFile
-import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.knowledge.methods.GenericMethod
 import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo
 import de.dkfz.roddy.plugins.LibrariesFactory
-import de.dkfz.roddy.plugins.LibrariesFactoryTest;
-import de.dkfz.roddy.tools.RoddyIOHelperMethods
+import de.dkfz.roddy.plugins.LibrariesFactoryTest
 import org.junit.BeforeClass;
 
-import java.io.*;
+import java.io.*
 
-import de.dkfz.roddy.knowledge.files.Tuple2;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.lang.reflect.Method;
+import org.junit.After
+import org.junit.Test
 
 /**
  * Created by heinold on 07.01.2016.
@@ -184,7 +175,7 @@ public class FilenamePatternTest {
 
     @Test
     public void testJobCreationWithFileUsingToolIDForNamePattern() {
-        CommandFactory.initializeFactory(new CommandFactory() {
+        JobManager.initializeFactory(new JobManager() {
             @Override
             void createUpdateDaemonThread(int interval) {
 

@@ -168,7 +168,7 @@ public abstract class RuntimeService extends CacheProvider {
                     //TODO Load a list of the previously created jobs and query those using qstat!
                     for (String call : jobCalls) {
                         //TODO. How can we recognize different command factories? i.e. for other cluster systems?
-                        Job job = CommandFactory.getInstance().parseToJob(context, call);
+                        Job job = JobManager.getInstance().parseToJob(context, call);
                         jobsStartedInContext.add(job);
                     }
                 }
@@ -185,7 +185,7 @@ public abstract class RuntimeService extends CacheProvider {
                 for (String id : statusList.keySet()) {
                     JobState status = statusList[id];
 
-                    if (!CommandFactory.getInstance().compareJobIDs(job.getJobID(), (id)))
+                    if (!JobManager.getInstance().compareJobIDs(job.getJobID(), (id)))
                         continue;
                     job.setJobState(status);
                 }
@@ -206,11 +206,11 @@ public abstract class RuntimeService extends CacheProvider {
                 }
             }
 
-            Map<String, JobState> map = CommandFactory.getInstance().queryJobStatus(queryList);
+            Map<String, JobState> map = JobManager.getInstance().queryJobStatus(queryList);
             for (String jobID : unknownJobs.keySet()) {
                 Job job = unknownJobs.get(jobID);
                 job.setJobState(map.get(jobID));
-                CommandFactory.getInstance().addJobStatusChangeListener(job);
+                JobManager.getInstance().addJobStatusChangeListener(job);
             }
             for (String jobID : possiblyRunningJobs.keySet()) {
                 Job job = possiblyRunningJobs.get(jobID);
@@ -218,7 +218,7 @@ public abstract class RuntimeService extends CacheProvider {
                     job.setJobState(JobState.FAILED);
                 } else {
                     job.setJobState(map.get(jobID));
-                    CommandFactory.getInstance().addJobStatusChangeListener(job);
+                    JobManager.getInstance().addJobStatusChangeListener(job);
                 }
             }
 
@@ -566,12 +566,12 @@ public abstract class RuntimeService extends CacheProvider {
 
     public File getLogFileForJob(Job job) {
         //Returns the log files path of the job.
-        File f = new File(job.getExecutionContext().getExecutionDirectory(), CommandFactory.getInstance().getLogFileName(job));
+        File f = new File(job.getExecutionContext().getExecutionDirectory(), JobManager.getInstance().getLogFileName(job));
     }
 
     public File getLogFileForCommand(Command command) {
         //Nearly the same as for the job but with a process id
-        File f = new File(getExecutionDirectory(command.getExecutionContext()), CommandFactory.getInstance().getLogFileName(command));
+        File f = new File(getExecutionDirectory(command.getExecutionContext()), JobManager.getInstance().getLogFileName(command));
     }
 
     public boolean hasLogFileForJob(Job job) {

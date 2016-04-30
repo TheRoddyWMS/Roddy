@@ -361,11 +361,11 @@ public class ConfigurationFactory {
             String runtimeServiceClass = extractAttributeText(configurationNode, "runtimeServiceClass", null);
 
             String workflowTool = extractAttributeText(configurationNode, "nativeWorkflowTool", null);
-            String commandFactoryClass = extractAttributeText(configurationNode, "targetCommandFactory", null);
+            String jobManagerClass = extractAttributeText(configurationNode, "targetJobManager", null);
 
             String workflowClass = extractAttributeText(configurationNode, "workflowClass");
 
-            if (workflowTool && commandFactoryClass) {
+            if (workflowTool && jobManagerClass) {
                 workflowClass = NativeWorkflow.class.name
             } else if (brawlWorkflow) {
                 workflowClass = BrawlWorkflow.class.name
@@ -378,9 +378,9 @@ public class ConfigurationFactory {
 
             config = new AnalysisConfiguration(icc, workflowClass, runtimeServiceClass, parentConfig, listOfUsedTools, usedToolFolders, cleanupScript);
 
-            if (workflowTool && commandFactoryClass) {
+            if (workflowTool && jobManagerClass) {
                 ((AnalysisConfiguration) config).setNativeToolID(workflowTool);
-                ((AnalysisConfiguration) config).setTargetCommandFactory(commandFactoryClass);
+                ((AnalysisConfiguration) config).setJobManagerFactory(jobManagerClass);
             }
             if (brawlWorkflow) {
                 ((de.dkfz.roddy.config.AnalysisConfiguration) config).setBrawlWorkflow(brawlWorkflow);

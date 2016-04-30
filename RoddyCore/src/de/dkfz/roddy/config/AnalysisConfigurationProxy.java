@@ -137,13 +137,13 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
-    public void setTargetCommandFactory(String targetCommandFactory) {
-        checkAnalysisConfig().setTargetCommandFactory(targetCommandFactory);
+    public void setJobManagerFactory(String targetJobManager) {
+        checkAnalysisConfig().setJobManagerFactory(targetJobManager);
     }
 
     @Override
-    public String getTargetCommandFactoryClass() {
-        return checkAnalysisConfig().getTargetCommandFactoryClass();
+    public String getTargetJobManagerClass() {
+        return checkAnalysisConfig().getTargetJobManagerClass();
     }
 
     @Override

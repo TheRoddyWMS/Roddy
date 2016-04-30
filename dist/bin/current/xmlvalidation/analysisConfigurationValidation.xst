@@ -26,7 +26,7 @@
         <xs:attribute type="xs:string" name="listOfUsedTools" use="optional"/>
         <xs:attribute type="xs:string" name="cleanupScript" use="optional"/>
         <xs:attribute type="xs:string" name="nativeWorkflowTool" use="optional"/>
-        <xs:attribute type="xs:string" name="targetCommandFactory" use="optional"/>
+        <xs:attribute type="xs:string" name="targetJobManager" use="optional"/>
         <xs:attribute type="xs:string" name="brawlWorkflow" use="optional"/>
         <xs:attribute type="xs:string" name="brawlBaseWorkflow" use="optional"/>
         <xs:attribute type="xs:string" name="runtimeServiceClass" use="required"/>

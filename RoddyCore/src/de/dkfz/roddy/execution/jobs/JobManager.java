@@ -6,7 +6,7 @@ import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.config.ToolEntry;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
-import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommandFactory;
+import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSJobManager;
 import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.knowledge.files.FileGroup;
 import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo;
@@ -21,15 +21,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Basic factory class for Cluster / Job command creation
- * Currently supported is QSub / PBS. Other cluster systems or custom job submission / execution system are possible.
+ * Basic factory and manager class for Job and Command management
+ * Currently supported are qsub via PBS or SGE. Other cluster systems or custom job submission / execution system are possible.
  *
  * @author michael
  */
-public abstract class CommandFactory<C extends Command> {
+public abstract class JobManager<C extends Command> {
 
-    private static final LoggerWrapper logger = LoggerWrapper.getLogger(CommandFactory.class.getSimpleName());
-    private static CommandFactory commandFactory;
+    private static final LoggerWrapper logger = LoggerWrapper.getLogger(JobManager.class.getSimpleName());
+    private static JobManager jobManager;
 
 
     protected Thread updateDaemonThread;
@@ -37,11 +37,11 @@ public abstract class CommandFactory<C extends Command> {
     protected boolean closeThread;
     protected List<C> listOfCreatedCommands = new LinkedList<>();
 
-    public CommandFactory() {
+    public JobManager() {
     }
 
-    public static void initializeFactory(CommandFactory factory) {
-        commandFactory = factory;
+    public static void initializeFactory(JobManager factory) {
+        jobManager = factory;
     }
 
     public static void initializeFactory(boolean fullSetup) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
@@ -50,16 +50,16 @@ public abstract class CommandFactory<C extends Command> {
             return;
 
         ClassLoader classLoader;
-        String commandFactoryClassID;
-        Class commandFactoryClass;
+        String jobManagerClassID;
+        Class jobManagerClass;
 
         classLoader = LibrariesFactory.getGroovyClassLoader();
-        commandFactoryClassID = Roddy.getApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS, PBSCommandFactory.class.getName());
-        commandFactoryClass = classLoader.loadClass(commandFactoryClassID);
+        jobManagerClassID = Roddy.getApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS, PBSJobManager.class.getName());
+        jobManagerClass = classLoader.loadClass(jobManagerClassID);
 
         /** Get the constructor which comes with no parameters */
-        Constructor first = commandFactoryClass.getDeclaredConstructor();
-        commandFactory = (CommandFactory) first.newInstance();
+        Constructor first = jobManagerClass.getDeclaredConstructor();
+        jobManager = (JobManager) first.newInstance();
     }
 
     public static String createJobName(BaseFile bf, String toolName, boolean reduceLevel) {
@@ -68,30 +68,15 @@ public abstract class CommandFactory<C extends Command> {
 
     public static String createJobName(BaseFile bf, String toolName, boolean reduceLevel, List<BaseFile> inputFilesForSizeCalculation) {
         ExecutionContext rp = bf.getExecutionContext();
-//        String idString = bf.getFileStage().getIDString();
-//        if (reduceLevel)
-//            idString = bf.getFileStage().decreaseLevel().getIDString();
-//        String prefix = rp.getConfiguration().getConfigurationValues().get("jobnamePrefix").toString();
         String runtime = rp.getTimeStampString();
         StringBuilder sb = new StringBuilder();
-//        sb.append("run_").append(runtime).append("_");
-//        if (prefix != null && !prefix.equals("")) {
-//            sb.append(prefix).append("_");
-//        }
-//        sb.append(bf.getPid()).append("_").append(idString).append("_").append(toolName);
         sb.append("r").append(runtime).append("_").append(bf.getPid()).append("_").append(toolName);
         return sb.toString();
     }
 
     public static String createJobName(ExecutionContext rp, String postfix) {
-        String prefix = rp.getConfiguration().getConfigurationValues().getString("jobnamePrefix");
         String runtime = rp.getTimeStampString();
         StringBuilder sb = new StringBuilder();
-//        sb.append("run_").append(runtime).append("_");
-//        if (prefix != null && !prefix.equals("")) {
-//            sb.append(prefix).append("_");
-//        }
-//        sb.append(rp.getDataSet().getId()).append("_").append("_").append(postfix);
         sb.append("r").append(runtime).append("_").append(rp.getDataSet().getId()).append("_").append(postfix);
         return sb.toString();
     }
@@ -101,9 +86,9 @@ public abstract class CommandFactory<C extends Command> {
         return createJobName(bf, toolName, reduceLevel, inputFilesForSizeCalculation);
     }
 
-    public static CommandFactory getInstance() {
+    public static JobManager getInstance() {
 
-        return commandFactory;
+        return jobManager;
     }
 
     public abstract void createUpdateDaemonThread(int interval);
@@ -198,7 +183,6 @@ public abstract class CommandFactory<C extends Command> {
      * @param job
      */
     public void storeJobStateInfo(Job job) {
-//        if(job.getJobID() == null)
         String millis = "" + System.currentTimeMillis();
         millis = millis.substring(0, millis.length() - 3);
         ExecutionContext currentContext = job.getExecutionContext();

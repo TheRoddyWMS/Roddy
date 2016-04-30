@@ -7,16 +7,9 @@ import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.JobDependencyID
-import de.dkfz.roddy.execution.jobs.JobResult
-import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.execution.jobs.ProcessingCommands
-import de.dkfz.roddy.execution.jobs.cluster.ClusterCommandFactory
-import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommand
-import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommandFactory
+import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSJobManager
 import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSResourceProcessingCommand
-import de.dkfz.roddy.execution.jobs.cluster.sge.SGECommand
-import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo
 
 /**
  * Factory for the management of slurm cluster systems.
@@ -49,7 +42,7 @@ import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo
  CODES section below for more information.
  *
  */
-class SlurmCommandFactory extends PBSCommandFactory {
+class SlurmJobManager extends PBSJobManager {
 
     @Override
     public SlurmCommand createCommand(Job job, ExecutionContext run, String jobName, List<ProcessingCommands> processingCommands, File tool, Map<String, String> parameters, List<String> dependencies, List<String> arraySettings) {

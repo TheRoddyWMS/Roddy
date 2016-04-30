@@ -1,9 +1,7 @@
 package de.dkfz.roddy.config;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * The class extends the standard configuration to add analysis related methods and fields.
@@ -17,7 +15,7 @@ public class AnalysisConfiguration extends Configuration {
 
     private String cleanupScript;
     private String nativeToolID;
-    private String targetCommandFactory;
+    private String targetJobManager;
     private String brawlWorkflow;
     private String brawlBaseWorkflow;
     private String runtimeServiceClass;
@@ -96,12 +94,12 @@ public class AnalysisConfiguration extends Configuration {
         return nativeToolID;
     }
 
-    public void setTargetCommandFactory(String targetCommandFactory) {
-        this.targetCommandFactory = targetCommandFactory;
+    public void setJobManagerFactory(String targetJobManager) {
+        this.targetJobManager = targetJobManager;
     }
 
-    public String getTargetCommandFactoryClass() {
-        return targetCommandFactory;
+    public String getTargetJobManagerClass() {
+        return targetJobManager;
     }
 
     public String getBrawlBaseWorkflow() {

@@ -7,11 +7,10 @@ import de.dkfz.roddy.client.cliclient.CommandLineCall;
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
 import de.dkfz.roddy.config.AppConfig;
 import de.dkfz.roddy.core.Initializable;
-import de.dkfz.roddy.execution.io.BaseMetadataTable;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.Command;
-import de.dkfz.roddy.execution.jobs.CommandFactory;
+import de.dkfz.roddy.execution.jobs.JobManager;
 import de.dkfz.roddy.client.fxuiclient.RoddyUIController;
 import de.dkfz.roddy.execution.jobs.JobState;
 import de.dkfz.roddy.plugins.LibrariesFactory;
@@ -366,12 +365,12 @@ public class Roddy {
             currentStep = "Initialize file system access provider";
             FileSystemAccessProvider.initializeProvider(fullSetup);
 
-            //Do not touch the calling order, execution service must be set before commandfactory.
+            //Do not touch the calling order, execution service must be set before JobManager.
             currentStep = "Initialize execution service";
             ExecutionService.initializeService(fullSetup);
 
             currentStep = "Initialize command factory";
-            CommandFactory.initializeFactory(fullSetup);
+            JobManager.initializeFactory(fullSetup);
 
             return true;
         } catch (Exception ex) {
@@ -446,10 +445,10 @@ public class Roddy {
         if (!option.needsFullInit())
             return;
 
-        if (CommandFactory.getInstance() != null && !CommandFactory.getInstance().executesWithoutJobSystem() && waitForJobsToFinish) {
+        if (JobManager.getInstance() != null && !JobManager.getInstance().executesWithoutJobSystem() && waitForJobsToFinish) {
             exitCode = performWaitforJobs();
         } else {
-            List<Command> listOfCreatedCommands = CommandFactory.getInstance().getListOfCreatedCommands();
+            List<Command> listOfCreatedCommands = JobManager.getInstance().getListOfCreatedCommands();
             for (Command command : listOfCreatedCommands) {
                 if (command.getJob().getJobState() == JobState.FAILED) exitCode++;
             }
@@ -460,7 +459,7 @@ public class Roddy {
     private static int performWaitforJobs() {
         try {
             Thread.sleep(15000); //Sleep at least 15 seconds to let any job scheduler handle things...
-            return CommandFactory.getInstance().waitForJobsToFinish();
+            return JobManager.getInstance().waitForJobsToFinish();
         } catch (Exception ex) {
             return 250;
         }

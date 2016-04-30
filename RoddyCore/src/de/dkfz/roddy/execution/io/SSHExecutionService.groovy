@@ -7,7 +7,7 @@ package de.dkfz.roddy.execution.io
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.core.ExecutionContextLevel
-import de.dkfz.roddy.execution.jobs.CommandFactory
+import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.core.ExecutionContext
@@ -427,8 +427,8 @@ class SSHExecutionService extends RemoteExecutionService {
                 }
                 String exID = "none";
                 if (res.successful) {
-                    exID = CommandFactory.getInstance().parseJobID(res.resultLines[0]);
-                    command.setExecutionID(CommandFactory.getInstance().createJobDependencyID(command.getJob(), exID));
+                    exID = JobManager.getInstance().parseJobID(res.resultLines[0]);
+                    command.setExecutionID(JobManager.getInstance().createJobDependencyID(command.getJob(), exID));
                 }
                 logger.postSometimesInfo("${exID}, ${cmdString}");
                 command.getExecutionContext().addCalledCommand(command);

@@ -43,7 +43,7 @@ public enum RoddyStartupOptions {
     usePluginVersion(true),
     pluginDirectories(true), 
     configurationDirectories(true),
-    commandFactoryClass(true),
+    jobManagerClass(true),
     executionServiceClass(true), 
     executionServiceAuth(true), 
     executionServiceHost(true), 

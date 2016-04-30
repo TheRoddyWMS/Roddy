@@ -468,7 +468,7 @@ public class Analysis {
                 //TODO Think hard if this could be generified and simplified! This is also used in other places in a similar way right?
                 ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, ExecutionContextLevel.CLEANUP, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null);
                 Job cleanupJob = new Job(context, "cleanup", ((AnalysisConfiguration) getConfiguration()).getCleanupScript(), null);
-//                Command cleanupCmd = CommandFactory.getInstance().createCommand(cleanupJob, cleanupJob.getToolPath(), new LinkedList<>());
+//                Command cleanupCmd = JobManager.getInstance().createCommand(cleanupJob, cleanupJob.getToolPath(), new LinkedList<>());
                 try {
                     ExecutionService.getInstance().writeFilesForExecution(context);
                     cleanupJob.run();

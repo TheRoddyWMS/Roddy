@@ -11,28 +11,12 @@ import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.Command
-import de.dkfz.roddy.execution.jobs.CommandFactory
-import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.JobDependencyID
-import de.dkfz.roddy.execution.jobs.JobResult
-import de.dkfz.roddy.execution.jobs.JobState
-import de.dkfz.roddy.execution.jobs.ProcessingCommands
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
-import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.LibrariesFactoryTest
-import de.dkfz.roddy.plugins.PluginInfo
-import org.junit.AfterClass
 import org.junit.BeforeClass;
 import org.junit.Test
-
-import java.nio.file.CopyOption
-import java.nio.file.Files;
-
-import static org.junit.Assert.*;
-
 
 /**
  * Created by heinold on 25.11.15.

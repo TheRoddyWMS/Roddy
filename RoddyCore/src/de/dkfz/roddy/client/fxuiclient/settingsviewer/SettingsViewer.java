@@ -50,7 +50,7 @@ public class SettingsViewer extends CustomControlOnGridPane {
     }
 
     public ListView configurationPaths;
-    public TextField txtCommandFactory;
+    public TextField txtJobManager;
 
     @FXML
     private ComboBox cbbCLIExecutionService;
@@ -167,7 +167,7 @@ public class SettingsViewer extends CustomControlOnGridPane {
         configurationPaths.getItems().add("pipelineConfigurationFiles");
         if (cfgDirectories.trim().length() > 0)
             configurationPaths.getItems().addAll(Arrays.asList(cfgDirectories.split(SPLIT_COMMA)));
-        txtCommandFactory.setText(cmdFactory);
+        txtJobManager.setText(cmdFactory);
 //        execServiceSettingsWrite();
     }
 
@@ -181,7 +181,7 @@ public class SettingsViewer extends CustomControlOnGridPane {
         if (workflowPaths.length() > 0)
             workflowPaths = workflowPaths.substring(1);
         Roddy.setApplicationProperty(Constants.APP_PROPERTY_CONFIGURATION_DIRECTORIES, workflowPaths);
-        Roddy.setApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS, txtCommandFactory.getText());
+        Roddy.setApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS, txtJobManager.getText());
         Roddy.setApplicationProperty(RunMode.CLI, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, cbbCLIExecutionService.getSelectionModel().getSelectedItem().toString());
         Roddy.setApplicationProperty(RunMode.UI, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, cbbGUIExecutionService.getSelectionModel().getSelectedItem().toString());
         for(SSHExecutionServiceSettingsPanelControl pnl : createdSSHExecutionServicePanels.values()) {

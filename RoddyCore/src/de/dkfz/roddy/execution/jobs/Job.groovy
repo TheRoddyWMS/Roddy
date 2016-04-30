@@ -358,7 +358,7 @@ public class Job {
                 }
             }
         } else {
-            cmd = CommandFactory.getInstance().createDummyCommand(this, context, jobName, arrayIndices);
+            cmd = JobManager.getInstance().createDummyCommand(this, context, jobName, arrayIndices);
             this.setJobState(JobState.DUMMY);
         }
 
@@ -380,7 +380,7 @@ public class Job {
         if (isArrayJob) {
             postProcessArrayJob(runResult)
         } else {
-            CommandFactory.getInstance().addJobStatusChangeListener(this);
+            JobManager.getInstance().addJobStatusChangeListener(this);
         }
         lastCommand = cmd;
         return runResult;
@@ -392,11 +392,11 @@ public class Job {
             File srcTool = configuration.getSourceToolPath(toolID);
 
             //Look in the configuration for resource options
-            ProcessingCommands extractedPCommands = CommandFactory.getInstance().getProcessingCommandsFromConfiguration(configuration, toolID);
+            ProcessingCommands extractedPCommands = JobManager.getInstance().getProcessingCommandsFromConfiguration(configuration, toolID);
 
             //Look in the script if no options are configured
             if (extractedPCommands == null)
-                extractedPCommands = CommandFactory.getInstance().extractProcessingCommandsFromToolScript(srcTool);
+                extractedPCommands = JobManager.getInstance().extractProcessingCommandsFromToolScript(srcTool);
 
             if (extractedPCommands != null)
                 this.addProcessingCommand(extractedPCommands);
@@ -514,13 +514,13 @@ public class Job {
         //TODO Think of proper array index handling!
         int i = 1;
         for (String arrayIndex : arrayIndices) {
-            JobResult jr = CommandFactory.getInstance().convertToArrayResult(this, runResult, i++);
+            JobResult jr = JobManager.getInstance().convertToArrayResult(this, runResult, i++);
 
             Job childJob = new Job(context, jobName + "[" + arrayIndex + "]", toolID, prmsAsStringMap, parentFiles, filesToVerify);
             childJob.setJobType(JobType.ARRAY_CHILD);
             childJob.setRunResult(jr);
             arrayChildJobs.add(childJob);
-            CommandFactory.getInstance().addJobStatusChangeListener(childJob);
+            JobManager.getInstance().addJobStatusChangeListener(childJob);
             this.context.addExecutedJob(childJob);
         }
     }
@@ -536,7 +536,7 @@ public class Job {
         String sep = Constants.ENV_LINESEPARATOR;
         File tool = context.getConfiguration().getProcessingToolPath(context, toolID);
         setJobState(JobState.UNSTARTED);
-        Command cmd = CommandFactory.getInstance().createCommand(this, tool, dependencies);
+        Command cmd = JobManager.getInstance().createCommand(this, tool, dependencies);
         ExecutionService.getInstance().execute(cmd);
         if (LoggerWrapper.isVerbosityMedium()) {
             dbgMessage << sep << "\tcommand was created and executed for job. ID is " + cmd.getExecutionID() << sep;

@@ -1,6 +1,6 @@
 package de.dkfz.roddy.knowledge.methods
 
-import de.dkfz.roddy.execution.jobs.CommandFactory
+import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
@@ -373,7 +373,7 @@ class GenericMethod {
         for (String arrayIndex in arrayIndices) {
             List<FileObject> newObjects = [];
             outputObjectsByArrayIndex[arrayIndex] = createOutputObject(arrayIndex);
-            JobResult jr = CommandFactory.getInstance().convertToArrayResult(jobResult.job, jobResult, i++);
+            JobResult jr = JobManager.getInstance().convertToArrayResult(jobResult.job, jobResult, i++);
             for (FileObject fo : newObjects) {
                 fo.setCreatingJobsResult(jr);
             }

@@ -13,7 +13,7 @@ import java.util.Map;
 
 /**
  */
-public class DirectSynchronousExecutedCommandFactory extends CommandFactory<DirectCommand> {
+public class DirectSynchronousExecutedJobManager extends JobManager<DirectCommand> {
 
 
     @Override

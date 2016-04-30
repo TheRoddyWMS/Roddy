@@ -6,7 +6,7 @@ import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.tools.BufferUnit;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.cluster.ClusterCommandFactory;
+import de.dkfz.roddy.execution.jobs.cluster.ClusterJobManager;
 import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo;
 import de.dkfz.roddy.tools.*;
 import de.dkfz.roddy.config.*;
@@ -25,9 +25,9 @@ import static de.dkfz.roddy.StringConstants.*;
  * @author michael
  */
 @groovy.transform.CompileStatic
-public class PBSCommandFactory extends ClusterCommandFactory<PBSCommand> {
+public class PBSJobManager extends ClusterJobManager<PBSCommand> {
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(PBSCommandFactory.class.getSimpleName());
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(PBSJobManager.class.getSimpleName());
 
     public static final String PBS_JOBSTATE_RUNNING = "R";
     public static final String PBS_JOBSTATE_HOLD = "H";
@@ -36,11 +36,11 @@ public class PBSCommandFactory extends ClusterCommandFactory<PBSCommand> {
     public static final String PBS_COMMAND_DELETE_JOBS = "qdel";
     public static final String PBS_LOGFILE_WILDCARD = "*.o";
 
-    public PBSCommandFactory(boolean createDaemon = true) {
+    public PBSJobManager(boolean createDaemon = true) {
         //Create a daemon thread which automatically calls queryJobStatus from time to time...
         try {
             if (createDaemon) {
-                int interval = Integer.parseInt(Roddy.getApplicationProperty("commandFactoryUpdateInterval", "60"));
+                int interval = Integer.parseInt(Roddy.getApplicationProperty("jobManagerUpdateInterval", "60"));
                 createUpdateDaemonThread(interval);
             }
         } catch (Exception ex) {

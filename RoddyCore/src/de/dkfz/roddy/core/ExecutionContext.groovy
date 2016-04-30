@@ -9,7 +9,6 @@ import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.*
 import de.dkfz.roddy.tools.LoggerWrapper
-import de.dkfz.roddy.tools.BufferUnit
 
 import java.util.*;
 
@@ -517,7 +516,7 @@ public class ExecutionContext implements JobStatusListener {
                 jobIDsForQuery.add(runResult.getJobID().getId());
             }
         }
-        Map<String, JobState> map = CommandFactory.getInstance().queryJobStatus(jobIDsForQuery);
+        Map<String, JobState> map = JobManager.getInstance().queryJobStatus(jobIDsForQuery);
         for (JobState js : map.values()) {
             if (js.isPlannedOrRunning())
                 return true;

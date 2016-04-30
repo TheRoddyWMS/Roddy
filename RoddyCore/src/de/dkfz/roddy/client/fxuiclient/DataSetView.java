@@ -1,7 +1,7 @@
 package de.dkfz.roddy.client.fxuiclient;
 
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
-import de.dkfz.roddy.execution.jobs.CommandFactory;
+import de.dkfz.roddy.execution.jobs.JobManager;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.core.*;
 import de.dkfz.roddy.execution.io.ExecutionHelper;
@@ -279,7 +279,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
      */
     public void stopPIDProcessing(ActionEvent actionEvent) {
         currentContext.abortJobSubmission();
-        CommandFactory.getInstance().queryJobAbortion(currentContext.getExecutedJobs());
+        JobManager.getInstance().queryJobAbortion(currentContext.getExecutedJobs());
     }
 
     /**
@@ -336,7 +336,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
                 else
                     strings = FileSystemAccessProvider.getInstance().loadTextFile(file);
             } else if (job != null) {
-                strings = CommandFactory.getInstance().peekLogFile(job);
+                strings = JobManager.getInstance().peekLogFile(job);
             }
             StringBuilder stringBuilder = new StringBuilder();
             for (String s : strings) {
@@ -595,7 +595,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
 
     private void resetJobState(Job job, JobState state) {
         job.setJobState(state);
-        CommandFactory.getInstance().storeJobStateInfo(job);
+        JobManager.getInstance().storeJobStateInfo(job);
     }
 
     public void resetJobState_OK(ActionEvent actionEvent) {

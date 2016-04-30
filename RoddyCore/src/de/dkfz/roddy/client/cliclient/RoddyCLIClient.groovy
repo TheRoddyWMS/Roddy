@@ -15,8 +15,8 @@ import de.dkfz.roddy.config.validation.WholeConfigurationValidator
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.SSHExecutionService
-import de.dkfz.roddy.execution.jobs.CommandFactory
 import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.execution.jobs.ProcessingCommands
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -520,7 +520,7 @@ public class RoddyCLIClient {
                 try {
                     ToolEntry tool = configuration.getTools().getValue(job.getToolID());
                     ToolEntry.ResourceSet resourceSet = tool.getResourceSet(configuration);
-                    ProcessingCommands convertResourceSet = CommandFactory.getInstance().convertResourceSet(configuration, resourceSet);
+                    ProcessingCommands convertResourceSet = JobManager.getInstance().convertResourceSet(configuration, resourceSet);
                     resources = convertResourceSet.toString();
 
                 } catch (Exception ex) {
@@ -686,7 +686,7 @@ public class RoddyCLIClient {
                         listOfRunningJobs << job;
                 }
             if (listOfRunningJobs)
-                CommandFactory.getInstance().queryJobAbortion(listOfRunningJobs)
+                JobManager.getInstance().queryJobAbortion(listOfRunningJobs)
         }
     }
 

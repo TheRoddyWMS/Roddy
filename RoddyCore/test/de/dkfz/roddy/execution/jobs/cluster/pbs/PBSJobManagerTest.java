@@ -4,18 +4,15 @@ import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.config.InformationalConfigurationContent;
 import de.dkfz.roddy.config.ResourceSetSize;
 import de.dkfz.roddy.config.ToolEntry;
-import de.dkfz.roddy.execution.jobs.CommandFactory;
-import de.dkfz.roddy.execution.jobs.ProcessingCommands;
+import de.dkfz.roddy.execution.jobs.JobManager;
 import de.dkfz.roddy.tools.BufferUnit;
 import de.dkfz.roddy.tools.BufferValue;
 import de.dkfz.roddy.tools.TimeUnit;
 import org.junit.Test;
 
-import java.io.File;
-
 /**
  */
-public class PBSCommandFactoryTest {
+public class PBSJobManagerTest {
 
     @Test
     public void testConvertToolEntryToPBSCommandParameters() {
@@ -25,7 +22,7 @@ public class PBSCommandFactoryTest {
 
         Configuration cfg = new Configuration(new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null));
 
-        CommandFactory cFactory = new PBSCommandFactory(false);
+        JobManager cFactory = new PBSJobManager(false);
         PBSResourceProcessingCommand test = (PBSResourceProcessingCommand) cFactory.convertResourceSet(cfg, rset1);
         assert test.getProcessingString().trim().equals("-l mem=1024M -l nodes=1:ppn=2 -l walltime=00:01:00:00");
 

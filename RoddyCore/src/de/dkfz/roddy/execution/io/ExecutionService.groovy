@@ -16,12 +16,9 @@ import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.Command
-import de.dkfz.roddy.execution.jobs.CommandFactory
-import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobDependencyID
+import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.execution.jobs.JobState
-import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
-import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutedCommandFactory
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -148,7 +145,7 @@ public abstract class ExecutionService extends CacheProvider {
         File path = context.getConfiguration().getProcessingToolPath(context, toolID);
 
 //        Job wrapperJob = new Job(context, context.getTimeStampString() + jobNameExtension + toolID, toolID, null);
-//        DirectSynchronousExecutedCommandFactory dcfac = new DirectSynchronousExecutedCommandFactory();
+//        DirectSynchronousExecutedJobManager dcfac = new DirectSynchronousExecutedJobManager();
 //        DirectCommand wrapperJobCommand = dcfac.createCommand(wrapperJob, context.getConfiguration().getProcessingToolPath(context, toolID), new LinkedList<>());
         String cmd = FileSystemAccessProvider.getInstance().commandSet.getExecuteScriptCommand(path);
         return execute(cmd).resultLines;
@@ -200,14 +197,14 @@ public abstract class ExecutionService extends CacheProvider {
                 command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.OK);
 
                 if (isLocalService() && command.isBlockingCommand()) {
-                    command.setExecutionID(CommandFactory.getInstance().createJobDependencyID(command.getJob(), res.processID));
+                    command.setExecutionID(JobManager.getInstance().createJobDependencyID(command.getJob(), res.processID));
 
                     File logFile = command.getExecutionContext().getRuntimeService().getLogFileForCommand(command)
                     FileSystemAccessProvider.getInstance().moveFile(tmpFile, logFile);
                 } else if (res.successful) {
-                    String exID = CommandFactory.getInstance().parseJobID(res.resultLines[0]);
-                    command.setExecutionID(CommandFactory.getInstance().createJobDependencyID(command.getJob(), exID));
-                    CommandFactory.getInstance().storeJobStateInfo(command.getJob());
+                    String exID = JobManager.getInstance().parseJobID(res.resultLines[0]);
+                    command.setExecutionID(JobManager.getInstance().createJobDependencyID(command.getJob(), exID));
+                    JobManager.getInstance().storeJobStateInfo(command.getJob());
                 }
                 command.getExecutionContext().addCalledCommand(command);
             } catch (Exception ex) {
@@ -355,7 +352,7 @@ public abstract class ExecutionService extends CacheProvider {
         Configuration cfg = context.getConfiguration();
         def configurationValues = cfg.getConfigurationValues()
 
-        CommandFactory.getInstance().addSpecificSettingsToConfiguration(cfg)
+        JobManager.getInstance().addSpecificSettingsToConfiguration(cfg)
         getInstance().addSpecificSettingsToConfiguration(cfg)
 
         //Add feature toggles to configuration

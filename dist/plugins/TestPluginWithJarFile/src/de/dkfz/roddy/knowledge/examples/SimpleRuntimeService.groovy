@@ -4,7 +4,7 @@ import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.CommandFactory
+import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForSourceFiles;
 
@@ -30,7 +30,7 @@ public class SimpleRuntimeService extends RuntimeService {
 
     @Override
     public String createJobName(ExecutionContext executionContext, BaseFile file, String TOOLID, boolean reduceLevel) {
-        return CommandFactory.getInstance().createJobName(file, TOOLID, reduceLevel);
+        return JobManager.getInstance().createJobName(file, TOOLID, reduceLevel);
     }
 
     @Override

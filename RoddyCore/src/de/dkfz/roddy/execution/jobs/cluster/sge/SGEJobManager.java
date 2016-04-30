@@ -8,7 +8,7 @@ import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.jobs.Job;
 import de.dkfz.roddy.execution.jobs.ProcessingCommands;
-import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommandFactory;
+import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSJobManager;
 import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSResourceProcessingCommand;
 import de.dkfz.roddy.tools.BufferUnit;
 
@@ -20,9 +20,9 @@ import java.util.Map;
 /**
  * Created by michael on 20.05.14.
  */
-public class SGECommandFactory extends PBSCommandFactory {
+public class SGEJobManager extends PBSJobManager {
 
-    public SGECommandFactory(boolean createDaemon) {
+    public SGEJobManager(boolean createDaemon) {
         super(createDaemon);
     }
 

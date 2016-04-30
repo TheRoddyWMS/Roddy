@@ -9,7 +9,9 @@ import java.io.Serializable;
 /**
  * Base class for all types of commands.
  *
- * PBSCommand extends this.
+ * PBSCommand extends this. Also SGECommand and so on.
+ *
+ * A job is executed via a command. The command represents the job on the cluster / system side.
  *
  * @author michael
  */
@@ -65,7 +67,7 @@ public abstract class Command implements Serializable {
         this.creatingJob = job;
         this.id = id;
         this.executionContext = run;
-        CommandFactory.getInstance().addCommandToList(this);
+        JobManager.getInstance().addCommandToList(this);
     }
 
     protected Command(Job job, String id) {

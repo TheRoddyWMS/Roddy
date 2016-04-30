@@ -4,19 +4,16 @@ import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.config.InformationalConfigurationContent;
 import de.dkfz.roddy.config.ResourceSetSize;
 import de.dkfz.roddy.config.ToolEntry;
-import de.dkfz.roddy.execution.jobs.CommandFactory;
-import de.dkfz.roddy.execution.jobs.ProcessingCommands;
+import de.dkfz.roddy.execution.jobs.JobManager;
 import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSResourceProcessingCommand;
 import de.dkfz.roddy.tools.BufferUnit;
 import de.dkfz.roddy.tools.BufferValue;
 import de.dkfz.roddy.tools.TimeUnit;
 import org.junit.Test;
 
-import java.io.File;
-
 /**
  */
-public class SGECommandFactoryTest {
+public class SGEJobManagerTest {
 
     @Test
     public void testConvertToolEntryToPBSCommandParameters() {
@@ -26,7 +23,7 @@ public class SGECommandFactoryTest {
 
         Configuration cfg = new Configuration(new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null));
 
-        CommandFactory cFactory = new SGECommandFactory(false);
+        JobManager cFactory = new SGEJobManager(false);
         PBSResourceProcessingCommand test = (PBSResourceProcessingCommand) cFactory.convertResourceSet(cfg, rset1);
         assert test.getProcessingString().trim().equals("-V -l s_data=1024M");
 
