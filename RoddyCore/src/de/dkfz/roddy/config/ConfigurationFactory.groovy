@@ -9,6 +9,7 @@ import de.dkfz.roddy.knowledge.files.FileStage
 import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
 import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration.ConfigurationType
 import de.dkfz.roddy.config.ToolEntry.ToolFileGroupParameter.PassOptions
 import de.dkfz.roddy.config.ToolEntry.ToolStringParameter.ParameterSetbyOptions
