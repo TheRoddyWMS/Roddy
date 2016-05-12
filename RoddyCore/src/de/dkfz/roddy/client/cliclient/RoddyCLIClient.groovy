@@ -47,24 +47,6 @@ public class RoddyCLIClient {
         }
     }
 
-    private static ConsoleStringFormatter _formatter = null;
-
-    private static ConsoleStringFormatter getFormatter() {
-        if (_formatter == null) {
-            //Decide which formatter can be used.
-            def env = System.getenv()
-            boolean isLinux = env.get("OSTYPE") == "linux";
-            boolean isBash = env.get("SHELL")?.contains("bash");
-
-        if (isLinux && isBash) { //Simple check if we are using linux and a color code aware console
-            if (System.console() != null)
-                return new BashFormatter();
-        }
-            _formatter = new NoColorsFormatter();
-        }
-        return _formatter;
-    }
-
     /**
      * Simple method to count input parameters
      *
@@ -268,7 +250,7 @@ public class RoddyCLIClient {
             i++;
         }
 
-        System.out.println(getFormatter().formatAll(sb.toString()));
+        System.out.println(ConsoleStringFormatter.getFormatter().formatAll(sb.toString()));
     }
 
     public static void printReducedRuntimeConfiguration(CommandLineCall commandLineCall) {
@@ -350,14 +332,14 @@ public class RoddyCLIClient {
 
             //First check, if a filter must be applied.
             if (!projectIDContains(pti, filter)) {
-                logger.postSometimesInfo(getFormatter().formatAll("#FRED#Configuration ${pti.icc.id} left out because of the specified filter.#CLEAR#"));
+                logger.postSometimesInfo(ConsoleStringFormatter.getFormatter().formatAll("#FRED#Configuration ${pti.icc.id} left out because of the specified filter.#CLEAR#"));
                 continue;
             }
-            logger.postAlwaysInfo(getFormatter().formatAll("${separator}#FWHITE##BGRED#Parsing configuration ${pti.icc.id}#CLEAR# : ${pti.icc.file}"));
+            logger.postAlwaysInfo(ConsoleStringFormatter.getFormatter().formatAll("${separator}#FWHITE##BGRED#Parsing configuration ${pti.icc.id}#CLEAR# : ${pti.icc.file}"));
             if (clc.isOptionSet(RoddyStartupOptions.shortlist)) {
-                logger.postAlwaysInfo(getFormatter().formatAll(printRecursivelyShort(pti).toString()));
+                logger.postAlwaysInfo(ConsoleStringFormatter.getFormatter().formatAll(printRecursivelyShort(pti).toString()));
             } else {
-                logger.postAlwaysInfo(getFormatter().formatAll(printRecursively(0, pti).toString())); ;
+                logger.postAlwaysInfo(ConsoleStringFormatter.getFormatter().formatAll(printRecursively(0, pti).toString())); ;
             }
         }
     }
@@ -549,7 +531,7 @@ public class RoddyCLIClient {
             sb << separator;
             sb << separator;
 
-            println(getFormatter().formatAll(sb.toString()));
+            println(ConsoleStringFormatter.getFormatter().formatAll(sb.toString()));
         }
     }
 
@@ -642,7 +624,7 @@ public class RoddyCLIClient {
 
         }
         sb << "#CLEAR#" << separator;
-        println(getFormatter().formatAll(sb.toString()));
+        println(ConsoleStringFormatter.getFormatter().formatAll(sb.toString()));
 
     }
 

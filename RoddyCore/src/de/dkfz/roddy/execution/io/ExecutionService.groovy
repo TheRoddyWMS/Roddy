@@ -276,24 +276,16 @@ public abstract class ExecutionService extends CacheProvider {
         else if (datasetDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("Output dir is not writable: ${outputDirectory}"));
 
-        if (projectExecCacheFileIsWritable == null)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output file is missing: ${projectExecCacheFile}", Level.INFO));
-        else if (projectExecCacheFileIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
+        if (projectExecCacheFileIsWritable == Boolean.FALSE)
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("The projects exec cache file is not writable: ${projectExecCacheFile}"));
 
-        if (projectExecutionContextDirIsWritable == null)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${projectExecutionDirectory}", Level.INFO));
-        else if (projectExecutionContextDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
+        if (projectExecutionContextDirIsWritable == Boolean.FALSE)
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("The project execution store is not writable: ${projectExecutionDirectory}"));
 
-        if (projectToolsMD5SumFileIsWritable == null)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output file is missing: ${projectToolsMD5SumFile}", Level.INFO));
-        else if (projectToolsMD5SumFileIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
+        if (projectToolsMD5SumFileIsWritable == Boolean.FALSE)
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("The project md5sum file is not writable: ${projectToolsMD5SumFile}"));
 
-        if (baseContextDirIsWritable == null)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${baseContextExecutionDirectory}", Level.WARNING));
-        else if (baseContextDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
+        if (baseContextDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evaluate null to false.
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("The datasets execution storeage folder is not writable: ${baseContextExecutionDirectory}"));
 
         //Just check, if there were new errors.

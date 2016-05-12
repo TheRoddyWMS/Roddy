@@ -23,6 +23,11 @@ public abstract class FileObject implements Serializable {
     public abstract void runDefaultOperations();
 
     public DataSet getPid() {
+        // TODO Deprecated. Remove if not needed in any workflow! Possibly move to plugin.
+        return getDataSet();
+    }
+
+    public DataSet getDataSet() {
         return executionContext.getDataSet();
     }
 

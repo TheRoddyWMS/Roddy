@@ -117,7 +117,8 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
             temp = _temp; //TODO Look why temp gets null. This should not be the case.
         //pid, sample, run...
         temp = temp.replace("${fileStageID}", fs.getIDString());
-        temp = temp.replace("${pid}", baseFile.getPid().toString());
+        temp = temp.replace("${pid}", baseFile.getDataSet().toString()); // TODO: Move to plugin.
+        temp = temp.replace("${dataSet}", baseFile.getDataSet().toString());
         return temp;
     }
 
@@ -125,7 +126,8 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
         FileStageSettings fs = baseFile.getFileStage();
         //pid, sample, run...
         temp = temp.replace(String.format("${fileStageID[%d]}", index), fs.getIDString());
-        temp = temp.replace(String.format("${pid[%d]}", index), baseFile.getPid().toString());
+        temp = temp.replace(String.format("${pid[%d]}", index), baseFile.getDataSet().toString()); // TODO: Move to plugin.
+        temp = temp.replace(String.format("${dataSet[%d]}", index), baseFile.getDataSet().toString());
         temp = fs.fillStringContentWithArrayValues(index, temp);
         return temp;
     }
