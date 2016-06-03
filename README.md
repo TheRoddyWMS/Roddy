@@ -1,15 +1,5 @@
 # Overview
 
-* Version update to 2.2.112
-
-What is Roddy and what is it not?
-- It is not a workflow.
-- It is workflow development framework and you can develop, run and bundle your workflows with it.
-- Roddy is designed to be as independent from the runtime environment as possible. But keep in mind, that
-  this might not be the case for workflows.
-
-Roddy has been tested and successfully used in a docker container together with Sun Grid Engine.
-
 # Prerequisites
 
 Roddy currently needs a JDK / JRE installed in either ~/.roddy/runtime or ~/.roddy/runtimeDevel
@@ -88,6 +78,33 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 # Changelist
 
+* Version update to 2.3.97b
+
+Beta release.
+- Working version of new runtime class location implementation.
+
+- Add new printruntimeconfig modes. There are be the two additional modes
+    --showsourcenetries : shows values with their file.
+    --extendedlist      : as an addition to showsourceentries, shows the
+                          full list of values including their predecessors.
+- API version checks (Java, Groovy, Roddy, Plugins) 
+- Unified portable IntelliJ Idea configs
+- Improved logging in ProjectFactory
+- Metadata table support
+- Colored output
+
+* Version update to 2.2.112
+
+What is Roddy and what is it not?
+- It is not a workflow.
+- It is workflow development framework and you can develop, run and bundle your workflows with it.
+- Roddy is designed to be as independent from the runtime environment as possible. But keep in mind, that
+  this might not be the case for workflows.
+
+Roddy has been tested and successfully used in a docker container together with Sun Grid Engine.
+
+* Version update
+
 - Change the behaviour of file access rights setting:
    
     - Only output one error message instead of many
@@ -116,7 +133,7 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
         - Workflow-1.0.23 (original)
         - Workflow-1.0.23-r1 (revision 1)
     
-    - Horicontal Plugin compatibility is done via the buildinfo.txt file:
+    - Horizontal Plugin compatibility is done via the buildinfo.txt file:
         - Workflow-1.0.24/buildinfo.txt
             - extendsversion=1.0.23
       
