@@ -12,5 +12,4 @@ source ${RODDY_DIRECTORY}/dist/bin/current/helperScripts/setupRuntimeEnvironment
 
 
 SCRIPTS_DIR=$RODDY_BINARY_DIR/helperScripts
-echo $RODDY_BINARY_DIR > /dev/stderr
 source $RODDY_BSCRIPT
