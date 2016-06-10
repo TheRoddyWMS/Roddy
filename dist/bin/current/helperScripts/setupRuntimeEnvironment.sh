@@ -6,8 +6,8 @@ jdkIsSet=false
 [[ ${JDK_VERSION} == 1.8 ]] && jdkIsSet=true;
 
 [[ $jdkIsSet == false ]] && echo "The requested Java runtime version ${JDK_VERSION} is not supported." && exit 1
-echo Required JRE/JDK: $JDK_VERSION
-echo Required Groovy:  $GROOVY_VERSION
+echo Required JRE/JDK: $JDK_VERSION > /dev/stderr
+echo Required Groovy:  $GROOVY_VERSION > /dev/stderr
 
 # First, check dist/runtime folder
 # Second, check ~/.roddy/runtime
