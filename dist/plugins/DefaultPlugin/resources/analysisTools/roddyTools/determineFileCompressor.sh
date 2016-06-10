@@ -6,7 +6,7 @@
 COMPRESSION=`file -bL ${TEST_FILE} | cut -d ' ' -f 1`
 if [[ $COMPRESSION = "setgid" ]]  # "setgid gzip compressed data": sticky bit is set for the file
 then
-    COMPRESSION=`file -bL $1 | cut -d ' ' -f 2`
+    COMPRESSION=`file -bL ${TEST_FILE} | cut -d ' ' -f 2`
 fi
 if [[ $COMPRESSION = "gzip" ]]
 then
