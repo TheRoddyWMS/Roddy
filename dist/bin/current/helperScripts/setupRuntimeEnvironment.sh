@@ -39,3 +39,6 @@ JFX_LIBINFO_FILE=~/.roddy/jfxlibInfo
 if [[ ! -f ${JFX_LIBINFO_FILE} ]] || [[ ! -f `cat ${JFX_LIBINFO_FILE}` ]]; then
 	echo `find ${JAVA_HOME}/ -name "jfxrt.jar"` > ${JFX_LIBINFO_FILE}
 fi
+
+>&2 echo `which java`
+>&2 echo `which groovy`

@@ -276,43 +276,41 @@ public class ConfigurationFactoryTest {
     }
 
     @Test
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternsForDerivedFromPatternType() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_DERIVEDFROM_PATTERN)
         testReadFilenamePatternsForDerivedFromPatternType_base(xml,"TestFileWithParent" )
     }
 
     @Test
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternsForDerivedFromPatternType_WithArr() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_DERIVEDFROM_PATTERN_WITH_ARR)
-        testReadFilenamePatternsForDerivedFromPatternType_base(xml,"TestFileWithParentArr" )
+        DerivedFromFilenamePattern fpattern = testReadFilenamePatternsForDerivedFromPatternType_base(xml,"TestFileWithParentArr" )
+        assert fpattern.acceptsFileArrays == true
+        assert fpattern.enforcedArraySize == 2
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    public void testReadFilenamePatternsForDerivedFromPatternType_base(NodeChild xml, String testfileEnding) {
+    public DerivedFromFilenamePattern testReadFilenamePatternsForDerivedFromPatternType_base(NodeChild xml, String testfileEnding) {
         DerivedFromFilenamePattern fpattern = ConfigurationFactory.readDerivedFromFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as DerivedFromFilenamePattern;
         assert fpattern.filenamePatternDependency == FilenamePatternDependency.derivedFrom;
         assert fpattern.derivedFromCls.name.endsWith("TestParentFile");
         assert fpattern.cls.name.endsWith(testfileEnding);
+        return fpattern;
     }
 
     @Test
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternsForOnMethodPatternType() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONMETHOD_PATTERN_FQN)
         testReadFilenamePatternsForOnMethodPatternType_base(xml)
     }
 
     @Test
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternsForOnMethodPatternType_WithBaseFile() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONMETHOD_PATTERN_WITH_CLASSNAME)
         testReadFilenamePatternsForOnMethodPatternType_base(xml)
     }
 
     @Test
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternsForOnMethodPatternType_WithFileName() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONMETHOD_PATTERN_WITH_METHODNAME)
         testReadFilenamePatternsForOnMethodPatternType_base(xml)
@@ -345,7 +343,6 @@ public class ConfigurationFactoryTest {
 
 
     @Test
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternForOnScriptParameterPatternType_Failed() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_FAILED)
         try{
@@ -357,7 +354,6 @@ public class ConfigurationFactoryTest {
 
 
     @Test
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternForOnScriptParameterPatternType_WithoutClass() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_WITHOUT_CLASS)
         try{
@@ -368,14 +364,12 @@ public class ConfigurationFactoryTest {
     }
 
     @Test
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternForOnScriptParameterPatternType_OnlyColonAndParamName() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_ONLY_COLON_AND_PARAMNAME)
         testReadFilenamePatternForOnScriptParameterPatternType_base(xml)
     }
 
     @Test
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternForOnScriptParameterPatternType_OnlyParamName() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_ONLY_PARAMNAME)
         testReadFilenamePatternForOnScriptParameterPatternType_base(xml)
@@ -383,14 +377,12 @@ public class ConfigurationFactoryTest {
 
 
     @Test
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternForOnScriptParameterPatternType_WithToolAndParamName() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_WITH_TOOL_AND_PARAMNAME)
         testReadFilenamePatternForOnScriptParameterPatternType_base(xml)
     }
 
     @Test
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testReadFilenamePatternForOnScriptParameterPatternType_WithAnyAndParamName() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_WITH_ANY_AND_PARAMNAME)
         testReadFilenamePatternForOnScriptParameterPatternType_base(xml)

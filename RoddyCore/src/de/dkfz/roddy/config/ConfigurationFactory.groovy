@@ -23,6 +23,7 @@ import org.apache.commons.io.filefilter.WildcardFileFilter
 
 import java.lang.reflect.*
 import java.util.logging.*
+import java.util.regex.Pattern
 
 import static de.dkfz.roddy.StringConstants.*
 
@@ -455,7 +456,7 @@ public class ConfigurationFactory {
         Tuple3<Class, Boolean, Integer> parentClassResult = loadPatternClass(pkg, fnDerivedFrom)
         Tuple3<Class, Boolean, Integer> classResult = loadPatternClass(pkg, classSimpleName, parentClassResult.x)
 
-        FilenamePattern fp = new DerivedFromFilenamePattern(classResult.x, parentClassResult.x, pattern, selectionTag, classResult.y, classResult.z);
+        FilenamePattern fp = new DerivedFromFilenamePattern(classResult.x, parentClassResult.x, pattern, selectionTag, parentClassResult.y, parentClassResult.z);
         return fp;
     }
 
@@ -469,6 +470,8 @@ public class ConfigurationFactory {
         else
             cls = (pkg != null ? pkg + "." : "") + className;
 
+        // Test if parent class contains something like [0-9] at the end. However, this test does not extract the size of the array.
+        //        boolean doesArrays = Pattern.compile('\\[\\d\\]$').matcher("test[2]").findAll();
 
         int enforcedArraySize = -1;
         boolean isArray = false;
