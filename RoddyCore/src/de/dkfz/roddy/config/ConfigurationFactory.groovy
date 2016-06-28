@@ -540,9 +540,10 @@ public class ConfigurationFactory {
         if (splitResult.size() == 1) {
             //any tool and param
             toolName= null
-            parameterName = splitResult
+            parameterName = splitResult.first()
         } else if (splitResult.size() == 2){
-            (toolName, parameterName) = splitResult
+            toolName = splitResult.first()
+            parameterName = splitResult.last()
 
             if (toolName.equals("[ANY]") || toolName.equals("")) {
                 //only param OR [ANY] tool and param
@@ -611,7 +612,6 @@ public class ConfigurationFactory {
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     private void readProcessingTools(NodeChild configurationNode, Configuration config) {
         Map<String, ToolEntry> toolEntries = config.getTools().getMap();
-
         for (NodeChild tool in configurationNode.processingTools.tool) {
             String toolID = tool.@name.text()
             logger.postRareInfo("Processing tool ${toolID}");
@@ -640,6 +640,12 @@ public class ConfigurationFactory {
                             inputParameters << parseToolParameter(toolID, child);
                         } else if (cName == "output") {
                             outputParameters << parseToolParameter(toolID, child);
+                        } else if (cName == "script") {
+                            if (child.@value.text() != ""){
+                                currentEntry.setInlineScript(child.text().trim())
+                                currentEntry.setInlineScriptName(child.@value.text())
+                            }
+
                         }
                     }
                     currentEntry.setGenericOptions(inputParameters, outputParameters, resourceSets);

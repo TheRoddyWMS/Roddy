@@ -7,6 +7,7 @@ import de.dkfz.roddy.tools.BufferValue;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.TimeUnit;
 
+import java.io.File;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.List;
@@ -328,11 +329,12 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
     public final String basePathId;
     public final String path;
     public final String computationResourcesFlags;
+    private String inlineScript;
+    private String inlineScriptName;
     private final List<ToolParameter> inputParameters = new LinkedList<>();
     private final List<ToolParameter> outputParameters = new LinkedList<>();
     private final List<ResourceSet> resourceSets = new LinkedList<>();
     private boolean overridesResourceSets;
-
     public ToolEntry(String id, String basePathId, String path) {
         this.id = id;
         this.basePathId = basePathId;
@@ -374,6 +376,33 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         te.setGenericOptions(_inp, _outp, _rsets);
         if (overridesResourceSets) te.setOverridesResourceSets();
         return te;
+    }
+
+    public String getLocalPath() {
+        return path;
+    }
+
+    public void setInlineScript(String script) {
+        this.inlineScript = script;
+    }
+
+    public String getInlineScript() {
+        return this.inlineScript;
+    }
+
+    public void setInlineScriptName(String scriptName) {
+        this.inlineScriptName = scriptName;
+    }
+
+    public String getInlineScriptName() {
+        return this.inlineScriptName;
+    }
+
+    public boolean hasInlineScript() {
+        if (inlineScript != null )
+                return true;
+        else
+            return false;
     }
 
     public boolean hasResourceSets() {

@@ -11,6 +11,7 @@ import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationFactory
 import de.dkfz.roddy.config.ConfigurationValue
+import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
@@ -24,8 +25,19 @@ import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
+import org.apache.commons.io.FileUtils
 
+import java.nio.charset.StandardCharsets
+import java.nio.file.FileSystem
+import java.nio.file.FileSystems
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
 import java.util.logging.Level
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 
 import static de.dkfz.roddy.StringConstants.TILDE
 import static de.dkfz.roddy.config.ConfigurationConstants.*
@@ -410,7 +422,7 @@ public abstract class ExecutionService extends CacheProvider {
 
     /**
      * Copy and link analysis tools folders to the target analysis tools directory. Analysis tools folder names must be unique over all plugins.
-     * However this is not enforced.
+     * However this is not enforced.qq
      * @param context
      */
     private void copyAnalysisToolsForContext(ExecutionContext context) {
@@ -418,7 +430,6 @@ public abstract class ExecutionService extends CacheProvider {
         Configuration cfg = context.getConfiguration();
         File dstExecutionDirectory = context.getExecutionDirectory();
         File dstAnalysisToolsDirectory = context.getAnalysisToolsDirectory();
-        File dstCommonExecutionDirectory = context.getCommonExecutionDirectory();
         boolean useCentralAnalysisArchive = cfg.getUseCentralAnalysisArchive();
 
         //Current analysisTools directory (they are also used for execution)
@@ -428,7 +439,6 @@ public abstract class ExecutionService extends CacheProvider {
         }
 
         provider.checkDirectory(dstExecutionDirectory, context, true);
-        List<String> usedToolFolders = ((AnalysisConfiguration) context.getAnalysis().getConfiguration()).getUsedToolFolders();
         if (useCentralAnalysisArchive) {
             String[] existingArchives = provider.loadTextFile(context.getFileForAnalysisToolsArchiveOverview());
             Roddy.getCompressedAnalysisToolsDirectory().mkdir();
@@ -443,119 +453,26 @@ public abstract class ExecutionService extends CacheProvider {
                     cfg.getConfigurationValues().add(new ConfigurationValue(basepathConfigurationID, RoddyIOHelperMethods.assembleLocalPath(dstExecutionDirectory, "analysisTools", bPathID).getAbsolutePath(), "string"));
             }
 
-            // Compress existing tool folders to a central location and generate some md5 sums for them.
+            Map<String, List<Map<String,String>>> inlineScripts = [:]
+
+            for (ToolEntry tool in cfg.getTools().allValuesAsList) {
+                if (tool.hasInlineScript()) {
+                    if (inlineScripts.containsKey(tool.basePathId)){
+                        inlineScripts.get(tool.basePathId).add(["inlineScript":tool.getInlineScript(),"inlineScriptName":tool.getInlineScriptName()])
+                    }else{
+                        inlineScripts.put(tool.basePathId,[])
+                        inlineScripts.get(tool.basePathId).add(["inlineScript":tool.getInlineScript(),"inlineScriptName":tool.getInlineScriptName()])
+                    }
+
+                }
+            }
+
             long startParallelCompression = System.nanoTime()
-            listOfFolders.keySet().parallelStream().each {
-                File subFolder ->
-                    long startSingleCompression = System.nanoTime()
-                    PluginInfo pInfo = listOfFolders[subFolder]
-                    String md5sum = RoddyIOHelperMethods.getSingleMD5OfFilesInDirectory(subFolder);
-                    String zipFilename = "cTools_${pInfo.getName()}:${pInfo.getProdVersion()}_${subFolder.getName()}.zip";
-                    String zipMD5Filename = zipFilename + "_contentmd5";
-                    File tempFile = new File(Roddy.getCompressedAnalysisToolsDirectory(), zipFilename);
-                    File zipMD5File = new File(Roddy.getCompressedAnalysisToolsDirectory(), zipMD5Filename);
-
-                    boolean createNew = false;
-                    if (!tempFile.exists())
-                        createNew = true;
-
-                    if (!zipMD5File.exists() || zipMD5File.text.trim() != md5sum)
-                        createNew = true;
-
-                    if (createNew) {
-                        RoddyIOHelperMethods.compressDirectory(subFolder, tempFile)
-                        zipMD5File.withWriter { BufferedWriter bw -> bw.writeLine(md5sum); }
-                    }
-
-                    String newArchiveMD5 = md5sum;
-                    if (tempFile.size() == 0)
-                        logger.severe("The size of archive ${tempFile.getName()} is 0!")
-                    synchronized (mapOfPreviouslyCompressedArchivesByFolder) {
-                        mapOfPreviouslyCompressedArchivesByFolder[subFolder] = new CompressedArchiveInfo(tempFile, newArchiveMD5, subFolder);
-                    }
-                    logger.postSometimesInfo("Compression of ${zipFilename} took ${(System.nanoTime() - startSingleCompression) / 1000000} ms.")
-            };
+            writeInlineScriptsAndCompressToolFolders(listOfFolders, inlineScripts)
             logger.postSometimesInfo("Overall tool compression took ${(System.nanoTime() - startParallelCompression) / 1000000} ms.");
 
             // Now check if the local file with its md5 sum exists on the remote site.
-            listOfFolders.each {
-                File subFolder, PluginInfo pInfo ->
-                    File localFile = mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive;
-                    File remoteFile = new File(mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive.getName()[0..-5] + "_" + context.getTimeStampString() + ".zip");
-                    String archiveMD5 = mapOfPreviouslyCompressedArchivesByFolder[subFolder].md5
-
-                    String foundExisting = null;
-                    String subFolderOnRemote = subFolder.getName();
-                    for (String line : existingArchives) {
-                        String[] split = line.split(StringConstants.SPLIT_COLON);
-                        String existingFilePath = split[0];
-                        String existingFileMD5 = split[1];
-                        if (split.length == 2) {
-                            existingFilePath = split[0];
-                            existingFileMD5 = split[1];
-                        } else if (split.length == 3) {                   // Newer Roddy version create directories containing version strings (separated by ":")
-                            existingFilePath = split[0] + ":" + split[1];
-                            existingFileMD5 = split[2];
-                        } else {
-                            continue;
-                        }
-
-                        if (existingFileMD5.equals(archiveMD5)) {
-                            foundExisting = existingFilePath;
-                            remoteFile = new File(remoteFile.getParentFile(), existingFilePath);
-                            subFolderOnRemote = remoteFile.getName().split(StringConstants.SPLIT_UNDERSCORE)[-3];
-                            //TODO This is seriously a hack.
-                            break;
-                        }
-                    }
-
-                    File analysisToolsServerDir;
-
-                    // Check, if there is a zip file available and if the zip file is uncompressed.
-                    if (foundExisting) {
-                        analysisToolsServerDir = new File(dstCommonExecutionDirectory, "/dir_" + foundExisting);
-                        File remoteZipFile = new File(dstCommonExecutionDirectory, remoteFile.getName());
-                        if (!provider.directoryExists(analysisToolsServerDir)) {
-                            //Now we may assume, that the file was not uncompressed!
-                            //Check if the zip file exists. If so, uncompress it.
-                            if (provider.fileExists(remoteZipFile)) {
-                                // Unzip the file again. foundExisting stays true
-                                GString str = RoddyIOHelperMethods.getCompressor().getDecompressionString(remoteZipFile, analysisToolsServerDir, analysisToolsServerDir);
-                                getInstance().execute(str, true);
-                                provider.setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.getAbsolutePath()), context);
-                            } else {
-                                // Uh Oh, the file is not existing, the directory is not existing! Copy again and unzip
-                                foundExisting = false;
-                            }
-                        }
-                    }
-
-                    if (foundExisting) {
-                        //remoteFile.delete(); //Don't need that anymore
-                        analysisToolsServerDir = new File(dstCommonExecutionDirectory, "/dir_" + foundExisting);
-                        logger.postSometimesInfo("Skipping copy of file ${remoteFile.getName()}, a file with the same md5 was found.")
-                    } else {
-                        //TODO This one is a really huge mess, make it good.
-
-                        analysisToolsServerDir = new File(dstCommonExecutionDirectory, "/dir_" + remoteFile.getName())
-                        provider.checkDirectory(dstCommonExecutionDirectory, context, true);
-                        provider.checkDirectory(analysisToolsServerDir, context, true);
-                        provider.copyFile(localFile, new File(dstCommonExecutionDirectory, remoteFile.getName()), context);
-                        provider.checkFile(context.getFileForAnalysisToolsArchiveOverview(), true, context);
-                        provider.appendLineToFile(true, context.getFileForAnalysisToolsArchiveOverview(), "${remoteFile.getName()}:${archiveMD5}", true);
-
-                        GString str = RoddyIOHelperMethods.getCompressor().getDecompressionString(new File(dstCommonExecutionDirectory, remoteFile.getName()), analysisToolsServerDir, analysisToolsServerDir);
-                        getInstance().execute(str, true);
-                        provider.setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.getAbsolutePath()), context);
-                        if (!provider.directoryExists(analysisToolsServerDir))
-                            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND.expand("The central archive ${analysisToolsServerDir.absolutePath} was not created!"))
-
-                    }
-                    provider.checkDirectory(dstAnalysisToolsDirectory, context, true);
-                    def linkCommand = "ln -s ${analysisToolsServerDir.getAbsolutePath()}/${subFolderOnRemote} ${dstAnalysisToolsDirectory.absolutePath}/${subFolder.getName()}"
-                    getInstance().execute(linkCommand, true);
-            }
-
+            moveCompressedToolFilesToRemoteLocation(listOfFolders,existingArchives,provider,context)
 
         } else {
             sourcePaths.each {
@@ -564,6 +481,147 @@ public abstract class ExecutionService extends CacheProvider {
                     provider.copyDirectory(sourcePath, dstAnalysisToolsDirectory);
                     provider.setDefaultAccessRightsRecursively(dstAnalysisToolsDirectory, context);
             }
+        }
+    }
+
+    /**
+     * Add inline scripts and compress existing tool folders to a central location and generate some md5 sums for them.
+     * @param listOfFolders
+     * @param inlineScripts
+     */
+    public void writeInlineScriptsAndCompressToolFolders(Map<File, PluginInfo> listOfFolders,  Map<String, List<Map<String,String>>>  inlineScripts ){
+
+        listOfFolders.keySet().parallelStream().each {
+            File subFolder ->
+                long startSingleCompression = System.nanoTime()
+                PluginInfo pInfo = listOfFolders[subFolder]
+                File tempFolder = File.createTempDir();
+                tempFolder.deleteOnExit()
+                FileUtils.copyDirectory(subFolder, tempFolder);
+                // Create files...
+                if (inlineScripts.containsKey(subFolder.getName())) {
+                    inlineScripts[subFolder.getName()].each {
+                        script ->
+                            File file = new File(tempFolder,script.get('inlineScriptName'))
+                            file << script.get('inlineScript')
+                    }
+                }
+
+                // Md5sum from tempFolder
+                String md5sum = RoddyIOHelperMethods.getSingleMD5OfFilesInDirectory(tempFolder);
+                String zipFilename = "cTools_${pInfo.getName()}:${pInfo.getProdVersion()}_${subFolder.getName()}.zip";
+                String zipMD5Filename = zipFilename + "_contentmd5";
+                File tempFile = new File(Roddy.getCompressedAnalysisToolsDirectory(), zipFilename);
+                File zipMD5File = new File(Roddy.getCompressedAnalysisToolsDirectory(), zipMD5Filename);
+                boolean createNew = false;
+                if (!tempFile.exists())
+                    createNew = true;
+
+                if (!zipMD5File.exists() || zipMD5File.text.trim() != md5sum)
+                    createNew = true;
+
+                if (createNew) {
+                    RoddyIOHelperMethods.compressDirectory(tempFolder, tempFile)
+
+                    zipMD5File.withWriter { BufferedWriter bw -> bw.writeLine(md5sum); }
+                }
+
+                String newArchiveMD5 = md5sum;
+                if (tempFile.size() == 0)
+                    logger.severe("The size of archive ${tempFile.getName()} is 0!")
+                synchronized (mapOfPreviouslyCompressedArchivesByFolder) {
+                    mapOfPreviouslyCompressedArchivesByFolder[subFolder] = new CompressedArchiveInfo(tempFile, newArchiveMD5, subFolder);
+                }
+                logger.postSometimesInfo("Compression of ${zipFilename} took ${(System.nanoTime() - startSingleCompression) / 1000000} ms.")
+        };
+    }
+
+    /**
+     * Check if the local file with its md5 sum exists on the remote site otherwise move those files from local to remote site.
+     * @param listOfFolders
+     * @param existingArchives
+     * @param provider
+     * @param context
+     */
+    public void moveCompressedToolFilesToRemoteLocation(Map<File, PluginInfo> listOfFolders, String[] existingArchives, FileSystemAccessProvider provider, ExecutionContext context){
+        File dstCommonExecutionDirectory = context.getCommonExecutionDirectory();
+        File dstAnalysisToolsDirectory = context.getAnalysisToolsDirectory();
+
+        listOfFolders.each {
+            File subFolder, PluginInfo pInfo ->
+                File localFile = mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive;
+                File remoteFile = new File(mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive.getName()[0..-5] + "_" + context.getTimeStampString() + ".zip");
+                String archiveMD5 = mapOfPreviouslyCompressedArchivesByFolder[subFolder].md5
+
+                String foundExisting = null;
+                String subFolderOnRemote = subFolder.getName();
+                for (String line : existingArchives) {
+                    String[] split = line.split(StringConstants.SPLIT_COLON);
+                    String existingFilePath = split[0];
+                    String existingFileMD5 = split[1];
+                    if (split.length == 2) {
+                        existingFilePath = split[0];
+                        existingFileMD5 = split[1];
+                    } else if (split.length == 3) {                   // Newer Roddy version create directories containing version strings (separated by ":")
+                        existingFilePath = split[0] + ":" + split[1];
+                        existingFileMD5 = split[2];
+                    } else {
+                        continue;
+                    }
+
+                    if (existingFileMD5.equals(archiveMD5)) {
+                        foundExisting = existingFilePath;
+                        remoteFile = new File(remoteFile.getParentFile(), existingFilePath);
+                        subFolderOnRemote = remoteFile.getName().split(StringConstants.SPLIT_UNDERSCORE)[-3];
+                        //TODO This is seriously a hack.
+                        break;
+                    }
+                }
+
+                File analysisToolsServerDir;
+
+                // Check, if there is a zip file available and if the zip file is uncompressed.
+                if (foundExisting) {
+                    analysisToolsServerDir = new File(dstCommonExecutionDirectory, "/dir_" + foundExisting);
+                    File remoteZipFile = new File(dstCommonExecutionDirectory, remoteFile.getName());
+                    if (!provider.directoryExists(analysisToolsServerDir)) {
+                        //Now we may assume, that the file was not uncompressed!
+                        //Check if the zip file exists. If so, uncompress it.
+                        if (provider.fileExists(remoteZipFile)) {
+                            // Unzip the file again. foundExisting stays true
+                            GString str = RoddyIOHelperMethods.getCompressor().getDecompressionString(remoteZipFile, analysisToolsServerDir, analysisToolsServerDir);
+                            getInstance().execute(str, true);
+                            provider.setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.getAbsolutePath()), context);
+                        } else {
+                            // Uh Oh, the file is not existing, the directory is not existing! Copy again and unzip
+                            foundExisting = false;
+                        }
+                    }
+                }
+
+                if (foundExisting) {
+                    //remoteFile.delete(); //Don't need that anymore
+                    analysisToolsServerDir = new File(dstCommonExecutionDirectory, "/dir_" + foundExisting);
+                    logger.postSometimesInfo("Skipping copy of file ${remoteFile.getName()}, a file with the same md5 was found.")
+                } else {
+
+                    analysisToolsServerDir = new File(dstCommonExecutionDirectory, "/dir_" + remoteFile.getName())
+                    provider.checkDirectory(dstCommonExecutionDirectory, context, true);
+                    provider.checkDirectory(analysisToolsServerDir, context, true);
+                    provider.copyFile(localFile, new File(dstCommonExecutionDirectory, remoteFile.getName()), context);
+                    provider.checkFile(context.getFileForAnalysisToolsArchiveOverview(), true, context);
+                    provider.appendLineToFile(true, context.getFileForAnalysisToolsArchiveOverview(), "${remoteFile.getName()}:${archiveMD5}", true);
+
+                    GString str = RoddyIOHelperMethods.getCompressor().getDecompressionString(new File(dstCommonExecutionDirectory, remoteFile.getName()), analysisToolsServerDir, analysisToolsServerDir);
+                    getInstance().execute(str, true);
+                    provider.setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.getAbsolutePath()), context);
+                    if (!provider.directoryExists(analysisToolsServerDir))
+                        context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND.expand("The central archive ${analysisToolsServerDir.absolutePath} was not created!"))
+
+                }
+                provider.checkDirectory(dstAnalysisToolsDirectory, context, true);
+                def linkCommand = "ln -s ${analysisToolsServerDir.getAbsolutePath()}/${subFolderOnRemote} ${dstAnalysisToolsDirectory.absolutePath}/${subFolder.getName()}"
+                getInstance().execute(linkCommand, true);
         }
     }
 
