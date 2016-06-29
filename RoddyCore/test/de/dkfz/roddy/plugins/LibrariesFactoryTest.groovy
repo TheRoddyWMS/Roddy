@@ -3,6 +3,7 @@ package de.dkfz.roddy.plugins
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.tools.RuntimeTools
+import groovy.transform.TypeCheckingMode
 import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.junit.Test
@@ -62,7 +63,7 @@ public class LibrariesFactoryTest {
     /**
      * Keeps all available plugins which were created with the help of the mapWithTestPlugins map
      */
-    private static Map<String, Map<String, PluginInfo>> mapOfAvailablePlugins
+    private static PluginInfoMap mapOfAvailablePlugins
 
     public static TemporaryFolder pluginsBaseDir = new TemporaryFolder();
 
@@ -72,6 +73,7 @@ public class LibrariesFactoryTest {
     }
 
     @BeforeClass
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public static void setupTestDataForPluginQueueTests() {
 
         pluginsBaseDir.create();
@@ -131,7 +133,7 @@ public class LibrariesFactoryTest {
         assert mapOfAvailablePlugins["B"]["1.0.3-0"]?.previousInChain == mapOfAvailablePlugins["B"]["1.0.2-2"] && mapOfAvailablePlugins["B"]["1.0.3-0"]?.previousInChainConnectionType == PluginInfo.PluginInfoConnection.EXTENSION
     }
 
-    public static Map<String, Map<String, PluginInfo>> callLoadMapOfAvailablePlugins(List<File> additionalPluginDirectories = []) {
+    public static PluginInfoMap callLoadMapOfAvailablePlugins(List<File> additionalPluginDirectories = []) {
         List<File> pluginDirectories = [new File(Roddy.getApplicationDirectory(), "/dist/plugins/")]
         pluginDirectories += additionalPluginDirectories
 

@@ -4,20 +4,14 @@ import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
-import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.validation.XSDValidator
 import de.dkfz.roddy.execution.io.MetadataTableFactory;
-import de.dkfz.roddy.plugins.LibrariesFactory;
-import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
-import de.dkfz.roddy.tools.Tuple2
+import de.dkfz.roddy.plugins.LibrariesFactory
+import de.dkfz.roddy.plugins.PluginInfo
+import de.dkfz.roddy.plugins.PluginInfoMap
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map
+import java.lang.reflect.InvocationTargetException
 
 import static de.dkfz.roddy.config.ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY
 import static de.dkfz.roddy.config.ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY;
@@ -51,7 +45,7 @@ public class ProjectFactory {
      * @param icc
      * @return
      */
-    public Project loadConfiguration(InformationalConfigurationContent icc) {
+    public static Project loadConfiguration(InformationalConfigurationContent icc) {
         if (icc.type == Configuration.ConfigurationType.PROJECT) {
             ProjectConfiguration pc = (ProjectConfiguration) ConfigurationFactory.getInstance().loadConfiguration(icc);
             return loadConfiguration(pc);
@@ -68,7 +62,7 @@ public class ProjectFactory {
      * @param configuration
      * @return
      */
-    public Project loadConfiguration(ProjectConfiguration configuration) {
+    public static Project loadConfiguration(ProjectConfiguration configuration) {
         List<Project> subProjects = new LinkedList<Project>();
         List<Analysis> analyses = new LinkedList<Analysis>();
 
@@ -103,7 +97,7 @@ public class ProjectFactory {
         }
     }
 
-    public Analysis loadAnalysisConfiguration(String analysisName, Project project, AnalysisConfiguration configuration) {
+    public static Analysis loadAnalysisConfiguration(String analysisName, Project project, AnalysisConfiguration configuration) {
         if (configuration == null)
             return null;
 
@@ -137,52 +131,57 @@ public class ProjectFactory {
     }
 
     /**
+     * There is some code duplication in this method and I do not actually like it. It has to be refactored for future times.
+     * @return
+     */
+    public static String getPluginRoddyAPILevel(String configurationIdentifier) {
+        String projectID; String analysisID;
+        def res = extractProjectIDAndAnalysisID(configurationIdentifier)
+        projectID = res[0]; analysisID = res[1]
+
+        if (analysisID == null) return null; //Return null (which needs to be checked then) because an auto id is not possible.
+
+        String fullAnalysisID = getFullAnalysisID(projectID, analysisID)
+
+        LibrariesFactory librariesFactory = LibrariesFactory.initializeFactory();
+
+        String pluginString; List<AnalysisImportKillSwitch> killSwitches;
+        res = dissectFullAnalysisID(fullAnalysisID)
+        pluginString = res[0];
+
+        PluginInfoMap mapOfPlugins = librariesFactory.loadMapOfAvailablePluginsForInstance();
+        PluginInfo pinfo = mapOfPlugins.getPluginInfoWithPluginString(pluginString);
+        return pinfo.getRoddyAPIVersion();
+    }
+
+    /**
      * Load an analysis with a set project/analysis identifier.
      *
      * @param configurationIdentifier Something like [project.subproject.subproject]@[analysisID] where analysisID will be used to find the correct analysis.
      * @return An analysis object containing linking a project and an analysis configuration.
      */
-    public Analysis loadAnalysis(String configurationIdentifier) {
+    public static Analysis loadAnalysis(String configurationIdentifier) {
 
-        String[] splitProjectAnalysis = configurationIdentifier.split(StringConstants.SPLIT_AT);
-        String projectID = splitProjectAnalysis[0];
-        if (splitProjectAnalysis.length == 1) {
-            logger.postAlwaysInfo("There was no analysis specified for configuration " + splitProjectAnalysis[0] + "\n\t Please specify the configuration string as [configuration_id]@[analysis_id].");
-            return null;
-        }
+        String projectID; String analysisID;
+        def res = extractProjectIDAndAnalysisID(configurationIdentifier)
+        projectID = res[0]; analysisID = res[1]
 
-        String analysisID = splitProjectAnalysis[1];
+        if (analysisID == null) return null;
 
-        InformationalConfigurationContent iccProject = loadAndValidateProjectICC(projectID);
+        String fullAnalysisID = getFullAnalysisID(projectID, analysisID)
 
-        String fullAnalysisID = loadFullAnalysisID(iccProject, analysisID);
-
-
-        LibrariesFactory.initializeFactory();
+        LibrariesFactory librariesFactory = LibrariesFactory.initializeFactory();
         ConfigurationFactory fac = ConfigurationFactory.getInstance();
-
-
-        String[] splitEntries = fullAnalysisID?.split("[:][:]");
-
-        // If the plugin is set, find "parent" plugins with the proper version.
-        String pluginPart = splitEntries?.find { String part -> part.startsWith("useplugin") }
-
-        // Get kill switches from the fullAnalysisID.
-        String[] killSwitchKeyVal = splitEntries?.find { String part -> part.startsWith("killswitches") }.split(StringConstants.EQUALS)
-        List<AnalysisImportKillSwitch> killSwitches;
-        if (killSwitchKeyVal.size() == 2) {
-            killSwitches = killSwitchKeyVal[1]?.split(StringConstants.SPLIT_COMMA)?.collect { it as AnalysisImportKillSwitch } as List;
-        } else {
-            killSwitches = new LinkedList<AnalysisImportKillSwitch>()
-        }
 
         boolean pluginsAreLoaded = false;
 
-        def librariesFactory = LibrariesFactory.getInstance()
-        if (pluginPart && pluginPart.size() > "useplugin=".size()) {
-            // Extract the plugin and its version.
-            String pluginStr = pluginPart.split("[=]")[1]
-            pluginsAreLoaded = librariesFactory.resolveAndLoadPlugins(pluginStr);
+        String pluginString; List<AnalysisImportKillSwitch> killSwitches;
+        res = dissectFullAnalysisID(fullAnalysisID)
+        pluginString = res[0];
+        killSwitches = res[1] as List<AnalysisImportKillSwitch>;
+
+        if (pluginString) {
+            pluginsAreLoaded = librariesFactory.resolveAndLoadPlugins(pluginString);
         }
 
         // If no plugin is set, load all libraries with the settings from the ini file
@@ -256,6 +255,48 @@ public class ProjectFactory {
             MetadataTableFactory.getTable(analysis);
             return analysis;
         }
+    }
+
+    private static List dissectFullAnalysisID(String fullAnalysisID) {
+        String[] splitEntries = fullAnalysisID.split("[:][:]");
+
+        // If the plugin is set, find "parent" plugins with the proper version.
+        String pluginPart = splitEntries?.find { String part -> part.startsWith("useplugin") }
+        String pluginStr = null;
+
+        if (pluginPart && pluginPart.size() > "useplugin=".size()) {
+            // Extract the plugin and its version.
+            pluginStr = pluginPart.split("[=]")[1]
+        }
+
+        // Get kill switches from the fullAnalysisID.
+        String[] killSwitchKeyVal = splitEntries?.find { String part -> part.startsWith("killswitches") }.split(StringConstants.EQUALS)
+        List<AnalysisImportKillSwitch> killSwitches;
+        if (killSwitchKeyVal.size() == 2) {
+            killSwitches = killSwitchKeyVal[1]?.split(StringConstants.SPLIT_COMMA)?.collect { it as AnalysisImportKillSwitch } as List;
+        } else {
+            killSwitches = new LinkedList<AnalysisImportKillSwitch>()
+        }
+        [pluginStr, killSwitches]
+    }
+
+    private static String getFullAnalysisID(String projectID, String analysisID) {
+        InformationalConfigurationContent iccProject = loadAndValidateProjectICC(projectID);
+
+        String fullAnalysisID = loadFullAnalysisID(iccProject, analysisID);
+        fullAnalysisID
+    }
+
+    public static List extractProjectIDAndAnalysisID(String configurationIdentifier) {
+        String[] splitProjectAnalysis = configurationIdentifier.split(StringConstants.SPLIT_AT);
+        String projectID = splitProjectAnalysis[0];
+        if (splitProjectAnalysis.length == 1) {
+            logger.postAlwaysInfo("There was no analysis specified for configuration ${projectID}\n\t Please specify the configuration string as [configuration_id]@[analysis_id].");
+            return [null, null];
+        }
+
+        String analysisID = splitProjectAnalysis[1];
+        [projectID, analysisID]
     }
 
     public static InformationalConfigurationContent loadAndValidateProjectICC(String projectID) {

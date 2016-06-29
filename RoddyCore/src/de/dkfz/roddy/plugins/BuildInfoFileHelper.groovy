@@ -49,8 +49,6 @@ public class BuildInfoFileHelper {
 
         if (invalid)
             logger.postAlwaysInfo("There are invalid entries in file buildinfo.txt for plugin ${pluginName}:\n  " + invalid.join("\n "));
-
-//            assert entries[BUILDINFO_RUNTIME_GROOVYVERSION].findIn
     }
 
     /** This constructor is the "real" constructor **/

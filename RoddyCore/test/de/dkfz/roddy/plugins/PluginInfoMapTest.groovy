@@ -1,0 +1,92 @@
+package de.dkfz.roddy.plugins;
+
+import org.junit.Test;
+
+import static org.junit.Assert.*;
+
+/**
+ * Created by heinold on 27.06.16.
+ */
+@groovy.transform.CompileStatic
+public class PluginInfoMapTest {
+
+    private PluginInfoMap assemblePluginInfoMap() {
+        return new PluginInfoMap([
+                "BasePlugin": [
+                        "1.0.1"  : new PluginInfo("BasePlugin", null, null, null, "1.0.1", "2.3", "1.8", "2.4", null),
+                        "1.0.2"  : new PluginInfo("BasePlugin", null, null, null, "1.0.2", "2.3", "1.8", "2.4", null),
+                        "current": new PluginInfo("BasePlugin", null, null, null, "current", "2.3", "1.8", "2.4", null),
+                ] as Map<String, List<PluginInfo>>,
+                "TestPlugin": [
+                        "1.0.1"  : new PluginInfo("TestPlugin", null, null, null, "1.0.1", "2.3", "1.8", "2.4", null),
+                        "1.0.2"  : new PluginInfo("TestPlugin", null, null, null, "1.0.2", "2.3", "1.8", "2.4", null),
+                        "current": new PluginInfo("TestPlugin", null, null, null, "current", "2.3", "1.8", "2.4", null),
+                ] as Map<String, List<PluginInfo>>
+        ] );
+    }
+
+    @Test(expected = RuntimeException)
+    public void testGetPluginInfoWithDamagedPluginString() {
+        PluginInfoMap pim = assemblePluginInfoMap();
+        pim.getPluginInfoWithPluginString("BasePlugin:1.0.1:11")
+    }
+
+    @Test
+    public void testGetPluginInfoByPluginString() {
+        PluginInfoMap pim = assemblePluginInfoMap();
+        assert null != pim.getPluginInfoWithPluginString("BasePlugin:1.0.1")
+        assert null != pim.getPluginInfoWithPluginString("BasePlugin:current")
+        assert null != pim.getPluginInfoWithPluginString("BasePlugin") && pim.getPluginInfoWithPluginString("BasePlugin").getProdVersion() == "current"
+    }
+
+    @Test(expected = RuntimeException)
+    public void testGetPluginInfoWithMissingPluginEntry() {
+        PluginInfoMap pim = assemblePluginInfoMap();
+        pim.getPluginInfo("NewPlugin", "1.0.0")
+    }
+
+    @Test(expected = RuntimeException)
+    public void testGetPluginInfoWithMissingVersionEntry() {
+        PluginInfoMap pim = assemblePluginInfoMap();
+        pim.getPluginInfo("BasePlugin", "1.0.0")
+    }
+
+    @Test
+    public void testGetPluginInfo() {
+        PluginInfoMap pim = assemblePluginInfoMap();
+        assert null != pim.getPluginInfo("BasePlugin", "1.0.1")
+        assert null != pim.getPluginInfo("BasePlugin", "1.0.2")
+        assert null != pim.getPluginInfo("BasePlugin", "current")
+        assert null != pim.getPluginInfo("BasePlugin", null) && pim.getPluginInfo("BasePlugin", null).getProdVersion() == "current"
+    }
+
+    @Test
+    public void testCheckExistence() {
+        PluginInfoMap pim = assemblePluginInfoMap();
+        assert !pim.checkExistence("NewPlugin", "1.0.0") //Non-existing plugin
+        assert !pim.checkExistence("BasePlugin", "1.0.0") //Non-existing version
+        assert pim.checkExistence("BasePlugin", "1.0.1") //Existing plugin and version
+        assert pim.checkExistence("BasePlugin", null) //Existing plugin and unset version (null)
+    }
+
+    @Test
+    public void testSize() {
+        assert assemblePluginInfoMap().size() == 2;
+    }
+
+    @Test
+    public void testGetAt(){
+        // Test, if the access is available.
+        assert assemblePluginInfoMap()["BasePlugin"].size() > 0;
+        // In some cases, groovyc told me, that it does not know about the type and made an inherent cast to Object.
+        // Without the type, nothing like size() or getAt() will work.
+        // This is a groovy specific error and this is the test for it. It is strange somehow :/
+        assert assemblePluginInfoMap()["BasePlugin"].size() + 1 > 0;
+    }
+
+    @Test
+    public void testAsBoolean() {
+        assert assemblePluginInfoMap() == true;
+        assert new PluginInfoMap(null) == false;
+    }
+}

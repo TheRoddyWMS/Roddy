@@ -349,6 +349,7 @@ public class Roddy {
     }
 
     public static boolean getFeatureToggleValue(AvailableFeatureToggles toggle) {
+        if (featureToggleConfig == null) return toggle.defaultValue;
         return RoddyConversionHelperMethods.toBoolean(featureToggleConfig.getProperty(toggle.name(), null), toggle.defaultValue);
     }
 
@@ -615,12 +616,14 @@ public class Roddy {
         List<File> folders = loadFolderListFromConfiguration(RoddyStartupOptions.pluginDirectories, Constants.APP_PROPERTY_PLUGIN_DIRECTORIES);
 
         // TODO For backward compatibility the following plugin folders will be used in an hardcoded way
-        File pFolder = RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "plugins");
-        File pFolder2 = RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins");
-        File pFolder3 = RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins_2.49plus");
-        if (pFolder.exists()) folders.add(pFolder);
-        if (pFolder2.exists()) folders.add(pFolder2);
-        if (pFolder3.exists()) folders.add(pFolder3);
+        for (File folder : Arrays.asList(
+                RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "plugins"),
+                RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins"),
+                RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins_2.49plus"),
+                RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins_R2.3")
+        )) {
+            if (folder.exists() && !folders.contains(folder)) folders.add(folder);
+        }
         return folders;
     }
 

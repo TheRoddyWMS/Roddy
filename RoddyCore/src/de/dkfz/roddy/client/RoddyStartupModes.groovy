@@ -44,6 +44,8 @@ public enum RoddyStartupModes {
 
     listdatasets(SCOPE_FULL, [useconfig]),
 
+    autoselect(SCOPE_REDUCED, [useconfig]),
+
     run(SCOPE_FULL, [test, useconfig, verbositylevel, debugOptions, waitforjobs, useiodir, disabletrackonlyuserjobs, trackonlystartedjobs, resubmitjobonerror, autosubmit, autocleanup, run, dontrun]),
 
     rerun(SCOPE_FULL, [test, run, dontrun, useconfig, verbositylevel, debugOptions, waitforjobs, useiodir, disabletrackonlyuserjobs, trackonlystartedjobs, resubmitjobonerror, autosubmit, autocleanup] as List<RoddyStartupOptions>),

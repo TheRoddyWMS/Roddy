@@ -2,7 +2,10 @@
 
 cd `dirname $0`
 
+
+
 parm1=${1-}
+
 
 # Call some scripts before other steps start.
 if [[ "$parm1" == "prepareprojectconfig" ]]; then
