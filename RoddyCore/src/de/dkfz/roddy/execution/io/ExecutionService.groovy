@@ -422,7 +422,7 @@ public abstract class ExecutionService extends CacheProvider {
 
     /**
      * Copy and link analysis tools folders to the target analysis tools directory. Analysis tools folder names must be unique over all plugins.
-     * However this is not enforced.qq
+     * However this is not enforced.
      * @param context
      */
     private void copyAnalysisToolsForContext(ExecutionContext context) {
@@ -453,23 +453,17 @@ public abstract class ExecutionService extends CacheProvider {
                     cfg.getConfigurationValues().add(new ConfigurationValue(basepathConfigurationID, RoddyIOHelperMethods.assembleLocalPath(dstExecutionDirectory, "analysisTools", bPathID).getAbsolutePath(), "string"));
             }
 
-            Map<String, List<Map<String,String>>> inlineScripts = [:]
+            Map<String, List<Map<String,String>>> mapOfInlineScripts = [:]
 
             for (ToolEntry tool in cfg.getTools().allValuesAsList) {
                 if (tool.hasInlineScript()) {
-                    if (inlineScripts.containsKey(tool.basePathId)){
-                        inlineScripts.get(tool.basePathId).add(["inlineScript":tool.getInlineScript(),"inlineScriptName":tool.getInlineScriptName()])
-                    }else{
-                        inlineScripts.put(tool.basePathId,[])
-                        inlineScripts.get(tool.basePathId).add(["inlineScript":tool.getInlineScript(),"inlineScriptName":tool.getInlineScriptName()])
-                    }
-
+                    mapOfInlineScripts.get(tool.basePathId, []) << ["inlineScript":tool.getInlineScript(),"inlineScriptName":tool.getInlineScriptName()]
                 }
             }
 
             long startParallelCompression = System.nanoTime()
-            writeInlineScriptsAndCompressToolFolders(listOfFolders, inlineScripts)
-            logger.postSometimesInfo("Overall tool compression took ${(System.nanoTime() - startParallelCompression) / 1000000} ms.");
+            writeInlineScriptsAndCompressToolFolders(listOfFolders, mapOfInlineScripts)
+            logger.postRareInfo("Overall tool compression took ${(System.nanoTime() - startParallelCompression) / 1000000} ms.");
 
             // Now check if the local file with its md5 sum exists on the remote site.
             moveCompressedToolFilesToRemoteLocation(listOfFolders,existingArchives,provider,context)
@@ -487,9 +481,9 @@ public abstract class ExecutionService extends CacheProvider {
     /**
      * Add inline scripts and compress existing tool folders to a central location and generate some md5 sums for them.
      * @param listOfFolders
-     * @param inlineScripts
+     * @param mapOfInlineScripts
      */
-    public void writeInlineScriptsAndCompressToolFolders(Map<File, PluginInfo> listOfFolders,  Map<String, List<Map<String,String>>>  inlineScripts ){
+    public void writeInlineScriptsAndCompressToolFolders(Map<File, PluginInfo> listOfFolders,  Map<String, List<Map<String,String>>>  mapOfInlineScripts ){
 
         listOfFolders.keySet().parallelStream().each {
             File subFolder ->
@@ -498,12 +492,12 @@ public abstract class ExecutionService extends CacheProvider {
                 File tempFolder = File.createTempDir();
                 tempFolder.deleteOnExit()
                 FileUtils.copyDirectory(subFolder, tempFolder);
+                logger.postSometimesInfo("Folder ${subFolder.getName()} copied to ${tempFolder.getAbsolutePath()}");
                 // Create files...
-                if (inlineScripts.containsKey(subFolder.getName())) {
-                    inlineScripts[subFolder.getName()].each {
-                        script ->
-                            File file = new File(tempFolder,script.get('inlineScriptName'))
-                            file << script.get('inlineScript')
+                if (mapOfInlineScripts.containsKey(subFolder.getName())) {
+                    mapOfInlineScripts[subFolder.getName()].each {
+                        scriptEntry ->
+                            new File(tempFolder, scriptEntry["inlineScriptName"]) << scriptEntry["inlineScript"]
                     }
                 }
 
@@ -523,8 +517,7 @@ public abstract class ExecutionService extends CacheProvider {
                 if (createNew) {
                     RoddyIOHelperMethods.compressDirectory(tempFolder, tempFile)
 
-                    zipMD5File.withWriter { BufferedWriter bw -> bw.writeLine(md5sum); }
-                }
+                    zipMD5File << md5sum                 }
 
                 String newArchiveMD5 = md5sum;
                 if (tempFile.size() == 0)

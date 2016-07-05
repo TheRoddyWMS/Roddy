@@ -610,50 +610,56 @@ public class ConfigurationFactory {
 
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private void readProcessingTools(NodeChild configurationNode, Configuration config) {
+    public void readProcessingTools(NodeChild configurationNode, Configuration config) {
         Map<String, ToolEntry> toolEntries = config.getTools().getMap();
         for (NodeChild tool in configurationNode.processingTools.tool) {
-            String toolID = tool.@name.text()
             logger.postRareInfo("Processing tool ${toolID}");
-            try {
-                String path = tool.@value.text()
-                String basePathId = tool.@basepath.text()
-                boolean overrideresourcesets = extractAttributeText(tool, "overrideresourcesets", "false").toBoolean();
-                ToolEntry currentEntry = new ToolEntry(toolID, basePathId, path);
-                if (overrideresourcesets)
-                    currentEntry.setOverridesResourceSets();
-                int noOfChildren = tool.children().size();
-                if (noOfChildren > 0) {
-                    List<ToolEntry.ToolParameter> inputParameters = new LinkedList<>();
-                    List<ToolEntry.ToolParameter> outputParameters = new LinkedList<>();
-                    List<ToolEntry.ResourceSet> resourceSets = new LinkedList<>();
-                    for (NodeChild child in tool.children()) {
-                        String cName = child.name();
+            String toolID = tool.@name.text()
+            toolEntries[toolID] = readProcessingTool(tool, config)
+        }
+    }
 
-                        if (cName == "resourcesets") {
-                            for (NodeChild rset in child.rset) {
-                                ToolEntry.ResourceSet tempSet = parseToolResourceSet(rset, config)
-                                if (tempSet)
-                                    resourceSets << tempSet;
-                            }
-                        } else if (cName == "input") {
-                            inputParameters << parseToolParameter(toolID, child);
-                        } else if (cName == "output") {
-                            outputParameters << parseToolParameter(toolID, child);
-                        } else if (cName == "script") {
-                            if (child.@value.text() != ""){
-                                currentEntry.setInlineScript(child.text().trim())
-                                currentEntry.setInlineScriptName(child.@value.text())
-                            }
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    public ToolEntry readProcessingTool(NodeChild tool, Configuration config){
+        try {
+            String toolID = tool.@name.text()
+            String path = tool.@value.text()
+            String basePathId = tool.@basepath.text()
+            boolean overrideresourcesets = extractAttributeText(tool, "overrideresourcesets", "false").toBoolean();
+            ToolEntry currentEntry = new ToolEntry(toolID, basePathId, path);
+            if (overrideresourcesets)
+                currentEntry.setOverridesResourceSets();
+            int noOfChildren = tool.children().size();
+            if (noOfChildren > 0) {
+                List<ToolEntry.ToolParameter> inputParameters = new LinkedList<>();
+                List<ToolEntry.ToolParameter> outputParameters = new LinkedList<>();
+                List<ToolEntry.ResourceSet> resourceSets = new LinkedList<>();
+                for (NodeChild child in tool.children()) {
+                    String cName = child.name();
 
+                    if (cName == "resourcesets") {
+                        for (NodeChild rset in child.rset) {
+                            ToolEntry.ResourceSet tempSet = parseToolResourceSet(rset, config)
+                            if (tempSet)
+                                resourceSets << tempSet;
                         }
+                    } else if (cName == "input") {
+                        inputParameters << parseToolParameter(toolID, child);
+                    } else if (cName == "output") {
+                        outputParameters << parseToolParameter(toolID, child);
+                    } else if (cName == "script") {
+                        if (child.@value.text() != ""){
+                            currentEntry.setInlineScript(child.text().trim().replaceAll( "<!\\[CDATA\\[", "" ).replaceAll( "]]>", "" ))
+                            currentEntry.setInlineScriptName(child.@value.text())
+                        }
+
                     }
-                    currentEntry.setGenericOptions(inputParameters, outputParameters, resourceSets);
                 }
-                toolEntries[toolID] = currentEntry;
-            } catch (Exception ex) {
-                println(ex);
+                currentEntry.setGenericOptions(inputParameters, outputParameters, resourceSets);
             }
+            return currentEntry;
+        } catch (Exception ex) {
+            println(ex);
         }
     }
 
