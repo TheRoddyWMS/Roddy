@@ -46,4 +46,8 @@ public class OnScriptParameterFilenamePattern extends FilenamePattern {
     public String getCalledParameterId() {
         return calledParameterId;
     }
+
+    public String getToolName(){
+        return toolName;
+    }
 }

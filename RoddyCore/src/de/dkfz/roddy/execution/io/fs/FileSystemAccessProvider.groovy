@@ -557,7 +557,7 @@ public class FileSystemAccessProvider extends CacheProvider {
 
     public boolean setDefaultAccessRightsRecursively(File path, ExecutionContext context) {
         if (context == null) {
-            return setAccessRightsRecursively(path, null, null, null)
+            return setAccessRightsRecursively(path, commandSet.getDefaultAccessRightsString(), commandSet.getDefaultAccessRightsString(), getMyGroup())
         } else {
             return setAccessRightsRecursively(path, context.outputDirectoryAccess, context.outputFileAccessRights, context.outputGroupString)
         };
