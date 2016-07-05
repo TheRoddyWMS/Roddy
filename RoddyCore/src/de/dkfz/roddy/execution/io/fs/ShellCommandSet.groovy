@@ -31,6 +31,10 @@ public abstract class ShellCommandSet {
 
     public abstract String getOwnerOfPathCommand(File f);
 
+    public abstract String getCheckForInteractiveConsoleCommand();
+
+    public abstract String getSetPathCommand();
+
     public abstract String getCheckDirectoryCommand(File f);
 
     public abstract String getCheckDirectoryCommand(File file, boolean createMissing, String onCreateAccessRights, String onCreateFileGroup);
@@ -84,4 +88,8 @@ public abstract class ShellCommandSet {
     public abstract ConfigurationConverter getConfigurationConverter();
 
     public abstract String getExecuteScriptCommand(File file);
+
+    public abstract String singleQuote(String text);
+
+    public abstract String doubleQuote(String text);
 }

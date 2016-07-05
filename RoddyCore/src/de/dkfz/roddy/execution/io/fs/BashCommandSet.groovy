@@ -36,19 +36,19 @@ public class BashCommandSet extends ShellCommandSet {
     @Override
     public String getReadabilityTestCommand(File f) {
         String path = f.getAbsolutePath();
-        return "[[ -e ${path} && -r ${path} ]]" + TRUE_OR_FALSE;
+        return "[[ -e ${path} && -r ${path} ]] " + TRUE_OR_FALSE;
     }
 
     @Override
     String getWriteabilityTestCommand(File f) {
         String path = f.getAbsolutePath();
-        return "[[ -e ${path} && -w ${path} ]]" + TRUE_OR_FALSE;
+        return "[[ -e ${path} && -w ${path} ]] " + TRUE_OR_FALSE;
     }
 
     @Override
     public String getExecutabilityTestCommand(File f) {
         String path = f.getAbsolutePath();
-        return "[[ -e ${path} && -x ${path} ]]" + TRUE_OR_FALSE;
+        return "[[ -e ${path} && -x ${path} ]] " + TRUE_OR_FALSE;
     }
 
     @Override
@@ -72,6 +72,19 @@ public class BashCommandSet extends ShellCommandSet {
     @Override
     String getOwnerOfPathCommand(File f) {
         return "stat -c %U ${f.absolutePath}";
+    }
+
+    @Override
+    String getCheckForInteractiveConsoleCommand() {
+        String separator = "\n"
+        StringBuilder builder = new StringBuilder();
+        builder << 'if [ -z "${PS1-}" ]; then' << separator << "\t echo non interactive process!" << separator << "else" << separator << "\t echo interactive process"
+        return builder.toString();
+    }
+
+    @Override
+    String getSetPathCommand() {
+        return '[[ ! ${SET_PATH-} == "" ]] && export PATH=${SET_PATH}'
     }
 
     @Override
@@ -259,5 +272,15 @@ public class BashCommandSet extends ShellCommandSet {
     @Override
     String getExecuteScriptCommand(File file) {
         return "/bin/bash ${file.absolutePath}";
+    }
+
+    @Override
+    String singleQuote(String text) {
+        return "'${text}'"
+    }
+
+    @Override
+    String doubleQuote(String text) {
+        return "\"${text}\""
     }
 }

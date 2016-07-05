@@ -9,6 +9,7 @@ import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextLevel
+import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.knowledge.files.BaseFile
@@ -40,72 +41,9 @@ public class ExecutionServiceTest {
             }
         };
 
-        final RuntimeService mockupRuntimeService = new RuntimeService() {
-            @Override
-            public Map<String, Object> getDefaultJobParameters(ExecutionContext context, String TOOLID) {
-                return null;
-            }
-
-            @Override
-            public String createJobName(ExecutionContext executionContext, BaseFile file, String TOOLID, boolean reduceLevel) {
-                return null;
-            }
-
-            @Override
-            public boolean isFileValid(BaseFile baseFile) {
-                return false;
-            }
-
-            @Override
-            public void releaseCache() {
-
-            }
-
-            @Override
-            File getLoggingDirectory(ExecutionContext context) {
-                return new File("/tmp/RoddyTests/logdir")
-            }
-
-            @Override
-            public boolean initialize() {
-                return false;
-            }
-
-            @Override
-            public void destroy() {
-
-            }
-
-        };
-
         mockupConfig.getConfigurationValues().add(new ConfigurationValue(RuntimeService.RODDY_CENTRAL_EXECUTION_DIRECTORY, "/tmp/roddyCentralDirectory"));
 
-        mockedContext = new ExecutionContext("testuser", null, null, ExecutionContextLevel.UNSET, null, null, null) {
-            @Override
-            public Configuration getConfiguration() {
-                return mockupConfig;
-            }
-
-            @Override
-            public RuntimeService getRuntimeService() {
-                return mockupRuntimeService;
-            }
-
-            @Override
-            Map<String, Object> getDefaultJobParameters(String TOOLID) {
-                return [:];
-            }
-
-            @Override
-            File getExecutionDirectory() {
-                return new File("/tmp/RoddyTests/exec_dir")
-            }
-
-            @Override
-            File getLoggingDirectory() {
-                return new File("tmp/RoddyTests/logdir")
-            }
-        };
+        mockedContext = MockupExecutionContextBuilder.createSimpleContext(ExecutionServiceTest, mockupConfig);
     }
 
     @Test
@@ -114,7 +52,7 @@ public class ExecutionServiceTest {
         // Create a test script which outputs several file paths
         def testFolder = "/tmp/RoddyTests"
         def testScriptPrefix = testFolder + "/RoddyTestScript_ExecutionServiceTest"
-        def testScriptsFolder = new File(testFolder, "exec_dir/analysisTools/RoddyTests")
+        def testScriptsFolder = new File(mockedContext.executionDirectory, "/analysisTools/RoddyTests")
         testScriptsFolder.mkdirs()
         (new File(testFolder)).mkdir()
         File testScript = new File(testScriptsFolder, "RoddyTestScript_ExecutionServiceTest.sh") // TODO This is Linux specific...!
@@ -128,7 +66,7 @@ public class ExecutionServiceTest {
         ExecutionContext context = mockedContext
         Configuration config = context.getConfiguration();
 
-        def scriptsFolder = new File(testFolder, "exec_dir/analysisTools/roddyTools/")
+        def scriptsFolder = new File(mockedContext.executionDirectory, "analysisTools/roddyTools/")
         scriptsFolder.mkdirs()
         def sourceToolpath = config.getSourceToolPath("wrapinScript");
         def targetToolpath = new File(scriptsFolder, sourceToolpath.name)

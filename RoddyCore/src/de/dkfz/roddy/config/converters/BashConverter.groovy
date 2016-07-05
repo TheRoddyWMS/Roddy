@@ -4,12 +4,12 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
-import de.dkfz.roddy.config.ConfigurationFactory
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.ConfigurationValueBundle
 import de.dkfz.roddy.config.InformationalConfigurationContent
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.core.ExecutionContext
+import de.dkfz.roddy.execution.io.fs.BashCommandSet
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
 import groovy.transform.CompileStatic
@@ -23,13 +23,115 @@ import java.util.logging.Level
 @groovy.transform.CompileStatic
 class BashConverter extends ConfigurationConverter {
 
+    final String separator = Constants.ENV_LINESEPARATOR;
+
     //TODO Use a pipeline converter interface with methods like "convertCValues, convertCValueBundles, convertTools"
     @Override
     String convert(ExecutionContext context, Configuration cfg) {
-        final FileSystemAccessProvider provider = FileSystemAccessProvider.getInstance();
-        final String targetSystemNewLineString = provider.getNewLineString();
+        StringBuilder text = createNewDocumentStringBuilder(context, cfg)
+
+        text << appendConfigurationValues(context, cfg)
+
+        text << appendConfigurationValueBundles(context, cfg)
+
+        text << appendToolEntries(context, cfg)
+
+        text << appendDebugVariables(cfg)
+
+        text << appendPathVariables()
+
+        text << separator << "";
+
+        return text.toString();
+    }
+
+    StringBuilder createNewDocumentStringBuilder(ExecutionContext context, Configuration cfg) {
         final String separator = Constants.ENV_LINESEPARATOR;
 
+        StringBuilder text = new StringBuilder();
+        text << "#!/bin/bash" << separator; //Add a shebang line
+
+        //TODO The output umask and the group should be taken from a central location.
+        String umask = context.getUMask();
+        String outputFileGroup = context.getOutputGroupString();
+        boolean processSetUserGroup = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, true);
+        boolean processSetUserMask = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERMASK, true);
+        text << separator << separator << new BashCommandSet().getCheckForInteractiveConsoleCommand() << separator << separator
+        text << separator << "fi" << separator << separator;
+
+        if (processSetUserMask) text << "\t umask " << umask << separator;
+        return text
+    }
+
+    StringBuilder appendConfigurationValues(ExecutionContext context, Configuration cfg) {
+        StringBuilder text = new StringBuilder();
+        Map<String, ConfigurationValue> listOfSortedValues = getConfigurationValuesSortedByDependencies(cfg)
+        for (ConfigurationValue cv : listOfSortedValues.values()) {
+            boolean isValidationRule = cv.id.contains("cfgValidationRule");
+
+            if (isValidationRule) {
+                text << "# Validation rule!: " + cv.toString() << separator;
+                continue;
+            }
+
+            text << convertConfigurationValueToShellScriptLine(cv, context) << separator;
+        }
+        return text;
+    }
+
+    StringBuilder appendConfigurationValueBundles(ExecutionContext context, Configuration cfg) {
+        StringBuilder text = new StringBuilder();
+        Map<String, ConfigurationValueBundle> cvBundles = cfg.getConfigurationValueBundles().getAllValues();
+        for (String bKey : cvBundles.keySet()) {
+            ConfigurationValueBundle bundle = cvBundles[bKey];
+            text << "#<" << bKey << separator;
+            for (String key : bundle.getKeys()) {
+                text << convertConfigurationValueToShellScriptLine(bundle[key], context) << separator;
+            }
+            text << "#>" << bKey << separator;
+        }
+        return text;
+    }
+
+    StringBuilder appendToolEntries(ExecutionContext context, Configuration cfg) {
+        StringBuilder text = new StringBuilder();
+        //Store tools
+        for (ToolEntry te : cfg.getTools().getAllValuesAsList()) {
+            String id = te.getID();
+            String valueName = createVariableName("TOOL_", id);
+            text << valueName << '="' << cfg.getProcessingToolPath(context, id) << '"' << separator;
+        }
+        return text;
+    }
+
+    StringBuilder appendDebugVariables(Configuration cfg) {
+        StringBuilder text = new StringBuilder();
+        text << separator << separator
+
+        for (List l in [
+                [ConfigurationConstants.DEBUG_OPTIONS_USE_PIPEFAIL, true, "set -o pipefail"],
+                [ConfigurationConstants.DEBUG_OPTIONS_USE_VERBOSE_OUTPUT, true, "set -v"],
+                [ConfigurationConstants.DEBUG_OPTIONS_USE_EXECUTE_OUTPUT, true, "set -x"],
+                [ConfigurationConstants.DEBUG_OPTIONS_USE_UNDEFINED_VARIABLE_BREAK, false, "set -u"],
+                [ConfigurationConstants.DEBUG_OPTIONS_USE_EXIT_ON_ERROR, false, "set -e"],
+                [ConfigurationConstants.DEBUG_OPTIONS_PARSE_SCRIPTS, false, "set -n"],
+                [ConfigurationConstants.CVALUE_PROCESS_OPTIONS_QUERY_ENV, false, "env"],
+                [ConfigurationConstants.CVALUE_PROCESS_OPTIONS_QUERY_ID, false, "id"],
+        ]) {
+            if (cfg.getConfigurationValues().getBoolean(l[0] as String, l[1] as Boolean)) text << separator << l[2] as String
+        }
+        return text;
+    }
+
+    StringBuilder appendPathVariables() {
+        StringBuilder text = new StringBuilder();
+
+        //Set a path if necessary.
+        text << separator << new BashCommandSet().getSetPathCommand()
+        return text;
+    }
+
+    Map<String, ConfigurationValue> getConfigurationValuesSortedByDependencies(Configuration cfg) {
         def values = cfg.getConfigurationValues().getAllValuesAsList();
         Map<String, ConfigurationValue> listOfUnsortedValues = [:]
         def listOfSortedValues = new LinkedHashMap<String, ConfigurationValue>();
@@ -67,13 +169,11 @@ class BashConverter extends ConfigurationConverter {
                         notFound << dep;
                 }
 
-                if (LoggerWrapper.isVerbosityHigh() && noOfDependencies > 0) {
-                    println "NOT ACCEPTED: ${cv.id} = ${cv.value}"
-                    for (String dep in notFound) {
-                        println("Not found: ${dep}");
-                    }
+                if (noOfDependencies > 0) {
+                    logger.postRareInfo("CValue not accepted in dependecy resolution round: ${cv.id} = ${cv.value} $separator" + notFound.collect { "Could not resolve: ${it}" }.join(separator));
                     continue;
                 }
+
                 foundValues[cv.id] = cv;
                 listOfSortedValues[cv.id] = cv;
             }
@@ -87,85 +187,12 @@ class BashConverter extends ConfigurationConverter {
                 println "UP: ${cv.id} = ${cv.value}:";
             }
         listOfSortedValues += listOfUnsortedValues;
-
-        StringBuilder text = new StringBuilder();
-        text << "#!/bin/bash" << separator; //Add a shebang line
-
-        //TODO The output umask and the group should be taken from a central location.
-        String umask = context.getUMask();
-        String outputFileGroup = context.getOutputGroupString();
-        boolean processSetUserGroup = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, true);
-        boolean processSetUserMask = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERMASK, true);
-        text << separator << 'if [ -z "${PS1-}" ]; then' << separator << "\t echo non interactive process!" << separator << "else" << separator << "\t echo interactive process" << separator
-        text << separator << "fi" << separator << separator;
-
-        if (processSetUserMask) text << "\t umask " << umask << separator;
-
-        for (ConfigurationValue cv : listOfSortedValues.values()) {
-            boolean isValidationRule = cv.id.contains("cfgValidationRule");
-
-            if (isValidationRule) {
-                text << "# Validation rule!: " + cv.toString() << separator;
-                continue;
-            }
-
-            convertConfigurationValueToShellScriptLine(cv, text, context)
-            text << separator;
-        }
-
-        Map<String, ConfigurationValueBundle> cvBundles = cfg.getConfigurationValueBundles().getAllValues();
-        for (String bKey : cvBundles.keySet()) {
-            ConfigurationValueBundle bundle = cvBundles.get(bKey);
-            text.append("#<").append(bKey).append(separator);
-            for (String key : bundle.getKeys()) {
-                ConfigurationValue cv = bundle.get(key);
-                convertConfigurationValueToShellScriptLine(cv, text, context)
-                text << separator;
-            }
-            text << "#>" << bKey << separator;
-        }
-
-        //Store tools
-        for (ToolEntry te : cfg.getTools().getAllValuesAsList()) {
-            String id = te.getID();
-            String valueName = createVariableName("TOOL_", id);
-            text << valueName << '="' << cfg.getProcessingToolPath(context, id) << '"' << separator;
-        }
-
-        boolean debugPipefail = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.DEBUG_OPTIONS_USE_PIPEFAIL, true);
-        boolean debugVerbose = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.DEBUG_OPTIONS_USE_VERBOSE_OUTPUT, true);
-        boolean debugXecute = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.DEBUG_OPTIONS_USE_EXECUTE_OUTPUT, true);
-        boolean debugUndefVar = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.DEBUG_OPTIONS_USE_UNDEFINED_VARIABLE_BREAK, false);
-        boolean debugExitOnError = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.DEBUG_OPTIONS_USE_EXIT_ON_ERROR, false);
-        boolean debugParseScripts = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.DEBUG_OPTIONS_PARSE_SCRIPTS, false);
-        boolean processQueryEnv = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_QUERY_ENV, false);
-        boolean processQueryID = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_QUERY_ID, false);
-
-        text << separator << separator
-
-        //TODO Convert those following calls to calls to the CommandSet. Otherwise it won't possibly work on different setups.
-        //This is very system specific.
-        if (debugPipefail) text << separator << "set -o pipefail";
-        if (debugVerbose) text << separator << "set -v";
-        if (debugXecute) text << separator << "set -x";
-        if (debugUndefVar) text << separator << "set -u";
-        if (debugExitOnError) text << separator << "set -e";
-        if (debugParseScripts) text << separator << "set -n";
-
-        if (processQueryID) text << separator << "id";
-        if (processQueryEnv) text << separator << "env";
-
-        //text << separator << '[[ ! ${TOOL_RESOLVE_WORKFLOW_DEPENDENCIES-null} -eq null ]] && source ${TOOL_RESOLVE_WORKFLOW_DEPENDENCIES}';
-
-        //Set a path if necessary.
-        text << separator << '[[ ! ${SET_PATH-} == "" ]] && export PATH=${SET_PATH}'
-
-        text << separator << "";
-        return text.toString();
+        return listOfSortedValues
     }
 
     @CompileStatic
-    private void convertConfigurationValueToShellScriptLine(ConfigurationValue cv, StringBuilder text, ExecutionContext context) {
+    StringBuilder convertConfigurationValueToShellScriptLine(ConfigurationValue cv, ExecutionContext context) {
+        StringBuilder text = new StringBuilder();
         if (cv.toString().startsWith("#COMMENT")) {
             text << cv.toString();
         } else {
@@ -182,12 +209,12 @@ class BashConverter extends ConfigurationConverter {
             //TODO Important, this is a serious hack! It must be removed soon
             if (tmp.startsWith("bundledFiles/"))
                 text << Roddy.getApplicationDirectory().getAbsolutePath() << FileSystemAccessProvider.getInstance().getPathSeparator();
-            if(cv.isQuoteOnConversionSet()) text << "'";
-            text << tmp;
-            if(cv.isQuoteOnConversionSet()) text << "'";
+            if (cv.isQuoteOnConversionSet()) text << (new BashCommandSet()).singleQuote(tmp);
+            else
+                text << tmp;
         }
+        return text;
     }
-
 
 
     public void importConfigurationFile(String configurationFile, String usedConfiguration) {
@@ -242,8 +269,6 @@ class BashConverter extends ConfigurationConverter {
 //        writeConfiguration(configuration)
         //        pipelineConfigurationFiles/$
     }
-
-
 
     public Configuration loadShellScript(String configurationFile) {
         if (!configurationFile) {

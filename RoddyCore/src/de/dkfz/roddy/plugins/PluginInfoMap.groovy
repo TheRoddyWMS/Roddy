@@ -40,7 +40,7 @@ class PluginInfoMap {
      * @return
      */
     public boolean asBoolean() {
-        return mapOfPlugins;
+        return mapOfPlugins != null && mapOfPlugins.size() > 0;
     }
 
     /**

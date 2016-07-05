@@ -56,12 +56,7 @@ public class RuntimeServiceTest {
 
         mockupConfig.getConfigurationValues().add(new ConfigurationValue(RuntimeService.RODDY_CENTRAL_EXECUTION_DIRECTORY, "/tmp/roddyCentralDirectory"));
 
-        mockedContext = new ExecutionContext("testuser", null, null, ExecutionContextLevel.UNSET, null, null, null) {
-            @Override
-            public Configuration getConfiguration() {
-                return mockupConfig;
-            }
-        };
+        mockedContext = MockupExecutionContextBuilder.createSimpleContext(RuntimeServiceTest.class, mockupConfig, mockedService);
 
     }
 

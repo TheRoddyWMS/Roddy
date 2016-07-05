@@ -16,7 +16,7 @@ public final class RuntimeTools {
     public static String getRoddyRuntimeVersion() {
         // Get from buildinfo file. If this is not available... don't know... take 2.2. then.
         def lines = getBuildinfoFile().readLines()
-        if(lines)  return lines[0..1].join(".");
+        if (lines) return lines.find { String line -> line.startsWith("Roddy") }.split(StringConstants.SPLIT_EQUALS)[1]
         return "2.2";
     }
 

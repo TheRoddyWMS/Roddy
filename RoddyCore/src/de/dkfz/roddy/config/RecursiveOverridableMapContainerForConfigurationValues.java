@@ -23,6 +23,10 @@ public class RecursiveOverridableMapContainerForConfigurationValues extends Recu
         return get(id, "");
     }
 
+    public ConfigurationValue getAt(String id) {
+        return get(id, "");
+    }
+
     public boolean getBoolean(String id) {
         return getBoolean(id, false);
     }
@@ -33,6 +37,7 @@ public class RecursiveOverridableMapContainerForConfigurationValues extends Recu
 
     /**
      * Returns the value converted to a string or an empty string ("") if the value could not be found.
+     *
      * @param id The id of the value
      * @return "" or the value converted to a string.
      */
@@ -51,6 +56,8 @@ public class RecursiveOverridableMapContainerForConfigurationValues extends Recu
      * @param value
      * @param type
      */
-    public void put(String id, String value, String type) { super.add(new ConfigurationValue(id, value, type)); }
+    public void put(String id, String value, String type) {
+        super.add(new ConfigurationValue(id, value, type));
+    }
 
 }

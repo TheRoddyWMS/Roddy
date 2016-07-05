@@ -30,16 +30,18 @@ public class RuntimeToolsTest {
 
     @Test
     public void testGetBuildinfoFile() {
-        assert RuntimeTools.getBuildinfoFile() == RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current", "buildinfo.txt");
+        assert RuntimeTools.getBuildinfoFile().getAbsolutePath().equals(RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current", "buildinfo.txt").getAbsolutePath());
     }
 
     @Test
     public void testGetCurrentDistFolder() {
-        assert RuntimeTools.getCurrentDistFolder() == RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current");
+        assert RuntimeTools.getCurrentDistFolder().getAbsolutePath().equals(RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current").getAbsolutePath());
     }
 
     @Test
     public void testGetGroovyLibrary() {
-        assert RuntimeTools.getBuildinfoFile() == RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current", "lib", "groovy-all-2.4.5-indy.jar");
+        File gPath = RuntimeTools.getGroovyLibrary();
+        File aPath = RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current", "lib", "groovy-all-2.4.5-indy.jar");
+        assert gPath.getAbsolutePath().equals(aPath.getAbsolutePath());
     }
 }
