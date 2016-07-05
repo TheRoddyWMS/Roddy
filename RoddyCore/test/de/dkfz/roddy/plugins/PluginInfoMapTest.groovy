@@ -86,7 +86,7 @@ public class PluginInfoMapTest {
 
     @Test
     public void testAsBoolean() {
-        assert assemblePluginInfoMap() == true;
-        assert new PluginInfoMap(null) == false;
+        assert assemblePluginInfoMap();
+        assert !(new PluginInfoMap(null));
     }
 }
