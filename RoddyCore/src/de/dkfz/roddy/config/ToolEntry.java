@@ -385,21 +385,27 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         int size = key.ordinal();
 
         ResourceSet first = resourceSets.get(0);
-        if (resourceSets.size() == 1) {
+        if (resourceSets.size() == 1) { // Only one set exists.
             return resourceSets.get(0);
         }
 
         ResourceSet last = resourceSets.get(resourceSets.size() - 1);
-        if (size <= first.getSize().ordinal()) {
+        if (size <= first.getSize().ordinal()) {  // The given key is smaller than the available keys. Return the first set.
             return first;
         }
-        if (size >= last.getSize().ordinal()) {
+        if (size >= last.getSize().ordinal()) {  // The given key is larger than the available keys. Return the last set.
             return last;
         }
-        for (ResourceSet resourceSet : resourceSets) {
+        for (ResourceSet resourceSet : resourceSets) {  // Select the appropriate set
             if (resourceSet.getSize() == key)
                 return resourceSet;
         }
+        //Still no set, take the largest set, which comes after the given ordinal.
+        for(ResourceSet resourceSet : resourceSets) {
+            if(resourceSet.getSize().ordinal() > size)
+                return resourceSet;
+        }
+
         return null;
     }
 
