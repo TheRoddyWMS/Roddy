@@ -1,5 +1,7 @@
 package de.dkfz.roddy.config;
 
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
+
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -126,6 +128,11 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
 
     public void add(V value) {
         this.values.put((K) value.getID(), value);
+    }
+
+    public void addAll(List<V> all) {
+        if(RoddyConversionHelperMethods.isNullOrEmpty(all)) return;
+        for(V it : all) { add(it); }
     }
 
     public int size() {

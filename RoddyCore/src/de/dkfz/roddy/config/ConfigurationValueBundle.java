@@ -33,7 +33,11 @@ public class ConfigurationValueBundle implements RecursiveOverridableMapContaine
         return new LinkedList<>(values.values());
     }
 
-    public ConfigurationValue get(String key) {
+//    public ConfigurationValue get(String key) {
+//        return values.get(key);
+//    }
+
+    public ConfigurationValue getAt(String key) {
         return values.get(key);
     }
 }

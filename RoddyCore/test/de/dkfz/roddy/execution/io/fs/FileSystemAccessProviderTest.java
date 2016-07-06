@@ -3,6 +3,7 @@ package de.dkfz.roddy.execution.io.fs;
 import de.dkfz.roddy.RunMode;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.ExecutionContextLevel;
+import de.dkfz.roddy.core.MockupExecutionContextBuilder;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.LocalExecutionService;
 import org.junit.BeforeClass;
@@ -17,12 +18,9 @@ import static org.junit.Assert.*;
  */
 public class FileSystemAccessProviderTest {
 
-    public static final File outputDirectory = new File("/tmp/testproject");
-
     @BeforeClass
     public static void initializeTests() {
         ExecutionService.initializeService(LocalExecutionService.class, RunMode.CLI);
-        outputDirectory.mkdir();
     }
 
     // TODO Think, how this test can be designed. The method via bash and checks on a group basis. The user is actually ignored...
@@ -37,7 +35,7 @@ public class FileSystemAccessProviderTest {
 
     @Test
     public void testCheckIfAccessRightsCanBeSetToTrue() throws Exception {
-        ExecutionContext mockedContext = new ExecutionContext(System.getProperty("user.name"), null, null, ExecutionContextLevel.UNSET, outputDirectory, outputDirectory, null);
+        ExecutionContext mockedContext = MockupExecutionContextBuilder.createSimpleContext(FileSystemAccessProviderTest.class, null, null);
 
         FileSystemAccessProvider p = new FileSystemAccessProvider();
         assertTrue(p.checkIfAccessRightsCanBeSet(mockedContext));

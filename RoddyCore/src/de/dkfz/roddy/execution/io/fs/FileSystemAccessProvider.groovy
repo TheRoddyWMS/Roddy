@@ -366,9 +366,14 @@ public class FileSystemAccessProvider extends CacheProvider {
      */
     public File getUserDirectory() {
         if (_userHome == null) {
-            String cmd = commandSet.getUserDirectoryCommand();
-            ExecutionResult er = ExecutionService.getInstance().execute(cmd);
-            _userHome = new File(er.resultLines[0]);
+            if (ExecutionService.getInstance().isLocalService()) {
+                String jHomeVar = System.getProperty("user.home");
+                _userHome = new File(jHomeVar)
+            } else {
+                String cmd = commandSet.getUserDirectoryCommand();
+                ExecutionResult er = ExecutionService.getInstance().execute(cmd);
+                _userHome = new File(er.resultLines[0]);
+            }
             fireCacheValueAddedEvent("userHome", _userHome.getAbsolutePath());
         }
         fireCacheValueReadEvent("userHome", -1);

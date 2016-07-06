@@ -54,4 +54,8 @@ class RoddyConversionHelperMethods {
     public static boolean isNullOrEmpty(String string) {
         return !string;
     }
+
+    public static boolean isNullOrEmpty(Collection collection) {
+        return !collection;
+    }
 }

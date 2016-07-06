@@ -108,7 +108,7 @@
         <xs:attribute type="xs:string" name="typeof"/>
         <xs:attribute type="xs:string" name="scriptparameter"/>
         <xs:attribute type="xs:string" name="setby"/>
-        <xs:attribute type="xs:string" name="passas"/>
+        <xs:attribute type="xs:string" name="passas" use="optional"/>
     </xs:complexType>
     <xs:complexType name="outputType" mixed="true">
         <xs:sequence>
@@ -119,6 +119,7 @@
         <xs:attribute type="xs:string" name="typeof" use="optional"/>
         <xs:attribute type="xs:string" name="scriptparameter" use="optional"/>
         <xs:attribute type="xs:string" name="fnpatternselectiontag" use="optional"/>
+        <xs:attribute type="xs:string" name="passas" use="optional"/>
         <xs:attribute type="xs:boolean" name="check" use="optional"/>
     </xs:complexType>
 </xs:schema>

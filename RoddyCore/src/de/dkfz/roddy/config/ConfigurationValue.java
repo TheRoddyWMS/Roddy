@@ -78,9 +78,14 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
 
     private String checkAndCorrectPath(String temp) {
         String curUserPath = (new File("")).getAbsolutePath();
+        String applicationDirectory = Roddy.getApplicationDirectory().getAbsolutePath();
         //TODO Make something like a blacklist. This is not properly handled now. Initially this was done because Java sometimes puts something in front of the file paths.
-        if ((value.startsWith("${") || value.startsWith("$") || value.startsWith("~")) && temp.startsWith(curUserPath)) {
-            temp = temp.substring(curUserPath.length() + 1);
+        if (value.startsWith("${") || value.startsWith("$") || value.startsWith("~") || !value.startsWith("/")) {
+            if (temp.startsWith(applicationDirectory)) {
+                temp = temp.substring(applicationDirectory.length() + 1);
+            } else if (temp.startsWith(curUserPath)) {
+                temp = temp.substring(curUserPath.length() + 1);
+            }
         }
 
         return temp;

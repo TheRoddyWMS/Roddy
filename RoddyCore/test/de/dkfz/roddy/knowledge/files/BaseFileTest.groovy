@@ -3,6 +3,7 @@ package de.dkfz.roddy.knowledge.files
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextLevel
+import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import de.dkfz.roddy.execution.jobs.JobResult
 import de.dkfz.roddy.plugins.LibrariesFactory
 import org.junit.BeforeClass
@@ -22,7 +23,7 @@ public class BaseFileTest {
     @BeforeClass
     public static void setupBaseFileTests() {
         syntheticTestFileClass = LibrariesFactory.generateSyntheticFileClassWithParentClass("TestFileClass", "BaseFile");
-        mockedContext = new ExecutionContext("default", null, null, ExecutionContextLevel.QUERY_STATUS, null, null, null);
+        mockedContext = MockupExecutionContextBuilder.createSimpleContext(BaseFileTest, null);
     }
 
     @Test

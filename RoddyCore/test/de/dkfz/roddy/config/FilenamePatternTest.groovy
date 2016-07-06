@@ -4,6 +4,7 @@ import de.dkfz.roddy.core.Analysis;
 import de.dkfz.roddy.core.DataSet;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.ExecutionContextLevel
+import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.Job
@@ -51,86 +52,7 @@ public class FilenamePatternTest {
             }
         };
 
-        final RuntimeService mockupRuntimeService = new RuntimeService() {
-            @Override
-            public Map<String, Object> getDefaultJobParameters(ExecutionContext context, String TOOLID) {
-                return null;
-            }
-
-            @Override
-            public String createJobName(ExecutionContext executionContext, BaseFile file, String TOOLID, boolean reduceLevel) {
-                return null;
-            }
-
-            @Override
-            public boolean isFileValid(BaseFile baseFile) {
-                return false;
-            }
-
-            @Override
-            public void releaseCache() {
-
-            }
-
-            @Override
-            File getLoggingDirectory(ExecutionContext context) {
-                return new File("/tmp/RoddyTests/logdir")
-            }
-
-            @Override
-            public boolean initialize() {
-                return false;
-            }
-
-            @Override
-            public void destroy() {
-
-            }
-
-        };
-
-        mockedContext = new ExecutionContext("testuser", null, null, ExecutionContextLevel.UNSET, null, null, null) {
-            @Override
-            public Configuration getConfiguration() {
-                return mockupConfig;
-            }
-
-            @Override
-            public RuntimeService getRuntimeService() {
-                return mockupRuntimeService;
-            }
-
-            @Override
-            File getOutputDirectory() {
-                return new File("/tmp/RoddyTests/output")
-            }
-
-            @Override
-            DataSet getDataSet() {
-                return new DataSet(new Analysis("Test", null, null, null, null), "TEST_PID", new File(getOutputDirectory(), "TEST_PID"));
-            }
-
-            @Override
-            Map<String, Object> getDefaultJobParameters(String TOOLID) {
-                return [:];
-            }
-
-            @Override
-            File getExecutionDirectory() {
-                return new File("/tmp/RoddyTests/exec_dir")
-            }
-
-            @Override
-            File getLoggingDirectory() {
-                return new File("tmp/RoddyTests/logdir")
-            }
-
-
-            @Override
-            public String toString() {
-                return "TestContext";
-            }
-        };
+        mockedContext = MockupExecutionContextBuilder.createSimpleContext(FilenamePatternTest, mockupConfig);
 
         testClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass("FilenamePatternTest_testFilenamePatternWithSelectionByToolID", BaseFile.class as Class<FileObject>);
 
