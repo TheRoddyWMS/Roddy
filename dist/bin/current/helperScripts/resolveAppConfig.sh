@@ -17,11 +17,11 @@ function grepFromConfigFile() {
 }
 
 function tryExtractRoddyVersionFromPlugin() {
-  echo $(grepFromConfigFile useRoddyVersion)
+  echo $( getValueFromConfigOrCommandLine useRoddyVersion useRoddyVersion )
 }
 
 function tryExtractPluginIDFromConfig() {
-  local var=$(grepFromConfigFile usePlugin)
+  local var=$( getValueFromConfigOrCommandLine usePlugin usePlugin )
   echo ${var-none}
 }
 
@@ -30,6 +30,7 @@ function setRoddyBinaryVariables() {
   [[ $1 == auto ]] && useRoddyVersion=current && autoSelectRoddy=true
   local numberOfDots=$(grep -o "[.]" <<< "$useRoddyVersion" | wc -l)    # Try find out, if we got an api level input like 2.2 or 2.3
   [[ $numberOfDots == 1 ]] && useRoddyVersion=$(cd $RODDY_DIRECTORY/dist/bin; ls -d $useRoddyVersion* | sort -V | tail -n 1)
+  export activeRoddyVersion=$useRoddyVersion
   RODDY_BINARY_DIR=${RODDY_DIRECTORY}/dist/bin/$useRoddyVersion
   RODDY_BINARY=$RODDY_BINARY_DIR/Roddy.jar
   RODDY_BSCRIPT=$RODDY_BINARY_DIR/roddy.sh
@@ -38,15 +39,18 @@ function setRoddyBinaryVariables() {
 function getValueFromConfigOrCommandLine() {
   local valueNameInCfg=$1
   local valueNameOnCLI=$2
-  local var=$(grepFromConfigFile $valueNameInCfg)
+  local var="none"
+  IFS=""
+  for i in ${fullParameterList[@]}; do
+    if [[ $i == --${valueNameOnCLI}* ]]; then
+      startIndex=$(expr 2 + ${#valueNameOnCLI} + 1)
+      var=${i:$startIndex:800}
+    fi
+  done
   if [[ ${var-none} == none ]]; then
-    for i in $*; do
-      if [[ $i == --${valueNameOnCLI}* ]]; then
-        startIndex=$(expr 2 + ${#valueNameOnCLI} + 1)
-        var=${i:$startIndex:800}
-      fi
-    done
+    local var=$(grepFromConfigFile $valueNameInCfg)
   fi
+  IFS=$OFS
   echo $var
 }
 
@@ -106,10 +110,10 @@ fi
 # If auto selection is enabled, the script tries to identify the proper version from the buildinfo text file of the called plugin.
 # If the plugin is known via ini or via parameter, we can use a fast Bash version to load the roddy version.
 # If it is set in xml... we'll have to call a current Roddy version and see what happens.
-if [[ $autoSelectRoddy == true ]]; then
+if [[ $autoSelectRoddy == true && ! $parm1 == autoselect ]]; then
     echo "Roddy auto selection is active! Using current to determine the version from the selected plugin."
     if [[ ${foundPluginID:-none} != "none" ]]; then
-        echo "A plugin $foundPluginID was set with usePluginVersion, try to figure out the Roddy version with Bash."
+        echo "A plugin $foundPluginID was set with usePluginVersion, will try to figure out the Roddy version with Bash."
         pluginDirectories=$(getValueFromConfigOrCommandLine pluginDirectories pluginDirectories)
 
         # TODO groovy is not yet setup! How can we do this in a convenient way?
@@ -120,16 +124,26 @@ if [[ $autoSelectRoddy == true ]]; then
         foundAPIVersion=$([[ -f $pluginBuildInfo ]] && cat $pluginBuildInfo | grep "^RoddyAPIVersion" | cut -d "=" -f 2 || echo "")
 
     else
-        echo "Going the long way and figure out the Roddy version with the Roddy Java application."
+        echo "Going the long way and figure out the Roddy version with the core application."
         setRoddyBinaryVariables current
-        projectAnalysisParameter=$2
-        foundAPIVersion=$(source $SCRIPTS_DIR/setupRuntimeEnvironment.sh &>/dev/null; 2>&1  ${BASE_DIR}/roddy.sh autoselect $projectAnalysisParameter --useconfig=$customconfigfile | tail -n 1 | cut -d "=" -f 3 )
-        [[ ${abc:-a} == "a" || -n $abc ]] && echo "Could not detect the Roddy API version, falling back to 2.2"
+        foundAPIVersion=$(source $SCRIPTS_DIR/setupRuntimeEnvironment.sh &>/dev/null; 2>&1  ${BASE_DIR}/roddy.sh autoselect $projectAnalysisParameter --useconfig=$customconfigfile --useRoddyVersion=current | grep "Roddy API level for" | tail -n 1 | cut -d "=" -f 3 )
     fi
-    # Fall back to 2.2 (the version before RoddyAPIVersion was introduced.
+
+    # Fall back to 2.2 (the version before RoddyAPIVersion was introduced), if necessary
     foundAPIVersion=${foundAPIVersion:-2.2}
     echo "Selected Roddy API version ${foundAPIVersion}"
     setRoddyBinaryVariables $foundAPIVersion
+    # Replace command line parameter =auto with =x.y.z
+    if [[ ${fullParameterList[@]} == *useRoddyVersion=auto* ]]; then
+      # Replace what is set as a parameter
+      fullParameterList=$(echo $fullParameterList | sed "s/useRoddyVersion=auto/useRoddyVersion=${activeRoddyVersion}/g")
+    else # It is not set or in the ini. So set it now and override everything else.
+      IFS="" fullParameterList=(${fullParameterList[@]} --useRoddyVersion=${activeRoddyVersion})
+    fi
+
+    # Finally, reset the parameter list! This IS necessary to keep backward compatibility!
+    set -- $fullParameterList
+
 fi
 
 # Resolve used groovy and java version

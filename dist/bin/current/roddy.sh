@@ -1,11 +1,7 @@
 #!/bin/bash
 
 cd `dirname $0`
-
-
-
 parm1=${1-}
-
 
 # Call some scripts before other steps start.
 if [[ "$parm1" == "prepareprojectconfig" ]]; then
@@ -129,5 +125,6 @@ elif [[ "$parm1" == "createworkflow" ]]; then
     exit 0
 fi
 
-java -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
-
+IFS=""
+java -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy ${fullParameterList[@]}
+IFS=$OFS
