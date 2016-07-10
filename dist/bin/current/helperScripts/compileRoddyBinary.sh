@@ -12,7 +12,7 @@ echo GroovyVersion=$GROOVY_VERSION >> dist/bin/current/buildinfo.txt
 echo RoddyAPIVersion=`head RoddyCore/buildversion.txt -n 1` >> dist/bin/current/buildinfo.txt
 
 echo "Searching source files"
-test=`find RoddyCore/src/ -type f \( -name "*.groovy" -or -name "*.java"  \)`
+test=`find RoddyCore/src/ RoddyCore/test/ -type f \( -name "*.groovy" -or -name "*.java"  \)`
 
 echo "Searching libraries"
 if [[ ! -f ~/.roddy/jfxlibInfo ]] || [[ ! -f `cat ~/.roddy/jfxlibInfo` ]]; then
