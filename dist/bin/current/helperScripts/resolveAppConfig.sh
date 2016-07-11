@@ -133,17 +133,23 @@ if [[ $autoSelectRoddy == true && ! $parm1 == autoselect ]]; then
     foundAPIVersion=${foundAPIVersion:-2.2}
     echo "Selected Roddy API version ${foundAPIVersion}"
     setRoddyBinaryVariables $foundAPIVersion
+
     # Replace command line parameter =auto with =x.y.z
+    # Store the fullParameterList variable to a new variable to prevent a mess up in Bashs array handling:
+    #   a=`echo ${a[@]} sed 's/d/f/g'`  replaced the 4th parameter in fullParameterList so that:
+    #   a=( a b c d ) would become a=( a b c f b c d )
+    
+    export fullParameterListFinal=""
     if [[ ${fullParameterList[@]} == *useRoddyVersion=auto* ]]; then
       # Replace what is set as a parameter
-      fullParameterList=$(echo $fullParameterList | sed "s/useRoddyVersion=auto/useRoddyVersion=${activeRoddyVersion}/g")
+      fullParameterListFinal=$(echo ${fullParameterList[@]} | sed "s/useRoddyVersion=auto/useRoddyVersion=${activeRoddyVersion}/g")
     else # It is not set or in the ini. So set it now and override everything else.
-      IFS="" fullParameterList=(${fullParameterList[@]} --useRoddyVersion=${activeRoddyVersion})
+      IFS="" fullParameterListFinal=(${fullParameterList[@]} --useRoddyVersion=${activeRoddyVersion})
     fi
 
-    # Finally, reset the parameter list! This IS necessary to keep backward compatibility!
-    set -- $fullParameterList
-
+    # Break here, call Roddy with the new parameter list... Exit afterwards! Get rid of all the s**t which happens when you try to change things... Remember the old lines however!
+    ${BASE_DIR}/roddy.sh ${fullParameterListFinal[@]}
+    exit $?
 fi
 
 # Resolve used groovy and java version
