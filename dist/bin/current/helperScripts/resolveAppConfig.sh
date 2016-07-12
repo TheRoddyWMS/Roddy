@@ -17,6 +17,7 @@ function grepFromConfigFile() {
 }
 
 function tryExtractRoddyVersionFromPlugin() {
+  [[ $parm1 == compile* ]] && echo "current" # Output current in case of compilation
   echo $( getValueFromConfigOrCommandLine useRoddyVersion useRoddyVersion )
 }
 
