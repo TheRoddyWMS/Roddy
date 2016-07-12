@@ -17,6 +17,6 @@ def pluginFolders = []
 
 if (splitPlugin.size() > 1) pluginLine.addAll(splitPlugin[1].split("[,]"))
 pluginLine.each { pl -> pluginFolders.addAll(new File(pl).listFiles().findAll { dir -> dir.isDirectory() }) }
-println(pluginFolders.find { it.name.endsWith(pluginID + (pluginVersion ? "_$pluginVersion" : "")); })
+println(pluginFolders.find { it.name.endsWith(pluginID + ( (pluginVersion && !pluginVersion.equals("current"))? "_$pluginVersion" : "")); })
 
 return
