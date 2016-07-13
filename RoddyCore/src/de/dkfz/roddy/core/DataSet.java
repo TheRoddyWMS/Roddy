@@ -58,6 +58,13 @@ public class DataSet extends InfoObject implements Serializable, ExecutionContex
      */
     private BaseMetadataTable metadataTable;
 
+    public DataSet(Analysis analysis, String id, File outputBaseFolder, BaseMetadataTable tableForDataset) {
+        this(analysis, id, outputBaseFolder);
+        assert tableForDataset != null;
+        this.metadataTable = tableForDataset.subsetByDataset(id);
+        assert metadataTable.listDatasets().size() == 1 && metadataTable.listDatasets().get(0).equals(id);
+    }
+
     public DataSet(Analysis analysis, String id, File outputBaseFolder) {
 
         this.id = id;
@@ -73,6 +80,10 @@ public class DataSet extends InfoObject implements Serializable, ExecutionContex
 
     public Project getProject() {
         return project;
+    }
+
+    public BaseMetadataTable getMetadataTable() {
+        return metadataTable;
     }
 
     /**
