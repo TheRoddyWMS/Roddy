@@ -542,8 +542,8 @@ public class ConfigurationFactory {
             toolName= null
             parameterName = splitResult.first()
         } else if (splitResult.size() == 2){
-            toolName = splitResult.first()
-            parameterName = splitResult.last()
+            toolName = splitResult[0]
+            parameterName = splitResult[1]
 
             if (toolName.equals("[ANY]") || toolName.equals("")) {
                 //only param OR [ANY] tool and param
@@ -613,8 +613,8 @@ public class ConfigurationFactory {
     public void readProcessingTools(NodeChild configurationNode, Configuration config) {
         Map<String, ToolEntry> toolEntries = config.getTools().getMap();
         for (NodeChild tool in configurationNode.processingTools.tool) {
-            logger.postRareInfo("Processing tool ${toolID}");
             String toolID = tool.@name.text()
+            logger.postRareInfo("Processing tool ${toolID}");
             toolEntries[toolID] = readProcessingTool(tool, config)
         }
     }
@@ -649,7 +649,7 @@ public class ConfigurationFactory {
                         outputParameters << parseToolParameter(toolID, child);
                     } else if (cName == "script") {
                         if (child.@value.text() != ""){
-                            currentEntry.setInlineScript(child.text().trim().replaceAll( "<!\\[CDATA\\[", "" ).replaceAll( "]]>", "" ))
+                            currentEntry.setInlineScript(child.text().trim().replaceAll( '<!\\[CDATA\\[', "" ).replaceAll( ']]>', "" ))
                             currentEntry.setInlineScriptName(child.@value.text())
                         }
 

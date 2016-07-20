@@ -400,7 +400,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
 
     public boolean hasInlineScript() {
         if (inlineScript != null )
-                return true;
+            return true;
         else
             return false;
     }

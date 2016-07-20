@@ -481,9 +481,9 @@ public abstract class ExecutionService extends CacheProvider {
     /**
      * Add inline scripts and compress existing tool folders to a central location and generate some md5 sums for them.
      * @param listOfFolders
-     * @param mapOfInlineScripts
+     * @param mapOfInlineScriptsBySubfolder - Map<SubfolderName,ScriptName>
      */
-    public void writeInlineScriptsAndCompressToolFolders(Map<File, PluginInfo> listOfFolders,  Map<String, List<Map<String,String>>>  mapOfInlineScripts ){
+    public void writeInlineScriptsAndCompressToolFolders(Map<File, PluginInfo> listOfFolders,  Map<String, List<Map<String,String>>>  mapOfInlineScriptsBySubfolder ){
 
         listOfFolders.keySet().parallelStream().each {
             File subFolder ->
@@ -494,8 +494,8 @@ public abstract class ExecutionService extends CacheProvider {
                 FileUtils.copyDirectory(subFolder, tempFolder);
                 logger.postSometimesInfo("Folder ${subFolder.getName()} copied to ${tempFolder.getAbsolutePath()}");
                 // Create files...
-                if (mapOfInlineScripts.containsKey(subFolder.getName())) {
-                    mapOfInlineScripts[subFolder.getName()].each {
+                if (mapOfInlineScriptsBySubfolder.containsKey(subFolder.getName())) {
+                    mapOfInlineScriptsBySubfolder[subFolder.getName()].each {
                         scriptEntry ->
                             new File(tempFolder, scriptEntry["inlineScriptName"]) << scriptEntry["inlineScript"]
                     }
@@ -516,8 +516,8 @@ public abstract class ExecutionService extends CacheProvider {
 
                 if (createNew) {
                     RoddyIOHelperMethods.compressDirectory(tempFolder, tempFile)
-
-                    zipMD5File << md5sum                 }
+                    zipMD5File << md5sum
+                }
 
                 String newArchiveMD5 = md5sum;
                 if (tempFile.size() == 0)

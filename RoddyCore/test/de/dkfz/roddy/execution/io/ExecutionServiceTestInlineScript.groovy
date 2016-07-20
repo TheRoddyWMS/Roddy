@@ -23,8 +23,8 @@ import org.junit.Test
  */
 public class ExecutionServiceTestInlineScript {
 
-
     public static ExecutionContext mockedContext;
+    public static Map<File, PluginInfo> listOfFolders = [:]
 
     @BeforeClass
     public static void setupContext() {
@@ -34,22 +34,20 @@ public class ExecutionServiceTestInlineScript {
         ConfigurationFactory.initialize(LibrariesFactory.getInstance().getLoadedPlugins().collect { it -> it.getConfigurationDirectory() })
 
         final Configuration mockupConfig = new Configuration(new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null), ConfigurationFactory.getInstance().getConfiguration("default"))
-
         mockedContext = MockupExecutionContextBuilder.createSimpleContext(ExecutionServiceTest, mockupConfig);
-    }
 
+        ExecutionService.initializeService(LocalExecutionService.class, RunMode.CLI);
 
-    @Test
-    public void testWriteInlineScriptsAndCompressToolFolders() {
-        // Create the definition for it
         Map<File, PluginInfo> sourcePaths = [:];
         for (PluginInfo pluginInfo : LibrariesFactory.getInstance().getLoadedPlugins()) {
             pluginInfo.getToolsDirectories().values().each { sourcePaths[it] = pluginInfo }
         }
+        listOfFolders = sourcePaths.findAll { File it, PluginInfo pInfo -> !it.getName().contains(".svn"); }
+    }
 
-        Map<File, PluginInfo> listOfFolders = sourcePaths.findAll { File it, PluginInfo pInfo -> !it.getName().contains(".svn"); }
+    @Test
+    public void testWriteInlineScriptsAndCompressToolFolders() {
         Configuration cfg = mockedContext.getConfiguration();
-        ExecutionService.initializeService(LocalExecutionService.class, RunMode.CLI);
 
         ToolEntry toolEntry = new ToolEntry("roddyTests", "roddyTests", "");
         toolEntry.getOutputParameters(cfg).add(new ToolEntry.ToolFileGroupParameter(GenericFileGroup, null, [], "TEST", ToolEntry.ToolFileGroupParameter.PassOptions.parameters))
@@ -88,6 +86,51 @@ public class ExecutionServiceTestInlineScript {
                         }
                     }
                     assert hasInlineScript
+                }
+        }
+        assert  hasCompressedFolder
+    }
+
+
+    @Test
+    public void testWriteInlineScriptsAndCompressToolFoldersWithoutInlineScript() {
+        Configuration cfg = mockedContext.getConfiguration();
+
+        ToolEntry toolEntry = new ToolEntry("roddyTests", "roddyTests", "");
+        toolEntry.getOutputParameters(cfg).add(new ToolEntry.ToolFileGroupParameter(GenericFileGroup, null, [], "TEST", ToolEntry.ToolFileGroupParameter.PassOptions.parameters))
+        def inlineScriptName = "testInlineScript.sh"
+        cfg.getTools().add(toolEntry);
+
+        Map<String, List<Map<String,String>>> mapOfInlineScripts = [:]
+
+        for (ToolEntry tool in cfg.getTools().allValuesAsList) {
+            if (tool.hasInlineScript()) {
+                mapOfInlineScripts.get(tool.basePathId, []) << ["inlineScript":tool.getInlineScript(),"inlineScriptName":tool.getInlineScriptName()]
+                assert false
+            }
+        }
+
+        ExecutionService.getInstance().writeInlineScriptsAndCompressToolFolders(listOfFolders,mapOfInlineScripts)
+
+        assert  listOfFolders.size() == 2
+        boolean hasCompressedFolder = false
+        listOfFolders.each {
+            File subFolder, PluginInfo pInfo ->
+                File localCompressedFolder = ExecutionService.getInstance().mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive;
+                assert localCompressedFolder != null
+                if (localCompressedFolder.name.equals("cTools_DefaultPlugin:current_roddyTests.zip")){
+                    hasCompressedFolder = true
+                    boolean hasInlineScript = false
+                    File tempFolder = File.createTempDir();
+                    tempFolder.deleteOnExit()
+                    GString str = RoddyIOHelperMethods.getCompressor().getDecompressionString(localCompressedFolder, null, tempFolder);
+                    ExecutionService.getInstance().execute(str, true);
+                    def files = tempFolder.listFiles()[0].listFiles()
+                    files.each {File file ->
+                        if (file.name.equals(inlineScriptName)){
+                            assert false
+                        }
+                    }
                 }
         }
         assert  hasCompressedFolder
