@@ -197,9 +197,7 @@ public abstract class ExecutionService extends CacheProvider {
                 cmdString = command.toString();
                 storeParameterFile(command);
 
-                //Store away process output if this is a local service.
-                File tmpFile = isLocalService() ? File.createTempFile("roddy_", "_temporaryLogfileStream") : null;
-                OutputStream outputStream = isLocalService() && waitFor && command.isBlockingCommand() ? new FileOutputStream(tmpFile) : null;
+                OutputStream outputStream = createServiceBasedOutputStream(command, waitFor);
 
                 ExecutionResult res;
                 if (run.getExecutionContextLevel() == ExecutionContextLevel.TESTRERUN) {
@@ -210,18 +208,8 @@ public abstract class ExecutionService extends CacheProvider {
                 }
                 command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.OK);
 
-                String exID = "none";
-                if (isLocalService() && command.isBlockingCommand()) {
-                    command.setExecutionID(JobManager.getInstance().createJobDependencyID(command.getJob(), res.processID));
+                handleServiceBasedJobExitStatus(command, res, outputStream);
 
-                    File logFile = command.getExecutionContext().getRuntimeService().getLogFileForCommand(command)
-                    FileSystemAccessProvider.getInstance().moveFile(tmpFile, logFile);
-                } else if (res.successful) {
-                    exID = JobManager.getInstance().parseJobID(res.processID);
-                    command.setExecutionID(JobManager.getInstance().createJobDependencyID(command.getJob(), exID));
-                    JobManager.getInstance().storeJobStateInfo(command.getJob());
-                }
-                logger.postSometimesInfo("${exID}, ${cmdString}");
                 command.getExecutionContext().addCalledCommand(command);
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, ex.toString());
@@ -235,6 +223,18 @@ public abstract class ExecutionService extends CacheProvider {
             logger.postSometimesInfo("Skipping command " + command + " for reason: " + reason);
         }
         fireCommandExecutedEvent(command);
+    }
+
+    protected FileOutputStream createServiceBasedOutputStream(Command command, boolean waitFor) { return null; }
+
+    protected String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, FileOutputStream outputStream) {
+        String exID = "none";
+        if (res.successful) {
+            exID = JobManager.getInstance().parseJobID(res.processID);
+            command.setExecutionID(JobManager.getInstance().createJobDependencyID(command.getJob(), exID));
+            JobManager.getInstance().storeJobStateInfo(command.getJob());
+        }
+        return exID;
     }
 
     public static void storeParameterFile(Command command) {
