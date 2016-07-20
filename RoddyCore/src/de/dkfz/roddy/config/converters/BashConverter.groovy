@@ -74,7 +74,7 @@ class BashConverter extends ConfigurationConverter {
                 continue;
             }
 
-            text << convertConfigurationValueToShellScriptLine(cv, context) << separator;
+            text << convertConfigurationValue(cv, context) << separator;
         }
         return text;
     }
@@ -86,7 +86,7 @@ class BashConverter extends ConfigurationConverter {
             ConfigurationValueBundle bundle = cvBundles[bKey];
             text << "#<" << bKey << separator;
             for (String key : bundle.getKeys()) {
-                text << convertConfigurationValueToShellScriptLine(bundle[key], context) << separator;
+                text << convertConfigurationValue(bundle[key], context) << separator;
             }
             text << "#>" << bKey << separator;
         }
@@ -149,7 +149,8 @@ class BashConverter extends ConfigurationConverter {
                 println "Pass ${i}, left ${listOfUnsortedValues.values().size()}";
             Map<String, ConfigurationValue> foundValues = [:];
 
-            //TODO There must be a central blacklist for those things.
+            //TODO Add command manager specific arguments to the command manager class, leave central things here.
+            //TODO How to figure out, where to put things like pid sample...
             List<String> valueBlacklist = ["PBS_JOBID", "PBS_ARRAYID", 'PWD', "PID", "pid", "sample", "run", "projectName", "testDataOptionID", "analysisMethodNameOnInput", "analysisMethodNameOnOutput"
                                            , "outputAnalysisBaseDirectory", "inputAnalysisBaseDirectory", "executionTimeString"]
             for (ConfigurationValue cv in listOfUnsortedValues.values()) {
@@ -190,13 +191,25 @@ class BashConverter extends ConfigurationConverter {
         return listOfSortedValues
     }
 
+    @Override
     @CompileStatic
-    StringBuilder convertConfigurationValueToShellScriptLine(ConfigurationValue cv, ExecutionContext context) {
+    StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context) {
         StringBuilder text = new StringBuilder();
         if (cv.toString().startsWith("#COMMENT")) {
             text << cv.toString();
         } else {
             String tmp;
+            if (cv.type && cv.type.toLowerCase() == "basharray") {
+                // Check, if it is already quoted.
+                // If so, take the existing quotes.
+                if (cv.value.startsWith("'") || cv.value.startsWith('"'))
+                    return new StringBuilder("declare -x    ${cv.id}=${cv.toString()}".toString());
+                // If not, quote
+                return new StringBuilder("declare -x    ${cv.id}=\"${cv.toString()}\"".toString());
+            } else if (cv.type && cv.type.toLowerCase() == "integer") {
+                return new StringBuilder("declare -x -i ${cv.id}=${cv.toString()}".toString());
+            }
+
             if (cv.type && cv.type.toLowerCase() == "path")
                 tmp = "${cv.toFile(context)}".toString();
             else {
@@ -205,69 +218,13 @@ class BashConverter extends ConfigurationConverter {
                 else
                     tmp = "${cv.toString()}".toString();
             }
-            text << "${cv.id}=";
+            text << "declare -x    ${cv.id}=";
             //TODO Important, this is a serious hack! It must be removed soon
             if (tmp.startsWith("bundledFiles/"))
                 text << Roddy.getApplicationDirectory().getAbsolutePath() << FileSystemAccessProvider.getInstance().getPathSeparator();
-            if (cv.isQuoteOnConversionSet()) text << (new BashCommandSet()).singleQuote(tmp);
-            else
-                text << tmp;
+            text << tmp;
         }
         return text;
-    }
-
-
-    public void importConfigurationFile(String configurationFile, String usedConfiguration) {
-//        if (!usedConfiguration) {
-//            throw new RuntimeException("Configuration has to be specified correctly!")
-//        }
-//        String[] cfgPath = usedConfiguration.split("\\.")
-//        int depth = cfgPath.length
-//
-//        if (depth > 3 || depth == 0) {
-//            throw new RuntimeException("Configuration path is not valid. Only three levels are allowed seperated by [.]")
-//        }
-//
-//        String workflow = cfgPath[0]
-//
-//        Configuration configuration = loadConfiguration(cfgPath[0])
-//        if (!configuration) {
-//            throw new RuntimeException("Base configuration ${cfgPath[0]} is not available!")
-//        }
-//
-//        Configuration temp = loadShellScript(configurationFile)
-//        Map<String, ConfigurationValue> basePaths = [:]
-//        Map<String, ToolEntry> toolEntries = [:]
-//        Map<String, ConfigurationValue> cValues = temp.getConfigurationValues()
-//
-//        switch (depth) {
-//            case 1: L: {
-//                configuration.setConfigurationValues(cValues)
-//                break;
-//            }
-//            case 2: L: {
-//                String project = cfgPath[1]
-//                if (!configuration.hasSubConfiguration(project)) {
-//                    configuration.addSubConfiguration(new Configuration(configuration, project, "", cValues, temp.getConfigurationValueBundles(), basePaths, toolEntries, null))
-//                }
-//                configuration.getSubConfiguration(project).setConfigurationValues(cValues)
-//                break;
-//            }
-//            case 3: L: {
-//                String project = cfgPath[1]
-//                if (!configuration.hasSubConfiguration(project)) {
-//                    configuration.addSubConfiguration(new Configuration(configuration, project, "", null, null, basePaths, toolEntries, null))
-//                }
-//                Configuration cfgPrj = configuration.getSubConfiguration(project)
-//                String variant = cfgPath[2]
-//                if (!cfgPrj.hasSubConfiguration(variant)) {
-//                    cfgPrj.addSubConfiguration(new Configuration(cfgPrj, variant, "", cValues, temp.getConfigurationValueBundles(), basePaths, toolEntries, null))
-//                }
-//                break;
-//            }
-//        }
-//        writeConfiguration(configuration)
-        //        pipelineConfigurationFiles/$
     }
 
     public Configuration loadShellScript(String configurationFile) {

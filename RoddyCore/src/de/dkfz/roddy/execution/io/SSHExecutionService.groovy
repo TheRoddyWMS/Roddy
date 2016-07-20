@@ -407,51 +407,6 @@ class SSHExecutionService extends RemoteExecutionService {
     }
 
     @Override
-    public void execute(Command command, boolean waitFor = true) {
-        ExecutionContext run = command.getExecutionContext();
-        //String commandString = command.toString();
-        boolean preventCalls = run.getConfiguration().getPreventJobExecution();
-        boolean pidIsBlocked = blockedPIDsForJobExecution.contains(command.getExecutionContext().getDataSet());
-        boolean showCalls = run.getConfiguration().getShowSSHCalls();
-        boolean isDummyCommand = Command instanceof Command.DummyCommand;
-        String cmdString;
-        if (!allJobsBlocked && !pidIsBlocked && !preventCalls && !isDummyCommand) {
-            try {
-                cmdString = command.toString();
-                ExecutionResult res = null;
-                if (run.getExecutionContextLevel() == ExecutionContextLevel.TESTRERUN) {
-                    String pid = String.format("0x%08X", System.nanoTime());
-                    res = new ExecutionResult(true, 0, [pid], pid);
-                } else {
-                    res = execute(cmdString, waitFor);
-                }
-                String exID = "none";
-                if (res.successful) {
-                    exID = JobManager.getInstance().parseJobID(res.resultLines[0]);
-                    command.setExecutionID(JobManager.getInstance().createJobDependencyID(command.getJob(), exID));
-                }
-                logger.postSometimesInfo("${exID}, ${cmdString}");
-                command.getExecutionContext().addCalledCommand(command);
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, ex.toString());
-            }
-        } else {
-            String reason = "";
-            if (preventCalls) {
-                reason += "Configuration does not allow the execution of commands. "
-            }
-            if (pidIsBlocked) {
-                reason += "The execution of jobs for this DataSet is stopped. "
-            }
-            if (allJobsBlocked) {
-                reason += "The execution service is no longer allowed to execute commands. "
-            }
-            logger.log(Level.INFO, "Skipping command " + command + " for reason: " + reason);
-        }
-        fireCommandExecutedEvent(command);
-    }
-
-    @Override
     boolean copyFile(File _in, File _out) {
         return copyFile(_in, _out, 0);
     }
@@ -470,8 +425,6 @@ class SSHExecutionService extends RemoteExecutionService {
         } catch (SFTPException ex) {
             if (retries < 3) {
                 retry = true;
-//                logger.warning("Catched no such file exception, attempting to retry copyFile ${_in.absolutePath} to ${_out.absolutePath}")
-//                copyFile(_in, _out, retries + 1);
             } else if (retries >= 3) {
                 logger.severe("Could not copy ${copyType} ${_in.absolutePath} to ${_out.absolutePath}");
                 throw ex;

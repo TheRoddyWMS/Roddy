@@ -26,7 +26,7 @@ public class Job {
 
     public static class FakeJob extends Job {
         public FakeJob() {
-            super(null, "Fakejob", null, null);
+            super(null, "Fakejob", null, [:]);
         }
 
         public FakeJob(ExecutionContext context) {
@@ -220,7 +220,7 @@ public class Job {
                 } else
                     convertedParameters.add(o.toString());
             }
-            this.parameters[k] = "parameterArray=(${RoddyIOHelperMethods.joinArray(convertedParameters.toArray(), " ")})".toString();
+            this.parameters[k] = "(${RoddyIOHelperMethods.joinArray(convertedParameters.toArray(), " ")})".toString();
 
 //        } else if(_v.getClass().isArray()) {
 //            newParameters.put(k, "parameterArray=(" + RoddyIOHelperMethods.joinArray((Object[]) _v, " ") + ")"); //TODO Put conversion to roddy helper methods?

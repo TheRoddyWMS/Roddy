@@ -1,21 +1,34 @@
 package de.dkfz.roddy.execution.jobs;
 
 
-import de.dkfz.roddy.core.ExecutionContext;
+import de.dkfz.roddy.config.ConfigurationValue;
+import de.dkfz.roddy.core.ExecutionContext
+import groovy.transform.CompileStatic;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import static de.dkfz.roddy.StringConstants.BRACE_RIGHT
+import static de.dkfz.roddy.StringConstants.DOLLAR_LEFTBRACE;
+import static de.dkfz.roddy.StringConstants.EMPTY;
+import static de.dkfz.roddy.StringConstants.SINGLE_QUOTE;
 
 /**
  * Base class for all types of commands.
- *
+ * <p>
  * PBSCommand extends this. Also SGECommand and so on.
- *
+ * <p>
  * A job is executed via a command. The command represents the job on the cluster / system side.
  *
  * @author michael
  */
-public abstract class Command implements Serializable {
+@CompileStatic
+public abstract class Command {
 
 
     public void setJob(Job job) {
@@ -27,7 +40,7 @@ public abstract class Command implements Serializable {
         private String jobName;
 
         public DummyCommand(Job job, ExecutionContext run, String jobName, boolean isArray) {
-            super(job, run, "dummy_" + getNextIDCountValue());
+            super(job, run, "dummy_" + getNextIDCountValue(), null);
             this.jobName = jobName;
             if (isArray) {
                 setExecutionID(JobDependencyID.getNotExecutedFakeJob(job, true));
@@ -43,6 +56,7 @@ public abstract class Command implements Serializable {
         }
 
     }
+
     /**
      * Static incremental counter for pipeline commands.
      */
@@ -61,36 +75,27 @@ public abstract class Command implements Serializable {
      */
     protected Job creatingJob;
 
-    protected transient final ExecutionContext executionContext;
+    protected final ExecutionContext executionContext;
 
-    protected Command(Job job, ExecutionContext run, String id) {
+    /**
+     * Parameters for the qsub command
+     */
+    protected Map<String, String> parameters;
+
+    protected File parameterFile;
+
+    protected Command(Job job, ExecutionContext run, String id, Map<String, String> parameters) {
+        this.parameters = parameters ?: new LinkedHashMap<String, String>();
         this.creatingJob = job;
         this.id = id;
         this.executionContext = run;
-        JobManager.getInstance().addCommandToList(this);
+        this.parameterFile = run.getParameterFilename(this);
+        JobManager.getInstance()?.addCommandToList(this);
     }
 
     protected Command(Job job, String id) {
-        this(job, job.context, id);
+        this(job, job.context, id, null);
         this.creatingJob = job;
-    }
-
-    private synchronized void writeObject(java.io.ObjectOutputStream s) throws IOException {
-        try {
-            s.defaultWriteObject();
-        } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
-    }
-
-    private synchronized void readObject(java.io.ObjectInputStream s) throws IOException, ClassNotFoundException {
-        try {
-            s.defaultReadObject();
-        } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
     }
 
     protected static synchronized int getNextIDCountValue() {
@@ -125,12 +130,34 @@ public abstract class Command implements Serializable {
         return String.format("command:0x%08X", id);
     }
 
+    public File getParameterFile() {
+        return parameterFile;
+    }
+
+    public List<ConfigurationValue> getParametersForParameterFile() {
+        List<ConfigurationValue> allParametersForFile = new LinkedList<>();
+        if (parameters.size() > 0) {
+            for (String parm : parameters.keySet()) {
+                String val = parameters.get(parm);
+                if (val.contains(DOLLAR_LEFTBRACE) && val.contains(BRACE_RIGHT)) {
+                    val = val.replace(DOLLAR_LEFTBRACE, "#{"); // Replace variable names so they can be passed to qsub.
+                }
+                String key = parm;
+                allParametersForFile.add(new ConfigurationValue(key, val));
+            }
+        }
+        return allParametersForFile;
+    }
+
     /**
      * Local commands are i.e. blocking, whereas PBSCommands are not.
      * The default is false.
+     *
      * @return
      */
-    public boolean isBlockingCommand() { return false; }
+    public boolean isBlockingCommand() {
+        return false;
+    }
 
     @Override
     public String toString() {

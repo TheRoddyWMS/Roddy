@@ -48,6 +48,8 @@ public class StringConstants {
     public static final String DOUBLE_QUOTE = "\"";
     public static final String FALSE = "false";
 
+    public static final String DOLLAR_LEFTBRACE = "${";
+
     public static final String TRUE = "true";
 
 }

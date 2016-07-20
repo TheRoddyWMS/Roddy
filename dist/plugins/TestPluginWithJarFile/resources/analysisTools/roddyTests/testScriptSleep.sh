@@ -1,6 +1,13 @@
 #!/bin/bash
 
+env
 source ${CONFIG_FILE}
+
+echo $INPUT_FILES
+echo ${INPUT_FILES[@]}
+for v in ${INPUT_FILES[@]}
+  echo $v
+fi
 
 set -xuv
 

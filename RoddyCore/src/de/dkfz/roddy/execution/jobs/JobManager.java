@@ -195,7 +195,10 @@ public abstract class JobManager<C extends Command> {
             code = "C";
         else if (job.getJobState() == JobState.FAILED)
             code = "E";
-        FileSystemAccessProvider.getInstance().appendLineToFile(true, currentContext.getRuntimeService().getNameOfJobStateLogFile(currentContext), String.format("%s:%s:%s", job.getJobID(), code, millis), false);
+        if (null != job.getJobID())
+            FileSystemAccessProvider.getInstance().appendLineToFile(true, currentContext.getRuntimeService().getNameOfJobStateLogFile(currentContext), String.format("%s:%s:%s", job.getJobID(), code, millis), false);
+        else
+            logger.postSometimesInfo("Did not store info for job " + job.getJobName() + ", job id was null.");
     }
 
     public String getLogFileName(Job p) {

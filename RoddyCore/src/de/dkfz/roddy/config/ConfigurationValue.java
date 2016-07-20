@@ -5,6 +5,7 @@ import de.dkfz.roddy.core.Analysis;
 import de.dkfz.roddy.core.DataSet;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 
 import java.io.File;
 import java.util.Arrays;
@@ -46,6 +47,19 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         this(config, id, value, null);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        // Auto-code from Idea.
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ConfigurationValue that = (ConfigurationValue) o;
+
+        if (id != null ? !id.equals(that.id) : that.id != null) return false;
+        if (value != null ? !value.equals(that.value) : that.value != null) return false;
+        return type != null ? type.equals(that.type) : that.type == null;
+    }
+
     public ConfigurationValue(String id, String value, String type) {
         this(null, id, value, type);
     }
@@ -58,7 +72,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         this.id = id;
         this.value = value;
         this.configuration = config;
-        this.type = type;
+        this.type = !RoddyConversionHelperMethods.isNullOrEmpty(type) ? type : determineTypeOfValue(value);
         this.description = description;
         if (tags != null)
             this.tags.addAll(tags);
@@ -68,6 +82,21 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         return configuration;
     }
 
+    /**
+     * If the type of the value is set to null, we can try to auto detect the value.
+     * Defaults to string and can detect integers, doubles and arrays.
+     * <p>
+     * Maybe, this should be put to a different location?
+     *
+     * @return
+     */
+    public static String determineTypeOfValue(String value) {
+        if (RoddyConversionHelperMethods.isInteger(value)) return "integer";
+        if (RoddyConversionHelperMethods.isDouble(value)) return "double";
+        if (RoddyConversionHelperMethods.isFloat(value)) return "float";
+        if (RoddyConversionHelperMethods.isDefinedArray(value)) return "bashArray";
+        return "string";
+    }
 
     private String replaceString(String src, String pattern, String text) {
         if (src.contains(pattern)) {
@@ -358,14 +387,6 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
 
     public String getDescription() {
         return description;
-    }
-
-    public boolean isQuoteOnConversionSet() {
-        return quoteOnConversion;
-    }
-
-    public void setQuoteOnConversion() {
-        this.quoteOnConversion = true;
     }
 
     /**

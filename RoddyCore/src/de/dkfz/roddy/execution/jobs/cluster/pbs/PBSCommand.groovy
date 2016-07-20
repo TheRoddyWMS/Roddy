@@ -5,6 +5,7 @@ import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationFactory
+import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -23,7 +24,7 @@ import static de.dkfz.roddy.StringConstants.*
  * @author michael
  */
 @groovy.transform.CompileStatic
-public class PBSCommand extends Command implements Serializable {
+public class PBSCommand extends Command {
 
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(PBSCommand.class.name);
     public static final String NONE = "none"
@@ -49,10 +50,6 @@ public class PBSCommand extends Command implements Serializable {
      */
     protected File loggingDirectory;
     /**
-     * Parameters for the qsub command
-     */
-    protected transient Map<String, String> parameters;
-    /**
      * The command which should be called
      */
     protected String command;
@@ -66,18 +63,8 @@ public class PBSCommand extends Command implements Serializable {
     protected List<String> arrayIndices;
 
     protected List<String> dependencyIDs;
+
     protected final List<ProcessingCommands> processingCommands
-    /**
-     *
-     * @param id
-     * @param parameters
-     * @param command
-     * @param filesToCheck
-     */
-    //    @groovy.transform.CompileStatic
-//    public PBSCommand(ExecutionContext context, ExecutionService executionService, String id, Map<String, String> parameters, List<String> dependencyIDs, String command) {
-//        this(context, executionService, id, parameters, null, dependencyIDs, command);
-//    }
 
     /**
      *
@@ -88,33 +75,14 @@ public class PBSCommand extends Command implements Serializable {
      * @param filesToCheck
      */
     public PBSCommand(Job job, ExecutionContext run, ExecutionService executionService, String id, List<ProcessingCommands> processingCommands, Map<String, String> parameters, List<String> arrayIndices, List<String> dependencyIDs, String command) {
-        super(job, run, String.format("%s_%08d", run.getDataSet(), Command.getNextIDCountValue()));
+        super(job, run, String.format("%s_%08d", run.getDataSet(), Command.getNextIDCountValue()), parameters);
         this.processingCommands = processingCommands;
-        this.parameters = parameters ?: new LinkedHashMap<String, String>();
         this.command = command;
         this.id = id;
         this.configuration = run.getConfiguration()
         this.loggingDirectory = new File(run.getLoggingDirectory().getAbsolutePath())
         this.arrayIndices = arrayIndices ?: new LinkedList<String>();
         this.dependencyIDs = dependencyIDs ?: new LinkedList<String>();
-    }
-
-    private synchronized void writeObject(java.io.ObjectOutputStream s) throws IOException {
-        try {
-            s.defaultWriteObject();
-        } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
-    }
-
-    private synchronized void readObject(java.io.ObjectInputStream s) throws IOException, ClassNotFoundException {
-        try {
-            s.defaultReadObject();
-        } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
     }
 
     public boolean getIsArray() {
@@ -170,23 +138,10 @@ public class PBSCommand extends Command implements Serializable {
         return "";
     }
 
-    // I.e. -W depend=
     protected String getDependsSuperParameter() {
         PARM_DEPENDS
     }
-    //    /**
-    //     * Executes the command and returns the job id
-    //     * Optionial: SSHstring to execute the call remotely
-    //     * @return
-    //     */
-    //    public def executeIndependent() {
-    //        return executeDependent(new LinkedList<String>())
-    //    }
-    //
-    //    public String executeDependent(List<String> dependencies = []) {
-    //
-    //
-    //    }
+
     @Override
     public String toString() {
 
@@ -249,35 +204,7 @@ public class PBSCommand extends Command implements Serializable {
     protected String assembleVariableExportString() {
         StringBuilder qsubCall = new StringBuilder();
         qsubCall << getVariablesParameter() + PARM_WRAPPED_SCRIPT << command;
-        if (parameters.size() > 0) {
-            List<String> allParms = [];
-            StringBuilder parameterSB = new StringBuilder();
-            for (String parm : parameters.keySet()) {
-                String val = parameters.get(parm);
-                if (val.contains("\${") && val.contains(BRACE_RIGHT)) {
-                    val = val.replace("\${", "#{"); // Replace variable names so they can be passed to qsub.
-                }
-                String key = parm;
-                if (val.startsWith("parameterArray=")) {
-                    val = "'" + val.replace("parameterArray=", EMPTY) + SINGLE_QUOTE;
-                }
-                allParms << "${key}${EQUALS}${val}".toString();
-            }
-            if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.ModifiedVariablePassing)) {
-                File parmFile = executionContext.getParameterFilename(this);
-                qsubCall << ",PARAMETER_FILE=" << parmFile;
-                StringBuilder allLines = new StringBuilder();
-                allParms.each {
-                    String line ->
-                        //TODO export is Bash dependent!
-                        allLines << "export " << line << "\n";
-                }
-                if (getExecutionContext().getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
-                    FileSystemAccessProvider.getInstance().writeTextFile(parmFile, allLines.toString(), executionContext);
-            } else {
-                qsubCall << StringConstants.COMMA << allParms.join(StringConstants.COMMA);
-            }
-        }
+        qsubCall << ",PARAMETER_FILE=" << parameterFile;
         return qsubCall
     }
 

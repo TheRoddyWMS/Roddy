@@ -1,7 +1,8 @@
 package de.dkfz.roddy.config.converters;
 
 import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationConstants;
+import de.dkfz.roddy.config.ConfigurationConstants
+import de.dkfz.roddy.config.ConfigurationValue;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -65,4 +66,6 @@ public abstract class ConfigurationConverter {
             return "UNKNOWN_${str}";
         }
     }
+
+    public abstract StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context);
 }

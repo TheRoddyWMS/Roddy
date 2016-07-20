@@ -1,2 +1,5 @@
 dependson=TestPluginWithJarFile:current
-dependson=PluginBase:1.0.24
+dependson=PluginBase:current
+JDKVersion=1.8
+GroovyVersion=2.4
+RoddyAPIVersion=2.3

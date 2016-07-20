@@ -183,11 +183,13 @@ public abstract class ExecutionService extends CacheProvider {
         if (!configurationDisallowsJobSubmission && !allJobsBlocked && !pidIsBlocked && !preventCalls && !isDummyCommand) {
             try {
                 cmdString = command.toString();
+                storeParameterFile(command);
+
                 //Store away process output if this is a local service.
                 File tmpFile = isLocalService() ? File.createTempFile("roddy_", "_temporaryLogfileStream") : null;
                 OutputStream outputStream = isLocalService() && waitFor && command.isBlockingCommand() ? new FileOutputStream(tmpFile) : null;
 
-                ExecutionResult res = null;
+                ExecutionResult res;
                 if (run.getExecutionContextLevel() == ExecutionContextLevel.TESTRERUN) {
                     String pid = String.format("0x%08X", System.nanoTime());
                     res = new ExecutionResult(true, 0, [pid], pid);
@@ -196,16 +198,18 @@ public abstract class ExecutionService extends CacheProvider {
                 }
                 command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.OK);
 
+                String exID = "none";
                 if (isLocalService() && command.isBlockingCommand()) {
                     command.setExecutionID(JobManager.getInstance().createJobDependencyID(command.getJob(), res.processID));
 
                     File logFile = command.getExecutionContext().getRuntimeService().getLogFileForCommand(command)
                     FileSystemAccessProvider.getInstance().moveFile(tmpFile, logFile);
                 } else if (res.successful) {
-                    String exID = JobManager.getInstance().parseJobID(res.resultLines[0]);
+                    exID = JobManager.getInstance().parseJobID(res.processID);
                     command.setExecutionID(JobManager.getInstance().createJobDependencyID(command.getJob(), exID));
                     JobManager.getInstance().storeJobStateInfo(command.getJob());
                 }
+                logger.postSometimesInfo("${exID}, ${cmdString}");
                 command.getExecutionContext().addCalledCommand(command);
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, ex.toString());
@@ -219,6 +223,15 @@ public abstract class ExecutionService extends CacheProvider {
             logger.postSometimesInfo("Skipping command " + command + " for reason: " + reason);
         }
         fireCommandExecutedEvent(command);
+    }
+
+    public static void storeParameterFile(Command command) {
+        String convertedParameters = command.getParametersForParameterFile().collect({
+            ConfigurationValue cval ->
+                FileSystemAccessProvider.getInstance().getConfigurationConverter().convertConfigurationValue(cval, command.getExecutionContext()).toString();
+        }).join("\n")
+        if (command.getExecutionContext().getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
+            FileSystemAccessProvider.getInstance().writeTextFile(command.getParameterFile(), convertedParameters, command.getExecutionContext());
     }
 
     public static long measureStart() { return System.nanoTime(); }

@@ -6,6 +6,7 @@ import de.dkfz.roddy.config.ConfigurationValueBundle
 import de.dkfz.roddy.core.ExecutionContext
 import groovy.transform.TypeCheckingMode
 import groovy.xml.MarkupBuilder
+import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 /**
  * Converts a configuration object to XML.
@@ -69,5 +70,10 @@ class XMLConverter extends ConfigurationConverter {
 //        xml.configuration.
 
         return writer.toString()
+    }
+
+    @Override
+    StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context) {
+        throw new NotImplementedException();
     }
 }

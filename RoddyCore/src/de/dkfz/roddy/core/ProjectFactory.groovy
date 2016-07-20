@@ -219,20 +219,10 @@ public class ProjectFactory {
             throw new RuntimeException("Could not load project ${projectID}!");
 
         // Add custom command line values to the project configuration.
-        List<String> externalConfigurationValues = Roddy.getCommandLineCall().getSetConfigurationValues();
+        List<ConfigurationValue> externalConfigurationValues = Roddy.getCommandLineCall().getSetConfigurationValues();
 
-        def configurationValues = project.getConfiguration().getConfigurationValues()
-        for (eVal in externalConfigurationValues) {
-            String[] splitIDValue = eVal.split(StringConstants.SPLIT_COLON);
-            //TODO Put in a better error checking when converting the split string to a configuration value.
-            String value = (splitIDValue.size() >= 2 ? splitIDValue[1] : ""); // Surround value with single quotes '' to prevent string interpretation for e.g. execution in bash
-            String cvalueId = splitIDValue[0];
-            String type = splitIDValue.size() >= 3 ? splitIDValue[2] : "string";
-
-            def configurationValue = new ConfigurationValue(cvalueId, value, type)
-            configurationValue.setQuoteOnConversion();
-            configurationValues.add(configurationValue);
-        }
+        RecursiveOverridableMapContainerForConfigurationValues configurationValues = project.getConfiguration().getConfigurationValues()
+        configurationValues.addAll(externalConfigurationValues);
 
         if (Roddy.useCustomIODirectories()) {
             configurationValues.add(new ConfigurationValue(CFG_INPUT_BASE_DIRECTORY, Roddy.getCustomBaseInputDirectory(), "path"));
