@@ -1,5 +1,6 @@
 package de.dkfz.roddy.config;
 
+import de.dkfz.roddy.core.ProjectFactory;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.config.validation.ConfigurationValidationError;
 import de.dkfz.roddy.core.ExecutionContext;
@@ -176,6 +177,9 @@ public class Configuration implements ContainerParent<Configuration> {
     }
 
     public ResourceSetSize getResourcesSize() {
+        if(configurationValues.hasValue(ProjectFactory.CFG_USED_RESOURCES_SIZE)) {
+            return ResourceSetSize.valueOf(configurationValues.getValue(ProjectFactory.CFG_USED_RESOURCES_SIZE).toString());
+        }
         return informationalConfigurationContent.usedresourcessize;
     }
 

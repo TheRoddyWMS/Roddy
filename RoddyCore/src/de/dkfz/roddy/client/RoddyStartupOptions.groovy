@@ -29,6 +29,10 @@ public enum RoddyStartupOptions {
     test,
     useiodir(true),
     usemetadatatable(true),
+    /**
+     * Override project speicifc usedresourcessize
+     */
+    usedresourcessize(true),
     disabletrackonlyuserjobs,
     trackonlystartedjobs,
     resubmitjobonerror,

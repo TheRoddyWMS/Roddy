@@ -6,6 +6,7 @@ import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
 import de.dkfz.roddy.config.AppConfig;
+import de.dkfz.roddy.config.ResourceSetSize;
 import de.dkfz.roddy.core.Initializable;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
@@ -141,6 +142,26 @@ public class Roddy {
 
     public static String getCustomBaseOutputDirectory() {
         return baseOutputDirectory;
+    }
+
+
+    public static ResourceSetSize getUsedResourcesSize() {
+        // Do not set, when null!
+        if (commandLineCall == null) {
+            return null;
+        }
+
+        // Return null, when it is not available
+        if (!commandLineCall.isOptionSet(RoddyStartupOptions.usedresourcessize)) {
+            return null;
+        }
+
+        // Return the parsed value or null.
+        try {
+            return ResourceSetSize.valueOf(commandLineCall.getOptionValue(RoddyStartupOptions.usedresourcessize));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     public static boolean isMetadataCLOptionSet() {
@@ -683,5 +704,4 @@ public class Roddy {
             return new CommandLineCall(new LinkedList<>());
         return commandLineCall;
     }
-
 }

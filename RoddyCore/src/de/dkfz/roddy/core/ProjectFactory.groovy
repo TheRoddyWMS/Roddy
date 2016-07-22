@@ -26,6 +26,7 @@ public class ProjectFactory {
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(ProjectFactory.class.getSimpleName());
 
     private static final ProjectFactory singleton = new ProjectFactory();
+    public static final String CFG_USED_RESOURCES_SIZE = "usedResourcesSize"
 
     public static ProjectFactory getInstance() {
         return singleton;
@@ -227,6 +228,10 @@ public class ProjectFactory {
         if (Roddy.useCustomIODirectories()) {
             configurationValues.add(new ConfigurationValue(CFG_INPUT_BASE_DIRECTORY, Roddy.getCustomBaseInputDirectory(), "path"));
             configurationValues.add(new ConfigurationValue(CFG_OUTPUT_BASE_DIRECTORY, Roddy.getCustomBaseOutputDirectory(), "path"));
+        }
+
+        if (Roddy.getUsedResourcesSize()) {
+            configurationValues.add(new ConfigurationValue(CFG_USED_RESOURCES_SIZE, Roddy.getUsedResourcesSize().toString(), "string"));
         }
 
         // Check if an analysis is available and if the runtime service is setup properly.

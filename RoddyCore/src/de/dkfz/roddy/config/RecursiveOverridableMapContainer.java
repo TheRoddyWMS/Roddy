@@ -65,15 +65,10 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
         for (P parent : (List<P>) containerParent.getContainerParents()) {
             Map<K, V> tempValues = parent.getContainer(id).getAllValues();
             for (K key : tempValues.keySet()) {
-//                if (!allValues.containsKey(key))
                 allValues.put(key, tempValues.get(key));
             }
         }
         allValues.putAll(values);
-//        for(K key : values.keySet()) {
-//            System.err.println("ID: " + containerParent.getID() + "\t" + key);
-//
-//        }
         return allValues;
     }
 
