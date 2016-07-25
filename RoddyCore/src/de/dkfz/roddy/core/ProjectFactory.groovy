@@ -14,8 +14,8 @@ import de.dkfz.roddy.plugins.PluginInfoMap
 import java.lang.reflect.InvocationTargetException
 
 import static de.dkfz.roddy.config.ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY
-import static de.dkfz.roddy.config.ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY;
-
+import static de.dkfz.roddy.config.ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY
+import static de.dkfz.roddy.config.ConfigurationConstants.CFG_USED_RESOURCES_SIZE
 /**
  * The project factory converts a configuration to a project/analysis. It stores a reference to already loaded projects and reuses them if possible.
  * A project can have multiple analyses
@@ -26,7 +26,6 @@ public class ProjectFactory {
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(ProjectFactory.class.getSimpleName());
 
     private static final ProjectFactory singleton = new ProjectFactory();
-    public static final String CFG_USED_RESOURCES_SIZE = "usedResourcesSize"
 
     public static ProjectFactory getInstance() {
         return singleton;

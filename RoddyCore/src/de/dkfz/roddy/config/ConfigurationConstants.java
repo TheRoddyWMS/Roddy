@@ -45,4 +45,6 @@ public class ConfigurationConstants {
     public static final String CFG_USE_CENTRAL_ANALYSIS_ARCHIVE = "useCentralAnalysisArchive";
     public static final String CFG_OUTPUT_UMASK = "outputUMask";
 
+    public static final String CFG_USED_RESOURCES_SIZE = "usedResourcesSize";
+
 }

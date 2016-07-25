@@ -17,7 +17,6 @@ up and is included in the configuration. The configuration settings directly ove
         <cvalue name='outputFileGroup' value='UNDEFINED'/>
         <cvalue name='outputAccessRights' value='u+rw,g+rw,o-rwx' />
         <cvalue name="outputAllowAccessRightsModification" value="true" />
-        <cvalue name='jobStateLogFile' value="jobStates.txt" type="string"/>
     </configurationvalues>
     <enumerations>
         <enumeration name='cvalueType' description='various types of configuration values' extends="">

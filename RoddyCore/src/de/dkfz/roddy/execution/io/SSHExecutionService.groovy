@@ -345,7 +345,7 @@ class SSHExecutionService extends RemoteExecutionService {
 
             List<String> output = new LinkedList<String>()
             output << "" + exitStatus;
-            measureStop(id, "blocking command [sshclient:${set.id}] '" + RoddyIOHelperMethods.truncateCommand(command, 20) + "'");
+            measureStop(id, "blocking command [sshclient:${set.id}] '" + RoddyIOHelperMethods.truncateCommand(command, Roddy.getApplicationProperty("commandLogTruncate", '20').toInteger()) + "'");
             fireExecutionStoppedEvent(id, command);
 
             if (exitStatus > 0) {
@@ -384,7 +384,7 @@ class SSHExecutionService extends RemoteExecutionService {
                 }
                 String content = IOUtils.readFully(cmd.getInputStream()).toString();
                 session.close();
-                measureStop(id, "async command  [sshclient:${set.id}] '" + RoddyIOHelperMethods.truncateCommand(command, 20) + "'");
+                measureStop(id, "async command  [sshclient:${set.id}] '" + RoddyIOHelperMethods.truncateCommand(command, Roddy.getApplicationProperty("commandLogTruncate", '20').toInteger()) + "'");
                 fireExecutionStoppedEvent(id, command)
             }
         }

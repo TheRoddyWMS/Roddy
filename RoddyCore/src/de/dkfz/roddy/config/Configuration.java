@@ -177,8 +177,8 @@ public class Configuration implements ContainerParent<Configuration> {
     }
 
     public ResourceSetSize getResourcesSize() {
-        if(configurationValues.hasValue(ProjectFactory.CFG_USED_RESOURCES_SIZE)) {
-            return ResourceSetSize.valueOf(configurationValues.getValue(ProjectFactory.CFG_USED_RESOURCES_SIZE).toString());
+        if(configurationValues.hasValue(ConfigurationConstants.CFG_USED_RESOURCES_SIZE)) {
+            return ResourceSetSize.valueOf(configurationValues.getValue(ConfigurationConstants.CFG_USED_RESOURCES_SIZE).toString());
         }
         return informationalConfigurationContent.usedresourcessize;
     }

@@ -491,6 +491,7 @@ public abstract class ExecutionService extends CacheProvider {
                 PluginInfo pInfo = listOfFolders[subFolder]
                 File tempFolder = File.createTempDir();
                 tempFolder.deleteOnExit()
+                tempFolder = RoddyIOHelperMethods.assembleLocalPath(tempFolder, subFolder.getName())
                 FileUtils.copyDirectory(subFolder, tempFolder);
                 logger.postSometimesInfo("Folder ${subFolder.getName()} copied to ${tempFolder.getAbsolutePath()}");
                 // Create files...
