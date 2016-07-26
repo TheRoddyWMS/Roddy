@@ -43,7 +43,7 @@ import static de.dkfz.roddy.StringConstants.FALSE;
  */
 public class Roddy {
 
-    public static final String FEATURE_TOGGLE_ENABLE_XML_VALIDATION = "enableXMLValidation";
+    private static String SETTINGS_DIRECTORY_NAME = ".roddy";
 
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(Roddy.class.getSimpleName());
     private static AppConfig applicationProperties;
@@ -558,23 +558,6 @@ public class Roddy {
         applicationProperties.setProperty(pName, value);
     }
 
-    public static File getPropertiesFilePath() {
-        if (customPropertiesFile == null) customPropertiesFile = Constants.APP_PROPERTIES_FILENAME;
-        File _customPropertiesFile = new File("" + customPropertiesFile);
-        if (_customPropertiesFile.exists())
-            return _customPropertiesFile;
-        _customPropertiesFile = new File(getSettingsDirectory(), _customPropertiesFile.getName());
-        if (_customPropertiesFile.exists()) {
-            return _customPropertiesFile;
-        }
-        _customPropertiesFile = new File(getApplicationDirectory(), _customPropertiesFile.getName());
-        if (_customPropertiesFile.exists()) {
-            return _customPropertiesFile;
-        }
-        logger.postAlwaysInfo("The configuration file " + customPropertiesFile + " does not exist in any known location and will not be loaded. A default configuration will be created and used.");
-        return new File(getSettingsDirectory().getAbsolutePath() + File.separator + Constants.APP_PROPERTIES_FILENAME);
-    }
-
     /**
      * Returns the path to Roddys application settings directory.
      * This directory contains the application properties file and subfolders like i.e. file caches.
@@ -587,7 +570,7 @@ public class Roddy {
             throw new IllegalStateException("user.home==null");
         }
         File home = new File(userHome);
-        File settingsDirectory = new File(home, ".roddy");
+        File settingsDirectory = new File(home, SETTINGS_DIRECTORY_NAME);
         if (!settingsDirectory.exists()) {
             if (!settingsDirectory.mkdir()) {
                 throw new IllegalStateException(settingsDirectory.toString());
@@ -601,6 +584,20 @@ public class Roddy {
         if (!logDir.exists())
             logDir.mkdir();
         return logDir;
+    }
+
+    public static File getPropertiesFilePath() {
+        if (customPropertiesFile == null) customPropertiesFile = Constants.APP_PROPERTIES_FILENAME;
+        File _customPropertiesFile = new File("" + customPropertiesFile);
+        String customPropertiesFileName = _customPropertiesFile.getName();
+
+        List<File> files = Arrays.asList(_customPropertiesFile, new File(getSettingsDirectory(), customPropertiesFileName), new File(getApplicationDirectory(), customPropertiesFileName));
+        for (File cpf : files)
+            if (cpf.exists())
+                return cpf;
+
+        logger.postAlwaysInfo("The configuration file " + customPropertiesFile + " does not exist in any known location and will not be loaded. A default configuration will be created and used.");
+        return new File(getSettingsDirectory(), Constants.APP_PROPERTIES_FILENAME);
     }
 
     public static File getCompressedAnalysisToolsDirectory() {
@@ -716,7 +713,7 @@ public class Roddy {
         try {
             cls = (Class<ShellCommandSet>) LibrariesFactory.getGroovyClassLoader().loadClass(localCommandSet);
             ShellCommandSet shellCommandSet = cls.newInstance();
-            if(shellCommandSet.validate())
+            if (shellCommandSet.validate())
                 return shellCommandSet;
             throw new RuntimeException("The selected ShellCommandSet '${localCommandSet}' could not validate.");
         } catch (ClassNotFoundException e) {
