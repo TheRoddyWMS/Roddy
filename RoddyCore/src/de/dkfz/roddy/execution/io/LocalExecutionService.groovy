@@ -1,7 +1,3 @@
-/*
-* To change this template, choose Tools | Templates
-* and open the template in the editor.
-*/
 package de.dkfz.roddy.execution.io
 
 import de.dkfz.roddy.config.Configuration
@@ -41,28 +37,14 @@ public class LocalExecutionService extends ExecutionService {
         return true;
     }
 
+    // This method actually overrides a base class. But if we keep the @Override, the Groovy (or Java) compiler constantly
+    // claims, that the method does not override it's base method.
+    // That is, why we keep it in but only as a comment.
+    // @Override
     protected List<String> _execute(String command, boolean waitFor, boolean ignoreErrors, OutputStream outputStream = null) {
         if (waitFor) {
-            Process execute = ["bash", "-c", command].execute();
-
-            //TODO Put to a custom class which can handle things for Windows as well.
-            Field f = execute.getClass().getDeclaredField("pid");
-            f.setAccessible(true);
-            String processID = f.get(execute)
-
-            List<String> lines = [];
-            if (logger.isVerbosityHigh())
-                println("Executing the command ${command} locally.");
-
-            if (outputStream)
-                execute.waitForProcessOutput(outputStream, outputStream)
-            else {
-                StringBuilder sstream = new StringBuilder();
-                execute.waitForProcessOutput(sstream, sstream);
-                lines = sstream.readLines().collect { CharSequence l -> return l.toString(); };
-            }
-
-            return (["" + execute.exitValue(), processID] + lines).asList();
+            ExecutionHelper.ExtendedProcessExecutionResult helper = ExecutionHelper.executeCommandWithExtendedResult(command, outputStream);
+            return (["" + helper.exitValue, helper.processID] + helper.lines).asList();
         } else {
             Thread.start {
                 command.execute();

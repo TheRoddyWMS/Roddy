@@ -92,4 +92,8 @@ public abstract class ShellCommandSet {
     public abstract String singleQuote(String text);
 
     public abstract String doubleQuote(String text);
+
+    public abstract List<String> getShellExecuteCommand(String... commands);
+
+    public abstract boolean validate();
 }

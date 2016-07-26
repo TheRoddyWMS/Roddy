@@ -9,7 +9,9 @@ import de.dkfz.roddy.config.AppConfig;
 import de.dkfz.roddy.config.ResourceSetSize;
 import de.dkfz.roddy.core.Initializable;
 import de.dkfz.roddy.execution.io.ExecutionService;
+import de.dkfz.roddy.execution.io.fs.BashCommandSet;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
+import de.dkfz.roddy.execution.io.fs.ShellCommandSet;
 import de.dkfz.roddy.execution.jobs.Command;
 import de.dkfz.roddy.execution.jobs.JobManager;
 import de.dkfz.roddy.client.fxuiclient.RoddyUIController;
@@ -697,6 +699,33 @@ public class Roddy {
         if (pluginVersions.containsKey(pluginID))
             return pluginVersions.get(pluginID);
         return LibrariesFactory.PLUGIN_VERSION_CURRENT;
+    }
+
+    public static ShellCommandSet getLocalCommandSet() {
+        String localCommandSet = getApplicationProperty("localCommandSet");
+
+        // Handle default case, the local commandset ist not set.
+        if (RoddyConversionHelperMethods.isNullOrEmpty(localCommandSet)) {
+            logger.postSometimesInfo("Using BashCommandSet, localCommandSet ist not set.");
+            BashCommandSet bcs = new BashCommandSet();
+            bcs.validate();
+            return bcs;
+        }
+
+        Class<ShellCommandSet> cls = null;
+        try {
+            cls = (Class<ShellCommandSet>) LibrariesFactory.getGroovyClassLoader().loadClass(localCommandSet);
+            ShellCommandSet shellCommandSet = cls.newInstance();
+            if(shellCommandSet.validate())
+                return shellCommandSet;
+            throw new RuntimeException("The selected ShellCommandSet '${localCommandSet}' could not validate.");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("Could not find localCommandSet class '${localCommandSet}'. Check you ini file.");
+        } catch (InstantiationException e) {
+            throw new RuntimeException("Could not create object of type: " + cls.getName());
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("Could not access default constructor for class: " + cls.getName());
+        }
     }
 
     public static CommandLineCall getCommandLineCall() {

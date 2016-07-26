@@ -26,4 +26,18 @@ public class BashCommandSetTest {
     public void testDoubleQuote() {
         assert new BashCommandSet().doubleQuote("Text") == '"Text"'
     }
+
+    @Test
+    public void testGetShellExecuteCommand() {
+        assert new BashCommandSet().getShellExecuteCommand("env") == ["bash", "-c", "env"];
+        assert new BashCommandSet().getShellExecuteCommand("echo a;", "echo b") == ["bash", "-c", "echo a;", "echo b;"];
+    }
+
+    @Test
+    public void testValidate() {
+        // This method can only be tested if /bin/bash is really avaible. The test makes no sense in my oppinion
+
+        def file = new File("/bin/bash")
+        assert file.canRead() && file.canExecute() == new BashCommandSet().validate();
+    }
 }

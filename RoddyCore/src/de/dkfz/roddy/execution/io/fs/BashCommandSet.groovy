@@ -2,6 +2,7 @@ package de.dkfz.roddy.execution.io.fs
 
 import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.config.converters.ConfigurationConverter
+import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
 /**
@@ -282,5 +283,16 @@ public class BashCommandSet extends ShellCommandSet {
     @Override
     String doubleQuote(String text) {
         return "\"${text}\""
+    }
+
+    @Override
+    List<String> getShellExecuteCommand(String... commands) {
+        return ["bash", "-c"] + (commands as List<String>);
+    }
+
+    @Override
+    boolean validate() {
+        def file = new File("/bin/bash")
+        return file.exists() && file.canExecute();
     }
 }

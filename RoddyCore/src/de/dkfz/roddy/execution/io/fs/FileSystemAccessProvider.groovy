@@ -153,6 +153,10 @@ public class FileSystemAccessProvider extends CacheProvider {
 
     }
 
+    ShellCommandSet getCommandSet() {
+        return commandSet;
+    }
+
     /**
      * Wrapper for isReadable(File)
      * @param bf
