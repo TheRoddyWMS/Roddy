@@ -22,7 +22,6 @@ public class MockupExecutionContextBuilder {
         testBaseDirectory
     }
 
-
     public static File getDirectory(String testID, String id) {
         def file = new File(getTestBaseDirectory(testID), id)
         if(!file.exists()) file.mkdirs();

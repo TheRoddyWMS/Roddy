@@ -218,17 +218,22 @@ class RoddyIOHelperMethods {
     }
 
     /**
-     * The method finds all files in a directory, creates an md5sum of each file and md5'es the result text.
+     * The method finds all files in a directory, creates an md5sum of each baseDirectory and md5'es the result text.
      * This is i.e. useful when the folder has to be archived and the archives content should be comparable.
-     * @param file
+     * @param baseDirectory
      * @return
      */
-    static String getSingleMD5OfFilesInDirectory(File file) {
+    static String getSingleMD5OfFilesInDirectory(File baseDirectory) {
         List<File> list = []
         List<String> md5s = []
-        file.eachFileRecurse(FileType.FILES) { File aFile -> list << aFile }
+        baseDirectory.eachFileRecurse(FileType.FILES) { File aFile -> list << aFile }
         list.sort()
-        list.each { File line -> md5s << getMD5OfFile(line) }
+        list.each {
+            File file ->
+                String md5OfDir = getMD5OfText(baseDirectory.name + file.absolutePath - baseDirectory.absolutePath)
+                String md5OfFile = getMD5OfFile(file)
+                md5s << md5OfDir + md5OfFile
+        }
         return getMD5OfText(md5s.join(Constants.ENV_LINESEPARATOR));
     }
 
