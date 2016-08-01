@@ -1,6 +1,7 @@
 package de.dkfz.roddy.tools
 
 import de.dkfz.roddy.RunMode
+import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
@@ -15,7 +16,44 @@ import static org.junit.Assert.*;
  *
  * Created by heinold on 11.11.15.
  */
+@groovy.transform.CompileStatic
 public class RoddyIOHelperMethodsTest {
+
+    @Test
+    public void copyDirectory() {
+        File base = MockupExecutionContextBuilder.getDirectory(RoddyIOHelperMethodsTest.class.name, "copyDirectory")
+        File src = new File(base, "src");
+        File dst = new File(base, "dst");
+        File dst2 = new File(dst, "dst")
+
+        String nonexecutable = "nonexecutable"
+        String executable = "executable"
+
+        src.mkdirs();
+
+        File ne = new File(src, nonexecutable)
+        ne << "a"
+
+        File ex = new File(src, executable)
+        ex << "b"
+        ex.setExecutable(true);
+
+        assert !ne.canExecute()
+        assert ex.canExecute();
+
+
+        // To non existing directory with new name
+        RoddyIOHelperMethods.copyDirectory(src ,dst)
+        assert dst.exists()
+        assert !new File(dst, nonexecutable).canExecute();
+        assert new File(dst, executable).canExecute()
+
+        // To existing directory without new name
+        RoddyIOHelperMethods.copyDirectory(src, dst2)
+        assert dst2.exists()
+        assert !new File(dst2, nonexecutable).canExecute();
+        assert new File(dst2, executable).canExecute()
+    }
 
     @Test
     public void testSymbolicToNumericAccessRights() throws Exception {

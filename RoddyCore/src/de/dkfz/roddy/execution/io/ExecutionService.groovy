@@ -492,7 +492,7 @@ public abstract class ExecutionService extends CacheProvider {
                 File tempFolder = File.createTempDir();
                 tempFolder.deleteOnExit()
                 tempFolder = RoddyIOHelperMethods.assembleLocalPath(tempFolder, subFolder.getName())
-                FileUtils.copyDirectory(subFolder, tempFolder);
+                RoddyIOHelperMethods.copyDirectory(subFolder, tempFolder);
                 logger.postSometimesInfo("Folder ${subFolder.getName()} copied to ${tempFolder.getAbsolutePath()}");
                 // Create files...
                 if (mapOfInlineScriptsBySubfolder.containsKey(subFolder.getName())) {

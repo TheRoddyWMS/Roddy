@@ -1,8 +1,10 @@
 package de.dkfz.roddy.tools
 
 import de.dkfz.roddy.Constants
+import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.execution.io.ExecutionHelper
+import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import groovy.io.FileType
 import org.apache.commons.codec.digest.DigestUtils
@@ -138,6 +140,22 @@ class RoddyIOHelperMethods {
             file.write(text);
         } catch (Exception ex) {
             logger.severe(ex.toString());
+        }
+    }
+
+    /**
+     * This method is a replacement for Apache FileUtils.copyDirectory
+     * It uses the local Roddy command set (with e.g. "cp -r" for Bash shells)
+     * It is designed to retain access rights.
+     * @param src
+     * @param tgt
+     */
+    public static void copyDirectory(File src, File tgt) {
+        try {
+            String cmd = Roddy.getLocalCommandSet().getCopyDirectoryCommand(src, tgt);
+            ExecutionHelper.executeSingleCommand(cmd);
+        } catch (Exception ex) {
+            logger.severe(ex.toString())
         }
     }
 
