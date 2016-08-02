@@ -1,10 +1,12 @@
 package de.dkfz.roddy.tools
 
+import de.dkfz.roddy.Constants
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import groovy.transform.CompileStatic;
 import org.junit.Test;
 
 import java.util.Map;
@@ -16,11 +18,70 @@ import static org.junit.Assert.*;
  *
  * Created by heinold on 11.11.15.
  */
-@groovy.transform.CompileStatic
+@CompileStatic
 public class RoddyIOHelperMethodsTest {
 
     @Test
-    public void copyDirectory() {
+    public void testGetMD5OfText() {
+        assert RoddyIOHelperMethods.getMD5OfText("ABCD") == "cb08ca4a7bb5f9683c19133a84872ca7";
+    }
+
+    @Test
+    public void testGetMD5OfFile() {
+        String md5
+        File testFile
+        try {
+            File testBaseDir = MockupExecutionContextBuilder.getDirectory(RoddyIOHelperMethodsTest.name, "testGetMD5OfFile");
+            testFile = new File(testBaseDir, "A");
+            testFile << "ABCD";
+            md5 = RoddyIOHelperMethods.getMD5OfFile(testFile);
+        } finally {
+            testFile?.delete();
+        }
+        assert md5 == "cb08ca4a7bb5f9683c19133a84872ca7";
+    }
+
+    private File getTestBaseDir() {
+        File testBaseDir = MockupExecutionContextBuilder.getDirectory(RoddyIOHelperMethodsTest.name, "testGetSingleMD5OfFilesInDirectory");
+        testBaseDir
+    }
+
+    private List<String> getMD5OfFilesInDirectories(File testBaseDir, File md5TestDir, List<String> filenames) {
+        String md5TestDirShort = (md5TestDir.absolutePath - testBaseDir.absolutePath)[1 .. -1];
+        return filenames.collect {
+            File f = new File(md5TestDir, it)
+            f << it
+            return RoddyIOHelperMethods.getMD5OfText("${md5TestDirShort}/${it}") + RoddyIOHelperMethods.getMD5OfFile(f)
+        }
+    }
+
+    @Test
+    public void testGetSingleMD5OfFilesInDifferentDirectories() {
+        File testBaseDir = MockupExecutionContextBuilder.getDirectory(RoddyIOHelperMethodsTest.name, "testGetSingleMD5OfFilesInDirectory");
+        File md5TestDir1 = new File(testBaseDir, "md5sumtest1");
+        File md5TestDir2 = new File(md5TestDir1, "md5sumtest2");
+        md5TestDir1.mkdirs();
+        md5TestDir2.mkdirs();
+
+        assert getMD5OfFilesInDirectories(testBaseDir, md5TestDir1, ["A", "B"]).join(Constants.ENV_LINESEPARATOR) != getMD5OfFilesInDirectories(testBaseDir, md5TestDir2, ["A", "B"]).join(Constants.ENV_LINESEPARATOR)
+    }
+
+    @Test
+    public void testGetSingleMD5OfFilesInDirectory() {
+        File testBaseDir = getTestBaseDir()
+        File md5TestDir = new File(testBaseDir, "md5sumtest");
+        File md5TestSubDir = new File(md5TestDir, "sub");
+        md5TestSubDir.mkdirs();
+
+        List<String> aList = getMD5OfFilesInDirectories(testBaseDir, md5TestDir, ["A", "B", "C", "D"])
+        aList += getMD5OfFilesInDirectories(testBaseDir, md5TestSubDir, ["E", "F"]);
+
+        String text = aList.join(Constants.ENV_LINESEPARATOR)
+        assert RoddyIOHelperMethods.getSingleMD5OfFilesInDirectory(md5TestDir) == RoddyIOHelperMethods.getMD5OfText(text);
+    }
+
+    @Test
+    public void testCopyDirectory() {
         File base = MockupExecutionContextBuilder.getDirectory(RoddyIOHelperMethodsTest.class.name, "copyDirectory")
         File src = new File(base, "src");
         File dst = new File(base, "dst");
@@ -48,9 +109,8 @@ public class RoddyIOHelperMethodsTest {
         assert exbnw.canExecute()
         assert !exbnw.canWrite()
 
-
         // To non existing directory with new name
-        RoddyIOHelperMethods.copyDirectory(src ,dst)
+        RoddyIOHelperMethods.copyDirectory(src, dst)
         assert dst.exists()
         File nebw2 = new File(dst, nonExecutableButWritable)
         assert !nebw2.canExecute()
@@ -101,11 +161,11 @@ public class RoddyIOHelperMethodsTest {
     @Test
     public void testConvertUMaskToAccessRights() throws Exception {
         Map<String, String> valuesAndResults = [
-                "0000" : "0777",
-                "0007" : "0770",
-                "0067" : "0710",
-                "0002" : "0775",
-                "0602" : "0175",
+                "0000": "0777",
+                "0007": "0770",
+                "0067": "0710",
+                "0002": "0775",
+                "0602": "0175",
         ]
 
         valuesAndResults.each {
