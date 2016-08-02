@@ -7,6 +7,12 @@
 <?import java.lang.String?>
 <?import java.net.URL?>
 <?import de.dkfz.roddy.client.fxuiclient.settingsviewer.SSHExecutionServiceSettingsPanelControl?>
+<!--
+  ~ Copyright (c) 2016 eilslabs.
+  ~
+  ~ Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+  -->
+
 <fx:root type="javafx.scene.layout.GridPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"  fx:id="ROOT">
     <fx:define>
         <FXCollections fx:factory="observableArrayList">

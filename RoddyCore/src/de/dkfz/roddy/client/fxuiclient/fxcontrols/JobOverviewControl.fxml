@@ -7,6 +7,12 @@
 <?import javafx.scene.web.WebView?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.image.Image?>
+<!--
+  ~ Copyright (c) 2016 eilslabs.
+  ~
+  ~ Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+  -->
+
 <fx:root type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" style="fx-background-colour: red; ">
     <stylesheets>
         <URL value="@../RoddyStyles_Main.css"/>

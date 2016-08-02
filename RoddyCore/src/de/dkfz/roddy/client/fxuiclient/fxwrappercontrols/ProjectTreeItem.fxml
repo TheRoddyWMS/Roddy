@@ -10,6 +10,12 @@
 <?import javafx.scene.paint.*?>
 
 <?import de.dkfz.roddy.client.fxuiclient.fxcontrols.ImageButtonWithToolTip?>
+        <!--
+  ~ Copyright (c) 2016 eilslabs.
+  ~
+  ~ Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+  -->
+
         <!--style="-fx-padding:0; -fx-border-width: 0 0 1 0; -fx-border-color: orange;"-->
 <BorderPane maxHeight="Infinity" maxWidth="Infinity" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.ProjectTreeItemController">
     <fx:define>

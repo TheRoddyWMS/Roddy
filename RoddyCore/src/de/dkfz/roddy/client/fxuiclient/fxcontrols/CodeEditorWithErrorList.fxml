@@ -5,6 +5,12 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.web.WebView?>
 <?import javafx.scene.layout.BorderPane?>
+<!--
+  ~ Copyright (c) 2016 eilslabs.
+  ~
+  ~ Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+  -->
+
 <fx:root type="javafx.scene.layout.BorderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" minHeight="250" style="-fx-background-color: red;">
 
     <center>
