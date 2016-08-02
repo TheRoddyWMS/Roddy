@@ -20,7 +20,7 @@ class ConfigurationTest extends GroovyTestCase {
         Configuration cfgB = new Configuration(iccB)
         Configuration cfgC = new Configuration(iccC)
 
-        cfgC.getConfigurationValues().add(new ConfigurationValue(cfgC, ProjectFactory.CFG_USED_RESOURCES_SIZE, "xl"));
+        cfgC.getConfigurationValues().add(new ConfigurationValue(cfgC, ConfigurationConstants.CFG_USED_RESOURCES_SIZE, "xl"));
 
         assert cfgB.getResourcesSize() == ResourceSetSize.s;
 

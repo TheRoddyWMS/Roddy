@@ -30,7 +30,7 @@ public class BashCommandSetTest {
     @Test
     public void testGetShellExecuteCommand() {
         assert new BashCommandSet().getShellExecuteCommand("env") == ["bash", "-c", "env"];
-        assert new BashCommandSet().getShellExecuteCommand("echo a;", "echo b") == ["bash", "-c", "echo a;", "echo b;"];
+        assert new BashCommandSet().getShellExecuteCommand("echo a;", "echo b;") == ["bash", "-c", "echo a;", "echo b;"];
     }
 
     @Test
