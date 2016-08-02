@@ -234,12 +234,12 @@ public class BashCommandSet extends ShellCommandSet {
 
     @Override
     String getCopyFileCommand(File _in, File _out) {
-        return "cp ${_in.getAbsolutePath()} ${_out.getAbsolutePath()}";
+        return "cp -p ${_in.getAbsolutePath()} ${_out.getAbsolutePath()}";
     }
 
     @Override
     String getCopyDirectoryCommand(File _in, File _out) {
-        return "cp -r ${_in.getAbsolutePath()} ${_out.getAbsolutePath()}";
+        return "cp -pr ${_in.getAbsolutePath()} ${_out.getAbsolutePath()}";
     }
 
     @Override

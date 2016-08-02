@@ -26,33 +26,51 @@ public class RoddyIOHelperMethodsTest {
         File dst = new File(base, "dst");
         File dst2 = new File(dst, "dst")
 
-        String nonexecutable = "nonexecutable"
-        String executable = "executable"
+        String nonExecutableButWritable = "nonExecutableButWritable"
+        String executableButNotWritable = "executableButNotWritable"
 
         src.mkdirs();
 
-        File ne = new File(src, nonexecutable)
-        ne << "a"
+        File nebw = new File(src, nonExecutableButWritable)
+        nebw << "a"
+        nebw.setExecutable(false)
+        nebw.setWritable(true)
 
-        File ex = new File(src, executable)
-        ex << "b"
-        ex.setExecutable(true);
+        File exbnw = new File(src, executableButNotWritable)
+        exbnw << "b"
+        exbnw.setExecutable(true);
+        exbnw.setWritable(false)
 
-        assert !ne.canExecute()
-        assert ex.canExecute();
+        assert !nebw.canExecute()
+        assert nebw.canWrite()
+
+
+        assert exbnw.canExecute()
+        assert !exbnw.canWrite()
 
 
         // To non existing directory with new name
         RoddyIOHelperMethods.copyDirectory(src ,dst)
         assert dst.exists()
-        assert !new File(dst, nonexecutable).canExecute();
-        assert new File(dst, executable).canExecute()
+        File nebw2 = new File(dst, nonExecutableButWritable)
+        assert !nebw2.canExecute()
+        assert nebw2.canWrite()
+
+        File exbnw2 = new File(dst, executableButNotWritable)
+        assert exbnw2.canExecute()
+        assert !exbnw2.canWrite()
 
         // To existing directory without new name
         RoddyIOHelperMethods.copyDirectory(src, dst2)
         assert dst2.exists()
-        assert !new File(dst2, nonexecutable).canExecute();
-        assert new File(dst2, executable).canExecute()
+        File nebw3 = new File(dst2, nonExecutableButWritable)
+        assert !nebw3.canExecute()
+        assert nebw3.canWrite()
+
+        File exbnw3 = new File(dst2, executableButNotWritable)
+        assert exbnw3.canExecute()
+        assert !exbnw3.canWrite()
+
     }
 
     @Test

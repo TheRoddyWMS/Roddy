@@ -17,7 +17,7 @@ public class MockupExecutionContextBuilder {
     public static final String DIR_PREFIX = "/tmp/RoddyTests/";
 
     public static File getTestBaseDirectory(String testID) {
-        final File testBaseDirectory = new File("${DIR_PREFIX}${testID}")
+        final File testBaseDirectory = File.createTempDir(DIR_PREFIX + "_", testID)
         testBaseDirectory.deleteOnExit();
         testBaseDirectory
     }
