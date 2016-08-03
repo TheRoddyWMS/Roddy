@@ -122,7 +122,7 @@ public class RoddyTest {
         assert iniInTemp == inTempResult;
         assert iniInSettingsDir == inSettingsResult;
         assert iniInApplicationDir == inApplicationDirResult;
-        assert emptyFile == new File(Roddy.getSettingsDirectory(), + Constants.APP_PROPERTIES_FILENAME)
+        assert emptyFile == new File(Roddy.getSettingsDirectory(), Constants.APP_PROPERTIES_FILENAME)
     }
 
     @Test
