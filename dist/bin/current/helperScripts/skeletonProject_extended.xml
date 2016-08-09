@@ -34,7 +34,7 @@
         <!--<cvalue name='inputBaseDirectory' value='$USERHOME/roddyTests/${projectName}/vbp' type='path'/>-->
         <!--<cvalue name='outputBaseDirectory' value='$USERHOME/roddyTests/${projectName}/rpp' type='path'/>-->
         <!--<cvalue name='outputAnalysisBaseDirectory' value='${outputBaseDirectory}/${pid}' type="path"/>-->
-
+        <!--<cvalue name='outputFileGroup' value='B080' />-->
 
         <!-- Example settings for SNV calling -->
         <!--<cvalue name="CONFIDENCE_OPTS" value='"-c 0"' type="string" description="set to default settings."/>-->
