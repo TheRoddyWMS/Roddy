@@ -177,14 +177,15 @@ public class LibrariesFactory extends Initializable {
                 File buildinfoFile = pEntry.listFiles().find { File f -> f.name == BUILDINFO_TEXTFILE };
                 if (buildinfoFile) {
                     for (String line in buildinfoFile.readLines()) {
-                        if (!line.startsWith(BUILDINFO_DEPENDENCY)) {
-                            logger.severe("Parse error for buildinfo file '${buildinfoFile}' -- skipping plugin ${pluginName}:${pluginVersion}!")
-                            continue PLUGIN_DIR;
+                        if (line.startsWith(BUILDINFO_DEPENDENCY)) {
+                            String[] split = line.split(StringConstants.SPLIT_EQUALS)[1].split(StringConstants.SPLIT_COLON);
+                            String workflow = split[0];
+                            String version = split.length > 1 ? split[1] : PLUGIN_VERSION_CURRENT;
+                            pluginDependencies.put(workflow, version);
                         }
-                        String[] split = line.split(StringConstants.SPLIT_EQUALS)[1].split(StringConstants.SPLIT_COLON);
-                        String workflow = split[0];
-                        String version = split.length > 1 ? split[1] : PLUGIN_VERSION_CURRENT;
-                        pluginDependencies.put(workflow, version);
+                    }
+                    if (pluginDependencies.isEmpty()) {
+                        continue PLUGIN_DIR
                     }
                     if (!pluginDependencies.containsKey(PLUGIN_BASEPLUGIN))
                         pluginDependencies.put(PLUGIN_BASEPLUGIN, PLUGIN_VERSION_CURRENT);
