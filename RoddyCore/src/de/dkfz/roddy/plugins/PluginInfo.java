@@ -141,6 +141,14 @@ public class PluginInfo {
         return nextInChain;
     }
 
+    public PluginInfo getNextCompatibleInChain() {
+        if (nextInChain != null && nextInChain.previousInChainConnectionType != PluginInfoConnection.INCOMPATIBLE) {
+            return nextInChain;
+        } else {
+            return null;
+        }
+    }
+
     public PluginInfo getPreviousInChain() {
         return previousInChain;
     }

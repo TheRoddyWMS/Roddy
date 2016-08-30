@@ -402,14 +402,16 @@ public class LibrariesFactory extends Initializable {
             PluginInfo pInfo = mapOfPlugins[id][version];
 
             // Now, if the plugin is not in usedPlugins (and therefore not fixed), we search the newest compatible
-            // version of it which may either be a revision (x:x.y-[0..n] or a higher compatible version.
+            // version of it which may either be a revision (x:x.y-[0..n] or a higher compatible version and fix that.
             // Search the last valid entry in the chain.
             if (!usedPlugins.contains("${id}:${version}")) {
-                for (; pInfo.nextInChain != null; pInfo = pInfo.nextInChain) {
+                for (; pInfo.nextCompatibleInChain != null; pInfo = pInfo.nextCompatibleInChain) {
                     version = pInfo.prodVersion;
-                    if (usedPlugins.contains("${id}:${version}")) //Break, if the list of used plugins contains the selected version of the plugin
+                    if (usedPlugins.contains("${id}:${version}")) //Break, if the list of used plugins already contains the selected version of the plugin.
                         break;
                 }
+                version = pInfo.prodVersion
+                usedPlugins += [id, version].join(":");
             }
 
             if (pInfo == null)
@@ -418,7 +420,7 @@ public class LibrariesFactory extends Initializable {
                 continue;
             if (pluginsToActivate[id] != null) {
                 if (pluginsToActivate[id].prodVersion != version) {
-                    logger.severe("There is a version mismatch for plugin dependencies! Not starting up.");
+                    logger.severe("There is a version mismatch for plugin '${id}' dependencies! Not starting up. ${pluginsToActivate[id].prodVersion} != ${version}");
                     return null;
                 } else {
                     //Not checking again!
