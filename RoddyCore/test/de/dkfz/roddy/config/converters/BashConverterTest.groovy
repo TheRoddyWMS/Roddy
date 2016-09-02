@@ -79,14 +79,29 @@ public class BashConverterTest {
     public void appendDebugVariables() throws Exception {
         Configuration configuration = createTestConfiguration()
 
-        assert  new BashConverter().appendDebugVariables(configuration).toString().trim() == "set -o pipefail\nset -v\nset -x"
+        assert  new BashConverter().
+                    appendDebugVariables(configuration).
+                    toString().
+                    trim() == ["set -o pipefail",
+                               "set -v",
+                               "set -x"].join("\n")
 
         configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT, "true", "boolean")
-        assert  new BashConverter().appendDebugVariables(configuration).toString().trim() == "set -o pipefail\nset -v\nset -x\nexport PS4='+(\${BASH_SOURCE}:\${LINENO}): \${FUNCNAME[0]: +\$ { FUNCNAME[0] }():}'"
+        assert  new BashConverter().
+                    appendDebugVariables(configuration).
+                    toString().
+                    trim() == ["set -o pipefail",
+                               "set -v",
+                               "set -x",
+                               "export PS4='+(\${BASH_SOURCE}:\${LINENO}): \${FUNCNAME[0]: +\$ { FUNCNAME[0] }():}'"].join("\n")
 
         configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXECUTE_OUTPUT, "false", "boolean")
         configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT, "false", "boolean")
-        assert  new BashConverter().appendDebugVariables(configuration).toString().trim() == "set -o pipefail\nset -v"
+        assert  new BashConverter().
+                    appendDebugVariables(configuration).
+                    toString().
+                    trim() == ["set -o pipefail",
+                               "set -v"].join("\n")
 
     }
 //
