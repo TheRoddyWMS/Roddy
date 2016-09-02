@@ -1,6 +1,7 @@
 package de.dkfz.roddy.config.converters;
 
 import de.dkfz.roddy.config.Configuration
+import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
@@ -70,10 +71,20 @@ public class BashConverterTest {
 //
 //    }
 //
-//    @Test
-//    public void appendDebugVariables() throws Exception {
-//
-//    }
+    @Test
+    public void appendDebugVariables() throws Exception {
+        Configuration configuration = createTestConfiguration()
+
+        assert  new BashConverter().appendDebugVariables(configuration).toString().trim() == "set -o pipefail\nset -v\nset -x"
+
+        configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT, "true", "boolean")
+        assert  new BashConverter().appendDebugVariables(configuration).toString().trim() == "set -o pipefail\nset -v\nset -x\nexport PS4='+(\${BASH_SOURCE}:\${LINENO}): \${FUNCNAME[0]: +\$ { FUNCNAME[0] }():}'"
+
+        configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXECUTE_OUTPUT, "false", "boolean")
+        configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT, "false", "boolean")
+        assert  new BashConverter().appendDebugVariables(configuration).toString().trim() == "set -o pipefail\nset -v"
+
+    }
 //
 //    @Test
 //    public void appendPathVariables() throws Exception {
