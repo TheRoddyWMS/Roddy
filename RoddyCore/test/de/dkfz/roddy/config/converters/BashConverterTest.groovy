@@ -1,10 +1,13 @@
-package de.dkfz.roddy.config.converters;
+package de.dkfz.roddy.config.converters
 
+import de.dkfz.roddy.RunMode;
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import de.dkfz.roddy.execution.io.ExecutionService
+import de.dkfz.roddy.execution.io.NoNoExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import org.junit.BeforeClass;
 import org.junit.Test
@@ -27,7 +30,8 @@ public class BashConverterTest {
 
     @BeforeClass
     public static final void setup() {
-        FileSystemAccessProvider.initializeProvider(true);
+        ExecutionService.initializeService(NoNoExecutionService, RunMode.UI)
+        FileSystemAccessProvider.initializeProvider(true)
     }
 
     private Configuration createTestConfiguration() {
