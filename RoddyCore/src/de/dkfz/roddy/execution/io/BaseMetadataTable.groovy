@@ -28,6 +28,8 @@ public class BaseMetadataTable {
     // The mapping is via standard values from some xml files.
     protected Map<String, String> internal2CustomIDMap = [:]
     protected Map<String, String> custom2InternalIDMap = [:]
+
+    // The values of mandatoryColumns need to be internal column names ("datasetCol", "fileCol", etc.).
     protected List<String> mandatoryColumns = [];
 
     // A map which links column id and column position.
@@ -61,7 +63,7 @@ public class BaseMetadataTable {
     }
 
     BaseMetadataTable(Map<String, Integer> headerMap, Map<String, String> internal2CustomIDMap, List<String> mandatoryColumns, List<Map<String, String>> records) {
-        this.internal2CustomIDMap = internal2CustomIDMap;
+        this.internal2CustomIDMap = internal2CustomIDMap as LinkedHashMap<String,String>;
         this.internal2CustomIDMap.each {
             String key, String val -> custom2InternalIDMap[val] = key;
         }
@@ -150,7 +152,7 @@ public class BaseMetadataTable {
         return records.collect { it.clone() } as List<Map<String, String>>
     }
 
-    public BaseMetadataTable subsetByColumn(String columnName, String value) {
+    public BaseMetadataTable unsafeSubsetByColumn(String columnName, String value) {
 
         // Look into internal mapping table for headernames to varnames
         return new BaseMetadataTable(
@@ -161,7 +163,32 @@ public class BaseMetadataTable {
         )
     }
 
-    public BaseMetadataTable subsetByDataset(String datasetId) {
+    /** Get a subset of rows by unique values in a specified column (internal column namespace).
+     *  If mandatory column is selected, it is checked, whether the higher priority column, which
+     *  are before the selected columns in the mandatory columns, are unique. This ensures that
+     *  for instance not the same file is assigned to two different datasets.
+     * @param columnName internal column name (e.g. "datasetCol")
+     * @param value
+     * @param check
+     * @return
+     */
+    public BaseMetadataTable subsetByColumn(String columnName, String value, boolean check = true) {
+        BaseMetadataTable subtable = unsafeSubsetByColumn(columnName, value)
+        if (check && mandatoryColumnNames.contains(columnName)) {
+            for(String colToCheck : mandatoryColumnNames) {
+                if (colToCheck.equals(columnName)) {
+                    break;
+                } else {
+                    if (subtable.listColumn(colToCheck).unique().size() != 1) {
+                        throw new RuntimeException("Subsetting metadata table column '${columnName}' with value '${value}' results in non-unique higher-priority column values for '${colToCheck}")
+                    }
+                }
+            }
+        }
+        return subtable;
+    }
+
+    public BaseMetadataTable subsetByDataset(String datasetId, boolean check = true) {
         return subsetByColumn(INPUT_TABLE_DATASET, datasetId)
     }
 

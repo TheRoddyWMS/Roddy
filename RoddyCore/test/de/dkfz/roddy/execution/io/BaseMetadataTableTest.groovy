@@ -14,15 +14,16 @@ public class BaseMetadataTableTest {
     public static final String correctTable = "InputTableTest_CorrectTable1.tsv"
     public static final String damagedTable = "InputTableTest_DamagedTable1.tsv"
 
-    public static final String DATASET_COL = "datasetCol";
+    public static final String RUMPLE_COL = "rumpleCol"
 
-    public static final Map<String, String> internal2CustomIDMap = [
+    public static final LinkedHashMap<String, String> internal2CustomIDMap = [
             "datasetCol": "PID",
             "fileCol"   : "File",
             "rumpleCol" : "Rumple"
     ]
 
-    public static final List<String> mandatoryColumnsTable = [DATASET_COL, "fileCol"] as List<String>
+    public static final List<String> mandatoryColumnsTable = [BaseMetadataTable.INPUT_TABLE_DATASET,
+                                                              BaseMetadataTable.INPUT_TABLE_FILE] as List<String>
 
     private BaseMetadataTable readTable(String table) {
         String testFileName = getResourceFile(table)
@@ -87,9 +88,16 @@ public class BaseMetadataTableTest {
     @Test
     public void testSubsetByColumn() throws Exception {
         BaseMetadataTable table = readTable(correctTable)
-        def column = table.subsetByColumn(DATASET_COL, "b")
-        assert column.size() == 2
-        assert table.subsetByColumn(DATASET_COL, "a").size() == 4
+        def subtable = table.subsetByColumn(BaseMetadataTable.INPUT_TABLE_DATASET, "b")
+        assert subtable.size() == 2
+        assert table.subsetByColumn(BaseMetadataTable.INPUT_TABLE_DATASET, "a").size() == 4
+
+        assert table.unsafeSubsetByColumn(RUMPLE_COL, "ambiguous").size() == 8
+        try {
+            table.subsetByColumn(RUMPLE_COL, "ambiguous")
+        } catch (RuntimeException ex) {
+            assert ex.message =~ "Subsetting metadata table column '${RUMPLE_COL}' with value 'ambiguous' results in non-unique higher-priority column values"
+        }
     }
 
     @Test
