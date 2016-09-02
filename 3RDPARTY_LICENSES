@@ -1,0 +1,29 @@
+Bouncy Castle: MIT - http://www.bouncycastle.org/licence.html
+bcpg-jdk15on-149.jar
+bcpkix-jdk15on-149.jar
+bcprov-ext-jdk15on-149.jar
+bcprov-jdk15on-149.jar
+
+Apache Commons: Apache 2.0
+commons-cli-1.2.jar
+commons-codec-1.8.jar
+commons-io-2.4.jar
+commons-logging-1.1.1.jar
+commons-logging-adapters-1.1.1.jar
+commons-logging-api-1.1.1.jar
+
+Groovy: Apache 2.0 - http://groovy.codehaus.org/License+Information
+groovy-all.jar
+
+JZLib: BSD-Style (formerly LGPL)
+jzlib.jar
+
+SL4J: MIT Licence - http://www.slf4j.org/license.html
+slf4j-api-1.7.2.jar
+slf4j-jcl-1.7.2.jar
+
+SSHJ: Apache 2.0 - https://github.com/hierynomus/sshj/blob/master/LICENSE
+SSHJ.jar
+
+XStream: BSD Licence - http://xstream.codehaus.org/license.html
+xstream-1.4.5.jar

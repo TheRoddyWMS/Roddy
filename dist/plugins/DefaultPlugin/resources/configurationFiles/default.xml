@@ -1,3 +1,9 @@
+<!--
+  ~ Copyright (c) 2016 eilslabs.
+  ~
+  ~ Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+  -->
+
 <configuration name='default' description='This is a configuration file with several default settings. The file should contain only configuration values, other values like tools are not processed! It is read on start
 up and is included in the configuration. The configuration settings directly override these settings.' >
     <configurationvalues>

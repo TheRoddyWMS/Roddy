@@ -9,6 +9,12 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.paint.*?>
 
+<!--
+  ~ Copyright (c) 2016 eilslabs.
+  ~
+  ~ Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+  -->
+
 <BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.LogFileListViewItemController" fx:id="borderPane">
     <left>
         <GridPane fx:id="iconsPane">

@@ -13,6 +13,12 @@
 <?import javafx.scene.shape.Circle?>
 <?import java.lang.*?>
 <?import java.net.URL?>
+<!--
+  ~ Copyright (c) 2016 eilslabs.
+  ~
+  ~ Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+  -->
+
 <BorderPane minHeight="480" minWidth="640" prefHeight="800.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.dkfz.roddy.client.fxuiclient.RoddyUIController" style="-fx-background-color: gray;">
     <fx:define>
         <Image url="/imgs/icon_applicationSpecific.png" fx:id="iconApplicationSpecific"/>

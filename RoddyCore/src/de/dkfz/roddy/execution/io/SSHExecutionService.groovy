@@ -1,4 +1,10 @@
 /*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
+/*
 * To change this template, choose Tools | Templates
 * and open the template in the editor.
 */
