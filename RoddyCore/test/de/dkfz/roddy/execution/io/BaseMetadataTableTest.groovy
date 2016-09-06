@@ -1,5 +1,6 @@
 package de.dkfz.roddy.execution.io
 
+import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.plugins.LibrariesFactory
 import groovy.transform.CompileStatic
 import org.junit.Test
@@ -96,7 +97,16 @@ public class BaseMetadataTableTest {
         try {
             table.subsetByColumn(RUMPLE_COL, "ambiguous")
         } catch (RuntimeException ex) {
-            assert ex.message =~ "Subsetting metadata table column '${RUMPLE_COL}' with value 'ambiguous' results in non-unique higher-priority column values"
+            assert ex.message.startsWith("For metadata table column '${RUMPLE_COL}' higher-priority column values for 'datasetCol' are not unique: [")
+        }
+    }
+
+    @Test void testSubsetBy() throws Exception {
+        BaseMetadataTable table = readTable(correctTable)
+        try {
+            table.subsetBy((BaseMetadataTable.INPUT_TABLE_DATASET): "a", (RUMPLE_COL): "ambiguous")
+        } catch (RuntimeException ex) {
+            assert ex.message.startsWith("For metadata table column '${RUMPLE_COL}' higher-priority column values for 'datasetCol' are not unique: [")
         }
     }
 

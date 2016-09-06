@@ -1,8 +1,6 @@
 package de.dkfz.roddy.execution.io
 
 import groovy.transform.CompileStatic
-import org.apache.commons.csv.CSVFormat
-import org.apache.commons.csv.CSVParser
 
 /**
  * The basic input table class for data input in table format instead of files.
@@ -159,8 +157,7 @@ public class BaseMetadataTable {
                 this,
                 records.findAll { Map<String, String> row ->
                     row.get(columnName) == value
-                }
-        )
+                })
     }
 
     /** Get a subset of rows by unique values in a specified column (internal column namespace).
@@ -172,26 +169,31 @@ public class BaseMetadataTable {
      * @param check
      * @return
      */
-    public BaseMetadataTable subsetByColumn(String columnName, String value, boolean check = true) {
-        BaseMetadataTable subtable = unsafeSubsetByColumn(columnName, value)
-        if (check && mandatoryColumnNames.contains(columnName)) {
-            for(String colToCheck : mandatoryColumnNames) {
-                if (colToCheck.equals(columnName)) {
-                    break;
-                } else {
-                    if (subtable.listColumn(colToCheck).unique().size() != 1) {
-                        throw new RuntimeException("Subsetting metadata table column '${columnName}' with value '${value}' results in non-unique higher-priority column values for '${colToCheck}")
-                    }
-                }
+    public BaseMetadataTable subsetByColumn(String columnName, String value) {
+        return unsafeSubsetByColumn(columnName, value).assertUniqueness(columnName)
+    }
+
+
+    /** Given a column names, throw if that column or some higher-priority mandatory column have non-unique values. */
+    public BaseMetadataTable assertUniqueness(String columnName = null) {
+        boolean result = true
+        def mandatoryUniqueColumnNames = mandatoryColumnNames
+        if (!mandatoryColumnNames.contains(columnName) || columnName != INPUT_TABLE_FILE)
+            mandatoryUniqueColumnNames = mandatoryUniqueColumnNames.minus(INPUT_TABLE_FILE)
+        for(String colToCheck : mandatoryUniqueColumnNames) {
+            if (listColumn(colToCheck).unique().size() != 1) {
+                throw new RuntimeException("For metadata table column '${columnName}' higher-priority column values for '${colToCheck}' are not unique: ${listColumn(colToCheck).unique().sort()}")
+            }
+            if (colToCheck.equals(columnName)) {
+                break
             }
         }
-        return subtable;
+        return this
     }
 
-    public BaseMetadataTable subsetByDataset(String datasetId, boolean check = true) {
+    public BaseMetadataTable subsetByDataset(String datasetId) {
         return subsetByColumn(INPUT_TABLE_DATASET, datasetId)
     }
-
 
     public Integer size() {
         return records.size()
@@ -213,5 +215,16 @@ public class BaseMetadataTable {
 
     public List<Map<String, String>> getRecords() {
         return records;
+    }
+
+    public BaseMetadataTable unsafeSubsetBy(Map<String, String> columnValueMap) {
+        BaseMetadataTable result = columnValueMap.inject(this) { BaseMetadataTable metaDataTable, String columnName, String value ->
+            metaDataTable.unsafeSubsetByColumn(columnName, value)
+        } as BaseMetadataTable
+        return result
+    }
+
+    public BaseMetadataTable subsetBy(Map<String, String> columnValueMap) {
+        return unsafeSubsetBy(columnValueMap).assertUniqueness()
     }
 }
