@@ -45,6 +45,12 @@
                                                 <top>
                                                     <TitledPane fx:id="tpProjectFilterSettings" text="Filter projects">
                                                         <VBox spacing="2">
+                                                            <Label text="Project ini files:"/>
+
+                                                            <ComboBox fx:id="comboBoxApplicationIniFiles" />
+                                                            <Button text="Load ini" onAction="#loadApplicationIniFile" />
+
+                                                            <Separator orientation="HORIZONTAL"/>
                                                             <Label text="Filter by:"/>
                                                             <GridPane>
                                                                 <columnConstraints>
@@ -91,28 +97,17 @@
                                                     <VBox spacing="2">
                                                         <TitledPane fx:id="tpProjectSettings" animated="false" text="Project settings">
                                                             <content>
-                                                                <GridPane hgap="4.0" vgap="2.0">
+                                                                <VBox>
                                                                     <children>
                                                                         <Label text="Analysis"/>
-                                                                        <Label text="Mode" GridPane.rowIndex="2"/>
-                                                                        <Separator prefWidth="200.0" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="1"/>
-                                                                        <VBox fx:id="vboxAvailableAnalyses" spacing="2.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                                                        <Separator />
+                                                                        <VBox fx:id="vboxAvailableAnalyses" spacing="2.0">
                                                                             <children>
                                                                                 <RadioButton mnemonicParsing="false" text="RadioButton"/>
                                                                             </children>
                                                                         </VBox>
-                                                                        <VBox fx:id="vboxProcessingMode" spacing="2.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
-                                                                            <children>
-                                                                                <RadioButton mnemonicParsing="false" selected="true" text="Productive">
-                                                                                    <toggleGroup>
-                                                                                        <ToggleGroup fx:id="projectProcessingMode"/>
-                                                                                    </toggleGroup>
-                                                                                </RadioButton>
-                                                                                <Separator prefWidth="200.0"/>
-                                                                                <!--<RadioButton mnemonicParsing="false" text="Debug" toggleGroup="$projectProcessingMode" />-->
-                                                                            </children>
-                                                                        </VBox>
-                                                                        <VBox GridPane.rowIndex="3" GridPane.columnSpan="2">
+                                                                        <Separator />
+                                                                        <VBox>
                                                                             <Label text="Analysis input directory"/>
                                                                             <TextField fx:id="txtAnalysisInputDirectory" editable="false"/>
                                                                             <Label text="Processing base directory"/>
@@ -121,19 +116,7 @@
                                                                             <TextField fx:id="txtAnalysisOutputDirectory" editable="false"/>
                                                                         </VBox>
                                                                     </children>
-                                                                    <columnConstraints>
-                                                                        <ColumnConstraints halignment="LEFT" minWidth="8.0"/>
-                                                                        <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" minWidth="8.0"/>
-                                                                    </columnConstraints>
-                                                                    <padding>
-                                                                        <Insets bottom="2.0" left="2.0" right="2.0" top="2.0"/>
-                                                                    </padding>
-                                                                    <rowConstraints>
-                                                                        <RowConstraints valignment="TOP"/>
-                                                                        <RowConstraints valignment="TOP"/>
-                                                                        <RowConstraints valignment="TOP"/>
-                                                                    </rowConstraints>
-                                                                </GridPane>
+                                                                </VBox>
                                                             </content>
                                                         </TitledPane>
                                                         <TitledPane fx:id="tpProjectDataSetFilter" animated="false" text="Filter">
@@ -158,22 +141,6 @@
                                                                                 <String fx:value="All"/>
                                                                             </value>
                                                                         </ComboBox>
-
-                                                                        <!--<VBox spacing="3.0" GridPane.columnIndex="0" GridPane.rowIndex="3">-->
-                                                                        <!--<RadioButton selected="true" text="All">-->
-                                                                        <!--<toggleGroup>-->
-                                                                        <!--<ToggleGroup fx:id="dataSetFilterViewToggleGroup"/>-->
-                                                                        <!--</toggleGroup>-->
-                                                                        <!--l-->
-                                                                        <!--</RadioButton>-->
-                                                                        <!--<RadioButton text="Active" toggleGroup="$dataSetFilterViewToggleGroup"/>-->
-                                                                        <!--<RadioButton text="Successful" toggleGroup="$dataSetFilterViewToggleGroup"/>-->
-                                                                        <!--<RadioButton text="Unknown" toggleGroup="$dataSetFilterViewToggleGroup"/>-->
-                                                                        <!--<RadioButton text="Failed" toggleGroup="$dataSetFilterViewToggleGroup"/>-->
-                                                                        <!--<padding>-->
-                                                                        <!--<Insets left="8.0" top="2.0" fx:id="x1"/>-->
-                                                                        <!--</padding>-->
-                                                                        <!--</VBox>-->
                                                                     </children>
                                                                     <columnConstraints>
                                                                         <ColumnConstraints halignment="LEFT" minWidth="8.0"/>

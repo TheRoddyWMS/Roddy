@@ -17,6 +17,13 @@ import java.lang.reflect.Field
 class ExecutionHelper {
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(ExecutionHelper.class.name);
 
+    public static String getProcessID(Process process) {
+        Field f = process.getClass().getDeclaredField("pid");
+        f.setAccessible(true);
+        String processID = f.get(process)
+        return processID
+    }
+
     static class ExtendedProcessExecutionResult {
         int exitValue;
         String processID;
@@ -57,9 +64,7 @@ class ExecutionHelper {
         Process process = Roddy.getLocalCommandSet().getShellExecuteCommand(command).execute();
 
         //TODO Put to a custom class which can handle things for Windows as well.
-        Field f = process.getClass().getDeclaredField("pid");
-        f.setAccessible(true);
-        String processID = f.get(process)
+        String processID = getProcessID(process)
 
         List<String> lines = [];
         if (logger.isVerbosityHigh())
@@ -73,6 +78,11 @@ class ExecutionHelper {
             lines = sstream.readLines().collect { String l -> return l.toString(); };
         }
         return new ExtendedProcessExecutionResult(process.exitValue(), processID, lines);
+    }
+
+    public static Process executeNonBlocking(String command) {
+        Process process = Roddy.getLocalCommandSet().getShellExecuteCommand("sleep 1; " + command).execute();
+        return process;
     }
 
 

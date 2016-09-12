@@ -257,7 +257,14 @@ public class ProjectFactory {
         }
     }
 
-    private static List dissectFullAnalysisID(String fullAnalysisID) {
+    /**
+     * Dissects an analysis id string. Returns:
+     * [0] = plugin
+     * [1] = killswitches
+     * @param fullAnalysisID
+     * @return
+     */
+    public static List dissectFullAnalysisID(String fullAnalysisID) {
         String[] splitEntries = fullAnalysisID.split("[:][:]");
 
         // If the plugin is set, find "parent" plugins with the proper version.

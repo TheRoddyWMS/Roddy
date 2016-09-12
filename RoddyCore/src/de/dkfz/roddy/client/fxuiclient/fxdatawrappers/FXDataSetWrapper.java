@@ -15,60 +15,67 @@ import java.util.List;
  * Encapsulates DataSets (like i.e. PIDs)
  */
 public class FXDataSetWrapper implements Comparable<FXDataSetWrapper> {
-    private final DataSet dataSet;
-    private final Analysis analysis;
-    private Boolean isExecutable;
+    private final String project;
+    private final String analysis;
+    private final String id;
+    private final String folder;
 
-    public FXDataSetWrapper(DataSet dataSet, Analysis analysis) {
-        this.dataSet = dataSet;
+    public FXDataSetWrapper(String project, String analysis, String id, String folder) {
+        this.project = project;
         this.analysis = analysis;
+        this.id = id;
+        this.folder = folder;
     }
 
-    public DataSet getDataSet() {
-        return dataSet;
+    public String getProject() {
+        return project;
     }
 
-    public String getID() {
-        return dataSet.toString();
-    }
-
-    public Analysis getAnalysis() {
+    public String getAnalysis() {
         return analysis;
     }
 
-    public AnalysisProcessingInformation getDummyProcessingInfo() {
-        return dataSet.getDummyAnalysisProcessingInformation(analysis);
+    public String getId() {
+        return id;
     }
 
-    public AnalysisProcessingInformation getRunningOrPlannedProcessingInfo() {
-        return dataSet.getActiveAnalysisProcessingInformation(analysis);
+    public String getFolder() {
+        return folder;
     }
 
-    public List<AnalysisProcessingInformation> getProcessingInfo() {
-        return dataSet.getProcessingInformation(analysis);
-    }
+    //    public AnalysisProcessingInformation getDummyProcessingInfo() {
+//        return dataSet.getDummyAnalysisProcessingInformation(analysis);
+//    }
+//
+//    public AnalysisProcessingInformation getRunningOrPlannedProcessingInfo() {
+//        return dataSet.getActiveAnalysisProcessingInformation(analysis);
+//    }
+//
+//    public List<AnalysisProcessingInformation> getProcessingInfo() {
+//        return dataSet.getProcessingInformation(analysis);
+//    }
 
-    public AnalysisProcessingInformation getValidProcessingInfo() {
-        AnalysisProcessingInformation api = getDummyProcessingInfo();
-        if (api == null)
-            api = getRunningOrPlannedProcessingInfo();
-        if (api == null && getProcessingInfo().size() > 0)
-            api = getProcessingInfo().get(0);
-        return api;
-    }
+//    public AnalysisProcessingInformation getValidProcessingInfo() {
+//        AnalysisProcessingInformation api = getDummyProcessingInfo();
+//        if (api == null)
+//            api = getRunningOrPlannedProcessingInfo();
+//        if (api == null && getProcessingInfo().size() > 0)
+//            api = getProcessingInfo().get(0);
+//        return api;
+//    }
 
-    public boolean isExecutable() {
-        if(isExecutable == null) {
-            DataSet ds = dataSet;
-            Analysis analysis = getAnalysis();
-            Workflow workflow = analysis.getWorkflow();
-            isExecutable = workflow.checkExecutability(new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), analysis, ds, ExecutionContextLevel.QUERY_STATUS, ds.getOutputFolderForAnalysis(analysis), ds.getInputFolderForAnalysis(analysis), null, -1, true));
-        }
-        return isExecutable;
-    }
+//    public boolean isExecutable() {
+//        if(isExecutable == null) {
+//            DataSet ds = dataSet;
+//            Analysis analysis = getAnalysis();
+//            Workflow workflow = analysis.getWorkflow();
+//            isExecutable = workflow.checkExecutability(new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), analysis, ds, ExecutionContextLevel.QUERY_STATUS, ds.getOutputFolderForAnalysis(analysis), ds.getInputFolderForAnalysis(analysis), null, -1, true));
+//        }
+//        return isExecutable;
+//    }
 
     @Override
     public int compareTo(FXDataSetWrapper o) {
-        return dataSet.getId().compareTo(o.dataSet.getId());
+        return id.compareTo(o.id);
     }
 }

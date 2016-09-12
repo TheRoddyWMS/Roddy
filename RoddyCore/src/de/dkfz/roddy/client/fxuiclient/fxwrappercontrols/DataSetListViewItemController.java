@@ -122,9 +122,9 @@ public class DataSetListViewItemController extends ExecutionContextPresenter<FXD
     @Override
     public void itemSet(final FXDataSetWrapper item) {
 //        this.item = item;
-        item.getDataSet().addListener(this, true);
-
-        pidID.setText(item.getID());
+//        item.getDataSet().addListener(this, true);
+//
+        pidID.setText(item.getId());
 
 //        runViews.getChildren().remove(runInfoPane);
 
@@ -147,10 +147,10 @@ public class DataSetListViewItemController extends ExecutionContextPresenter<FXD
             @Override
             public ExecutionContext _call() throws Exception {
                 try {
-                    isExecutable = item.isExecutable();
-                    api = item.getRunningOrPlannedProcessingInfo();
-                    if (api == null && item.getProcessingInfo().size() > 0)
-                        api = item.getProcessingInfo().get(0);
+//                    isExecutable = item.isExecutable();
+//                    api = item.getRunningOrPlannedProcessingInfo();
+//                    if (api == null && item.getProcessingInfo().size() > 0)
+//                        api = item.getProcessingInfo().get(0);
 
                     if (api == null) // || !api.getDetailedProcessingInfo().hasRunningJobs())
 //                        if (item.getProcessingInfo().size() > 0)
@@ -193,10 +193,10 @@ public class DataSetListViewItemController extends ExecutionContextPresenter<FXD
                 RoddyUITask.invokeLater(() -> {
                     try {
 
-                        if (!item.isExecutable()) {
-                            pidID.setId("InactiveItem");
-                        } else
-                            pidID.setId("ActiveItem");
+//                        if (!item.isExecutable()) {
+//                            pidID.setId("InactiveItem");
+//                        } else
+//                            pidID.setId("ActiveItem");
 
                         setIconVisiblity(indicatorUnknown);
                         if (errorInfo.getChildren().size() > 0)

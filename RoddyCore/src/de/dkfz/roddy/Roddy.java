@@ -11,6 +11,7 @@ import de.dkfz.roddy.client.RoddyStartupModes;
 import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
+import de.dkfz.roddy.client.rmiclient.RoddyRMIServer;
 import de.dkfz.roddy.config.AppConfig;
 import de.dkfz.roddy.config.ResourceSetSize;
 import de.dkfz.roddy.core.Initializable;
@@ -34,6 +35,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
+import static de.dkfz.roddy.RunMode.CLI;
 import static de.dkfz.roddy.StringConstants.FALSE;
 
 /**
@@ -254,8 +256,11 @@ public class Roddy {
 
     public static void performInitialSetup(String[] args, RoddyStartupModes option) {
 
-        runMode = option == RoddyStartupModes.ui ? RunMode.UI : RunMode.CLI;
-        trackUserJobsOnly = runMode == RunMode.CLI ? true : false; //Auto enable or disable trackuserjobs
+        runMode = CLI;
+        if(option == RoddyStartupModes.ui) runMode = RunMode.UI;
+        if(option == RoddyStartupModes.rmi) runMode = RunMode.RMI;
+
+        trackUserJobsOnly = runMode == CLI ? true : false; //Auto enable or disable trackuserjobs
 
         for (int i = 0; i < args.length; i++) {
             logger.postRareInfo(String.format("[%d] - %s", i, args[i]));
@@ -282,7 +287,7 @@ public class Roddy {
 
             }
 
-            if (runMode == RunMode.CLI) {
+            if (runMode.isCommandLineMode()) {
                 // Instead of terminating, Roddy waits for all submitted jobs to finish.
                 if (startupOption == (RoddyStartupOptions.waitforjobs)) {
                     waitForJobsToFinish = true;
@@ -457,6 +462,8 @@ public class Roddy {
     private static void parseRoddyStartupModeAndRun(CommandLineCall clc) {
         if (clc.startupMode == RoddyStartupModes.ui)
             RoddyUIController.App.main(clc.getArguments().toArray(new String[0]));
+        else if(clc.startupMode == RoddyStartupModes.rmi)
+            RoddyRMIServer.startServer(clc);
         else
             RoddyCLIClient.parseStartupMode(clc);
     }
@@ -553,7 +560,7 @@ public class Roddy {
     }
 
     public static RunMode getRunMode() {
-        return runMode;
+        return CLI;// runMode;
     }
 
     public static void setApplicationProperty(RunMode runMode, String appPropertyExecutionServiceClass, String text) {
