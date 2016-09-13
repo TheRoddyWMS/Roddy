@@ -10,6 +10,7 @@ import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.RunMode;
 import de.dkfz.roddy.StringConstants;
 import de.dkfz.roddy.client.rmiclient.RoddyRMIClientConnection;
+import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation;
 import de.dkfz.roddy.config.AppConfig;
 import de.dkfz.roddy.config.ConfigurationFactory;
 import de.dkfz.roddy.config.InformationalConfigurationContent;
@@ -23,6 +24,7 @@ import de.dkfz.roddy.client.fxuiclient.fxdatawrappers.FXICCWrapper;
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.GenericListViewItemCellImplementation;
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.ProjectTreeItemCellImplementation;
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.ProjectTreeItemCellListener;
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -245,6 +247,15 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
         setupTitlePaneExpansionProcessing(tpProjectDataSetFilter, APP_PROPERTY_PROJECT_DATASET_FILTER_OPENED, Boolean.TRUE);
     }
 
+    private void stopRMITasks() {
+        for (RoddyRMIClientConnection clientConnection : rmiConnectionPool.values()) {
+            try {
+                clientConnection.closeServer();
+            } catch (Exception ex) {
+
+            }
+        }
+    }
 
     public static void setupTitlePaneExpansionProcessing(TitledPane tp, String id, Boolean defaultValue) {
         tp.setExpanded(Boolean.parseBoolean(Roddy.getApplicationProperty(RunMode.UI, id, defaultValue.toString())));
@@ -584,6 +595,24 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
         });
     }
 
+    private Map<String, RoddyRMIClientConnection> rmiConnectionPool = new LinkedHashMap<>();
+
+    /**
+     * Check and (re-)open / get an (active) rmi server + connection
+     * @return
+     */
+    private synchronized RoddyRMIClientConnection getRMIConnection() {
+        List<String> dissected = ProjectFactory.dissectFullAnalysisID(currentAnalysis);
+        String pluginID = dissected.get(0);
+
+        String shortAnalysisId = currentAnalysis.split("[:][:]")[0];
+        if (!rmiConnectionPool.containsKey(pluginID) || !rmiConnectionPool.get(pluginID).pingServer()) {
+            RoddyRMIClientConnection clientConnection = new RoddyRMIClientConnection();
+            clientConnection.startLocalRoddyRMIServerAndConnect(currentIniFile.getAbsolutePath(), currentProjectWrapper.getName(), shortAnalysisId);
+            rmiConnectionPool.put(pluginID, clientConnection);
+        }
+        return rmiConnectionPool.get(pluginID);
+    }
 
     /**
      * Load all datasets for an analysis / project
@@ -608,56 +637,33 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
                 List<FXDataSetWrapper> _dataSetWrappers = new LinkedList<>();
 
                 // Run a remote RMI Roddy task and load datasets from the new instance.
-                RoddyRMIClientConnection clientConnection = new RoddyRMIClientConnection();
-                clientConnection.startLocalRoddyRMIServerAndConnect(currentIniFile.getAbsolutePath(), currentProjectWrapper.getName(), currentAnalysis.split("[:][:]")[0]);
-                assert clientConnection.pingServer();
-                Map<String, String> listOfDatasets = clientConnection.getListOfDatasets();
-                for (String id : listOfDatasets.keySet()) {
-                    _dataSetWrappers.add(new FXDataSetWrapper(currentProjectWrapper.getName(), currentAnalysis, id, listOfDatasets.get(id)));
+                List<String> dissected = ProjectFactory.dissectFullAnalysisID(currentAnalysis);
+                String shortAnalysisId = currentAnalysis.split("[:][:]")[0];
+                String pluginID = dissected.get(0);
+                if (RoddyConversionHelperMethods.isNullOrEmpty(pluginID))
+                    return null;
 
+                RoddyRMIClientConnection clientConnection = getRMIConnection();
+
+                assert clientConnection.pingServer();
+                List<RoddyRMIInterfaceImplementation.DataSetInfoObject> listOfDatasets = clientConnection.getListOfDatasets(shortAnalysisId);
+                for (RoddyRMIInterfaceImplementation.DataSetInfoObject infoObject : listOfDatasets) {
+                    _dataSetWrappers.add(new FXDataSetWrapper(currentProjectWrapper.getName(), currentAnalysis, infoObject.getId(), infoObject.getPath().getAbsolutePath()));
                 }
 
                 Collections.sort(_dataSetWrappers);
 
-                synchronized (currentListOfDataSets) {
-                    for (int i = 0; i < _dataSetWrappers.size() - 1; i++) {
-                        currentListOfDataSets.add(_dataSetWrappers.get(i));
-                    }
-                    currentListOfDataSets.addAll(_dataSetWrappers);//.get(_dataSetWrappers.size() - 1));
-
-                }
-
-//                List<FXDataSetWrapper> dataSetWrappers = new LinkedList<>();
-//                wrapperPackages.add(dataSetWrappers);
-//                for (FXDataSetWrapper dsw : _dataSetWrappers) {
-//                    if (dataSetWrappers.add(dsw)) ;
-//                    if (dataSetWrappers.size() == 1) {
-//                        dataSetWrappers = new LinkedList<>();
-//                        wrapperPackages.add(dataSetWrappers);
-//                    }
-//                }
-//
-//                for (final List<FXDataSetWrapper> ldsw : wrapperPackages) {
-//                    final boolean isFirst = ldsw == wrapperPackages.get(0);
-////                    RoddyUITask.invokeLater(new Runnable() {
-////                        @Override
-////                        public void context() {
-////                            if (isFirst)
-////                                listViewDataSets.getItems().clear();
-////                            listViewDataSets.getItems().addAll(ldsw);
-//
-////                        }
-////                    }, UIINVOKE_ADD_DATA_SETS_TO_LISTVIEW);
-//                }
+                dataSetWrappers.clear();
+                dataSetWrappers.addAll(_dataSetWrappers);
 
                 return _dataSetWrappers;
             }
 
-//            @Override
-//            public void _succeeded() {
-//                listViewDataSets.getItems().clear();
-//                listViewDataSets.getItems().addAll(dataSetWrappers);
-//            }
+            @Override
+            public void _succeeded() {
+                listViewDataSets.getItems().clear();
+                listViewDataSets.getItems().addAll(dataSetWrappers);
+            }
         });
     }
 
@@ -984,6 +990,7 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
 
                     @Override
                     public void handle(WindowEvent windowEvent) {
+                        RoddyUIController.getMainUIController().stopRMITasks();
                         primaryStage.close();
                     }
                 });

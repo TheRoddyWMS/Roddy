@@ -217,9 +217,10 @@ public class Roddy {
 
     private static void time(String info) {
         t2 = System.nanoTime();
-        if (info != null) logger.postSometimesInfo("Timing " + info + ": " + ((t2 - t1) / 1000000) + " ms");
+        if (info != null) logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo(info, t1, t2));
         t1 = t2;
     }
+
 
     private static void startup(String[] args) {
         time(null);
@@ -394,19 +395,23 @@ public class Roddy {
     public static final boolean initializeServices(boolean fullSetup) {
         String currentStep = "Initialize proxy settings";
         try {
+
             // Configure a proxy for internet connection. Used i.e. for codemirror
             initializeProxySettings();
+            time("init proxy");
 
             currentStep = "Initialize file system access provider";
             FileSystemAccessProvider.initializeProvider(fullSetup);
+            time("init fsap");
 
             //Do not touch the calling order, execution service must be set before JobManager.
             currentStep = "Initialize execution service";
             ExecutionService.initializeService(fullSetup);
+            time("init execserv");
 
             currentStep = "Initialize command factory";
             JobManager.initializeFactory(fullSetup);
-
+            time("init cmd fac");
             return true;
         } catch (Exception ex) {
             logger.severe("initializeServices failed with an unhandled error. The step in which the error occurred was: " + currentStep + "\nSee the following stacktrace for more details.", ex);

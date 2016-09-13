@@ -24,37 +24,84 @@ import java.util.concurrent.Semaphore;
  */
 public class RoddyRMIServer {
     private static final LoggerWrapper loggerWrapper = LoggerWrapper.getLogger(RoddyRMIServer.class.getName());
-    /**
-     * The semaphore for the server. Initialised with 0, it will be acquired, as soon as it was released once (by close)
-     **/
-    public static final Semaphore rmiActiveSemaphore = new Semaphore(0);
+
     public static final String RODDY_SERVER_UP_MESSAGE = "Roddy RMI server instance is ready";
     public static final String RODDY_SERVER_FAIL_MESSAGE = "Roddy RMI server failed at startup: ";
 
+    /**
+     * The countdown until the server stops.
+     */
+    public static final int RODDY_SERVER_COUNTDOWN = 180;
+
+    /**
+     * The semaphore for the server. Initialised with 0, it will be acquired, as soon as it was released once (by close)
+     **/
+    private static final Semaphore rmiActiveSemaphore = new Semaphore(0);
+
+    /**
+     * A countdown which needs to be refreshed upon each server action.
+     * Keeps the server alive.
+     *
+     * Set to 0 (run stopServer) to exit the rmiserver
+     */
+    private static int lastActionCountdown = RODDY_SERVER_COUNTDOWN;
+
+    /**
+     * @param clc
+     */
     public static void startServer(CommandLineCall clc) {
         try {
             RoddyRMIInterfaceImplementation obj = new RoddyRMIInterfaceImplementation();
             RoddyRMIInterface stub = (RoddyRMIInterface) UnicastRemoteObject.exportObject(obj, 0);
-//            int portNumber = RoddyConversionHelperMethods.toInt(clc.getArguments().last());
             int portNumber = RoddyConversionHelperMethods.toInt(System.getenv("RMIPORT"));
 
             // TODO IMPORTANT  Enable SSL for RMI! http://docs.oracle.com/javase/1.5.0/docs/guide/rmi/socketfactory/SSLInfo.html
             // Bind the remote object's stub in the registry
-            // TODO Attach the process id and unbind when something bad happens. The pid will identify the Roddy subprocess.
             loggerWrapper.postAlwaysInfo("Trying to connect to local rmi registry on port " + portNumber);
             Registry registry = LocateRegistry.createRegistry(portNumber);
-//            Registry registry = LocateRegistry.getRegistry(portNumber);
             registry.bind("RoddyRMIInterface", stub);
-
 
             System.err.println(RODDY_SERVER_UP_MESSAGE);
 
+            startCountdownThread();
+
             rmiActiveSemaphore.acquire();
+            lastActionCountdown = 0;
 
             registry.unbind("RoddyRMIInterface");
         } catch (Exception e) {
             System.err.println(RODDY_SERVER_FAIL_MESSAGE + e.toString());
             e.printStackTrace();
         }
+    }
+
+    public static void touchServer() {
+        lastActionCountdown = RODDY_SERVER_COUNTDOWN * 4; // multiply by four, steps are in quarter seconds.
+    }
+
+    public static void stopServer() {
+        System.err.println("Stopping server.");
+        lastActionCountdown = 0;
+        rmiActiveSemaphore.release();
+    }
+
+    public static boolean isActive() {
+        return rmiActiveSemaphore.hasQueuedThreads();
+    }
+
+    private static void startCountdownThread() {
+        Thread countdownThread = new Thread(() -> {
+            while (lastActionCountdown > 0) {
+                try {
+                    Thread.sleep(250);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                lastActionCountdown--;
+            }
+            stopServer();
+        });
+        countdownThread.setName("RMI countdown thread");
+        countdownThread.start();
     }
 }

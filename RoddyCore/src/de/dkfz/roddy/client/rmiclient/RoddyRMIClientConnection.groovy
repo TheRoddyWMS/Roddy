@@ -9,6 +9,7 @@ package de.dkfz.roddy.client.rmiclient
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.core.DataSet
 import de.dkfz.roddy.execution.io.ExecutionHelper
+import de.dkfz.roddy.execution.jobs.JobState
 import groovy.transform.CompileStatic
 
 import java.rmi.registry.LocateRegistry
@@ -104,7 +105,7 @@ public class RoddyRMIClientConnection {
 
     public boolean pingServer() {
         try {
-            return connection.ping();
+            return connection.ping(true);
         } catch (Exception ex) {
             return false;
         }
@@ -118,12 +119,24 @@ public class RoddyRMIClientConnection {
         }
     }
 
-    public Map<String, String> getListOfDatasets() {
+    public List<RoddyRMIInterfaceImplementation.DataSetInfoObject> getListOfDatasets(String analysisId) {
         try {
-            return connection.listdatasets();
+            return connection.listdatasets(analysisId);
         } catch (Exception ex) {
-            return [:];
+            return [];
         }
+    }
+
+    public JobState queryDataSetState(String dataSetId, String analysisId) {
+
+    }
+
+    public void run(List<String> datasets, String analysisId, boolean test) {
+
+    }
+
+    public void rerun(List<String> datasets, String analysisId, boolean test) {
+
     }
 
 }

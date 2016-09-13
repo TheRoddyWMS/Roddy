@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.client.rmiclient;
 
+import de.dkfz.roddy.execution.jobs.JobState;
+
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.List;
@@ -21,14 +23,22 @@ import java.util.Map;
 
 public interface RoddyRMIInterface extends Remote {
 
-    boolean ping() throws RemoteException;
+    boolean ping(boolean keepalive) throws RemoteException;
 
     /**
      * Close the service
      */
     void close() throws RemoteException;
 
-    Map<String, String> listdatasets() throws RemoteException;
+    List<RoddyRMIInterfaceImplementation.DataSetInfoObject> listdatasets(String analysisId) throws RemoteException;
+
+    JobState queryDataSetState(String dataSetId, String analysisId) throws RemoteException;
+
+    void run() throws RemoteException;
 
     void testrun() throws RemoteException;
+
+    void rerun() throws RemoteException;
+
+    void testrerun() throws RemoteException;
 }

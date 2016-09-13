@@ -22,6 +22,7 @@ import static org.junit.Assert.*;
 @CompileStatic
 public class RoddyRMIInterfaceImplementationTest {
 
+
     @Test
     public void listdatasets() throws Exception {
 
@@ -31,12 +32,19 @@ public class RoddyRMIInterfaceImplementationTest {
         Thread.start {
             Roddy.main("rmi coWorkflowsTestProject@genome 66000 --useconfig=/data/michael/.roddy/applicationProperties.ini".split(" "));
         }
-        while (!RoddyRMIServer.rmiActiveSemaphore.hasQueuedThreads()) {
+        while (!RoddyRMIServer.isActive()) {
             Thread.sleep(125);
         }
         RoddyRMIInterfaceImplementation iface = new RoddyRMIInterfaceImplementation();
 
-        def listdatasets = iface.listdatasets()
+        def listdatasets = iface.listdatasets("genome");
+
+        assert listdatasets != null;
+        assert listdatasets.size() > 0;
+
+        // Try a second time, this failed in the past.
+        listdatasets = iface.listdatasets("genome");
+
         assert listdatasets != null;
         assert listdatasets.size() > 0;
     }

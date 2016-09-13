@@ -34,7 +34,7 @@ if [[ "$parm1" == "compile" ]]; then
     source ${SCRIPTS_DIR}/compileRoddyBinary.sh
     exit 0
 elif [[ "$parm1" == "pack" ]]; then
-    groovy ${SCRIPTS_DIR}/addChangelistVersionTag.groovy README.md RoddyCore/buildversion.txt
+    $GROOVY_BINARY ${SCRIPTS_DIR}/addChangelistVersionTag.groovy README.md RoddyCore/buildversion.txt
     major=`head RoddyCore/buildversion.txt -n 1`
     minor=`tail RoddyCore/buildversion.txt -n 1`
 
@@ -71,9 +71,9 @@ elif [[ "$parm1" == "packplugin" || "$parm1" == "testpackplugin" ]]; then
     source ${SCRIPTS_DIR}/resolveAppConfig.sh
     pluginID=$2
     pluginDirectories=`grep pluginDirectories ${customconfigfile}`
-    pluginDirectory=`groovy ${SCRIPTS_DIR}/findPluginFolders.groovy ${pluginDirectories} ${RODDY_DIRECTORY} ${pluginID}`
+    pluginDirectory=`$GROOVY_BINARY ${SCRIPTS_DIR}/findPluginFolders.groovy ${pluginDirectories} ${RODDY_DIRECTORY} ${pluginID}`
     for i in `ls ${pluginDirectory}/README*.txt 2> /dev/null`; do
-        groovy ${SCRIPTS_DIR}/addChangelistVersionTag.groovy $i ${pluginDirectory}/buildversion.txt
+        $GROOVY_BINARY ${SCRIPTS_DIR}/addChangelistVersionTag.groovy $i ${pluginDirectory}/buildversion.txt
     done
 
     major=`head ${pluginDirectory}/buildversion.txt -n 1`
@@ -127,5 +127,4 @@ fi
 
 IFS=""
 java -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
-# ${fullParameterList[@]}   Cannot be used => Results in recursive call loop
 IFS=$OFS

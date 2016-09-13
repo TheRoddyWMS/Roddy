@@ -338,4 +338,7 @@ class RoddyIOHelperMethods {
                 o: (rights & 0007)]
     }
 
+    public static String printTimingInfo(String info, long t1, long t2) {
+        return "Timing " + info + ": " + ((t2 - t1) / 1000000) + " ms";
+    }
 }

@@ -4,7 +4,8 @@ cd `dirname $0`
 RODDY_DIRECTORY=`readlink -f .`
 parm1=${1-}
 projectAnalysisParameter=$2
-
+export GROOVY_BINARY=groovy
+#export GROOVY_BINARY=/data/michael/Projekte/Roddy/groovyserv-1.1.0/bin/groovyclient
 
 # OFS is the original field separator
 export OFS=$IFS

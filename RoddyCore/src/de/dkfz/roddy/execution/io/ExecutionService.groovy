@@ -139,7 +139,10 @@ public abstract class ExecutionService extends CacheProvider {
 
     public boolean tryInitialize(boolean waitFor) {
         try {
-            return initialize(waitFor);
+            long t1 = System.nanoTime();
+            def var = initialize(waitFor);
+            logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("initialize exec service", t1, System.nanoTime()));
+            return var
         } catch (Exception ex) {
             return false;
         }

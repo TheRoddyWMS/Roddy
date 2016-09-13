@@ -107,14 +107,18 @@ class SSHExecutionService extends RemoteExecutionService {
         }
 
         public boolean initialize() {
+            long t1 = System.nanoTime();
             close();
 
             SSHClient c = new SSHClient();
-
+            long t2 = System.nanoTime();
+            logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("create ssh client", t1, t2));
             try {
                 c.setConnectTimeout(1000);
                 c.addHostKeyVerifier(new PromiscuousVerifier());
                 c.connect(host);
+                t1 = System.nanoTime();
+                logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("connect ssh client", t2, t1));
 
                 if (method == Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD) {
                     c.authPassword(user, Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_PWD));
@@ -128,6 +132,9 @@ class SSHExecutionService extends RemoteExecutionService {
                     c.useCompression();
 
                 c.startSession();
+                t2 = System.nanoTime();
+                logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("start ssh client session", t1, t2));
+
 
             } catch (Exception ex) {
             }
@@ -135,6 +142,9 @@ class SSHExecutionService extends RemoteExecutionService {
             sftpClient = client.newSFTPClient();
             scpFileTransfer = client.newSCPFileTransfer();
             scpDownloadClient = scpFileTransfer.newSCPDownloadClient();
+            t1 = System.nanoTime();
+            logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("create additionial ssh services", t2, t1));
+
         }
 
         public void acquire() {
