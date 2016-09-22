@@ -67,7 +67,7 @@ public class BaseMetadataTable {
     }
 
     BaseMetadataTable(Map<String, Integer> headerMap, Map<String, String> internal2CustomIDMap, List<String> mandatoryColumns, List<Map<String, String>> records) {
-        this.internal2CustomIDMap = internal2CustomIDMap as LinkedHashMap<String,String>;
+        this.internal2CustomIDMap = internal2CustomIDMap
         this.internal2CustomIDMap.each {
             String key, String val -> custom2InternalIDMap[val] = key;
         }
@@ -183,12 +183,9 @@ public class BaseMetadataTable {
     /** Given a column names, throw if that column or some higher-priority mandatory column have non-unique values. */
     public BaseMetadataTable assertUniqueness(String columnName = null) {
         boolean result = true
-        def mandatoryUniqueColumnNames = mandatoryColumnNames
-        if (!mandatoryColumnNames.contains(columnName) || columnName != INPUT_TABLE_FILE)
-            mandatoryUniqueColumnNames = mandatoryUniqueColumnNames.minus(INPUT_TABLE_FILE)
-        for(String colToCheck : mandatoryUniqueColumnNames) {
+        for(String colToCheck : mandatoryColumnNames) {
             if (listColumn(colToCheck).unique().size() != 1) {
-                throw new RuntimeException("For metadata table column '${columnName}' higher-priority column values for '${colToCheck}' are not unique: ${listColumn(colToCheck).unique().sort()}")
+                throw new RuntimeException("For metadata table column(s) '${columnName}' higher-priority column values for '${colToCheck}' are not unique: ${listColumn(colToCheck).unique().sort()}")
             }
             if (colToCheck.equals(columnName)) {
                 break
@@ -231,6 +228,6 @@ public class BaseMetadataTable {
     }
 
     public BaseMetadataTable subsetBy(Map<String, String> columnValueMap) {
-        return unsafeSubsetBy(columnValueMap).assertUniqueness()
+        return unsafeSubsetBy(columnValueMap).assertUniqueness(columnValueMap.keySet().sort().join(","))
     }
 }

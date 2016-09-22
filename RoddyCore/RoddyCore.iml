@@ -26,6 +26,7 @@
       <sourceFolder url="file://$MODULE_DIR$/../dist/bin/2.2.66/helperScripts" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../dist/bin/2.2.87/helperScripts" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../dist/bin/2.2.10/helperScripts" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dist/bin/current/xmlvalidation" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.0.469" />
       <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.1.14" />
       <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.1.24" />
@@ -35,9 +36,11 @@
       <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.1.7" />
       <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.2.10" />
       <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.2.112" />
+      <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.2.112-1" />
       <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.2.49" />
       <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.2.66" />
       <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.2.87" />
+      <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.3.115" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

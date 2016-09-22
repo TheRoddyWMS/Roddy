@@ -380,8 +380,8 @@ public class ExecutionContext implements JobStatusListener {
 
     public String getOutputGroupString() {
         if (!isAccessRightsModificationAllowed()) return null;
-        return getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_FILE_GROUP)
-        fileSystemAccessProvider.getMyGroup().toString()
+        return getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_FILE_GROUP,
+                fileSystemAccessProvider.getMyGroup()).toString()
     }
 
     public String getUMask() {
