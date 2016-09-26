@@ -198,6 +198,17 @@ public class BaseMetadataTable {
         return subsetByColumn(INPUT_TABLE_DATASET, datasetId)
     }
 
+    public BaseMetadataTable unsafeSubsetBy(Map<String, String> columnValueMap) {
+        BaseMetadataTable result = columnValueMap.inject(this) { BaseMetadataTable metaDataTable, String columnName, String value ->
+            metaDataTable.unsafeSubsetByColumn(columnName, value)
+        } as BaseMetadataTable
+        return result
+    }
+
+    public BaseMetadataTable subsetBy(Map<String, String> columnValueMap) {
+        return unsafeSubsetBy(columnValueMap).assertUniqueness(columnValueMap.keySet().sort().join(","))
+    }
+
     public Integer size() {
         return records.size()
     }
@@ -220,14 +231,4 @@ public class BaseMetadataTable {
         return records;
     }
 
-    public BaseMetadataTable unsafeSubsetBy(Map<String, String> columnValueMap) {
-        BaseMetadataTable result = columnValueMap.inject(this) { BaseMetadataTable metaDataTable, String columnName, String value ->
-            metaDataTable.unsafeSubsetByColumn(columnName, value)
-        } as BaseMetadataTable
-        return result
-    }
-
-    public BaseMetadataTable subsetBy(Map<String, String> columnValueMap) {
-        return unsafeSubsetBy(columnValueMap).assertUniqueness(columnValueMap.keySet().sort().join(","))
-    }
 }
