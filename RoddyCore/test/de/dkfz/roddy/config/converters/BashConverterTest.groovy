@@ -6,10 +6,14 @@
 
 package de.dkfz.roddy.config.converters;
 
+import de.dkfz.roddy.RunMode;
 import de.dkfz.roddy.config.Configuration
+import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import de.dkfz.roddy.execution.io.ExecutionService
+import de.dkfz.roddy.execution.io.NoNoExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import org.junit.BeforeClass;
 import org.junit.Test
@@ -32,7 +36,8 @@ public class BashConverterTest {
 
     @BeforeClass
     public static final void setup() {
-        FileSystemAccessProvider.initializeProvider(true);
+        ExecutionService.initializeService(NoNoExecutionService, RunMode.UI)
+        FileSystemAccessProvider.initializeProvider(true)
     }
 
     private Configuration createTestConfiguration() {
@@ -76,10 +81,35 @@ public class BashConverterTest {
 //
 //    }
 //
-//    @Test
-//    public void appendDebugVariables() throws Exception {
-//
-//    }
+    @Test
+    public void appendDebugVariables() throws Exception {
+        Configuration configuration = createTestConfiguration()
+
+        assert  new BashConverter().
+                    appendDebugVariables(configuration).
+                    toString().
+                    trim() == ["set -o pipefail",
+                               "set -v",
+                               "set -x"].join("\n")
+
+        configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT, "true", "boolean")
+        assert  new BashConverter().
+                    appendDebugVariables(configuration).
+                    toString().
+                    trim() == ["set -o pipefail",
+                               "set -v",
+                               "set -x",
+                               "export PS4='+(\${BASH_SOURCE}:\${LINENO}): \${FUNCNAME[0]: +\$ { FUNCNAME[0] }():}'"].join("\n")
+
+        configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXECUTE_OUTPUT, "false", "boolean")
+        configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT, "false", "boolean")
+        assert  new BashConverter().
+                    appendDebugVariables(configuration).
+                    toString().
+                    trim() == ["set -o pipefail",
+                               "set -v"].join("\n")
+
+    }
 //
 //    @Test
 //    public void appendPathVariables() throws Exception {

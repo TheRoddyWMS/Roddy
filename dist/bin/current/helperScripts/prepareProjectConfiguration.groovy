@@ -6,7 +6,7 @@ import de.dkfz.roddy.core.InfoObject
  * This script creates a folder with
  */
 
-@groovy.transform.CompileStatic
+//@groovy.transform.CompileStatic
 public class ConfigurationPreparator {
 
     enum Modes {
@@ -53,7 +53,7 @@ public class ConfigurationPreparator {
         if(useRepo) {
             // Copy all files from a specific repository and adapt them.
         } else {
-            new File()
+            new File("")
         }
 
 //        cp ${SCRIPTS_DIR}/skeletonProject_minimal.xml $targetConfigFolder/project_minimal.xml

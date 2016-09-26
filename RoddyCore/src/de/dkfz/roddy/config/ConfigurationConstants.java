@@ -20,6 +20,7 @@ public class ConfigurationConstants {
     public static final String DEBUG_OPTIONS_USE_PIPEFAIL = "debugOptionsUsePipefail";
     public static final String DEBUG_OPTIONS_USE_VERBOSE_OUTPUT = "debugOptionsUseVerboseOutput";
     public static final String DEBUG_OPTIONS_USE_EXECUTE_OUTPUT = "debugOptionsUseExecuteOutput";
+    public static final String DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT = "debugOptionsUseExtendedExecuteOutput";
     public static final String DEBUG_OPTIONS_USE_UNDEFINED_VARIABLE_BREAK = "debugOptionsUseUndefinedVariableBreak";
     public static final String DEBUG_OPTIONS_USE_EXIT_ON_ERROR = "debugOptionsUseExitOnError";
     public static final String DEBUG_OPTIONS_PARSE_SCRIPTS = "debugOptionsParseScripts";

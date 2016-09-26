@@ -15,7 +15,9 @@ import de.dkfz.roddy.tools.Tuple3
 import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.NodeChild
 import org.junit.BeforeClass
-import org.junit.Test;
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder
 import static ResourceSetSize.*;
 
@@ -26,6 +28,9 @@ import java.lang.reflect.Method
  */
 @groovy.transform.CompileStatic
 public class ConfigurationFactoryTest {
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     public static TemporaryFolder tempFolder = new TemporaryFolder();
 
@@ -86,14 +91,14 @@ public class ConfigurationFactoryTest {
 
     @Test
     public void testLoadInvalidConfigurationDirectories() {
-        // Load context from invalid directories and see, if the step fails.
-        ConfigurationFactory.initialize([testFolder3, testFolder4])
-
-        testFolder3.setReadable(true);
+        testFolder3.setReadable(false);
         testFolder4.setReadable(true);
 
-        assert ConfigurationFactory.getInstance().getAvailableProjectConfigurations().size() == 3;
-        assert ConfigurationFactory.getInstance().getAvailableConfigurationsOfType(Configuration.ConfigurationType.OTHER).size() == 1;
+        thrown.expect(RuntimeException.class);
+        thrown.expectMessage("Cannot access (read and execute) configuration directory '${testFolder3}'")
+
+        // Load context from invalid directories and see, if the step fails.
+        ConfigurationFactory.initialize([testFolder3, testFolder4])
     }
 
     @Test

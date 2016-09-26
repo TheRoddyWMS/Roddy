@@ -114,17 +114,18 @@ class BashConverter extends ConfigurationConverter {
         StringBuilder text = new StringBuilder();
         text << separator << separator
 
-        for (List l in [
+        for (List bashFlag in [
                 [ConfigurationConstants.DEBUG_OPTIONS_USE_PIPEFAIL, true, "set -o pipefail"],
                 [ConfigurationConstants.DEBUG_OPTIONS_USE_VERBOSE_OUTPUT, true, "set -v"],
                 [ConfigurationConstants.DEBUG_OPTIONS_USE_EXECUTE_OUTPUT, true, "set -x"],
+                [ConfigurationConstants.DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT, false, "export PS4='+(\${BASH_SOURCE}:\${LINENO}): \${FUNCNAME[0]: +\$ { FUNCNAME[0] }():}'"],
                 [ConfigurationConstants.DEBUG_OPTIONS_USE_UNDEFINED_VARIABLE_BREAK, false, "set -u"],
                 [ConfigurationConstants.DEBUG_OPTIONS_USE_EXIT_ON_ERROR, false, "set -e"],
                 [ConfigurationConstants.DEBUG_OPTIONS_PARSE_SCRIPTS, false, "set -n"],
                 [ConfigurationConstants.CVALUE_PROCESS_OPTIONS_QUERY_ENV, false, "env"],
                 [ConfigurationConstants.CVALUE_PROCESS_OPTIONS_QUERY_ID, false, "id"],
         ]) {
-            if (cfg.getConfigurationValues().getBoolean(l[0] as String, l[1] as Boolean)) text << separator << l[2] as String
+            if (cfg.getConfigurationValues().getBoolean(bashFlag[0] as String, bashFlag[1] as Boolean)) text << separator << bashFlag[2] as String
         }
         return text;
     }
@@ -226,8 +227,9 @@ class BashConverter extends ConfigurationConverter {
             }
             text << "declare -x    ${cv.id}=";
             //TODO Important, this is a serious hack! It must be removed soon
-            if (tmp.startsWith("bundledFiles/"))
+            if (tmp.startsWith("bundledFiles/")) {
                 text << Roddy.getApplicationDirectory().getAbsolutePath() << FileSystemAccessProvider.getInstance().getPathSeparator();
+            }
             text << tmp;
         }
         return text;
