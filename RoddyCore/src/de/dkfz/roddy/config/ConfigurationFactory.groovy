@@ -73,7 +73,7 @@ public class ConfigurationFactory {
 
     public ConfigurationFactory(List<File> configurationDirectories = null) {
         if (configurationDirectories == null)
-            configurationDirectories = Roddy.getConfigurationDirectories();
+            configurationDirectories = Roddy.getConfigurationDirectories()
 
         this.configurationDirectories.addAll(configurationDirectories);
 
@@ -85,9 +85,9 @@ public class ConfigurationFactory {
         configurationDirectories.parallelStream().each {
             File baseDir ->
                 logger.log(Level.CONFIG, "Searching for configuration files in: " + baseDir.toString());
-                if (!baseDir.canRead()) {
-                    logger.log(Level.SEVERE, "Cannot read from configuration directory ${baseDir.absolutePath}, does the folder exist und do you have access rights to it?")
-                    return;
+                if (!baseDir.canRead() || !baseDir.canExecute()) {
+                    logger.log(Level.SEVERE, "Cannot read from configuration directory ${baseDir.absolutePath}, does the folder exist und do you have access (read/execute) rights to it?")
+                    throw new RuntimeException("Cannot access (read and execute) configuration directory '${baseDir}'")
                 }
                 File[] files = baseDir.listFiles((FileFilter) new WildcardFileFilter("*.xml"));
                 if (files == null) {

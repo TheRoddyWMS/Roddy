@@ -7,8 +7,6 @@
 package de.dkfz.roddy.execution.io
 
 import groovy.transform.CompileStatic
-import org.apache.commons.csv.CSVFormat
-import org.apache.commons.csv.CSVParser
 
 /**
  * The basic input table class for data input in table format instead of files.
@@ -34,6 +32,8 @@ public class BaseMetadataTable {
     // The mapping is via standard values from some xml files.
     protected Map<String, String> internal2CustomIDMap = [:]
     protected Map<String, String> custom2InternalIDMap = [:]
+
+    // The values of mandatoryColumns need to be internal column names ("datasetCol", "fileCol", etc.).
     protected List<String> mandatoryColumns = [];
 
     // A map which links column id and column position.
@@ -67,7 +67,7 @@ public class BaseMetadataTable {
     }
 
     BaseMetadataTable(Map<String, Integer> headerMap, Map<String, String> internal2CustomIDMap, List<String> mandatoryColumns, List<Map<String, String>> records) {
-        this.internal2CustomIDMap = internal2CustomIDMap;
+        this.internal2CustomIDMap = internal2CustomIDMap
         this.internal2CustomIDMap.each {
             String key, String val -> custom2InternalIDMap[val] = key;
         }
@@ -156,21 +156,58 @@ public class BaseMetadataTable {
         return records.collect { it.clone() } as List<Map<String, String>>
     }
 
-    public BaseMetadataTable subsetByColumn(String columnName, String value) {
+    public BaseMetadataTable unsafeSubsetByColumn(String columnName, String value) {
 
         // Look into internal mapping table for headernames to varnames
         return new BaseMetadataTable(
                 this,
                 records.findAll { Map<String, String> row ->
                     row.get(columnName) == value
-                }
-        )
+                })
+    }
+
+    /** Get a subset of rows by unique values in a specified column (internal column namespace).
+     *  If mandatory column is selected, it is checked, whether the higher priority column, which
+     *  are before the selected columns in the mandatory columns, are unique. This ensures that
+     *  for instance not the same file is assigned to two different datasets.
+     * @param columnName internal column name (e.g. "datasetCol")
+     * @param value
+     * @param check
+     * @return
+     */
+    public BaseMetadataTable subsetByColumn(String columnName, String value) {
+        return unsafeSubsetByColumn(columnName, value).assertUniqueness(columnName)
+    }
+
+
+    /** Given a column names, throw if that column or some higher-priority mandatory column have non-unique values. */
+    public BaseMetadataTable assertUniqueness(String columnName = null) {
+        boolean result = true
+        for(String colToCheck : mandatoryColumnNames) {
+            if (listColumn(colToCheck).unique().size() != 1) {
+                throw new RuntimeException("For metadata table column(s) '${columnName}' higher-priority column values for '${colToCheck}' are not unique: ${listColumn(colToCheck).unique().sort()}")
+            }
+            if (colToCheck.equals(columnName)) {
+                break
+            }
+        }
+        return this
     }
 
     public BaseMetadataTable subsetByDataset(String datasetId) {
         return subsetByColumn(INPUT_TABLE_DATASET, datasetId)
     }
 
+    public BaseMetadataTable unsafeSubsetBy(Map<String, String> columnValueMap) {
+        BaseMetadataTable result = columnValueMap.inject(this) { BaseMetadataTable metaDataTable, String columnName, String value ->
+            metaDataTable.unsafeSubsetByColumn(columnName, value)
+        } as BaseMetadataTable
+        return result
+    }
+
+    public BaseMetadataTable subsetBy(Map<String, String> columnValueMap) {
+        return unsafeSubsetBy(columnValueMap).assertUniqueness(columnValueMap.keySet().sort().join(","))
+    }
 
     public Integer size() {
         return records.size()
@@ -193,4 +230,5 @@ public class BaseMetadataTable {
     public List<Map<String, String>> getRecords() {
         return records;
     }
+
 }
