@@ -320,7 +320,7 @@ public class Configuration implements ContainerParent<Configuration> {
     }
 
     public boolean getUseCentralAnalysisArchive() {
-        return configurationValues.getBoolean(ConfigurationConstants.CFG_USE_CENTRAL_ANALYSIS_ARCHIVE, false);
+        return configurationValues.getBoolean(ConfigurationConstants.CFG_USE_CENTRAL_ANALYSIS_ARCHIVE, true);
     }
 
     public String getSSHExecutionUser() {

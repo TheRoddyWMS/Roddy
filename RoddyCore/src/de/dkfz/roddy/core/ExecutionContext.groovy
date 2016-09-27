@@ -42,11 +42,10 @@ import java.util.*;
  * @author michael
  */
 @groovy.transform.CompileStatic
-public class ExecutionContext implements JobStatusListener {
+public class ExecutionContext {
 
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(ExecutionContext.class.name);
 
-    private static final List<ExecutionContextListener> staticListeners = new LinkedList<>();
     /**
      * The project to which this context belongs
      */
@@ -81,7 +80,6 @@ public class ExecutionContext implements JobStatusListener {
      * The list is not stored and rebuilt if necessary, so not all errors might be available.
      */
     private final List<ExecutionContextError> errors = new LinkedList<>();
-    private final List<ExecutionContextListener> listeners = new LinkedList<>();
     /**
      * The timestamp of this context object
      */
@@ -145,8 +143,6 @@ public class ExecutionContext implements JobStatusListener {
         this.executionContextLevel = executionContextLevel;
         this.dataSet = dataSet;
         setExecutingUser(userID);
-        if (!dontRaise)
-            raiseNewExecutionContextListenerEvent(this);
     }
 
     public ExecutionContext(String userID, Analysis analysis, DataSet dataSet, ExecutionContextLevel executionContextLevel, File outputDirectory, File inputDirectory, File executionDirectory, long creationCheckPoint) {
@@ -191,14 +187,6 @@ public class ExecutionContext implements JobStatusListener {
         this.commandCalls.addAll(p.commandCalls);
         this.errors.addAll(p.errors);
         creationCheckPoint = -1;
-    }
-
-    public static void registerStaticContextListener(ExecutionContextListener ecl) {
-        staticListeners.add(ecl);
-    }
-
-    private static void raiseNewExecutionContextListenerEvent(ExecutionContext ec) {
-        for (ExecutionContextListener ecl : staticListeners) ecl.newExecutionContextEvent(ec);
     }
 
     /**
@@ -257,8 +245,6 @@ public class ExecutionContext implements JobStatusListener {
     public synchronized void setDetailedExecutionContextLevel(ExecutionContextSubLevel subLevel) {
         ExecutionContextSubLevel temp = this.executionContextSubLevel;
         this.executionContextSubLevel = subLevel;
-        if (temp != subLevel)
-            raiseDetailedExecutionContextLevelChanged();
     }
 
     public void setCurrentExecutedTool(ToolEntry toolEntry) {
@@ -303,12 +289,24 @@ public class ExecutionContext implements JobStatusListener {
         return analysis.getConfiguration();
     }
 
-    public RecursiveOverridableMapContainerForConfigurationValues getConfigurationValues () {
+    public RecursiveOverridableMapContainerForConfigurationValues getConfigurationValues() {
         return configuration.getConfigurationValues()
     }
 
     public void setTimestamp(Date timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public Date getTimestamp() {
+        return timestamp;
+    }
+
+    public String getTimestampString() {
+        return InfoObject.formatTimestamp(timestamp);
+    }
+
+    public long getCreationCheckPoint() {
+        return creationCheckPoint;
     }
 
     public String getExecutingUser() {
@@ -349,7 +347,7 @@ public class ExecutionContext implements JobStatusListener {
 
     public boolean isAccessRightsModificationAllowed() {
         // Include an additional check, if the target filesystem allows the modification and disable this, if necessary.
-        if(checkedIfAccessRightsCanBeSet != null)
+        if (checkedIfAccessRightsCanBeSet != null)
             return checkedIfAccessRightsCanBeSet;
         boolean modAllowed = getConfiguration().getConfigurationValues().getBoolean(ConfigurationConstants.CFG_ALLOW_ACCESS_RIGHTS_MODIFICATION, true)
         if (modAllowed && checkedIfAccessRightsCanBeSet == null) {
@@ -380,8 +378,8 @@ public class ExecutionContext implements JobStatusListener {
 
     public String getOutputGroupString() {
         if (!isAccessRightsModificationAllowed()) return null;
-        return getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_FILE_GROUP)
-        fileSystemAccessProvider.getMyGroup().toString()
+        return getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_FILE_GROUP,
+                fileSystemAccessProvider.getMyGroup()).toString()
     }
 
     public String getUMask() {
@@ -417,17 +415,6 @@ public class ExecutionContext implements JobStatusListener {
         new File(getExecutionDirectory(), "${command.getJob().getJobName()}_${command.getJob().jobCreationCounter}.parameters");
     }
 
-    public String getTimeStampString() {
-        return InfoObject.formatTimestamp(timestamp);
-    }
-
-    public Date getTimeStamp() {
-        return timestamp;
-    }
-
-    public long getCreationCheckPoint() {
-        return creationCheckPoint;
-    }
 
     public void addFile(BaseFile file) {
         if (!processingFlag.contains(ProcessingFlag.STORE_FILES))
@@ -470,10 +457,6 @@ public class ExecutionContext implements JobStatusListener {
         //TODO Add processing flag query
         jobsForProcess.clear();
         jobsForProcess.addAll(previousJobs);
-        for (Job job : previousJobs) {
-            job.addJobStatusListener(this);
-            raiseJobAddedEvent(job);
-        }
     }
 
     public void addExecutedJob(Job job) {
@@ -482,8 +465,6 @@ public class ExecutionContext implements JobStatusListener {
 
         //TODO Synchronize jobsForProcess!
         jobsForProcess.add(job);
-        job.addJobStatusListener(this);
-        raiseJobAddedEvent(job);
     }
 
     /**
@@ -609,30 +590,9 @@ public class ExecutionContext implements JobStatusListener {
         return analysis.getWorkflow().execute(this);
     }
 
-    public void registerContextListener(ExecutionContextListener ecl) {
-        if (!listeners.contains(ecl))
-            listeners.add(ecl);
-    }
-
-    private void raiseJobAddedEvent(Job job) {
-        for (ExecutionContextListener ecl : listeners) ecl.jobAddedEvent(job);
-    }
-
-    private void raiseJobStateChangedEvent(Job job) {
-        for (ExecutionContextListener ecl : listeners) ecl.jobStateChangedEvent(job);
-    }
-
-    private void raiseDetailedExecutionContextLevelChanged() {
-        for (ExecutionContextListener ecl : listeners) ecl.detailedExecutionContextLevelChanged(this);
-    }
-
     @Override
     public String toString() {
         return String.format("Context [%s-%s:%s, %s]", project.getName(), analysis, dataSet, InfoObject.formatTimestamp(timestamp));
     }
 
-    @Override
-    public void jobStatusChanged(Job job, JobState oldState, JobState newState) {
-        raiseJobStateChangedEvent(job);
-    }
 }

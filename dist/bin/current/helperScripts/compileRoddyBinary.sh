@@ -4,7 +4,7 @@
 set -e
 
 echo "Increasing build number and date"
-groovy ${SCRIPTS_DIR}/IncreaseAndSetBuildVersion.groovy RoddyCore/buildversion.txt RoddyCore/src/de/dkfz/roddy/Constants.java &
+$GROOVY_BINARY ${SCRIPTS_DIR}/IncreaseAndSetBuildVersion.groovy RoddyCore/buildversion.txt RoddyCore/src/de/dkfz/roddy/Constants.java &
 
 echo "Storing buildinfo for the new Roddy jar file"
 echo JDKVersion=$JDK_VERSION > dist/bin/current/buildinfo.txt

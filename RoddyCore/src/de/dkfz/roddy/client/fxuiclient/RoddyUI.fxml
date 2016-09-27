@@ -106,15 +106,15 @@
                                                                                 <RadioButton mnemonicParsing="false" text="RadioButton"/>
                                                                             </children>
                                                                         </VBox>
-                                                                        <Separator />
-                                                                        <VBox>
-                                                                            <Label text="Analysis input directory"/>
-                                                                            <TextField fx:id="txtAnalysisInputDirectory" editable="false"/>
-                                                                            <Label text="Processing base directory"/>
-                                                                            <TextField fx:id="txtProjectBaseOutputDirectory" editable="false"/>
-                                                                            <Label text="Analysis output directory"/>
-                                                                            <TextField fx:id="txtAnalysisOutputDirectory" editable="false"/>
-                                                                        </VBox>
+                                                                        <!--<Separator />-->
+                                                                        <!--<VBox>-->
+                                                                            <!--<Label text="Analysis input directory"/>-->
+                                                                            <!--<TextField fx:id="txtAnalysisInputDirectory" editable="false"/>-->
+                                                                            <!--<Label text="Processing base directory"/>-->
+                                                                            <!--<TextField fx:id="txtProjectBaseOutputDirectory" editable="false"/>-->
+                                                                            <!--<Label text="Analysis output directory"/>-->
+                                                                            <!--<TextField fx:id="txtAnalysisOutputDirectory" editable="false"/>-->
+                                                                        <!--</VBox>-->
                                                                     </children>
                                                                 </VBox>
                                                             </content>
@@ -201,82 +201,92 @@
                                 </graphic>
                                 <content>
                                     <TabPane>
-                                        <Tab text="Settings" closable="false">
+                                        <Tab fx:id="appTabIniFile" text="Settings" closable="false">
                                             <graphic>
                                                 <ImageView>
                                                     <fx:reference source="iconApplicationSpecific"/>
                                                 </ImageView>
                                             </graphic>
                                             <content>
-                                                <SettingsViewer />
+                                                <SettingsViewer fx:id="appIniViewer" />
                                             </content>
                                         </Tab>
-                                        <Tab text="Info" closable="false">
+                                        <Tab text="Active UI Tasks" closable="false">
                                             <graphic>
                                                 <ImageView>
                                                     <fx:reference source="iconApplicationSpecific"/>
                                                 </ImageView>
                                             </graphic>
                                             <content>
-                                                <ApplicationInfoTab />
+                                                <ListView fx:id="listViewOfActiveUITasks" />
                                             </content>
                                         </Tab>
-                                        <Tab text="Performance" closable="false">
-                                            <graphic>
-                                                <ImageView>
-                                                    <fx:reference source="iconApplicationInformal"/>
-                                                </ImageView>
-                                            </graphic>
-                                            <content>
-                                                <FXUIPerformanceTab />
-                                            </content>
-                                        </Tab>
-                                        <Tab text="Logs" closable="false" id="TabHeaderCommon">
-                                            <graphic>
-                                                <ImageView>
-                                                    <fx:reference source="iconApplicationInformal"/>
-                                                </ImageView>
-                                            </graphic>
-                                            <content>
-                                                <LogViewer/>
-                                            </content>
-                                        </Tab>
-                                        <Tab text="Cache providers" closable="false" id="TabHeaderCommon">
-                                            <graphic>
-                                                <ImageView>
-                                                    <fx:reference source="iconApplicationInformal"/>
-                                                </ImageView>
-                                            </graphic>
-                                            <content>
-                                                <CacheProviderViewer/>
-                                            </content>
-                                        </Tab>
-                                        <Tab text="Help" closable="false">
-                                            <graphic>
-                                                <ImageView>
-                                                    <fx:reference source="iconApplicationSpecific"/>
-                                                </ImageView>
-                                            </graphic>
-                                            <content>
-                                                <GridPane>
-                                                    <Label>Application help</Label>
-                                                </GridPane>
-                                            </content>
-                                        </Tab>
+                                        <!--<Tab  text="Info" closable="false">-->
+                                            <!--<graphic>-->
+                                                <!--<ImageView>-->
+                                                    <!--<fx:reference source="iconApplicationSpecific"/>-->
+                                                <!--</ImageView>-->
+                                            <!--</graphic>-->
+                                            <!--<content>-->
+                                                <!--<ApplicationInfoTab />-->
+                                            <!--</content>-->
+                                        <!--</Tab>-->
+                                        <!--<Tab text="Performance" closable="false">-->
+                                            <!--<graphic>-->
+                                                <!--<ImageView>-->
+                                                    <!--<fx:reference source="iconApplicationInformal"/>-->
+                                                <!--</ImageView>-->
+                                            <!--</graphic>-->
+                                            <!--<content>-->
+                                                <!--<FXUIPerformanceTab />-->
+                                            <!--</content>-->
+                                        <!--</Tab>-->
+                                        <!--<Tab text="Logs" closable="false" id="TabHeaderCommon">-->
+                                            <!--<graphic>-->
+                                                <!--<ImageView>-->
+                                                    <!--<fx:reference source="iconApplicationInformal"/>-->
+                                                <!--</ImageView>-->
+                                            <!--</graphic>-->
+                                            <!--<content>-->
+                                                <!--<LogViewer/>-->
+                                            <!--</content>-->
+                                        <!--</Tab>-->
+                                        <!--<Tab text="Cache providers" closable="false" id="TabHeaderCommon">-->
+                                            <!--<graphic>-->
+                                                <!--<ImageView>-->
+                                                    <!--<fx:reference source="iconApplicationInformal"/>-->
+                                                <!--</ImageView>-->
+                                            <!--</graphic>-->
+                                            <!--<content>-->
+                                                <!--<CacheProviderViewer/>-->
+                                            <!--</content>-->
+                                        <!--</Tab>-->
+                                        <!--<Tab text="Help" closable="false">-->
+                                            <!--<graphic>-->
+                                                <!--<ImageView>-->
+                                                    <!--<fx:reference source="iconApplicationSpecific"/>-->
+                                                <!--</ImageView>-->
+                                            <!--</graphic>-->
+                                            <!--<content>-->
+                                                <!--<GridPane>-->
+                                                    <!--<Label>Application help</Label>-->
+                                                <!--</GridPane>-->
+                                            <!--</content>-->
+                                        <!--</Tab>-->
                                     </TabPane>
                                 </content>
                             </Tab>
 
-                            <Tab fx:id="appTabConfiguration" text="Configuration" closable="false" id="TabHeaderProject">
-                                <graphic>
-                                    <ImageView>
-                                        <fx:reference source="iconProjectSpecific"/>
-                                    </ImageView>
-                                </graphic>
-                                <content>
-                                    <ConfigurationViewer fx:id="configurationViewer"/>
-                                </content>
-                            </Tab>
+                            <!--<Tab fx:id="appTabConfiguration" text="Configuration" closable="false" id="TabHeaderProject" >-->
+                                <!--<graphic>-->
+                                    <!--<ImageView>-->
+                                        <!--<fx:reference source="iconProjectSpecific"/>-->
+                                    <!--</ImageView>-->
+                                <!--</graphic>-->
+                                <!--<content>-->
+                                    <!--<ConfigurationViewer fx:id="configurationViewer"/>-->
+                                <!--</content>-->
+                            <!--</Tab>-->
                         </tabs>
                     </TabPane>
                 </items>

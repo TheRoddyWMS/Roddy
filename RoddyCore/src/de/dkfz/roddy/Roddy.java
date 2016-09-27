@@ -186,6 +186,7 @@ public class Roddy {
      */
     public static void main(String[] args) {
         try {
+            Thread.sleep(3000);
             //Check if Roddy is called from the right directory.
             //TODO Think about a better way to get Roddys base directory.
             String[] list = applicationDirectory.list((dir, name) -> name.equals("roddy.sh"));
@@ -203,7 +204,7 @@ public class Roddy {
             mainStarted = true;
             startup(args);
         } catch (Exception e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
             exit(1);
         }
     }
@@ -258,8 +259,8 @@ public class Roddy {
     public static void performInitialSetup(String[] args, RoddyStartupModes option) {
 
         runMode = CLI;
-        if(option == RoddyStartupModes.ui) runMode = RunMode.UI;
-        if(option == RoddyStartupModes.rmi) runMode = RunMode.RMI;
+        if (option == RoddyStartupModes.ui) runMode = RunMode.UI;
+        if (option == RoddyStartupModes.rmi) runMode = RunMode.RMI;
 
         trackUserJobsOnly = runMode == CLI ? true : false; //Auto enable or disable trackuserjobs
 
@@ -467,7 +468,7 @@ public class Roddy {
     private static void parseRoddyStartupModeAndRun(CommandLineCall clc) {
         if (clc.startupMode == RoddyStartupModes.ui)
             RoddyUIController.App.main(clc.getArguments().toArray(new String[0]));
-        else if(clc.startupMode == RoddyStartupModes.rmi)
+        else if (clc.startupMode == RoddyStartupModes.rmi)
             RoddyRMIServer.startServer(clc);
         else
             RoddyCLIClient.parseStartupMode(clc);

@@ -616,8 +616,8 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
 
     /**
      * TODO The current premise for this method is, that it will only work if GenericMethod was used to run it. The current process / context / run needs an extension, so that we have something like
-     * a state machine where the developer can always query the current context and store context specific things. Maybe this can be bound to the current Thread or so... In this case, a Thread could also
-     * have a link to several context objects (which are called one after another.). The state machine will always know the current active context, the current active job and so on. It might be complicated
+     * a jobState machine where the developer can always query the current context and store context specific things. Maybe this can be bound to the current Thread or so... In this case, a Thread could also
+     * have a link to several context objects (which are called one after another.). The jobState machine will always know the current active context, the current active job and so on. It might be complicated
      * but maybe worth it. For now, let's just get the job id from the Generic Method call.
      *
      * @param baseFile

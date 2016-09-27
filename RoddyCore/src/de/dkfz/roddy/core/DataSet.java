@@ -23,7 +23,8 @@ import java.util.concurrent.LinkedBlockingDeque;
  * For each dataset a number of runs can exist.
  */
 @groovy.transform.CompileStatic
-public class DataSet extends InfoObject implements Serializable, ExecutionContextListener {
+public class DataSet extends InfoObject implements Serializable {
+//        , ExecutionContextListener {
 
     private String id;
 
@@ -77,7 +78,7 @@ public class DataSet extends InfoObject implements Serializable, ExecutionContex
         this.outputBaseFolder = outputBaseFolder;
         this.project = analysis.getProject();
         this.analysesByID.put(analysis.getName(), analysis);
-        ExecutionContext.registerStaticContextListener(this);
+//        ExecutionContext.registerStaticContextListener(this);
     }
 
     public String getId() {
@@ -152,7 +153,7 @@ public class DataSet extends InfoObject implements Serializable, ExecutionContex
                 return o2.getExecPath().compareTo(o1.getExecPath());
             }
         });
-        fireProcessingInfoAddedEvent(pi);
+//        fireProcessingInfoAddedEvent(pi);
     }
 
     public boolean hasDummyAnalysisProcessingInformation(Analysis analysis) {
@@ -223,74 +224,74 @@ public class DataSet extends InfoObject implements Serializable, ExecutionContex
     public String toString() {
         return id;
     }
+//
+//    @Override
+//    public void newExecutionContextEvent(ExecutionContext context) {
+//        if (context.getDataSet() != this)
+//            return;
+//        Analysis cAnalysis = context.getAnalysis();
+//        if (hasAnalysis(cAnalysis.getName())) {
+//            AnalysisProcessingInformation api = new AnalysisProcessingInformation(context);
+//            if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) {
+//                setDummyAnalysisProcessingInformation(api);
+//                //TODO Check, if the dummy process can be set? There should not be one or replace it?
+//            } else if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) {
+//                setPlannedOrRunningAnalysisProcessingInformation(api);
+//                //TODO Cancel or stop existing running processes? Should be better right? Or just throw an exception?
+//                removeDummyAnalysisProcessingInformation(cAnalysis);
+//            } else {
+//                addProcessingInformation(api);
+//            }
+//        } else {
+//
+//        }
+//    }
+//
+//    @Override
+//    public void jobStateChangedEvent(Job job) {
+//    }
+//
+//    @Override
+//    public void jobAddedEvent(Job job) {
+//    }
+//
+//    @Override
+//    public void fileAddedEvent(File file) {
+//    }
+//
+//    @Override
+//    public void detailedExecutionContextLevelChanged(ExecutionContext context) {
+//    }
+//
+//    public void addListener(DataSetListener listener, boolean replaceOfSameClass) {
+//        if (replaceOfSameClass) {
+//            Class c = listener.getClass();
+//            Deque<DataSetListener> listenersToKeep = new LinkedBlockingDeque<>();
+//            for (DataSetListener jsl : this.listeners) {
+//                if (jsl.getClass() != c)
+//                    listenersToKeep.add(jsl);
+//            }
+//            listeners.clear();
+//            listeners.addAll(listenersToKeep);
+//        }
+//        addListener(listener);
+//    }
+//
+//    public void addListener(DataSetListener dataSetListener) {
+//        this.listeners.add(dataSetListener);
+//    }
 
-    @Override
-    public void newExecutionContextEvent(ExecutionContext context) {
-        if (context.getDataSet() != this)
-            return;
-        Analysis cAnalysis = context.getAnalysis();
-        if (hasAnalysis(cAnalysis.getName())) {
-            AnalysisProcessingInformation api = new AnalysisProcessingInformation(context);
-            if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) {
-                setDummyAnalysisProcessingInformation(api);
-                //TODO Check, if the dummy process can be set? There should not be one or replace it?
-            } else if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) {
-                setPlannedOrRunningAnalysisProcessingInformation(api);
-                //TODO Cancel or stop existing running processes? Should be better right? Or just throw an exception?
-                removeDummyAnalysisProcessingInformation(cAnalysis);
-            } else {
-                addProcessingInformation(api);
-            }
-        } else {
-
-        }
-    }
-
-    @Override
-    public void jobStateChangedEvent(Job job) {
-    }
-
-    @Override
-    public void jobAddedEvent(Job job) {
-    }
-
-    @Override
-    public void fileAddedEvent(File file) {
-    }
-
-    @Override
-    public void detailedExecutionContextLevelChanged(ExecutionContext context) {
-    }
-
-    public void addListener(DataSetListener listener, boolean replaceOfSameClass) {
-        if (replaceOfSameClass) {
-            Class c = listener.getClass();
-            Deque<DataSetListener> listenersToKeep = new LinkedBlockingDeque<>();
-            for (DataSetListener jsl : this.listeners) {
-                if (jsl.getClass() != c)
-                    listenersToKeep.add(jsl);
-            }
-            listeners.clear();
-            listeners.addAll(listenersToKeep);
-        }
-        addListener(listener);
-    }
-
-    public void addListener(DataSetListener dataSetListener) {
-        this.listeners.add(dataSetListener);
-    }
-
-    private void fireProcessingInfoAddedEvent(AnalysisProcessingInformation pi) {
-        for (DataSetListener dsl : listeners) {
-            dsl.processingInfoAddedEvent(this, pi);
-        }
-    }
-
-    private void fireProcessingInfoRemovedEvent(AnalysisProcessingInformation pi) {
-        for (DataSetListener dsl : listeners) {
-            dsl.processingInfoRemovedEvent(this, pi);
-        }
-    }
+//    private void fireProcessingInfoAddedEvent(AnalysisProcessingInformation pi) {
+//        for (DataSetListener dsl : listeners) {
+//            dsl.processingInfoAddedEvent(this, pi);
+//        }
+//    }
+//
+//    private void fireProcessingInfoRemovedEvent(AnalysisProcessingInformation pi) {
+//        for (DataSetListener dsl : listeners) {
+//            dsl.processingInfoRemovedEvent(this, pi);
+//        }
+//    }
 
     public void setAsAvailableInOutputOnly() {
         onlyAvailableInOutputDirectory = true;

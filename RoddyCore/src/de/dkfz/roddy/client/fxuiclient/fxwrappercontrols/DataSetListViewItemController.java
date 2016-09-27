@@ -19,8 +19,6 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -165,7 +163,7 @@ public class DataSetListViewItemController extends ExecutionContextPresenter<FXD
 
                     ec = api.getDetailedProcessingInfo();
                     ecUser = ec.getExecutingUser();
-                    ecTimeStamp = ec.getTimeStampString();
+                    ecTimeStamp = ec.getTimestampString();
                     for (JobState js : JobState.values())
                         stateMap.put(js, 0);
                     ec.getExecutedJobs().forEach((job) -> {
@@ -239,7 +237,7 @@ public class DataSetListViewItemController extends ExecutionContextPresenter<FXD
                             setIconVisiblity(indicatorOK);
                         }
                     } catch (Exception e) {
-                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        e.printStackTrace();
                     }
                 }, "Invoke ds lv icon update", false);
 
@@ -253,26 +251,4 @@ public class DataSetListViewItemController extends ExecutionContextPresenter<FXD
         });
 
     }
-
-    private void succ() {
-
-    }
-
-
-    @Override
-    public void processingInfoAddedEvent(DataSet dataSet, AnalysisProcessingInformation pi) {
-//        if(pi.getDetailedProcessingInfo().getExecutionContextLevel().canSubmitJobs)
-        updateUI();
-    }
-
-    @Override
-    public void jobStateChangedEvent(Job job) {
-        updateUI();
-    }
-
-    @Override
-    public void jobAddedEvent(Job job) {
-        updateUI();
-    }
-
 }

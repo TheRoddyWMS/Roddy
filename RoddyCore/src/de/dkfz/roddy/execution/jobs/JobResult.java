@@ -78,7 +78,7 @@ public class JobResult implements Serializable {
         try {
             s.defaultWriteObject();
         } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
         }
     }
 
@@ -86,9 +86,9 @@ public class JobResult implements Serializable {
         try {
             s.defaultReadObject();
         } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
         }
     }
 

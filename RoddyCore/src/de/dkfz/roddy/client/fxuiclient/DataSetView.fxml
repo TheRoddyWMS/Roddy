@@ -29,13 +29,13 @@
             <panes>
                 <TitledPane text="Execution contexts" fx:id="tpExecutionContexts">
                     <BorderPane>
-                        <top>
-                            <TitledPane fx:id="tpECFilterSettings" text="Filter settings" expanded="false">
+                        <bottom>
+                            <TitledPane fx:id="tpECFilterSettings" text="Filter settings" expanded="false" visible="false" maxHeight="0">
                                 <content>
                                     <CheckBox text="Hide empty contexts" selected="false"/>
                                 </content>
                             </TitledPane>
-                        </top>
+                        </bottom>
                         <center>
                             <ListView fx:id="lstRuns"/>
                         </center>
@@ -43,9 +43,9 @@
                 </TitledPane>
                 <TitledPane text="Submitted jobs" fx:id="tpSubmittedJob">
                     <BorderPane>
-                        <top>
+                        <bottom>
                             <VBox>
-                                <TitledPane fx:id="tpJobFilterSettings" text="Filter settings">
+                                <TitledPane fx:id="tpJobFilterSettings" text="Filter settings" visible="false" maxHeight="0">
                                     <content>
                                         <GridPane hgap="2" vgap="2">
                                             <columnConstraints>
@@ -115,40 +115,8 @@
                                         </GridPane>
                                     </content>
                                 </TitledPane>
-                                <TitledPane fx:id="tpJobSettings" animated="false" text="Job settings">
-                                    <content>
-                                        <VBox>
-                                            <children>
-                                                <VBox VBox.vgrow="ALWAYS">
-                                                    <children>
-                                                        <Label text="Reset job state"/>
-                                                        <Separator/>
-                                                        <GridPane hgap="2.0" vgap="2.0" VBox.vgrow="ALWAYS">
-                                                            <children>
-                                                                <ImageButtonWithToolTip GridPane.columnIndex="0" GridPane.rowIndex="0" text="_Good" imagePath="/imgs/icon_status_ok.png" tooltipText="Job finished without an error." onAction="#resetJobState_OK"/>
-                                                                <ImageButtonWithToolTip GridPane.columnIndex="0" GridPane.rowIndex="1" text="_Failed" imagePath="/imgs/icon_status_error.png" tooltipText="Job stopped with an error." onAction="#resetJobState_FAILED"/>
-                                                                <ImageButtonWithToolTip GridPane.columnIndex="1" GridPane.rowIndex="0" text="_Unstarted" imagePath="/imgs/icon_status_unprocessed.png" tooltipText="Job was submitted but not started (missing dependency?)." onAction="#resetJobState_UNPROCESSED"/>
-                                                                <ImageButtonWithToolTip GridPane.columnIndex="1" GridPane.rowIndex="1" text="_Aborted" imagePath="/imgs/icon_status_aborted.png" tooltipText="Job was submitted but not started (missing dependency?)." onAction="#resetJobState_ABORTED"/>
-                                                            </children>
-                                                            <columnConstraints>
-                                                                <ColumnConstraints percentWidth="50.0"/>
-                                                                <ColumnConstraints percentWidth="50.0"/>
-                                                            </columnConstraints>
-                                                            <rowConstraints>
-                                                                <RowConstraints/>
-                                                                <RowConstraints/>
-                                                                <RowConstraints/>
-                                                            </rowConstraints>
-                                                        </GridPane>
-                                                    </children>
-                                                </VBox>
-                                                <VBox/>
-                                            </children>
-                                        </VBox>
-                                    </content>
-                                </TitledPane>
                             </VBox>
-                        </top>
+                        </bottom>
                         <center>
                             <ListView fx:id="lstJobsOfRun" VBox.vgrow="ALWAYS"/>
                         </center>
@@ -173,55 +141,55 @@
                     <JobOverviewControl fx:id="jobOverview" onAction="#dependencyJobClicked" VBox.vgrow="ALWAYS"/>
                 </VBox>
             </Tab>
-            <Tab text="Additional log files" closable="false">
-                <BorderPane>
-                    <top>
-                        <ListView fx:id="lstAdditionalLogFiles"/>
-                    </top>
-                    <center>
-                        <WebView fx:id="txtAdditionalLogFile"/>
-                    </center>
-                </BorderPane>
-            </Tab>
-            <Tab text="Workflow files" closable="false">
+            <!--<Tab text="Additional log files" closable="false">-->
                 <!--<BorderPane>-->
-                <!--<center>-->
-                <TableView fx:id="lstFilesCreatedByWorkflow">
-
-                    <columns>
-                        <TableColumn text="Status">
-                            <cellValueFactory>
-                                <PropertyValueFactory property="isFileMissing"/>
-                            </cellValueFactory>
-                        </TableColumn>
-                        <TableColumn text="Status">
-                            <cellValueFactory>
-                                <PropertyValueFactory property="isTemporaryFile"/>
-                            </cellValueFactory>
-                        </TableColumn>
-                        <TableColumn text="Job">
-                            <cellValueFactory>
-                                <PropertyValueFactory property="jobID"/>
-                            </cellValueFactory>
-                        </TableColumn>
-                        <TableColumn text="Name">
-                            <cellValueFactory>
-                                <PropertyValueFactory property="fileName"/>
-                            </cellValueFactory>
-                        </TableColumn>
-                        <TableColumn text="Folder">
-                            <cellValueFactory>
-                                <PropertyValueFactory property="filePath"/>
-                            </cellValueFactory>
-                        </TableColumn>
-                    </columns>
-                </TableView>
-                <!--</top>-->
-                <!--<center>-->
-                <!---->
-                <!--</center>-->
+                    <!--<top>-->
+                        <!--<ListView fx:id="lstAdditionalLogFiles"/>-->
+                    <!--</top>-->
+                    <!--<center>-->
+                        <!--<WebView fx:id="txtAdditionalLogFile"/>-->
+                    <!--</center>-->
                 <!--</BorderPane>-->
-            </Tab>
+            <!--</Tab>-->
+            <!--<Tab text="Workflow files" closable="false">-->
+                <!--&lt;!&ndash;<BorderPane>&ndash;&gt;-->
+                <!--&lt;!&ndash;<center>&ndash;&gt;-->
+                <!--<TableView fx:id="lstFilesCreatedByWorkflow">-->
+
+                    <!--<columns>-->
+                        <!--<TableColumn text="Status">-->
+                            <!--<cellValueFactory>-->
+                                <!--<PropertyValueFactory property="isFileMissing"/>-->
+                            <!--</cellValueFactory>-->
+                        <!--</TableColumn>-->
+                        <!--<TableColumn text="Status">-->
+                            <!--<cellValueFactory>-->
+                                <!--<PropertyValueFactory property="isTemporaryFile"/>-->
+                            <!--</cellValueFactory>-->
+                        <!--</TableColumn>-->
+                        <!--<TableColumn text="Job">-->
+                            <!--<cellValueFactory>-->
+                                <!--<PropertyValueFactory property="jobID"/>-->
+                            <!--</cellValueFactory>-->
+                        <!--</TableColumn>-->
+                        <!--<TableColumn text="Name">-->
+                            <!--<cellValueFactory>-->
+                                <!--<PropertyValueFactory property="fileName"/>-->
+                            <!--</cellValueFactory>-->
+                        <!--</TableColumn>-->
+                        <!--<TableColumn text="Folder">-->
+                            <!--<cellValueFactory>-->
+                                <!--<PropertyValueFactory property="filePath"/>-->
+                            <!--</cellValueFactory>-->
+                        <!--</TableColumn>-->
+                    <!--</columns>-->
+                <!--</TableView>-->
+                <!--&lt;!&ndash;</top>&ndash;&gt;-->
+                <!--&lt;!&ndash;<center>&ndash;&gt;-->
+                <!--&lt;!&ndash;&ndash;&gt;-->
+                <!--&lt;!&ndash;</center>&ndash;&gt;-->
+                <!--&lt;!&ndash;</BorderPane>&ndash;&gt;-->
+            <!--</Tab>-->
         </TabPane>
     </center>
 </fx:root>

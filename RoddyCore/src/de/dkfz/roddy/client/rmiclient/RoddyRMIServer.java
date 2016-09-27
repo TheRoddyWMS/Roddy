@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.client.rmiclient;
 
+import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
 import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
@@ -29,11 +30,6 @@ public class RoddyRMIServer {
     public static final String RODDY_SERVER_FAIL_MESSAGE = "Roddy RMI server failed at startup: ";
 
     /**
-     * The countdown until the server stops.
-     */
-    public static final int RODDY_SERVER_COUNTDOWN = 180;
-
-    /**
      * The semaphore for the server. Initialised with 0, it will be acquired, as soon as it was released once (by close)
      **/
     private static final Semaphore rmiActiveSemaphore = new Semaphore(0);
@@ -44,7 +40,7 @@ public class RoddyRMIServer {
      *
      * Set to 0 (run stopServer) to exit the rmiserver
      */
-    private static int lastActionCountdown = RODDY_SERVER_COUNTDOWN;
+    private static int lastActionCountdown;
 
     /**
      * @param clc
@@ -69,6 +65,7 @@ public class RoddyRMIServer {
             lastActionCountdown = 0;
 
             registry.unbind("RoddyRMIInterface");
+            System.err.println("Stopped server");
         } catch (Exception e) {
             System.err.println(RODDY_SERVER_FAIL_MESSAGE + e.toString());
             e.printStackTrace();
@@ -76,7 +73,12 @@ public class RoddyRMIServer {
     }
 
     public static void touchServer() {
-        lastActionCountdown = RODDY_SERVER_COUNTDOWN * 4; // multiply by four, steps are in quarter seconds.
+        lastActionCountdown = getRMIServerCountDown() * 4; // multiply by four, steps are in quarter seconds.
+        System.err.println("Resetting countdown");
+    }
+
+    private static int getRMIServerCountDown() {
+        return RoddyConversionHelperMethods.toInt(Roddy.getApplicationProperty("roddyRMIServerCountDown", "180"), 180);
     }
 
     public static void stopServer() {
@@ -91,6 +93,8 @@ public class RoddyRMIServer {
 
     private static void startCountdownThread() {
         Thread countdownThread = new Thread(() -> {
+            System.err.println("Start countdown thread with " + getRMIServerCountDown() + "s, lastActionCountDown == " + lastActionCountdown);
+            touchServer();
             while (lastActionCountdown > 0) {
                 try {
                     Thread.sleep(250);
@@ -99,6 +103,7 @@ public class RoddyRMIServer {
                 }
                 lastActionCountdown--;
             }
+            System.err.println("Stopped server due to timeout");
             stopServer();
         });
         countdownThread.setName("RMI countdown thread");

@@ -17,12 +17,14 @@ import java.util.List;
 public class FXDataSetWrapper implements Comparable<FXDataSetWrapper> {
     private final String project;
     private final String analysis;
+    private final String longAnalysisId;
     private final String id;
     private final String folder;
 
-    public FXDataSetWrapper(String project, String analysis, String id, String folder) {
+    public FXDataSetWrapper(String project, String analysis, String longAnalysisId, String id, String folder) {
         this.project = project;
         this.analysis = analysis;
+        this.longAnalysisId = longAnalysisId;
         this.id = id;
         this.folder = folder;
     }
@@ -33,6 +35,14 @@ public class FXDataSetWrapper implements Comparable<FXDataSetWrapper> {
 
     public String getAnalysis() {
         return analysis;
+    }
+
+    public String getLongAnalysisId() {
+        return longAnalysisId;
+    }
+
+    public String getProjectAnalysisIdentifier() {
+        return project + "@" + analysis;
     }
 
     public String getId() {

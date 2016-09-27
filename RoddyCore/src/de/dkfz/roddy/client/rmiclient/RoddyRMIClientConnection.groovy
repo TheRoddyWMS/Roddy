@@ -26,11 +26,18 @@ public class RoddyRMIClientConnection {
 
     private RoddyRMIInstanceInfo instanceInfo;
 
+    private boolean alive = true;
+
     private static int rmiregistryStart = 60000;
+
 
     public static class RoddyRMIInstanceInfo {
 
         private Process process;
+
+        private OutputStream appendable = new ByteArrayOutputStream();
+
+        private List<String> lines = [];
 
         RoddyRMIInstanceInfo(Process process) {
             this.process = process
@@ -39,7 +46,48 @@ public class RoddyRMIClientConnection {
         public String getProcessID() {
             return ExecutionHelper.getProcessID(process);
         }
+
+        public synchronized List<String> updateOutput() {
+            process.consumeProcessOutput(appendable, appendable)
+            def allReadLines = appendable.toString().readLines();
+            def diff = allReadLines - lines;
+            if(diff) println(diff);
+            lines = allReadLines;
+            return allReadLines;
+        }
     }
+
+    private static List<RoddyRMIClientConnection> connectionList = [];
+
+    private static checkAndStartCheckConsumptionThread(RoddyRMIClientConnection newObject) {
+        synchronized (connectionList) {
+            connectionList << newObject;
+            if(connectionList.size() > 1) return;
+        }
+
+        boolean active = true;
+
+        while (active) {
+            List<RoddyRMIClientConnection> listToCheck = [];
+            synchronized (connectionList) {
+                listToCheck += connectionList.findAll { it.alive && it.pingServer(false) }
+            }
+
+            listToCheck.each {
+                RoddyRMIClientConnection connection ->
+                    connection.instanceInfo.process.consumeProcessOutput()
+            }
+
+            synchronized (connectionList) {
+                connectionList.clear();
+                connectionList += listToCheck;
+                active = connectionList;
+            }
+            Thread.sleep(250);
+        }
+        println("Closed client surveillance thread.")
+    }
+
 
     public RoddyRMIClientConnection() {
 
@@ -51,21 +99,20 @@ public class RoddyRMIClientConnection {
         startString = "RMIPORT=${rmiregistryStart} ${startString}".replace("#PORTNUMBER#", "" + rmiregistryStart)
         instanceInfo = new RoddyRMIInstanceInfo(ExecutionHelper.executeNonBlocking(startString));
 
-        OutputStream appendable = new ByteArrayOutputStream();
+        // The method needs an instanceinfo
+        checkAndStartCheckConsumptionThread(this);
 
         // Read out the lines of the process and check for messages like server up.
-        float timeout = 10; //seconds
+        float timeout = 20; //seconds
         boolean serverIsRunning = false;
         while (timeout > 0 && !serverIsRunning) {
-            instanceInfo.process.consumeProcessOutput(appendable, appendable)
-            def lines = appendable.toString().readLines();
+            def lines = instanceInfo.updateOutput();
             assert !lines.find { it == RoddyRMIServer.RODDY_SERVER_FAIL_MESSAGE };
             serverIsRunning = lines.find { it == RoddyRMIServer.RODDY_SERVER_UP_MESSAGE }
             timeout -= 0.125;
             Thread.sleep(125)
 
         }
-        System.out.println(appendable.toString());
 
         try {
             Registry registry = LocateRegistry.getRegistry("localhost", rmiregistryStart);
@@ -103,9 +150,9 @@ public class RoddyRMIClientConnection {
         return instanceInfo
     }
 
-    public boolean pingServer() {
+    public boolean pingServer(boolean keepAlive = true) {
         try {
-            return connection.ping(true);
+            return connection.ping(keepAlive);
         } catch (Exception ex) {
             return false;
         }
@@ -113,6 +160,7 @@ public class RoddyRMIClientConnection {
 
     public void closeServer() {
         try {
+            alive = true;
             connection.close();
         } catch (Exception ex) {
 
@@ -127,16 +175,56 @@ public class RoddyRMIClientConnection {
         }
     }
 
+    RoddyRMIInterfaceImplementation.ExtendedDataSetInfoObjectCollection queryExtendedDataSetInfo(String id, String analysis) {
+        try {
+            return connection.queryExtendedDataSetInfo(id, analysis);
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
     public JobState queryDataSetState(String dataSetId, String analysisId) {
 
     }
 
-    public void run(List<String> datasets, String analysisId, boolean test) {
+    public Map<String, JobState> queryJobState(List<String> jobIds) {
+        try {
+            return connection.queryJobState(jobIds);
+        } catch (Exception ex) {
 
+        }
     }
 
-    public void rerun(List<String> datasets, String analysisId, boolean test) {
+    public List<RoddyRMIInterfaceImplementation.ExecutionContextInfoObject> run(List<String> datasets, String analysisId, boolean test) {
+        try {
+            return connection.run(datasets, analysisId);
+        } catch (Exception ex) {
+            return [];
+        }
+    }
 
+    public List<RoddyRMIInterfaceImplementation.ExecutionContextInfoObject> rerun(List<String> datasets, String analysisId, boolean test) {
+        try {
+            return connection.run(datasets, analysisId);
+        } catch (Exception ex) {
+            return [];
+        }
+    }
+
+    public List<String> readLocalFile(String file) {
+        try {
+            return connection.readLocalFile(file);
+        } catch (Exception ex) {
+            return []
+        }
+    }
+
+    public List<String> readRemoteFile(String file) {
+        try {
+            return connection.readRemoteFile(file);
+        } catch (Exception ex) {
+            return []
+        }
     }
 
 }

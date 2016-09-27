@@ -74,14 +74,14 @@ public abstract class JobManager<C extends Command> {
 
     public static String createJobName(BaseFile bf, String toolName, boolean reduceLevel, List<BaseFile> inputFilesForSizeCalculation) {
         ExecutionContext rp = bf.getExecutionContext();
-        String runtime = rp.getTimeStampString();
+        String runtime = rp.getTimestampString();
         StringBuilder sb = new StringBuilder();
         sb.append("r").append(runtime).append("_").append(bf.getPid()).append("_").append(toolName);
         return sb.toString();
     }
 
     public static String createJobName(ExecutionContext rp, String postfix) {
-        String runtime = rp.getTimeStampString();
+        String runtime = rp.getTimestampString();
         StringBuilder sb = new StringBuilder();
         sb.append("r").append(runtime).append("_").append(rp.getDataSet().getId()).append("_").append(postfix);
         return sb.toString();
@@ -176,7 +176,7 @@ public abstract class JobManager<C extends Command> {
 
     /**
      * Tries to get the log for a running job.
-     * Returns an empty array, if the job's state is not RUNNING
+     * Returns an empty array, if the job's jobState is not RUNNING
      *
      * @param job
      * @return
@@ -184,7 +184,7 @@ public abstract class JobManager<C extends Command> {
     public abstract String[] peekLogFile(Job job);
 
     /**
-     * Stores a new job state info to an execution contexts job state log file.
+     * Stores a new job jobState info to an execution contexts job jobState log file.
      *
      * @param job
      */

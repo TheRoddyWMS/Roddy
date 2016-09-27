@@ -70,7 +70,7 @@ else
 
   startCode=STARTED
 
-  # Check if the jobs parent jobs are stored and passed as a parameter. If so Roddy checks the job state logfile
+  # Check if the jobs parent jobs are stored and passed as a parameter. If so Roddy checks the job jobState logfile
   # if at least one of the parent jobs exited with a value different to 0.
   if [[ ! ${RODDY_PARENT_JOBS} = false ]]
   then

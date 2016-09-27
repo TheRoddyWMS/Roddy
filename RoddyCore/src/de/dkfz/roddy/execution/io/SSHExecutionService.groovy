@@ -339,7 +339,7 @@ class SSHExecutionService extends RemoteExecutionService {
         SSHClient sshClient = set.client;
 
         if (waitFor) {
-            long id = fireExecutionStartedEvent(command)
+//            long id = fireExecutionStartedEvent(command)
 
             set.acquire();
             Session session = sshClient.startSession();
@@ -361,8 +361,8 @@ class SSHExecutionService extends RemoteExecutionService {
 
             List<String> output = new LinkedList<String>()
             output << "" + exitStatus;
-            measureStop(id, "blocking command [sshclient:${set.id}] '" + RoddyIOHelperMethods.truncateCommand(command, Roddy.getApplicationProperty("commandLogTruncate", '20').toInteger()) + "'");
-            fireExecutionStoppedEvent(id, command);
+//            measureStop(id, "blocking command [sshclient:${set.id}] '" + RoddyIOHelperMethods.truncateCommand(command, Roddy.getApplicationProperty("commandLogTruncate", '20').toInteger()) + "'");
+//            fireExecutionStoppedEvent(id, command);
 
             if (exitStatus > 0) {
                 if (ignoreError) {
@@ -388,7 +388,7 @@ class SSHExecutionService extends RemoteExecutionService {
 
             @Override
             void run() {
-                long id = fireExecutionStartedEvent(command)
+//                long id = fireExecutionStartedEvent(command)
                 //Append a newgrp (Philip: better "newgrp -"!) to each command, so that all command context in the proper group context.
                 set.acquire();
                 Session session = sshClient.startSession();
@@ -400,8 +400,8 @@ class SSHExecutionService extends RemoteExecutionService {
                 }
                 String content = IOUtils.readFully(cmd.getInputStream()).toString();
                 session.close();
-                measureStop(id, "async command  [sshclient:${set.id}] '" + RoddyIOHelperMethods.truncateCommand(command, Roddy.getApplicationProperty("commandLogTruncate", '20').toInteger()) + "'");
-                fireExecutionStoppedEvent(id, command)
+//                measureStop(id, "async command  [sshclient:${set.id}] '" + RoddyIOHelperMethods.truncateCommand(command, Roddy.getApplicationProperty("commandLogTruncate", '20').toInteger()) + "'");
+//                fireExecutionStoppedEvent(id, command)
             }
         }
         Thread thread = new Thread(runnable)
@@ -418,7 +418,7 @@ class SSHExecutionService extends RemoteExecutionService {
         int returnCode = result.size() > 0 && result[0] != "null" ? Integer.parseInt(returnCodeStr) : 256;
         result.remove(0);
         ExecutionResult er = new ExecutionResult(returnCode == 0, returnCode, result, "");
-        fireStringExecutedEvent(string, er);
+//        fireStringExecutedEvent(string, er);
         return er;
     }
 
@@ -432,7 +432,7 @@ class SSHExecutionService extends RemoteExecutionService {
         boolean fileCopy = _in.isFile();
         String copyType = fileCopy ? "file" : "directory";
 
-        long id = fireExecutionStartedEvent("")
+//        long id = fireExecutionStartedEvent("")
         SSHPoolConnectionSet service = waitForAndAcquireService()
         boolean result
         try {
@@ -447,8 +447,8 @@ class SSHExecutionService extends RemoteExecutionService {
             }
         } finally {
             service.release();
-            measureStop(id, "${copyType} copy [sshclient:${service.id}]");
-            fireExecutionStoppedEvent(id, "");
+//            measureStop(id, "${copyType} copy [sshclient:${service.id}]");
+//            fireExecutionStoppedEvent(id, "");
         }
         if (retry) {
             logger.warning("Catched no such file exception, attempting to retry copyFile ${_in.absolutePath} to ${_out.absolutePath}")
@@ -482,7 +482,7 @@ class SSHExecutionService extends RemoteExecutionService {
     @Override
     boolean modifyAccessRights(File file, String rightsStr, String groupID) {
         waitForService();
-        long id = fireExecutionStartedEvent("")
+//        long id = fireExecutionStartedEvent("")
 
         SSHPoolConnectionSet service = waitForAndAcquireService()
         boolean result = true;
@@ -495,15 +495,15 @@ class SSHExecutionService extends RemoteExecutionService {
             result = false;
         } finally {
             service.release();
-            measureStop(id, "chmod [sshclient:${service.id}]");
-            fireExecutionStoppedEvent(id, "");
+//            measureStop(id, "chmod [sshclient:${service.id}]");
+//            fireExecutionStoppedEvent(id, "");
         }
         return result;
     }
 
     @Override
     public boolean createFileWithRights(boolean atomic, File file, String accessRights, String groupID, boolean blocking) {
-        long id = fireExecutionStartedEvent("")
+//        long id = fireExecutionStartedEvent("")
         SSHPoolConnectionSet service = waitForAndAcquireService()
         try {
             Set<OpenMode> set = new HashSet<>();
@@ -518,8 +518,8 @@ class SSHExecutionService extends RemoteExecutionService {
                 service.sftpClient.chgrp(file.getAbsolutePath(), fp.getGroupID(groupID));
         } finally {
             service.release();
-            measureStop(id, "touch [sshclient:${service.id}]");
-            fireExecutionStoppedEvent(id, "");
+//            measureStop(id, "touch [sshclient:${service.id}]");
+//            fireExecutionStoppedEvent(id, "");
         }
         return modifyAccessRights(file, accessRights, groupID);
     }
@@ -561,7 +561,7 @@ class SSHExecutionService extends RemoteExecutionService {
 
     @Override
     boolean appendLineToFile(boolean atomic, File file, String line, boolean blocking) {
-        long id = fireExecutionStartedEvent("")
+//        long id = fireExecutionStartedEvent("")
         SSHPoolConnectionSet service = waitForAndAcquireService()
         boolean result
         try {
@@ -576,8 +576,8 @@ class SSHExecutionService extends RemoteExecutionService {
             f.close();
         } finally {
             service.release();
-            measureStop(id, "append to file [sshclient:${service.id}]");
-            fireExecutionStoppedEvent(id, "");
+//            measureStop(id, "append to file [sshclient:${service.id}]");
+//            fireExecutionStoppedEvent(id, "");
         }
         return result
     }
@@ -613,7 +613,7 @@ class SSHExecutionService extends RemoteExecutionService {
  * @param tempPost
  */
     private File transferFileFromRemoteToLocal(File file, String tempPre, String tempPost) {
-        long id = fireExecutionStartedEvent("")
+//        long id = fireExecutionStartedEvent("")
 //        boolean acquired = false;
         try {
             synchronized (file) {
@@ -649,7 +649,7 @@ class SSHExecutionService extends RemoteExecutionService {
         } finally {
 //            if (acquired)
 //                sshSemaphore.release();
-            fireExecutionStoppedEvent(id, "");
+//            fireExecutionStoppedEvent(id, "");
             null;
         }
     }
@@ -704,7 +704,7 @@ class SSHExecutionService extends RemoteExecutionService {
     @Override
     List<File> listFiles(File file, List<String> filters) {
         try {
-            long id = fireExecutionStartedEvent("")
+//            long id = fireExecutionStartedEvent("")
             final service = waitForService();
             final List<RemoteResourceInfo> ls;
             service.acquire();
@@ -732,8 +732,8 @@ class SSHExecutionService extends RemoteExecutionService {
                     result.add(new File(rinfo.path));
             }
 
-            measureStop(id, "list files [sshclient:${service.id}:${id}] ${file.absolutePath}");
-            fireExecutionStoppedEvent(id, "");
+//            measureStop(id, "list files [sshclient:${service.id}:${id}] ${file.absolutePath}");
+//            fireExecutionStoppedEvent(id, "");
             return result;
         }
 
@@ -801,7 +801,7 @@ class SSHExecutionService extends RemoteExecutionService {
     @Override
     FileAttributes queryFileAttributes(File file) {
         try {
-            long id = fireExecutionStartedEvent("")
+//            long id = fireExecutionStartedEvent("")
             net.schmizz.sshj.sftp.FileAttributes attributes
             SSHPoolConnectionSet service = waitForAndAcquireService()
             try {
@@ -811,8 +811,8 @@ class SSHExecutionService extends RemoteExecutionService {
                 service.release();
             }
 
-            measureStop(id, "query attributes [sshclient:${service.id}] of ${file.absolutePath}");
-            fireExecutionStoppedEvent(id, "");
+//            measureStop(id, "query attributes [sshclient:${service.id}] of ${file.absolutePath}");
+//            fireExecutionStoppedEvent(id, "");
             FileAttributes newAttributes = new FileAttributes("" + attributes.getUID(), "" + attributes.getGID());
             newAttributes.setPermissions(
                     attributes.permissions.contains(net.schmizz.sshj.xfer.FilePermission.USR_R),

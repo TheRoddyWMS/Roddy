@@ -32,13 +32,21 @@ public interface RoddyRMIInterface extends Remote {
 
     List<RoddyRMIInterfaceImplementation.DataSetInfoObject> listdatasets(String analysisId) throws RemoteException;
 
+    RoddyRMIInterfaceImplementation.ExtendedDataSetInfoObjectCollection queryExtendedDataSetInfo(String id, String analysis) throws RemoteException;
+
     JobState queryDataSetState(String dataSetId, String analysisId) throws RemoteException;
 
-    void run() throws RemoteException;
+    List<RoddyRMIInterfaceImplementation.ExecutionContextInfoObject> run(List<String> datasetIds, String analysisId) throws RemoteException;
 
-    void testrun() throws RemoteException;
+    List<RoddyRMIInterfaceImplementation.ExecutionContextInfoObject> testrun(List<String> datasetIds, String analysisId) throws RemoteException;
 
-    void rerun() throws RemoteException;
+    List<RoddyRMIInterfaceImplementation.ExecutionContextInfoObject> rerun(List<String> datasetIds, String analysisId) throws RemoteException;
 
-    void testrerun() throws RemoteException;
+    List<RoddyRMIInterfaceImplementation.ExecutionContextInfoObject> testrerun(List<String> datasetIds, String analysisId) throws RemoteException;
+
+    Map<String, JobState> queryJobState(List<String> jobIds) throws RemoteException;
+
+    List<String> readLocalFile(String path) throws RemoteException;
+
+    List<String> readRemoteFile(String path) throws RemoteException;
 }

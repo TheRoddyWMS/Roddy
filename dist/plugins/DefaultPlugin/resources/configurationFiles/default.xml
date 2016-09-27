@@ -20,7 +20,7 @@ up and is included in the configuration. The configuration settings directly ove
         <cvalue name='ZIPTOOL_OPTIONS' value='-c'/>
         <cvalue name='useAcceleratedHardware' value='true' type='boolean'/>
         <cvalue name='outputUMask' value='007' type='string'/>
-        <cvalue name='outputFileGroup' value='UNDEFINED'/>
+        <!--<cvalue name='outputFileGroup' value='UNDEFINED'/>-->
         <cvalue name='outputAccessRights' value='u+rw,g+rw,o-rwx' />
         <cvalue name="outputAllowAccessRightsModification" value="true" />
     </configurationvalues>
