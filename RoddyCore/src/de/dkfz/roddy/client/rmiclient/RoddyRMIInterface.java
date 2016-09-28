@@ -36,6 +36,8 @@ public interface RoddyRMIInterface extends Remote {
 
     JobState queryDataSetState(String dataSetId, String analysisId) throws RemoteException;
 
+    boolean queryDataSetExecutability(String id, String analysis) throws RemoteException;
+
     List<RoddyRMIInterfaceImplementation.ExecutionContextInfoObject> run(List<String> datasetIds, String analysisId) throws RemoteException;
 
     List<RoddyRMIInterfaceImplementation.ExecutionContextInfoObject> testrun(List<String> datasetIds, String analysisId) throws RemoteException;

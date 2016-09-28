@@ -6,6 +6,9 @@
 
 package de.dkfz.roddy.client.fxuiclient.fxwrappercontrols;
 
+import de.dkfz.roddy.client.fxuiclient.RoddyUIController;
+import de.dkfz.roddy.client.rmiclient.RoddyRMIClientConnection;
+import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation;
 import de.dkfz.roddy.core.*;
 import de.dkfz.roddy.execution.jobs.Job;
 import de.dkfz.roddy.execution.jobs.JobState;
@@ -99,6 +102,18 @@ public class DataSetListViewItemController extends ExecutionContextPresenter<FXD
     public void initialize() {
     }
 
+    private void setIconVisiblity(JobState state) {
+        setIconVisiblity(indicatorNotExecutedByRoddy);
+        if (state == JobState.UNKNOWN)
+            setIconVisiblity(indicatorUnknown);
+        else if (state == JobState.RUNNING)
+            setIconVisiblity(indicatorRunning);
+        else if (state == JobState.FAILED)
+            setIconVisiblity(JobState.FAILED);
+//        else
+//            setIconVisiblity(JobState.UNKNOWN);
+    }
+
     private synchronized void setIconVisiblity(Node icon) {
         indicatorNotExecutedByRoddy.setVisible(indicatorNotExecutedByRoddy == icon);
         indicatorOK.setVisible(indicatorOK == icon);
@@ -125,8 +140,8 @@ public class DataSetListViewItemController extends ExecutionContextPresenter<FXD
         pidID.setText(item.getId());
 
 //        runViews.getChildren().remove(runInfoPane);
-
-        setIconVisiblity(indicatorNotExecutedByRoddy);
+//        JobState state = item.getJobStateProperty().getValue();
+        setIconVisiblity(JobState.UNKNOWN);
         updateUI();
     }
 
@@ -138,19 +153,23 @@ public class DataSetListViewItemController extends ExecutionContextPresenter<FXD
             public String ecUser;
             public String ecTimeStamp;
             public boolean isExecutable;
-            ExecutionContext ec = null;
             Map<JobState, Integer> stateMap = new HashMap<>();
-            private AnalysisProcessingInformation api;
+            RoddyRMIInterfaceImplementation.ExtendedDataSetInfoObjectCollection extendedInfo;
 
             @Override
             public ExecutionContext _call() throws Exception {
                 try {
-//                    isExecutable = item.isExecutable();
+                    RoddyRMIClientConnection rmiConnection = RoddyUIController.getMainUIController().getRMIConnection(item.getLongAnalysisId());
+                    isExecutable = rmiConnection.queryDataSetExecutability(item.getId(), item.getAnalysis());
+
+                    extendedInfo = rmiConnection.queryExtendedDataSetInfo(item.getId(), item.getAnalysis());
+                    ecUser = item.getLastExecutingUser();
+                    ecTimeStamp = item.getLastTimestamp();
 //                    api = item.getRunningOrPlannedProcessingInfo();
 //                    if (api == null && item.getProcessingInfo().size() > 0)
 //                        api = item.getProcessingInfo().get(0);
 
-                    if (api == null) // || !api.getDetailedProcessingInfo().hasRunningJobs())
+//                    if (api == null) // || !api.getDetailedProcessingInfo().hasRunningJobs())
 //                        if (item.getProcessingInfo().size() > 0)
 //                            for (AnalysisProcessingInformation _api : item.getProcessingInfo()) {
 //                                if (_api.getDetailedProcessingInfo().getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS)
@@ -159,30 +178,35 @@ public class DataSetListViewItemController extends ExecutionContextPresenter<FXD
 //                                break;
 //                            }
 //                        else
-                        return null;
-
-                    ec = api.getDetailedProcessingInfo();
-                    ecUser = ec.getExecutingUser();
-                    ecTimeStamp = ec.getTimestampString();
+//                        return null;
+//                    item.
+//                    ec = api.getDetailedProcessingInfo();
+//                    ecUser = ec.getExecutingUser();
+//                    ecTimeStamp = ec.getTimestampString();
                     for (JobState js : JobState.values())
                         stateMap.put(js, 0);
-                    ec.getExecutedJobs().forEach((job) -> {
-                        if (job.isFakeJob()) return; //Do not count Fake jobs
-                        JobState s = job.getJobState();
-                        if (s == null) s = JobState.UNKNOWN;
-                        stateMap.put(s, stateMap.get(s) + 1);
-                    });
-//                    for (Job job : ec.getExecutedJobs()) {
-//                        JobState s = job.getJobState();
-//                        if (s == null) s = JobState.UNKNOWN;
-//                        stateMap.put(s, stateMap.get(s) + 1);
-//                    }
+
+                    RoddyRMIInterfaceImplementation.ExecutionContextInfoObject ec = extendedInfo.getList().size() > 0 ? extendedInfo.getList().get(0) : null;
+                    if (ec != null) {
+                        ec.getExecutedJobs().forEach((job) -> {
+                            if (job.isFakeJob()) return; //Do not count Fake jobs
+                            JobState s = job.getJobState();
+                            if (s == null) s = JobState.UNKNOWN;
+                            stateMap.put(s, stateMap.get(s) + 1);
+                        });
+                        for (RoddyRMIInterfaceImplementation.JobInfoObject job : ec.getExecutedJobs()) {
+                            JobState s = job.getJobState();
+                            if (s == null) s = JobState.UNKNOWN;
+                            stateMap.put(s, stateMap.get(s) + 1);
+                        }
+                    }
                 } catch (Exception ex) {
                     System.out.println(ex);
                     for (Object o : ex.getStackTrace())
                         System.out.println(o.toString());
                 } finally {
-                    return ec;
+//                    return ec;
+                    return null;
                 }
             }
 
@@ -200,21 +224,21 @@ public class DataSetListViewItemController extends ExecutionContextPresenter<FXD
                         if (errorInfo.getChildren().size() > 0)
                             errorInfo.getChildren().clear();
 
-                        if (api == null) {
+                        if (extendedInfo == null) {
                             setIconVisiblity(indicatorNotExecutedByRoddy);
                             return;
                         }
 
-                        if (ec == null) return;
-
-                        if (ec.getErrors().size() > 0) {
-                            for (ExecutionContextError ece : ec.getErrors()) {
+//                        if (ec == null) return;
+//
+                        if (extendedInfo != null && extendedInfo.getList().size() > 0) {
+                            for (ExecutionContextError ece : extendedInfo.getList().get(0).getErrors()) {
                                 errorInfo.getChildren().add(createErrorIcon(ece));
                             }
                         }
 
-                        if (api != null && ecUser != null)
-                            furtherInfo.setText(String.format("%s / %s", api.getExecutionDateHumanReadable(), ecUser));
+                        if (extendedInfo != null && ecUser != null)
+                            furtherInfo.setText(String.format("%s / %s", ecTimeStamp, ecUser));
 
                         pidExecInfo.setVisible(true);
 

@@ -97,6 +97,7 @@ public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
         ExecutionContextInfoObject dummy
         ExecutionContextInfoObject running
         List<ExecutionContextInfoObject> list = []
+
     }
 
     public static class ExecutionContextInfoObject implements Serializable {
@@ -236,12 +237,28 @@ public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
 
     @Override
     JobState queryDataSetState(String dataSetId, String analysisId) throws RemoteException {
-        RoddyRMIServer.touchServer();
+        try {
+            RoddyRMIServer.touchServer();
+            Map<DataSet, Boolean> status = loadAnalysis(analysisId).checkStatus([dataSetId]);
+            if (!status) return JobState.UNSTARTED;
+            if (status && status.values()[0]) return JobState.RUNNING;
+            RoddyRMIServer.touchServer();
+        } catch (Exception ex) {
+            return JobState.UNKNOWN;
+        }
+    }
 
-//        getDataSetsForAnalysis(analysisId)[dataSetId]
-
-        RoddyRMIServer.touchServer();
-        return null
+    @Override
+    boolean queryDataSetExecutability(String id, String analysisId) {
+        try {
+            RoddyRMIServer.touchServer();
+            if (queryDataSetState(id, analysisId) == JobState.RUNNING) return false
+            boolean result = loadAnalysis(analysisId).getWorkflow().checkExecutability(loadAnalysis(analysisId).run([id], ExecutionContextLevel.QUERY_STATUS)[0]);
+            RoddyRMIServer.touchServer();
+            return result;
+        } catch (Exception ex) {
+            return false;
+        }
     }
 
     @Override

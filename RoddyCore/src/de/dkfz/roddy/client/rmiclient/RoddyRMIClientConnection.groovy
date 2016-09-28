@@ -184,8 +184,22 @@ public class RoddyRMIClientConnection {
     }
 
     public JobState queryDataSetState(String dataSetId, String analysisId) {
+        try {
+            return connection.queryDataSetState(dataSetId, analysisId);
+        } catch (Exception ex) {
 
+        }
     }
+
+
+    boolean queryDataSetExecutability(String dataSetId, String analysisId) {
+        try {
+            return connection.queryDataSetExecutability(dataSetId, analysisId);
+        } catch (Exception ex) {
+
+        }
+    }
+
 
     public Map<String, JobState> queryJobState(List<String> jobIds) {
         try {

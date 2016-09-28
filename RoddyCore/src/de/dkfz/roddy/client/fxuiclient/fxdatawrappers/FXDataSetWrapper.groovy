@@ -6,20 +6,30 @@
 
 package de.dkfz.roddy.client.fxuiclient.fxdatawrappers;
 
+import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation;
 import de.dkfz.roddy.core.*;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
+import de.dkfz.roddy.execution.jobs.JobState
+import groovy.transform.CompileStatic;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
 
 import java.util.List;
 
 /**
  * Encapsulates DataSets (like i.e. PIDs)
  */
+@CompileStatic
 public class FXDataSetWrapper implements Comparable<FXDataSetWrapper> {
-    private final String project;
-    private final String analysis;
-    private final String longAnalysisId;
-    private final String id;
-    private final String folder;
+    final String project;
+    final String analysis;
+    final String longAnalysisId;
+    final String id;
+    final String folder;
+    JobState jobState = JobState.UNKNOWN;
+    boolean executable = false;
+
+    private RoddyRMIInterfaceImplementation.ExtendedDataSetInfoObjectCollection extendedDataSetInfoObjectCollection = null;
 
     public FXDataSetWrapper(String project, String analysis, String longAnalysisId, String id, String folder) {
         this.project = project;
@@ -29,29 +39,18 @@ public class FXDataSetWrapper implements Comparable<FXDataSetWrapper> {
         this.folder = folder;
     }
 
-    public String getProject() {
-        return project;
-    }
-
-    public String getAnalysis() {
-        return analysis;
-    }
-
-    public String getLongAnalysisId() {
-        return longAnalysisId;
-    }
-
     public String getProjectAnalysisIdentifier() {
         return project + "@" + analysis;
     }
 
-    public String getId() {
-        return id;
+    public String getLastExecutingUser() {
+        return extendedDataSetInfoObjectCollection?.list ? extendedDataSetInfoObjectCollection.list[0].getExecutingUser() : "UNKNOWN";
     }
 
-    public String getFolder() {
-        return folder;
+    public String getLastTimestamp() {
+        return extendedDataSetInfoObjectCollection?.list ? extendedDataSetInfoObjectCollection.list[0].executionDateHumanReadable : "";
     }
+
 
     //    public AnalysisProcessingInformation getDummyProcessingInfo() {
 //        return dataSet.getDummyAnalysisProcessingInformation(analysis);

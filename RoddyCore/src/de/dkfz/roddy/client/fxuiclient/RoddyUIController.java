@@ -22,6 +22,7 @@ import de.dkfz.roddy.client.fxuiclient.fxdatawrappers.FXICCWrapper;
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.GenericListViewItemCellImplementation;
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.ProjectTreeItemCellImplementation;
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.ProjectTreeItemCellListener;
+import de.dkfz.roddy.execution.jobs.JobState;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import javafx.application.Application;
@@ -704,6 +705,10 @@ public class RoddyUIController extends BorderPane implements Initializable, Proj
             public void _succeeded() {
                 listViewDataSets.getItems().clear();
                 listViewDataSets.getItems().addAll(dataSetWrappers);
+
+//                for (final FXDataSetWrapper dataSetWrapper : dataSetWrappers) {
+//
+//                }
             }
         });
     }
@@ -812,11 +817,11 @@ public class RoddyUIController extends BorderPane implements Initializable, Proj
 
             @Override
             protected void _succeeded() {
-                for(RoddyRMIInterfaceImplementation.ExecutionContextInfoObject contextInfoObject : executionContextInfoObjects) {
+                for (RoddyRMIInterfaceImplementation.ExecutionContextInfoObject contextInfoObject : executionContextInfoObjects) {
                     String dsId = contextInfoObject.getDatasetId();
                     Map<FXDataSetWrapper, DataSetView> listOfOpenDataSetViewsForAnalysis = getListOfOpenDataSetViewsForAnalysis();
                     for (DataSetView dataSetWrapper : listOfOpenDataSetViewsForAnalysis.values()) {
-                        if(dataSetWrapper.getDataSetId().equals(dsId)) {
+                        if (dataSetWrapper.getDataSetId().equals(dsId)) {
                             dataSetWrapper.addContextInfo(contextInfoObject);
                             break;
                         }
