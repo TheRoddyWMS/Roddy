@@ -28,7 +28,6 @@ public abstract class RoddyUITask<T> extends Task<T> {
 
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(RoddyUITask.class.getSimpleName());
     private static final ReentrantLock activeTaskCountLock = new ReentrantLock();
-    private static final ReentrantLock taskIDCounterLock = new ReentrantLock();
     private static final ReentrantLock lightWeightTaskIDCounterLock = new ReentrantLock();
     private static final String METHOD_CALL = "call";
     private static final String METHOD_SUCCEEDED = "succeeded";
@@ -91,17 +90,17 @@ public abstract class RoddyUITask<T> extends Task<T> {
 
     private static void addActiveTaskInfo(String taskName, int id) {
         if (taskName.startsWith("donttrack::")) return;
-        System.out.println("Add " + id + ":" + taskName);
+        logger.postRareInfo("Add " + id + ":" + taskName);
         _activeListOfTasks.put(id, taskName);
     }
 
     private static void removeActiveTaskInfo(String taskName, int id) {
         if (taskName.startsWith("donttrack::")) return;
         if (_activeListOfTasks.containsKey(id)) {
-            System.out.println("Remove " + id + ":" + taskName);
+            logger.postRareInfo("Remove " + id + ":" + taskName);
             _activeListOfTasks.remove(id);
         } else {
-            System.out.println("Could not remove " + id + ":" + taskName);
+            logger.postRareInfo("Could not remove " + id + ":" + taskName);
         }
     }
 
@@ -224,12 +223,11 @@ public abstract class RoddyUITask<T> extends Task<T> {
             addActiveTaskInfo(taskName, taskID);
             result = _call();
         } catch (Exception ex) {
-//            if(printTask)
             System.out.println(ex);
             logger.severe("Error in _call() of task " + taskName + "\n" + ex.toString());
             throw ex;
         } finally {
-            double val = stopMeasurement(t, taskName, METHOD_CALL);
+            stopMeasurement(t, taskName, METHOD_CALL);
             RoddyUIController.getMainUIController().executionFinished(t, taskName);
             decrementActiveTaskCount();
             removeActiveTaskInfo(taskName, taskID);

@@ -264,27 +264,24 @@ public class RoddyUIController extends BorderPane implements Initializable, Proj
             }
         });
 
-        startDataSurveillanceThread();
+        startUIUpdateThread();
     }
 
-    private void startDataSurveillanceThread() {
+    private void startUIUpdateThread() {
         Thread t = new Thread(() -> {
             while (App.instance.isRunning) {
                 try {
-                    // Query open datasets
-                    if (currentAnalysis != null) {
-                        RoddyRMIClientConnection connection = getRMIConnection(currentAnalysis);
+                    invokeDataUpdate();
 
-                        for (Object _dsw : listViewDataSets.getItems()) {
-                            FXDataSetWrapper dsw = (FXDataSetWrapper) _dsw;
-                            connection.queryDataSetState(dsw.getId(), dsw.getAnalysis());
-                        }
-
-                        // Query open data set views
-                        for (DataSetView dsv : getListOfOpenDataSetViewsForAnalysis().values()) {
-                            dsv.updateDataSetInformation();
-                        }
-                    }
+//                    final Runtime runtime = Runtime.getRuntime();
+//                    final double maxMem = 1.0 / (double) runtime.totalMemory();
+//
+//                    RoddyUITask.invokeLater(() -> {
+//                        double number = (runtime.totalMemory() - runtime.freeMemory()) * maxMem;
+//                        pgbMemory.setProgress(number);
+//                        lblMemory.setText(String.format("%8.0f", number * 100.0) + " %");
+//                        lblMemory.setText("" + runtime.freeMemory() + " / " + runtime.totalMemory() + " / " + runtime.maxMemory());
+//                    }, "app info update");
 
                     Thread.sleep(15000);
                 } catch (InterruptedException e) {
@@ -293,6 +290,23 @@ public class RoddyUIController extends BorderPane implements Initializable, Proj
             }
         });
         t.start();
+    }
+
+    private void invokeDataUpdate() {
+        // Query open datasets
+        if (currentAnalysis != null) {
+            RoddyRMIClientConnection connection = getRMIConnection(currentAnalysis);
+
+            for (Object _dsw : listViewDataSets.getItems()) {
+                FXDataSetWrapper dsw = (FXDataSetWrapper) _dsw;
+                connection.queryDataSetState(dsw.getId(), dsw.getAnalysis());
+            }
+
+            // Query open data set views
+            for (DataSetView dsv : getListOfOpenDataSetViewsForAnalysis().values()) {
+                dsv.updateDataSetInformation();
+            }
+        }
     }
 
     private String getUiSettingsFileForIniFiles() {
@@ -322,72 +336,6 @@ public class RoddyUIController extends BorderPane implements Initializable, Proj
     public ConfigurationViewer getConfigurationViewer() {
         return configurationViewer;
     }
-//
-//    /**
-//     * Creates a daemon thread which updates ui info components such as the used memory bar.
-//     */
-//    private void runUIApplicationInfoUpdateDaemon() {
-//        Task<Void> fxUIApplicationInfoUpdateTask = new Task<Void>() {
-//            @Override
-//            public Void call() throws Exception {
-//                while (App.instance.isRunning()) {
-//                    final Runtime runtime = Runtime.getRuntime();
-////                    final double maxMem = 1.0 / (double) runtime.totalMemory();
-//
-////                    RoddyUITask.invokeLater(new Runnable() {
-////                        @Override
-////                        public void run() {
-////                            double number = (runtime.totalMemory() - runtime.freeMemory()) * maxMem;
-//////                            pgbMemory.setProgress(number);
-//////                            lblMemory.setText(String.format("%8.0f", number * 100.0) + " %");
-//////                            lblMemory.setText("" + runtime.freeMemory() + " / " + runtime.totalMemory() + " / " + runtime.maxMemory());
-////                        }
-////                    }, null);//UIINVOKE_SET_APPINFO);
-//                    Thread.sleep(5000);
-//                }
-//                return null;
-//            }
-//
-//
-//        };
-//        Thread t = new Thread(fxUIApplicationInfoUpdateTask, UIConstants.UITASK_APPINFO_UPDATE_DAEMON);
-//        t.setDaemon(true);
-////        t.start();
-//    }
-//
-//    private void runCheckConnectionTask() {
-//        RoddyUITask.runTask(new RoddyUITask<Boolean>(UIConstants.UITASK_CHECKCONN) {
-//
-//            private boolean result = false;
-//
-//            @Override
-//            public Boolean _call() throws Exception {
-//                Thread.sleep(UIConstants.UITASK_CHECKCONN_WAIT);
-//                if (!ExecutionService.getInstance().needsPassword())
-//                    result = true;
-//                if (ExecutionService.getInstance().testConnection())
-//                    result = true;
-//                return result;
-//            }
-//
-//            @Override
-//            public void _succeeded() {
-//                show();
-//            }
-//
-//            @Override
-//            public void _failed() {
-//                show();
-//            }
-//
-//            private void show() {
-//                if (result) return;
-////                overlayDialogSetup.addErrorMessage(SettingsViewer.Sections.Connection, SettingsViewer.INVALID_CREDENTIALS);
-////                showOverlayDialog();
-//            }
-//        });
-//    }
-
 
     /**
      * Helper method to fill the content of a text field specifically to an input objects type.
@@ -556,7 +504,6 @@ public class RoddyUIController extends BorderPane implements Initializable, Proj
         projectDatasetAccordion.setExpandedPane(tpDatasets);
 
         RoddyUITask.runTask(new RoddyUITask<Void>(UIConstants.UITASK_CHANGE_PROJECT) {
-            String newAnalysis = null;
             List<String> analysesList = null;
 
             @Override
@@ -601,7 +548,6 @@ public class RoddyUIController extends BorderPane implements Initializable, Proj
 
                 if (analysesList.size() == 1) {
                     tgAnalyses.getToggles().get(0).setSelected(true);
-//                changeSelectedAnalysis(newAnalysis);
                 }
             }
         });
