@@ -263,37 +263,40 @@ public class Configuration implements ContainerParent<Configuration> {
     }
 
     public File getSourceBrawlWorkflow(String brawlName) {
-        List<PluginInfo> pluginInfos = LibrariesFactory.getInstance().getLoadedPlugins();
-        Map<String, File> availableBasePaths = new LinkedHashMap<>();
-        List<File> allFiles = new LinkedList<>();
-        for (PluginInfo pluginInfo : pluginInfos) {
-            File[] files = pluginInfo.getBrawlWorkflowDirectory().listFiles((FileFilter) new WildcardFileFilter(brawlName + ".brawl"));
-            if(files != null && files.length > 0)
-            allFiles.addAll(Arrays.asList(files));
-        }
-        if(allFiles.size() == 1) return allFiles.get(0);
-        logger.severe("Too many braw workflows called " + brawlName);
-        return null;
+        throw new RuntimeException("Currently not supported. Fix LI.getInstance first!");
+//        List<PluginInfo> pluginInfos = LibrariesFactory.getInstance().getLoadedPlugins();
+//        Map<String, File> availableBasePaths = new LinkedHashMap<>();
+//        List<File> allFiles = new LinkedList<>();
+//        for (PluginInfo pluginInfo : pluginInfos) {
+//            File[] files = pluginInfo.getBrawlWorkflowDirectory().listFiles((FileFilter) new WildcardFileFilter(brawlName + ".brawl"));
+//            if(files != null && files.length > 0)
+//            allFiles.addAll(Arrays.asList(files));
+//        }
+//        if(allFiles.size() == 1) return allFiles.get(0);
+//        logger.severe("Too many braw workflows called " + brawlName);
+//        return null;
     }
 
     public File getSourceToolPath(String tool) {
-        List<PluginInfo> pluginInfos = LibrariesFactory.getInstance().getLoadedPlugins();
-        Map<String, File> availableBasePaths = new LinkedHashMap<>();
-        for (PluginInfo pluginInfo : pluginInfos) {
-            availableBasePaths.putAll(pluginInfo.getToolsDirectories());
-        }
-
-
-        ToolEntry te = tools.getValue(tool);
-        if (te.basePathId.length() > 0 && !availableBasePaths.containsKey(te.basePathId)) {
-            throw new RuntimeException("Base path for tool " + tool + " is not configured");
-        }
-        File bPath = availableBasePaths.get(te.basePathId);
-
-        Map<String, String> localPath = new LinkedHashMap<>();
-        localPath.put(ConfigurationConstants.CVALUE_PLACEHOLDER_EXECUTION_DIRECTORY, ".");
-        File toolPath = new File(bPath.getAbsolutePath(), te.path);
-        return toolPath;
+        throw new RuntimeException("Currently not supported. Fix LI.getInstance first!");
+//
+//        List<PluginInfo> pluginInfos = LibrariesFactory.getInstance().getLoadedPlugins();
+//        Map<String, File> availableBasePaths = new LinkedHashMap<>();
+//        for (PluginInfo pluginInfo : pluginInfos) {
+//            availableBasePaths.putAll(pluginInfo.getToolsDirectories());
+//        }
+//
+//
+//        ToolEntry te = tools.getValue(tool);
+//        if (te.basePathId.length() > 0 && !availableBasePaths.containsKey(te.basePathId)) {
+//            throw new RuntimeException("Base path for tool " + tool + " is not configured");
+//        }
+//        File bPath = availableBasePaths.get(te.basePathId);
+//
+//        Map<String, String> localPath = new LinkedHashMap<>();
+//        localPath.put(ConfigurationConstants.CVALUE_PLACEHOLDER_EXECUTION_DIRECTORY, ".");
+//        File toolPath = new File(bPath.getAbsolutePath(), te.path);
+//        return toolPath;
     }
 
     public File getProcessingToolPath(ExecutionContext context, String tool) {

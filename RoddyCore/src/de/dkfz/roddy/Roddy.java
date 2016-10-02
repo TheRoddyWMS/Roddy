@@ -183,6 +183,13 @@ public class Roddy {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        new Roddy().start(args);
+    }
+
+    public Roddy() {
+    }
+
+    private void start(String[] args) {
         try {
             //Check if Roddy is called from the right directory.
             //TODO Think about a better way to get Roddys base directory.
@@ -717,7 +724,7 @@ public class Roddy {
 
         Class<ShellCommandSet> cls = null;
         try {
-            cls = (Class<ShellCommandSet>) LibrariesFactory.getGroovyClassLoader().loadClass(localCommandSet);
+            cls = (Class<ShellCommandSet>) LibrariesFactory.getBaseClassLoader().loadClass(localCommandSet);
             ShellCommandSet shellCommandSet = cls.newInstance();
             if (shellCommandSet.validate())
                 return shellCommandSet;

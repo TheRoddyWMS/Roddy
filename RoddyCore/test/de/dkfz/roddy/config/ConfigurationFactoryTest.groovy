@@ -40,8 +40,8 @@ public class ConfigurationFactoryTest {
     @BeforeClass
     public static void setupClass() {
 
-        LibrariesFactory.initializeFactory(true);
-        LibrariesFactory.getInstance().loadLibraries(LibrariesFactory.buildupPluginQueue(LibrariesFactoryTest.callLoadMapOfAvailablePlugins(), "DefaultPlugin").values() as List);
+        def instance = LibrariesFactory.getInstance(ConfigurationFactoryTest.name);
+        instance.loadLibraries(LibrariesFactory.buildupPluginQueue(LibrariesFactoryTest.callLoadMapOfAvailablePlugins(), "DefaultPlugin").values() as List);
 
         // Create buggy directories first.
         tempFolder.create();

@@ -47,6 +47,8 @@ class SSHExecutionService extends RemoteExecutionService {
     public static final LoggerWrapper logger = LoggerWrapper.getLogger(SSHExecutionService.class.name);
 
     public static class SSHPoolConnectionSet {
+        public Session session;
+
         public SSHClient client;
 
         public SFTPClient sftpClient;
@@ -127,9 +129,10 @@ class SSHExecutionService extends RemoteExecutionService {
                 if (RoddyConversionHelperMethods.toBoolean(Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_USE_COMPRESSION, Boolean.FALSE.toString()), false))
                     c.useCompression();
 
-                c.startSession();
+                session = c.startSession();
 
             } catch (Exception ex) {
+                println(ex);
             }
             client = c;
             sftpClient = client.newSFTPClient();
@@ -332,18 +335,18 @@ class SSHExecutionService extends RemoteExecutionService {
             long id = fireExecutionStartedEvent(command)
 
             set.acquire();
-            Session session = sshClient.startSession();
+//            Session session = sshClient.startSession();
             Session.Command cmd;
             try {
-                cmd = session.exec(command)
+                cmd = set.session.exec(command)
             } finally {
                 set.release();
             }
             String content = IOUtils.readFully(cmd.getInputStream()).toString();
-            session.close();
+//            session.close();
 
             cmd.join();
-            session.close();
+//            session.close();
 
             // Get the exit status of the process. In case of things like caught signals (SEGV-Segmentation fault), the value is null and will be set to 256.
             Integer exitStatus = cmd.getExitStatus();

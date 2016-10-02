@@ -59,7 +59,8 @@ public class NativeWorkflow extends Workflow {
         JobManager targetJobManager = null;
         try {
             String clz = aCfg.getTargetJobManagerClass();
-            ClassLoader classLoader = LibrariesFactory.getGroovyClassLoader();
+            //TODO Fix this to get a specific classloader (out of a plugin) Job Manager might be in a plugin
+            ClassLoader classLoader = LibrariesFactory.getBaseClassLoader();
             Class<?> targetJobManagerClass = classLoader.loadClass(clz);
             Constructor[] c = targetJobManagerClass.getConstructors();
             Constructor first = c[0];
