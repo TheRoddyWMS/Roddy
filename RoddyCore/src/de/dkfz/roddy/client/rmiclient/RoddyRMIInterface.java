@@ -30,6 +30,8 @@ public interface RoddyRMIInterface extends Remote {
      */
     void close() throws RemoteException;
 
+    long getInterfaceClassVersion() throws RemoteException;
+
     List<RoddyRMIInterfaceImplementation.DataSetInfoObject> listdatasets(String analysisId) throws RemoteException;
 
     RoddyRMIInterfaceImplementation.ExtendedDataSetInfoObjectCollection queryExtendedDataSetInfo(String id, String analysis) throws RemoteException;
