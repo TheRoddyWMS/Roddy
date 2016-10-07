@@ -8,6 +8,7 @@ package de.dkfz.roddy.plugins
 
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.tools.RuntimeTools
 import groovy.transform.TypeCheckingMode
 import org.junit.AfterClass
@@ -227,12 +228,33 @@ public class LibrariesFactoryTest {
                 pluginQueueWODefaultLibs["DefaultPlugin"].prodVersion == "current";
     }
 
+    /**
+     * Just create a synthetic class in the provided Libraries Factory instance
+     * @param instance
+     * @param classname
+     * @param baseclass
+     */
+    private void testCreateSyntheticClass(LibrariesFactory instance, String classname = "TestClass", String baseclass = "BaseFile") {
+        Class _cls = instance.generateSyntheticFileClassWithParentClass(classname, baseclass, instance.instanceClassLoader);
+        assert _cls != null && _cls.name.equals(LibrariesFactory.SYNTHETIC_PACKAGE + ".$classname");
+        assert _cls.getDeclaredConstructors().size() == 1;
+        assert _cls.getDeclaredConstructors()[0].parameterTypes[0] == BaseFile.ConstructionHelperForBaseFiles
+    }
 
     @Test
     public void testGenerateSyntheticFileClassWithParentClass() {
-        Class _cls = LibrariesFactory.generateSyntheticFileClassWithParentClass("TestClass", "BaseFile", new GroovyClassLoader());
-        assert _cls != null && _cls.name.equals(LibrariesFactory.SYNTHETIC_PACKAGE + ".TestClass");
-        assert _cls.getDeclaredConstructors().size() == 1;
-        assert _cls.getDeclaredConstructors()[0].parameterTypes[0] == de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForBaseFiles
+        def instance = LibrariesFactory.getInstance(LibrariesFactoryTest.name)
+        testCreateSyntheticClass(instance)
     }
+
+    @Test
+    public void testSafeCreationOfMultipleLFInstances() {
+        def a = LibrariesFactory.getInstance(LibrariesFactoryTest.name + "_a")
+        def b = LibrariesFactory.getInstance(LibrariesFactoryTest.name + "_b")
+        def c = LibrariesFactory.getInstance(LibrariesFactoryTest.name + "_c")
+        testCreateSyntheticClass(a);
+        testCreateSyntheticClass(b);
+        testCreateSyntheticClass(c);
+    }
+
 }

@@ -89,7 +89,7 @@ public class BrawlWorkflowTest {
         def pCfg = new ProjectConfiguration(null, null, null, null)
         ContextConfiguration cc = new ContextConfiguration(aCfg, pCfg);
 
-        Class<BaseFile> testFileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass("TestFile", BaseFile.class as Class<FileObject>);
+        Class<BaseFile> testFileClass = LibrariesFactory.getInstance(BrawlWorkflowTest.name).loadRealOrSyntheticClass("TestFile", BaseFile.class as Class<FileObject>);
         def loadFastqFiles = new ToolEntry(LOAD_FASTQ_FILES, "testtools", "/tmp/testtools/${LOAD_FASTQ_FILES}.sh")
         loadFastqFiles.getOutputParameters(cc).add(
                 new ToolEntry.ToolFileGroupParameter(

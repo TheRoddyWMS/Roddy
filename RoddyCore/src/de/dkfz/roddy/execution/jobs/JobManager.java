@@ -59,7 +59,8 @@ public abstract class JobManager<C extends Command> {
         String jobManagerClassID;
         Class jobManagerClass;
 
-        classLoader = LibrariesFactory.getGroovyClassLoader();
+        //TODO Fix this to get a specific classloader (out of a plugin) JobManager might be in a plugin
+        classLoader = LibrariesFactory.getBaseClassLoader();
         jobManagerClassID = Roddy.getApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS, PBSJobManager.class.getName());
         jobManagerClass = classLoader.loadClass(jobManagerClassID);
 

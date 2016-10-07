@@ -28,11 +28,6 @@ import java.util.regex.Pattern
 public class LibrariesFactory extends Initializable {
     private static LoggerWrapper logger = LoggerWrapper.getLogger(LibrariesFactory.class.getSimpleName());
 
-    private static LibrariesFactory librariesFactory;
-
-    public static URLClassLoader urlClassLoader
-    public static GroovyClassLoader centralGroovyClassLoader;
-
     public static final String SYNTHETIC_PACKAGE = "de.dkfz.roddy.synthetic.files"
 
     public static final String PLUGIN_VERSION_CURRENT = "current";
@@ -46,6 +41,16 @@ public class LibrariesFactory extends Initializable {
     public static final String BUILDINFO_RUNTIME_JDKVERSION = "JDKVersion"
     public static final String BUILDINFO_RUNTIME_GROOVYVERSION = "GroovyVersion"
     public static final String BUILDINFO_RUNTIME_APIVERSION = "RoddyAPIVersion"
+
+    /** A map of all available created factories, identified by their session id **/
+    private static Map<String, LibrariesFactory> librariesFactoryBySession = [:];
+
+    static final GroovyClassLoader baseClassLoader = new GroovyClassLoader(ClassLoader.getSystemClassLoader());
+
+    /** A groovy classloader which is context specific **/
+    final GroovyClassLoader instanceClassLoader = new GroovyClassLoader(baseClassLoader);
+
+    final URLClassLoader urlClassLoader = instanceClassLoader;
 
     private List<String> loadedLibrariesInfo = [];
 
@@ -77,17 +82,6 @@ public class LibrariesFactory extends Initializable {
         }
     }
 
-    /**
-     * This resets the singleton and is not thread safe!
-     * Actually only creates a new singleton clearing out old values.
-     * @return
-     */
-    public static LibrariesFactory initializeFactory(boolean enforceinit = false) {
-        if (!librariesFactory || enforceinit)
-            librariesFactory = new LibrariesFactory();
-        return librariesFactory;
-    }
-
     private LibrariesFactory() {
         synthetic = new SyntheticPluginInfo("Synthetic", null, null, null, "current", [:]);
     }
@@ -96,23 +90,11 @@ public class LibrariesFactory extends Initializable {
         return synthetic;
     }
 
-    /**
-     * TODO Leave this static? Or make it a libraries factory based thing?
-     * @return
-     */
-    public static GroovyClassLoader getGroovyClassLoader() {
-        if (centralGroovyClassLoader == null) {
-            centralGroovyClassLoader = new GroovyClassLoader(ClassLoader.getSystemClassLoader())
-            urlClassLoader = centralGroovyClassLoader;
-        }
-        return centralGroovyClassLoader;
-    }
-
     private Map<PluginInfo, List<String>> classListCacheByPlugin = [:];
 
     public Class searchForClass(String name) {
         if (name.contains(".")) {
-            return getGroovyClassLoader().loadClass(name);
+            return instanceClassLoader.loadClass(name);
         } else {
             //Search synthetic classes first.
             if (getSynthetic().map.containsKey(name))
@@ -147,7 +129,7 @@ public class LibrariesFactory extends Initializable {
                 return null;
             }
             if (listOfClasses.size() == 1) {
-                return getGroovyClassLoader().loadClass(listOfClasses[0]);
+                return instanceClassLoader.loadClass(listOfClasses[0]);
             }
             logger.severe("No class found for ${name}")
             return null;
@@ -157,8 +139,8 @@ public class LibrariesFactory extends Initializable {
     public Class loadRealOrSyntheticClass(String classOfFileObject, String baseClassOfFileObject) {
         Class<BaseFile> _cls = searchForClass(classOfFileObject);
         if (_cls == null) {
-            _cls = generateSyntheticFileClassWithParentClass(classOfFileObject, baseClassOfFileObject, LibrariesFactory.getGroovyClassLoader())
-            LibrariesFactory.getInstance().getSynthetic().addClass(_cls);
+            _cls = generateSyntheticFileClassWithParentClass(classOfFileObject, baseClassOfFileObject, instanceClassLoader)
+            getSynthetic().addClass(_cls);
             logger.severe("Class ${classOfFileObject} could not be found, created synthetic class ${_cls.name}.");
         }
         return _cls
@@ -169,7 +151,7 @@ public class LibrariesFactory extends Initializable {
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    public static Class generateSyntheticFileClassWithParentClass(String syntheticClassName, String constructorClassName, GroovyClassLoader classLoader = null) {
+    public Class generateSyntheticFileClassWithParentClass(String syntheticClassName, String constructorClassName, GroovyClassLoader classLoader = null) {
         String syntheticFileClass =
                 """
                 package $SYNTHETIC_PACKAGE
@@ -488,25 +470,7 @@ public class LibrariesFactory extends Initializable {
         return pluginsToActivate;
     }
 
-//    /**
-//     * Get a list of all available plugins in their most recent version...
-//     * @return
-//     */
-//    public List<PluginInfo> getAvailablePluginVersion() {
-//        List<PluginInfo> mostCurrentPlugins = [];
-//        PluginInfoMap availablePlugins = loadMapOfAvailablePluginsForInstance();
-//        availablePlugins.each {
-//            String pluginID, Map<String, PluginInfo> versions ->
-//                if (versions.keySet().contains(PLUGIN_VERSION_CURRENT))
-//                    mostCurrentPlugins << versions[PLUGIN_VERSION_CURRENT];
-//                else
-//                    mostCurrentPlugins << versions[versions.keySet().last()]
-//        }
-//
-//        return mostCurrentPlugins;
-//    }
-
-    public static boolean addFile(File f) throws IOException {
+    public boolean addFile(File f) throws IOException {
         return addURL(f.toURI().toURL());
     }
 
@@ -520,9 +484,9 @@ public class LibrariesFactory extends Initializable {
      * @param u
      * @throws IOException
      */
-    public static boolean addURL(URL u) throws IOException {
+    public boolean addURL(URL u) throws IOException {
         try {
-            getGroovyClassLoader().addURL(u);
+            instanceClassLoader.addURL(u);
             return true;
         } catch (Throwable t) {
             logger.severe("A plugin could not be loaded: " + u)
@@ -531,12 +495,19 @@ public class LibrariesFactory extends Initializable {
     }
 
     public static LibrariesFactory getInstance() {
-        if (librariesFactory == null) {
-            logger.postAlwaysInfo("The libraries factory for plugin management was not initialized! Creating a new, empty object.")
-            librariesFactory = new LibrariesFactory();
+        return getInstance("default");
+    }
+
+    public static synchronized LibrariesFactory getInstance(String sessionId) {
+        if(!sessionId)
+            throw new RuntimeException("A library factory needs a session id, the passed id was empty or null");
+
+        if (!librariesFactoryBySession[sessionId]) {
+            logger.postAlwaysInfo("The libraries factory for plugin management was not initialized! Creating a new, empty object for session ${sessionId}.")
+            librariesFactoryBySession[sessionId] = new LibrariesFactory();
         }
 
-        return librariesFactory;
+        return librariesFactoryBySession[sessionId];
     }
 
     public boolean loadLibraries(List<PluginInfo> pluginInfo) {
@@ -612,7 +583,7 @@ public class LibrariesFactory extends Initializable {
     }
 
     public Class loadClass(String className) throws ClassNotFoundException {
-        return getGroovyClassLoader().loadClass(className);
+        return instanceClassLoader.loadClass(className);
     }
 
     public static boolean isVersionStringValid(String s) {
