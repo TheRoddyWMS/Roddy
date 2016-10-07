@@ -186,7 +186,7 @@ public class Roddy {
      */
     public static void main(String[] args) {
         try {
-            Thread.sleep(3000);
+//            Thread.sleep(3000);
             //Check if Roddy is called from the right directory.
             //TODO Think about a better way to get Roddys base directory.
             String[] list = applicationDirectory.list((dir, name) -> name.equals("roddy.sh"));
