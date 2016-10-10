@@ -33,6 +33,9 @@ public class BashConverterTest {
     public static final String CVAL_TEST_INTEGER = "testInteger"
     public static final String CVAL_TEST_FLOAT = "testFloat"
     public static final String CVAL_TEST_DOUBLE = "testDouble"
+    public static final String CVAL_TEST_SPACE_QUOTES = "testSpaces"
+    public static final String CVAL_TEST_TAB_QUOTES = "testTabs"
+    public static final String CVAL_TEST_NEWLINE_QUOTES = "testNewlines"
 
     @BeforeClass
     public static final void setup() {
@@ -51,6 +54,9 @@ public class BashConverterTest {
                 new ConfigurationValue(configuration, CVAL_TEST_INTEGER, "100", "integer"),
                 new ConfigurationValue(configuration, CVAL_TEST_FLOAT, "1.0", "float"),
                 new ConfigurationValue(configuration, CVAL_TEST_DOUBLE, "1.0", "double"),
+                new ConfigurationValue(configuration, CVAL_TEST_SPACE_QUOTES, "text with spaces"),
+                new ConfigurationValue(configuration, CVAL_TEST_TAB_QUOTES, "text\twith\ttabs"),
+                new ConfigurationValue(configuration, CVAL_TEST_NEWLINE_QUOTES, "text\nwith\nnewlines"),
         ] as List<ConfigurationValue>)
         return configuration;
     }
@@ -134,12 +140,15 @@ public class BashConverterTest {
                 // These tests here fail, if you only start this test. Leave them at the end, so we can at least test the other tests.
                 (CVAL_OUTPUT_BASE_DIRECTORY)         : "declare -x    ${CVAL_OUTPUT_BASE_DIRECTORY}=/tmp".toString(),
                 (CVAL_OUTPUT_ANALYSIS_BASE_DIRECTORY): "declare -x    ${CVAL_OUTPUT_ANALYSIS_BASE_DIRECTORY}=/tmp/Dideldum".toString(),
+                (CVAL_TEST_SPACE_QUOTES)             : "declare -x    ${CVAL_TEST_SPACE_QUOTES}=\"text with spaces\"".toString(),
+                (CVAL_TEST_TAB_QUOTES)               : "declare -x    ${CVAL_TEST_TAB_QUOTES}=\"text\twith\ttabs\"".toString(),
+                (CVAL_TEST_NEWLINE_QUOTES)           : "declare -x    ${CVAL_TEST_NEWLINE_QUOTES}=\"text\nwith\nnewlines\"".toString(),
         ]
 
         ExecutionContext context = MockupExecutionContextBuilder.createSimpleContext(BashConverterTest, configuration)
 
         list.each { String id, String expected ->
-            def val = new BashConverter().convertConfigurationValue(configuration.getConfigurationValues()[id], context).toString();
+            def val = new BashConverter().convertConfigurationValue(configuration.getConfigurationValues()[id], context, true).toString();
 
             assert val.toString() == expected
         }

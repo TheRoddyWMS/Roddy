@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.config.converters
 
+import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration
@@ -198,9 +199,8 @@ class BashConverter extends ConfigurationConverter {
         return listOfSortedValues
     }
 
-    @Override
     @CompileStatic
-    StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context) {
+    StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context, Boolean quoteSomeScalarConfigValues) {
         StringBuilder text = new StringBuilder();
         if (cv.toString().startsWith("#COMMENT")) {
             text << cv.toString();
@@ -215,12 +215,12 @@ class BashConverter extends ConfigurationConverter {
                 return new StringBuilder("declare -x    ${cv.id}=\"${cv.toString()}\"".toString());
             } else if (cv.type && cv.type.toLowerCase() == "integer") {
                 return new StringBuilder("declare -x -i ${cv.id}=${cv.toString()}".toString());
-            }
-
-            if (cv.type && cv.type.toLowerCase() == "path")
+            } else if (cv.type && ["double", "float"].contains(cv.type.toLowerCase())) {
+                return new StringBuilder("declare -x    ${cv.id}=${cv.toString()}".toString());
+            } else if (cv.type && cv.type.toLowerCase() == "path") {
                 tmp = "${cv.toFile(context)}".toString();
-            else {
-                if (cv.value.startsWith("-") || cv.value.startsWith("*"))
+            } else {
+                if (cv.value.startsWith("-") || cv.value.startsWith("*") || (quoteSomeScalarConfigValues || cv.value =~ /[\s\t\n;]/))
                     tmp = "\"${cv.toString()}\"".toString();
                 else
                     tmp = "${cv.toString()}".toString();
@@ -233,6 +233,12 @@ class BashConverter extends ConfigurationConverter {
             text << tmp;
         }
         return text;
+    }
+
+    @Override
+    @CompileStatic
+    StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context) {
+        convertConfigurationValue(cv, context, Roddy.getFeatureToggleValue(AvailableFeatureToggles.QuoteSomeScalarConfigValues))
     }
 
     public Configuration loadShellScript(String configurationFile) {
