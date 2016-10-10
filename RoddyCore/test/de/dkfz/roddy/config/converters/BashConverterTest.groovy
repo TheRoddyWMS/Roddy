@@ -36,6 +36,7 @@ public class BashConverterTest {
     public static final String CVAL_TEST_SPACE_QUOTES = "testSpaces"
     public static final String CVAL_TEST_TAB_QUOTES = "testTabs"
     public static final String CVAL_TEST_NEWLINE_QUOTES = "testNewlines"
+    public static final String CVAL_TEST_SPACE_NQUOTE_ALREADY_QUOTED = "testQuotedSpaces"
 
     @BeforeClass
     public static final void setup() {
@@ -57,6 +58,7 @@ public class BashConverterTest {
                 new ConfigurationValue(configuration, CVAL_TEST_SPACE_QUOTES, "text with spaces"),
                 new ConfigurationValue(configuration, CVAL_TEST_TAB_QUOTES, "text\twith\ttabs"),
                 new ConfigurationValue(configuration, CVAL_TEST_NEWLINE_QUOTES, "text\nwith\nnewlines"),
+                new ConfigurationValue(configuration, CVAL_TEST_SPACE_NQUOTE_ALREADY_QUOTED, "\"text with spaces\""),
         ] as List<ConfigurationValue>)
         return configuration;
     }
@@ -143,6 +145,8 @@ public class BashConverterTest {
                 (CVAL_TEST_SPACE_QUOTES)             : "declare -x    ${CVAL_TEST_SPACE_QUOTES}=\"text with spaces\"".toString(),
                 (CVAL_TEST_TAB_QUOTES)               : "declare -x    ${CVAL_TEST_TAB_QUOTES}=\"text\twith\ttabs\"".toString(),
                 (CVAL_TEST_NEWLINE_QUOTES)           : "declare -x    ${CVAL_TEST_NEWLINE_QUOTES}=\"text\nwith\nnewlines\"".toString(),
+                (CVAL_TEST_SPACE_NQUOTE_ALREADY_QUOTED) : "declare -x    ${CVAL_TEST_SPACE_NQUOTE_ALREADY_QUOTED}=\"text with spaces\"".toString(),
+
         ]
 
         ExecutionContext context = MockupExecutionContextBuilder.createSimpleContext(BashConverterTest, configuration)

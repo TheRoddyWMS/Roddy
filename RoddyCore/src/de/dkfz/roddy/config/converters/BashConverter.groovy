@@ -199,6 +199,10 @@ class BashConverter extends ConfigurationConverter {
         return listOfSortedValues
     }
 
+    private boolean isQuoted(String string) {
+        (string.startsWith("'") && string.endsWith("'")) || (string.startsWith('"') && string.endsWith('"'))
+    }
+
     @CompileStatic
     StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context, Boolean quoteSomeScalarConfigValues) {
         StringBuilder text = new StringBuilder();
@@ -209,7 +213,7 @@ class BashConverter extends ConfigurationConverter {
             if (cv.type && cv.type.toLowerCase() == "basharray") {
                 // Check, if it is already quoted.
                 // If so, take the existing quotes.
-                if (cv.value.startsWith("'") || cv.value.startsWith('"'))
+                if (isQuoted(cv.value))
                     return new StringBuilder("declare -x    ${cv.id}=${cv.toString()}".toString());
                 // If not, quote
                 return new StringBuilder("declare -x    ${cv.id}=\"${cv.toString()}\"".toString());
@@ -220,10 +224,13 @@ class BashConverter extends ConfigurationConverter {
             } else if (cv.type && cv.type.toLowerCase() == "path") {
                 tmp = "${cv.toFile(context)}".toString();
             } else {
-                if (cv.value.startsWith("-") || cv.value.startsWith("*") || (quoteSomeScalarConfigValues || cv.value =~ /[\s\t\n;]/))
+                if (cv.value.startsWith("-") || cv.value.startsWith("*")) {
                     tmp = "\"${cv.toString()}\"".toString();
-                else
+                } else if (quoteSomeScalarConfigValues && !isQuoted(cv.value) && cv.value =~ /[\s\t\n;]/) {
+                    tmp = "\"${cv.toString()}\"".toString();
+                } else {
                     tmp = "${cv.toString()}".toString();
+                }
             }
             text << "declare -x    ${cv.id}=";
             //TODO Important, this is a serious hack! It must be removed soon
