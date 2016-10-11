@@ -18,6 +18,7 @@ public enum AvailableFeatureToggles {
     RollbackOnSubmissionOnError(false),
     // Modify bash arrays and pass them with a different separator. (comma instead of whitespace)
     ModifiedVariablePassing(true),
+    QuoteSomeScalarConfigValues(true),
     UseOldDataSetIDExtraction(true),
     AutoFilenames(false),
     UnzipZippedPlugins(false);
