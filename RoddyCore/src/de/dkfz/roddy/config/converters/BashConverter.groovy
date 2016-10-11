@@ -202,8 +202,7 @@ class BashConverter extends ConfigurationConverter {
     private boolean isQuoted(String string) {
         (string.startsWith("'") && string.endsWith("'")) || (string.startsWith('"') && string.endsWith('"'))
     }
-
-    @CompileStatic
+    
     StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context, Boolean quoteSomeScalarConfigValues) {
         StringBuilder text = new StringBuilder();
         if (cv.toString().startsWith("#COMMENT")) {
