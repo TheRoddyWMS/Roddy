@@ -71,18 +71,20 @@ public class LibrariesFactoryTest {
      */
     private static PluginInfoMap mapOfAvailablePlugins
 
-    public static TemporaryFolder pluginsBaseDir = new TemporaryFolder();
+    public static TemporaryFolder pluginsBaseDirWithCorrectEntries = new TemporaryFolder();
+
+    public static TemporaryFolder pluginsBaseDirWithInvalidEntries = new TemporaryFolder();
 
     @AfterClass
     public static void tearDownClass() {
-        pluginsBaseDir.delete();
+        pluginsBaseDirWithCorrectEntries.delete();
     }
 
     @BeforeClass
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public static void setupTestDataForPluginQueueTests() {
 
-        pluginsBaseDir.create();
+        pluginsBaseDirWithCorrectEntries.create();
 
         // Create the folder and file structure so that the loadPluginsFromDirectories method will work.
         for (String plugin : mapWithTestPlugins.keySet()) {
@@ -100,11 +102,11 @@ public class LibrariesFactoryTest {
                 if (vString[1]?.contains("z")) {
                     // Touch a zip file and continue
                     folderName += ".zip"
-                    pluginsBaseDir.newFile(folderName);
+                    pluginsBaseDirWithCorrectEntries.newFile(folderName);
                     continue
                 }
 
-                File pFolder = pluginsBaseDir.newFolder(folderName);
+                File pFolder = pluginsBaseDirWithCorrectEntries.newFolder(folderName);
                 File buildinfo = new File(pFolder, "buildinfo.txt");
 
                 // Check, if there are additions to the versioning string.
@@ -117,12 +119,17 @@ public class LibrariesFactoryTest {
                 importList.each {
                     buildinfo << "dependson=${it}\n"
                 }
+                buildinfo << ""
+
+                new File(pFolder, "buildversion.txt") << "";
+                new File(pFolder, "resources/analysisTools").mkdirs()
+                new File(pFolder, "resources/configurationFiles").mkdirs()
             }
         }
 
         //Add additional "native" plugins (DefaultPlugin, PluginBase) and the temporary plugin folder
         List<File> pluginDirectories = [
-                pluginsBaseDir.root
+                pluginsBaseDirWithCorrectEntries.root
         ]
 
         mapOfAvailablePlugins = callLoadMapOfAvailablePlugins(pluginDirectories)
@@ -139,17 +146,80 @@ public class LibrariesFactoryTest {
         assert mapOfAvailablePlugins["B"]["1.0.3-0"]?.previousInChain == mapOfAvailablePlugins["B"]["1.0.2-2"] && mapOfAvailablePlugins["B"]["1.0.3-0"]?.previousInChainConnectionType == PluginInfo.PluginInfoConnection.EXTENSION
     }
 
-    public static PluginInfoMap callLoadMapOfAvailablePlugins(List<File> additionalPluginDirectories = []) {
-        List<File> pluginDirectories = [new File(Roddy.getApplicationDirectory(), "/dist/plugins/")]
-        pluginDirectories += additionalPluginDirectories
+    @BeforeClass
+    public static void setupTestDataForPluginLoaderTest() {
+        // Create a temp directory with several valid and several invalid directories.
+        // Invalid are e.g. hidden directories, directories with malformated names, directories with missing content..
+        // TODO Might be necessary to extend this to cover Auto-Detect of Python/Java/Groovy Plugins and contents. (Jar files).
+
+        pluginsBaseDirWithInvalidEntries.create()
+        pluginsBaseDirWithInvalidEntries.newFolder("Valid_1.0.2-2").with {
+            File f ->
+                new File(f, "buildinfo.txt") << "dependson=PluginBase:current\nJDKVersion=1.8\nGroovyVersion=2.4\nRoddyAPIVersion=2.3\n";
+                new File(f, "buildversion.txt") << "1.0\n2";
+                new File(f, "resources/analysisTools").mkdirs();
+                new File(f, "resources/configurationFiles").mkdirs();
+        }
+
+        pluginsBaseDirWithInvalidEntries.newFolder("ValidContent").with {
+            File f ->
+                new File(f, "buildinfo.txt") << "dependson=PluginBase:current\nJDKVersion=1.8\nGroovyVersion=2.4\nRoddyAPIVersion=2.3\n";
+                new File(f, "buildversion.txt") << "current";
+                new File(f, "resources/analysisTools").mkdirs();
+                new File(f, "resources/configurationFiles").mkdirs();
+        }
+
+        pluginsBaseDirWithInvalidEntries.newFolder("InValidContentNoATools").with {
+            File f ->
+                new File(f, "buildinfo.txt") << "dependson=PluginBase:current\nJDKVersion=1.8\nGroovyVersion=2.4\nRoddyAPIVersion=2.3\n";
+                new File(f, "buildversion.txt") << "1.0\n2";
+                new File(f, "resources/configurationFiles").mkdirs();
+        }
+        pluginsBaseDirWithInvalidEntries.newFolder("InValidContentNoCfgDir").with {
+            File f ->
+                new File(f, "buildinfo.txt") << "dependson=PluginBase:current\nJDKVersion=1.8\nGroovyVersion=2.4\nRoddyAPIVersion=2.3\n";
+                new File(f, "buildversion.txt") << "1.0\n2";
+                new File(f, "resources/analysisTools").mkdirs();
+        }
+        pluginsBaseDirWithInvalidEntries.newFolder("InValidContentNoBuildFiles").with {
+            File f ->
+                new File(f, "resources/analysisTools").mkdirs();
+                new File(f, "resources/configurationFiles").mkdirs();
+        }
+        pluginsBaseDirWithInvalidEntries.newFolder("InValidContentCantRead").setReadable(false, false);
+
+        pluginsBaseDirWithInvalidEntries.newFolder("InValidName_1.02-c")
+        pluginsBaseDirWithInvalidEntries.newFolder("InValidName_1.02-ax")
+        pluginsBaseDirWithInvalidEntries.newFolder("InValidName_ax")
+        pluginsBaseDirWithInvalidEntries.newFolder(".InValidHidden")
+        pluginsBaseDirWithInvalidEntries.newFolder(".git")
+        pluginsBaseDirWithInvalidEntries.newFolder(".svn")
+
+        pluginsBaseDirWithInvalidEntries.newFile(".InvalidHiddenFile")
+        pluginsBaseDirWithInvalidEntries.newFile("InvalidFile")
+    }
+
+    public static PluginInfoMap callLoadMapOfAvailablePlugins(List<File> additionalPluginDirectories = [], boolean single = false) {
+        List<File> pluginDirectories = additionalPluginDirectories
+
+        if (!single)
+            pluginDirectories += [new File(Roddy.getApplicationDirectory(), "/dist/plugins/")]
 
         // The method is static and private and should stay that way, so get it via reflection.
         Method loadMapOfAvailablePlugins = LibrariesFactory.getDeclaredMethod("loadMapOfAvailablePlugins", List.class);
         loadMapOfAvailablePlugins.setAccessible(true);
 
         // Invoke the method and check the results.
-        mapOfAvailablePlugins = LibrariesFactory.loadMapOfAvailablePlugins(pluginDirectories)
-        return mapOfAvailablePlugins
+        return LibrariesFactory.loadMapOfAvailablePlugins(pluginDirectories)
+    }
+
+    @Test
+    public void testLoadMapOfAvailablePlugins() {
+        def availablePlugins = callLoadMapOfAvailablePlugins([pluginsBaseDirWithInvalidEntries.root], true);
+        assert availablePlugins
+        assert availablePlugins.size() == 2
+        assert availablePlugins["ValidContent"].size() == 1
+        assert availablePlugins["Valid"].size() == 1
     }
 
     @Test
