@@ -211,6 +211,15 @@ public class LibrariesFactory extends Initializable {
         };
     }
 
+    static boolean checkFile(File f) {
+        return f.exists() && f.isFile() && f.canRead()
+    }
+
+    static boolean checkDirectory(File f) {
+        return f.exists() && f.isDirectory() && f.canRead()
+        //&& f.canExecute()
+    }
+
     /**
      * This method returns a list of all plugins found in plugin directories.
      * This method distinguishes between Roddy environments for development and packed Roddy versions.
@@ -229,41 +238,64 @@ public class LibrariesFactory extends Initializable {
 
         //Search all plugin folders and also try to join those if possible.
         List<Tuple2<File, String[]>> collectedPluginDirectories = [];
-        def blacklist = [".idea", "out", "Template", ".svn"]
         boolean warningUnzippedDirectoriesMissing = false;
 
         for (File pBaseDirectory : pluginDirectories) {
-	    logger.postSometimesInfo("Parsing plugins folder: ${pBaseDirectory}");
+            logger.postSometimesInfo("Parsing plugins folder: ${pBaseDirectory}");
+            if (!pBaseDirectory.exists()) {
+                logger.warning("The plugins directory $pBaseDirectory does not exist.")
+                continue;
+            }
+            if (!pBaseDirectory.canRead()) {
+                logger.warning("The plugins directory $pBaseDirectory is not readable.")
+            }
+
             File[] directoryList = pBaseDirectory.listFiles().sort() as File[];
             for (File pEntry in directoryList) {
-	        logger.postRareInfo("  Parsing plugin folder: ${pEntry}");
-                String dirName = pEntry.getName();
-                boolean isZip = dirName.endsWith(".zip");
-                boolean unzippedDirectoryExists = false;
-                if (isZip) {
-                    dirName = dirName[0..-5]; // Remove .zip from the end.
-                    unzippedDirectoryExists = new File(dirName).exists();
-                    if (isZip && !unzippedDirectoryExists) warningUnzippedDirectoriesMissing = true;
-                    //set warn unzipped dir missing.
-                }
+                logger.postRareInfo("  Parsing plugin folder: ${pEntry}");
 
+                if (!pEntry.isDirectory())
+                    continue;
+                if (pEntry.isHidden())
+                    continue;
+                if (!pEntry.canRead())
+                    continue;
+
+                String dirName = pEntry.getName();
+                if (!isPluginDirectoryNameValid(dirName))
+                    continue;
+
+                if (!checkFile(new File(pEntry, "buildinfo.txt")) ||
+                        !checkFile(new File(pEntry, "buildversion.txt")) ||
+                        !checkDirectory(new File(pEntry, "resources/analysisTools")) ||
+                        !checkDirectory(new File(pEntry, "resources/configurationFiles"))
+                ) continue;
+
+//                boolean isZip = dirName.endsWith(".zip");
+//                boolean unzippedDirectoryExists = false;
+//                if (isZip) {
+//                    dirName = dirName[0..-5]; // Remove .zip from the end.
+//                    unzippedDirectoryExists = new File(dirName).exists();
+//                    if (isZip && !unzippedDirectoryExists) warningUnzippedDirectoriesMissing = true;
+//                    set warn unzipped dir missing.
+//                }
                 String[] splitName = dirName.split(StringConstants.SPLIT_UNDERSCORE); //First split for .zip then for the version
                 String pluginName = splitName[0];
-                if ((!pEntry.isDirectory() && !isZip) || isZip || !pluginName || blacklist.contains(pluginName))
-                    continue;
+//                if ((!pEntry.isDirectory() && !isZip) || isZip || !pluginName || blacklist.contains(pluginName))
+//                    continue;
                 collectedPluginDirectories << new Tuple2<File, String[]>(pEntry, splitName);
             }
         }
 
-        if (warningUnzippedDirectoriesMissing) {
-            logger.warning("There are plugins in your directories which are not unzipped. If some plugins are not found, please consider to check your zipped plugins.")
-        }
+//        if (warningUnzippedDirectoriesMissing) {
+//            logger.warning("There are plugins in your directories which are not unzipped. If some plugins are not found, please consider to check your zipped plugins.")
+//        }
 
         return loadPluginsFromDirectories(collectedPluginDirectories)
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private static List<Tuple2<File, String[]>> checkValidPluginNames (List<Tuple2<File, String[]>> collectedPluginDirectories) {
+    private static List<Tuple2<File, String[]>> checkValidPluginNames(List<Tuple2<File, String[]>> collectedPluginDirectories) {
         List<Tuple2<File, String[]>> collectedTemporary = [];
         collectedPluginDirectories.each { tuple ->
             String rev = (tuple.x.name.split("[-]") as List)[1]
@@ -285,7 +317,7 @@ public class LibrariesFactory extends Initializable {
     private static List<Tuple2<File, String[]>> sortPluginDirectories(List<Tuple2<File, String[]>> collectedPluginDirectories) {
         collectedPluginDirectories = collectedPluginDirectories.sort {
             Tuple2<File, String[]> left, Tuple2<File, String[]> right ->
-				logger.postRareInfo("Call to plugin directory sort for ${left.x} vs ${right.x}");
+                logger.postRareInfo("Call to plugin directory sort for ${left.x} vs ${right.x}");
                 List<String> splitLeft = left.x.name.split("[_:.-]") as List;
                 List<String> splitRight = right.x.name.split("[_:.-]") as List;
                 Tuple5<String, Integer, Integer, Integer, Integer> tLeft = new Tuple5<>(
@@ -332,7 +364,7 @@ public class LibrariesFactory extends Initializable {
 
         Map<String, Map<String, PluginInfo>> _mapOfPlugins = [:];
         for (Tuple2<File, String[]> _entry : collectedPluginDirectories) {
-			logger.postRareInfo("Processing plugin entry: ${_entry.x}")
+            logger.postRareInfo("Processing plugin entry: ${_entry.x}")
             File pEntry = _entry.x;
             String[] splitName = _entry.y;//pEntry.getName().split(StringConstants.SPLIT_UNDERSCORE); //First split for .zip then for the version
 
@@ -436,7 +468,7 @@ public class LibrariesFactory extends Initializable {
             //There are now some  as String conversions which are just there for the Idea code view... They'll be shown as faulty otherwise.
             if (version != PLUGIN_VERSION_CURRENT && !(version as String).contains("-")) version += "-0";
 
-            if(!mapOfPlugins.checkExistence(id as String, version as String)) {
+            if (!mapOfPlugins.checkExistence(id as String, version as String)) {
                 logger.severe("The plugin ${id}:${version} could not be found, are the plugin paths properly set?");
                 return null;
             }
