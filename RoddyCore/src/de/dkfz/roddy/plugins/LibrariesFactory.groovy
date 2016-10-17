@@ -213,6 +213,15 @@ public class LibrariesFactory extends Initializable {
         };
     }
 
+    static boolean checkFile(File f) {
+        return f.exists() && f.isFile() && f.canRead()
+    }
+
+    static boolean checkDirectory(File f) {
+        return f.exists() && f.isDirectory() && f.canRead()
+        //&& f.canExecute()
+    }
+
     /**
      * This method returns a list of all plugins found in plugin directories.
      * This method distinguishes between Roddy environments for development and packed Roddy versions.
