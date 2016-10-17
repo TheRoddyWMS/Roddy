@@ -227,7 +227,9 @@ public abstract class ExecutionService extends CacheProvider {
     protected String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, FileOutputStream outputStream) {
         String exID = "none";
         if (res.successful) {
-            exID = JobManager.getInstance().parseJobID(res.processID);
+            exID = JobManager.getInstance().parseJobID(res.processID ?: res.resultLines[0]);            
+		if(!exID)  exID = JobManager.getInstance().parseJobID(res.resultLines[0]);
+
             command.setExecutionID(JobManager.getInstance().createJobDependencyID(command.getJob(), exID));
             JobManager.getInstance().storeJobStateInfo(command.getJob());
         }

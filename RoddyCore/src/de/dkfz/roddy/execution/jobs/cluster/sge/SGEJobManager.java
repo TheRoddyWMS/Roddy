@@ -28,6 +28,11 @@ import java.util.Map;
  */
 public class SGEJobManager extends PBSJobManager {
 
+    public SGEJobManager() {
+        super(true);
+
+    }
+
     public SGEJobManager(boolean createDaemon) {
         super(createDaemon);
     }
