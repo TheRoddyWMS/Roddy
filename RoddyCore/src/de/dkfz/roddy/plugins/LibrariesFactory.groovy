@@ -11,6 +11,8 @@ import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.client.RoddyStartupModes
 import de.dkfz.roddy.client.cliclient.CommandLineCall
 import de.dkfz.roddy.execution.io.ExecutionHelper
+import de.dkfz.roddy.execution.io.LocalExecutionService
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.tools.*
@@ -211,15 +213,6 @@ public class LibrariesFactory extends Initializable {
         };
     }
 
-    static boolean checkFile(File f) {
-        return f.exists() && f.isFile() && f.canRead()
-    }
-
-    static boolean checkDirectory(File f) {
-        return f.exists() && f.isDirectory() && f.canRead()
-        //&& f.canExecute()
-    }
-
     /**
      * This method returns a list of all plugins found in plugin directories.
      * This method distinguishes between Roddy environments for development and packed Roddy versions.
@@ -252,46 +245,39 @@ public class LibrariesFactory extends Initializable {
 
             File[] directoryList = pBaseDirectory.listFiles().sort() as File[];
             for (File pEntry in directoryList) {
-                logger.postRareInfo("  Parsing plugin folder: ${pEntry}");
 
-                if (!pEntry.isDirectory())
-                    continue;
-                if (pEntry.isHidden())
-                    continue;
-                if (!pEntry.canRead())
+                if(!isValidPluginFolder(pEntry))
                     continue;
 
-                String dirName = pEntry.getName();
-                if (!isPluginDirectoryNameValid(dirName))
-                    continue;
-
-                if (!checkFile(new File(pEntry, "buildinfo.txt")) ||
-                        !checkFile(new File(pEntry, "buildversion.txt")) ||
-                        !checkDirectory(new File(pEntry, "resources/analysisTools")) ||
-                        !checkDirectory(new File(pEntry, "resources/configurationFiles"))
-                ) continue;
-
-//                boolean isZip = dirName.endsWith(".zip");
-//                boolean unzippedDirectoryExists = false;
-//                if (isZip) {
-//                    dirName = dirName[0..-5]; // Remove .zip from the end.
-//                    unzippedDirectoryExists = new File(dirName).exists();
-//                    if (isZip && !unzippedDirectoryExists) warningUnzippedDirectoriesMissing = true;
-//                    set warn unzipped dir missing.
-//                }
-                String[] splitName = dirName.split(StringConstants.SPLIT_UNDERSCORE); //First split for .zip then for the version
-                String pluginName = splitName[0];
-//                if ((!pEntry.isDirectory() && !isZip) || isZip || !pluginName || blacklist.contains(pluginName))
-//                    continue;
+                String[] splitName = pEntry.name.split(StringConstants.SPLIT_UNDERSCORE); //First split for .zip then for the version
                 collectedPluginDirectories << new Tuple2<File, String[]>(pEntry, splitName);
             }
         }
 
-//        if (warningUnzippedDirectoriesMissing) {
-//            logger.warning("There are plugins in your directories which are not unzipped. If some plugins are not found, please consider to check your zipped plugins.")
-//        }
-
         return loadPluginsFromDirectories(collectedPluginDirectories)
+    }
+
+    static boolean isValidPluginFolder(File directory) {
+        logger.postRareInfo("  Parsing plugin folder: ${directory}");
+
+        if (!directory.isDirectory())
+            return false;
+        if (directory.isHidden())
+            return false;
+        if (!directory.canRead())
+            return false;
+
+        String dirName = directory.getName();
+        if (!isPluginDirectoryNameValid(dirName))
+            return false;
+
+        def f = FileSystemAccessProvider.getInstance();
+        if (!f.checkFile(new File(directory, "buildinfo.txt")) ||
+                !f.checkFile(new File(directory, "buildversion.txt")) ||
+                !f.checkDirectory(new File(directory, "resources/analysisTools")) ||
+                !f.checkDirectory(new File(directory, "resources/configurationFiles"))
+        ) return false;
+
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
