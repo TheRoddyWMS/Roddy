@@ -146,5 +146,8 @@ elif [[ "$parm1" == "createworkflow" ]]; then
     exit 0
 fi
 
+set -xv
+IFS=""
 java -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
-
+# ${fullParameterList[@]}   Cannot be used => Results in recursive call loop
+IFS=$OFS

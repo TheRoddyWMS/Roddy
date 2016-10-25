@@ -507,6 +507,7 @@ public class LibrariesFactory extends Initializable {
 
             def loadInfo = "The plugin ${pi.getName()} [ Version: ${pi.getProdVersion()} ] was loaded."
             logger.postAlwaysInfo(loadInfo)
+            logger.postRareInfo("  plugin resides in ${pi.directory}")
             synchronized (loadedLibrariesInfo) {
                 loadedPlugins << pi;
                 loadedLibrariesInfo << loadInfo.toString()
