@@ -28,6 +28,18 @@ public class CommandLineCall {
             args = [RoddyStartupModes.help.toString()];
         this.arguments = args;
 
+        /**
+         * Rejoin/split the argument list.
+         * Currently this is very basic and just splits by the " --" separator between startup options.
+         * E.g. does not check, if there are " or ' or other " --" somewhere in the text.
+         * However it makes it possible to rewrite the damaged Bash arguments and store e.g. lists / arrays properly.
+         */
+        int firstIndex = args.findIndexOf { String arg -> arg.startsWith("--") }
+        List<String> newArgsBack = args[firstIndex..-1].join(" ").replace(" --", "#SPLITHERE#--").split("#SPLITHERE#") as List<String>
+        args = args[0..firstIndex - 1]
+        args += newArgsBack;
+        logger.postSometimesInfo("Formatted argument list: " + args)
+
         List<String> parameters = args.findAll { String arg -> !arg.startsWith("--") } as ArrayList<String>;
         Collection<String> options = args.findAll { String arg -> arg.startsWith("--") };
 //        ExecutionService.measureStop(t1, "measure 1", LoggerWrapper.VERBOSITY_RARE);
@@ -35,7 +47,7 @@ public class CommandLineCall {
         t1 = ExecutionService.measureStart();
         // Try to extract the startup mode. If it not know, display the help message.
         try {
-            if(parameters.size() == 0)
+            if (parameters.size() == 0)
                 startupMode = help;
             else
                 startupMode = Enum.valueOf(RoddyStartupModes.class, parameters[0]);
