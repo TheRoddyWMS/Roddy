@@ -225,7 +225,7 @@ public class ProjectFactory {
             //TODO Put in a better error checking when converting the split string to a configuration value.
             String value = (splitIDValue.size() >= 2 ? splitIDValue[1] : ""); // Surround value with single quotes '' to prevent string interpretation for e.g. execution in bash
             String cvalueId = splitIDValue[0];
-            String type = splitIDValue.size() >= 3 ? splitIDValue[2] : "string";
+            String type = splitIDValue.size() >= 3 ? splitIDValue[2] : null;
 
             def configurationValue = new ConfigurationValue(cvalueId, value, type)
             configurationValue.setQuoteOnConversion();

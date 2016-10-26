@@ -48,10 +48,27 @@ class RoddyConversionHelperMethods {
     }
 
     public static boolean isInteger(String str) {
-        return str.isInteger();
+        return !isNullOrEmpty(str) && str.isInteger();
+    }
+
+    static boolean isFloat(String str) {
+        return !isNullOrEmpty(str) && str.isFloat() &&
+                (!str.contains(".") || str.endsWith("f")); // Expand test to "real" floats ending with "f", if there is a format like 1.0f 1.0e10f
+    }
+
+    static boolean isDouble(String str) {
+        return !isNullOrEmpty(str) && !str.endsWith("f") && str.isDouble(); // In case of double it is easy, they are not allowed to end with f
     }
 
     public static boolean isNullOrEmpty(String string) {
         return !string;
+    }
+
+    public static boolean isNullOrEmpty(Collection collection) {
+        return !collection;
+    }
+
+    public static boolean isDefinedArray(String value) {
+        return !isNullOrEmpty(value) && ([value[0], value[-1]] == ["(", ")"]); // What else to test??
     }
 }

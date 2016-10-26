@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.config;
 
 import de.dkfz.roddy.Roddy;
@@ -5,6 +11,7 @@ import de.dkfz.roddy.core.Analysis;
 import de.dkfz.roddy.core.DataSet;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 
 import java.io.File;
 import java.util.Arrays;
@@ -56,7 +63,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         this.id = id;
         this.value = value;
         this.configuration = config;
-        this.type = type;
+        this.type = !RoddyConversionHelperMethods.isNullOrEmpty(type) ? type : determineTypeOfValue(value);
         this.description = description;
     }
 
@@ -64,6 +71,21 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         return configuration;
     }
 
+    /**
+     * If the type of the value is set to null, we can try to auto detect the value.
+     * Defaults to string and can detect integers, doubles and arrays.
+     * <p>
+     * Maybe, this should be put to a different location?
+     *
+     * @return
+     */
+    public static String determineTypeOfValue(String value) {
+        if (RoddyConversionHelperMethods.isInteger(value)) return "integer";
+        if (RoddyConversionHelperMethods.isDouble(value)) return "double";
+        if (RoddyConversionHelperMethods.isFloat(value)) return "float";
+        if (RoddyConversionHelperMethods.isDefinedArray(value)) return "bashArray";
+        return "string";
+    }
 
     private String replaceString(String src, String pattern, String text) {
         if (src.contains(pattern)) {
