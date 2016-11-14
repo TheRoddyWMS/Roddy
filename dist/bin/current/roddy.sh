@@ -34,7 +34,7 @@ if [[ "$parm1" == "compile" ]]; then
     source ${SCRIPTS_DIR}/compileRoddyBinary.sh
     exit 0
 elif [[ "$parm1" == "pack" ]]; then
-    groovy ${SCRIPTS_DIR}/addChangelistVersionTag.groovy README.md RoddyCore/buildversion.txt
+    groovy ${SCRIPTS_DIR}/addChangelistVersionTag.groovy CHANGELIST.md RoddyCore/buildversion.txt
     major=`head RoddyCore/buildversion.txt -n 1`
     minor=`tail RoddyCore/buildversion.txt -n 1`
 

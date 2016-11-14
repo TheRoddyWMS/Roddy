@@ -9,7 +9,7 @@ Roddy versions 2.2 and below need Groovy 2.3.x and the JDK/JRE in version 8 (Ora
 Roddy versions 2.3 and upwards need Groovy 2.4.x and the JDK/JRE in version 8 (also Oracle!)
 
 ```
-~/Projekte/Roddy> ll ~/.roddy/runtimeDevel/
+~/Projects/Roddy> ll ~/.roddy/runtimeDevel/
  groovy -> groovy-2.3.6
  groovy-2.3.6
  groovy-2.4.3
@@ -18,8 +18,6 @@ Roddy versions 2.3 and upwards need Groovy 2.4.x and the JDK/JRE in version 8 (a
  jdk1.8.0_40
  jre -> jdk/jre
 ```
-
-Support for Groovy 2.4.x has been tested and it is currently not working!
 
 # Contents
 
