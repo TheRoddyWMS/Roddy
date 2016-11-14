@@ -34,7 +34,7 @@ if [[ "$parm1" == "compile" ]]; then
     source ${SCRIPTS_DIR}/compileRoddyBinary.sh
     exit 0
 elif [[ "$parm1" == "pack" ]]; then
-    $GROOVY_BINARY ${SCRIPTS_DIR}/addChangelistVersionTag.groovy README.md RoddyCore/buildversion.txt
+    $GROOVY_BINARY ${SCRIPTS_DIR}/addChangelistVersionTag.groovy CHANGELIST.md RoddyCore/buildversion.txt
     major=`head RoddyCore/buildversion.txt -n 1`
     minor=`tail RoddyCore/buildversion.txt -n 1`
 
@@ -126,6 +126,12 @@ elif [[ "$parm1" == "createworkflow" ]]; then
 fi
 
 IFS=""
+<<<<<<< HEAD
 #[[ $RMIPORT != "" ]] && export DBG_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005" && echo "Opened up rmi debugger port"
 java $DBG_OPTS -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
 IFS=$OFS
+=======
+java -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
+# ${fullParameterList[@]}   Cannot be used => Results in recursive call loop
+IFS=$OFS
+>>>>>>> ChangelistAndREADMEUpdates
