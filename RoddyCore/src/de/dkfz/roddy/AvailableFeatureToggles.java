@@ -6,6 +6,7 @@ package de.dkfz.roddy;
  */
 public enum AvailableFeatureToggles {
 
+    AutoQuoteCLICValues(false),
     XMLValidation(true),
     ForbidSubmissionOnRunning(false),
     BreakSubmissionOnError(false),

@@ -10,6 +10,7 @@ import de.dkfz.roddy.config.validation.XSDValidator;
 import de.dkfz.roddy.plugins.LibrariesFactory;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.Tuple2
+import groovy.transform.CompileStatic
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -25,6 +26,7 @@ import static de.dkfz.roddy.config.ConfigurationConstants.CFG_OUTPUT_BASE_DIRECT
  * The project factory converts a configuration to a project/analysis. It stores a reference to already loaded projects and reuses them if possible.
  * A project can have multiple analyses
  */
+@CompileStatic
 public class ProjectFactory {
 
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(ProjectFactory.class.getSimpleName());
@@ -138,7 +140,7 @@ public class ProjectFactory {
         String[] splitProjectAnalysis = configurationIdentifier.split(StringConstants.SPLIT_AT);
         String projectID = splitProjectAnalysis[0];
         if (splitProjectAnalysis.length == 1) {
-            RoddyCLIClient.logger.postAlwaysInfo("There was no analysis specified for configuration " + splitProjectAnalysis[0] + "\n\t Please specify the configuration string as [configuration_id]@[analysis_id].");
+            logger.postAlwaysInfo("There was no analysis specified for configuration " + splitProjectAnalysis[0] + "\n\t Please specify the configuration string as [configuration_id]@[analysis_id].");
             return null;
         }
         String analysisID = splitProjectAnalysis[1];
@@ -228,7 +230,8 @@ public class ProjectFactory {
             String type = splitIDValue.size() >= 3 ? splitIDValue[2] : null;
 
             def configurationValue = new ConfigurationValue(cvalueId, value, type)
-            configurationValue.setQuoteOnConversion();
+            if(Roddy.getFeatureToggleValue(AvailableFeatureToggles.AutoQuoteCLICValues))
+                configurationValue.setQuoteOnConversion();
             configurationValues.add(configurationValue);
         }
 
