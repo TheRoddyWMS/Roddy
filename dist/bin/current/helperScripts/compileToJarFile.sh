@@ -14,7 +14,7 @@ srcDirectory=`groovy ${SCRIPTS_DIR}/findPluginFolders.groovy ${pluginDirectories
 cd $srcDirectory
 
 echo "Increasing build number and date"
-pluginClass=`find $srcDirectory -name "*Plugin.java" | head -n 1`
+pluginClass=`find $srcDirectory/ -name "*Plugin.java" | head -n 1`
 groovy ${SCRIPTS_DIR}/IncreaseAndSetBuildVersion.groovy $srcDirectory/buildversion.txt $pluginClass
 echo "  Increased to" `head -n 1 $srcDirectory/buildversion.txt`.`tail -n 1 $srcDirectory/buildversion.txt`
 

@@ -165,6 +165,10 @@ class BashConverter extends ConfigurationConverter {
         return text.toString();
     }
 
+    private boolean isQuoted(String string) {
+        (string.startsWith("'") && string.endsWith("'")) || (string.startsWith('"') && string.endsWith('"'))
+    }
+
     @CompileStatic
     private void convertConfigurationValueToShellScriptLine(ConfigurationValue cv, StringBuilder text, ExecutionContext context) {
         if (cv.toString().startsWith("#COMMENT")) {
@@ -176,8 +180,11 @@ class BashConverter extends ConfigurationConverter {
             else {
                 if (cv.value.startsWith("-") || cv.value.startsWith("*"))
                     tmp = "\"${cv.toString()}\"".toString();
-                else
+                else if (!isQuoted(cv.value) && cv.value =~ /[\s\t\n;]/) {
+                    tmp = "\"${cv.toString()}\"".toString();
+                } else {
                     tmp = "${cv.toString()}".toString();
+                }
             }
             text << "${cv.id}=";
             //TODO Important, this is a serious hack! It must be removed soon
