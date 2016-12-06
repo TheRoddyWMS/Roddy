@@ -224,11 +224,11 @@ public abstract class ExecutionService extends CacheProvider {
 
     protected FileOutputStream createServiceBasedOutputStream(Command command, boolean waitFor) { return null; }
 
-    protected String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, FileOutputStream outputStream) {
+    protected String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, OutputStream outputStream) {
         String exID = "none";
         if (res.successful) {
-            exID = JobManager.getInstance().parseJobID(res.processID ?: res.resultLines[0]);            
-		if(!exID)  exID = JobManager.getInstance().parseJobID(res.resultLines[0]);
+            exID = JobManager.getInstance().parseJobID(res.processID ?: res.resultLines[0]);
+            if (!exID) exID = JobManager.getInstance().parseJobID(res.resultLines[0]);
 
             command.setExecutionID(JobManager.getInstance().createJobDependencyID(command.getJob(), exID));
             JobManager.getInstance().storeJobStateInfo(command.getJob());
@@ -452,11 +452,11 @@ public abstract class ExecutionService extends CacheProvider {
                     cfg.getConfigurationValues().add(new ConfigurationValue(basepathConfigurationID, RoddyIOHelperMethods.assembleLocalPath(dstExecutionDirectory, "analysisTools", bPathID).getAbsolutePath(), "string"));
             }
 
-            Map<String, List<Map<String,String>>> mapOfInlineScripts = [:]
+            Map<String, List<Map<String, String>>> mapOfInlineScripts = [:]
 
             for (ToolEntry tool in cfg.getTools().allValuesAsList) {
                 if (tool.hasInlineScript()) {
-                    mapOfInlineScripts.get(tool.basePathId, []) << ["inlineScript":tool.getInlineScript(),"inlineScriptName":tool.getInlineScriptName()]
+                    mapOfInlineScripts.get(tool.basePathId, []) << ["inlineScript": tool.getInlineScript(), "inlineScriptName": tool.getInlineScriptName()]
                 }
             }
 
@@ -465,7 +465,7 @@ public abstract class ExecutionService extends CacheProvider {
             logger.postRareInfo("Overall tool compression took ${(System.nanoTime() - startParallelCompression) / 1000000} ms.");
 
             // Now check if the local file with its md5 sum exists on the remote site.
-            moveCompressedToolFilesToRemoteLocation(listOfFolders,existingArchives,provider,context)
+            moveCompressedToolFilesToRemoteLocation(listOfFolders, existingArchives, provider, context)
 
         } else {
             sourcePaths.each {
@@ -482,7 +482,7 @@ public abstract class ExecutionService extends CacheProvider {
      * @param listOfFolders
      * @param mapOfInlineScriptsBySubfolder - Map<SubfolderName,ScriptName>
      */
-    public void writeInlineScriptsAndCompressToolFolders(Map<File, PluginInfo> listOfFolders,  Map<String, List<Map<String,String>>>  mapOfInlineScriptsBySubfolder ){
+    public void writeInlineScriptsAndCompressToolFolders(Map<File, PluginInfo> listOfFolders, Map<String, List<Map<String, String>>> mapOfInlineScriptsBySubfolder) {
 
         listOfFolders.keySet().parallelStream().each {
             File subFolder ->
@@ -536,7 +536,7 @@ public abstract class ExecutionService extends CacheProvider {
      * @param provider
      * @param context
      */
-    public void moveCompressedToolFilesToRemoteLocation(Map<File, PluginInfo> listOfFolders, String[] existingArchives, FileSystemAccessProvider provider, ExecutionContext context){
+    public void moveCompressedToolFilesToRemoteLocation(Map<File, PluginInfo> listOfFolders, String[] existingArchives, FileSystemAccessProvider provider, ExecutionContext context) {
         File dstCommonExecutionDirectory = context.getCommonExecutionDirectory();
         File dstAnalysisToolsDirectory = context.getAnalysisToolsDirectory();
 

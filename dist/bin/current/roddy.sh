@@ -126,12 +126,6 @@ elif [[ "$parm1" == "createworkflow" ]]; then
 fi
 
 IFS=""
-<<<<<<< HEAD
 #[[ $RMIPORT != "" ]] && export DBG_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005" && echo "Opened up rmi debugger port"
 java $DBG_OPTS -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
 IFS=$OFS
-=======
-java -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
-# ${fullParameterList[@]}   Cannot be used => Results in recursive call loop
-IFS=$OFS
->>>>>>> ChangelistAndREADMEUpdates
