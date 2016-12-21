@@ -213,7 +213,7 @@ public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
             if (!analysis)
                 return [:];
             if (!dataSetsByAnalysisAndId[analysisId])
-                dataSetsByAnalysisAndId[analysisId] = analysis.getListOfDataSets().collectEntries { DataSet it -> [it.id, it] } as Map<String, DataSet>
+                dataSetsByAnalysisAndId[analysisId] = analysis.getRuntimeService().getListOfPossibleDataSets(analysis).collectEntries { DataSet it -> [it.id, it] } as Map<String, DataSet>
             return dataSetsByAnalysisAndId[analysisId];
         }
     }
