@@ -22,6 +22,7 @@ import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.NodeChild
 import groovy.xml.MarkupBuilder
+import org.apache.commons.io.filefilter.WildcardFileFilter
 
 import static de.dkfz.roddy.StringConstants.EMPTY
 import static de.dkfz.roddy.StringConstants.SPLIT_COLON
@@ -48,6 +49,10 @@ public abstract class RuntimeService extends CacheProvider {
     public static final String DIRNAME_ANALYSIS_TOOLS = "analysisTools"
     public static final String RODDY_CENTRAL_EXECUTION_DIRECTORY = "RODDY_CENTRAL_EXECUTION_DIRECTORY"
 
+    public RuntimeService() {
+        super("RuntimeService");
+    }
+
     /**
      * Loads a list of input data set for the specified analysis.
      * In this method the data set is defined by its main directory (i.e. a pid like ICGC_PCA004)
@@ -66,7 +71,7 @@ public abstract class RuntimeService extends CacheProvider {
         return loadDataSetsFromDirectory(directory, analysis)
     }
 
-    public List<DataSet> loadCombinedListOfDataSets(Analysis analysis) {
+    public List<DataSet> loadCombinedListOfPossibleDataSets(Analysis analysis) {
 
         if(Roddy.isMetadataCLOptionSet()) {
 
@@ -121,9 +126,63 @@ public abstract class RuntimeService extends CacheProvider {
         return results;
     }
 
-    public RuntimeService() {
-        super("RuntimeService");
+    /**
+     * A small cache which prevents Roddy from querying the file system for datasets several times.
+     */
+    private Map<Analysis, List<DataSet>> _listOfPossibleDataSetsByAnalysis = [:]
+
+    /**
+     * Fetches information to the projects data sets and various analysis related additional information for those data sets.
+     * Retrieves the data sets for this analysis from it's project and appends the data for this analysis (if not already set).
+     * <p>
+     * getListOfPossibleDataSets without a parameter
+     *
+     * @return
+     */
+    public List<DataSet> getListOfPossibleDataSets(Analysis analysis) {
+
+        if (_listOfPossibleDataSetsByAnalysis[analysis] == null)
+            _listOfPossibleDataSetsByAnalysis[analysis] = loadCombinedListOfPossibleDataSets(analysis);
+
+        List<AnalysisProcessingInformation> previousExecs = readoutExecCacheFile(analysis);
+
+        for (DataSet ds : _listOfPossibleDataSetsByAnalysis[analysis]) {
+            for (AnalysisProcessingInformation api : previousExecs) {
+                if (api.getDataSet() == ds) {
+                    ds.addProcessingInformation(api);
+                }
+            }
+            analysis.getProject().updateDataSet(ds, analysis);
+        }
+
+        return _listOfPossibleDataSetsByAnalysis[analysis];
     }
+
+    public List<DataSet> loadDatasetsWithFilter(Analysis analysis, List<String> pidFilters, boolean suppressInfo = false) {
+        if (pidFilters == null || pidFilters.size() == 0 || pidFilters.size() == 1 && pidFilters.get(0).equals("[ALL]")) {
+            pidFilters = Arrays.asList("*");
+        }
+        List<DataSet> listOfDataSets = getListOfPossibleDataSets(analysis);
+        return selectDatasetsFromPattern(analysis, pidFilters, listOfDataSets, suppressInfo);
+    }
+
+    public List<DataSet> selectDatasetsFromPattern(Analysis analysis, List<String> pidFilters, List<DataSet> listOfDataSets, boolean suppressInfo) {
+
+        List<DataSet> selectedDatasets = new LinkedList<>();
+        WildcardFileFilter wff = new WildcardFileFilter(pidFilters);
+        for (DataSet ds : listOfDataSets) {
+            File inputFolder = ds.getInputFolderForAnalysis(analysis);
+            if (!wff.accept(inputFolder))
+                continue;
+            if (!suppressInfo) logger.info(String.format("Selected dataset %s for processing.", ds.getId()));
+            selectedDatasets.add(ds);
+        }
+
+        if (selectedDatasets.size() == 0)
+            logger.postAlwaysInfo("There were no available datasets for the provided pattern.");
+        return selectedDatasets;
+    }
+
 
     /**
      * The method tries to read back an execution context from a directory structure.
@@ -628,7 +687,94 @@ public abstract class RuntimeService extends CacheProvider {
 
     public abstract Map<String, Object> getDefaultJobParameters(ExecutionContext context, String TOOLID)
 
-    public abstract String createJobName(ExecutionContext executionContext, BaseFile file, String TOOLID, boolean reduceLevel)
+    public String createJobName(ExecutionContext executionContext, BaseFile file, String TOOLID, boolean reduceLevel) {
+        return JobManager.getInstance().createJobName(file, TOOLID, reduceLevel);
+    }
 
-    public abstract boolean isFileValid(BaseFile baseFile)
+    /**
+     * Checks if a folder is valid
+     *
+     * A folder is valid if:
+     * <ul>
+     *   <li>its parents are valid</li>
+     *   <li>it was not created recently (within this context)</li>
+     *   <li>it exists</li>
+     *   <li>it can be validated (i.e. by its size or files, but not with a lengthy operation!)</li>
+     * </ul>
+     */
+    public boolean isFileValid(BaseFile baseFile) {
+
+        //Parents valid?
+        boolean parentsValid = true;
+        for (BaseFile bf in baseFile.parentFiles) {
+            if (bf.isTemporaryFile()) continue; //We do not check the existence of parent files which are temporary.
+            if (bf.isSourceFile()) continue;
+            if (!bf.isFileValid()) {
+                return false;
+            }
+        }
+
+        boolean result = true;
+
+        //Source files should be marked as such and checked in a different way. They are assumed to be valid.
+        if (baseFile.isSourceFile())
+            return true;
+
+        //Temporary files are also considered as valid.
+        if (baseFile.isTemporaryFile())
+            return true;
+
+        try {
+            //Was freshly created?
+            if (baseFile.creatingJobsResult != null && baseFile.creatingJobsResult.wasExecuted) {
+                result = false;
+            }
+        } catch (Exception ex) {
+            result = false;
+        }
+
+        try {
+            //Does it exist and is it readable?
+            if (result && !baseFile.isFileReadable()) {
+                result = false;
+            }
+        } catch (Exception ex) {
+            result = false;
+        }
+
+        try {
+            //Can it be validated?
+            //TODO basefiles are always validated!
+            if (result && !baseFile.checkFileValidity()) {
+                result = false;
+            }
+        } catch (Exception ex) {
+            result = false;
+        }
+
+        // TODO? If the file is not valid then also temporary parent files should be invalidated! Or at least checked.
+        if (!result) {
+            // Something is missing here! Michael?
+        }
+
+        return result;
+    }
+
+
+    /**
+     * Releases the cache in this provider
+     */
+    @Override
+    public void releaseCache() {
+
+    }
+
+    @Override
+    public boolean initialize() {
+        return true;
+    }
+
+    @Override
+    public void destroy() {
+    }
 }

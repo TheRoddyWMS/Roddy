@@ -72,7 +72,7 @@ public class LocalExecutionService extends ExecutionService {
     }
 
     @Override
-    protected String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, FileOutputStream outputStream) {
+    protected String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, OutputStream outputStream) {
         if (command.isBlockingCommand()) {
             command.setExecutionID(JobManager.getInstance().createJobDependencyID(command.getJob(), res.processID));
 
