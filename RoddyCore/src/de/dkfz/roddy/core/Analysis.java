@@ -152,6 +152,10 @@ public class Analysis {
         return getRuntimeService().getOutputFolderForAnalysis(this);
     }
 
+    public List<DataSet> getListOfDataSets() {
+        return getRuntimeService().getListOfPossibleDataSets(this);
+    }
+
     public DataSet getDataSet(String dataSetID) {
         for (DataSet d : getRuntimeService().getListOfPossibleDataSets(this))
             if (d.getId().equals(dataSetID))
@@ -254,6 +258,7 @@ public class Analysis {
 
     /**
      * Convenience accessor to runtimeService
+     *
      * @return
      */
     public List<DataSet> getListOfPossibleDataSets() {
@@ -375,7 +380,7 @@ public class Analysis {
                 logger.postAlwaysInfo("An exception occurred: '" + eCopy.getLocalizedMessage() + "'");
                 if (logger.isVerbosityMedium()) {
                     logger.log(Level.SEVERE, eCopy.toString());
-                    logger.postAlwaysInfo( RoddyIOHelperMethods.getStackTraceAsString(eCopy));
+                    logger.postAlwaysInfo(RoddyIOHelperMethods.getStackTraceAsString(eCopy));
                 } else {
                     logger.postAlwaysInfo("Set --verbositylevel >=" + LoggerWrapper.VERBOSITY_WARNING + " or higher to see stack trace.");
                 }
@@ -394,10 +399,10 @@ public class Analysis {
                 StringBuilder messages = new StringBuilder();
                 boolean warningsOnly = true;
                 for (ExecutionContextError executionContextError : context.getErrors()) {
-                    if(executionContextError.getErrorLevel().intValue() > Level.WARNING.intValue())
+                    if (executionContextError.getErrorLevel().intValue() > Level.WARNING.intValue())
                         warningsOnly = false;
                 }
-                if(warningsOnly)
+                if (warningsOnly)
                     messages.append("\nThere were warnings for the execution context for dataset " + datasetID);
                 else
                     messages.append("\nThere were errors for the execution context for dataset " + datasetID);
