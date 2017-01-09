@@ -354,6 +354,55 @@ class RoddyIOHelperMethods {
                 o: (rights & 0007)]
     }
 
+    /** Split a pathname string into components (using '/'). Empty path components, as they occur between double
+     *  component separators ('//') are omitted.
+     *
+     * @param pathname
+     * @return
+     */
+    public static ArrayList<String> splitPathname(String pathname) {
+        pathname.split(StringConstants.SPLIT_SLASH).findAll({it != ""}) as ArrayList<String>
+    }
+
+    public static Optional<Integer> findComponentIndexInPath(String path, String component) {
+        Integer index = splitPathname(path).findIndexOf { it -> it == component }
+        if (-1 == index) {
+            Optional.empty()
+        } else {
+            Optional.of(index)
+        }
+    }
+
+    /** Match a variable, defined by a pattern in a path. This checks that all leading path components
+     *  that are not variable definitions in the pattern (i.e. ${someVar}) are identical for both the
+     *  pattern and the path. If there is a mismatch, a RuntimeException is raised. Only the first match
+     *  is considered. Later path components may diverge.
+     *
+     * @param pattern    Path pattern, e.g. /path/to/${variable}/to/be/matched
+     * @param variable   Variable to be matched, e.g. pid. ${variable} will be searched for in pattern.
+     * @param path       Path containing the value. The path value that is matched in here will be returned
+     * @return
+     */
+    public static Optional<String> getPatternVariableFromPath(String pattern, String variable, String path) {
+        ArrayList<String> patternComponents = splitPathname(pattern)
+        ArrayList<String> pathComponents = splitPathname(path)
+        Integer index = 0
+        while (index < Math.min(patternComponents.size(), pathComponents.size())) {
+            String patternC = patternComponents[index]
+            String pathC = pathComponents[index]
+            if (patternC.startsWith(StringConstants.DOLLAR_LEFTBRACE) && patternC.endsWith(StringConstants.BRACE_RIGHT)) {
+                if (patternC == "\${${variable}}") {
+                    return Optional.of(pathC)
+                }
+            } else if (patternC != pathC) {
+                throw new RuntimeException("Pattern and path have incompatible prefix path component ${index} before \${${variable}}. Pattern = ${pattern}, Path = ${path}")
+            }
+            ++index
+        }
+        return Optional.empty()
+    }
+
+
     public static String printTimingInfo(String info, long t1, long t2) {
         return "Timing " + info + ": " + ((t2 - t1) / 1000000) + " ms";
     }

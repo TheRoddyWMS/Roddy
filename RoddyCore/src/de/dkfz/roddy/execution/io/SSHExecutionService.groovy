@@ -47,6 +47,8 @@ class SSHExecutionService extends RemoteExecutionService {
     public static final LoggerWrapper logger = LoggerWrapper.getLogger(SSHExecutionService.class.name);
 
     public static class SSHPoolConnectionSet {
+        public Session session;
+
         public SSHClient client;
 
         public SFTPClient sftpClient;
@@ -134,9 +136,8 @@ class SSHExecutionService extends RemoteExecutionService {
                 c.startSession();
                 t2 = System.nanoTime();
                 logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("start ssh client session", t1, t2));
-
-
             } catch (Exception ex) {
+                println(ex);
             }
             client = c;
             sftpClient = client.newSFTPClient();
@@ -332,6 +333,15 @@ class SSHExecutionService extends RemoteExecutionService {
 //            }
     }
 
+    public String readStream(InputStream inputStream) {
+        ByteArrayOutputStream result = new ByteArrayOutputStream()
+        byte[] buffer = new byte[1024]
+        int length
+        while ((length = inputStream.read(buffer)) != -1)
+            result.write(buffer, 0 , length)
+        return result.toString("UTF-8")
+    }
+
 //    @Override
     public
     synchronized List<String> _execute(String command, boolean waitFor = true, boolean ignoreError = false, OutputStream outputStream = null) {
@@ -344,16 +354,20 @@ class SSHExecutionService extends RemoteExecutionService {
             set.acquire();
             Session session = sshClient.startSession();
             Session.Command cmd;
+            //long tBefore = System.nanoTime()
             try {
                 cmd = session.exec(command)
             } finally {
                 set.release();
             }
-            String content = IOUtils.readFully(cmd.getInputStream()).toString();
-            session.close();
+            //String content = IOUtils.readFully(cmd.getInputStream()).toString();
+            String content = readStream(cmd.getInputStream())
+            //measureStop(tBefore, "SSH: ${command}", LoggerWrapper.VERBOSITY_ALWAYS)
+            //session.close();
 
             cmd.join();
             session.close();
+
 
             // Get the exit status of the process. In case of things like caught signals (SEGV-Segmentation fault), the value is null and will be set to 256.
             Integer exitStatus = cmd.getExitStatus();

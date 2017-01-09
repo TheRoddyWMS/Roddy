@@ -7,17 +7,12 @@
 package de.dkfz.roddy.tools
 
 import de.dkfz.roddy.Constants
-import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
-import de.dkfz.roddy.execution.io.ExecutionService
-import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import groovy.transform.CompileStatic;
-import org.junit.Test;
-
-import java.util.Map;
-
-import static org.junit.Assert.*;
+import groovy.transform.CompileStatic
+import org.junit.Rule;
+import org.junit.Test
+import org.junit.rules.ExpectedException
 
 /**
  * Test class to cover RoddyIOHelperMethods.
@@ -26,6 +21,9 @@ import static org.junit.Assert.*;
  */
 @CompileStatic
 public class RoddyIOHelperMethodsTest {
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none()
 
     @Test
     public void testGetMD5OfText() {
@@ -178,5 +176,31 @@ public class RoddyIOHelperMethodsTest {
             String rights, String res ->
                 assert res == RoddyIOHelperMethods.convertUMaskToAccessRights(rights);
         }
+    }
+
+    @Test
+    public void testSplitPathname() throws Exception {
+        assert RoddyIOHelperMethods.splitPathname("") == new ArrayList()
+        assert RoddyIOHelperMethods.splitPathname("/") == new ArrayList()
+        assert RoddyIOHelperMethods.splitPathname("/a/b") == ["a", "b"]
+        assert RoddyIOHelperMethods.splitPathname("//a/b/") == ["a", "b"]
+    }
+
+    @Test
+    public void testfindComponentIndexInPath() throws Exception {
+        assert RoddyIOHelperMethods.findComponentIndexInPath('/a/b/c', "c").get() == 2
+        assert RoddyIOHelperMethods.findComponentIndexInPath('////a/b//c///', "c").get() == 2
+        assert !RoddyIOHelperMethods.findComponentIndexInPath('/a/b/X', "c").isPresent()
+    }
+
+    @Test
+    public void testGetPatternVariableFromPath() throws Exception {
+        assert RoddyIOHelperMethods.getPatternVariableFromPath('/a/b/c/${var}/d', "var", '/a/b/c/theValue/x').get() == "theValue"
+        assert !RoddyIOHelperMethods.getPatternVariableFromPath('/a/b/c', "var", "/a/b/c/d").isPresent()
+        assert !RoddyIOHelperMethods.getPatternVariableFromPath('/a/b/c/${var}/d', "var", "/a/b/").isPresent()
+        assert RoddyIOHelperMethods.getPatternVariableFromPath('//a/b///c///${var}//d', "var", '/a////////b//c///theValue/x').get() == "theValue"
+
+        thrown.expect(RuntimeException.class)
+        RoddyIOHelperMethods.getPatternVariableFromPath('/a/b/c/${var}', "var", '/A/b/c/theValue')
     }
 }
