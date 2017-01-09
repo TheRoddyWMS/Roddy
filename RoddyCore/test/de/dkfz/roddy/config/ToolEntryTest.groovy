@@ -56,4 +56,22 @@ class ToolEntryTest extends GroovyTestCase {
                 assert entry.getResourceSet(createTestConfiguration(given)).getSize() == expected
         }
     }
+
+
+    /////// Tests for ToolFileParameterCondition
+    void testNewToolFileParameterCondition() {
+        def abc = new ToolEntry.ToolFileParameterCondition("conditional:abc")
+        assert ! abc.isPureBoolean()
+        assert abc.getCondition()
+
+        def pure = new ToolEntry.ToolFileParameterCondition("true")
+        assert pure.isPureBoolean()
+        assert pure.evaluate(null)
+        assert pure.getCondition() == null
+
+        pure = new ToolEntry.ToolFileParameterCondition("false")
+        assert pure.isPureBoolean()
+        assert pure.evaluate(null)
+        assert pure.getCondition() == null
+    }
 }

@@ -11,7 +11,9 @@ import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.knowledge.files.FileGroup;
 import de.dkfz.roddy.tools.BufferValue;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
+import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.tools.TimeUnit;
+import examples.Exec;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -217,6 +219,39 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         }
     }
 
+    public static class ToolFileParameterCondition {
+
+        private String condition;
+
+        private Boolean pureBoolean;
+
+        public ToolFileParameterCondition(boolean pureBoolean) {
+            this.pureBoolean = Boolean.valueOf(pureBoolean);
+        }
+
+        public ToolFileParameterCondition(String condition) {
+            if(condition.startsWith("conditional:"))
+                this.condition = condition.substring(12);
+            else {
+                this.pureBoolean = RoddyConversionHelperMethods.toBoolean(condition, true);
+            }
+        }
+
+        public boolean isPureBoolean() {
+            return pureBoolean != null;
+        }
+
+        public String getCondition() {
+            return condition;
+        }
+
+        public boolean evaluate(ExecutionContext context) {
+            if (pureBoolean != null)
+                return pureBoolean;
+            return context.getConfiguration().getConfigurationValues().getBoolean(condition, true);
+        }
+    }
+
     /**
      * Parameters for generic tools (tools which are not programmatically set!).
      * Parameters can be for in and for output.
@@ -227,15 +262,15 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         public final List<ToolConstraint> constraints;
         public final String scriptParameterName;
         public final String filenamePatternSelectionTag;
-        public final boolean checkFile;
+        public final ToolFileParameterCondition checkFile;
         public final String parentVariable;
         private List<ToolFileParameter> childFiles;
 
-        public ToolFileParameter(Class<BaseFile> fileClass, List<ToolConstraint> constraints, String scriptParameterName, boolean checkFile) {
+        public ToolFileParameter(Class<BaseFile> fileClass, List<ToolConstraint> constraints, String scriptParameterName, ToolFileParameterCondition checkFile) {
             this(fileClass, constraints, scriptParameterName, checkFile, FilenamePattern.DEFAULT_SELECTION_TAG, null, null);
         }
 
-        public ToolFileParameter(Class<BaseFile> fileClass, List<ToolConstraint> constraints, String scriptParameterName, boolean checkFile, String filenamePatternSelectionTag, List<ToolFileParameter> childFiles, String parentVariable) {
+        public ToolFileParameter(Class<BaseFile> fileClass, List<ToolConstraint> constraints, String scriptParameterName, ToolFileParameterCondition checkFile, String filenamePatternSelectionTag, List<ToolFileParameter> childFiles, String parentVariable) {
             super(scriptParameterName);
             this.fileClass = fileClass;
             this.constraints = constraints != null ? constraints : new LinkedList<>();
@@ -341,6 +376,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
     private final List<ToolParameter> outputParameters = new LinkedList<>();
     private final List<ResourceSet> resourceSets = new LinkedList<>();
     private boolean overridesResourceSets;
+
     public ToolEntry(String id, String basePathId, String path) {
         this.id = id;
         this.basePathId = basePathId;
@@ -405,7 +441,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
     }
 
     public boolean hasInlineScript() {
-        if (inlineScript != null )
+        if (inlineScript != null)
             return true;
         else
             return false;
@@ -436,8 +472,8 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
                 return resourceSet;
         }
         //Still no set, take the largest set, which comes after the given ordinal.
-        for(ResourceSet resourceSet : resourceSets) {
-            if(resourceSet.getSize().ordinal() > size)
+        for (ResourceSet resourceSet : resourceSets) {
+            if (resourceSet.getSize().ordinal() > size)
                 return resourceSet;
         }
 
