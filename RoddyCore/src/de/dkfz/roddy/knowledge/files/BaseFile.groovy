@@ -14,6 +14,7 @@ import de.dkfz.roddy.config.FileStageFilenamePattern;
 import de.dkfz.roddy.config.FilenamePattern
 import de.dkfz.roddy.config.FilenamePatternDependency
 import de.dkfz.roddy.config.OnMethodFilenamePattern
+import de.dkfz.roddy.config.OnScriptParameterFilenamePattern
 import de.dkfz.roddy.config.OnToolFilenamePattern
 import de.dkfz.roddy.config.ToolEntry;
 import de.dkfz.roddy.core.ExecutionContext
@@ -485,7 +486,8 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
             ExecutionContext context = baseFile.getExecutionContext();
             LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>> availablePatterns = loadAVailableFilenamePatterns(baseFile, context);
 
-            patternResult = findFilenameFromOnMethodPatterns(baseFile, availablePatterns[FilenamePatternDependency.onMethod], selectionTag) ?:
+            patternResult = findFilenameFromOnScriptParameterPatterns(baseFile, availablePatterns[FilenamePatternDependency.onScriptParameter], selectionTag) ?:
+                    findFilenameFromOnMethodPatterns(baseFile, availablePatterns[FilenamePatternDependency.onMethod], selectionTag) ?:
                     findFilenameFromOnToolIDPatterns(baseFile, availablePatterns[FilenamePatternDependency.onTool], selectionTag) ?:
                             findFilenameFromSourcefilePatterns(baseFile, availablePatterns[FilenamePatternDependency.derivedFrom], selectionTag) ?:
                                     findFilenameFromGenericPatterns(baseFile, availablePatterns[FilenamePatternDependency.FileStage], selectionTag);
@@ -616,8 +618,8 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
 
     /**
      * TODO The current premise for this method is, that it will only work if GenericMethod was used to run it. The current process / context / run needs an extension, so that we have something like
-     * a state machine where the developer can always query the current context and store context specific things. Maybe this can be bound to the current Thread or so... In this case, a Thread could also
-     * have a link to several context objects (which are called one after another.). The state machine will always know the current active context, the current active job and so on. It might be complicated
+     * a jobState machine where the developer can always query the current context and store context specific things. Maybe this can be bound to the current Thread or so... In this case, a Thread could also
+     * have a link to several context objects (which are called one after another.). The jobState machine will always know the current active context, the current active job and so on. It might be complicated
      * but maybe worth it. For now, let's just get the job id from the Generic Method call.
      *
      * @param baseFile
@@ -640,6 +642,38 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
                 appliedPattern = fp;
                 filename = new File(fp.apply(baseFile));
                 break;
+            }
+        }
+        if (!filename || !appliedPattern) return null;
+        return new Tuple2<>(filename, appliedPattern);
+    }
+
+    /**
+     * @param baseFile
+     * @param availablePatterns
+     * @param selectionTag
+     * @return
+     */
+    private static Tuple2<File, FilenamePattern> findFilenameFromOnScriptParameterPatterns(BaseFile baseFile, LinkedList<FilenamePattern> availablePatterns, String selectionTag) {
+        Tuple2<File, FilenamePattern> result = null;
+        File filename = null;
+        FilenamePattern appliedPattern = null;
+        //Find the called basefile method, if on_method patterns are available.
+        if (!availablePatterns) return result;
+
+        ToolEntry currentToolEntry = baseFile.getExecutionContext().getCurrentExecutedTool()
+        FilenamePatterns: for (FilenamePattern _fp : availablePatterns) {
+            OnScriptParameterFilenamePattern fp = _fp as OnScriptParameterFilenamePattern;
+             if (fp.getToolName() == null || fp.getToolName().equals(currentToolEntry.getID())) {
+                 List<ToolEntry.ToolFileParameter> toolParameters = new LinkedList<>(currentToolEntry.getOutputParameters(baseFile.getExecutionContext().getConfiguration()) as List<ToolEntry.ToolFileParameter>)
+                 toolParameters.addAll(toolParameters.collect { it.getChildFiles() }.flatten() as List<ToolEntry.ToolFileParameter>)
+                for(ToolEntry.ToolFileParameter tp : toolParameters){
+                    if (fp.getCalledParameterId().equals(tp.scriptParameterName) && fp.getCls() == tp.fileClass){
+                        appliedPattern = fp;
+                        filename = new File(fp.apply(baseFile));
+                        continue FilenamePatterns;
+                    }
+                }
             }
         }
         if (!filename || !appliedPattern) return null;

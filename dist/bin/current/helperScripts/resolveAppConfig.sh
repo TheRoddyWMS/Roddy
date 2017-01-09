@@ -118,7 +118,7 @@ if [[ $autoSelectRoddy == true && ! $parm1 == autoselect ]]; then
         pluginDirectories=$(getValueFromConfigOrCommandLine pluginDirectories pluginDirectories)
 
         # TODO groovy is not yet setup! How can we do this in a convenient way?
-        pluginDirectory=`source $SCRIPTS_DIR/setupRuntimeEnvironment.sh &> /dev/null; groovy ${SCRIPTS_DIR}/findPluginFolders.groovy pluginDirectories=${pluginDirectories} ${RODDY_DIRECTORY} ${foundPluginID}`
+        pluginDirectory=`source $SCRIPTS_DIR/setupRuntimeEnvironment.sh &> /dev/null; $GROOVY_BINARY ${SCRIPTS_DIR}/findPluginFolders.groovy pluginDirectories=${pluginDirectories} ${RODDY_DIRECTORY} ${foundPluginID}`
         pluginBuildInfo=$pluginDirectory/buildinfo.txt
 
         # Extract it from parameter or ini file

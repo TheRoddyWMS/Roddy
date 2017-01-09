@@ -1,0 +1,10 @@
+declare -x    pid=queryExtendedDataSetInfo
+declare -x    PID=queryExtendedDataSetInfo
+declare -x    CONFIG_FILE=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/runtimeConfig.sh
+declare -x    ANALYSIS_DIR=/data/michael/temp/exampleProject
+declare -x    PRM_TOOLS_DIR=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTests
+declare -x    TOOLSDIR=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTests
+declare -x    TOOL_ID=testScriptExitBad
+declare -x    FILENAME_IN=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/r160919_131318173_queryExtendedDataSetInfo_testScript_FILENAME_OUT_1335135711_8.auto
+declare -x    FILENAME_OUT=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/r160919_131318173_queryExtendedDataSetInfo_testScriptExitBad_FILENAME_OUT_95345410_8.auto
+declare -x    RODDY_PARENT_JOBS="(14022)"

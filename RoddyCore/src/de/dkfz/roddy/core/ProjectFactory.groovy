@@ -161,14 +161,21 @@ public class ProjectFactory {
     }
 
     /**
+     * Cache necessary for RMI... TODO Better into libraries factory?
+     */
+    private static Map<String, Analysis> _analysisCache = [:]
+
+    /**
      * Load an analysis with a set project/analysis identifier.
      *
      * @param configurationIdentifier Something like [project.subproject.subproject]@[analysisID] where analysisID will be used to find the correct analysis.
      * @return An analysis object containing linking a project and an analysis configuration.
      */
-    public static Analysis loadAnalysis(String configurationIdentifier) {
+    public static synchronized Analysis loadAnalysis(String configurationIdentifier) {
+        if(_analysisCache.containsKey(configurationIdentifier)) return _analysisCache[configurationIdentifier];
 
-        String projectID; String analysisID;
+        String projectID;
+        String analysisID;
         def res = extractProjectIDAndAnalysisID(configurationIdentifier)
         projectID = res[0]; analysisID = res[1]
 
@@ -239,6 +246,9 @@ public class ProjectFactory {
             configurationValues.add(new ConfigurationValue(CFG_USED_RESOURCES_SIZE, Roddy.getUsedResourcesSize().toString(), "string"));
         }
 
+        // Put into cache
+        _analysisCache[configurationIdentifier] = analysis;
+
         // Check if an analysis is available and if the runtime service is setup properly.
         if (analysis == null) {
             StringBuilder sb = new StringBuilder();
@@ -257,7 +267,14 @@ public class ProjectFactory {
         }
     }
 
-    private static List dissectFullAnalysisID(String fullAnalysisID) {
+    /**
+     * Dissects an analysis id string. Returns:
+     * [0] = plugin
+     * [1] = killswitches
+     * @param fullAnalysisID
+     * @return
+     */
+    public static List dissectFullAnalysisID(String fullAnalysisID) {
         String[] splitEntries = fullAnalysisID.split("[:][:]");
 
         // If the plugin is set, find "parent" plugins with the proper version.

@@ -428,7 +428,7 @@ public class RoddyCLIClient {
         return found;
     }
 
-    public static void listDatasets(String[] args) {
+    public static List<DataSet> listDatasets(String[] args) {
         Analysis analysis = ProjectFactory.getInstance().loadAnalysis(args[1]);
         if (!analysis) return;
 
@@ -436,6 +436,7 @@ public class RoddyCLIClient {
         for (DataSet ds : datasets) {
             System.out.println(String.format("\t%s", ds.getId()));
         }
+        return datasets;
     }
 
     public static Analysis checkAndLoadAnalysis(CommandLineCall clc) {

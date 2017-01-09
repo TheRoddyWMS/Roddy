@@ -10,8 +10,9 @@ import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.StringConstants;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import javafx.application.Platform;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableMap;
 import javafx.concurrent.Task;
 
 import java.util.LinkedHashMap;
@@ -27,7 +28,6 @@ public abstract class RoddyUITask<T> extends Task<T> {
 
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(RoddyUITask.class.getSimpleName());
     private static final ReentrantLock activeTaskCountLock = new ReentrantLock();
-    private static final ReentrantLock taskIDCounterLock = new ReentrantLock();
     private static final ReentrantLock lightWeightTaskIDCounterLock = new ReentrantLock();
     private static final String METHOD_CALL = "call";
     private static final String METHOD_SUCCEEDED = "succeeded";
@@ -38,6 +38,8 @@ public abstract class RoddyUITask<T> extends Task<T> {
     private static int taskIDCounter;
     private static int lightWeightTaskIDCounter;
     private static IntegerProperty _activeTaskCount = new SimpleIntegerProperty();
+    private static javafx.beans.property.MapProperty _activeListOfTasks = new SimpleMapProperty(FXCollections.synchronizedObservableMap(FXCollections.observableMap(new LinkedHashMap<Integer, String>())));
+
     /**
      * Keeps a list of measurement information objects for all called tasks.
      */
@@ -59,12 +61,9 @@ public abstract class RoddyUITask<T> extends Task<T> {
         this.printTask = printTask;
     }
 
-    private static int getNextTaskID() {
-        int temp = -1;
-        taskIDCounterLock.lock();
-        temp = taskIDCounter++;
-        taskIDCounterLock.unlock();
-        return temp;
+    private static synchronized int getNextTaskID() {
+        taskIDCounter++;
+        return taskIDCounter;
     }
 
     private static void incrementActiveTaskCount() {
@@ -87,6 +86,26 @@ public abstract class RoddyUITask<T> extends Task<T> {
 
     public static IntegerProperty activeTaskCountProperty() {
         return _activeTaskCount;
+    }
+
+    private static void addActiveTaskInfo(String taskName, int id) {
+        if (taskName.startsWith("donttrack::")) return;
+        logger.postRareInfo("Add " + id + ":" + taskName);
+        _activeListOfTasks.put(id, taskName);
+    }
+
+    private static void removeActiveTaskInfo(String taskName, int id) {
+        if (taskName.startsWith("donttrack::")) return;
+        if (_activeListOfTasks.containsKey(id)) {
+            logger.postRareInfo("Remove " + id + ":" + taskName);
+            _activeListOfTasks.remove(id);
+        } else {
+            logger.postRareInfo("Could not remove " + id + ":" + taskName);
+        }
+    }
+
+    public static MapProperty activeListOfTasksProperty() {
+        return _activeListOfTasks;
     }
 
     public static void runTask(RoddyUITask task) {
@@ -138,18 +157,24 @@ public abstract class RoddyUITask<T> extends Task<T> {
                 if (printMessages && !taskName.startsWith("null"))
                     logger.info(String.format("UI lightweight update task %s started.", taskName));
                 long t = startMeasurement(taskName, METHOD_INVOKELATER);
-                RoddyUIController.getMainUIController().executionStarted(t, taskName);
-                incrementActiveTaskCount();
+                int id = getNextTaskID();
                 try {
-                    r.run();
-                } catch (Exception ex) {
-                    logger.severe("Error in Platform.invokeLater() of task " + taskName + "\n" + ex.toString());
+                    RoddyUIController.getMainUIController().executionStarted(t, taskName);
+                    incrementActiveTaskCount();
+                    addActiveTaskInfo(taskName, id);
+                    try {
+                        r.run();
+                    } catch (Exception ex) {
+                        logger.severe("Error in Platform.invokeLater() of task " + taskName + "\n" + ex.toString());
+                    }
+                    double duration = stopMeasurement(t, taskName, METHOD_INVOKELATER);
+                    if (printMessages && !taskName.startsWith("null"))
+                        logger.info(String.format("UI lightweight update task %s finished after %8.2f ms, with currently %d active tasks.", taskName, duration, activeTaskCount));
+                } finally {
+                    RoddyUIController.getMainUIController().executionFinished(t, taskName);
+                    decrementActiveTaskCount();
+                    removeActiveTaskInfo(taskName, id);
                 }
-                double duration = stopMeasurement(t, taskName, METHOD_INVOKELATER);
-                if (printMessages && !taskName.startsWith("null"))
-                    logger.info(String.format("UI lightweight update task %s finished after %8.2f ms, with currently %d active tasks.", taskName, duration, activeTaskCount));
-                RoddyUIController.getMainUIController().executionFinished(t, taskName);
-                decrementActiveTaskCount();
             }
         });
     }
@@ -195,16 +220,17 @@ public abstract class RoddyUITask<T> extends Task<T> {
         try {
             RoddyUIController.getMainUIController().executionStarted(t, taskName);
             incrementActiveTaskCount();
+            addActiveTaskInfo(taskName, taskID);
             result = _call();
         } catch (Exception ex) {
-//            if(printTask)
             System.out.println(ex);
             logger.severe("Error in _call() of task " + taskName + "\n" + ex.toString());
             throw ex;
         } finally {
-            double val = stopMeasurement(t, taskName, METHOD_CALL);
+            stopMeasurement(t, taskName, METHOD_CALL);
             RoddyUIController.getMainUIController().executionFinished(t, taskName);
             decrementActiveTaskCount();
+            removeActiveTaskInfo(taskName, taskID);
         }
         return result;
     }
@@ -292,7 +318,9 @@ public abstract class RoddyUITask<T> extends Task<T> {
             listOfDurations.add(value);
         }
 
-        public int getNumberOfCalls()  { return listOfDurations.size(); }
+        public int getNumberOfCalls() {
+            return listOfDurations.size();
+        }
 
         public double getMeanValueInMicros() {
             return cumulatedTaskDuration / listOfDurations.size();

@@ -11,6 +11,7 @@ import de.dkfz.roddy.client.RoddyStartupModes;
 import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
+import de.dkfz.roddy.client.rmiclient.RoddyRMIServer;
 import de.dkfz.roddy.config.AppConfig;
 import de.dkfz.roddy.config.ResourceSetSize;
 import de.dkfz.roddy.core.Initializable;
@@ -34,6 +35,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
+import static de.dkfz.roddy.RunMode.CLI;
 import static de.dkfz.roddy.StringConstants.FALSE;
 
 /**
@@ -184,6 +186,7 @@ public class Roddy {
      */
     public static void main(String[] args) {
         try {
+//            Thread.sleep(3000);
             //Check if Roddy is called from the right directory.
             //TODO Think about a better way to get Roddys base directory.
             String[] list = applicationDirectory.list((dir, name) -> name.equals("roddy.sh"));
@@ -201,7 +204,7 @@ public class Roddy {
             mainStarted = true;
             startup(args);
         } catch (Exception e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
             exit(1);
         }
     }
@@ -215,9 +218,10 @@ public class Roddy {
 
     private static void time(String info) {
         t2 = System.nanoTime();
-        if (info != null) logger.postSometimesInfo("Timing " + info + ": " + ((t2 - t1) / 1000000) + " ms");
+        if (info != null) logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo(info, t1, t2));
         t1 = t2;
     }
+
 
     private static void startup(String[] args) {
         time(null);
@@ -254,8 +258,11 @@ public class Roddy {
 
     public static void performInitialSetup(String[] args, RoddyStartupModes option) {
 
-        runMode = option == RoddyStartupModes.ui ? RunMode.UI : RunMode.CLI;
-        trackUserJobsOnly = runMode == RunMode.CLI ? true : false; //Auto enable or disable trackuserjobs
+        runMode = CLI;
+        if (option == RoddyStartupModes.ui) runMode = RunMode.UI;
+        if (option == RoddyStartupModes.rmi) runMode = RunMode.RMI;
+
+        trackUserJobsOnly = runMode == CLI ? true : false; //Auto enable or disable trackuserjobs
 
         for (int i = 0; i < args.length; i++) {
             logger.postRareInfo(String.format("[%d] - %s", i, args[i]));
@@ -282,7 +289,7 @@ public class Roddy {
 
             }
 
-            if (runMode == RunMode.CLI) {
+            if (runMode.isCommandLineMode()) {
                 // Instead of terminating, Roddy waits for all submitted jobs to finish.
                 if (startupOption == (RoddyStartupOptions.waitforjobs)) {
                     waitForJobsToFinish = true;
@@ -389,19 +396,23 @@ public class Roddy {
     public static final boolean initializeServices(boolean fullSetup) {
         String currentStep = "Initialize proxy settings";
         try {
+
             // Configure a proxy for internet connection. Used i.e. for codemirror
             initializeProxySettings();
+            time("init proxy");
 
             currentStep = "Initialize file system access provider";
             FileSystemAccessProvider.initializeProvider(fullSetup);
+            time("init fsap");
 
             //Do not touch the calling order, execution service must be set before JobManager.
             currentStep = "Initialize execution service";
             ExecutionService.initializeService(fullSetup);
+            time("init execserv");
 
             currentStep = "Initialize command factory";
             JobManager.initializeFactory(fullSetup);
-
+            time("init cmd fac");
             return true;
         } catch (Exception ex) {
             logger.severe("initializeServices failed with an unhandled error. The step in which the error occurred was: " + currentStep + "\nSee the following stacktrace for more details.", ex);
@@ -457,6 +468,8 @@ public class Roddy {
     private static void parseRoddyStartupModeAndRun(CommandLineCall clc) {
         if (clc.startupMode == RoddyStartupModes.ui)
             RoddyUIController.App.main(clc.getArguments().toArray(new String[0]));
+        else if (clc.startupMode == RoddyStartupModes.rmi)
+            RoddyRMIServer.startServer(clc);
         else
             RoddyCLIClient.parseStartupMode(clc);
     }
@@ -553,7 +566,7 @@ public class Roddy {
     }
 
     public static RunMode getRunMode() {
-        return runMode;
+        return CLI;// runMode;
     }
 
     public static void setApplicationProperty(RunMode runMode, String appPropertyExecutionServiceClass, String text) {

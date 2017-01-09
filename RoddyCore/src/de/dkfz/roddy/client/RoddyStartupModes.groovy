@@ -70,6 +70,8 @@ public enum RoddyStartupModes {
 
     ui(SCOPE_FULL, [useconfig, verbositylevel]),
 
+    rmi(SCOPE_FULL, [useconfig]),
+
     compile(SCOPE_CLI),
 
     pack(SCOPE_CLI),

@@ -6,13 +6,12 @@
 
 package de.dkfz.roddy.client.fxuiclient.fxcontrols;
 
-import de.dkfz.roddy.core.ExecutionContext;
-import de.dkfz.roddy.core.ExecutionContextError;
-import de.dkfz.roddy.client.fxuiclient.RoddyUITask;
 import de.dkfz.roddy.client.fxuiclient.fxdatawrappers.FXExecutionContextErrorWrapper;
+import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation;
+import de.dkfz.roddy.client.fxuiclient.RoddyUITask;
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.CustomControlOnBorderPane;
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.GenericListViewItemCellImplementation;
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
+import de.dkfz.roddy.core.ExecutionContextError;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ListCell;
@@ -39,11 +38,11 @@ public class ExecutionContextOverviewControl extends CustomControlOnBorderPane i
     @FXML
     private TextField txtOutputDirectory;
 
-    @FXML
-    private ListView inputDirectoryContentList;
-
-    @FXML
-    private ListView outputDirectoryContentList;
+//    @FXML
+//    private ListView inputDirectoryContentList;
+//
+//    @FXML
+//    private ListView outputDirectoryContentList;
 
     @FXML
     private ListView errorList;
@@ -62,41 +61,47 @@ public class ExecutionContextOverviewControl extends CustomControlOnBorderPane i
         });
     }
 
-    public void setContext(final ExecutionContext context) {
+    public void setContext(final RoddyRMIInterfaceImplementation.ExecutionContextInfoObject context) {
         txtExecutionDirectory.setText(context.getExecutionDirectory().getAbsolutePath());
         txtInputDirectory.setText(context.getInputDirectory().getAbsolutePath());
         txtOutputDirectory.setText(context.getOutputDirectory().getAbsolutePath());
+        List<FXExecutionContextErrorWrapper> wrappers = new LinkedList<>();
+        for (ExecutionContextError o : context.getErrors()) {
+            wrappers.add(new FXExecutionContextErrorWrapper(o));
+        }
+        errorList.getItems().addAll(wrappers);
+
         RoddyUITask.runTask(new RoddyUITask("Get additional execution context information") {
             List<File> filesIn;
             List<File> filesOut;
 
             @Override
             protected Object _call() throws Exception {
-                try {
-                    filesIn = FileSystemAccessProvider.getInstance().listDirectoriesInDirectory(context.getInputDirectory());
-                } catch (Exception e) {
-                    filesIn = new LinkedList<File>();
-                }
-                try {
-                    filesOut = FileSystemAccessProvider.getInstance().listDirectoriesInDirectory(context.getOutputDirectory());
-                } catch (Exception e) {
-                    filesOut = new LinkedList<File>();
-                }
+//                try {
+//                    filesIn = FileSystemAccessProvider.getInstance().listDirectoriesInDirectory(context.getInputDirectory());
+//                } catch (Exception e) {
+//                    filesIn = new LinkedList<File>();
+//                }
+//                try {
+//                    filesOut = FileSystemAccessProvider.getInstance().listDirectoriesInDirectory(context.getOutputDirectory());
+//                } catch (Exception e) {
+//                    filesOut = new LinkedList<File>();
+//                }
                 return null;
             }
 
             @Override
             protected void _succeeded() {
-                inputDirectoryContentList.getItems().clear();
-                inputDirectoryContentList.getItems().addAll(filesIn);
-                outputDirectoryContentList.getItems().clear();
-                outputDirectoryContentList.getItems().addAll(filesOut);
-
-                errorList.getItems().clear();
-                for (ExecutionContextError ece : context.getErrors()) {
-                    FXExecutionContextErrorWrapper wrapper = new FXExecutionContextErrorWrapper(ece);
-                    errorList.getItems().add(wrapper);
-                }
+//                inputDirectoryContentList.getItems().clear();
+//                inputDirectoryContentList.getItems().addAll(filesIn);
+//                outputDirectoryContentList.getItems().clear();
+//                outputDirectoryContentList.getItems().addAll(filesOut);
+//
+//                errorList.getItems().clear();
+//                for (ExecutionContextError ece : context.getErrors()) {
+//                    FXExecutionContextErrorWrapper wrapper = new FXExecutionContextErrorWrapper(ece);
+//                    errorList.getItems().add(wrapper);
+//                }
             }
         });
     }

@@ -204,7 +204,7 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
             temp = fillVariablesFromSourceFileValues(baseFile, temp);
         } catch (Exception e) {
             logger.severe("Could not apply filename pattern " + pattern + " for file " + baseFiles[0]);
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
         }
         return temp;
     }

@@ -12,7 +12,6 @@ import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient
-import de.dkfz.roddy.config.AnalysisConfiguration
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationFactory
@@ -31,19 +30,8 @@ import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
-import org.apache.commons.io.FileUtils
 
-import java.nio.charset.StandardCharsets
-import java.nio.file.FileSystem
-import java.nio.file.FileSystems
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardOpenOption
 import java.util.logging.Level
-import java.util.zip.ZipEntry
-import java.util.zip.ZipInputStream
-import java.util.zip.ZipOutputStream
 
 import static de.dkfz.roddy.StringConstants.TILDE
 import static de.dkfz.roddy.config.ConfigurationConstants.*
@@ -139,7 +127,10 @@ public abstract class ExecutionService extends CacheProvider {
 
     public boolean tryInitialize(boolean waitFor) {
         try {
-            return initialize(waitFor);
+            long t1 = System.nanoTime();
+            def var = initialize(waitFor);
+            logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("initialize exec service", t1, System.nanoTime()));
+            return var
         } catch (Exception ex) {
             return false;
         }
@@ -154,7 +145,7 @@ public abstract class ExecutionService extends CacheProvider {
     }
 
     public void destroy() {
-        this.listOfListeners.clear();
+//        this.listOfListeners.clear();
     }
 
     protected abstract List<String> _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream);
@@ -162,7 +153,7 @@ public abstract class ExecutionService extends CacheProvider {
     public List<String> executeTool(ExecutionContext context, String toolID, String jobNameExtension = "_executedScript:") {
         File path = context.getConfiguration().getProcessingToolPath(context, toolID);
 
-//        Job wrapperJob = new Job(context, context.getTimeStampString() + jobNameExtension + toolID, toolID, null);
+//        Job wrapperJob = new Job(context, context.getTimestampString() + jobNameExtension + toolID, toolID, null);
 //        DirectSynchronousExecutedJobManager dcfac = new DirectSynchronousExecutedJobManager();
 //        DirectCommand wrapperJobCommand = dcfac.createCommand(wrapperJob, context.getConfiguration().getProcessingToolPath(context, toolID), new LinkedList<>());
         String cmd = FileSystemAccessProvider.getInstance().commandSet.getExecuteScriptCommand(path);
@@ -186,7 +177,7 @@ public abstract class ExecutionService extends CacheProvider {
         } else {
             er = new ExecutionResult(false, -1, Arrays.asList("Command not valid. String is empty."), "");
         }
-        fireStringExecutedEvent(string, er);
+//        fireStringExecutedEvent(string, er);
         return er;
     }
 
@@ -228,15 +219,17 @@ public abstract class ExecutionService extends CacheProvider {
             reason << allJobsBlocked ? "The execution service is no longer allowed to execute commands. " : "";
             logger.postSometimesInfo("Skipping command " + command + " for reason: " + reason);
         }
-        fireCommandExecutedEvent(command);
+//        fireCommandExecutedEvent(command);
     }
 
     protected FileOutputStream createServiceBasedOutputStream(Command command, boolean waitFor) { return null; }
 
-    protected String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, FileOutputStream outputStream) {
+    protected String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, OutputStream outputStream) {
         String exID = "none";
         if (res.successful) {
-            exID = JobManager.getInstance().parseJobID(res.processID);
+            exID = JobManager.getInstance().parseJobID(res.processID ?: res.resultLines[0]);
+            if (!exID) exID = JobManager.getInstance().parseJobID(res.resultLines[0]);
+
             command.setExecutionID(JobManager.getInstance().createJobDependencyID(command.getJob(), exID));
             JobManager.getInstance().storeJobStateInfo(command.getJob());
         }
@@ -280,8 +273,8 @@ public abstract class ExecutionService extends CacheProvider {
         File outputDirectory = context.getOutputDirectory()             //Output with dataset id
 
         File projectExecCacheFile = context.getRuntimeService().getNameOfExecCacheFile(context.getAnalysis())   // .roddyExecCache.txt containing the list of executed runs in the project output folder
-        File projectExecutionDirectory = context.getCommonExecutionDirectory()  // .roddyExecutionDirectory in outputBaseDirectory
-        File projectToolsMD5SumFile = context.getFileForAnalysisToolsArchiveOverview()  // The md5 sum file in .roddyExecutionDirectory
+        File projectExecutionDirectory = context.getCommonExecutionDirectory()  // .roddyExecutionStore in outputBaseDirectory
+        File projectToolsMD5SumFile = context.getFileForAnalysisToolsArchiveOverview()  // The md5 sum file in .roddyExecutionStore
         File baseContextExecutionDirectory = context.getRuntimeService().getBaseExecutionDirectory(context) //roddyExecutionStore in the dataset folder
         File contextExecutionDirectory = context.getExecutionDirectory()        // the exec_... folder int he base context exec dir. (NOT CHECKED, created later!)
 
@@ -459,11 +452,11 @@ public abstract class ExecutionService extends CacheProvider {
                     cfg.getConfigurationValues().add(new ConfigurationValue(basepathConfigurationID, RoddyIOHelperMethods.assembleLocalPath(dstExecutionDirectory, "analysisTools", bPathID).getAbsolutePath(), "string"));
             }
 
-            Map<String, List<Map<String,String>>> mapOfInlineScripts = [:]
+            Map<String, List<Map<String, String>>> mapOfInlineScripts = [:]
 
             for (ToolEntry tool in cfg.getTools().allValuesAsList) {
                 if (tool.hasInlineScript()) {
-                    mapOfInlineScripts.get(tool.basePathId, []) << ["inlineScript":tool.getInlineScript(),"inlineScriptName":tool.getInlineScriptName()]
+                    mapOfInlineScripts.get(tool.basePathId, []) << ["inlineScript": tool.getInlineScript(), "inlineScriptName": tool.getInlineScriptName()]
                 }
             }
 
@@ -472,7 +465,7 @@ public abstract class ExecutionService extends CacheProvider {
             logger.postRareInfo("Overall tool compression took ${(System.nanoTime() - startParallelCompression) / 1000000} ms.");
 
             // Now check if the local file with its md5 sum exists on the remote site.
-            moveCompressedToolFilesToRemoteLocation(listOfFolders,existingArchives,provider,context)
+            moveCompressedToolFilesToRemoteLocation(listOfFolders, existingArchives, provider, context)
 
         } else {
             sourcePaths.each {
@@ -489,7 +482,7 @@ public abstract class ExecutionService extends CacheProvider {
      * @param listOfFolders
      * @param mapOfInlineScriptsBySubfolder - Map<SubfolderName,ScriptName>
      */
-    public void writeInlineScriptsAndCompressToolFolders(Map<File, PluginInfo> listOfFolders,  Map<String, List<Map<String,String>>>  mapOfInlineScriptsBySubfolder ){
+    public void writeInlineScriptsAndCompressToolFolders(Map<File, PluginInfo> listOfFolders, Map<String, List<Map<String, String>>> mapOfInlineScriptsBySubfolder) {
 
         listOfFolders.keySet().parallelStream().each {
             File subFolder ->
@@ -543,14 +536,14 @@ public abstract class ExecutionService extends CacheProvider {
      * @param provider
      * @param context
      */
-    public void moveCompressedToolFilesToRemoteLocation(Map<File, PluginInfo> listOfFolders, String[] existingArchives, FileSystemAccessProvider provider, ExecutionContext context){
+    public void moveCompressedToolFilesToRemoteLocation(Map<File, PluginInfo> listOfFolders, String[] existingArchives, FileSystemAccessProvider provider, ExecutionContext context) {
         File dstCommonExecutionDirectory = context.getCommonExecutionDirectory();
         File dstAnalysisToolsDirectory = context.getAnalysisToolsDirectory();
 
         listOfFolders.each {
             File subFolder, PluginInfo pInfo ->
                 File localFile = mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive;
-                File remoteFile = new File(mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive.getName()[0..-5] + "_" + context.getTimeStampString() + ".zip");
+                File remoteFile = new File(mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive.getName()[0..-5] + "_" + context.getTimestampString() + ".zip");
                 String archiveMD5 = mapOfPreviouslyCompressedArchivesByFolder[subFolder].md5
 
                 String foundExisting = null;
@@ -755,39 +748,6 @@ public abstract class ExecutionService extends CacheProvider {
             readability[file] = allFiles.contains(file);
 
         return readability;
-    }
-
-    private LinkedList<ExecutionServiceListener> listOfListeners = new LinkedList<ExecutionServiceListener>();
-
-    public void registerExecutionListener(ExecutionServiceListener listener) {
-        listOfListeners.add(listener);
-    }
-
-    public void removeExecutionListener(ExecutionServiceListener listener) {
-        listOfListeners.remove(listener);
-    }
-
-    public void fireStringExecutedEvent(String commandString, ExecutionResult result) {
-        listOfListeners.each { ExecutionServiceListener esl -> esl.stringExecuted(commandString, result); }
-    }
-
-    public void fireCommandExecutedEvent(Command result) {
-        listOfListeners.each { ExecutionServiceListener esl -> esl.commandExecuted(result); }
-    }
-
-
-    public void fireExecutionServiceStateChange(TriState state) {
-        listOfListeners.each { ExecutionServiceListener esl -> esl.changeExecutionServiceState(state); }
-    }
-
-    public long fireExecutionStartedEvent(String message) {
-        long id = System.nanoTime();
-        listOfListeners.each { ExecutionServiceListener esl -> esl.executionStarted(id, message) }
-        return id;
-    }
-
-    public void fireExecutionStoppedEvent(long id, String message) {
-        listOfListeners.each { ExecutionServiceListener esl -> esl.executionFinished(id, message) }
     }
 
     /**

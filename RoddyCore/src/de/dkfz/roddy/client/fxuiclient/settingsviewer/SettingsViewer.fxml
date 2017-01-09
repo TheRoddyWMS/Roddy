@@ -44,12 +44,17 @@
                         <Label alignment="TOP_LEFT" text="Configuration path's" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
                         <VBox GridPane.columnIndex="2" GridPane.rowIndex="3" spacing="2">
                             <ListView fx:id="configurationPaths" prefHeight="128.0" prefWidth="96.0"/>
-                            <HBox spacing="2">
-                                <children>
-                                    <Button minWidth="32.0" mnemonicParsing="false" text="+" onAction="#addConfigurationPath"/>
-                                    <Button minWidth="32.0" mnemonicParsing="false" text="-" onAction="#removeConfigurationPath"/>
-                                </children>
-                            </HBox>
+                            <!--<HBox spacing="2">-->
+                                <!--<children>-->
+                                    <!--<Button minWidth="32.0" mnemonicParsing="false" text="+" onAction="#addConfigurationPath"/>-->
+                                    <!--<Button minWidth="32.0" mnemonicParsing="false" text="-" onAction="#removeConfigurationPath"/>-->
+                                <!--</children>-->
+                            <!--</HBox>-->
+                        </VBox>
+
+                        <Label alignment="TOP_LEFT" text="Configuration path's" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+                        <VBox GridPane.columnIndex="2" GridPane.rowIndex="5" spacing="2">
+                            <ListView fx:id="pluginPaths" prefHeight="128.0" prefWidth="96.0"/>
                         </VBox>
 
                         <padding>
@@ -96,31 +101,31 @@
                             </items>
                         </ComboBox>
 
-                        <Label GridPane.rowIndex="2" GridPane.columnIndex="1" text="GUI execution service:"/>
-                        <ComboBox GridPane.rowIndex="2" GridPane.columnIndex="2" fx:id="cbbGUIExecutionService">
-                            <items>
-                                <FXCollections fx:factory="observableArrayList">
-                                    <String fx:value="de.dkfz.roddy.execution.io.LocalExecutionService"/>
-                                    <String fx:value="de.dkfz.roddy.execution.io.SSHExecutionService"/>
-                                </FXCollections>
-                            </items>
-                        </ComboBox>
+                        <!--<Label GridPane.rowIndex="2" GridPane.columnIndex="1" text="GUI execution service:"/>-->
+                        <!--<ComboBox GridPane.rowIndex="2" GridPane.columnIndex="2" fx:id="cbbGUIExecutionService">-->
+                            <!--<items>-->
+                                <!--<FXCollections fx:factory="observableArrayList">-->
+                                    <!--<String fx:value="de.dkfz.roddy.execution.io.LocalExecutionService"/>-->
+                                    <!--<String fx:value="de.dkfz.roddy.execution.io.SSHExecutionService"/>-->
+                                <!--</FXCollections>-->
+                            <!--</items>-->
+                        <!--</ComboBox>-->
 
                     </GridPane>
 
-                    <GridPane alignment="CENTER" id="SettingsBackground" padding="$gridpane_padding_0" VBox.margin="$gridpane_margin_0" vgap="2" hgap="2">
-                        <columnConstraints>
-                            <fx:reference source="defaultColums_0"/>
-                            <fx:reference source="defaultColums_1"/>
-                            <fx:reference source="defaultColums_2"/>
-                            <fx:reference source="defaultColums_3"/>
-                        </columnConstraints>
-                        <Label id="SettingsHeader" GridPane.hgrow="ALWAYS" GridPane.columnSpan="3" text="Accept or reject the configuration."/>
+                    <!--<GridPane alignment="CENTER" id="SettingsBackground" padding="$gridpane_padding_0" VBox.margin="$gridpane_margin_0" vgap="2" hgap="2">-->
+                        <!--<columnConstraints>-->
+                            <!--<fx:reference source="defaultColums_0"/>-->
+                            <!--<fx:reference source="defaultColums_1"/>-->
+                            <!--<fx:reference source="defaultColums_2"/>-->
+                            <!--<fx:reference source="defaultColums_3"/>-->
+                        <!--</columnConstraints>-->
+                        <!--<Label id="SettingsHeader" GridPane.hgrow="ALWAYS" GridPane.columnSpan="3" text="Accept or reject the configuration."/>-->
 
-                        <Button GridPane.rowIndex="1" GridPane.columnIndex="1" fx:id="btnAcceptRemoteCredentials" text="Accept" onAction="#setRemoteCredentialSettings"/>
-                        <Button GridPane.rowIndex="1" GridPane.columnIndex="2" fx:id="btnRejectRemoteCredentials" text="Reject" onAction="#rejectRemoteCredentialSettings"/>
+                        <!--<Button GridPane.rowIndex="1" GridPane.columnIndex="1" fx:id="btnAcceptRemoteCredentials" text="Accept" onAction="#setRemoteCredentialSettings"/>-->
+                        <!--<Button GridPane.rowIndex="1" GridPane.columnIndex="2" fx:id="btnRejectRemoteCredentials" text="Reject" onAction="#rejectRemoteCredentialSettings"/>-->
 
-                    </GridPane>
+                    <!--</GridPane>-->
                     <padding>
                         <Insets left="4.0" right="4.0"/>
                     </padding>

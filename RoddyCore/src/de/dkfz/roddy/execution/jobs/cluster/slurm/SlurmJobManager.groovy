@@ -36,13 +36,13 @@ import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSResourceProcessingCommand
  * --
  *      https://computing.llnl.gov/tutorials/ibm_sp/man/squeue.txt
  *
- *        %t  Job state, compact form:  PD (pending), R
+ *        %t  Job jobState, compact form:  PD (pending), R
  (running), CA (cancelled), CG (completing), CD
  (completed), F (failed), TO (timeout), and NF (node
  failure).  See the JOB STATE CODES section below
  for more information.
 
- %T  Job state, extended form: PENDING, RUNNING,
+ %T  Job jobState, extended form: PENDING, RUNNING,
  SUSPENDED, CANCELLED, COMPLETING, COMPLETED,
  FAILED, TIMEOUT, and NODE_FAIL.  See the JOB STATE
  CODES section below for more information.
@@ -149,7 +149,7 @@ class SlurmJobManager extends PBSJobManager {
         //953190 xgs mFastq_03_H75NCCCXX_1_AS-77263-LR-10641_2118 pinkert R
         //squeue %i %P %.55j %u %t
         return Arrays.asList(
-                "job - ID prior name user state submit / start at queue slots ja -task - ID",
+                "job - ID prior name user jobState submit / start at queue slots ja -task - ID",
                 "---------------------------------------------------------------------------------------------------------------- -",
                 "   1187 0.75000 r140710_09 seqware r 07 / 10 / 2014 09:51:55 main.q @worker3 1",
                 "   1188 0.41406 r140710_09 seqware r 07 / 10 / 2014 09:51:40 main.q @worker1 1",

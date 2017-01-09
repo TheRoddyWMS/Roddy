@@ -161,7 +161,7 @@ public class CustomCellItemsHelper {
                 hbox.getChildren().add(new Label("Fallback: (" + cellItem.getClass().getSimpleName() + " / " + item.getClass().getSimpleName() + ")"));
                 hbox.getChildren().add(new Label(item.toString()));
                 node = hbox;
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                e.printStackTrace();
             }
             synchronized (customCellItemsCache) {
                 customCellItemsCache.put(cellItem, node);

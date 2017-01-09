@@ -45,7 +45,7 @@ public abstract class RuntimeService extends CacheProvider {
     public static final String FILENAME_REPEATABLEJOBCALLS = "repeatableJobCalls.sh"
     public static final String FILENAME_EXECUTEDJOBS_INFO = "executedJobs.txt"
     public static final String FILENAME_ANALYSES_MD5_OVERVIEW = "zippedAnalysesMD5.txt"
-    public static final String DIRECTORY_RODDY_COMMON_EXECUTION = ".roddyExecutionDirectory"
+    public static final String DIRECTORY_RODDY_COMMON_EXECUTION = ".roddyExecutionStore"
     public static final String DIRNAME_ANALYSIS_TOOLS = "analysisTools"
     public static final String RODDY_CENTRAL_EXECUTION_DIRECTORY = "RODDY_CENTRAL_EXECUTION_DIRECTORY"
 
@@ -202,7 +202,7 @@ public abstract class RuntimeService extends CacheProvider {
             Map<String, Job> unknownJobs = new LinkedHashMap<>();
             Map<String, Job> possiblyRunningJobs = new LinkedHashMap<>();
             List<String> queryList = new LinkedList<>();
-            //For every job which is still unknown or possibly running get the actual state from the cluster
+            //For every job which is still unknown or possibly running get the actual jobState from the cluster
             for (Job job : jobsStartedInContext) {
                 if (job.getJobState().isUnknown() || job.getJobState() == JobState.UNSTARTED) {
                     unknownJobs.put(job.getJobID(), job);
@@ -418,7 +418,7 @@ public abstract class RuntimeService extends CacheProvider {
         String outPath = getOutputFolderForDataSetAndAnalysis(context.getDataSet(), context.getAnalysis()).absolutePath
         String sep = FileSystemAccessProvider.getInstance().getPathSeparator();
 
-        String dirPath = "${outPath}${sep}roddyExecutionStore${sep}${ConfigurationConstants.RODDY_EXEC_DIR_PREFIX}${context.getTimeStampString()}_${context.getExecutingUser()}_${context.getAnalysis().getName()}"
+        String dirPath = "${outPath}${sep}roddyExecutionStore${sep}${ConfigurationConstants.RODDY_EXEC_DIR_PREFIX}${context.getTimestampString()}_${context.getExecutingUser()}_${context.getAnalysis().getName()}"
         if (context.getExecutionContextLevel() == ExecutionContextLevel.CLEANUP)
             dirPath += "_cleanup"
         return new File(dirPath);

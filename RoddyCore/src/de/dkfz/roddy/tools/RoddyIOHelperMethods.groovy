@@ -136,6 +136,14 @@ class RoddyIOHelperMethods {
         }
     }
 
+    public static void writeTextFile(String path, List items) {
+        writeTextFile(new File(path), items);
+    }
+
+    public static void writeTextFile(File path, List items) {
+        writeTextFile(path, items.collect { it.toString() }.join("\n") + "\n");
+    }
+
     public static void writeTextFile(String path, String text) {
         File f = new File(path);
         writeTextFile(f, text);
@@ -147,6 +155,14 @@ class RoddyIOHelperMethods {
         } catch (Exception ex) {
             logger.severe(ex.toString());
         }
+    }
+
+    public static List<String> readTextFile(String path) {
+        return readTextFile(new File(path));
+    }
+
+    public static List<String> readTextFile(File path) {
+        return path.readLines();
     }
 
     /**
@@ -387,4 +403,7 @@ class RoddyIOHelperMethods {
     }
 
 
+    public static String printTimingInfo(String info, long t1, long t2) {
+        return "Timing " + info + ": " + ((t2 - t1) / 1000000) + " ms";
+    }
 }

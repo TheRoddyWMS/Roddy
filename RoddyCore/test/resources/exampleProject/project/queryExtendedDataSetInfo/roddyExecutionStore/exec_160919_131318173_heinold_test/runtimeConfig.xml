@@ -1,0 +1,44 @@
+<configuration name='testAnalysis' description='A test analysis for local and remote roddy workflow tests.' workflowClass='de.dkfz.roddy.core.Analysis'>
+  <configurationvalues>
+    <cvalue name='analysisMethodNameOnInput' value='testAnalysis' />
+    <cvalue name='analysisMethodNameOnOutput' value='testAnalysis' />
+    <cvalue name='testAOutputDirectory' value='testfiles' />
+    <cvalue name='testOutputDirectory' value='${outputAnalysisBaseDirectory}/testfiles' />
+    <cvalue name='testInnerOutputDirectory' value='${testOutputDirectory}/testfilesw2' />
+    <cvalue name='jobnamePrefix' value='defaultRoddyJobname' />
+    <cvalue name='inputBaseDirectory' value='/data/michael/temp/exampleProject/project' />
+    <cvalue name='outputBaseDirectory' value='/data/michael/temp/exampleProject/project' />
+    <cvalue name='DEBUG' value='TRUE' />
+    <cvalue name='preventJobExecution' value='false' />
+    <cvalue name='UNZIPTOOL' value='gunzip' />
+    <cvalue name='UNZIPTOOL_OPTIONS' value='-c' />
+    <cvalue name='ZIPTOOL' value='gzip' />
+    <cvalue name='ZIPTOOL_OPTIONS' value='-c' />
+    <cvalue name='useAcceleratedHardware' value='true' />
+    <cvalue name='outputUMask' value='007' />
+    <cvalue name='outputFileGroup' value='UNDEFINED' />
+    <cvalue name='outputAccessRights' value='u+rw,g+rw,o-rwx' />
+    <cvalue name='outputAllowAccessRightsModification' value='true' />
+    <cvalue name='outputAnalysisBaseDirectory' value='${outputBaseDirectory}/${pid}' />
+    <cvalue name='processOptionsSetUserGroup' value='false' />
+    <cvalue name='processOptionsSetUserMask' value='false' />
+    <cvalue name='processOptionsQueryID' value='false' />
+    <cvalue name='XMLValidation' value='true' />
+    <cvalue name='ForbidSubmissionOnRunning' value='true' />
+    <cvalue name='BreakSubmissionOnError' value='true' />
+    <cvalue name='RollbackOnSubmissionOnError' value='false' />
+    <cvalue name='ModifiedVariablePassing' value='true' />
+    <cvalue name='UseOldDataSetIDExtraction' value='true' />
+    <cvalue name='AutoFilenames' value='false' />
+    <cvalue name='UnzipZippedPlugins' value='false' />
+    <cvalue name='DIR_LOCKFILES' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/temp/lockfiles' />
+    <cvalue name='DIR_TEMP' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/temp' />
+    <cvalue name='DIR_EXECUTION' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test' />
+    <cvalue name='DIR_EXECUTION_COMMON' value='/data/michael/temp/exampleProject/project/.roddyExecutionDirectory' />
+    <cvalue name='DIR_RODDY' value='/data/michael/Projekte/Roddy' />
+    <cvalue name='DIR_BUNDLED_FILES' value='/data/michael/Projekte/Roddy/bundledFiles' />
+    <cvalue name='DIR_ANALYSIS_TOOLS' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools' />
+    <cvalue name='jobStateLogFile' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/jobStateLogfile.txt' />
+  </configurationvalues>
+  <projects />
+</configuration>
