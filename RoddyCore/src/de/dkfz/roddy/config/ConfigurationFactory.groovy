@@ -866,8 +866,10 @@ public class ConfigurationFactory {
 
         String pName = child.@scriptparameter.text();
         String fnpSelTag = extractAttributeText(child, "fnpatternselectiontag", FilenamePattern.DEFAULT_SELECTION_TAG);
-        boolean check = Boolean.parseBoolean(extractAttributeText(child, "check", "true"));
         String parentFileVariable = extractAttributeText(child, "variable", null); //This is only the case for child files.
+        ToolEntry.ToolFileParameterCondition check = new ToolEntry.ToolFileParameterCondition(extractAttributeText(child, "check", "true"));
+
+        if(check && check.startsWith("conditional:"))
 
         List<ToolEntry.ToolConstraint> constraints = new LinkedList<ToolEntry.ToolConstraint>();
         for (constraint in child.constraint) {
