@@ -63,7 +63,7 @@ public class FilenamePatternTest {
         testClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass("FilenamePatternTest_testFilenamePatternWithSelectionByToolID", BaseFile.class as Class<FileObject>);
 
         ToolEntry toolEntry = new ToolEntry("RoddyTests", "RoddyTests", "RoddyTestScript_ExecutionServiceTest.sh");
-        toolEntry.getOutputParameters(mockupConfig).add(new ToolEntry.ToolFileParameter(testClass, null, "TEST", true))
+        toolEntry.getOutputParameters(mockupConfig).add(new ToolEntry.ToolFileParameter(testClass, null, "TEST", new ToolEntry.ToolFileParameterCondition(true)))
 
         mockupConfig.getTools().add(toolEntry);
     }
