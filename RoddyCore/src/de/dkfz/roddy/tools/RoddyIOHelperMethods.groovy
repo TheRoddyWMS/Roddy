@@ -364,7 +364,7 @@ class RoddyIOHelperMethods {
         pathname.split(StringConstants.SPLIT_SLASH).findAll({it != ""}) as ArrayList<String>
     }
 
-    public static Optional<Integer> matchComponentInPath(String path, String component) {
+    public static Optional<Integer> findComponentIndexInPath(String path, String component) {
         Integer index = splitPathname(path).findIndexOf { it -> it == component }
         if (-1 == index) {
             Optional.empty()

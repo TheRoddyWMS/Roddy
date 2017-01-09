@@ -7,19 +7,12 @@
 package de.dkfz.roddy.tools
 
 import de.dkfz.roddy.Constants
-import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
-import de.dkfz.roddy.execution.io.ExecutionService
-import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import groovy.transform.CompileStatic
 import org.junit.Rule;
 import org.junit.Test
-import org.junit.rules.ExpectedException;
-
-import java.util.Map;
-
-import static org.junit.Assert.*;
+import org.junit.rules.ExpectedException
 
 /**
  * Test class to cover RoddyIOHelperMethods.
@@ -194,10 +187,10 @@ public class RoddyIOHelperMethodsTest {
     }
 
     @Test
-    public void testMatchComponentInPath() throws Exception {
-        assert RoddyIOHelperMethods.matchComponentInPath('/a/b/c', "c").get() == 2
-        assert RoddyIOHelperMethods.matchComponentInPath('////a/b//c///', "c").get() == 2
-        assert !RoddyIOHelperMethods.matchComponentInPath('/a/b/X', "c").isPresent()
+    public void testfindComponentIndexInPath() throws Exception {
+        assert RoddyIOHelperMethods.findComponentIndexInPath('/a/b/c', "c").get() == 2
+        assert RoddyIOHelperMethods.findComponentIndexInPath('////a/b//c///', "c").get() == 2
+        assert !RoddyIOHelperMethods.findComponentIndexInPath('/a/b/X', "c").isPresent()
     }
 
     @Test
