@@ -141,6 +141,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
 
         String temp = f.getAbsolutePath();
         temp = temp.contains("${pid}") ? replaceString(temp, "${pid}", dataSet.getId()) : temp;
+        temp = temp.contains("${dataSet}") ? replaceString(temp, "${dataSet}", dataSet.getId()) : temp;
 
         return new File(temp);
     }

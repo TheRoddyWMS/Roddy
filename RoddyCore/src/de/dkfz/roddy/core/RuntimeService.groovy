@@ -18,6 +18,7 @@ import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.LoadedFile
 import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.NodeChild
@@ -492,43 +493,17 @@ public abstract class RuntimeService extends CacheProvider {
         return new File(getExecutionDirFilePrefixString(context) + FILENAME_RUNTIME_INFO);
     }
 
-    public String extractDataSetIDFromPath(File p, Analysis analysis) {
-        //Try new version first, fallback to old version if necessary.
-//        if (!Roddy.getFeatureToggleValue(AvailableFeatureToggles.UseOldDataSetIDExtraction)) {
-//            def instance = FileSystemAccessManager.getInstance();
-//            //TODO Hack! This will only work on Linux systems using bash. Extract the PID from the realjobcalls file. PID is always a parameter.
-//            def realJobCalls = new File(p, "realJobCalls.txt")
-//            try {
-//                if (instance.checkFile(realJobCalls)) {
-//                    String line = instance.getLineOfFile(realJobCalls, 0); //Get the first line of a file.
-//                    int indexOfPID = line.indexOf("PID=");
-//                    String datasetID = line.substring(indexOfPID + 4).split(StringConstants.SPLIT_COMMA)[0].split(StringConstants.SPLIT_WHITESPACE)[0]
-//                    return datasetID;
-//                }
-//            } catch (Exception ex) {
-//                //Fallback...
-//            }
-//        }
-
-        getOutputFolderForAnalysis(analysis);
-
-        String realString = analysis.getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY).toFile(analysis).getAbsolutePath();
-        String[] split = realString.split("/");
-        //TODO can be quite error prone! what if a user puts an additional / somewhere?
-        int index = -1;
-        for (int i = 0; i < split.length; i++) {
-            index++;
-            if (split[i].equals('${pid}')) {
-                break;
-            }
-        }
-        if (index == -1) {
-            return Constants.UNKNOWN;
-        }
-
-        split = p.getAbsolutePath().split("/");
-        return split[index];
-
+    /** Only the first matching ${dataSet} or ${pid} will be returned. ${dataSet} has precedence over ${pid}.
+     *  No checks are done that there is a unique solution.
+     * @param path
+     * @param analysis
+     * @return
+     */
+    public String extractDataSetIDFromPath(File path, Analysis analysis) {
+        String pattern = analysis.getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY).toFile(analysis).getAbsolutePath()
+        RoddyIOHelperMethods.getPatternVariableFromPath(pattern, "dataSet", path.getAbsolutePath()).
+                orElse(RoddyIOHelperMethods.getPatternVariableFromPath(pattern, "pid", path.getAbsolutePath()).
+                        orElse(Constants.UNKNOWN))
     }
 
     /**
@@ -548,7 +523,12 @@ public abstract class RuntimeService extends CacheProvider {
                 if (info.length < 2) return;
                 File path = new File(info[0]);
                 execDirectories << path;
-                String dataSetID = analysis.getRuntimeService().extractDataSetIDFromPath(path, analysis);
+                String dataSetID
+                try {
+                    dataSetID = analysis.getRuntimeService().extractDataSetIDFromPath(path, analysis);
+                } catch (RuntimeException e) {
+                    throw new RuntimeException(e.message + " If you moved the .roddyExecCache.txt, please delete it and restart Roddy.")
+                }
                 Analysis dataSetAnalysis = analysis.getProject().getAnalysis(info[1])
                 DataSet ds = analysis.getDataSet(dataSetID);
                 if (dataSetAnalysis == analysis) {
