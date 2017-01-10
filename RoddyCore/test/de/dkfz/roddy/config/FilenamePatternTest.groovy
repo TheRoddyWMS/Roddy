@@ -207,4 +207,14 @@ public class FilenamePatternTest {
         assert result != null
         assert result.class == testClass;
     }
+
+    @Test
+    public testExtractCommand() {
+
+    }
+
+    @Test
+    public testExtractCommands() {
+
+    }
 }
