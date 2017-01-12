@@ -669,6 +669,7 @@ public abstract class RuntimeService extends CacheProvider {
     public String createJobName(ExecutionContext executionContext, BaseFile file, String TOOLID, boolean reduceLevel) {
         return JobManager.getInstance().createJobName(file, TOOLID, reduceLevel);
     }
+<<<<<<< HEAD
 
     /**
      * Checks if a folder is valid
@@ -746,6 +747,85 @@ public abstract class RuntimeService extends CacheProvider {
     @Override
     public void releaseCache() {
 
+=======
+
+    /**
+     * Checks if a folder is valid
+     *
+     * A folder is valid if:
+     * <ul>
+     *   <li>its parents are valid</li>
+     *   <li>it was not created recently (within this context)</li>
+     *   <li>it exists</li>
+     *   <li>it can be validated (i.e. by its size or files, but not with a lengthy operation!)</li>
+     * </ul>
+     */
+    public boolean isFileValid(BaseFile baseFile) {
+
+        //Parents valid?
+        boolean parentsValid = true;
+        for (BaseFile bf in baseFile.parentFiles) {
+            if (bf.isTemporaryFile()) continue; //We do not check the existence of parent files which are temporary.
+            if (bf.isSourceFile()) continue;
+            if (!bf.isFileValid()) {
+                return false;
+            }
+        }
+
+        boolean result = true;
+
+        //Source files should be marked as such and checked in a different way. They are assumed to be valid.
+        if (baseFile.isSourceFile())
+            return true;
+
+        //Temporary files are also considered as valid.
+        if (baseFile.isTemporaryFile())
+            return true;
+
+        try {
+            //Was freshly created?
+            if (baseFile.creatingJobsResult != null && baseFile.creatingJobsResult.wasExecuted) {
+                result = false;
+            }
+        } catch (Exception ex) {
+            result = false;
+        }
+
+        try {
+            //Does it exist and is it readable?
+            if (result && !baseFile.isFileReadable()) {
+                result = false;
+            }
+        } catch (Exception ex) {
+            result = false;
+        }
+
+        try {
+            //Can it be validated?
+            //TODO basefiles are always validated!
+            if (result && !baseFile.checkFileValidity()) {
+                result = false;
+            }
+        } catch (Exception ex) {
+            result = false;
+        }
+
+        // TODO? If the file is not valid then also temporary parent files should be invalidated! Or at least checked.
+        if (!result) {
+            // Something is missing here! Michael?
+        }
+
+        return result;
+    }
+
+
+    /**
+     * Releases the cache in this provider
+     */
+    @Override
+    public void releaseCache() {
+
+>>>>>>> b31fbd40513aeafcaa5e7b4babd8e1aed2696a35
     }
 
     @Override
