@@ -145,16 +145,16 @@ public abstract class RuntimeService extends CacheProvider {
         if (_listOfPossibleDataSetsByAnalysis[analysis] == null)
             _listOfPossibleDataSetsByAnalysis[analysis] = loadCombinedListOfPossibleDataSets(analysis);
 
-        List<AnalysisProcessingInformation> previousExecs = readoutExecCacheFile(analysis);
-
-        for (DataSet ds : _listOfPossibleDataSetsByAnalysis[analysis]) {
-            for (AnalysisProcessingInformation api : previousExecs) {
-                if (api.getDataSet() == ds) {
-                    ds.addProcessingInformation(api);
-                }
-            }
-            analysis.getProject().updateDataSet(ds, analysis);
-        }
+//        List<AnalysisProcessingInformation> previousExecs = readoutExecCacheFile(analysis);
+//
+//        for (DataSet ds : _listOfPossibleDataSetsByAnalysis[analysis]) {
+//            for (AnalysisProcessingInformation api : previousExecs) {
+//                if (api.getDataSet() == ds) {
+//                    ds.addProcessingInformation(api);
+//                }
+//            }
+//            analysis.getProject().updateDataSet(ds, analysis);
+//        }
 
         return _listOfPossibleDataSetsByAnalysis[analysis];
     }
@@ -567,7 +567,6 @@ public abstract class RuntimeService extends CacheProvider {
 
     /**
      * Looks in the projects output directory if the cache file exists. If it does not exist it is created using the find command.
-     * TODO Think if this is the right place to have this method! Should this be in the runtime service?
      * @param project
      */
     public List<AnalysisProcessingInformation> readoutExecCacheFile(Analysis analysis) {
