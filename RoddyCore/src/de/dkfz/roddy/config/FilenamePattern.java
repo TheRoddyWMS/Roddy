@@ -99,7 +99,7 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
         }
 
         while (temp.contains(PLACEHOLDER_CVALUE)) {
-            Command command = FilenamePatternHelper.extractCommand(PLACEHOLDER_CVALUE, temp);
+            Command command = FilenamePatternHelper.extractCommand(context, PLACEHOLDER_CVALUE, temp);
             CommandAttribute name = command.attributes.get("name");
             CommandAttribute def = command.attributes.get("default");
             if (name != null) {
@@ -178,7 +178,7 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
                 temp = temp.replace("${sourcefile}", sourcepath.getAbsolutePath());
                 temp = temp.replace("${sourcefileAtomic}", sourcepath.getName());
                 if (temp.contains(PLACEHOLDER_SOURCEFILE_PROPERTY)) { //Replace the string with a property value
-                    Command command = FilenamePatternHelper.extractCommand(PLACEHOLDER_SOURCEFILE_PROPERTY, temp);
+                    Command command = FilenamePatternHelper.extractCommand(baseFile.getExecutionContext(), PLACEHOLDER_SOURCEFILE_PROPERTY, temp);
                     String pName = command.attributes.keySet().toArray()[0].toString();
 
                     String accessorName = "get" + pName.substring(0, 1).toUpperCase() + pName.substring(1);
@@ -187,7 +187,7 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
                     temp = temp.replace(command.name, value);
                 }
                 if (temp.contains(PLACEHOLDER_SOURCEFILE_ATOMIC_PREFIX)) {
-                    Command command = FilenamePatternHelper.extractCommand(PLACEHOLDER_SOURCEFILE_ATOMIC_PREFIX, temp);
+                    Command command = FilenamePatternHelper.extractCommand(baseFile.getExecutionContext(), PLACEHOLDER_SOURCEFILE_ATOMIC_PREFIX, temp);
                     CommandAttribute att = command.attributes.get("delimiter");
                     if (att != null) {
                         String sourcename = sourcepath.getName();
