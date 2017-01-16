@@ -30,6 +30,7 @@
       <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.2.66" />
       <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.2.87" />
       <excludeFolder url="file://$MODULE_DIR$/../dist/bin/2.3.115" />
+      <excludeFolder url="file://$MODULE_DIR$/../dist/bin/libs_2.2.x" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
