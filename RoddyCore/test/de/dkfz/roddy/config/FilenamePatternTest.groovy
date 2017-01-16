@@ -6,12 +6,8 @@
 
 package de.dkfz.roddy.config
 
-import de.dkfz.roddy.core.Analysis;
-import de.dkfz.roddy.core.DataSet;
-import de.dkfz.roddy.core.ExecutionContext;
-import de.dkfz.roddy.core.ExecutionContextLevel
+import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
-import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobDependencyID
@@ -63,7 +59,7 @@ public class FilenamePatternTest {
         testClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass("FilenamePatternTest_testFilenamePatternWithSelectionByToolID", BaseFile.class as Class<FileObject>);
 
         ToolEntry toolEntry = new ToolEntry("RoddyTests", "RoddyTests", "RoddyTestScript_ExecutionServiceTest.sh");
-        toolEntry.getOutputParameters(mockupConfig).add(new ToolEntry.ToolFileParameter(testClass, null, "TEST", new ToolEntry.ToolFileParameterCondition(true)))
+        toolEntry.getOutputParameters(mockupConfig).add(new ToolEntry.ToolFileParameter(testClass, null, "TEST", new ToolEntry.ToolFileParameterCheckCondition(true)))
 
         mockupConfig.getTools().add(toolEntry);
     }

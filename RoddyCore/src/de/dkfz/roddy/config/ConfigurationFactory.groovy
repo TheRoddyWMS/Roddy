@@ -29,7 +29,6 @@ import org.apache.commons.io.filefilter.WildcardFileFilter
 
 import java.lang.reflect.*
 import java.util.logging.*
-import java.util.regex.Pattern
 
 import static de.dkfz.roddy.StringConstants.*
 
@@ -867,7 +866,7 @@ public class ConfigurationFactory {
         String pName = child.@scriptparameter.text();
         String fnpSelTag = extractAttributeText(child, "fnpatternselectiontag", FilenamePattern.DEFAULT_SELECTION_TAG);
         String parentFileVariable = extractAttributeText(child, "variable", null); //This is only the case for child files.
-        ToolEntry.ToolFileParameterCondition check = new ToolEntry.ToolFileParameterCondition(extractAttributeText(child, "check", "true"));
+        ToolEntry.ToolFileParameterCheckCondition check = new ToolEntry.ToolFileParameterCheckCondition(extractAttributeText(child, "check", "true"));
 
         if(check && check.startsWith("conditional:"))
 
