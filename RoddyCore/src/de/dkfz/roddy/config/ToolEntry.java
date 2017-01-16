@@ -11,7 +11,9 @@ import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.knowledge.files.FileGroup;
 import de.dkfz.roddy.tools.BufferValue;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
+import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.tools.TimeUnit;
+import examples.Exec;
 
 import java.lang.reflect.Method;
 import java.util.LinkedList;
@@ -213,6 +215,39 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         @Override
         public ToolStringParameter clone() {
             return new ToolStringParameter(scriptParameterName, cValueID, setby);
+        }
+    }
+
+    public static class ToolFileParameterCondition {
+
+        private String condition;
+
+        private Boolean pureBoolean;
+
+        public ToolFileParameterCondition(boolean pureBoolean) {
+            this.pureBoolean = Boolean.valueOf(pureBoolean);
+        }
+
+        public ToolFileParameterCondition(String condition) {
+            if(condition.startsWith("conditional:"))
+                this.condition = condition.substring(12);
+            else {
+                this.pureBoolean = RoddyConversionHelperMethods.toBoolean(condition, true);
+            }
+        }
+
+        public boolean isPureBoolean() {
+            return pureBoolean != null;
+        }
+
+        public String getCondition() {
+            return condition;
+        }
+
+        public boolean evaluate(ExecutionContext context) {
+            if (pureBoolean != null)
+                return pureBoolean;
+            return context.getConfiguration().getConfigurationValues().getBoolean(condition, true);
         }
     }
 
