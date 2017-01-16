@@ -14,7 +14,7 @@ import de.dkfz.roddy.knowledge.files.FileStageSettings;
  * Created by michael on 28.10.14.
  */
 public class TestFileStageSettings extends FileStageSettings {
-    protected TestFileStageSettings() {
+    public TestFileStageSettings() {
         super(null, null);
     }
 
