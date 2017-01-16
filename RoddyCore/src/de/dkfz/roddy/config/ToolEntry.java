@@ -11,11 +11,8 @@ import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.knowledge.files.FileGroup;
 import de.dkfz.roddy.tools.BufferValue;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
-import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.tools.TimeUnit;
-import examples.Exec;
 
-import java.io.File;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.List;
@@ -219,26 +216,33 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         }
     }
 
-    public static class ToolFileParameterCondition {
+    /**
+     * The class defines a state for the check tag of tool output parameters
+     * check can hold:
+     *  true                   - The value will be checked on rerun
+     *  false                  - The value will NOT be checked
+     *  conditionial:somevalue - The check is true or false depending on the somevalue named variable
+     */
+    public static class ToolFileParameterCheckCondition {
 
         private String condition;
 
-        private Boolean pureBoolean;
+        private Boolean booleanValue;
 
-        public ToolFileParameterCondition(boolean pureBoolean) {
-            this.pureBoolean = Boolean.valueOf(pureBoolean);
+        public ToolFileParameterCheckCondition(boolean value) {
+            this.booleanValue = Boolean.valueOf(value);
         }
 
-        public ToolFileParameterCondition(String condition) {
+        public ToolFileParameterCheckCondition(String condition) {
             if(condition.startsWith("conditional:"))
                 this.condition = condition.substring(12);
             else {
-                this.pureBoolean = RoddyConversionHelperMethods.toBoolean(condition, true);
+                this.booleanValue = RoddyConversionHelperMethods.toBoolean(condition, true);
             }
         }
 
-        public boolean isPureBoolean() {
-            return pureBoolean != null;
+        public boolean isBoolean() {
+            return booleanValue != null;
         }
 
         public String getCondition() {
@@ -246,8 +250,8 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         }
 
         public boolean evaluate(ExecutionContext context) {
-            if (pureBoolean != null)
-                return pureBoolean;
+            if (booleanValue != null)
+                return booleanValue;
             return context.getConfiguration().getConfigurationValues().getBoolean(condition, true);
         }
     }
@@ -262,15 +266,15 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         public final List<ToolConstraint> constraints;
         public final String scriptParameterName;
         public final String filenamePatternSelectionTag;
-        public final ToolFileParameterCondition checkFile;
+        public final ToolFileParameterCheckCondition checkFile;
         public final String parentVariable;
         private List<ToolFileParameter> childFiles;
 
-        public ToolFileParameter(Class<BaseFile> fileClass, List<ToolConstraint> constraints, String scriptParameterName, ToolFileParameterCondition checkFile) {
+        public ToolFileParameter(Class<BaseFile> fileClass, List<ToolConstraint> constraints, String scriptParameterName, ToolFileParameterCheckCondition checkFile) {
             this(fileClass, constraints, scriptParameterName, checkFile, FilenamePattern.DEFAULT_SELECTION_TAG, null, null);
         }
 
-        public ToolFileParameter(Class<BaseFile> fileClass, List<ToolConstraint> constraints, String scriptParameterName, ToolFileParameterCondition checkFile, String filenamePatternSelectionTag, List<ToolFileParameter> childFiles, String parentVariable) {
+        public ToolFileParameter(Class<BaseFile> fileClass, List<ToolConstraint> constraints, String scriptParameterName, ToolFileParameterCheckCondition checkFile, String filenamePatternSelectionTag, List<ToolFileParameter> childFiles, String parentVariable) {
             super(scriptParameterName);
             this.fileClass = fileClass;
             this.constraints = constraints != null ? constraints : new LinkedList<>();

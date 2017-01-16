@@ -58,19 +58,19 @@ class ToolEntryTest extends GroovyTestCase {
     }
 
 
-    /////// Tests for ToolFileParameterCondition
+    /////// Tests for ToolFileParameterCheckCondition
     void testNewToolFileParameterCondition() {
-        def abc = new ToolEntry.ToolFileParameterCondition("conditional:abc")
-        assert ! abc.isPureBoolean()
+        def abc = new ToolEntry.ToolFileParameterCheckCondition("conditional:abc")
+        assert ! abc.isBoolean()
         assert abc.getCondition()
 
-        def pure = new ToolEntry.ToolFileParameterCondition("true")
-        assert pure.isPureBoolean()
+        def pure = new ToolEntry.ToolFileParameterCheckCondition("true")
+        assert pure.isBoolean()
         assert pure.evaluate(null)
         assert pure.getCondition() == null
 
-        pure = new ToolEntry.ToolFileParameterCondition("false")
-        assert pure.isPureBoolean()
+        pure = new ToolEntry.ToolFileParameterCheckCondition("false")
+        assert pure.isBoolean()
         assert pure.evaluate(null)
         assert pure.getCondition() == null
     }
