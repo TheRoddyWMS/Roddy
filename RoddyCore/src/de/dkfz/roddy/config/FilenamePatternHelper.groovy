@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.config
 
+import de.dkfz.roddy.core.ExecutionContextError
+import de.dkfz.roddy.knowledge.files.BaseFile
 import groovy.transform.CompileStatic
 
 import static de.dkfz.roddy.StringConstants.BRACE_RIGHT
@@ -41,7 +43,7 @@ class FilenamePatternHelper {
         }
     }
 
-    public static Command extractCommand(String commandID, String temp, int startIndex = -1) {
+    public static Command extractCommand(BaseFile baseFile, String commandID, String temp, int startIndex = -1) {
         if (startIndex == -1)
             startIndex = temp.indexOf(commandID);
         int endIndex = temp.indexOf(BRACE_RIGHT, startIndex);
@@ -49,15 +51,25 @@ class FilenamePatternHelper {
 
         Map<String, CommandAttribute> attributes = [:]
 
+        // Split up a command like ${jobParameter,name=...,desc=...} by comma
         String[] split = command.split(SPLIT_COMMA);
         for (int i = 1; i < split.length; i++) { //Start with the first option.
+
+            // Replace every character in the String which EXCEPT the ones in the square brackets with EMPTY.
+            // Gets rid of illegal characters and makes further parsing easier
             String _split = split[i].replaceAll("[^0-9a-zA-Z=.-_+#]", EMPTY);
             String[] attributeSplit = _split.split(SPLIT_EQUALS);
-            String name = attributeSplit[0];
-            String value = EMPTY;
-            if (attributeSplit.length == 2)
-                value = attributeSplit[1].replace('"', EMPTY);
+            String name = attributeSplit[0]; //Get the tag name
+            String value = EMPTY; // Get the tag value (might be empty)
+
+            if (attributeSplit.length == 2) // If it has a value
+                value = attributeSplit[1].replace('"', EMPTY); // Get rid of leading or trailing double quotes
             attributes[name] = new CommandAttribute(name, value);
+        }
+
+        // Check if the attribute at least has a name tag
+        if(!attributes["name"]) {
+            baseFile.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("The jobParameter for ${command} must have a name tag with a value."))
         }
 
         return new Command(command, attributes);
