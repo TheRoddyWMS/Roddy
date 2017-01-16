@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.config
 
+import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.knowledge.files.BaseFile
 import groovy.transform.CompileStatic
@@ -43,7 +44,7 @@ class FilenamePatternHelper {
         }
     }
 
-    public static Command extractCommand(BaseFile baseFile, String commandID, String temp, int startIndex = -1) {
+    public static Command extractCommand(ExecutionContext context, String commandID, String temp, int startIndex = -1) {
         if (startIndex == -1)
             startIndex = temp.indexOf(commandID);
         int endIndex = temp.indexOf(BRACE_RIGHT, startIndex);
@@ -69,7 +70,7 @@ class FilenamePatternHelper {
 
         // Check if the attribute at least has a name tag
         if(!attributes["name"]) {
-            baseFile.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("The jobParameter for ${command} must have a name tag with a value."))
+            context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("The jobParameter for ${command} must have a name tag with a value."))
         }
 
         return new Command(command, attributes);
@@ -84,7 +85,7 @@ class FilenamePatternHelper {
      * @param temp
      * @return
      */
-    public static List<Command> extractCommands(String commandID, String temp) {
+    public static List<Command> extractCommands(ExecutionContext context, String commandID, String temp) {
         def cmds = []
         // This simple method to get the no of instances is not possible! Groovy will try to compile a pattern from things like ${jobParameter
         // It seems, that $ and { trigger an internal mechanism when used with findAll.
@@ -100,7 +101,7 @@ class FilenamePatternHelper {
         int lastIndex = 0
         for (int i = 0; i < no; i++) {
             lastIndex = temp.indexOf(commandID, lastIndex + 1);
-            cmds << extractCommand(commandID, temp, lastIndex);
+            cmds << extractCommand(context, commandID, temp, lastIndex);
         }
         return cmds
     }

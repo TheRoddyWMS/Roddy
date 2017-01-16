@@ -252,7 +252,7 @@ public class Job {
         }
 
         String absolutePath = path.getAbsolutePath()
-        List<FilenamePatternHelper.Command> commands = FilenamePatternHelper.extractCommands(PLACEHOLDER_JOBPARAMETER, absolutePath);
+        List<FilenamePatternHelper.Command> commands = FilenamePatternHelper.extractCommands(bf, PLACEHOLDER_JOBPARAMETER, absolutePath);
         for (FilenamePatternHelper.Command command : commands) {
             FilenamePatternHelper.CommandAttribute name = command.attributes.get("name");
             if (name != null) {
