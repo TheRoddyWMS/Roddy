@@ -157,7 +157,8 @@ public class Analysis {
     }
 
     public DataSet getDataSet(String dataSetID) {
-        for (DataSet d : getRuntimeService().getListOfPossibleDataSets(this))
+        // TODO: The avoidRecursion variable is more or less a hack. It work
+        for (DataSet d : getRuntimeService().getListOfPossibleDataSets(this, true))
             if (d.getId().equals(dataSetID))
                 return d;
         return null;
