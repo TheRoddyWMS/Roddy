@@ -24,7 +24,6 @@ import java.util.concurrent.LinkedBlockingDeque;
  */
 @groovy.transform.CompileStatic
 public class DataSet extends InfoObject implements Serializable {
-//        , ExecutionContextListener {
 
     private String id;
 

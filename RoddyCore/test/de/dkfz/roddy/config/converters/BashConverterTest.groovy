@@ -95,29 +95,29 @@ public class BashConverterTest {
     public void appendDebugVariables() throws Exception {
         Configuration configuration = createTestConfiguration()
 
-        assert  new BashConverter().
-                    appendDebugVariables(configuration).
-                    toString().
-                    trim() == ["set -o pipefail",
-                               "set -v",
-                               "set -x"].join("\n")
+        assert new BashConverter().
+                appendDebugVariables(configuration).
+                toString().
+                trim() == ["set -o pipefail",
+                           "set -v",
+                           "set -x"].join("\n")
 
         configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT, "true", "boolean")
-        assert  new BashConverter().
-                    appendDebugVariables(configuration).
-                    toString().
-                    trim() == ["set -o pipefail",
-                               "set -v",
-                               "set -x",
-                               "export PS4='+(\${BASH_SOURCE}:\${LINENO}): \${FUNCNAME[0]: +\$ { FUNCNAME[0] }():}'"].join("\n")
+        assert new BashConverter().
+                appendDebugVariables(configuration).
+                toString().
+                trim() == ["set -o pipefail",
+                           "set -v",
+                           "set -x",
+                           "export PS4='+(\${BASH_SOURCE}:\${LINENO}): \${FUNCNAME[0]: +\$ { FUNCNAME[0] }():}'"].join("\n")
 
         configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXECUTE_OUTPUT, "false", "boolean")
         configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT, "false", "boolean")
-        assert  new BashConverter().
-                    appendDebugVariables(configuration).
-                    toString().
-                    trim() == ["set -o pipefail",
-                               "set -v"].join("\n")
+        assert new BashConverter().
+                appendDebugVariables(configuration).
+                toString().
+                trim() == ["set -o pipefail",
+                           "set -v"].join("\n")
 
     }
 //
@@ -135,20 +135,20 @@ public class BashConverterTest {
     public void convertConfigurationValueToShellScriptLine() throws Exception {
         def configuration = createTestConfiguration()
         Map<String, String> list = [
-                (CVAL_TEST_OUTPUT_DIRECTORY)         : "declare -x    testOutputDirectory=testvalue",
-                (CVAL_TEST_BASHARRAY)                : "declare -x    testBashArray=\"( a b c d )\"",
-                (CVAL_TEST_BASHARRAY_QUOTES)         : "declare -x    testBashArrayQuotes='( a b c d )'",
-                (CVAL_TEST_INTEGER)                  : "declare -x -i testInteger=100",
-                (CVAL_TEST_FLOAT)                    : "declare -x    testFloat=1.0",
-                (CVAL_TEST_DOUBLE)                   : "declare -x    testDouble=1.0",
+                (CVAL_TEST_OUTPUT_DIRECTORY)           : "declare -x    testOutputDirectory=testvalue",
+                (CVAL_TEST_BASHARRAY)                  : "declare -x    testBashArray=\"( a b c d )\"",
+                (CVAL_TEST_BASHARRAY_QUOTES)           : "declare -x    testBashArrayQuotes='( a b c d )'",
+                (CVAL_TEST_INTEGER)                    : "declare -x -i testInteger=100",
+                (CVAL_TEST_FLOAT)                      : "declare -x    testFloat=1.0",
+                (CVAL_TEST_DOUBLE)                     : "declare -x    testDouble=1.0",
                 // These tests here fail, if you only start this test. Leave them at the end, so we can at least test the other tests.
-                (CVAL_OUTPUT_BASE_DIRECTORY)         : "declare -x    ${CVAL_OUTPUT_BASE_DIRECTORY}=/tmp".toString(),
-                (CVAL_OUTPUT_ANALYSIS_BASE_DIRECTORY): "declare -x    ${CVAL_OUTPUT_ANALYSIS_BASE_DIRECTORY}=/tmp/Dideldum".toString(),
-                (CVAL_TEST_SPACE_QUOTES)             : "declare -x    ${CVAL_TEST_SPACE_QUOTES}=\"text with spaces\"".toString(),
-                (CVAL_TEST_TAB_QUOTES)               : "declare -x    ${CVAL_TEST_TAB_QUOTES}=\"text\twith\ttabs\"".toString(),
-                (CVAL_TEST_NEWLINE_QUOTES)           : "declare -x    ${CVAL_TEST_NEWLINE_QUOTES}=\"text\nwith\nnewlines\"".toString(),
-                (CVAL_TEST_SPACE_NQUOTE_ALREADY_QUOTED) : "declare -x    ${CVAL_TEST_SPACE_NQUOTE_ALREADY_QUOTED}=\"text with spaces\"".toString(),
-                (CVAL_TEST_EQUALITY_SIGN)            : "declare -x    ${CVAL_TEST_EQUALITY_SIGN}=\"--par1=val1 --par2=val2\"".toString(),
+                (CVAL_OUTPUT_BASE_DIRECTORY)           : "declare -x    ${CVAL_OUTPUT_BASE_DIRECTORY}=/tmp".toString(),
+                (CVAL_OUTPUT_ANALYSIS_BASE_DIRECTORY)  : "declare -x    ${CVAL_OUTPUT_ANALYSIS_BASE_DIRECTORY}=/tmp/Dideldum".toString(),
+                (CVAL_TEST_SPACE_QUOTES)               : "declare -x    ${CVAL_TEST_SPACE_QUOTES}=\"text with spaces\"".toString(),
+                (CVAL_TEST_TAB_QUOTES)                 : "declare -x    ${CVAL_TEST_TAB_QUOTES}=\"text\twith\ttabs\"".toString(),
+                (CVAL_TEST_NEWLINE_QUOTES)             : "declare -x    ${CVAL_TEST_NEWLINE_QUOTES}=\"text\nwith\nnewlines\"".toString(),
+                (CVAL_TEST_SPACE_NQUOTE_ALREADY_QUOTED): "declare -x    ${CVAL_TEST_SPACE_NQUOTE_ALREADY_QUOTED}=\"text with spaces\"".toString(),
+                (CVAL_TEST_EQUALITY_SIGN)              : "declare -x    ${CVAL_TEST_EQUALITY_SIGN}=\"--par1=val1 --par2=val2\"".toString(),
         ]
 
         ExecutionContext context = MockupExecutionContextBuilder.createSimpleContext(BashConverterTest, configuration)

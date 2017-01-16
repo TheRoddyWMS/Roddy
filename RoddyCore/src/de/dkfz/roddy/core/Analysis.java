@@ -60,16 +60,6 @@ public class Analysis {
     private File inputBaseDirectory;
 
     /**
-     * The basic output directory for an analysis.
-     */
-    private File outputBaseDirectory;
-
-    /**
-     * The datasets linked with this analysis.
-     */
-    private List<DataSet> listOfAnalysisDataSets;
-
-    /**
      * Runtime service is set in the analysis config. But the user can also set it for a project. The project then goes first, afterwards the analysis.
      */
     private RuntimeService runtimeService;
@@ -128,34 +118,6 @@ public class Analysis {
 //        return configuration;
     }
 
-    /**
-     * Fetches information to the projects data sets and various analysis related additional information for those data sets.
-     * Retrieves the data sets for this analysis from it's project and appends the data for this analysis (if not already set).
-     * <p>
-     * getListOfDataSets without a parameter
-     *
-     * @return
-     */
-    public List<DataSet> getListOfDataSets() {
-
-        RuntimeService rs = getRuntimeService();
-        if (listOfAnalysisDataSets == null)
-            listOfAnalysisDataSets = rs.loadCombinedListOfDataSets(this);
-
-        List<AnalysisProcessingInformation> previousExecs = rs.readoutExecCacheFile(this);
-
-        for (DataSet ds : listOfAnalysisDataSets) {
-            for (AnalysisProcessingInformation api : previousExecs) {
-                if (api.getDataSet() == ds) {
-                    ds.addProcessingInformation(api);
-                }
-            }
-            project.updateDataSet(ds, this);
-        }
-
-        return listOfAnalysisDataSets;
-    }
-
     @Override
     public String toString() {
         return name;
@@ -188,13 +150,15 @@ public class Analysis {
      */
     public File getOutputAnalysisBaseDirectory() {
         return getRuntimeService().getOutputFolderForAnalysis(this);
-//        if (outputBaseDirectory == null)
-//            outputBaseDirectory = getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY).toFile(this);
-//        return outputBaseDirectory;
+    }
+
+    public List<DataSet> getListOfDataSets() {
+        return getRuntimeService().getListOfPossibleDataSets(this);
     }
 
     public DataSet getDataSet(String dataSetID) {
-        for (DataSet d : listOfAnalysisDataSets)
+        // TODO: The avoidRecursion variable is more or less a hack. It work
+        for (DataSet d : getRuntimeService().getListOfPossibleDataSets(this, true))
             if (d.getId().equals(dataSetID))
                 return d;
         return null;
@@ -215,7 +179,7 @@ public class Analysis {
      * @return
      */
     public List<ExecutionContext> run(List<String> pidFilters, ExecutionContextLevel level) {
-        List<DataSet> selectedDatasets = loadDatasetsWithFilter(pidFilters);
+        List<DataSet> selectedDatasets = getRuntimeService().loadDatasetsWithFilter(this, pidFilters);
         List<ExecutionContext> runs = new LinkedList<>();
 
         long creationCheckPoint = System.nanoTime();
@@ -276,7 +240,7 @@ public class Analysis {
     }
 
     public Map<DataSet, Boolean> checkStatus(List<String> pids, boolean suppressInfo) {
-        List<DataSet> dataSets = loadDatasetsWithFilter(pids, suppressInfo);
+        List<DataSet> dataSets = getRuntimeService().loadDatasetsWithFilter(this, pids, suppressInfo);
         Map<DataSet, Boolean> results = new LinkedHashMap<>();
         dataSets.parallelStream().forEach(ds -> {
             boolean result = checkStatusForDataset(ds);
@@ -293,33 +257,28 @@ public class Analysis {
         return sortedMap;
     }
 
+    /**
+     * Convenience accessor to runtimeService
+     *
+     * @return
+     */
+    public List<DataSet> getListOfPossibleDataSets() {
+        return runtimeService.getListOfPossibleDataSets(this);
+    }
+
+    @Deprecated
     public List<DataSet> loadDatasetsWithFilter(List<String> pidFilters) {
         return loadDatasetsWithFilter(pidFilters, false);
     }
 
+    @Deprecated()
     public List<DataSet> loadDatasetsWithFilter(List<String> pidFilters, boolean suppressInfo) {
-        if (pidFilters == null || pidFilters.size() == 0 || pidFilters.size() == 1 && pidFilters.get(0).equals("[ALL]")) {
-            pidFilters = Arrays.asList("*");
-        }
-        List<DataSet> listOfDataSets = getListOfDataSets();
-        return selectDatasetsFromPattern(pidFilters, listOfDataSets, suppressInfo);
+        return runtimeService.loadDatasetsWithFilter(this, pidFilters, suppressInfo);
     }
 
+    @Deprecated
     public List<DataSet> selectDatasetsFromPattern(List<String> pidFilters, List<DataSet> listOfDataSets, boolean suppressInfo) {
-
-        List<DataSet> selectedDatasets = new LinkedList<>();
-        WildcardFileFilter wff = new WildcardFileFilter(pidFilters);
-        for (DataSet ds : listOfDataSets) {
-            File inputFolder = ds.getInputFolderForAnalysis(this);
-            if (!wff.accept(inputFolder))
-                continue;
-            if (!suppressInfo) logger.info(String.format("Selected dataset %s for processing.", ds.getId()));
-            selectedDatasets.add(ds);
-        }
-
-        if (selectedDatasets.size() == 0)
-            logger.postAlwaysInfo("There were no available datasets for the provided pattern.");
-        return selectedDatasets;
+        return runtimeService.selectDatasetsFromPattern(this, pidFilters, listOfDataSets, suppressInfo);
     }
 
     /**
@@ -333,7 +292,7 @@ public class Analysis {
      */
     public ExecutionContext runDeferredContext(String pidFilter, final ExecutionContextLevel executionContextLevel) {
         long creationCheckPoint = System.nanoTime();
-        for (DataSet ds : getListOfDataSets()) {
+        for (DataSet ds : getRuntimeService().getListOfPossibleDataSets(this)) {
             if (!new WildcardFileFilter(pidFilter).accept(ds.getInputFolderForAnalysis(this)))
                 continue;
             final ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, executionContextLevel, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null, creationCheckPoint);
@@ -422,7 +381,7 @@ public class Analysis {
                 logger.postAlwaysInfo("An exception occurred: '" + eCopy.getLocalizedMessage() + "'");
                 if (logger.isVerbosityMedium()) {
                     logger.log(Level.SEVERE, eCopy.toString());
-                    logger.postAlwaysInfo( RoddyIOHelperMethods.getStackTraceAsString(eCopy));
+                    logger.postAlwaysInfo(RoddyIOHelperMethods.getStackTraceAsString(eCopy));
                 } else {
                     logger.postAlwaysInfo("Set --verbositylevel >=" + LoggerWrapper.VERBOSITY_WARNING + " or higher to see stack trace.");
                 }
@@ -441,10 +400,10 @@ public class Analysis {
                 StringBuilder messages = new StringBuilder();
                 boolean warningsOnly = true;
                 for (ExecutionContextError executionContextError : context.getErrors()) {
-                    if(executionContextError.getErrorLevel().intValue() > Level.WARNING.intValue())
+                    if (executionContextError.getErrorLevel().intValue() > Level.WARNING.intValue())
                         warningsOnly = false;
                 }
-                if(warningsOnly)
+                if (warningsOnly)
                     messages.append("\nThere were warnings for the execution context for dataset " + datasetID);
                 else
                     messages.append("\nThere were errors for the execution context for dataset " + datasetID);
@@ -467,7 +426,7 @@ public class Analysis {
     public void cleanup(List<String> pidList) {
         if (!((AnalysisConfiguration) getConfiguration()).hasCleanupScript() && !getWorkflow().hasCleanupMethod())
             logger.postAlwaysInfo("There is neither a configured cleanup script or a native workflow cleanup method available for this analysis.");
-        List<DataSet> dataSets = loadDatasetsWithFilter(pidList, true);
+        List<DataSet> dataSets = getRuntimeService().loadDatasetsWithFilter(this, pidList, true);
         for (DataSet ds : dataSets) {
             // Call a custom cleanup shell script.
             if (((AnalysisConfiguration) getConfiguration()).hasCleanupScript()) {

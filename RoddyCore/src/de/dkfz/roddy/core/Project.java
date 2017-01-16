@@ -127,7 +127,7 @@ public class Project implements Serializable {
         return runtimeService;
     }
 
-//    public List<DataSet> getListOfDataSets() {
+//    public List<DataSet> getListOfPossibleDataSets() {
 //        return listOfDataSets;
 //    }
 
