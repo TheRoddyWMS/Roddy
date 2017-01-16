@@ -432,7 +432,7 @@ public class RoddyCLIClient {
         Analysis analysis = ProjectFactory.getInstance().loadAnalysis(args[1]);
         if (!analysis) return;
 
-        def datasets = analysis.getListOfDataSets()
+        def datasets = analysis.getRuntimeService().getListOfPossibleDataSets(analysis)
         for (DataSet ds : datasets) {
             System.out.println(String.format("\t%s", ds.getId()));
         }

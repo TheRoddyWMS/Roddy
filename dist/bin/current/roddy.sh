@@ -3,6 +3,8 @@
 cd `dirname $0`
 parm1=${1-}
 
+JAVA_OPTS=${JAVA_OPTS:-"-Xms64m -Xmx500m"}
+
 # Call some scripts before other steps start.
 if [[ "$parm1" == "prepareprojectconfig" ]]; then
     source ${SCRIPTS_DIR}/prepareProjectConfiguration.sh
