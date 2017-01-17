@@ -7,7 +7,6 @@
 package de.dkfz.roddy.tools
 
 import groovy.transform.CompileStatic
-import org.apache.commons.cli.CommandLine
 
 /**
  * A complex line representing e.g. a command line.
@@ -20,6 +19,20 @@ import org.apache.commons.cli.CommandLine
  */
 @CompileStatic
 class ComplexLine {
+
+    static Map<Character, Character> possibleContainersByOpeningCharacter = [:]
+    static Map<Character, Character> possibleContainersByClosingCharacter = [:]
+
+    static {
+        possibleContainersByOpeningCharacter['\'' as char] = '\'' as Character
+        possibleContainersByOpeningCharacter['\"' as char] = '\"' as Character
+        possibleContainersByOpeningCharacter['{' as char] = '}' as Character
+        possibleContainersByOpeningCharacter['[' as char] = ']' as Character
+        possibleContainersByOpeningCharacter['(' as char] = ')' as Character
+
+        possibleContainersByOpeningCharacter.each { Character key, Character value -> possibleContainersByClosingCharacter[value] = key }
+    }
+
     String line;
     ParsedLine parsedLine;
 
@@ -72,8 +85,16 @@ class ComplexLine {
         }
     }
 
+    public static isOpeningOrClosingCharacter(Character c) {
+        return possibleContainersByOpeningCharacter.containsKey(c) || possibleContainersByClosingCharacter.containsKey(c)
+    }
+
+    public static fitsToOpeningCharacter(Character c, Character o) {
+        return possibleContainersByClosingCharacter[c] == o
+    }
+
     public static ParsedLine parseLine(String line) {
-        List<Character> possibleContainers = ['\'' as char, '\"' as char]
+
         Stack<Character> openedStarts = new Stack<>();
         openedStarts.push('ö' as char)
 
@@ -85,10 +106,10 @@ class ComplexLine {
 
             char character = line.getChars()[i];
 
-            if (!possibleContainers.contains(character)) {
+            if (!isOpeningOrClosingCharacter(character)) {
                 current.content += character;
                 continue;
-            } else if (openedStarts.peek() == character) {
+            } else if (fitsToOpeningCharacter(character, openedStarts.peek())) {
                 openedStarts.pop()
                 if (parsedLines.size() > 0)
                     parsedLines.pop()
@@ -104,6 +125,7 @@ class ComplexLine {
                 parsedLines.push(current);
             }
         }
+        if(parsedLines.size() > 1) throw new IOException("The line $line is malformed. There is an enclosing literal missing.")
         return current;
     }
 
