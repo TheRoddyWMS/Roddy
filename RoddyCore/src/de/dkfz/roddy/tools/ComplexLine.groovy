@@ -13,8 +13,6 @@ import groovy.transform.CompileStatic
  *
  * The complex line will try to identify enclosing single or double ticks.
  *
- * Brackets are not detected yet! Maybe make that available in the future. The tests for brackets are a bit different to ticks.
- *
  * Created by heinold on 16.01.17.
  */
 @CompileStatic
@@ -34,7 +32,7 @@ class ComplexLine {
     }
 
     String line;
-    ParsedLine parsedLine;
+    LineNode parsedLine;
 
     /**
      * Parsed line represents a transformed / parsed line. Currently, single and double ticks will be used
@@ -52,38 +50,90 @@ class ComplexLine {
      *                                                          |
      *                                                          equals
      */
-    static class ParsedLine {
-        String content = "";
-        List<ParsedLine> children = [];
+    static abstract class LineNode {
 
-        ParsedLine() {
-        }
+        abstract String reassemble()
 
-        public String reassemble() {
-            String _content = content;
-            for (int i = 0; i < children.size(); i++) {
-                _content = _content.replace("###CHILD_${i}###", children[i].reassemble());
-            }
-            return _content;
-        }
-
-        public String[] splitBy(String s) {
-            def res = content.split(s);
-
-            for (int i = 0; i < res.size(); i++) {
-                def pl = new ParsedLine()
-                pl.content = res[i];
-                pl.children = children;
-                res[i] = pl.reassemble()
-            }
-            return res;
-        }
+        abstract String[] splitBy(String s)
 
         @Override
         public String toString() {
             return reassemble()
         }
     }
+
+    static class TextNode extends LineNode {
+        StringBuilder text = new StringBuilder()
+
+        TextNode() {
+
+        }
+
+        TextNode(String start) {
+            this.text << start
+        }
+
+        @Override
+        String reassemble() {
+            return text.toString()
+        }
+
+        @Override
+        String[] splitBy(String s) {
+            return text.toString().split(s)
+        }
+    }
+
+    static class ComplexNode extends LineNode {
+        List<LineNode> blocks = []
+
+        ComplexNode() {
+            blocks << new TextNode()
+        }
+
+
+        @Override
+        String reassemble() {
+            StringBuilder _content = new StringBuilder();
+            for (int i = 0; i < blocks.size(); i++) {
+                _content << blocks[i].reassemble()
+            }
+            return _content.toString();
+        }
+
+        public String[] splitBy(String s) {
+            // Keep a list of splitted, prepared blocks. The list will be used to join results.
+            List<StringBuilder> splittedBlocks = []
+            for (int i = 0; i < blocks.size(); i++) {
+                List<String> splitted = null
+                if (blocks[i] instanceof TextNode) {
+                    splitted = blocks[i].splitBy(s) as List<String>
+
+                    // If our string ends with the splitter, the splitted entry would be lost. Append an empty entry to preserve it.
+                    if (blocks[i].reassemble().endsWith(s))
+                        splitted = splitted + [""]
+                }
+                if (blocks[i] instanceof ComplexNode) {
+                    splitted = [blocks[i].reassemble()] // Complex nodes will just be reassembled. We don't want to split over multi levels!
+                }
+
+                // Convert the found strings to builders
+                List<StringBuilder> newBuilders = splitted.collect { new StringBuilder(it) }
+
+                // If there already is a splitted entry, append the first new found string to the last entry.
+                if (splittedBlocks) {
+                    splittedBlocks[-1] << newBuilders[0]
+                    if (newBuilders.size() > 1)
+                        splittedBlocks += newBuilders[1..-1]
+                } else
+                    splittedBlocks += newBuilders // If there is nothing, just take all entries as new entries.
+            }
+            // Collect, convert, return
+            def res = splittedBlocks.collect { new String(it) }
+            return res as String[]
+        }
+    }
+
 
     public static isOpeningOrClosingCharacter(Character c) {
         return possibleContainersByOpeningCharacter.containsKey(c) || possibleContainersByClosingCharacter.containsKey(c)
@@ -93,39 +143,39 @@ class ComplexLine {
         return possibleContainersByClosingCharacter[c] == o
     }
 
-    public static ParsedLine parseLine(String line) {
+    public static LineNode parseLine(String line) {
 
         Stack<Character> openedStarts = new Stack<>();
         openedStarts.push('ö' as char)
 
-        ParsedLine current = new ParsedLine();
-        Stack<ParsedLine> parsedLines = new Stack<>()
-        parsedLines.push(current)
+        ComplexNode current = new ComplexNode();
+        Stack<ComplexNode> lineNodes = new Stack<>()
+        lineNodes.push(current)
 
         for (int i = 0; i < line.length(); i++) {
 
             char character = line.getChars()[i];
 
             if (!isOpeningOrClosingCharacter(character)) {
-                current.content += character;
+                ((TextNode) current.blocks[-1]).text << character;
                 continue;
             } else if (fitsToOpeningCharacter(character, openedStarts.peek())) {
                 openedStarts.pop()
-                if (parsedLines.size() > 0)
-                    parsedLines.pop()
-                if (parsedLines.size() > 0)
-                    current = parsedLines.peek()
-                current.content += character;
+                if (lineNodes.size() > 0)
+                    lineNodes.pop()
+                if (lineNodes.size() > 0)
+                    current = lineNodes.peek()
+                current.blocks << new TextNode(character as String);
             } else {
-                current.content += character;
+                ((TextNode) current.blocks[-1]).text << character;
                 openedStarts.push(character)
-                current.content += "###CHILD_${current.children.size()}###"
-                current = new ParsedLine()
-                parsedLines.peek().children << current
-                parsedLines.push(current);
+                current.blocks << new ComplexNode()
+//                lineNodes.peek().children << current
+                current = current.blocks[-1] as ComplexNode
+                lineNodes.push(current);
             }
         }
-        if(parsedLines.size() > 1) throw new IOException("The line $line is malformed. There is an enclosing literal missing.")
+        if (lineNodes.size() > 1) throw new IOException("The line $line is malformed. There is an enclosing literal missing.")
         return current;
     }
 
@@ -142,4 +192,5 @@ class ComplexLine {
     public String toString() {
         return line
     }
+
 }
