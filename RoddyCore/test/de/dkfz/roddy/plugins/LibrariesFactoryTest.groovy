@@ -7,7 +7,13 @@
 package de.dkfz.roddy.plugins
 
 import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import de.dkfz.roddy.execution.io.ExecutionHelper
+import de.dkfz.roddy.execution.io.ExecutionService
+import de.dkfz.roddy.execution.io.LocalExecutionService
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.RuntimeTools
 import groovy.transform.TypeCheckingMode
 import org.junit.AfterClass
@@ -75,6 +81,8 @@ public class LibrariesFactoryTest {
 
     public static TemporaryFolder pluginsBaseDirWithInvalidEntries = new TemporaryFolder();
 
+    public static File pluginsDirWithInvalidEntries
+
     @AfterClass
     public static void tearDownClass() {
         pluginsBaseDirWithCorrectEntries.delete();
@@ -83,7 +91,8 @@ public class LibrariesFactoryTest {
     @BeforeClass
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public static void setupTestDataForPluginQueueTests() {
-
+        ExecutionService.initializeService(LocalExecutionService, RunMode.CLI);
+        FileSystemAccessProvider.initializeProvider(true);
         pluginsBaseDirWithCorrectEntries.create();
 
         // Create the folder and file structure so that the loadPluginsFromDirectories method will work.
@@ -151,52 +160,13 @@ public class LibrariesFactoryTest {
         // Create a temp directory with several valid and several invalid directories.
         // Invalid are e.g. hidden directories, directories with malformated names, directories with missing content..
         // TODO Might be necessary to extend this to cover Auto-Detect of Python/Java/Groovy Plugins and contents. (Jar files).
+        pluginsBaseDirWithInvalidEntries.create();
 
-        pluginsBaseDirWithInvalidEntries.create()
-        pluginsBaseDirWithInvalidEntries.newFolder("Valid_1.0.2-2").with {
-            File f ->
-                new File(f, "buildinfo.txt") << "dependson=PluginBase:current\nJDKVersion=1.8\nGroovyVersion=2.4\nRoddyAPIVersion=2.3\n";
-                new File(f, "buildversion.txt") << "1.0\n2";
-                new File(f, "resources/analysisTools").mkdirs();
-                new File(f, "resources/configurationFiles").mkdirs();
-        }
-
-        pluginsBaseDirWithInvalidEntries.newFolder("ValidContent").with {
-            File f ->
-                new File(f, "buildinfo.txt") << "dependson=PluginBase:current\nJDKVersion=1.8\nGroovyVersion=2.4\nRoddyAPIVersion=2.3\n";
-                new File(f, "buildversion.txt") << "current";
-                new File(f, "resources/analysisTools").mkdirs();
-                new File(f, "resources/configurationFiles").mkdirs();
-        }
-
-        pluginsBaseDirWithInvalidEntries.newFolder("InValidContentNoATools").with {
-            File f ->
-                new File(f, "buildinfo.txt") << "dependson=PluginBase:current\nJDKVersion=1.8\nGroovyVersion=2.4\nRoddyAPIVersion=2.3\n";
-                new File(f, "buildversion.txt") << "1.0\n2";
-                new File(f, "resources/configurationFiles").mkdirs();
-        }
-        pluginsBaseDirWithInvalidEntries.newFolder("InValidContentNoCfgDir").with {
-            File f ->
-                new File(f, "buildinfo.txt") << "dependson=PluginBase:current\nJDKVersion=1.8\nGroovyVersion=2.4\nRoddyAPIVersion=2.3\n";
-                new File(f, "buildversion.txt") << "1.0\n2";
-                new File(f, "resources/analysisTools").mkdirs();
-        }
-        pluginsBaseDirWithInvalidEntries.newFolder("InValidContentNoBuildFiles").with {
-            File f ->
-                new File(f, "resources/analysisTools").mkdirs();
-                new File(f, "resources/configurationFiles").mkdirs();
-        }
-        pluginsBaseDirWithInvalidEntries.newFolder("InValidContentCantRead").setReadable(false, false);
-
-        pluginsBaseDirWithInvalidEntries.newFolder("InValidName_1.02-c")
-        pluginsBaseDirWithInvalidEntries.newFolder("InValidName_1.02-ax")
-        pluginsBaseDirWithInvalidEntries.newFolder("InValidName_ax")
-        pluginsBaseDirWithInvalidEntries.newFolder(".InValidHidden")
-        pluginsBaseDirWithInvalidEntries.newFolder(".git")
-        pluginsBaseDirWithInvalidEntries.newFolder(".svn")
-
-        pluginsBaseDirWithInvalidEntries.newFile(".InvalidHiddenFile")
-        pluginsBaseDirWithInvalidEntries.newFile("InvalidFile")
+        File testSource = new File(LibrariesFactory.groovyClassLoader.getResource("LibrariesFactoryTestData.zip").file)
+        pluginsDirWithInvalidEntries = pluginsBaseDirWithInvalidEntries.root
+        ExecutionHelper.executeSingleCommand("cp -r ${testSource} ${pluginsDirWithInvalidEntries}; cd ${pluginsDirWithInvalidEntries}; unzip LibrariesFactoryTestData.zip");
+        pluginsDirWithInvalidEntries = new File(pluginsDirWithInvalidEntries, "LibrariesFactoryTestData")
+        new File(pluginsDirWithInvalidEntries, "InValidContentCantRead").setReadable(false);
     }
 
     public static PluginInfoMap callLoadMapOfAvailablePlugins(List<File> additionalPluginDirectories = [], boolean single = false) {
@@ -205,18 +175,14 @@ public class LibrariesFactoryTest {
         if (!single)
             pluginDirectories += [new File(Roddy.getApplicationDirectory(), "/dist/plugins/")]
 
-        // The method is static and private and should stay that way, so get it via reflection.
-        Method loadMapOfAvailablePlugins = LibrariesFactory.getDeclaredMethod("loadMapOfAvailablePlugins", List.class);
-        loadMapOfAvailablePlugins.setAccessible(true);
-
         // Invoke the method and check the results.
         return LibrariesFactory.loadMapOfAvailablePlugins(pluginDirectories)
     }
 
     @Test
     public void testLoadMapOfAvailablePlugins() {
-        def availablePlugins = callLoadMapOfAvailablePlugins([pluginsBaseDirWithInvalidEntries.root], true);
-        assert availablePlugins
+        def availablePlugins = callLoadMapOfAvailablePlugins([pluginsDirWithInvalidEntries], true);
+        assert availablePlugins != null
         assert availablePlugins.size() == 2
         assert availablePlugins["ValidContent"].size() == 1
         assert availablePlugins["Valid"].size() == 1
