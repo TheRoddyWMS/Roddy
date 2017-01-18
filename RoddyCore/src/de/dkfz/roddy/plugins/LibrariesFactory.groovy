@@ -246,7 +246,7 @@ public class LibrariesFactory extends Initializable {
             File[] directoryList = pBaseDirectory.listFiles().sort() as File[];
             for (File pEntry in directoryList) {
 
-                if(!isValidPluginFolder(pEntry))
+                if (!isValidPluginFolder(pEntry))
                     continue;
 
                 String[] splitName = pEntry.name.split(StringConstants.SPLIT_UNDERSCORE); //First split for .zip then for the version
@@ -276,8 +276,8 @@ public class LibrariesFactory extends Initializable {
                 !f.checkFile(new File(directory, "buildversion.txt")) ||
                 !f.checkDirectory(new File(directory, "resources/analysisTools")) ||
                 !f.checkDirectory(new File(directory, "resources/configurationFiles"))
-        ) return false;
-
+        ) return false
+        return true
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
