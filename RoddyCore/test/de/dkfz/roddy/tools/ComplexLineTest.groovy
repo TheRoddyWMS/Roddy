@@ -7,7 +7,9 @@
 package de.dkfz.roddy.tools
 
 import groovy.transform.CompileStatic
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExpectedException
 
 /**
  * A test class for the Complex Line class
@@ -35,7 +37,7 @@ class ComplexLineTest {
     public static final String faultyLineExample = "a(b(c())"
 
     @Test
-    public void testIsOpeningOrClosingCharacter() {
+    void testIsOpeningOrClosingCharacter() {
         assert ComplexLine.isOpeningOrClosingCharacter('\'' as Character);
         assert ComplexLine.isOpeningOrClosingCharacter('\"' as Character);
         assert ComplexLine.isOpeningOrClosingCharacter('[' as Character);
@@ -47,7 +49,7 @@ class ComplexLineTest {
     }
 
     @Test
-    public void testFitsToOpeningCharacter() {
+    void testFitsToOpeningCharacter() {
         assert ComplexLine.fitsToOpeningCharacter('\'' as Character, '\'' as Character)
         assert ComplexLine.fitsToOpeningCharacter('\"' as Character, '\"' as Character)
         assert !ComplexLine.fitsToOpeningCharacter('\"' as Character, '\'' as Character)
@@ -57,7 +59,7 @@ class ComplexLineTest {
     }
 
     @Test
-    public void testParseSimpleLine() {
+    void testParseSimpleLine() {
         ComplexLine.ComplexNode parsed = ComplexLine.parseLine("a'bcd'e f'gh'i") as ComplexLine.ComplexNode
         assert parsed.blocks.size() == 5
         assert parsed.blocks[0] instanceof ComplexLine.TextNode && parsed.blocks[0].reassemble() == "a'"
@@ -68,33 +70,50 @@ class ComplexLineTest {
     }
 
     @Test
-    public void testParseCommandLine() {
+    void testParseCommandLine() {
         ComplexLine.ComplexNode parsed = ComplexLine.parseLine(commandLineExample) as ComplexLine.ComplexNode;
         assert parsed.blocks.size() == 5
         assert parsed.blocks[0] instanceof ComplexLine.TextNode && parsed.blocks[0].reassemble() == "--abc --def=\""
-        assert ((ComplexLine.ComplexNode)parsed.blocks[1]).blocks[0].reassemble() == "ab,def;efk=test;anotherValue='"
+        assert ((ComplexLine.ComplexNode) parsed.blocks[1]).blocks[0].reassemble() == "ab,def;efk=test;anotherValue='"
         assert parsed.blocks[2] instanceof ComplexLine.TextNode && parsed.blocks[2].reassemble() == "\" --jki --a=\""
         assert parsed.blocks[3] instanceof ComplexLine.ComplexNode && parsed.blocks[3].reassemble() == "something=def"
         assert parsed.blocks[4] instanceof ComplexLine.TextNode && parsed.blocks[4].reassemble() == "\""
     }
 
     @Test
-    public void testParseCodeLine() {
+    void testParseCodeLine() {
         ComplexLine.ComplexNode parsed = ComplexLine.parseLine(codeLineExample) as ComplexLine.ComplexNode;
         assert parsed.blocks.size() == 7
         assert parsed.blocks[0] instanceof ComplexLine.TextNode && parsed.blocks[0].reassemble() == "def multiline='"
-        assert ((ComplexLine.ComplexNode)parsed.blocks[1]).blocks[0].reassemble() == "a string"
+        assert ((ComplexLine.ComplexNode) parsed.blocks[1]).blocks[0].reassemble() == "a string"
         assert parsed.blocks[2] instanceof ComplexLine.TextNode && parsed.blocks[2].reassemble() == "', b={"
     }
 
-    @Test(expected = IOException)
-    public void testFaultyLine() {
-        ComplexLine.parseLine(faultyLineExample)
-    }
-
+    @Rule
+    public ExpectedException thrown = ExpectedException.none()
 
     @Test
-    public void testReassembleCommandLine() {
+    void testFaultyLine() {
+        thrown.expect(IOException)
+        thrown.expectMessage("The line $faultyLineExample is malformed. There is a closing literal missing.")
+        ComplexLine.parseLine(faultyLineExample)
+
+    }
+
+    @Test
+    void testMoreFaultyTests() {
+        assert false
+//        forgotten closing paren: "(blabla"
+//        confused/non-matching paren types: "(a\"b)\""
+//        forgotten opening paren: "balbla}"
+//        non-matching paren types: "\"blabla\'"
+//        singleton opening paren: "{"
+//        singleton closing paren: ")"
+//        etc.
+    }
+
+    @Test
+    void testReassembleCommandLine() {
         ComplexLine.LineNode parsed = ComplexLine.parseLine(commandLineExample)
         assert parsed.reassemble() == commandLineExample
 
@@ -102,7 +121,7 @@ class ComplexLineTest {
     }
 
     @Test
-    public void testReassembleCodeLine() {
+    void testReassembleCodeLine() {
         ComplexLine.LineNode parsed = ComplexLine.parseLine(codeLineExample)
         assert parsed.reassemble() == codeLineExample
 
@@ -110,13 +129,13 @@ class ComplexLineTest {
     }
 
     @Test
-    public void testSplitCommandLine() {
+    void testSplitCommandLine() {
         ComplexLine cls = new ComplexLine(commandLineExample);
         assert cls.splitBy(" ") == splittedCommandLineExample as List<String>
     }
 
     @Test
-    public void testSplitCodeLine() {
+    void testSplitCodeLine() {
         ComplexLine cls = new ComplexLine(codeLineExample);
         assert cls.splitBy(",") == splittedCodeLineExample as List<String>
     }

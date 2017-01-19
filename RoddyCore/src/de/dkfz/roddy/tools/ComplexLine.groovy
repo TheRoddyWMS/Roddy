@@ -9,7 +9,7 @@ package de.dkfz.roddy.tools
 import groovy.transform.CompileStatic
 
 /**
- * A complex line representing e.g. a command line.
+ * A complex line representing e.g. a command line or a code line
  *
  * The complex line will try to identify enclosing single or double ticks.
  *
@@ -31,30 +31,34 @@ class ComplexLine {
         possibleContainersByOpeningCharacter.each { Character key, Character value -> possibleContainersByClosingCharacter[value] = key }
     }
 
-    String line;
+    /** The full line passed to the ComplexLine **/
+    final String line;
+
+    /** The parsed line **/
     LineNode parsedLine;
 
     /**
-     * Parsed line represents a transformed / parsed line. Currently, single and double ticks will be used
-     * to identify children.
+     * Basic class for line nodes. A String is converted to a tree of these.
      *
-     * E.g. --abc --def="ab,def;efk=test;anotherValue='equals'" --jki --a="something=def"
+     * E.g. --abc --def="ab,def;efk=(test);anotherValue='equals'" --jki --a="something=def"
      *
      * will be represented like:
      *
-     *     --abc --def="###CHILD_0###" --jki --a="###CHILD_1###"
-     *                       |                         |
-     *                       ab,def;efk=test;anotherValue="###CHILD_0###"
-     *                                                 |        |
-     *                                                 something=def
-     *                                                          |
-     *                                                          equals
+     * Node 0:      [ TN:'--abc --def=', CN:Node 1, TN:'" --jki --a="', CN:Node 4, TN:'"' ]
+     * Node 1:      [ TN:'ab,def;efk=(', CN:Node 2, TN:");anotherValue='", CN:Node 3, TN:"'", TN:'"' ]
+     * Node 2:      [ TN:'test' ]
+     * Node 3:      [ TN:'equals' ]
+     * Node 4:      [ TN:'something-def' ]
      */
     static abstract class LineNode {
 
         abstract String reassemble()
 
-        abstract String[] splitBy(String s)
+        abstract String[] spliteNodeContentBy(String s)
+
+        boolean isTextNode() { return false; }
+
+        boolean isComplexNode() { return false; }
 
         @Override
         public String toString() {
@@ -62,6 +66,9 @@ class ComplexLine {
         }
     }
 
+    /**
+     * Represents a block of text
+     */
     static class TextNode extends LineNode {
         StringBuilder text = new StringBuilder()
 
@@ -74,16 +81,24 @@ class ComplexLine {
         }
 
         @Override
+        boolean isTextNode() {
+            return true;
+        }
+
+        @Override
         String reassemble() {
             return text.toString()
         }
 
         @Override
-        String[] splitBy(String s) {
+        String[] spliteNodeContentBy(String s) {
             return text.toString().split(s)
         }
     }
 
+    /**
+     * Represents a complex node which holds an instance of text and complex node objects.
+     */
     static class ComplexNode extends LineNode {
         List<LineNode> blocks = []
 
@@ -91,6 +106,10 @@ class ComplexLine {
             blocks << new TextNode()
         }
 
+        @Override
+        boolean isComplexNode() {
+            return true;
+        }
 
         @Override
         String reassemble() {
@@ -101,19 +120,18 @@ class ComplexLine {
             return _content.toString();
         }
 
-        public String[] splitBy(String s) {
+        String[] spliteNodeContentBy(String s) {
             // Keep a list of splitted, prepared blocks. The list will be used to join results.
             List<StringBuilder> splittedBlocks = []
             for (int i = 0; i < blocks.size(); i++) {
                 List<String> splitted = null
-                if (blocks[i] instanceof TextNode) {
-                    splitted = blocks[i].splitBy(s) as List<String>
+                if (blocks[i].isTextNode()) {
+                    splitted = blocks[i].spliteNodeContentBy(s) as List<String>
 
                     // If our string ends with the splitter, the splitted entry would be lost. Append an empty entry to preserve it.
                     if (blocks[i].reassemble().endsWith(s))
                         splitted = splitted + [""]
-                }
-                if (blocks[i] instanceof ComplexNode) {
+                } else if (blocks[i].isComplexNode()) {
                     splitted = [blocks[i].reassemble()] // Complex nodes will just be reassembled. We don't want to split over multi levels!
                 }
 
@@ -135,18 +153,18 @@ class ComplexLine {
     }
 
 
-    public static isOpeningOrClosingCharacter(Character c) {
+    static isOpeningOrClosingCharacter(Character c) {
         return possibleContainersByOpeningCharacter.containsKey(c) || possibleContainersByClosingCharacter.containsKey(c)
     }
 
-    public static fitsToOpeningCharacter(Character c, Character o) {
+    static fitsToOpeningCharacter(Character c, Character o) {
         return possibleContainersByClosingCharacter[c] == o
     }
 
-    public static LineNode parseLine(String line) {
+    static LineNode parseLine(String line) {
 
         Stack<Character> openedStarts = new Stack<>();
-        openedStarts.push('ö' as char)
+        openedStarts.push('ö' as char) // Just put some character
 
         ComplexNode current = new ComplexNode();
         Stack<ComplexNode> lineNodes = new Stack<>()
@@ -158,24 +176,22 @@ class ComplexLine {
 
             if (!isOpeningOrClosingCharacter(character)) {
                 ((TextNode) current.blocks[-1]).text << character;
-                continue;
             } else if (fitsToOpeningCharacter(character, openedStarts.peek())) {
                 openedStarts.pop()
-                if (lineNodes.size() > 0)
+                if (lineNodes.size() > 0) // First, check if something is in the Stack, then pop from it
                     lineNodes.pop()
-                if (lineNodes.size() > 0)
+                if (lineNodes.size() > 0)  // If there is still something in the Stack, peek it.
                     current = lineNodes.peek()
                 current.blocks << new TextNode(character as String);
             } else {
                 ((TextNode) current.blocks[-1]).text << character;
                 openedStarts.push(character)
                 current.blocks << new ComplexNode()
-//                lineNodes.peek().children << current
                 current = current.blocks[-1] as ComplexNode
                 lineNodes.push(current);
             }
         }
-        if (lineNodes.size() > 1) throw new IOException("The line $line is malformed. There is an enclosing literal missing.")
+        if (lineNodes.size() > 1) throw new IOException("The line $line is malformed. There is a closing literal missing.")
         return current;
     }
 
@@ -185,11 +201,11 @@ class ComplexLine {
     }
 
     String[] splitBy(String s) {
-        return parsedLine.splitBy(s)
+        return parsedLine.spliteNodeContentBy(s)
     }
 
     @Override
-    public String toString() {
+    String toString() {
         return line
     }
 
