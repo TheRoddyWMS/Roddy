@@ -53,21 +53,21 @@ class GitRepo {
         return matches[0].replaceAll(~/^\\*\\s/, "")
     }
 
-    String currentCommit (boolean allowDirty=false, boolean shortHash=false) {
+    String lastCommitHash (boolean allowDirty=false, boolean shortHash=false) {
         assert allowDirty || !isDirty()
         LinkedList<String> result
         if (shortHash) {
-             result = execute(gitCommand("log", "-1", "--pretty=%h%n")).findAll( { it.matches(~ /\S+/)})
+            result = execute(gitCommand("log", "-1", "--pretty=%h%n")).findAll( { it.matches(~ /\S+/)})
         } else {
-              result = execute(gitCommand("log", "-1", "--pretty=%H%n")).findAll( { it.matches(~ /\S+/)})
+            result = execute(gitCommand("log", "-1", "--pretty=%H%n")).findAll( { it.matches(~ /\S+/)})
         }
         if (result.size() != 1) {
-            throw new RuntimeException("Couldn't get current commit for ${this}.")
+            throw new RuntimeException("Couldn't get last commit for ${this}.")
         }
         return(result[0]);
     }
 
-    String currentCommitDate (boolean allowDirty=false) {
+    String lastCommitDate (boolean allowDirty=false) {
         assert allowDirty || !isDirty()
         return execute(gitCommand("log", "-1")).findAll {
             (it =~/^Date:\s+/) as Boolean

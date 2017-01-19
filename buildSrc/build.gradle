@@ -7,15 +7,33 @@ apply plugin: 'groovy'
 apply plugin: 'idea'
 
 repositories {
+    mavenCentral()
+	// jcenter()
     // Manage a local copy of the required libraries.
-    flatDir dirs: ["${rootProject.projectDir}/../dist/bin/current/lib/",
-                   "${rootProject.projectDir}/../dist/runtimeDevel/groovy/lib",
-                   "${rootProject.projectDir}/../dist/runtimeDevel/jdk/lib"]
+//    flatDir dirs: ["${rootProject.projectDir}/../dist/bin/current/lib/",
+//                   "${rootProject.projectDir}/../dist/runtimeDevel/groovy/lib",
+//                   "${rootProject.projectDir}/../dist/runtimeDevel/jdk/lib"]
+}
+
+
+def groovyVersion = "2.4.7"
+if (GroovySystem.getVersion() != groovyVersion) {
+    throw new GradleException("The current Groovy version ${GroovySystem.getVersion()} used by Gradle is not identical with the version configured for the Gradle extension code (buildSrc/, ${groovyVersion})")
+}
+
+
+configurations.all {
+    // This needs to be the same version as the one used for gradle!
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if (details.requested.group == 'org.codehaus.groovy') {
+            details.useVersion groovyVersion
+        }
+    }
 }
 
 dependencies {
-    compile ':groovy-all:2.3.6-indy'
-    testCompile ':spock-core:1.0-groovy-2.3'
+    compile "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    testCompile 'org.spockframework:spock-core:1.1-groovy-2.4-rc-3'
 }
 
 test {

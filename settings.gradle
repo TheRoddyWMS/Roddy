@@ -1,4 +1,4 @@
-rootProject.name = "RoddyGradle"
+rootProject.name = "Roddy"
 include "Roddy"
 project(":Roddy").projectDir = file("RoddyCore")
 include "PluginBase"

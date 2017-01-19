@@ -1,5 +1,6 @@
 package de.dkfz.roddy
 
+import org.spockframework.compiler.model.ThenBlock
 import spock.lang.*
 import org.gradle.api.file.*
 
@@ -43,7 +44,7 @@ class GitRepoSpec extends Specification {
         repo.add([tmpFile])
         repo.commit("testfile")
         then:
-        repo.currentCommit(true).matches(~ /^[0-9a-f]+$/)
+        repo.lastCommitHash(true).matches(~ /^[0-9a-f]+$/)
     }
 
     def "listing modified files" () {
@@ -62,12 +63,13 @@ class GitRepoSpec extends Specification {
         repo.add([tmpFile])
         repo.commit("testfile")
         then:
-        (repo.currentCommitDate(true) =~ /^\S{3}\s\S{3}\s\d{1,2}\s\d{2}:\d{2}:\d{2}\s\d{4}\s[+-]\d{4}$/) as Boolean
+        (repo.lastCommitDate(true) =~ /^\S{3}\s\S{3}\s\d{1,2}\s\d{2}:\d{2}:\d{2}\s\d{4}\s[+-]\d{4}$/) as Boolean
     }
 
     def "recognizing dirty repo" () {
         when:
         GitRepo repo = new GitRepo (tmpDir).initialize()
+        tmpFile.write("hallo")
         repo.add([tmpFile])
         then:
         repo.isDirty()
@@ -75,6 +77,10 @@ class GitRepoSpec extends Specification {
         repo.commit("testmessage")
         then:
         !repo.isDirty()
+        when:
+        tmpFile.write("modified hello")
+        then:
+        repo.isDirty()
     }
 
     def "tagging a commit" () {

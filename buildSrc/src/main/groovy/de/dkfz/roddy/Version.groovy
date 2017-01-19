@@ -49,11 +49,11 @@ class Version {
         if (revision == 0) {
             return "${major}.${minor}.${patch}"
         } else {
-            return "${major}.${minor}.${patch}-r${revision}"
+            return "${major}.${minor}.${patch}-${revision}"
         }
     }
 
-    private static final versionPattern = Pattern.compile(/^(\d+)\.(\d+)\.(\d+)(-r(\d+))?$/)
+    private static final versionPattern = Pattern.compile(/^(\d+)\.(\d+)\.(\d+)(-(\d+))?$/)
 
     public static Version fromString (String versionString) {
         Matcher matcher = versionPattern.matcher(versionString)
@@ -74,7 +74,7 @@ class Version {
         else if (idx == 1) minor
         else if (idx == 2) patch
         else if (idx == 3) revision
-        else throw new IndexOutOfBoundsException("1.2.3-r4")
+        else throw new IndexOutOfBoundsException("1.2.3-4")
     }
 
     public equals (Version other) {
