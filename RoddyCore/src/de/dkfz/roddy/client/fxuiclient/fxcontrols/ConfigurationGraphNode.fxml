@@ -11,6 +11,12 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.paint.*?>
 <?scenebuilder-stylesheet ConfigurationGraphNode.css?>
+<!--
+  ~ Copyright (c) 2016 eilslabs.
+  ~
+  ~ Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+  -->
+
 <fx:root type="javafx.scene.layout.BorderPane" prefHeight="45.0" prefWidth="150.0" xmlns:fx="http://javafx.com/fxml">
     <center>
         <StackPane fx:id="stackPane">

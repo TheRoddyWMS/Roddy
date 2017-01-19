@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.config.converters
 
 import de.dkfz.roddy.config.Configuration
@@ -6,6 +12,7 @@ import de.dkfz.roddy.config.ConfigurationValueBundle
 import de.dkfz.roddy.core.ExecutionContext
 import groovy.transform.TypeCheckingMode
 import groovy.xml.MarkupBuilder
+import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 /**
  * Converts a configuration object to XML.
@@ -69,5 +76,10 @@ class XMLConverter extends ConfigurationConverter {
 //        xml.configuration.
 
         return writer.toString()
+    }
+
+    @Override
+    StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context) {
+        throw new NotImplementedException();
     }
 }

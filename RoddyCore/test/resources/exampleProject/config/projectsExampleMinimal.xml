@@ -1,0 +1,16 @@
+<!--
+  ~ Copyright (c) 2016 eilslabs.
+  ~
+  ~ Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+  -->
+
+<configuration configurationType='project' name='example' description='' imports="" usedresourcessize="s">
+    <availableAnalyses>
+        <analysis id='test' configuration='testAnalysis' useplugin="TestPluginWithJarFile" />
+    </availableAnalyses>
+    <configurationvalues>
+        <cvalue name='inputBaseDirectory' value='#IODIR#' type='path'/>
+        <cvalue name='outputBaseDirectory' value='#IODIR#' type='path'/>
+        <cvalue name='outputAnalysisBaseDirectory' value='${outputBaseDirectory}/${pid}' type="path"/>
+    </configurationvalues>
+</configuration>

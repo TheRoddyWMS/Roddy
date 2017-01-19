@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.client.cliclient.clioutput;
 
 /**
@@ -37,7 +43,7 @@ public enum BashColours {
     BashColours(String colourString) {
         this.colourString = colourString
         this.colourFormatString = "#" + name() + "#";
-        this.colourFinalString = "\\033[" + colourString;
+        this.colourFinalString = "" + (char)27 + "[" + colourString;
     }
 
     public String format(String str) {

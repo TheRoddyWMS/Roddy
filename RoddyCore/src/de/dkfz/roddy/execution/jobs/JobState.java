@@ -1,11 +1,19 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.execution.jobs;
 
 import org.omg.PortableInterceptor.SUCCESSFUL;
 
+import java.io.Serializable;
+
 /**
- * A generic state for jobs.
+ * A generic jobState for jobs.
  */
-public enum JobState {
+public enum JobState implements Serializable {
     /**
      * Job is still running
      */
@@ -19,15 +27,15 @@ public enum JobState {
      */
     OK,
     /**
-     * Job state is unknown
+     * Job jobState is unknown
      */
     UNKNOWN,
     /**
-     * Job state is unknown because it was freshly read out from a file.
+     * Job jobState is unknown because it was freshly read out from a file.
      */
     UNKNOWN_READOUT,
     /**
-     * Recently submitted job, state is unknown
+     * Recently submitted job, jobState is unknown
      */
     UNKNOWN_SUBMITTED,
     /**

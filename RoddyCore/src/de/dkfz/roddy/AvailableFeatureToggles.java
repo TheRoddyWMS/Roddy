@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy;
 
 /**
@@ -11,7 +17,8 @@ public enum AvailableFeatureToggles {
     BreakSubmissionOnError(false),
     RollbackOnSubmissionOnError(false),
     // Modify bash arrays and pass them with a different separator. (comma instead of whitespace)
-    ModifiedVariablePassing(false),
+    ModifiedVariablePassing(true),
+    QuoteSomeScalarConfigValues(true),
     UseOldDataSetIDExtraction(true),
     AutoFilenames(false),
     UnzipZippedPlugins(false);

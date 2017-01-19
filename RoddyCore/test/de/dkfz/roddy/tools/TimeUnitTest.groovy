@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.tools;
 
 import org.junit.Test;
@@ -61,6 +67,11 @@ public class TimeUnitTest {
             String value, String expectedValue ->
                 assert (new TimeUnit(value).toString() == expectedValue);
         }
+    }
+
+    @Test(expected = NumberFormatException)
+    public void testInvalidWalltimeString2() {
+        new TimeUnit("3:5.25")
     }
 
     @Test(expected = NumberFormatException)

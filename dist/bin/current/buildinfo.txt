@@ -1,0 +1,3 @@
+JDKVersion=1.8
+GroovyVersion=2.4
+RoddyAPIVersion=2.3

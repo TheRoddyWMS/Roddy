@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.execution.jobs.direct.synchronousexecution
 
 import de.dkfz.roddy.StringConstants
@@ -7,6 +13,7 @@ import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.Job
 
 import static de.dkfz.roddy.StringConstants.BRACE_RIGHT
+import static de.dkfz.roddy.StringConstants.DOLLAR_LEFTBRACE
 import static de.dkfz.roddy.StringConstants.EMPTY
 import static de.dkfz.roddy.StringConstants.SINGLE_QUOTE
 
@@ -19,7 +26,6 @@ import static de.dkfz.roddy.StringConstants.SINGLE_QUOTE
 public class DirectCommand extends Command {
 
     private final List processingCommands;
-    private final Map<String, String> parameters;
     private final List<String> arrayIndices;
     private final List<String> dependencyIDs;
     private final String command;
@@ -28,10 +34,9 @@ public class DirectCommand extends Command {
     public static final String PARM_WRAPPED_SCRIPT = "WRAPPED_SCRIPT="
 
     public DirectCommand(Job job, ExecutionContext run, String jobName, List processingCommands, Map<String, String> parameters, List<String> arrayIndices, List<String> dependencyIDs, String command) {
-        super(job, run, jobName);
+        super(job, run, jobName, parameters);
         //, processingCommands, tool, parameters, dependencies, arraySettings);
         this.processingCommands = processingCommands;
-        this.parameters = parameters;
         this.arrayIndices = arrayIndices;
         this.dependencyIDs = dependencyIDs;
         this.command = command;
@@ -57,11 +62,8 @@ public class DirectCommand extends Command {
         parameters.each {
             String pName, String val ->
                 //TODO Code dedup with PBSCommand
-                if(val.contains("\${") && val.contains(BRACE_RIGHT)) {
-                    val = val.replace("\${", "#{"); // Replace variable names so they can be passed to qsub.
-                }
-                if(val.startsWith("parameterArray=")) {
-                    val = "'" + val.replace("parameterArray=", EMPTY) + SINGLE_QUOTE;
+                if (val.contains(DOLLAR_LEFTBRACE) && val.contains(BRACE_RIGHT)) {
+                    val = val.replace(DOLLAR_LEFTBRACE, "#{"); // Replace variable names so they can be passed to qsub.
                 }
                 parameterBuilder << " ${pName}=${val}";
         }

@@ -1,21 +1,46 @@
+<!--
+  ~ Copyright (c) 2016 eilslabs.
+  ~
+  ~ Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+  -->
+
 <configuration configurationType='project'
                name='skeletonProject_extended'
                description='An extended skeleton project xml class.'
                imports="coBaseProject"
                usedresourcessize="l">
     <availableAnalyses>
-        <!-- Plugin versions can be different from the values listed here. Please use roddy.sh listavailableplugins to get a list of available plugins and versions. -->
-        <!--<analysis id="snvCalling" configuration="snvCallingAnalysis" useplugin="COWorkflows:1.0.132-1" />-->
-        <!--<analysis id="indelCalling" configuration="indelCallingAnalysis" useplugin="COWorkflows:1.0.132-1" />-->
-        <!--<analysis id="copyNumberEstimation" configuration="copyNumberEstimationAnalysis" useplugin="CopyNumberEstimationWorkflow:1.0.189" />-->
-        <!--<analysis id="telomereExtraction" configuration="telomereExtractionAnalysis" useplugin="COWorkflows:1.0.132-1" />-->
-        <!--<analysis id="postMergeQC" configuration="postMergeQCAnalysis" useplugin="COWorkflows:1.0.132-1" />-->
+        <!-- Plugin versions can be different from the values listed here. These are stable, default releases.
+             Please consider using only one analysis import per project xml file, if you set configuration variables, as
+             configuration values for different workflows might have the same name. This could then lead to misconfigured
+             workflows. If you do not want to create a new file, you can still use subconfigurations for the different
+             workflows.
+
+             Before you enable an analysis for your project, make sure that you are allowed to run this specific analysis!
+             Talk to your group leader first.
+             -->
+
+        <!-- Roddy 2.2.x -->
+        <!--<analysis id='snvCalling' configuration='snvCallingAnalysis' useplugin="COWorkflows:1.0.132-4" />-->
+        <!--<analysis id='indelCalling' configuration='indelCallingAnalysis'  useplugin="COWorkflows:1.0.132-4" />-->
+        <!--<analysis id='copyNumberEstimation' configuration='copyNumberEstimationAnalysis' useplugin="CopyNumberEstimationWorkflow:1.0.189" />-->
+        <!--<analysis id='delly' configuration='dellyAnalysis' useplugin="DellyWorkflow:0.1.12"/>-->
+
+        <!-- Roddy 2.3.x -->
+        <!--<analysis id='WES' configuration='exomeAnalysis' useplugin="AlignmentAndQCWorkflows:1.1.39" />-->
+        <!--<analysis id='WGS' configuration='qcAnalysis' useplugin="AlignmentAndQCWorkflows:1.1.39" />-->
+        <!--<analysis id='postMergeQC' configuration='postMergeQCAnalysis' useplugin="AlignmentAndQCWorkflows:1.1.39"/>-->
+        <!--<analysis id='postMergeExomeQC' configuration='postMergeExomeQCAnalysis' useplugin="AlignmentAndQCWorkflows:1.1.39"/>-->
+
+        <!-- Unreleased or Beta -->
+        <!--<analysis id='rdw' configuration='snvRecurrenceDetectionAnalysis' useplugin="SNVRecurrenceDetectionWorkflow"/>-->
+        <!--<analysis id='WGBS' configuration='bisulfiteCoreAnalysis' useplugin="AlignmentAndQCWorkflows:1.1.39"/>-->
     </availableAnalyses>
     <configurationvalues>
         <!--<cvalue name='inputBaseDirectory' value='$USERHOME/roddyTests/${projectName}/vbp' type='path'/>-->
         <!--<cvalue name='outputBaseDirectory' value='$USERHOME/roddyTests/${projectName}/rpp' type='path'/>-->
         <!--<cvalue name='outputAnalysisBaseDirectory' value='${outputBaseDirectory}/${pid}' type="path"/>-->
-
+        <!--<cvalue name='outputFileGroup' value='B080' />-->
 
         <!-- Example settings for SNV calling -->
         <!--<cvalue name="CONFIDENCE_OPTS" value='"-c 0"' type="string" description="set to default settings."/>-->

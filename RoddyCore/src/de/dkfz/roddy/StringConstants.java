@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy;
 
 /**
@@ -47,6 +53,8 @@ public class StringConstants {
     public static final String SINGLE_QUOTE = "'";
     public static final String DOUBLE_QUOTE = "\"";
     public static final String FALSE = "false";
+
+    public static final String DOLLAR_LEFTBRACE = "${";
 
     public static final String TRUE = "true";
 

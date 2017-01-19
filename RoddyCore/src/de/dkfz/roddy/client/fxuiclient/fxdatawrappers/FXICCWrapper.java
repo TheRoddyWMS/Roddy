@@ -1,11 +1,15 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.client.fxuiclient.fxdatawrappers;
 
 import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.config.InformationalConfigurationContent;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * UI Wrapper for InformationalConfigurationContent objects
@@ -55,15 +59,16 @@ public class FXICCWrapper {
     }
 
     /**
-     * @return Returns a sorted list of the ids of the available analyses for the wrapped project.
+     * @return Returns a map of all analyses available for a project.
      */
-    public List<String> getAnalyses() {
-        List<String> analyses = new LinkedList<>();
+    public Map<String, String> getAnalyses() {
+        Map<String, String> analyses = new LinkedHashMap<>();
         for (String _analysis : icc.getListOfAnalyses()) {
             String[] analysis = _analysis.split("::");
-            analyses.add(analysis[analysis.length - 2]);
+            String[] _pluginID = analysis[2].split("=");
+            String pluginID = _pluginID.length > 1 ? _pluginID[1] : "UNKNOWN";
+            analyses.put(analysis[0], pluginID);
         }
-        Collections.sort(analyses);
         return analyses;
     }
 

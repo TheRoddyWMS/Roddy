@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.client.fxuiclient.fxcontrols;
 
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
@@ -196,7 +202,7 @@ public class CodeEditorWithErrorList extends CustomControlOnBorderPane {
         loadWorker.stateProperty().addListener(new ChangeListener<Worker.State>() {
             @Override
             public void changed(ObservableValue<? extends Worker.State> observableValue, Worker.State state, Worker.State state2) {
-//                System.out.println("New webview state: " + state2);
+//                System.out.println("New webview jobState: " + state2);
                 lblWebviewLoaderState.setText(state2.name());
 //                if (state2 == Worker.State.SUCCEEDED) {
 //                    System.out.println(getCodeAndSnapshot());

@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="Gradle: :groovy-all:2.3.6-indy">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/dist/bin/current/lib/groovy-all-2.3.6-indy.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

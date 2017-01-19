@@ -1,8 +1,15 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.client;
 
 /**
  * Created by michael on 31.03.15.
  */
+@groovy.transform.CompileStatic
 public class RoddyStartupModeScopes {
 
     /**

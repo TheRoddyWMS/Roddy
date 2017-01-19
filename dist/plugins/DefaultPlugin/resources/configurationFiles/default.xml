@@ -1,3 +1,9 @@
+<!--
+  ~ Copyright (c) 2016 eilslabs.
+  ~
+  ~ Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+  -->
+
 <configuration name='default' description='This is a configuration file with several default settings. The file should contain only configuration values, other values like tools are not processed! It is read on start
 up and is included in the configuration. The configuration settings directly override these settings.' >
     <configurationvalues>
@@ -14,10 +20,9 @@ up and is included in the configuration. The configuration settings directly ove
         <cvalue name='ZIPTOOL_OPTIONS' value='-c'/>
         <cvalue name='useAcceleratedHardware' value='true' type='boolean'/>
         <cvalue name='outputUMask' value='007' type='string'/>
-        <cvalue name='outputFileGroup' value='UNDEFINED'/>
+        <!--<cvalue name='outputFileGroup' value='UNDEFINED'/>-->
         <cvalue name='outputAccessRights' value='u+rw,g+rw,o-rwx' />
         <cvalue name="outputAllowAccessRightsModification" value="true" />
-        <cvalue name='jobStateLogFile' value="jobStates.txt" type="string"/>
     </configurationvalues>
     <enumerations>
         <enumeration name='cvalueType' description='various types of configuration values' extends="">

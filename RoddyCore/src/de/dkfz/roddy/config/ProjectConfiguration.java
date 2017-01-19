@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.config;
 
 import java.util.LinkedHashMap;
@@ -93,8 +99,12 @@ public class ProjectConfiguration extends Configuration {
         if ((runtimeServiceClass == null || runtimeServiceClass.trim().length() == 0) && getContainerParents().size() > 0) {
             String rsc;
             for (Configuration c : getContainerParents()) {
-                if (!(c instanceof ProjectConfiguration)) continue;
-                rsc = ((ProjectConfiguration) c).getRuntimeServiceClass();
+                if ((c instanceof ProjectConfiguration))
+                    rsc = ((ProjectConfiguration) c).getRuntimeServiceClass();
+                else if(c instanceof  AnalysisConfiguration)
+                    rsc = ((AnalysisConfiguration) c).getRuntimeServiceClass();
+                else
+                    continue;
                 if (rsc != null) return rsc;
             }
         }

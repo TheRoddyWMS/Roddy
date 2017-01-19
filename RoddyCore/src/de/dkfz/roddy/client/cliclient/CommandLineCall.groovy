@@ -1,11 +1,19 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.client.cliclient
 
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.client.RoddyStartupModes
 import de.dkfz.roddy.client.RoddyStartupOptions
+import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.tools.LoggerWrapper
 
+import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 import static de.dkfz.roddy.client.RoddyStartupModes.help
 
 /**
@@ -21,7 +29,6 @@ public class CommandLineCall {
     private Map<RoddyStartupOptions, List<String>> optionsMap;
 
     CommandLineCall(List<String> args) {
-        long t1 = ExecutionService.measureStart();
         parameters = [];
         optionsMap = [:];
         if (!args.size() == 0)
@@ -30,23 +37,15 @@ public class CommandLineCall {
 
         List<String> parameters = args.findAll { String arg -> !arg.startsWith("--") } as ArrayList<String>;
         Collection<String> options = args.findAll { String arg -> arg.startsWith("--") };
-//        ExecutionService.measureStop(t1, "measure 1", LoggerWrapper.VERBOSITY_RARE);
 
-        t1 = ExecutionService.measureStart();
         // Try to extract the startup mode. If it not know, display the help message.
         try {
-            if(parameters.size() == 0)
-                startupMode = help;
-            else
-                startupMode = Enum.valueOf(RoddyStartupModes.class, parameters[0]);
+            startupMode = parameters ? parameters[0] as RoddyStartupModes : help;
         } catch (Exception ex) {
             logger.postAlwaysInfo("The startupmode " + parameters[0] + " is not known.");
             this.startupMode = help;
             return;
         }
-//        ExecutionService.measureStop(t1, "measure 2", LoggerWrapper.VERBOSITY_RARE);
-
-        t1 = ExecutionService.measureStart();
 
         //Parse options
         Map<RoddyStartupOptions, List<String>> parsedOptions = [:];
@@ -68,19 +67,23 @@ public class CommandLineCall {
                 logger.postAlwaysInfo("The option with " + optArg + " is malformed!");
             }
         }
-//        ExecutionService.measureStop(t1, "measure 3", LoggerWrapper.VERBOSITY_RARE);
-
-        t1 = ExecutionService.measureStart();
 
         // Store all parameters and remove the startup mode.
         if (parameters.size() > 1)
             this.parameters += parameters[1..-1];
         this.optionsMap.putAll(parsedOptions);
-//        ExecutionService.measureStop(t1, "measure 4", LoggerWrapper.VERBOSITY_RARE);
     }
 
     List<String> getParameters() {
         return new LinkedList(parameters);
+    }
+
+    String getAnalysisID() {
+        return parameters[0];
+    }
+
+    List<String> getDatasetSpecifications() {
+        return Arrays.asList(parameters[1].split(SPLIT_COMMA));
     }
 
     public boolean hasParameters() {
@@ -112,7 +115,19 @@ public class CommandLineCall {
      * [ a:a string, b:another string, c:123, ... ]
      * @return
      */
-    public List<String> getSetConfigurationValues() {
-        return optionsMap.get(RoddyStartupOptions.cvalues, []);
+    public List<ConfigurationValue> getSetConfigurationValues() {
+        def externalConfigurationValues = optionsMap.get(RoddyStartupOptions.cvalues, []);
+        def configurationValues = []
+        for (eVal in externalConfigurationValues) {
+            String[] splitIDValue = eVal.split(StringConstants.SPLIT_COLON);
+            //TODO Put in a better error checking when converting the split string to a configuration value.
+            //Remark, if a value contains : / colons, it will not work!
+            String cvalueId = splitIDValue[0];
+            String value = (splitIDValue.size() >= 2 ? splitIDValue[1] : ""); // Surround value with single quotes '' to prevent string interpretation for e.g. execution in bash
+            String type = splitIDValue.size() >= 3 ? splitIDValue[2] : null; // If null is set, type is guessed.
+
+            configurationValues << new ConfigurationValue(cvalueId, value, type)
+        }
+        configurationValues
     }
 }

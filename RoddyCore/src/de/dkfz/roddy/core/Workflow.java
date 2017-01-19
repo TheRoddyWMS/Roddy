@@ -1,6 +1,15 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.core;
 
 import de.dkfz.roddy.config.Configuration;
+import de.dkfz.roddy.knowledge.files.BaseFile;
+import de.dkfz.roddy.knowledge.files.FileObject;
+import de.dkfz.roddy.knowledge.methods.GenericMethod;
 
 import java.lang.reflect.Method;
 
@@ -64,5 +73,36 @@ public abstract class Workflow {
 
     public boolean cleanup(DataSet dataset) {
         return false;
+    }
+
+    /**
+     * Convenience method to call GenericMethod.callGenericTool()
+     * @param toolName
+     * @param input
+     * @param additionalInput
+     * @return
+     */
+    protected FileObject call(String toolName, BaseFile input, Object... additionalInput) {
+        return GenericMethod.callGenericTool(toolName, input, additionalInput);
+    }
+
+    /**
+     * Convenience method to get a boolean runflag from the context config, defaults to true
+     * @param context
+     * @param flagID
+     * @return
+     */
+    protected boolean getflag(ExecutionContext context, String flagID) {
+        return getflag(context, flagID, true);
+    }
+
+    /**
+     * Convenience method to get a boolean runflag from the context config, defaults to defaultValue
+     * @param context
+     * @param flagID
+     * @return
+     */
+    protected boolean getflag(ExecutionContext context, String flagID, boolean defaultValue) {
+        return context.getConfiguration().getConfigurationValues().getBoolean(flagID, defaultValue);
     }
 }

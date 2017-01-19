@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.client.fxuiclient.fxdatawrappers;
 
 import de.dkfz.roddy.config.FilenamePattern;
@@ -22,7 +28,7 @@ public class FXFilenamePatternWrapper implements Comparable<FXFilenamePatternWra
     public FXFilenamePatternWrapper(FilenamePattern pattern) {
         id.set(pattern.getID());
         cls.set(pattern.getCls().toString());
-        dependency.set(pattern.getFilenamePatternDependency().toString());
+//        dependency.set(pattern.getFilenamePatternDependency().toString());
     }
 
     public final StringProperty idProperty() {

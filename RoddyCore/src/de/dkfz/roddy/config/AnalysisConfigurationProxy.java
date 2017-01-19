@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.config;
 
 import de.dkfz.roddy.config.validation.ConfigurationValidationError;
@@ -9,11 +15,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
-*  The AC Proxy is used to enable lazy loading of analyis configuration objects.
+ * The AC Proxy is used to enable lazy loading of analyis configuration objects.
  * It encapsulates a real AC object.
- *
+ * <p>
  * Created by michael on 20.03.15.
-*/
+ */
 public class AnalysisConfigurationProxy extends AnalysisConfiguration {
 
     private AnalysisConfiguration analysisConfiguration;
@@ -36,7 +42,7 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     private synchronized AnalysisConfiguration checkAnalysisConfig() {
-        if(analysisConfiguration == null) {
+        if (analysisConfiguration == null) {
             analysisConfiguration = ConfigurationFactory.getInstance().lazyLoadAnalysisConfiguration(this);
         }
         return analysisConfiguration;
@@ -72,28 +78,8 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
-    public List<String> getListOfTestdataOptions() {
-        return checkAnalysisConfig().getListOfTestdataOptions();
-    }
-
-    @Override
-    public List<TestDataOption> getTestdataOptions() {
-        return checkAnalysisConfig().getTestdataOptions();
-    }
-
-    @Override
-    public TestDataOption getTestdataOption(String id) {
-        return checkAnalysisConfig().getTestdataOption(id);
-    }
-
-    @Override
     public ResourceSetSize getResourcesSize() {
         return checkAnalysisConfig().getResourcesSize();
-    }
-
-    @Override
-    public boolean hasTestdataOption(String id) {
-        return checkAnalysisConfig().hasTestdataOption(id);
     }
 
     @Override
@@ -117,13 +103,13 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
-    public void addTestDataOptions(List<TestDataOption> options) {
-        checkAnalysisConfig().addTestDataOptions(options);
+    public List<String> getListOfUsedTools() {
+        return checkAnalysisConfig().getListOfUsedTools();
     }
 
     @Override
-    public List<String> getListOfUsedTools() {
-        return checkAnalysisConfig().getListOfUsedTools();
+    public String getRuntimeServiceClass() {
+        return checkAnalysisConfig().getRuntimeServiceClass();
     }
 
     @Override
@@ -157,13 +143,13 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
-    public void setTargetCommandFactory(String targetCommandFactory) {
-        checkAnalysisConfig().setTargetCommandFactory(targetCommandFactory);
+    public void setJobManagerFactory(String targetJobManager) {
+        checkAnalysisConfig().setJobManagerFactory(targetJobManager);
     }
 
     @Override
-    public String getTargetCommandFactoryClass() {
-        return checkAnalysisConfig().getTargetCommandFactoryClass();
+    public String getTargetJobManagerClass() {
+        return checkAnalysisConfig().getTargetJobManagerClass();
     }
 
     @Override
@@ -249,11 +235,15 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     @Override
     public void setParent(Configuration c) {
         super.setParent(c);
+        if (c != null)
+            checkAnalysisConfig().setParent(c);
     }
 
     @Override
     public void addParent(Configuration p) {
         super.addParent(p);
+        if (p != null)
+            checkAnalysisConfig().addParent(p);
     }
 
     @Override

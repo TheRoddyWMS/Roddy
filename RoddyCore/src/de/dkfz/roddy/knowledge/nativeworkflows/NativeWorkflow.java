@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.knowledge.nativeworkflows;
 
 import de.dkfz.roddy.config.AnalysisConfiguration;
@@ -10,10 +16,10 @@ import de.dkfz.roddy.execution.io.ExecutionResult;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.Command;
-import de.dkfz.roddy.execution.jobs.CommandFactory;
+import de.dkfz.roddy.execution.jobs.JobManager;
 import de.dkfz.roddy.execution.jobs.Job;
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand;
-import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutedCommandFactory;
+import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutedJobManager;
 import de.dkfz.roddy.plugins.LibrariesFactory;
 
 import java.io.File;
@@ -50,14 +56,14 @@ public class NativeWorkflow extends Workflow {
         AnalysisConfiguration aCfg = configuration.getAnalysisConfiguration();
 
         //Get the target command factory, initialize it and create an alias for the submission command (i.e. qsub)
-        CommandFactory targetCommandFactory = null;
+        JobManager targetJobManager = null;
         try {
-            String clz = aCfg.getTargetCommandFactoryClass();
+            String clz = aCfg.getTargetJobManagerClass();
             ClassLoader classLoader = LibrariesFactory.getGroovyClassLoader();
-            Class<?> targetCommandFactoryClass = classLoader.loadClass(clz);
-            Constructor[] c = targetCommandFactoryClass.getConstructors();
+            Class<?> targetJobManagerClass = classLoader.loadClass(clz);
+            Constructor[] c = targetJobManagerClass.getConstructors();
             Constructor first = c[0];
-            targetCommandFactory = (CommandFactory) first.newInstance();
+            targetJobManager = (JobManager) first.newInstance();
         } catch (Exception e) {
             context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("Wrong target command factory class is set."));
             return false;
@@ -65,14 +71,11 @@ public class NativeWorkflow extends Workflow {
 
         // In normal cases commands are executed by the default factory. In this case we want the command to be executed directly.
         String toolID = aCfg.getNativeToolID();
-        Job wrapperJob = new Job(context, context.getTimeStampString() + "_nativeJobWrapper:" + toolID, toolID, null);
+        Job wrapperJob = new Job(context, context.getTimestampString() + "_nativeJobWrapper:" + toolID, toolID, null);
 
-//        <tool name='wrapinScript' value='wrapInScript.sh' basepath='roddyTools'/>
-//        <tool name='nativeWorkflowScriptWrapper' value='nativeWorkflowScriptWrapper.sh' basepath='roddyTools'/>
-
-        DirectSynchronousExecutedCommandFactory dcfac = new DirectSynchronousExecutedCommandFactory();
+        DirectSynchronousExecutedJobManager dcfac = new DirectSynchronousExecutedJobManager();
         DirectCommand wrapperJobCommand = dcfac.createCommand(wrapperJob, aCfg.getProcessingToolPath(context, toolID), new LinkedList<>());
-        String submissionCommand = targetCommandFactory.getSubmissionCommand();
+        String submissionCommand = targetJobManager.getSubmissionCommand();
         if (submissionCommand == null) {
             context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("There is no submission command for this type of command factory."));
             return false;
@@ -94,7 +97,7 @@ public class NativeWorkflow extends Workflow {
         Map<String, GenericJobInfo> callsByID = new LinkedHashMap<>();
         Map<String, String> fakeIDWithRealID = new LinkedHashMap<>();
         for (String call : calls) {
-            GenericJobInfo jInfo = targetCommandFactory.parseGenericJobInfo(context, call);
+            GenericJobInfo jInfo = targetJobManager.parseGenericJobInfo(context, call);
             callsByID.put(jInfo.getID(), jInfo);
             jInfo.getParameters().put(PRM_TOOLS_DIR, configuration.getProcessingToolPath(context, jInfo.getToolID()).getAbsolutePath());
             jInfo.getParameters().put(PRM_TOOL_ID, jInfo.getToolID());
@@ -110,7 +113,7 @@ public class NativeWorkflow extends Workflow {
                 jInfo.setParentJobIDs(newIDs);
             }
 
-            Command command = CommandFactory.getInstance().createCommand(jInfo);
+            Command command = JobManager.getInstance().createCommand(jInfo);
             ExecutionService.getInstance().execute(command);
             String id = null;
             try {

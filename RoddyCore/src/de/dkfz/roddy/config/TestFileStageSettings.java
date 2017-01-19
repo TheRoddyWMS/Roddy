@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.config;
 
 import de.dkfz.roddy.core.DataSet;
@@ -14,12 +20,12 @@ public class TestFileStageSettings extends FileStageSettings {
 
     @Override
     public FileStageSettings copy() {
-        return null;
+        return new TestFileStageSettings();
     }
 
     @Override
     public FileStageSettings decreaseLevel() {
-        return null;
+        return new TestFileStageSettings();
     }
 
     @Override

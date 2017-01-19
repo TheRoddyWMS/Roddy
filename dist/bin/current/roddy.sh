@@ -1,34 +1,15 @@
 #!/bin/bash
 
 cd `dirname $0`
-
 parm1=${1-}
+
+JAVA_OPTS=${JAVA_OPTS:-"-Xms64m -Xmx500m"}
 
 # Call some scripts before other steps start.
 if [[ "$parm1" == "prepareprojectconfig" ]]; then
     source ${SCRIPTS_DIR}/prepareProjectConfiguration.sh
     exit 0
-elif [[ "$parm1" == "setup" ]]; then
-    source ${SCRIPTS_DIR}/setupRoddy.sh
-    exit 0
 fi
-
-# Example for a date call (for timestamps)
-#date +"%M %S %N"
-GROOVY_HOME=`ls -d ${PWD}/dist/runtime*/groovy 2> /dev/null`
-JAVA_HOME=`ls -d ${PWD}/dist/runtime*/jre 2> /dev/null`
-JDK_HOME=`ls -d ${PWD}/dist/runtime*/jdk 2> /dev/null`
-
-
-if [[ -z $JAVA_HOME ]]
-then
-    GROOVY_HOME=`ls -d ~/.roddy/runtime*/groovy 2> /dev/null`
-    JAVA_HOME=`ls -d ~/.roddy/runtime*/jre 2> /dev/null`
-    JDK_HOME=`ls -d ~/.roddy/runtime*/jdk 2> /dev/null`
-fi
-
-[[ ! -d $JAVA_HOME ]] && echo "There was no java runtime environment or jdk setup. Roddy cannot be compiled." && exit 1
-[[ ! -d $GROOVY_HOME ]] && echo "Groovy SDK / Runtime not found, Roddy cannot be compiled or started." && exit 1
 
 PATH=$JDK_HOME/bin:$JAVA_HOME/bin:$GROOVY_HOME/bin:$PATH
 JFX_LIBINFO_FILE=~/.roddy/jfxlibInfo
@@ -52,12 +33,12 @@ done
 
 if [[ "$parm1" == "compile" ]]; then
     [[ ! -d $JDK_HOME ]] && echo "There was no JDK home found. Roddy cannot compile workflows." && exit 1
-    source ${SCRIPTS_DIR}/compile.sh
+    source ${SCRIPTS_DIR}/compileRoddyBinary.sh
     exit 0
 elif [[ "$parm1" == "pack" ]]; then
-    groovy ${SCRIPTS_DIR}/addChangelistVersionTag.groovy README.md RoddyCore/buildversions.txt
-    major=`head RoddyCore/buildversions.txt -n 1`
-    minor=`tail RoddyCore/buildversions.txt -n 1`
+    $GROOVY_BINARY ${SCRIPTS_DIR}/addChangelistVersionTag.groovy CHANGELIST.md RoddyCore/buildversion.txt
+    major=`head RoddyCore/buildversion.txt -n 1`
+    minor=`tail RoddyCore/buildversion.txt -n 1`
 
     packedRoddyDir=${RODDY_DIRECTORY}/dist/bin/${major}.${minor}
     packedZip=${RODDY_DIRECTORY}/dist/bin/Roddy_${major}.${minor}.zip
@@ -80,21 +61,21 @@ elif [[ "$parm1" == "pack" ]]; then
 elif [[ "$parm1" == "compileplugin" ]]; then
     echo "Using Roddy binary "`basename ${RODDY_BINARY}`
     [[ ! -d $JDK_HOME ]] && echo "There was no JDK home found. Roddy cannot compile workflows." && exit 1
-    source ${SCRIPTS_DIR}/compileToJarFile.sh
+    source ${SCRIPTS_DIR}/compileRoddyPlugin.sh
     exit 0
 elif [[ "$parm1" == "packplugin" || "$parm1" == "testpackplugin" ]]; then
     [[ "$parm1" == "testpackplugin" ]] && set -xuv
     increasebuildonly=true
 #    set -xuv
-    source ${SCRIPTS_DIR}/compileToJarFile.sh
+    source ${SCRIPTS_DIR}/compileRoddyPlugin.sh
 
     # Test pack does not put things to svn so it is safe to use. Test will not change the zip file but will increase the buildnumber.
     source ${SCRIPTS_DIR}/resolveAppConfig.sh
     pluginID=$2
     pluginDirectories=`grep pluginDirectories ${customconfigfile}`
-    pluginDirectory=`groovy ${SCRIPTS_DIR}/findPluginFolders.groovy ${pluginDirectories} ${RODDY_DIRECTORY} ${pluginID}`
+    pluginDirectory=`$GROOVY_BINARY ${SCRIPTS_DIR}/findPluginFolders.groovy ${pluginDirectories} ${RODDY_DIRECTORY} ${pluginID}`
     for i in `ls ${pluginDirectory}/README*.txt 2> /dev/null`; do
-        groovy ${SCRIPTS_DIR}/addChangelistVersionTag.groovy $i ${pluginDirectory}/buildversion.txt
+        $GROOVY_BINARY ${SCRIPTS_DIR}/addChangelistVersionTag.groovy $i ${pluginDirectory}/buildversion.txt
     done
 
     major=`head ${pluginDirectory}/buildversion.txt -n 1`
@@ -105,7 +86,7 @@ elif [[ "$parm1" == "packplugin" || "$parm1" == "testpackplugin" ]]; then
     [[ ! -d ${filename} ]] && mkdir ${filename}
     cp -r $pluginID/* ${filename}
     cd $filename
-    set -xuv
+#    set -xuv
     set +e
     echo "Removing obsolete files"
     # Find .svn folders?
@@ -146,5 +127,7 @@ elif [[ "$parm1" == "createworkflow" ]]; then
     exit 0
 fi
 
-java -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
-
+IFS=""
+#[[ $RMIPORT != "" ]] && export DBG_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005" && echo "Opened up rmi debugger port"
+java $DBG_OPTS -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
+IFS=$OFS

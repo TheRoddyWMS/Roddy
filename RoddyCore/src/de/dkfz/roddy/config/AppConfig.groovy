@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.config
 
 import de.dkfz.roddy.StringConstants
@@ -89,14 +95,20 @@ public class AppConfig {
 
     private List<Entry> allEntries = [];
 
+    public AppConfig() {
+        appIniFile = null;
+    }
+
     public AppConfig(String file) {
         this(new File(file));
     }
 
     public AppConfig(File file) {
+        this(file.readLines() as String[]);
         this.appIniFile = file;
-        String[] lines = file.readLines()
+    }
 
+    public AppConfig(String[] lines) {
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i];
             Entry e = new Entry(i, line);
@@ -104,10 +116,6 @@ public class AppConfig {
             if(e.isContent())
                 entriesByKey[e.key] = e;
         }
-    }
-
-    public AppConfig() {
-        appIniFile = null;
     }
 
     public String toString() {

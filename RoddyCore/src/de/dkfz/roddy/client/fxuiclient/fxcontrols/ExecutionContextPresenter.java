@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.client.fxuiclient.fxcontrols;
 
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.CustomCellItemsHelper;
@@ -14,7 +20,7 @@ import java.util.Map;
 
 /**
  */
-public abstract class ExecutionContextPresenter<T> extends CustomCellItemsHelper.CustomCellItemController<T> implements DataSetListener, ExecutionContextListener {
+public abstract class ExecutionContextPresenter<T> extends CustomCellItemsHelper.CustomCellItemController<T> {
 
     private static final String ICO_FILE_MISSING = "/imgs/icon_status_logfile_missing.png";
     private static final String ICO_EXECUTION_ERROR = "/imgs/icon_status_error.png";
@@ -55,32 +61,4 @@ public abstract class ExecutionContextPresenter<T> extends CustomCellItemsHelper
         return l;
     }
 
-    @Override
-    public void processingInfoAddedEvent(DataSet dataSet, AnalysisProcessingInformation pi) {
-    }
-
-    @Override
-    public void processingInfoRemovedEvent(DataSet dataSet, AnalysisProcessingInformation pi) {
-
-    }
-
-    @Override
-    public void newExecutionContextEvent(ExecutionContext context) {
-    }
-
-    @Override
-    public void jobStateChangedEvent(Job job) {
-    }
-
-    @Override
-    public void jobAddedEvent(Job job) {
-    }
-
-    @Override
-    public void fileAddedEvent(File file) {
-    }
-
-    @Override
-    public void detailedExecutionContextLevelChanged(ExecutionContext context) {
-    }
 }

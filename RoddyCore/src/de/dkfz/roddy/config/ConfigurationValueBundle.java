@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.config;
 
 import java.util.HashMap;
@@ -33,7 +39,11 @@ public class ConfigurationValueBundle implements RecursiveOverridableMapContaine
         return new LinkedList<>(values.values());
     }
 
-    public ConfigurationValue get(String key) {
+//    public ConfigurationValue get(String key) {
+//        return values.get(key);
+//    }
+
+    public ConfigurationValue getAt(String key) {
         return values.get(key);
     }
 }

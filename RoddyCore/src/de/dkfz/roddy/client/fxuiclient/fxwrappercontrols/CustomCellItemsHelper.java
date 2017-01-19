@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.client.fxuiclient.fxwrappercontrols;
 
 import javafx.beans.property.ObjectProperty;
@@ -155,7 +161,7 @@ public class CustomCellItemsHelper {
                 hbox.getChildren().add(new Label("Fallback: (" + cellItem.getClass().getSimpleName() + " / " + item.getClass().getSimpleName() + ")"));
                 hbox.getChildren().add(new Label(item.toString()));
                 node = hbox;
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                e.printStackTrace();
             }
             synchronized (customCellItemsCache) {
                 customCellItemsCache.put(cellItem, node);

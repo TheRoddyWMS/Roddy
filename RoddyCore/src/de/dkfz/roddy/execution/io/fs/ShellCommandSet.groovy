@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.execution.io.fs
 
 import de.dkfz.roddy.config.converters.ConfigurationConverter
@@ -30,6 +36,10 @@ public abstract class ShellCommandSet {
     public abstract String getGroupIDCommand(String groupID);
 
     public abstract String getOwnerOfPathCommand(File f);
+
+    public abstract String getCheckForInteractiveConsoleCommand();
+
+    public abstract String getSetPathCommand();
 
     public abstract String getCheckDirectoryCommand(File f);
 
@@ -84,4 +94,12 @@ public abstract class ShellCommandSet {
     public abstract ConfigurationConverter getConfigurationConverter();
 
     public abstract String getExecuteScriptCommand(File file);
+
+    public abstract String singleQuote(String text);
+
+    public abstract String doubleQuote(String text);
+
+    public abstract List<String> getShellExecuteCommand(String... commands);
+
+    public abstract boolean validate();
 }

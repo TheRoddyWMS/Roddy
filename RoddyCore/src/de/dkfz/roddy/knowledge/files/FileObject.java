@@ -1,9 +1,16 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.knowledge.files;
 
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.DataSet;
 import de.dkfz.roddy.core.Project;
 import de.dkfz.roddy.execution.jobs.JobResult;
+import examples.Exec;
 
 import java.io.Serializable;
 
@@ -22,6 +29,11 @@ public abstract class FileObject implements Serializable {
     public abstract void runDefaultOperations();
 
     public DataSet getPid() {
+        // TODO Deprecated. Remove if not needed in any workflow! Possibly move to plugin.
+        return getDataSet();
+    }
+
+    public DataSet getDataSet() {
         return executionContext.getDataSet();
     }
 
@@ -36,6 +48,8 @@ public abstract class FileObject implements Serializable {
     public void setCreatingJobsResult(JobResult jr) {
         this.creatingJobsResult = jr;
     }
+
+    protected void setExecutionContext(ExecutionContext newContext) { this.executionContext = newContext; }
 
     public ExecutionContext getExecutionContext() {
         return executionContext;

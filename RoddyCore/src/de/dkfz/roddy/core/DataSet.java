@@ -1,6 +1,13 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.core;
 
-import de.dkfz.roddy.config.TestDataOption;
+import de.dkfz.roddy.execution.io.BaseMetadataTable;
+import de.dkfz.roddy.execution.io.MetadataTableFactory;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.Job;
 
@@ -16,7 +23,8 @@ import java.util.concurrent.LinkedBlockingDeque;
  * For each dataset a number of runs can exist.
  */
 @groovy.transform.CompileStatic
-public class DataSet extends InfoObject implements Serializable, ExecutionContextListener {
+public class DataSet extends InfoObject implements Serializable {
+//        , ExecutionContextListener {
 
     private String id;
 
@@ -47,11 +55,22 @@ public class DataSet extends InfoObject implements Serializable, ExecutionContex
      */
     private Map<Analysis, List<AnalysisProcessingInformation>> processingInformation = new HashMap<>();
 
-    private Map<Analysis, Map<TestDataOption, TestDataSet>> testdataContainer = new HashMap<>();
     /**
      * Marks a dataset as being only in the output directory.
      */
     private boolean onlyAvailableInOutputDirectory;
+
+    /**
+     * The metadata table instance specific for this dataset.
+     */
+    private BaseMetadataTable metadataTable;
+
+    public DataSet(Analysis analysis, String id, File outputBaseFolder, BaseMetadataTable tableForDataset) {
+        this(analysis, id, outputBaseFolder);
+        assert tableForDataset != null;
+        this.metadataTable = tableForDataset.subsetByDataset(id);
+        assert metadataTable.listDatasets().size() == 1 && metadataTable.listDatasets().get(0).equals(id);
+    }
 
     public DataSet(Analysis analysis, String id, File outputBaseFolder) {
 
@@ -59,7 +78,7 @@ public class DataSet extends InfoObject implements Serializable, ExecutionContex
         this.outputBaseFolder = outputBaseFolder;
         this.project = analysis.getProject();
         this.analysesByID.put(analysis.getName(), analysis);
-        ExecutionContext.registerStaticContextListener(this);
+//        ExecutionContext.registerStaticContextListener(this);
     }
 
     public String getId() {
@@ -68,6 +87,10 @@ public class DataSet extends InfoObject implements Serializable, ExecutionContex
 
     public Project getProject() {
         return project;
+    }
+
+    public BaseMetadataTable getMetadataTable() {
+        return metadataTable;
     }
 
     /**
@@ -80,11 +103,11 @@ public class DataSet extends InfoObject implements Serializable, ExecutionContex
     }
 
     public File getInputFolderForAnalysis(Analysis analysis) {
-        return project.getRuntimeService().getInputFolderForDataSetAndAnalysis(this, analysis);
+        return analysis.getRuntimeService().getInputFolderForDataSetAndAnalysis(this, analysis);
     }
 
     public File getOutputFolderForAnalysis(Analysis analysis) {
-        return project.getRuntimeService().getOutputFolderForDataSetAndAnalysis(this, analysis);
+        return analysis.getRuntimeService().getOutputFolderForDataSetAndAnalysis(this, analysis);
     }
 
     /**
@@ -130,7 +153,7 @@ public class DataSet extends InfoObject implements Serializable, ExecutionContex
                 return o2.getExecPath().compareTo(o1.getExecPath());
             }
         });
-        fireProcessingInfoAddedEvent(pi);
+//        fireProcessingInfoAddedEvent(pi);
     }
 
     public boolean hasDummyAnalysisProcessingInformation(Analysis analysis) {
@@ -201,74 +224,74 @@ public class DataSet extends InfoObject implements Serializable, ExecutionContex
     public String toString() {
         return id;
     }
+//
+//    @Override
+//    public void newExecutionContextEvent(ExecutionContext context) {
+//        if (context.getDataSet() != this)
+//            return;
+//        Analysis cAnalysis = context.getAnalysis();
+//        if (hasAnalysis(cAnalysis.getName())) {
+//            AnalysisProcessingInformation api = new AnalysisProcessingInformation(context);
+//            if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) {
+//                setDummyAnalysisProcessingInformation(api);
+//                //TODO Check, if the dummy process can be set? There should not be one or replace it?
+//            } else if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) {
+//                setPlannedOrRunningAnalysisProcessingInformation(api);
+//                //TODO Cancel or stop existing running processes? Should be better right? Or just throw an exception?
+//                removeDummyAnalysisProcessingInformation(cAnalysis);
+//            } else {
+//                addProcessingInformation(api);
+//            }
+//        } else {
+//
+//        }
+//    }
+//
+//    @Override
+//    public void jobStateChangedEvent(Job job) {
+//    }
+//
+//    @Override
+//    public void jobAddedEvent(Job job) {
+//    }
+//
+//    @Override
+//    public void fileAddedEvent(File file) {
+//    }
+//
+//    @Override
+//    public void detailedExecutionContextLevelChanged(ExecutionContext context) {
+//    }
+//
+//    public void addListener(DataSetListener listener, boolean replaceOfSameClass) {
+//        if (replaceOfSameClass) {
+//            Class c = listener.getClass();
+//            Deque<DataSetListener> listenersToKeep = new LinkedBlockingDeque<>();
+//            for (DataSetListener jsl : this.listeners) {
+//                if (jsl.getClass() != c)
+//                    listenersToKeep.add(jsl);
+//            }
+//            listeners.clear();
+//            listeners.addAll(listenersToKeep);
+//        }
+//        addListener(listener);
+//    }
+//
+//    public void addListener(DataSetListener dataSetListener) {
+//        this.listeners.add(dataSetListener);
+//    }
 
-    @Override
-    public void newExecutionContextEvent(ExecutionContext context) {
-        if (context.getDataSet() != this)
-            return;
-        Analysis cAnalysis = context.getAnalysis();
-        if (hasAnalysis(cAnalysis.getName())) {
-            AnalysisProcessingInformation api = new AnalysisProcessingInformation(context);
-            if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) {
-                setDummyAnalysisProcessingInformation(api);
-                //TODO Check, if the dummy process can be set? There should not be one or replace it?
-            } else if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) {
-                setPlannedOrRunningAnalysisProcessingInformation(api);
-                //TODO Cancel or stop existing running processes? Should be better right? Or just throw an exception?
-                removeDummyAnalysisProcessingInformation(cAnalysis);
-            } else {
-                addProcessingInformation(api);
-            }
-        } else {
-
-        }
-    }
-
-    @Override
-    public void jobStateChangedEvent(Job job) {
-    }
-
-    @Override
-    public void jobAddedEvent(Job job) {
-    }
-
-    @Override
-    public void fileAddedEvent(File file) {
-    }
-
-    @Override
-    public void detailedExecutionContextLevelChanged(ExecutionContext context) {
-    }
-
-    public void addListener(DataSetListener listener, boolean replaceOfSameClass) {
-        if (replaceOfSameClass) {
-            Class c = listener.getClass();
-            Deque<DataSetListener> listenersToKeep = new LinkedBlockingDeque<>();
-            for (DataSetListener jsl : this.listeners) {
-                if (jsl.getClass() != c)
-                    listenersToKeep.add(jsl);
-            }
-            listeners.clear();
-            listeners.addAll(listenersToKeep);
-        }
-        addListener(listener);
-    }
-
-    public void addListener(DataSetListener dataSetListener) {
-        this.listeners.add(dataSetListener);
-    }
-
-    private void fireProcessingInfoAddedEvent(AnalysisProcessingInformation pi) {
-        for (DataSetListener dsl : listeners) {
-            dsl.processingInfoAddedEvent(this, pi);
-        }
-    }
-
-    private void fireProcessingInfoRemovedEvent(AnalysisProcessingInformation pi) {
-        for (DataSetListener dsl : listeners) {
-            dsl.processingInfoRemovedEvent(this, pi);
-        }
-    }
+//    private void fireProcessingInfoAddedEvent(AnalysisProcessingInformation pi) {
+//        for (DataSetListener dsl : listeners) {
+//            dsl.processingInfoAddedEvent(this, pi);
+//        }
+//    }
+//
+//    private void fireProcessingInfoRemovedEvent(AnalysisProcessingInformation pi) {
+//        for (DataSetListener dsl : listeners) {
+//            dsl.processingInfoRemovedEvent(this, pi);
+//        }
+//    }
 
     public void setAsAvailableInOutputOnly() {
         onlyAvailableInOutputDirectory = true;

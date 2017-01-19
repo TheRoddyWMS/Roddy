@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.config;
 
 import de.dkfz.roddy.Roddy;
@@ -5,6 +11,7 @@ import de.dkfz.roddy.core.Analysis;
 import de.dkfz.roddy.core.DataSet;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 
 import java.io.File;
 import java.util.Arrays;
@@ -34,6 +41,8 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
      * A description or comment for a configuration value.
      */
     private final String description;
+    private final List<String> tags = new LinkedList<>();
+
     private boolean invalid = false;
 
     public ConfigurationValue(String id, String value) {
@@ -44,26 +53,56 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         this(config, id, value, null);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        // Auto-code from Idea.
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ConfigurationValue that = (ConfigurationValue) o;
+
+        if (id != null ? !id.equals(that.id) : that.id != null) return false;
+        if (value != null ? !value.equals(that.value) : that.value != null) return false;
+        return type != null ? type.equals(that.type) : that.type == null;
+    }
+
     public ConfigurationValue(String id, String value, String type) {
         this(null, id, value, type);
     }
 
     public ConfigurationValue(Configuration config, String id, String value, String type) {
-        this(config, id, value, type, "");
+        this(config, id, value, type, "", null);
     }
 
-    public ConfigurationValue(Configuration config, String id, String value, String type, String description) {
+    public ConfigurationValue(Configuration config, String id, String value, String type, String description, List<String> tags) {
         this.id = id;
         this.value = value;
         this.configuration = config;
-        this.type = type;
+        this.type = !RoddyConversionHelperMethods.isNullOrEmpty(type) ? type : determineTypeOfValue(value);
         this.description = description;
+        if (tags != null)
+            this.tags.addAll(tags);
     }
 
     public Configuration getConfiguration() {
         return configuration;
     }
 
+    /**
+     * If the type of the value is set to null, we can try to auto detect the value.
+     * Defaults to string and can detect integers, doubles and arrays.
+     * <p>
+     * Maybe, this should be put to a different location?
+     *
+     * @return
+     */
+    public static String determineTypeOfValue(String value) {
+        if (RoddyConversionHelperMethods.isInteger(value)) return "integer";
+        if (RoddyConversionHelperMethods.isDouble(value)) return "double";
+        if (RoddyConversionHelperMethods.isFloat(value)) return "float";
+        if (RoddyConversionHelperMethods.isDefinedArray(value)) return "bashArray";
+        return "string";
+    }
 
     private String replaceString(String src, String pattern, String text) {
         if (src.contains(pattern)) {
@@ -74,9 +113,14 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
 
     private String checkAndCorrectPath(String temp) {
         String curUserPath = (new File("")).getAbsolutePath();
+        String applicationDirectory = Roddy.getApplicationDirectory().getAbsolutePath();
         //TODO Make something like a blacklist. This is not properly handled now. Initially this was done because Java sometimes puts something in front of the file paths.
-        if ((value.startsWith("${") || value.startsWith("$") || value.startsWith("~")) && temp.startsWith(curUserPath)) {
-            temp = temp.substring(curUserPath.length() + 1);
+        if (value.startsWith("${") || value.startsWith("$") || value.startsWith("~") || !value.startsWith("/")) {
+            if (temp.startsWith(applicationDirectory)) {
+                temp = temp.substring(applicationDirectory.length() + 1);
+            } else if (temp.startsWith(curUserPath)) {
+                temp = temp.substring(curUserPath.length() + 1);
+            }
         }
 
         return temp;
@@ -97,6 +141,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
 
         String temp = f.getAbsolutePath();
         temp = temp.contains("${pid}") ? replaceString(temp, "${pid}", dataSet.getId()) : temp;
+        temp = temp.contains("${dataSet}") ? replaceString(temp, "${dataSet}", dataSet.getId()) : temp;
 
         return new File(temp);
     }
@@ -115,7 +160,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
 
             if (userID != null)
                 temp = replaceString(temp, "$USERNAME", userID);
-            if( groupID != null)
+            if (groupID != null)
                 temp = replaceString(temp, "$USERGROUP", groupID);
 
             String ud = FileSystemAccessProvider.getInstance().getUserDirectory().getAbsolutePath();
@@ -145,7 +190,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         try {
             String temp = toFile(context.getAnalysis(), context.getDataSet()).getAbsolutePath();
             temp = checkAndCorrectPath(temp);
-            if(value.startsWith("${DIR_BUNDLED_FILES}") || value.startsWith("${DIR_RODDY}"))
+            if (value.startsWith("${DIR_BUNDLED_FILES}") || value.startsWith("${DIR_RODDY}"))
                 temp = Roddy.getApplicationDirectory().getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + temp;
 
             if (temp.contains(ConfigurationConstants.CVALUE_PLACEHOLDER_EXECUTION_DIRECTORY)) {
@@ -228,7 +273,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         String temp = value;
         if (configuration != null) {
             List<String> valueIDs = getIDsForParrentValues();
-            for(String vName : valueIDs) {
+            for (String vName : valueIDs) {
                 if (configuration.getConfigurationValues().hasValue(vName))
                     temp = temp.replace("${" + vName + '}', configuration.getConfigurationValues().get(vName).toString());
             }
@@ -251,6 +296,14 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
 
     public String getType() {
         return type;
+    }
+
+    public List<String> getListOfTags() {
+        return tags;
+    }
+
+    public boolean hasTag(String tag) {
+        return tags.contains(tag);
     }
 
     public EnumerationValue getEnumerationValueType() {
@@ -339,14 +392,8 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         return value;
     }
 
-    public String getDescription() { return description; }
-
-    public boolean isQuoteOnConversionSet() {
-        return quoteOnConversion;
-    }
-
-    public void setQuoteOnConversion() {
-        this.quoteOnConversion = true;
+    public String getDescription() {
+        return description;
     }
 
     /**

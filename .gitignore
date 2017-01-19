@@ -1,7 +1,11 @@
 .idea/workspace.xml
+out
 RoddyCore/build
+dist/bin/2*
 dist/build
 dist/plugins/DefaultPlugin_*
+dist/plugins/*/build
+dist/plugins/PluginBase_1.0.28
 build
 gradle
 .nfo
@@ -9,3 +13,6 @@ gradle
 .idea/encodings.xml
 manifest.tmp
 *~
+coverage/
+.idea/codeStyleSettings.xml
+.idea/gradle.xml

@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.knowledge.files;
 
 /**
@@ -7,7 +13,7 @@ package de.dkfz.roddy.knowledge.files;
  * Use the onMethod filename pattern.
  */
 public class GenericFile extends BaseFile {
-    public GenericFile(BaseFile parentFile) {
-        super(parentFile);
+    public GenericFile(ConstructionHelperForBaseFiles helper) {
+        super( helper);
     }
 }

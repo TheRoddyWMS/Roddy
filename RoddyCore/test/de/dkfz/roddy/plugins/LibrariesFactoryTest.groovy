@@ -1,10 +1,17 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.plugins
 
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.tools.RuntimeTools
+import groovy.transform.TypeCheckingMode
 import org.junit.AfterClass
 import org.junit.BeforeClass
-import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
@@ -18,40 +25,6 @@ import java.lang.reflect.Method
 @groovy.transform.CompileStatic
 public class LibrariesFactoryTest {
 
-//    private static Object testLock = new Object();
-
-//    @Test
-//    /**
-//     * Test, if the plugin chain with "full" plugins is loading.
-//     */
-//    public void testLoadLibraryChainWithJarFile() {
-//        try {
-//            synchronized (testLock) {
-//                Roddy.resetMainStarted();
-//                Roddy.main(["testrun", "TestProjectForUnitTests@test", "stds", "--useRoddyVersion=current", "--disallowexit", "--configurationDirectories=" + RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current", "testFiles").absolutePath] as String[]);
-//                assert (LibrariesFactory.getInstance().getLoadedLibrariesInfoList().size() == 3)
-//            }
-//        } finally {
-//            LibrariesFactory.initializeFactory(true);
-//        }
-//    }
-//
-//    @Test
-//    /**
-//     * Test, if the plugin chain with "mixed/empty" plugins is loading. Empty plugins are such, that have no jar file.
-//     */
-//    public void testLoadLibraryChainWithoutJarFile() {
-//        try {
-//            synchronized (testLock) {
-//                Roddy.resetMainStarted();
-//                Roddy.main(["testrun", "TestProjectForUnitTests@testWithoutJar", "stds", "--useRoddyVersion=current", "--disallowexit", "--configurationDirectories=" + RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current", "testFiles").absolutePath] as String[]);
-//                assert (LibrariesFactory.getInstance().getLoadedLibrariesInfoList().size() == 4)
-//            }
-//        } finally {
-//            LibrariesFactory.initializeFactory(true);
-//        }
-//    }
-
     /**
      * Test data map for plugin chain loading mechanims
      * The map contains various plugins, versions and dependencies to other plugins.
@@ -64,7 +37,7 @@ public class LibrariesFactoryTest {
      */
     private static final LinkedHashMap<String, LinkedHashMap<String, List<String>>> mapWithTestPlugins = [
             A: ["1.0.1"  : [],
-                "1.0.24" : ["PluginBase:1.0.24", "DefaultPlugin:1.0.28"],
+                "1.0.24" : ["PluginBase:current", "DefaultPlugin:current"],
                 "current": ["PluginBase:current", "DefaultPlugin:current"]
             ],
             B: ["0.9.0"    : ["A:1.0.1"],
@@ -96,7 +69,7 @@ public class LibrariesFactoryTest {
     /**
      * Keeps all available plugins which were created with the help of the mapWithTestPlugins map
      */
-    private static Map<String, Map<String, PluginInfo>> mapOfAvailablePlugins
+    private static PluginInfoMap mapOfAvailablePlugins
 
     public static TemporaryFolder pluginsBaseDir = new TemporaryFolder();
 
@@ -106,6 +79,7 @@ public class LibrariesFactoryTest {
     }
 
     @BeforeClass
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public static void setupTestDataForPluginQueueTests() {
 
         pluginsBaseDir.create();
@@ -165,7 +139,7 @@ public class LibrariesFactoryTest {
         assert mapOfAvailablePlugins["B"]["1.0.3-0"]?.previousInChain == mapOfAvailablePlugins["B"]["1.0.2-2"] && mapOfAvailablePlugins["B"]["1.0.3-0"]?.previousInChainConnectionType == PluginInfo.PluginInfoConnection.EXTENSION
     }
 
-    public static Map<String, Map<String, PluginInfo>> callLoadMapOfAvailablePlugins(List<File> additionalPluginDirectories = []) {
+    public static PluginInfoMap callLoadMapOfAvailablePlugins(List<File> additionalPluginDirectories = []) {
         List<File> pluginDirectories = [new File(Roddy.getApplicationDirectory(), "/dist/plugins/")]
         pluginDirectories += additionalPluginDirectories
 
@@ -174,8 +148,20 @@ public class LibrariesFactoryTest {
         loadMapOfAvailablePlugins.setAccessible(true);
 
         // Invoke the method and check the results.
-        mapOfAvailablePlugins = loadMapOfAvailablePlugins.invoke(null, pluginDirectories) as Map<String, Map<String, PluginInfo>>;
+        mapOfAvailablePlugins = LibrariesFactory.loadMapOfAvailablePlugins(pluginDirectories)
         return mapOfAvailablePlugins
+    }
+
+    @Test
+    public void testPerformCompatibleAPIChecks() {
+        assert LibrariesFactory.performAPIChecks([new PluginInfo("MasterMax", null, null, null, "1.0.10-0", RuntimeTools.roddyRuntimeVersion, RuntimeTools.getJavaRuntimeVersion(), RuntimeTools.getGroovyRuntimeVersion(), null)])
+    }
+
+    @Test
+    public void testPerformIncompatibleAPIChecks() {
+        assert false == LibrariesFactory.performAPIChecks([
+                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", RuntimeTools.roddyRuntimeVersion, RuntimeTools.javaRuntimeVersion, RuntimeTools.groovyRuntimeVersion, null),
+                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", "1.3", null)])
     }
 
     @Test
@@ -204,12 +190,12 @@ public class LibrariesFactoryTest {
     public void testBuildupPluginQueueContainingCompatibleEntries() {
         Map<String, PluginInfo> pluginQueueCompatible = LibrariesFactory.buildupPluginQueue(mapOfAvailablePlugins, ["D:1.0.3"] as String[]);
         assert pluginQueueCompatible != null;
-        assert pluginQueueCompatible["D"].prodVersion == "1.0.3-0" &&
-                pluginQueueCompatible["C"].prodVersion == "current" &&
-                pluginQueueCompatible["B"].prodVersion == "1.0.3-0" &&
-                pluginQueueCompatible["A"].prodVersion == "current" &&
-                pluginQueueCompatible["PluginBase"].prodVersion == "current" &&
-                pluginQueueCompatible["DefaultPlugin"].prodVersion == "current";
+        assert pluginQueueCompatible["D"].prodVersion == "1.0.3-0";
+        assert pluginQueueCompatible["C"].prodVersion == "current";
+        assert pluginQueueCompatible["B"].prodVersion == "1.0.3-0";
+        assert pluginQueueCompatible["A"].prodVersion == "current";
+        assert pluginQueueCompatible["PluginBase"].prodVersion == "current";
+        assert pluginQueueCompatible["DefaultPlugin"].prodVersion == "current";
 
     }
 
@@ -228,8 +214,8 @@ public class LibrariesFactoryTest {
                 pluginQueueFixatedEntriesOK["C"].prodVersion == "1.0.2-0" &&
                 pluginQueueFixatedEntriesOK["B"].prodVersion == "1.0.2-1" &&
                 pluginQueueFixatedEntriesOK["A"].prodVersion == "1.0.24-0" &&
-                pluginQueueFixatedEntriesOK["PluginBase"].prodVersion == "1.0.24-0" &&
-                pluginQueueFixatedEntriesOK["DefaultPlugin"].prodVersion == "1.0.28-0";
+                pluginQueueFixatedEntriesOK["PluginBase"].prodVersion == "current" &&
+                pluginQueueFixatedEntriesOK["DefaultPlugin"].prodVersion == "current";
 
     }
 
@@ -241,4 +227,12 @@ public class LibrariesFactoryTest {
                 pluginQueueWODefaultLibs["DefaultPlugin"].prodVersion == "current";
     }
 
+
+    @Test
+    public void testGenerateSyntheticFileClassWithParentClass() {
+        Class _cls = LibrariesFactory.generateSyntheticFileClassWithParentClass("TestClass", "BaseFile", new GroovyClassLoader());
+        assert _cls != null && _cls.name.equals(LibrariesFactory.SYNTHETIC_PACKAGE + ".TestClass");
+        assert _cls.getDeclaredConstructors().size() == 1;
+        assert _cls.getDeclaredConstructors()[0].parameterTypes[0] == de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForBaseFiles
+    }
 }

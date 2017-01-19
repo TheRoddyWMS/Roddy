@@ -1,8 +1,15 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.plugins;
 
 import de.dkfz.roddy.StringConstants;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
+import de.dkfz.roddy.tools.RuntimeTools;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +50,9 @@ public class PluginInfo {
     private File directory;
     private File developmentDirectory;
     private String prodVersion;
+    private final String roddyAPIVersion;
+    private final String jdkVersion;
+    private final String groovyVersion;
     private Map<String, String> dependencies;
     private final File zipFile;
 
@@ -63,11 +73,14 @@ public class PluginInfo {
 
     private Map<String, File> listOfToolDirectories = new LinkedHashMap<>();
 
-    public PluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, Map<String, String> dependencies) {
+    public PluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, String roddyAPIVersion, String jdkVersion, String groovyVersion, Map<String, String> dependencies) {
         this.name = name;
         this.directory = directory;
         this.developmentDirectory = developmentDirectory;
         this.prodVersion = prodVersion;
+        this.roddyAPIVersion = roddyAPIVersion;
+        this.jdkVersion = jdkVersion;
+        this.groovyVersion = groovyVersion;
         this.dependencies = dependencies;
         this.zipFile = zipFile;
         fillListOfToolDirectories();
@@ -87,6 +100,7 @@ public class PluginInfo {
                     String toolsDir = file.getName();
                     listOfToolDirectories.put(toolsDir, file);
                 }
+
             } else { //Otherwise, finally look into the zip file. (Which must be existing at this point!)
                 directory = RoddyIOHelperMethods.assembleLocalPath(zipFile.getParent(), zipFile.getName().split(".zip")[0]);
                 toolsBaseDir = RoddyIOHelperMethods.assembleLocalPath(directory, "resources", "analysisTools");
@@ -117,7 +131,9 @@ public class PluginInfo {
         return new File(new File(directory, "resources"), "brawlworkflows");
     }
 
-    public File getConfigurationDirectory() { return new File(new File(directory, "resources"), "configurationFiles"); }
+    public File getConfigurationDirectory() {
+        return new File(new File(directory, "resources"), "configurationFiles");
+    }
 
     public String getName() {
         return name;
@@ -129,6 +145,18 @@ public class PluginInfo {
 
     public String getProdVersion() {
         return prodVersion;
+    }
+
+    public String getRoddyAPIVersion() {
+        return roddyAPIVersion;
+    }
+
+    public String getJdkVersion() {
+        return jdkVersion;
+    }
+
+    public String getGroovyVersion() {
+        return groovyVersion;
     }
 
     public Map<String, File> getToolsDirectories() {
@@ -157,6 +185,29 @@ public class PluginInfo {
 
     public String getMajorAndMinor() {
         return prodVersion.split("[-]")[0];
+    }
+
+    public boolean isCompatibleToRuntimeSystem() {
+        return jdkVersion == RuntimeTools.getJavaRuntimeVersion()
+                && groovyVersion == RuntimeTools.getRoddyRuntimeVersion()
+                && roddyAPIVersion == RuntimeTools.getGroovyRuntimeVersion();
+    }
+
+    public boolean isJavaProject() {
+        File srcFolder = new File(directory, "src");
+        // Java projects need a valid jar file
+        // Scan for java files?? Only in src?
+        return false;
+    }
+
+    public boolean isGroovyProject() {
+        // Scan for groovy files?? Only in src?
+        return false;
+    }
+
+    public boolean hasValidJarFile() {
+        // Check
+        return false;
     }
 
     public int getRevision() {

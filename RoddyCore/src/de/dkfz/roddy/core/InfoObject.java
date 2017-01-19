@@ -1,10 +1,17 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.core;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * Provides basic fields and methods for classes which represent a state of i.e. data sets which for a given point in time.
+ * Provides basic fields and methods for classes which represent a jobState of i.e. data sets which for a given point in time.
  */
 public class InfoObject {
     private static final String TIMESTAMP_FORMAT = "yyMMdd_HHmm";
@@ -16,6 +23,11 @@ public class InfoObject {
 
     public InfoObject() {
         this.timeStamp = new Date();
+    }
+
+    public static String formatTimestampReadable(Date timestamp) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yy-MM-dd / HH:mm");
+        return sdf.format(timestamp);
     }
 
     public static String formatTimestamp(Date timestamp) {

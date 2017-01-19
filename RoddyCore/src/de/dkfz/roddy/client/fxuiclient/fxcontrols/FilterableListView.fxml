@@ -7,6 +7,12 @@
 <?import javafx.scene.paint.*?>
 <?import javafx.scene.shape.Line?>
 
+<!--
+  ~ Copyright (c) 2016 eilslabs.
+  ~
+  ~ Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+  -->
+
 <fx:root type="javafx.scene.layout.BorderPane" prefWidth="685.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
     <bottom>
         <GridPane>

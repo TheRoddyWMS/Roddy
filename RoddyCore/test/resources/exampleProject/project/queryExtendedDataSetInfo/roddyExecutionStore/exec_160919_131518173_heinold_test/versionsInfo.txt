@@ -1,0 +1,5 @@
+Roddy version: current
+Library info:
+The plugin TestPluginWithJarFile [ Version: current ] was loaded.
+The plugin PluginBase [ Version: current ] was loaded.
+The plugin DefaultPlugin [ Version: current ] was loaded.

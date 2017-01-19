@@ -1,169 +1,61 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.config;
 
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.knowledge.files.BaseFile;
-import de.dkfz.roddy.knowledge.files.FileObject;
-import de.dkfz.roddy.knowledge.files.FileStage;
 import de.dkfz.roddy.knowledge.files.FileStageSettings;
 
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import static de.dkfz.roddy.StringConstants.*;
 
 /**
  * Filename patterns are stored in a configuration file. They are project specific and should be fully configurable.
  */
-public class FilenamePattern implements RecursiveOverridableMapContainer.Identifiable {
+public abstract class FilenamePattern implements RecursiveOverridableMapContainer.Identifiable {
+
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(FilenamePattern.class.getSimpleName());
-    public static final String $_SOURCEFILE_ATOMIC_PREFIX = "${sourcefileAtomicPrefix";
-    public static final String $_SOURCEFILE_PROPERTY = "${sourcefileProperty";
-    public static final String $_CVALUE = "${cvalue";
-    public static final String $_JOBPARAMETER = "${jobParameter";
+    public static final String PLACEHOLDER_SOURCEFILE_ATOMIC_PREFIX = "${sourcefileAtomicPrefix";
+    public static final String PLACEHOLDER_SOURCEFILE_PROPERTY = "${sourcefileProperty";
+    public static final String PLACEHOLDER_CVALUE = "${cvalue";
+    public static final String PLACEHOLDER_JOBPARAMETER = "${jobParameter";
     public static final String DEFAULT_SELECTION_TAG = "default";
 
-    private boolean acceptsFileArrays;
+    protected final Class<BaseFile> cls;
+    protected final String pattern;
+    protected final String selectionTag;
+    protected boolean acceptsFileArrays;
+    protected int enforcedArraySize;
 
-
-    public enum FilenamePatternDependency {
-        SourceClass,
-        FileStage,
-        MethodName,
-        ScriptID;
-    }
-
-    private final Class<BaseFile> cls;
-    private final Class<BaseFile> derivedFromCls;
-    private int enforcedArraySize;
-    private final FileStage fileStage;
-    private final Class calledMethodsClass;
-    private final Method calledMethodsName;
-    private final String calledScriptID;
-    private final String pattern;
-    private final String selectionTag;
-    private final FilenamePatternDependency filenamePatternDependency;
-
-    public FilenamePattern(Class<BaseFile> cls, Class<BaseFile> derivedFromCls, String pattern, String selectionTag) {
-        this(cls, derivedFromCls, pattern, selectionTag, false, -1);
-    }
-
-    public FilenamePattern(Class<BaseFile> cls, Class<BaseFile> derivedFromCls, String pattern, String selectionTag, boolean acceptsFileArrays, int enforcedArraySize) {
+    public FilenamePattern(Class<BaseFile> cls, String pattern, String selectionTag) {
         this.cls = cls;
-        this.derivedFromCls = derivedFromCls;
-        this.acceptsFileArrays = acceptsFileArrays;
-        this.enforcedArraySize = enforcedArraySize;
-        this.fileStage = null;
-        calledMethodsName = null;
-        calledMethodsClass = null;
-        this.calledScriptID = null;
         this.pattern = pattern;
-        this.filenamePatternDependency = FilenamePatternDependency.SourceClass;
         this.selectionTag = selectionTag != null ? selectionTag : DEFAULT_SELECTION_TAG;
-    }
-
-    public FilenamePattern(Class<BaseFile> cls, FileStage fileStage, String pattern, String selectionTag) {
-        this.cls = cls;
-        this.fileStage = fileStage;
-        this.derivedFromCls = null;
-        calledMethodsName = null;
-        calledMethodsClass = null;
-        this.calledScriptID = null;
-        this.pattern = pattern;
-        this.filenamePatternDependency = FilenamePatternDependency.FileStage;
-        this.selectionTag = selectionTag != null ? selectionTag : DEFAULT_SELECTION_TAG;
-    }
-
-    /**
-     * OnScript
-     * @param cls
-     * @param pattern
-     * @param selectionTag
-     */
-    public FilenamePattern(Class<BaseFile> cls, String script, String pattern, String selectionTag) {
-        this.cls = cls;
-        this.calledScriptID = script;
-        this.pattern = pattern;
-        this.filenamePatternDependency = FilenamePatternDependency.ScriptID;
-        this.selectionTag = selectionTag != null ? selectionTag : DEFAULT_SELECTION_TAG;
-        fileStage = null;
-        derivedFromCls = null;
-        calledMethodsName = null;
-        calledMethodsClass = null;
-    }
-
-    /**
-     * OnMethod
-     * @param cls
-     * @param calledClass
-     * @param method
-     * @param pattern
-     * @param selectionTag
-     */
-    public FilenamePattern(Class<BaseFile> cls, Class calledClass, Method method, String pattern, String selectionTag) {
-        this.cls = cls;
-        this.fileStage = null;
-        this.derivedFromCls = null;
-        this.calledScriptID = null;
-        this.calledMethodsClass = calledClass;
-        this.calledMethodsName = method;
-        this.pattern = pattern;
-        this.filenamePatternDependency = FilenamePatternDependency.MethodName;
-        this.selectionTag = selectionTag != null ? selectionTag : DEFAULT_SELECTION_TAG;
-    }
-
-    public static String assembleID(Class<BaseFile> cls, Class<BaseFile> derivedFromCls, String selectionTag) {
-        return  String.format("%s::c_%s[%s]", cls.getName(), derivedFromCls.getName(), selectionTag);
-    }
-
-    public static String assembleID(Class<BaseFile> cls, FileStage stage, String selectionTag) {
-        return String.format("%s::#_%s[%s]", cls.getName(), stage.toString(), selectionTag);
-    }
-
-    public static String assembleID(Class<FileObject> cls, Method calledMethodsName, Class createdClass, String selectionTag) {
-        return String.format("%s::m_%s/r_%s[%s]", cls.getName(), calledMethodsName.getName(), createdClass.getName(), selectionTag);
-    }
-
-    public static String assembleID(Class<BaseFile> cls, String scriptID, String selectionTag) {
-        return String.format("%s::onS_%s[%s]", cls.getName(), scriptID, selectionTag);
-    }
-
-    @Override
-    public String getID() {
-        if (filenamePatternDependency == FilenamePatternDependency.FileStage)
-            return assembleID(cls, fileStage, selectionTag);
-        if (filenamePatternDependency == FilenamePatternDependency.SourceClass)
-            return assembleID(cls, derivedFromCls, selectionTag);
-        if (filenamePatternDependency == FilenamePatternDependency.ScriptID)
-            return assembleID(cls, calledScriptID, selectionTag);
-        if (filenamePatternDependency == FilenamePatternDependency.MethodName)
-            return assembleID(calledMethodsClass, calledMethodsName, cls, selectionTag);
-        return null;
     }
 
     public Class<BaseFile> getCls() {
         return cls;
     }
 
-    public Class<BaseFile> getDerivedFromCls() {
-        return derivedFromCls;
-    }
-
-    public Method getCalledMethodsName() {
-        return calledMethodsName;
-    }
-
-    public Class getCalledMethodsClass() { return calledMethodsClass; }
-
     public String getPattern() {
         return pattern;
     }
 
-    public FileStage getFileStage() {
-        return fileStage;
+    public boolean hasSelectionTag() {
+        return !selectionTag.equals(DEFAULT_SELECTION_TAG);
+    }
+
+    public String getSelectionTag() {
+        return selectionTag;
     }
 
     public boolean doesAcceptFileArrays() {
@@ -178,23 +70,13 @@ public class FilenamePattern implements RecursiveOverridableMapContainer.Identif
         return enforcedArraySize;
     }
 
-    public FilenamePatternDependency getFilenamePatternDependency() {
-        return filenamePatternDependency;
-    }
+    public abstract FilenamePatternDependency getFilenamePatternDependency();
 
-    public boolean hasSelectionTag() {
-        return !selectionTag.equals(DEFAULT_SELECTION_TAG);
-    }
-
-    public String getSelectionTag() {
-        return selectionTag;
-    }
-
-    private String fillVariables(BaseFile baseFile, String temp) {
-        ExecutionContext run = baseFile.getExecutionContext();
-        Configuration cfg = run.getConfiguration();
+    protected String fillVariables(BaseFile baseFile, String temp) {
+        ExecutionContext context = baseFile.getExecutionContext();
+        Configuration cfg = context.getConfiguration();
         //Different output folder
-        String oPath = run.getOutputDirectory().getAbsolutePath();
+        String oPath = context.getOutputDirectory().getAbsolutePath();
 //        temp = temp.replace("${outputbasepath}", oPath);
         temp = temp.replace("${outputAnalysisBaseDirectory}", oPath);
         //Replace output directories containing OutputDirectory
@@ -206,15 +88,15 @@ public class FilenamePattern implements RecursiveOverridableMapContainer.Identif
                     String cvalID = s.substring(2, s.length() - 1);
                     ConfigurationValue cval = cfg.getConfigurationValues().get(cvalID);
 
-                    String pathSup = cval.getType().equals("path") ? cval.toFile(run).getAbsolutePath() : cval.toString();
+                    String pathSup = cval.getType().equals("path") ? cval.toFile(context).getAbsolutePath() : cval.toString();
                     pathSup = pathSup.replace(Roddy.getApplicationDirectory().getAbsolutePath() + "/", ""); //Remove Roddy application folder from path...
                     temp = temp.replace(s, pathSup);
                 }
             }
         }
 
-        while (temp.contains($_CVALUE)) {
-            Command command = extractCommand($_CVALUE, temp);
+        while (temp.contains(PLACEHOLDER_CVALUE)) {
+            Command command = extractCommand(PLACEHOLDER_CVALUE, temp);
             CommandAttribute name = command.attributes.get("name");
             CommandAttribute def = command.attributes.get("default");
             if (name != null) {
@@ -233,25 +115,31 @@ public class FilenamePattern implements RecursiveOverridableMapContainer.Identif
         return temp;
     }
 
-    private String fillVariablesFromSourceFileValues(BaseFile baseFile, String temp) {
+    protected String fillVariablesFromSourceFileValues(BaseFile baseFile, String temp) {
         FileStageSettings fs = baseFile.getFileStage();
         String _temp = temp;
         temp = fs.fillStringContent(temp);
-        if(temp == null)
+        if (temp == null)
             temp = _temp; //TODO Look why temp gets null. This should not be the case.
         //pid, sample, run...
         temp = temp.replace("${fileStageID}", fs.getIDString());
-        temp = temp.replace("${pid}", baseFile.getPid().toString());
+        temp = temp.replace("${pid}", baseFile.getDataSet().toString()); // TODO: Move to plugin.
+        temp = temp.replace("${dataSet}", baseFile.getDataSet().toString());
         return temp;
     }
 
-    private String fillVariablesFromSourceFileArrayValues(BaseFile baseFile, String temp, int index) {
+    protected String fillVariablesFromSourceFileArrayValues(BaseFile baseFile, String temp, int index) {
         FileStageSettings fs = baseFile.getFileStage();
         //pid, sample, run...
         temp = temp.replace(String.format("${fileStageID[%d]}", index), fs.getIDString());
-        temp = temp.replace(String.format("${pid[%d]}", index), baseFile.getPid().toString());
+        temp = temp.replace(String.format("${pid[%d]}", index), baseFile.getDataSet().toString()); // TODO: Move to plugin.
+        temp = temp.replace(String.format("${dataSet[%d]}", index), baseFile.getDataSet().toString());
         temp = fs.fillStringContentWithArrayValues(index, temp);
         return temp;
+    }
+
+    protected BaseFile getSourceFile(BaseFile[] baseFiles) {
+        return null;
     }
 
     /**
@@ -278,26 +166,16 @@ public class FilenamePattern implements RecursiveOverridableMapContainer.Identif
         try {
             temp = null;
             BaseFile baseFile = baseFiles[0];
-            BaseFile sourceFile = null;
+            BaseFile sourceFile = getSourceFile(baseFiles);
             temp = pattern;
-
-            if (filenamePatternDependency == FilenamePatternDependency.SourceClass) {
-                //Filename pattern dependency is always derived from
-                sourceFile = baseFile; //In this case sourcefile is the basefile.
-            } else if (filenamePatternDependency == FilenamePatternDependency.FileStage) {
-                //            BaseFile.FileStage tgtFileStage = baseFile.getFileStage().getStage();
-            } else if (filenamePatternDependency == FilenamePatternDependency.MethodName) {
-                if (baseFile.getParentFiles() != null && baseFile.getParentFiles().size() > 0)
-                    sourceFile = (BaseFile)baseFile.getParentFiles().get(0); //In this case sourcefile is the first of the base files, if at least one basefile is available.
-            }
 
             // There is one source file existing, so source file based options can be applied.
             if (sourceFile != null) {
                 File sourcepath = sourceFile.getPath();
                 temp = temp.replace("${sourcefile}", sourcepath.getAbsolutePath());
                 temp = temp.replace("${sourcefileAtomic}", sourcepath.getName());
-                if (temp.contains($_SOURCEFILE_PROPERTY)) { //Replace the string with a property value
-                    Command command = extractCommand($_SOURCEFILE_PROPERTY, temp);
+                if (temp.contains(PLACEHOLDER_SOURCEFILE_PROPERTY)) { //Replace the string with a property value
+                    Command command = extractCommand(PLACEHOLDER_SOURCEFILE_PROPERTY, temp);
                     String pName = command.attributes.keySet().toArray()[0].toString();
 
                     String accessorName = "get" + pName.substring(0, 1).toUpperCase() + pName.substring(1);
@@ -305,8 +183,8 @@ public class FilenamePattern implements RecursiveOverridableMapContainer.Identif
                     String value = accessorMethod.invoke(sourceFile).toString();
                     temp = temp.replace(command.name, value);
                 }
-                if (temp.contains($_SOURCEFILE_ATOMIC_PREFIX)) {
-                    Command command = extractCommand($_SOURCEFILE_ATOMIC_PREFIX, temp);
+                if (temp.contains(PLACEHOLDER_SOURCEFILE_ATOMIC_PREFIX)) {
+                    Command command = extractCommand(PLACEHOLDER_SOURCEFILE_ATOMIC_PREFIX, temp);
                     CommandAttribute att = command.attributes.get("delimiter");
                     if (att != null) {
                         String sourcename = sourcepath.getName();
@@ -326,7 +204,7 @@ public class FilenamePattern implements RecursiveOverridableMapContainer.Identif
             temp = fillVariablesFromSourceFileValues(baseFile, temp);
         } catch (Exception e) {
             logger.severe("Could not apply filename pattern " + pattern + " for file " + baseFiles[0]);
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
         }
         return temp;
     }
@@ -365,7 +243,7 @@ public class FilenamePattern implements RecursiveOverridableMapContainer.Identif
             String[] attributeSplit = _split.split(SPLIT_EQUALS);
             String name = attributeSplit[0];
             String value = EMPTY;
-            if(attributeSplit.length == 2)
+            if (attributeSplit.length == 2)
                 value = attributeSplit[1];
             attributes.put(name, new CommandAttribute(name, value));
         }

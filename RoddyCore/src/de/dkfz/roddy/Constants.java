@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy;
 
 /**
@@ -10,9 +16,9 @@ public class Constants {
     // Application constants
     /////////////////////////
 
-    public static final String APP_CURRENT_VERSION_STRING = "2.2.109";
-    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Fri Nov 20 16:18:57 CET 2015";
-    public static final String APP_PROPERTY_COMMAND_FACTORY_CLASS = "commandFactoryClass";
+    public static final String APP_CURRENT_VERSION_STRING = "2.3.123";
+    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Mon Sep 26 10:22:36 CEST 2016";
+    public static final String APP_PROPERTY_COMMAND_FACTORY_CLASS = "jobManagerClass";
     public static final String APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS = "fileSystemAccessManagerClass";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_CLASS = "executionServiceClass";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_USER = "executionServiceUser";
@@ -41,6 +47,8 @@ public class Constants {
     public static final String ERR_MSG_ONLY_ONE_JOB_ALLOWED = "A job object is not allowed to run several times.";
     public static final String ERR_MSG_WRONG_PARAMETER_COUNT = "You did not provide proper parameters, args.length = ";
     public static final String ERR_MSG_NO_APPLICATION_PROPERTY_FILE = "Configuration does not exist. Cannot start application.";
+
+//    public static final String APP_EXITCODE_
 
     /////////////////////////
     // Environment settings

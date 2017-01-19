@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.client.cliclient
 
 import de.dkfz.roddy.AvailableFeatureToggles
@@ -15,8 +21,8 @@ import de.dkfz.roddy.config.validation.WholeConfigurationValidator
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.SSHExecutionService
-import de.dkfz.roddy.execution.jobs.CommandFactory
 import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.execution.jobs.ProcessingCommands
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -45,24 +51,6 @@ public class RoddyCLIClient {
             this.icc = icc
             this.children += children;
         }
-    }
-
-    private static ConsoleStringFormatter _formatter = null;
-
-    private static ConsoleStringFormatter getFormatter() {
-        if (_formatter == null) {
-            //Decide which formatter can be used.
-            def env = System.getenv()
-            boolean isLinux = env.get("OSTYPE") == "linux";
-            boolean isBash = env.get("SHELL")?.contains("bash");
-
-//        if (isLinux && isBash) { //Simple check if we are using linux and a color code aware console
-//            if (System.console() != null)
-//                return new BashFormatter();
-//        }
-            _formatter = new NoColorsFormatter();
-        }
-        return _formatter;
     }
 
     /**
@@ -111,11 +99,17 @@ public class RoddyCLIClient {
             case printruntimeconfig:
                 printRuntimeConfiguration(clc);
                 break;
+            case printidlessruntimeconfig:
+                printReducedRuntimeConfiguration(clc);
+                break;
             case listworkflows:
                 listWorkflows(clc);
                 break;
             case listdatasets:
                 listDatasets(args);
+                break;
+            case autoselect:
+                RoddyCLIClient.autoselect(clc);
                 break;
             case run:
                 RoddyCLIClient.run(clc);
@@ -208,7 +202,7 @@ public class RoddyCLIClient {
         Analysis analysis = ProjectFactory.getInstance().loadAnalysis(commandLineCall.getArguments()[1]);
 
         def text = analysis.getReadmeFile()?.text
-        if(text) {
+        if (text) {
             println("Print readme file for analysis ${analysis.getName()}: \n\t" + analysis.getReadmeFile());
             println(text);
         }
@@ -265,27 +259,68 @@ public class RoddyCLIClient {
             i++;
         }
 
-        System.out.println(getFormatter().formatAll(sb.toString()));
+        System.out.println(ConsoleStringFormatter.getFormatter().formatAll(sb.toString()));
+    }
+
+    public static void printReducedRuntimeConfiguration(CommandLineCall commandLineCall) {
+        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(commandLineCall.getArguments()[1]);
+        if (!analysis) return;
+
+        ExecutionContext context = new ExecutionContext("DUMMY", analysis, null, ExecutionContextLevel.QUERY_STATUS, null, null, new File("/tmp/Roddy_DUMMY_Directory")) {
+            @Override
+            String getOutputGroupString() {
+                return "NOGROUP"
+            }
+        };
+        System.out.println(ConfigurationConverter.convertAutomatically(context, analysis.getConfiguration()));
     }
 
     public static void printRuntimeConfiguration(CommandLineCall commandLineCall) {
         Analysis analysis = ProjectFactory.getInstance().loadAnalysis(commandLineCall.getArguments()[1]);
         if (!analysis) return;
 
-        if (commandLineCall.getParameters().size() < 2) {
-            logger.postAlwaysInfo("There must be a valid dataset id / pid.")
-            return;
-        }
-
         List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(commandLineCall.getArguments()[2].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
-        for (it in executionContexts) {
-            System.out.println(ConfigurationConverter.convertAutomatically(it, it.getAnalysis().getConfiguration()));
+
+        if (commandLineCall.isOptionSet(RoddyStartupOptions.showentrysources)) {
+            if (commandLineCall.isOptionSet(RoddyStartupOptions.extendedlist)) {
+                for (ExecutionContext it in executionContexts) {
+
+                    def cvalues = it.getAnalysis().getConfiguration().getConfigurationValues()
+                    cvalues.getAllValues().each {
+                        String id, ConfigurationValue cvalue ->
+                            def inheritanceList = cvalues.getInheritanceList(id);
+                            boolean first = true;
+                            println(id);
+                            for (ConfigurationValue iValue : inheritanceList.reverse()) {
+                                println(((first ? "    " : "  * ") + "") + iValue.value.padRight(70).substring(0, 70) + " " + iValue?.getConfiguration()?.getInformationalConfigurationContent().file);
+                                first = false
+                            }
+                    }
+                }
+            } else {
+                for (ExecutionContext it in executionContexts) {
+
+                    def cvalues = it.getAnalysis().getConfiguration().getConfigurationValues()
+                    cvalues.getAllValues().each {
+                        String id, ConfigurationValue cvalue ->
+                            try {
+                                def path = cvalue?.getConfiguration()?.getInformationalConfigurationContent()?.file
+                                if (!path) path = "[ Automatically generated by Roddy ]"
+                                println(id.padRight(50).substring(0, 50) + " " + cvalue.value.padRight(70).substring(0, 70) + " " + path);
+                            } catch (Exception ex) {
+                                println(ex);
+                            }
+                    }
+                }
+            }
+        } else {
+            for (it in executionContexts) {
+                System.out.println(ConfigurationConverter.convertAutomatically(it, it.getAnalysis().getConfiguration()));
+            }
         }
     }
 
     public static void listWorkflows(CommandLineCall clc) {
-//        RoddyCLIClient.checkParameterCount(args, 1);
-
         String filter = clc.hasParameters() ? clc.getParameters().get(0) : "";
 
         final String separator = Constants.ENV_LINESEPARATOR;
@@ -306,14 +341,14 @@ public class RoddyCLIClient {
 
             //First check, if a filter must be applied.
             if (!projectIDContains(pti, filter)) {
-                logger.postSometimesInfo(getFormatter().formatAll("#FRED#Configuration ${pti.icc.id} left out because of the specified filter.#CLEAR#"));
+                logger.postSometimesInfo(ConsoleStringFormatter.getFormatter().formatAll("#FRED#Configuration ${pti.icc.id} left out because of the specified filter.#CLEAR#"));
                 continue;
             }
-            logger.postAlwaysInfo(getFormatter().formatAll("${separator}#FWHITE##BGRED#Parsing configuration ${pti.icc.id}#CLEAR# : ${pti.icc.file}"));
+            logger.postAlwaysInfo(ConsoleStringFormatter.getFormatter().formatAll("${separator}#FWHITE##BGRED#Parsing configuration ${pti.icc.id}#CLEAR# : ${pti.icc.file}"));
             if (clc.isOptionSet(RoddyStartupOptions.shortlist)) {
-                logger.postAlwaysInfo(getFormatter().formatAll(printRecursivelyShort(pti).toString()));
+                logger.postAlwaysInfo(ConsoleStringFormatter.getFormatter().formatAll(printRecursivelyShort(pti).toString()));
             } else {
-                logger.postAlwaysInfo(getFormatter().formatAll(printRecursively(0, pti).toString())); ;
+                logger.postAlwaysInfo(ConsoleStringFormatter.getFormatter().formatAll(printRecursively(0, pti).toString())); ;
             }
         }
     }
@@ -393,7 +428,7 @@ public class RoddyCLIClient {
         return found;
     }
 
-    public static void listDatasets(String[] args) {
+    public static List<DataSet> listDatasets(String[] args) {
         Analysis analysis = ProjectFactory.getInstance().loadAnalysis(args[1]);
         if (!analysis) return;
 
@@ -401,28 +436,38 @@ public class RoddyCLIClient {
         for (DataSet ds : datasets) {
             System.out.println(String.format("\t%s", ds.getId()));
         }
+        return datasets;
     }
 
     public static Analysis checkAndLoadAnalysis(CommandLineCall clc) {
         if (clc.parameters.size() < 2) {
             logger.postAlwaysInfo("There were no dataset identifiers set, cannot run workflow."); return null;
         }
-        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(clc.parameters[0]);
+        Analysis analysis = ProjectFactory.getInstance().loadAnalysis(clc.getAnalysisID());
         return analysis;
+    }
+
+    public static void autoselect(CommandLineCall clc) {
+
+        String apiLevel = ProjectFactory.getInstance().getPluginRoddyAPILevel(clc.getAnalysisID());
+        if (apiLevel == null) //Explicitely query for null (then there is no auto detect!)
+            logger.postAlwaysInfo("Roddy API level could not be detected");
+        else
+            logger.postAlwaysInfo("Roddy API level for ${clc.getAnalysisID()} == ${apiLevel}");
     }
 
     public static void run(CommandLineCall clc) {
         Analysis analysis = checkAndLoadAnalysis(clc);
         if (!analysis) return;
 
-        analysis.run(Arrays.asList(clc.parameters[1].split(SPLIT_COMMA)), ExecutionContextLevel.RUN);
+        analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.RUN);
     }
 
     public static List<ExecutionContext> rerun(CommandLineCall clc) {
         Analysis analysis = checkAndLoadAnalysis(clc);
         if (!analysis) return;
 
-        List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(clc.parameters[1].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
+        List<ExecutionContext> executionContexts = analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.QUERY_STATUS);
         return analysis.rerun(executionContexts, false);
     }
 
@@ -434,7 +479,7 @@ public class RoddyCLIClient {
         Analysis analysis = checkAndLoadAnalysis(clc);
         if (!analysis) return;
 
-        List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(clc.parameters[1].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
+        List<ExecutionContext> executionContexts = analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.QUERY_STATUS);
         if (testrerun) executionContexts = analysis.rerun(executionContexts, true);
 
         outputRerunResult(executionContexts, testrerun)
@@ -455,14 +500,20 @@ public class RoddyCLIClient {
             ConfigurationConverter.convertAutomatically(ec, configuration);
             StringBuilder sb = new StringBuilder();
 
-            sb << "#FWHITE##BGBLUE#Information about run test for dataset: " << ec.getDataSet().getId() << "#CLEAR#" << separator;
 
-            sb << "  Input directory     : ${ec.getInputDirectory()}" << separator;
-            sb << "  Output directory    : ${ec.getOutputDirectory()}" << separator;
-            sb << "  Execution directory : ${ec.getExecutionDirectory()}" << separator;
+            Collection<Job> collectedJobs = ec.getExecutedJobs().findAll { Job job -> job.getJobID() != null && (rerun ? job.runResult?.wasExecuted : true) }
+            def numberOfJobs = collectedJobs.size()
 
-            Collection<Job> collectedJobs = ec.getExecutedJobs().findAll { Job job -> job.getJobID() != null && (rerun ? job.runResult?.wasExecuted : true)  }
-            sb << "  #FWHITE#List of jobs (${collectedJobs.size()}):#CLEAR#" << separator;
+            if (numberOfJobs > 0) {
+                sb << "#FWHITE##BGBLUE#Information about run test for dataset: " << ec.getDataSet().getId() << "#CLEAR#" << separator;
+                sb << "  Input directory     : ${ec.getInputDirectory()}" << separator;
+                sb << "  Output directory    : ${ec.getOutputDirectory()}" << separator;
+                sb << "  Execution directory : ${ec.getExecutionDirectory()}" << separator;
+                sb << "  #FWHITE#List of jobs (${numberOfJobs}):#CLEAR#" << separator;
+            } else {
+                sb << "There were no executed jobs for dataset " << ec.getDataSet().getId() << separator;
+            }
+
             for (Job job : collectedJobs) {
 
                 String resources = "Unknown resource entry";
@@ -470,7 +521,7 @@ public class RoddyCLIClient {
                 try {
                     ToolEntry tool = configuration.getTools().getValue(job.getToolID());
                     ToolEntry.ResourceSet resourceSet = tool.getResourceSet(configuration);
-                    ProcessingCommands convertResourceSet = CommandFactory.getInstance().convertResourceSet(configuration, resourceSet);
+                    ProcessingCommands convertResourceSet = JobManager.getInstance().convertResourceSet(configuration, resourceSet);
                     resources = convertResourceSet.toString();
 
                 } catch (Exception ex) {
@@ -499,7 +550,7 @@ public class RoddyCLIClient {
             sb << separator;
             sb << separator;
 
-            println(getFormatter().formatAll(sb.toString()));
+            println(ConsoleStringFormatter.getFormatter().formatAll(sb.toString()));
         }
     }
 
@@ -529,7 +580,7 @@ public class RoddyCLIClient {
         sb << "Note, that only 'valid' information is processed and display. Empty execution folders and ";
         sb << "folders containing no job information will be skipped." << NEWLINE << NEWLINE << "[outDir]: " << outputDirectory << NEWLINE;
 
-        if(!dataSets)
+        if (!dataSets)
             return;
 
         //Get padding length for pid.
@@ -553,7 +604,7 @@ public class RoddyCLIClient {
                 if (information)
                     context = information.getDetailedProcessingInfo();
 
-                if(!datasetprinted) {
+                if (!datasetprinted) {
                     sb << ds.getId().padRight(padSize) << "  ";
                     datasetprinted = true;
                 } else {
@@ -592,15 +643,15 @@ public class RoddyCLIClient {
 
         }
         sb << "#CLEAR#" << separator;
-        println(getFormatter().formatAll(sb.toString()));
+        println(ConsoleStringFormatter.getFormatter().formatAll(sb.toString()));
 
     }
 
     static void cleanupWorkflow(CommandLineCall clc) {
-        def analysisID = clc.getParameters().get(0)
+        def analysisID = clc.getAnalysisID()
         Analysis analysis = ProjectFactory.getInstance().loadAnalysis(analysisID);
         if (!analysis) return;
-        List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getParameters()[1].split(SPLIT_COMMA) : null;
+        List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getDatasetSpecifications() : null;
         if (dFilter == null) {
             println("There were no valid pids specified.")
             return;
@@ -609,10 +660,10 @@ public class RoddyCLIClient {
     }
 
     static void abortWorkflow(CommandLineCall clc) {
-        def analysisID = clc.getParameters().get(0)
+        def analysisID = clc.getAnalysisID()
         Analysis analysis = ProjectFactory.getInstance().loadAnalysis(analysisID);
         if (!analysis) return;
-        List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getParameters()[1].split(SPLIT_COMMA) : null;
+        List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getDatasetSpecifications() : null;
         if (dFilter == null) {
             println("There were no valid pids specified.")
             return;
@@ -636,7 +687,7 @@ public class RoddyCLIClient {
                         listOfRunningJobs << job;
                 }
             if (listOfRunningJobs)
-                CommandFactory.getInstance().queryJobAbortion(listOfRunningJobs)
+                JobManager.getInstance().queryJobAbortion(listOfRunningJobs)
         }
     }
 

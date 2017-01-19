@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="roddy">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/dist/bin/current/Roddy.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

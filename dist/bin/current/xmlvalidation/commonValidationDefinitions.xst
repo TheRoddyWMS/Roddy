@@ -32,6 +32,8 @@
                 <xs:attribute type="xs:string" name="derivedFrom" use="optional"/>
                 <xs:attribute type="xs:string" name="fileStage" use="optional"/>
                 <xs:attribute type="xs:string" name="onMethod" use="optional"/>
+                <xs:attribute type="xs:string" name="onTool" use="optional"/>
+                <xs:attribute type="xs:string" name="onScriptParameter" use="optional"/>
                 <xs:attribute type="xs:string" name="selectiontag" use="optional"/>
                 <xs:attribute type="xs:string" name="pattern" use="optional"/>
             </xs:extension>
@@ -50,6 +52,7 @@
                 <xs:attribute type="xs:string" name="value" use="required"/>
                 <xs:attribute type="xs:string" name="type" use="optional" default="string"/>
                 <xs:attribute type="xs:string" name="description" use="optional"/>
+                <xs:attribute type="xs:string" name="tags" use="optional"/>
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
@@ -105,7 +108,7 @@
         <xs:attribute type="xs:string" name="typeof"/>
         <xs:attribute type="xs:string" name="scriptparameter"/>
         <xs:attribute type="xs:string" name="setby"/>
-        <xs:attribute type="xs:string" name="passas"/>
+        <xs:attribute type="xs:string" name="passas" use="optional"/>
     </xs:complexType>
     <xs:complexType name="outputType" mixed="true">
         <xs:sequence>
@@ -116,6 +119,7 @@
         <xs:attribute type="xs:string" name="typeof" use="optional"/>
         <xs:attribute type="xs:string" name="scriptparameter" use="optional"/>
         <xs:attribute type="xs:string" name="fnpatternselectiontag" use="optional"/>
+        <xs:attribute type="xs:string" name="passas" use="optional"/>
         <xs:attribute type="xs:boolean" name="check" use="optional"/>
     </xs:complexType>
 </xs:schema>

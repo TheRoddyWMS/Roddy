@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.core;
 
 import java.io.File;
@@ -17,7 +23,7 @@ public class AnalysisProcessingInformation extends InfoObject {
     private final DataSet dataSet;
     private String executingUser;
     private ExecutionContext executionContext;
-    private final List<AnalysisProcessingInformationListener> listeners = new LinkedList<>();
+//    private final List<AnalysisProcessingInformationListener> listeners = new LinkedList<>();
 
     /**
      * Constructor for read out information.
@@ -70,8 +76,7 @@ public class AnalysisProcessingInformation extends InfoObject {
     }
 
     public String getExecutionDateHumanReadable() {
-        SimpleDateFormat sdf = new SimpleDateFormat("yy-MM-dd / HH:mm");
-        return sdf.format(getExecutionDate());
+        return InfoObject.formatTimestampReadable(getExecutionDate());
     }
 
     @Override
@@ -93,7 +98,7 @@ public class AnalysisProcessingInformation extends InfoObject {
         return String.format("AnalysisProcessingInformation with timestamp %s for path %s and analysis %s", InfoObject.formatTimestamp(getTimeStamp()), execPath.getAbsolutePath(), analysis.getName());
     }
 
-    public void addListener(AnalysisProcessingInformationListener apil) {
-        this.listeners.add(apil);
-    }
+//    public void addListener(AnalysisProcessingInformationListener apil) {
+//        this.listeners.add(apil);
+//    }
 }

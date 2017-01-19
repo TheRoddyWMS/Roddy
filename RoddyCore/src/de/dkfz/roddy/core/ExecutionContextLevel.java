@@ -1,9 +1,17 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.core;
+
+import java.io.Serializable;
 
 /**
  * Specifies the level of an ExecutionContext object
  */
-public enum ExecutionContextLevel {
+public enum ExecutionContextLevel implements Serializable {
 
     /**
      * Do not execute anything. Used for collecting data for previous

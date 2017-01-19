@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.execution.io.fs
 
 import de.dkfz.roddy.Constants
@@ -33,8 +39,8 @@ public class FileSystemAccessProvider extends CacheProvider {
      * Well this  value is to ensure backward compatibility for older Roddy workflows.
      * Formerly, this class was called FileSystemInfoProvider which is just not the right name for the class.
      * So we decided to rename it to FileSytemAccessProvider. This name covers everything!
-     * However, the FileSystemInfoProvider class still resides for backward compatibility.
-     * The lock is used in this class and in the FileSystemInfoProvider. It is not on a package level and also should not be!
+     * However, the FileSystemAccessProvider class still resides for backward compatibility.
+     * The lock is used in this class and in the FileSystemAccessProvider. It is not on a package level and also should not be!
      * Also it must not be public or private.
      * So don't whonder why this one is protected static.
      */
@@ -78,6 +84,7 @@ public class FileSystemAccessProvider extends CacheProvider {
     }
 
     public static void initializeProvider(boolean fullSetup) {
+        logger.postSometimesInfo("public static void initializeProvider(boolean fullSetup)")
         fileSystemAccessProviderLock.lock();
         try {
             if (!fullSetup) {
@@ -150,6 +157,10 @@ public class FileSystemAccessProvider extends CacheProvider {
     @Override
     void destroy() {
 
+    }
+
+    ShellCommandSet getCommandSet() {
+        return commandSet;
     }
 
     /**
@@ -365,9 +376,14 @@ public class FileSystemAccessProvider extends CacheProvider {
      */
     public File getUserDirectory() {
         if (_userHome == null) {
-            String cmd = commandSet.getUserDirectoryCommand();
-            ExecutionResult er = ExecutionService.getInstance().execute(cmd);
-            _userHome = new File(er.resultLines[0]);
+            if (ExecutionService.getInstance().isLocalService()) {
+                String jHomeVar = System.getProperty("user.home");
+                _userHome = new File(jHomeVar)
+            } else {
+                String cmd = commandSet.getUserDirectoryCommand();
+                ExecutionResult er = ExecutionService.getInstance().execute(cmd);
+                _userHome = new File(er.resultLines[0]);
+            }
             fireCacheValueAddedEvent("userHome", _userHome.getAbsolutePath());
         }
         fireCacheValueReadEvent("userHome", -1);
@@ -541,7 +557,7 @@ public class FileSystemAccessProvider extends CacheProvider {
 
     public boolean setDefaultAccessRightsRecursively(File path, ExecutionContext context) {
         if (context == null) {
-            return setAccessRightsRecursively(path, null, null, null)
+            return setAccessRightsRecursively(path, commandSet.getDefaultAccessRightsString(), commandSet.getDefaultAccessRightsString(), getMyGroup())
         } else {
             return setAccessRightsRecursively(path, context.outputDirectoryAccess, context.outputFileAccessRights, context.outputGroupString)
         };

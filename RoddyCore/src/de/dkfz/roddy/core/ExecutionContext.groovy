@@ -1,13 +1,20 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.core;
 
 import de.dkfz.roddy.Constants;
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
+import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
+import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.*
 import de.dkfz.roddy.tools.LoggerWrapper
-import de.dkfz.roddy.tools.BufferUnit
 
 import java.util.*;
 
@@ -35,11 +42,10 @@ import java.util.*;
  * @author michael
  */
 @groovy.transform.CompileStatic
-public class ExecutionContext implements JobStatusListener {
+public class ExecutionContext {
 
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(ExecutionContext.class.name);
 
-    private static final List<ExecutionContextListener> staticListeners = new LinkedList<>();
     /**
      * The project to which this context belongs
      */
@@ -70,16 +76,10 @@ public class ExecutionContext implements JobStatusListener {
      */
     private final long creationCheckPoint;
     /**
-     * Lockfiles are a central process locking and synchronization mechanism.
-     * Therefore they are stored in this central position.
-     */
-    private final Map<Object, LockFile> lockFiles = new HashMap<Object, LockFile>();
-    /**
      * Keeps a list of errors which happen either on read back or on execution.
      * The list is not stored and rebuilt if necessary, so not all errors might be available.
      */
     private final List<ExecutionContextError> errors = new LinkedList<>();
-    private final List<ExecutionContextListener> listeners = new LinkedList<>();
     /**
      * The timestamp of this context object
      */
@@ -122,6 +122,7 @@ public class ExecutionContext implements JobStatusListener {
     private File analysisToolsDirectory;
     private ExecutionContextLevel executionContextLevel;
     private ExecutionContextSubLevel executionContextSubLevel = ExecutionContextSubLevel.RUN_UNINITIALIZED;
+    private ToolEntry currentExecutedTool;
     private ProcessingFlag processingFlag = ProcessingFlag.STORE_EVERYTHING;
     /**
      * The user who created the context (if known)
@@ -142,8 +143,6 @@ public class ExecutionContext implements JobStatusListener {
         this.executionContextLevel = executionContextLevel;
         this.dataSet = dataSet;
         setExecutingUser(userID);
-        if (!dontRaise)
-            raiseNewExecutionContextListenerEvent(this);
     }
 
     public ExecutionContext(String userID, Analysis analysis, DataSet dataSet, ExecutionContextLevel executionContextLevel, File outputDirectory, File inputDirectory, File executionDirectory, long creationCheckPoint) {
@@ -186,17 +185,8 @@ public class ExecutionContext implements JobStatusListener {
         this.allFilesInRun.addAll(p.getAllFilesInRun());
         this.jobsForProcess.addAll(p.jobsForProcess);
         this.commandCalls.addAll(p.commandCalls);
-        this.lockFiles.putAll(p.lockFiles);
         this.errors.addAll(p.errors);
         creationCheckPoint = -1;
-    }
-
-    public static void registerStaticContextListener(ExecutionContextListener ecl) {
-        staticListeners.add(ecl);
-    }
-
-    private static void raiseNewExecutionContextListenerEvent(ExecutionContext ec) {
-        for (ExecutionContextListener ecl : staticListeners) ecl.newExecutionContextEvent(ec);
     }
 
     /**
@@ -206,46 +196,6 @@ public class ExecutionContext implements JobStatusListener {
      */
     public ExecutionContext clone() {
         return new ExecutionContext(this);
-    }
-
-    /**
-     * Create a group of locked files for a file group. The files are create in a Job.
-     *
-     * @return
-     */
-    public LockFileGroup createLockFiles(FileGroup fileGroup) {
-        return createLockFiles(fileGroup.getFilesInGroup() as List<Object>);
-    }
-
-    /**
-     * Create a group of locked files for a file group. The files are create in a Job.
-     *
-     * @return
-     */
-    public LockFileGroup createLockFiles(List<Object> identifiers) {
-        LockFileGroup lfg = new LockFileGroup(null);
-        for (int i = 0; i < identifiers.size(); i++) {
-            LockFile lockfile = new LockFile(this, new File(getLockFilesDirectory().getAbsolutePath() + File.separator + "~" + System.nanoTime()));
-            lfg.addFile(lockfile);
-            lockFiles.put(identifiers.get(i), lockfile);
-        }
-
-        ExecutionContext run = this;
-
-        final String TOOL = Constants.TOOLID_CREATE_LOCKFILES;
-        run.getDefaultJobParameters(TOOL);
-        Map<String, Object> parameters = getDefaultJobParameters(TOOL);
-        int i = 0;
-        for (BaseFile bf : lfg.getFilesInGroup()) {
-            parameters.put("LOCKFILE_" + (i++), bf.getPath().getAbsolutePath());
-        }
-
-        Job job = new Job(run, CommandFactory.createJobName(run, "roddy_lockfile_creation"), TOOL, parameters);
-
-        JobResult jobResult = job.run();
-        for (BaseFile bf : lfg.getFilesInGroup())
-            bf.setCreatingJobsResult(jobResult);
-        return lfg;
     }
 
     public Map<String, Object> getDefaultJobParameters(String TOOLID) {
@@ -268,68 +218,6 @@ public class ExecutionContext implements JobStatusListener {
         return getRuntimeService().createJobName(this, p, TOOLID, reduceLevel);
     }
 
-    /**
-     * Returns an (available) lockfile for the passed identifier.
-     *
-     * @param identifier
-     * @return
-     */
-    public LockFile getLockFile(Object identifier) {
-        return lockFiles.get(identifier);
-    }
-
-    /**
-     * This creates a job for memory or other n x n buffers.
-     * This should be a bit more flexible (much more!) so it is really only temporary.
-     * TODO Create a versatile buffer and locking logic.
-     */
-    public StreamingBufferFileGroup runStreamingBuffer(LockFileGroup lockfilesInput, LockFileGroup lockfilesOutput, int buffers, int sizePerBuffer, BufferUnit unit) {
-        ExecutionContext run = this;
-
-        final String TOOL = Constants.TOOLID_STREAM_BUFFER;
-
-        List<File> inFileNames = new LinkedList<File>();
-        List<File> outFileNames = new LinkedList<File>();
-        List<StreamingBufferConnectionFile> inFiles = new LinkedList<StreamingBufferConnectionFile>();
-        List<StreamingBufferConnectionFile> outFiles = new LinkedList<StreamingBufferConnectionFile>();
-
-        Map<String, Object> parameters = getDefaultJobParameters(TOOL);
-        int i = 0;
-        for (BaseFile bf : lockfilesInput.getFilesInGroup()) {
-            parameters.put("IN_LOCKFILE_" + i, bf.getPath().getAbsolutePath());
-            i++;
-        }
-        i = 0;
-        for (BaseFile bf : lockfilesOutput.getFilesInGroup()) {
-            parameters.put("OUT_LOCKFILE_" + i, bf.getPath().getAbsolutePath());
-            i++;
-        }
-        for (i = 0; i < buffers; i++) {
-            File inFile = new File(run.getTemporaryDirectory().getAbsolutePath() + File.separator + System.nanoTime() + "_portExchange.tmp");
-            File outFile = new File(run.getTemporaryDirectory().getAbsolutePath() + File.separator + System.nanoTime() + "_portExchange.tmp");
-            inFileNames.add(inFile);
-            outFileNames.add(outFile);
-            parameters.put("PORTEXCHANGE_INFILE_" + i, inFile.getAbsolutePath());
-            parameters.put("PORTEXCHANGE_OUTFILE_" + i, outFile.getAbsolutePath());
-        }
-
-        parameters.put("BUFFER_COUNT", "" + buffers);
-        parameters.put("BUFFER_SIZE", "" + sizePerBuffer);
-        parameters.put("BUFFER_UNIT", "" + unit);
-
-        List<BaseFile> pFiles = new LinkedList<BaseFile>(lockfilesInput.getFilesInGroup());
-        pFiles.addAll(lockfilesOutput.getFilesInGroup());
-
-//        StreamingBufferFileGroup
-
-        JobResult jr = (new Job(this, CommandFactory.createJobName(run, "roddy_streamingbuffer_" + buffers + "x" + sizePerBuffer + unit), TOOL, parameters, pFiles)).run();
-        for (i = 0; i < buffers; i++) {
-            inFiles.add(new StreamingBufferConnectionFile(inFileNames.get(i), this, jr, null, lockfilesInput.getFilesInGroup().get(0).getFileStage()));
-            outFiles.add(new StreamingBufferConnectionFile(outFileNames.get(i), this, jr, null, lockfilesInput.getFilesInGroup().get(0).getFileStage()));
-        }
-        return new StreamingBufferFileGroup(inFiles, outFiles);
-    }
-
     public File getInputDirectory() {
         return inputDirectory;
     }
@@ -339,7 +227,7 @@ public class ExecutionContext implements JobStatusListener {
     }
 
     public RuntimeService getRuntimeService() {
-        return project.getRuntimeService();
+        return analysis.getRuntimeService();
     }
 
     public ExecutionContextLevel getExecutionContextLevel() {
@@ -357,8 +245,14 @@ public class ExecutionContext implements JobStatusListener {
     public synchronized void setDetailedExecutionContextLevel(ExecutionContextSubLevel subLevel) {
         ExecutionContextSubLevel temp = this.executionContextSubLevel;
         this.executionContextSubLevel = subLevel;
-        if (temp != subLevel)
-            raiseDetailedExecutionContextLevelChanged();
+    }
+
+    public void setCurrentExecutedTool(ToolEntry toolEntry) {
+        this.currentExecutedTool = toolEntry;
+    }
+
+    public ToolEntry getCurrentExecutedTool() {
+        return currentExecutedTool;
     }
 
     public ProcessingFlag getProcessingFlag() {
@@ -395,8 +289,24 @@ public class ExecutionContext implements JobStatusListener {
         return analysis.getConfiguration();
     }
 
+    public RecursiveOverridableMapContainerForConfigurationValues getConfigurationValues() {
+        return configuration.getConfigurationValues()
+    }
+
     public void setTimestamp(Date timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public Date getTimestamp() {
+        return timestamp;
+    }
+
+    public String getTimestampString() {
+        return InfoObject.formatTimestamp(timestamp);
+    }
+
+    public long getCreationCheckPoint() {
+        return creationCheckPoint;
     }
 
     public String getExecutingUser() {
@@ -414,19 +324,19 @@ public class ExecutionContext implements JobStatusListener {
      */
     public synchronized File getExecutionDirectory() {
         if (executionDirectory == null)
-            executionDirectory = project.getRuntimeService().getExecutionDirectory(this);
+            executionDirectory = analysis.getRuntimeService().getExecutionDirectory(this);
         return executionDirectory;
     }
 
     public File getFileForAnalysisToolsArchiveOverview() {
         if (!md5OverviewFile)
-            md5OverviewFile = project.getRuntimeService().getAnalysedMD5OverviewFile(this)
+            md5OverviewFile = analysis.getRuntimeService().getAnalysedMD5OverviewFile(this)
         return md5OverviewFile;
     }
 
     public synchronized File getCommonExecutionDirectory() {
         if (!commonExecutionDirectory)
-            commonExecutionDirectory = project.getRuntimeService().getCommonExecutionDirectory(this);
+            commonExecutionDirectory = analysis.getRuntimeService().getCommonExecutionDirectory(this);
         return commonExecutionDirectory;
     }
 
@@ -437,14 +347,14 @@ public class ExecutionContext implements JobStatusListener {
 
     public boolean isAccessRightsModificationAllowed() {
         // Include an additional check, if the target filesystem allows the modification and disable this, if necessary.
-        if(checkedIfAccessRightsCanBeSet != null)
+        if (checkedIfAccessRightsCanBeSet != null)
             return checkedIfAccessRightsCanBeSet;
         boolean modAllowed = getConfiguration().getConfigurationValues().getBoolean(ConfigurationConstants.CFG_ALLOW_ACCESS_RIGHTS_MODIFICATION, true)
         if (modAllowed && checkedIfAccessRightsCanBeSet == null) {
             checkedIfAccessRightsCanBeSet = FileSystemAccessProvider.getInstance().checkIfAccessRightsCanBeSet(this)
             if (!checkedIfAccessRightsCanBeSet) {
                 modAllowed = false
-                logger.severe("Access rights modification was disabled. The test on the file system raised an error.");
+                addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("Access rights modification was disabled. The test on the file system raised an error."))
             };
         }
         return modAllowed;
@@ -468,8 +378,8 @@ public class ExecutionContext implements JobStatusListener {
 
     public String getOutputGroupString() {
         if (!isAccessRightsModificationAllowed()) return null;
-        return getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_FILE_GROUP)
-        fileSystemAccessProvider.getMyGroup().toString()
+        return getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_FILE_GROUP,
+                fileSystemAccessProvider.getMyGroup()).toString()
     }
 
     public String getUMask() {
@@ -479,25 +389,25 @@ public class ExecutionContext implements JobStatusListener {
 
     public synchronized File getLockFilesDirectory() {
         if (lockFilesDirectory == null)
-            lockFilesDirectory = project.getRuntimeService().getLockFilesDirectory(this);
+            lockFilesDirectory = analysis.getRuntimeService().getLockFilesDirectory(this);
         return lockFilesDirectory;
     }
 
     public synchronized File getTemporaryDirectory() {
         if (temporaryDirectory == null)
-            temporaryDirectory = project.getRuntimeService().getTemporaryDirectory(this);
+            temporaryDirectory = analysis.getRuntimeService().getTemporaryDirectory(this);
         return temporaryDirectory;
     }
 
     public synchronized File getLoggingDirectory() {
         if (loggingDirectory == null)
-            loggingDirectory = project.getRuntimeService().getLoggingDirectory(this);
+            loggingDirectory = analysis.getRuntimeService().getLoggingDirectory(this);
         return loggingDirectory;
     }
 
     public synchronized File getAnalysisToolsDirectory() {
         if (analysisToolsDirectory == null)
-            analysisToolsDirectory = project.getRuntimeService().getAnalysisToolsDirectory(this);
+            analysisToolsDirectory = analysis.getRuntimeService().getAnalysisToolsDirectory(this);
         return analysisToolsDirectory;
     }
 
@@ -505,17 +415,6 @@ public class ExecutionContext implements JobStatusListener {
         new File(getExecutionDirectory(), "${command.getJob().getJobName()}_${command.getJob().jobCreationCounter}.parameters");
     }
 
-    public String getTimeStampString() {
-        return InfoObject.formatTimestamp(timestamp);
-    }
-
-    public Date getTimeStamp() {
-        return timestamp;
-    }
-
-    public long getCreationCheckPoint() {
-        return creationCheckPoint;
-    }
 
     public void addFile(BaseFile file) {
         if (!processingFlag.contains(ProcessingFlag.STORE_FILES))
@@ -558,10 +457,6 @@ public class ExecutionContext implements JobStatusListener {
         //TODO Add processing flag query
         jobsForProcess.clear();
         jobsForProcess.addAll(previousJobs);
-        for (Job job : previousJobs) {
-            job.addJobStatusListener(this);
-            raiseJobAddedEvent(job);
-        }
     }
 
     public void addExecutedJob(Job job) {
@@ -570,8 +465,6 @@ public class ExecutionContext implements JobStatusListener {
 
         //TODO Synchronize jobsForProcess!
         jobsForProcess.add(job);
-        job.addJobStatusListener(this);
-        raiseJobAddedEvent(job);
     }
 
     /**
@@ -610,7 +503,7 @@ public class ExecutionContext implements JobStatusListener {
                 jobIDsForQuery.add(runResult.getJobID().getId());
             }
         }
-        Map<String, JobState> map = CommandFactory.getInstance().queryJobStatus(jobIDsForQuery);
+        Map<String, JobState> map = JobManager.getInstance().queryJobStatus(jobIDsForQuery);
         for (JobState js : map.values()) {
             if (js.isPlannedOrRunning())
                 return true;
@@ -697,39 +590,9 @@ public class ExecutionContext implements JobStatusListener {
         return analysis.getWorkflow().execute(this);
     }
 
-    /**
-     * Create testdata for the stored dataset.
-     *
-     * @return
-     */
-    public boolean createTestdata() {
-        return analysis.getWorkflow().createTestdata(this);
-    }
-
-    public void registerContextListener(ExecutionContextListener ecl) {
-        if (!listeners.contains(ecl))
-            listeners.add(ecl);
-    }
-
-    private void raiseJobAddedEvent(Job job) {
-        for (ExecutionContextListener ecl : listeners) ecl.jobAddedEvent(job);
-    }
-
-    private void raiseJobStateChangedEvent(Job job) {
-        for (ExecutionContextListener ecl : listeners) ecl.jobStateChangedEvent(job);
-    }
-
-    private void raiseDetailedExecutionContextLevelChanged() {
-        for (ExecutionContextListener ecl : listeners) ecl.detailedExecutionContextLevelChanged(this);
-    }
-
     @Override
     public String toString() {
         return String.format("Context [%s-%s:%s, %s]", project.getName(), analysis, dataSet, InfoObject.formatTimestamp(timestamp));
     }
 
-    @Override
-    public void jobStatusChanged(Job job, JobState oldState, JobState newState) {
-        raiseJobStateChangedEvent(job);
-    }
 }

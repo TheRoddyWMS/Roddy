@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.knowledge.examples;
 
 import de.dkfz.roddy.core.ExecutionContext;
@@ -15,16 +21,8 @@ import java.util.List;
  */
 public class SimpleTestTextFile extends BaseFile {
 
-    public SimpleTestTextFile(File path, ExecutionContext executionContext, JobResult jobResult, List parentFiles, FileStageSettings settings) {
-        super(path, executionContext, jobResult, parentFiles, settings);
-    }
-
-    public SimpleTestTextFile(BaseFile parentFile) {
-        super(parentFile);
-    }
-
-    public SimpleTestTextFile(SimpleTestTextFile parentFile) {
-        super(parentFile);
+    public SimpleTestTextFile(ConstructionHelperForBaseFiles helper) {
+        super(helper);
     }
 
     @ScriptCallingMethod

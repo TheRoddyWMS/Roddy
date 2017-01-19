@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.tools
 
 import de.dkfz.roddy.execution.io.ExecutionHelper
@@ -23,7 +29,7 @@ class RoddyConversionHelperMethods {
         }
     }
 
-    public static float toFloat(String value, int number = 0) {
+    public static float toFloat(String value, float number = 0) {
         try {
             return Float.parseFloat(value)
         } catch (any) {
@@ -31,7 +37,7 @@ class RoddyConversionHelperMethods {
         }
     }
 
-    public static double toDouble(String value, int number = 0) {
+    public static double toDouble(String value, double number = 0) {
         try {
             return Double.parseDouble(value)
         } catch (any) {
@@ -40,18 +46,34 @@ class RoddyConversionHelperMethods {
     }
 
     public static boolean toBoolean(String value, boolean defaultValue) {
-        try {
-            return Boolean.parseBoolean(value)
-        } catch (any) {
-            return defaultValue;
-        }
+        value = value?.toLowerCase()
+        if (value == "true" || value == "1") return true;
+        if (value == "false" || value == "0") return false;
+        return defaultValue ?: false
     }
 
     public static boolean isInteger(String str) {
-        return str.isInteger();
+        return !isNullOrEmpty(str) && str.isInteger();
+    }
+
+    static boolean isFloat(String str) {
+        return !isNullOrEmpty(str) && str.isFloat() &&
+                (!str.contains(".") || str.endsWith("f")); // Expand test to "real" floats ending with "f", if there is a format like 1.0f 1.0e10f
+    }
+
+    static boolean isDouble(String str) {
+        return !isNullOrEmpty(str) && !str.endsWith("f") && str.isDouble(); // In case of double it is easy, they are not allowed to end with f
     }
 
     public static boolean isNullOrEmpty(String string) {
         return !string;
+    }
+
+    public static boolean isNullOrEmpty(Collection collection) {
+        return !collection;
+    }
+
+    public static boolean isDefinedArray(String value) {
+        return !isNullOrEmpty(value) && ([value[0], value[-1]] == ["(", ")"]); // What else to test??
     }
 }

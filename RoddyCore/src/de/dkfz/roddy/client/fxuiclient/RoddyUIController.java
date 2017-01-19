@@ -1,22 +1,30 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.client.fxuiclient;
 
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.RunMode;
 import de.dkfz.roddy.StringConstants;
-import de.dkfz.roddy.config.AnalysisConfiguration;
+import de.dkfz.roddy.client.fxuiclient.settingsviewer.SettingsViewer;
+import de.dkfz.roddy.client.rmiclient.RoddyRMIClientConnection;
+import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation;
+import de.dkfz.roddy.config.AppConfig;
 import de.dkfz.roddy.config.ConfigurationFactory;
 import de.dkfz.roddy.config.InformationalConfigurationContent;
-import de.dkfz.roddy.config.TestDataOption;
 import de.dkfz.roddy.core.*;
-import de.dkfz.roddy.execution.io.ExecutionResult;
 import de.dkfz.roddy.execution.io.ExecutionService;
-import de.dkfz.roddy.execution.io.ExecutionServiceListener;
-import de.dkfz.roddy.execution.jobs.Command;
 import de.dkfz.roddy.client.fxuiclient.fxdatawrappers.FXDataSetWrapper;
 import de.dkfz.roddy.client.fxuiclient.fxdatawrappers.FXICCWrapper;
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.GenericListViewItemCellImplementation;
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.ProjectTreeItemCellImplementation;
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.ProjectTreeItemCellListener;
+import de.dkfz.roddy.execution.jobs.JobState;
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
+import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -24,7 +32,6 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -44,6 +51,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -61,7 +69,7 @@ import java.util.logging.Level;
  * Controller implementation for RoddyUI.fxml
  * This is the JavaFX replacement for the RoddyUI class.
  */
-public class RoddyUIController extends BorderPane implements ExecutionServiceListener, Initializable, ProjectTreeItemCellListener {
+public class RoddyUIController extends BorderPane implements Initializable, ProjectTreeItemCellListener {
 
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(RoddyUIController.class.getSimpleName());
     private static final String APP_PROPERTY_LAST_OPEN_PROJECT_PATH = "lastOpenProjectPath";
@@ -73,7 +81,7 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
     private static final String APP_PROPERTY_PROJECT_DATASET_PROCESSING_OPENED = "titlePaneProjectDataSetProcessingOpened";
     private static final String APP_PROPERTY_PROJECT_FILTER_SETTINGS_OPENED = "titlePaneProjectFilterSettingsOpened";
 
-    public static enum TabType {
+    public enum TabType {
         Common,
         Project,
         Dataset
@@ -121,10 +129,19 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
     private ListView listViewDataSets;
 
     @FXML
-    private TabPane appTabs;
+    private ComboBox comboBoxApplicationIniFiles;
 
     @FXML
-    private Tab appTabConfiguration;
+    private TabPane appTabs;
+
+    //    @FXML
+//    private Tab appTabConfiguration;
+//
+    @FXML
+    public SettingsViewer appIniViewer;
+
+    @FXML
+    public ListView listViewOfActiveUITasks;
 
     @FXML
     private VBox vboxAvailableAnalyses;
@@ -132,14 +149,14 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
     @FXML
     private VBox vboxProcessingMode;
 
-    @FXML
-    private TextField txtAnalysisInputDirectory;
-
-    @FXML
-    private TextField txtProjectBaseOutputDirectory;
-
-    @FXML
-    private TextField txtAnalysisOutputDirectory;
+//    @FXML
+//    private TextField txtAnalysisInputDirectory;
+//
+//    @FXML
+//    private TextField txtProjectBaseOutputDirectory;
+//
+//    @FXML
+//    private TextField txtAnalysisOutputDirectory;
 
     @FXML
     private ConfigurationViewer configurationViewer;
@@ -168,52 +185,54 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
     @FXML
     private TitledPane tpProjectDataSetFilter;
 
-//    @FXML
-//    private TitledPane tpDataSetProcessing;
-
     @FXML
     public TitledPane tpProjectFilterSettings;
 
 
     private FXICCWrapper currentProjectWrapper;
-    private Project currentProject;
-    private Analysis currentAnalysis;
+
+    private File currentIniFile;
+    private String currentProject;
+    private String currentAnalysis;
+    private RoddyRMIClientConnection currentConnection;
+
     private ObservableList<FXDataSetWrapper> currentListOfDataSets = FXCollections.observableArrayList();
-    private boolean currentListOfDataSetsIsLocked = false;
 
     private TreeItem<FXICCWrapper> allProjectTreeItemsRoot = null;
 
-    private Map<Analysis, Map<FXDataSetWrapper, DataSetView>> openDataSetViews = new HashMap<>();
+    private Map<String, Map<FXDataSetWrapper, DataSetView>> openDataSetViews = new HashMap<>();
 
     /**
      * A map which contains the currently open data set view objects.
      */
     private Map<FXDataSetWrapper, DataSetView> activeDataSetViews = new LinkedHashMap<>();
 
+
     public static RoddyUIController getMainUIController() {
         return instance;
     }
 
-
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         instance = this;
-        ExecutionService.getInstance().registerExecutionListener(this);
-        runCheckConnectionTask();
 
         txtDataSetFilter.textProperty().addListener((observableValue, s, s2) -> refillListOfDataSets());
-        currentListOfDataSets.addListener((ListChangeListener<FXDataSetWrapper>) change -> refillListOfDataSets());
+
+        comboBoxApplicationIniFiles.getSelectionModel().selectedItemProperty().addListener((observableValue, old, newValue) -> selectedApplicationIniChanged(newValue.toString()));
+        comboBoxApplicationIniFiles.getItems().addAll(RoddyIOHelperMethods.readTextFile(getUiSettingsFileForIniFiles()));
 
         projectTree.setCellFactory(treeView -> new ProjectTreeItemCellImplementation(projectTree, instance));
         projectTree.getSelectionModel().selectedItemProperty().addListener((observableValue, oldValue, newValue) -> {
             TreeItem<FXICCWrapper> pWrapper = (TreeItem<FXICCWrapper>) projectTree.getSelectionModel().getSelectedItem();
             if (pWrapper == null) return;
-            changeSelectedProject(pWrapper.getValue());//, pWrapper.getValue().getCurrentlySelectedAnalysisID());
+            changeSelectedProject(pWrapper.getValue());
         });
 
         listViewDataSets.setCellFactory(listView -> new GenericListViewItemCellImplementation());
         listViewDataSets.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         listViewDataSets.getSelectionModel().selectedItemProperty().addListener((observableValue, old, newValue) -> selectedDataSetsChanged());
+
+        currentListOfDataSets.addListener((ListChangeListener<FXDataSetWrapper>) change -> refillListOfDataSets());
 
         String txtAnalysisIDFilter = Roddy.getApplicationProperty(RunMode.UI, APP_PROPERTY_FILTER_ANALYSISID, StringConstants.EMPTY);
         String txtIDFilter = Roddy.getApplicationProperty(RunMode.UI, APP_PROPERTY_FILTER_PROJECTID, StringConstants.EMPTY);
@@ -232,9 +251,81 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
         setupTitlePaneExpansionProcessing(tpProjectFilterSettings, APP_PROPERTY_PROJECT_FILTER_SETTINGS_OPENED, Boolean.TRUE);
         setupTitlePaneExpansionProcessing(tpProjectSettings, APP_PROPERTY_PROJECT_SETTINGS_OPENED, Boolean.TRUE);
         setupTitlePaneExpansionProcessing(tpProjectDataSetFilter, APP_PROPERTY_PROJECT_DATASET_FILTER_OPENED, Boolean.TRUE);
-//        setupTitlePaneExpansionProcessing(tpDataSetProcessing, APP_PROPERTY_PROJECT_DATASET_PROCESSING_OPENED, Boolean.TRUE);
 
-        loadProjects();
+        RoddyUITask.activeListOfTasksProperty().addListener(new ChangeListener() {
+            @Override
+            public void changed(ObservableValue observable, Object oldValue, Object newValue) {
+                RoddyUITask.invokeASAP(new Runnable() {
+                    @Override
+                    public void run() {
+                        listViewOfActiveUITasks.getItems().clear();
+                        listViewOfActiveUITasks.getItems().addAll(RoddyUITask.activeListOfTasksProperty().values());
+                    }
+                }, "donttrack::Update tasklist", false);
+            }
+        });
+
+        startUIUpdateThread();
+    }
+
+    private void startUIUpdateThread() {
+        Thread t = new Thread(() -> {
+            while (App.instance.isRunning) {
+                try {
+                    invokeDataUpdate();
+
+//                    final Runtime runtime = Runtime.getRuntime();
+//                    final double maxMem = 1.0 / (double) runtime.totalMemory();
+//
+//                    RoddyUITask.invokeLater(() -> {
+//                        double number = (runtime.totalMemory() - runtime.freeMemory()) * maxMem;
+//                        pgbMemory.setProgress(number);
+//                        lblMemory.setText(String.format("%8.0f", number * 100.0) + " %");
+//                        lblMemory.setText("" + runtime.freeMemory() + " / " + runtime.totalMemory() + " / " + runtime.maxMemory());
+//                    }, "app info update");
+
+                    Thread.sleep(15000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        t.start();
+    }
+
+    private void invokeDataUpdate() {
+        // Query open datasets
+        if (currentAnalysis != null) {
+            RoddyRMIClientConnection connection = getRMIConnection(currentAnalysis);
+
+            for (Object _dsw : listViewDataSets.getItems()) {
+                FXDataSetWrapper dsw = (FXDataSetWrapper) _dsw;
+                connection.queryDataSetState(dsw.getId(), dsw.getAnalysis());
+            }
+
+            // Query open data set views
+            for (DataSetView dsv : getListOfOpenDataSetViewsForAnalysis().values()) {
+                dsv.updateDataSetInformation();
+            }
+        }
+    }
+
+    private String getUiSettingsFileForIniFiles() {
+        String _f = Roddy.getSettingsDirectory() + "/uiRecentleyUsedIniFiles.lst";
+        File f = new File(_f);
+        if (!f.exists())
+            RoddyIOHelperMethods.writeTextFile(f, "");
+        return _f;
+    }
+
+    private void stopRMITasks() {
+        for (RoddyRMIClientConnection clientConnection : rmiConnectionPool.values()) {
+            try {
+                clientConnection.closeServer();
+            } catch (Exception ex) {
+
+            }
+        }
     }
 
     public static void setupTitlePaneExpansionProcessing(TitledPane tp, String id, Boolean defaultValue) {
@@ -242,86 +333,91 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
         tp.expandedProperty().addListener((obs, oldV, newV) -> Roddy.setApplicationProperty(RunMode.UI, id, "" + tp.isExpanded()));
     }
 
+
     public ConfigurationViewer getConfigurationViewer() {
         return configurationViewer;
     }
 
     /**
-     * Creates a daemon thread which updates ui info components such as the used memory bar.
+     * Helper method to fill the content of a text field specifically to an input objects type.
+     * If this cannot be done, the default value will be used.
      */
-    private void runUIApplicationInfoUpdateDaemon() {
-        Task<Void> fxUIApplicationInfoUpdateTask = new Task<Void>() {
-            @Override
-            public Void call() throws Exception {
-                while (App.instance.isRunning()) {
-                    final Runtime runtime = Runtime.getRuntime();
-//                    final double maxMem = 1.0 / (double) runtime.totalMemory();
-
-//                    RoddyUITask.invokeLater(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            double number = (runtime.totalMemory() - runtime.freeMemory()) * maxMem;
-////                            pgbMemory.setProgress(number);
-////                            lblMemory.setText(String.format("%8.0f", number * 100.0) + " %");
-////                            lblMemory.setText("" + runtime.freeMemory() + " / " + runtime.totalMemory() + " / " + runtime.maxMemory());
-//                        }
-//                    }, null);//UIINVOKE_SET_APPINFO);
-                    Thread.sleep(5000);
-                }
-                return null;
+    private void fillTextFieldWithObjectValue(TextField textField, Object o, String alternative) {
+        String text = null;
+        if (o != null) {
+            if (o instanceof File) {
+                text = ((File) o).getAbsolutePath();
+            } else {
+                text = o.toString();
             }
-
-
-        };
-        Thread t = new Thread(fxUIApplicationInfoUpdateTask, UIConstants.UITASK_APPINFO_UPDATE_DAEMON);
-        t.setDaemon(true);
-//        t.start();
+        } else {
+            text = alternative != null ? alternative : "";
+        }
+        textField.setText(text);
     }
 
-
-    private void runCheckConnectionTask() {
-        RoddyUITask.runTask(new RoddyUITask<Boolean>(UIConstants.UITASK_CHECKCONN) {
-
-            private boolean result = false;
-
-            @Override
-            public Boolean _call() throws Exception {
-                Thread.sleep(UIConstants.UITASK_CHECKCONN_WAIT);
-                if (!ExecutionService.getInstance().needsPassword())
-                    result = true;
-                if (ExecutionService.getInstance().testConnection())
-                    result = true;
-                return result;
-            }
-
-            @Override
-            public void _succeeded() {
-                show();
-            }
-
-            @Override
-            public void _failed() {
-                show();
-            }
-
-            private void show() {
-                if (result) return;
-//                overlayDialogSetup.addErrorMessage(SettingsViewer.Sections.Connection, SettingsViewer.INVALID_CREDENTIALS);
-//                showOverlayDialog();
-            }
-        });
+    public void addTab(Pane component, String title, TabType tabType, boolean closable) {
+        Tab t = new Tab(title);
+        t.setStyle("TabHeader" + tabType.name());
+        t.setClosable(true);
+        t.setContent(component);
+        if (tabType == TabType.Dataset)
+            t.setGraphic(new ImageView(iconDatasetSpecific));
+        appTabs.getTabs().add(t);
     }
+
+    private void setStateImageVisibility(boolean f1, boolean f2, boolean f3) {
+        stateImage_active.setVisible(f1);
+        stateImage_inactive.setVisible(f2);
+        stateImage_connecting.setVisible(f3);
+    }
+
 
     /**
+     * Load an ini file, add it to the list of recently used ini files.
+     * TODO Store this info somewhere!
+     *
+     * @param actionEvent
+     */
+    public void loadApplicationIniFile(ActionEvent actionEvent) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Open Resource File");
+        File iniFile = fileChooser.showOpenDialog(App.instance.primaryStage);
+        if (iniFile != null && iniFile.exists()) {
+            comboBoxApplicationIniFiles.getItems().add(iniFile);
+            selectedApplicationIniChanged(iniFile.getAbsolutePath());
+        }
+    }
+
+    private void selectedApplicationIniChanged(String _newIni) {
+        currentIniFile = new File(_newIni);
+        RoddyIOHelperMethods.writeTextFile(getUiSettingsFileForIniFiles(), comboBoxApplicationIniFiles.getItems());
+        appIniViewer.loadSettingsToScreen(currentIniFile);
+        loadProjects(currentIniFile);
+    }
+
+
+    /**
+     * Load a list of available projects related to the current ini file
      * Load all projects from accessible configuration files.
      * This is done in a JavaFX Task.
+     *
+     * @param iniFile
      */
-    @FXML
-    private void loadProjects() {
+    private void loadProjects(File iniFile) {
         RoddyUITask task = new RoddyUITask<TreeItem<FXICCWrapper>>(UIConstants.UITASK_LOAD_PROJECTS) {
             @Override
             public TreeItem<FXICCWrapper> _call() throws Exception {
                 TreeItem<FXICCWrapper> root = new TreeItem<>(null);
+                AppConfig appConfig = new AppConfig(iniFile);
+                String[] allConfigDirectories = appConfig.getProperty("configurationDirectories", "").split(StringConstants.SPLIT_COMMA);
+                List<File> folders = new LinkedList<>();
+                for (String s : allConfigDirectories) {
+                    File f = new File(s);
+                    if (f.exists())
+                        folders.add(f);
+                }
+                ConfigurationFactory.initialize(folders);
                 List<InformationalConfigurationContent> availableProjectConfigurations = ConfigurationFactory.getInstance().getAvailableProjectConfigurations();
                 availableProjectConfigurations.sort(new Comparator<InformationalConfigurationContent>() {
                     @Override
@@ -329,7 +425,7 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
                         return o1.name.compareTo(o2.name);
                     }
                 });
-                loadProjectsRec(root, availableProjectConfigurations);
+                loadProjectsRecursivelyFromXMLFiles(root, availableProjectConfigurations);
                 return root;
             }
 
@@ -344,14 +440,13 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
                 refreshProjectView(null);
             }
         };
-
         RoddyUITask.runTask(task);
     }
 
     /**
      * Recursive helper method to load projects from configuration files.
      */
-    private void loadProjectsRec(final TreeItem<FXICCWrapper> root, List<InformationalConfigurationContent> availableProjectConfigurations) {
+    private void loadProjectsRecursivelyFromXMLFiles(final TreeItem<FXICCWrapper> root, List<InformationalConfigurationContent> availableProjectConfigurations) {
         int count = 0;
         String path = Roddy.getApplicationProperty(RunMode.UI, RoddyUIController.APP_PROPERTY_LAST_OPEN_PROJECT_PATH, "");
 
@@ -359,11 +454,17 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
             FXICCWrapper fpw = new FXICCWrapper(icc, count++);
             TreeItem<FXICCWrapper> newItem = new TreeItem<>(fpw);
             root.getChildren().add(newItem);
-            for (String analysisID : fpw.getAnalyses()) {
-                FXICCWrapper fpwAnalysis = new FXICCWrapper(icc, analysisID, count++);
-                newItem.getChildren().add(new TreeItem<>(fpwAnalysis));
+            try {
+
+                Map<String, String> analyses = fpw.getAnalyses();
+                for (String analysisID : analyses.keySet()) {
+                    FXICCWrapper fpwAnalysis = new FXICCWrapper(icc, analysisID, count++);
+                    newItem.getChildren().add(new TreeItem<>(fpwAnalysis));
+                }
+                loadProjectsRecursivelyFromXMLFiles(newItem, icc.getSubContent());
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            loadProjectsRec(newItem, icc.getSubContent());
         }
 
         //Add an expand listener to the topmost nodes
@@ -404,28 +505,22 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
         projectDatasetAccordion.setExpandedPane(tpDatasets);
 
         RoddyUITask.runTask(new RoddyUITask<Void>(UIConstants.UITASK_CHANGE_PROJECT) {
-            Analysis newAnalysis = null;
-            List<Analysis> analysesList = null;
+            List<String> analysesList = null;
 
             @Override
             public Void _call() throws Exception {
                 long t1 = ExecutionService.measureStart();
                 currentProjectWrapper = pWrapper;
+                currentProject = pWrapper.getID();
                 long t2 = ExecutionService.measureStart();
-                currentProject = ProjectFactory.getInstance().loadConfiguration(currentProjectWrapper.getICC());
+
                 ExecutionService.measureStop(t2, UIConstants.UITASK_MP_LOADCONFIGURATION);
 
-                analysesList = currentProject.getAnalyses();
-                String analysisID = pWrapper.getAnalysisID();
+                analysesList = currentProjectWrapper.getICC().getListOfAnalyses();
+
+                cleanRMIPool();
+
                 ExecutionService.measureStop(t2, UIConstants.UITASK_MP_LOAD_ANALYSIS_LIST);
-                if (analysisID != null) {
-                    newAnalysis = currentProject.getAnalysis(analysisID);
-                }
-                if (newAnalysis == null && analysesList.size() > 0) {
-                    newAnalysis = analysesList.get(0);
-                }
-//                ConfigurationFactory.getInstance().validateConfiguration(newAnalysis.getConfiguration());
-                ExecutionService.measureStop(t1, UIConstants.UITASK_CHANGE_PROJECT);
                 return null;
             }
 
@@ -434,25 +529,31 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
 
                 vboxAvailableAnalyses.getChildren().clear();
                 ToggleGroup tgAnalyses = new ToggleGroup();
-                for (Analysis analysis : analysesList) {
-                    RadioButton rb = new RadioButton(analysis.getName());
+
+                for (String analysis : analysesList) {
+                    List fullAnalysisID = ProjectFactory.dissectFullAnalysisID(analysis);
+                    String id = analysis.split("[:][:]")[0];
+                    String plugin = fullAnalysisID.size() > 0 ? "\n - " + fullAnalysisID.get(0).toString() : "";
+
+                    RadioButton rb = new RadioButton(id + plugin);
                     rb.setUserData(analysis);
                     rb.setToggleGroup(tgAnalyses);
-                    if (analysis == newAnalysis)
-                        rb.setSelected(true);
                     vboxAvailableAnalyses.getChildren().add(rb);
                 }
                 tgAnalyses.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
                     @Override
                     public void changed(ObservableValue<? extends Toggle> observableValue, Toggle toggle, Toggle toggle2) {
-                        changeSelectedAnalysis((Analysis) toggle2.getUserData());
+                        changeSelectedAnalysis((String) toggle2.getUserData());
                     }
                 });
-                changeSelectedAnalysis(newAnalysis);
 
+                if (analysesList.size() == 1) {
+                    tgAnalyses.getToggles().get(0).setSelected(true);
+                }
             }
         });
     }
+
 
     /**
      * This method is called if an analysis hyperlink in the projects tree view was clicked.
@@ -462,25 +563,7 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
      */
     @Override
     public void analysisSelected(FXICCWrapper pWrapper, String analysisID) {
-        changeSelectedProject(pWrapper);
-    }
-
-    /**
-     * Helper method to fill the content of a text field specifically to an input objects type.
-     * If this cannot be done, the default value will be used.
-     */
-    private void fillTextFieldWithObjectValue(TextField textField, Object o, String alternative) {
-        String text = null;
-        if (o != null) {
-            if (o instanceof File) {
-                text = ((File) o).getAbsolutePath();
-            } else {
-                text = o.toString();
-            }
-        } else {
-            text = alternative != null ? alternative : "";
-        }
-        textField.setText(text);
+        changeSelectedAnalysis(analysisID);
     }
 
     /**
@@ -488,7 +571,7 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
      *
      * @param analysis
      */
-    private void changeSelectedAnalysis(final Analysis analysis) {
+    private void changeSelectedAnalysis(final String analysis) {
         RoddyUITask.runTask(new RoddyUITask<Void>(UIConstants.UITASK_ANALYSIS_SELECTED) {
 
             @Override
@@ -500,7 +583,6 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
                 currentAnalysis = analysis;
 
                 long t2 = ExecutionService.measureStart();
-                configurationViewer.setConfiguration(currentAnalysis.getConfiguration());
                 ExecutionService.measureStop(t2, UIConstants.UITASK_ANALYSIS_SELECTED_UPD_CFGVIEWER);
                 return null;
             }
@@ -509,30 +591,69 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
             public void _succeeded() {
                 long t = ExecutionService.measureStart();
 
-                RadioButton rbProductive = (RadioButton) vboxProcessingMode.getChildren().get(0);
-                vboxProcessingMode.getChildren().clear();
-                vboxProcessingMode.getChildren().add(rbProductive);
-                for (TestDataOption tdo : ((AnalysisConfiguration) currentAnalysis.getConfiguration()).getTestdataOptions()) {
-                    RadioButton rbPM = new RadioButton("Debug: " + tdo.getId());
-                    rbPM.setUserData(tdo);
-                    rbPM.setToggleGroup(rbProductive.getToggleGroup());
-                    vboxProcessingMode.getChildren().add(rbPM);
-                }
                 String string = UIConstants.ERRSTR_PATHNOTFOUND;
-                fillTextFieldWithObjectValue(txtAnalysisOutputDirectory, currentAnalysis.getOutputAnalysisBaseDirectory(), string);
-                fillTextFieldWithObjectValue(txtAnalysisInputDirectory, currentAnalysis.getInputBaseDirectory(), string);
-                fillTextFieldWithObjectValue(txtProjectBaseOutputDirectory, currentAnalysis.getOutputBaseDirectory(), string);
-
-                if (!openDataSetViews.containsKey(analysis))
-                    openDataSetViews.put(analysis, new LinkedHashMap<FXDataSetWrapper, DataSetView>());
+//                Analysis activeAnalysis = currentProject.getAnalysis(currentAnalysis);
+//                fillTextFieldWithObjectValue(txtAnalysisOutputDirectory, activeAnalysis.getOutputAnalysisBaseDirectory(), string);
+//                fillTextFieldWithObjectValue(txtAnalysisInputDirectory, activeAnalysis.getInputBaseDirectory(), string);
+//                fillTextFieldWithObjectValue(txtProjectBaseOutputDirectory, activeAnalysis.getOutputBaseDirectory(), string);
+//
+//                if (!openDataSetViews.containsKey(analysis))
+//                    openDataSetViews.put(activeAnalysis, new LinkedHashMap<FXDataSetWrapper, DataSetView>());
                 ExecutionService.measureStop(t, UIConstants.UITASK_ANALYSIS_SELECTED);
 
                 loadDataSetsForProject();
 
             }
         });
+    }
 
+    private Map<String, ReentrantLock> rmiLocks = new LinkedHashMap<>();
 
+    private Map<String, RoddyRMIClientConnection> rmiConnectionPool = new LinkedHashMap<>();
+
+    private synchronized void cleanRMIPool() {
+        for (RoddyRMIClientConnection c : rmiConnectionPool.values()) {
+            c.closeServer();
+        }
+        rmiConnectionPool.clear();
+    }
+
+    /**
+     * Check and (re-)open / get an (active) rmi server + connection
+     *
+     * @return
+     */
+    public RoddyRMIClientConnection getRMIConnection(String analysis) {
+        if (RoddyConversionHelperMethods.isNullOrEmpty(analysis) && !analysis.contains("::"))
+            System.err.println("Malformed analysis " + analysis + " for getRMIConnection(), needs to be fully specified.");
+        List<String> dissected = ProjectFactory.dissectFullAnalysisID(analysis);
+        String pluginID = dissected.get(0);
+
+        String shortAnalysisId = analysis.split("[:][:]")[0];
+        ReentrantLock myLock = null;
+        synchronized (rmiLocks) {
+            if (!rmiLocks.containsKey(pluginID)) {
+                rmiLocks.put(pluginID, new ReentrantLock());
+            }
+            myLock = rmiLocks.get(pluginID);
+        }
+
+        RoddyRMIClientConnection connection = null;
+        logger.postAlwaysInfo("Locking for " + analysis);
+        myLock.lock();
+        try {
+            if (!rmiConnectionPool.containsKey(pluginID) || !rmiConnectionPool.get(pluginID).pingServer()) {
+                logger.postAlwaysInfo("Creating connection for " + analysis);
+                RoddyRMIClientConnection clientConnection = new RoddyRMIClientConnection();
+                clientConnection.startLocalRoddyRMIServerAndConnect(currentIniFile.getAbsolutePath(), currentProjectWrapper.getName(), shortAnalysisId);
+                rmiConnectionPool.put(pluginID, clientConnection);
+            }
+            logger.postAlwaysInfo("Retrieving connection for " + analysis);
+            connection = rmiConnectionPool.get(pluginID);
+        } finally {
+            myLock.unlock();
+        }
+        return connection;
     }
 
     /**
@@ -554,62 +675,46 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
 
             @Override
             public List<FXDataSetWrapper> _call() throws Exception {
+                if (currentAnalysis == null) return null;
                 List<FXDataSetWrapper> _dataSetWrappers = new LinkedList<>();
-                //Fetch information about the states for the current analysis
-                for (DataSet dataSet : currentAnalysis.getListOfDataSets()) {
-                    FXDataSetWrapper wrapper = new FXDataSetWrapper(dataSet, currentAnalysis);
-                    _dataSetWrappers.add(wrapper);
+
+                // Run a remote RMI Roddy task and load datasets from the new instance.
+                List<String> dissected = ProjectFactory.dissectFullAnalysisID(currentAnalysis);
+                String shortAnalysisId = currentAnalysis.split("[:][:]")[0];
+                String pluginID = dissected.get(0);
+                if (RoddyConversionHelperMethods.isNullOrEmpty(pluginID))
+                    return null;
+
+                RoddyRMIClientConnection clientConnection = getRMIConnection(currentAnalysis);
+
+                assert clientConnection.pingServer();
+                List<RoddyRMIInterfaceImplementation.DataSetInfoObject> listOfDatasets = clientConnection.getListOfDatasets(shortAnalysisId);
+                for (RoddyRMIInterfaceImplementation.DataSetInfoObject infoObject : listOfDatasets) {
+                    _dataSetWrappers.add(new FXDataSetWrapper(currentProjectWrapper.getName(), shortAnalysisId, currentAnalysis, infoObject.getId(), infoObject.getPath().getAbsolutePath()));
                 }
+
                 Collections.sort(_dataSetWrappers);
 
-                synchronized (currentListOfDataSets) {
-//                    currentListOfDataSetsIsLocked = true;
-//                    for (int i = 0; i < _dataSetWrappers.size() - 1; i++) {
-//                        currentListOfDataSets.add(_dataSetWrappers.get(i));
-//                    }
-//                    currentListOfDataSetsIsLocked = false;
-                    currentListOfDataSets.addAll(_dataSetWrappers);//.get(_dataSetWrappers.size() - 1));
-
-                }
-
-//                List<FXDataSetWrapper> dataSetWrappers = new LinkedList<>();
-//                wrapperPackages.add(dataSetWrappers);
-//                for (FXDataSetWrapper dsw : _dataSetWrappers) {
-//                    if (dataSetWrappers.add(dsw)) ;
-//                    if (dataSetWrappers.size() == 1) {
-//                        dataSetWrappers = new LinkedList<>();
-//                        wrapperPackages.add(dataSetWrappers);
-//                    }
-//                }
-//
-//                for (final List<FXDataSetWrapper> ldsw : wrapperPackages) {
-//                    final boolean isFirst = ldsw == wrapperPackages.get(0);
-////                    RoddyUITask.invokeLater(new Runnable() {
-////                        @Override
-////                        public void context() {
-////                            if (isFirst)
-////                                listViewDataSets.getItems().clear();
-////                            listViewDataSets.getItems().addAll(ldsw);
-//
-////                        }
-////                    }, UIINVOKE_ADD_DATA_SETS_TO_LISTVIEW);
-//                }
+                dataSetWrappers.clear();
+                dataSetWrappers.addAll(_dataSetWrappers);
 
                 return _dataSetWrappers;
             }
 
-//            @Override
-//            public void _succeeded() {
-//                listViewDataSets.getItems().clear();
-//                listViewDataSets.getItems().addAll(dataSetWrappers);
-//            }
+            @Override
+            public void _succeeded() {
+                listViewDataSets.getItems().clear();
+                listViewDataSets.getItems().addAll(dataSetWrappers);
+
+//                for (final FXDataSetWrapper dataSetWrapper : dataSetWrappers) {
+//
+//                }
+            }
         });
     }
 
     private void refillListOfDataSets() {
         //TODO Think about a good update mechanism Maybe a counter which only allowes update if the count fits?
-//        if (currentListOfDataSetsIsLocked)
-//            return;
         if (!Platform.isFxApplicationThread()) {
             Platform.runLater(new Runnable() {
                 @Override
@@ -631,36 +736,26 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
             listViewDataSets.getSelectionModel().select(-1);
             listViewDataSets.getItems().clear();
             for (FXDataSetWrapper dsw : newList) {
-                if (wff.accept(new File(dsw.getID()))) {
+                if (wff.accept(new File(dsw.getId()))) {
                     acceptedItems.add(dsw);
                 }
             }
-//            ExecutorService es = Executors.newFixedThreadPool(64);
-//            for (final FXDataSetWrapper dataSetWrapper : acceptedItems) {
-//                es.execute(new Runnable() {
-//                    @Override
-//                    public void context() {
             listViewDataSets.getItems().addAll(acceptedItems);
-//                    }
-//                });
-//            }
-//            es.shutdown();
-//            es.awaitTermination(3, TimeUnit.SECONDS);
-//            listViewDataSets.getItems().addAll(acceptedItems);
         } catch (Exception e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
         }
     }
 
     private void selectedDataSetsChanged() {
         List<FXDataSetWrapper> dataSets = listViewDataSets.getSelectionModel().getSelectedItems();
-        Map<FXDataSetWrapper, DataSetView> currentListOfViews = openDataSetViews.get(currentAnalysis);
+        Map<FXDataSetWrapper, DataSetView> currentListOfViews = getListOfOpenDataSetViewsForAnalysis();
         Map<FXDataSetWrapper, DataSetView> newMap = new HashMap<>();
+        if (currentListOfViews == null) currentListOfViews = new LinkedHashMap<>();
 
         //TODO Rework that. Close all dataset tabs. Not more Tag them with Common / Project / Dataset?
         for (int i = appTabs.getTabs().size() - 1; i > 0; i--) {
             Tab appTab = appTabs.getTabs().get(i);
-            if(appTab.isClosable())
+            if (appTab.isClosable())
                 appTabs.getTabs().remove(appTab);
         }
 
@@ -671,8 +766,7 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
             if (currentListOfViews.containsKey(dsw)) {
                 newMap.put(dsw, currentListOfViews.get(dsw));
             } else {
-                DataSet ds = dsw.getDataSet();
-                DataSetView dsv = new DataSetView(currentAnalysis, ds);
+                DataSetView dsv = new DataSetView(currentAnalysis, dsw);
                 newMap.put(dsw, dsv);
             }
         }
@@ -680,33 +774,61 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
         List<FXDataSetWrapper> keysSorted = new LinkedList<>(newMap.keySet());
         Collections.sort(keysSorted);
         for (FXDataSetWrapper dsw : keysSorted) {
-            DataSet ds = dsw.getDataSet();
-            addTab(newMap.get(dsw), ds.getId(), TabType.Dataset, true);
+            addTab(newMap.get(dsw), dsw.getId(), TabType.Dataset, true);
         }
-        openDataSetViews.put(currentAnalysis, newMap);
-        appTabs.getSelectionModel().select(3);
+        synchronized (openDataSetViews) {
+            openDataSetViews.put(currentAnalysis, newMap);
+        }
+        appTabs.getSelectionModel().select(1);
     }
 
-    public void addTab(Pane component, String title, TabType tabType, boolean closable) {
-        Tab t = new Tab(title);
-        t.setStyle("TabHeader" + tabType.name());
-        t.setClosable(true);
-        t.setContent(component);
-        if (tabType == TabType.Dataset)
-            t.setGraphic(new ImageView(iconDatasetSpecific));
-        appTabs.getTabs().add(t);
+    private Map<FXDataSetWrapper, DataSetView> getListOfOpenDataSetViewsForAnalysis() {
+        Map<FXDataSetWrapper, DataSetView> currentListOfViews;
+        synchronized (openDataSetViews) {
+            currentListOfViews = openDataSetViews.get(currentAnalysis);
+        }
+        return currentListOfViews;
     }
 
-    private void runDataSetsDeferred(ExecutionContextLevel level) {
-        ObservableList selectedItems = listViewDataSets.getSelectionModel().getSelectedItems();
-        for (Object o : selectedItems) {
-            final FXDataSetWrapper fxDataSetWrapper = (FXDataSetWrapper) o;
-            ExecutionContext deferredContext = currentAnalysis.runDeferredContext(fxDataSetWrapper.getID(), level);
-            if (deferredContext == null) {
-                logger.warning(UIConstants.ERRTXT_WORKFLOWNOTEXECUTED + fxDataSetWrapper.getID());
-                continue;
+
+    private void runDataSetsDeferred(boolean rerun, boolean test) {
+        RoddyUITask.runTask(new RoddyUITask(UIConstants.UITASK_RERUN_DATASETS) {
+
+            private List<RoddyRMIInterfaceImplementation.ExecutionContextInfoObject> executionContextInfoObjects;
+
+            @Override
+            protected Object _call() throws Exception {
+                RoddyRMIClientConnection rmiConnection = getRMIConnection(currentAnalysis);
+
+                ObservableList selectedItems = listViewDataSets.getSelectionModel().getSelectedItems();
+                List<String> datasetIds = new LinkedList<>();
+                for (Object selectedItem : selectedItems) {
+                    FXDataSetWrapper dsw = (FXDataSetWrapper) selectedItem;
+                    datasetIds.add(dsw.getId());
+                }
+
+                if (rerun)
+                    executionContextInfoObjects = rmiConnection.rerun(datasetIds, currentAnalysis, test);
+                else {
+                    executionContextInfoObjects = rmiConnection.run(datasetIds, currentAnalysis, test);
+                }
+                return null;
             }
-        }
+
+            @Override
+            protected void _succeeded() {
+                for (RoddyRMIInterfaceImplementation.ExecutionContextInfoObject contextInfoObject : executionContextInfoObjects) {
+                    String dsId = contextInfoObject.getDatasetId();
+                    Map<FXDataSetWrapper, DataSetView> listOfOpenDataSetViewsForAnalysis = getListOfOpenDataSetViewsForAnalysis();
+                    for (DataSetView dataSetWrapper : listOfOpenDataSetViewsForAnalysis.values()) {
+                        if (dataSetWrapper.getDataSetId().equals(dsId)) {
+                            dataSetWrapper.addContextInfo(contextInfoObject);
+                            break;
+                        }
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -715,16 +837,7 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
      * @param actionEvent
      */
     public void executeWorkflowForDataSets(ActionEvent actionEvent) {
-        runDataSetsDeferred(ExecutionContextLevel.RUN);
-    }
-
-    /**
-     * If the workflow supports it create test data here.
-     *
-     * @param actionEvent
-     */
-    public void createTestDataForDataSets(ActionEvent actionEvent) {
-
+        runDataSetsDeferred(false, false);
     }
 
     /**
@@ -733,66 +846,9 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
      * @param actionEvent
      */
     public void rerunWorkflowForDataSets(ActionEvent actionEvent) {
-
-        ObservableList selectedItems = listViewDataSets.getSelectionModel().getSelectedItems();
-        final List<String> dataSets = new LinkedList<>();
-        for (Object o : selectedItems) {
-            final FXDataSetWrapper fxDataSetWrapper = (FXDataSetWrapper) o;
-            dataSets.add(fxDataSetWrapper.getDataSet().getId());
-        }
-
-        RoddyUITask.runTask(new RoddyUITask(UIConstants.UITASK_RERUN_DATASETS) {
-            @Override
-            protected Object _call() throws Exception {
-                long creationCheckPoint = System.nanoTime();
-                List<ExecutionContext> listOfContexts = currentAnalysis.run(dataSets, ExecutionContextLevel.QUERY_STATUS);
-                for (ExecutionContext context : listOfContexts) {
-                    currentAnalysis.rerunDeferredContext(context, ExecutionContextLevel.RERUN, creationCheckPoint, false);
-                }
-
-                return null;
-            }
-
-            @Override
-            protected void _succeeded() {
-                super._succeeded();
-            }
-        });
+        runDataSetsDeferred(true, false);
     }
 
-//    private void showOverlayDialog() {
-//        overlayDialogSetup.setVisible(true);
-//    }
-
-    @Override
-    public void stringExecuted(String commandString, ExecutionResult result) {
-    }
-
-    @Override
-    public void commandExecuted(Command result) {
-    }
-
-    @Override
-    public void changeExecutionServiceState(final TriState state) {
-        //Only important if the execution service works on remote machines.
-        if (ExecutionService.getInstance().isLocalService()) {
-            setStateImageVisibility(false, false, false);
-            return;
-        }
-
-        RoddyUITask.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                setStateImageVisibility(state == TriState.TRUE, state == TriState.FALSE, state == TriState.UNKNOWN);
-            }
-        }, UIConstants.UIINVOKE_CHANGE_STATE_IMAGES);
-    }
-
-    private void setStateImageVisibility(boolean f1, boolean f2, boolean f3) {
-        stateImage_active.setVisible(f1);
-        stateImage_inactive.setVisible(f2);
-        stateImage_connecting.setVisible(f3);
-    }
 
     private Map<Long, String> activeExecutionTasks = new LinkedHashMap<>();
 
@@ -815,7 +871,7 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
         }
     }
 
-    @Override
+    //    @Override
     public void executionStarted(final long id, final String text) {
         Platform.runLater(new Runnable() {
             @Override
@@ -828,7 +884,7 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
         });
     }
 
-    @Override
+    //    @Override
     public void executionFinished(final long id, String text) {
         Platform.runLater(new Runnable() {
             @Override
@@ -847,7 +903,7 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
 
     public void reloadProjectView(ActionEvent actionEvent) {
         ConfigurationFactory.getInstance().initialize();
-        loadProjects();
+        loadProjects(currentIniFile);
     }
 
     public void refreshProjectView(ActionEvent actionEvent) {
@@ -921,7 +977,7 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
     }
 
     public void switchActiveTabToConfiguration() {
-        appTabs.getSelectionModel().select(appTabConfiguration);
+//        appTabs.getSelectionModel().select(appTabConfiguration);
     }
 
     public static class App extends Application {
@@ -955,13 +1011,14 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
 
                     @Override
                     public void handle(WindowEvent windowEvent) {
+                        RoddyUIController.getMainUIController().stopRMITasks();
                         primaryStage.close();
                     }
                 });
 
 
             } catch (IOException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                e.printStackTrace();
             }
         }
 
@@ -969,7 +1026,7 @@ public class RoddyUIController extends BorderPane implements ExecutionServiceLis
             try {
                 launch(args);
             } catch (Exception e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                e.printStackTrace();
             }
         }
 

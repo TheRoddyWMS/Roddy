@@ -1,11 +1,18 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.knowledge.examples
 
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.CommandFactory
+import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.knowledge.files.BaseFile
+import de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForSourceFiles;
 
 /**
  */
@@ -29,7 +36,7 @@ public class SimpleRuntimeService extends RuntimeService {
 
     @Override
     public String createJobName(ExecutionContext executionContext, BaseFile file, String TOOLID, boolean reduceLevel) {
-        return CommandFactory.getInstance().createJobName(file, TOOLID, reduceLevel);
+        return JobManager.getInstance().createJobName(file, TOOLID, reduceLevel);
     }
 
     @Override
@@ -104,8 +111,7 @@ public class SimpleRuntimeService extends RuntimeService {
     }
 
     public SimpleTestTextFile createInitialTextFile(ExecutionContext ec) {
-        SimpleTestTextFile tf = new SimpleTestTextFile(new File(getOutputFolderForDataSetAndAnalysis(ec.getDataSet(), ec.getAnalysis()).getAbsolutePath() + "/textBase.txt"), ec, null, null, new SimpleFileStageSettings(ec.getDataSet(), "100", "R001"));
-        tf.setAsSourceFile();
+        SimpleTestTextFile tf = new SimpleTestTextFile(new ConstructionHelperForSourceFiles(new File(getOutputFolderForDataSetAndAnalysis(ec.getDataSet(), ec.getAnalysis()).getAbsolutePath(), "textBase.txt"), ec, new SimpleFileStageSettings(ec.getDataSet(), "100", "R001"), null));
         if (!FileSystemAccessProvider.getInstance().checkFile(tf.getPath()))
             FileSystemAccessProvider.getInstance().createFileWithDefaultAccessRights(true, tf.getPath(), ec, true);
         return tf;

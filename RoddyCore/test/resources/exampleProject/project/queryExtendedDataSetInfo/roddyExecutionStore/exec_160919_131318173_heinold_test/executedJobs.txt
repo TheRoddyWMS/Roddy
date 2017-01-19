@@ -1,0 +1,70 @@
+<jobinfo>
+  <jobs>
+    <job id='14011' name='r160919_131318173_queryExtendedDataSetInfo_testScript'>
+      <calledcommand command=' pid=queryExtendedDataSetInfo PID=queryExtendedDataSetInfo CONFIG_FILE=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/runtimeConfig.sh ANALYSIS_DIR=/data/michael/temp/exampleProject PRM_TOOLS_DIR=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTests TOOLSDIR=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTests TOOL_ID=testScript FILENAME_IN=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/textBase.txt FILENAME_OUT=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/r160919_131318173_queryExtendedDataSetInfo_testScript_FILENAME_OUT_1335135711_8.auto RODDY_PARENT_JOBS=() WRAPPED_SCRIPT=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTests/testScriptSleep.sh /data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTools/wrapInScript.sh' />
+      <tool id='testScript' md5='5c2dc86f1c8a6f0bad08aa7107bf3ed5' />
+      <parameters>
+        <parameter name='pid' value='queryExtendedDataSetInfo' />
+        <parameter name='PID' value='queryExtendedDataSetInfo' />
+        <parameter name='CONFIG_FILE' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/runtimeConfig.sh' />
+        <parameter name='ANALYSIS_DIR' value='/data/michael/temp/exampleProject' />
+        <parameter name='PRM_TOOLS_DIR' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTests' />
+        <parameter name='TOOLSDIR' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTests' />
+        <parameter name='TOOL_ID' value='testScript' />
+        <parameter name='FILENAME_IN' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/textBase.txt' />
+        <parameter name='FILENAME_OUT' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/r160919_131318173_queryExtendedDataSetInfo_testScript_FILENAME_OUT_1335135711_8.auto' />
+        <parameter name='RODDY_PARENT_JOBS' value='()' />
+      </parameters>
+      <filesbyjob>
+        <file class='de.dkfz.roddy.knowledge.examples.SimpleTestTextFile' id='4094368' path='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/r160919_131318173_queryExtendedDataSetInfo_testScript_FILENAME_OUT_1335135711_8.auto' parentfiles='-343310927' />
+      </filesbyjob>
+      <dependendies>
+        <job id='Error' fileid='-343310927' filepath='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/textBase.txt' />
+      </dependendies>
+    </job>
+    <job id='14022' name='r160919_131318173_queryExtendedDataSetInfo_testScript'>
+      <calledcommand command=' pid=queryExtendedDataSetInfo PID=queryExtendedDataSetInfo CONFIG_FILE=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/runtimeConfig.sh ANALYSIS_DIR=/data/michael/temp/exampleProject PRM_TOOLS_DIR=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTests TOOLSDIR=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTests TOOL_ID=testScript FILENAME_IN=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/r160919_131318173_queryExtendedDataSetInfo_testScript_FILENAME_OUT_1335135711_8.auto FILENAME_OUT=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/r160919_131318173_queryExtendedDataSetInfo_testScript_FILENAME_OUT_1335135711_8.auto RODDY_PARENT_JOBS=(14011) WRAPPED_SCRIPT=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTests/testScriptSleep.sh /data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTools/wrapInScript.sh' />
+      <tool id='testScript' md5='5c2dc86f1c8a6f0bad08aa7107bf3ed5' />
+      <parameters>
+        <parameter name='pid' value='queryExtendedDataSetInfo' />
+        <parameter name='PID' value='queryExtendedDataSetInfo' />
+        <parameter name='CONFIG_FILE' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/runtimeConfig.sh' />
+        <parameter name='ANALYSIS_DIR' value='/data/michael/temp/exampleProject' />
+        <parameter name='PRM_TOOLS_DIR' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTests' />
+        <parameter name='TOOLSDIR' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTests' />
+        <parameter name='TOOL_ID' value='testScript' />
+        <parameter name='FILENAME_IN' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/r160919_131318173_queryExtendedDataSetInfo_testScript_FILENAME_OUT_1335135711_8.auto' />
+        <parameter name='FILENAME_OUT' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/r160919_131318173_queryExtendedDataSetInfo_testScript_FILENAME_OUT_1335135711_8.auto' />
+        <parameter name='RODDY_PARENT_JOBS' value='(14011)' />
+      </parameters>
+      <filesbyjob>
+        <file class='de.dkfz.roddy.knowledge.examples.SimpleTestTextFile' id='4094368' path='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/r160919_131318173_queryExtendedDataSetInfo_testScript_FILENAME_OUT_1335135711_8.auto' parentfiles='4094368' />
+      </filesbyjob>
+      <dependendies>
+        <job id='14011' fileid='4094368' filepath='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/r160919_131318173_queryExtendedDataSetInfo_testScript_FILENAME_OUT_1335135711_8.auto' />
+      </dependendies>
+    </job>
+    <job id='14033' name='r160919_131318173_queryExtendedDataSetInfo_testScriptExitBad'>
+      <calledcommand command=' pid=queryExtendedDataSetInfo PID=queryExtendedDataSetInfo CONFIG_FILE=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/runtimeConfig.sh ANALYSIS_DIR=/data/michael/temp/exampleProject PRM_TOOLS_DIR=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTests TOOLSDIR=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTests TOOL_ID=testScriptExitBad FILENAME_IN=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/r160919_131318173_queryExtendedDataSetInfo_testScript_FILENAME_OUT_1335135711_8.auto FILENAME_OUT=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/r160919_131318173_queryExtendedDataSetInfo_testScriptExitBad_FILENAME_OUT_95345410_8.auto RODDY_PARENT_JOBS=(14022) WRAPPED_SCRIPT=/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTests/testScriptSleepExitBad.sh /data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTools/wrapInScript.sh' />
+      <tool id='testScriptExitBad' md5='b1c13cac36e0a07969519abfafdc69ec' />
+      <parameters>
+        <parameter name='pid' value='queryExtendedDataSetInfo' />
+        <parameter name='PID' value='queryExtendedDataSetInfo' />
+        <parameter name='CONFIG_FILE' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/runtimeConfig.sh' />
+        <parameter name='ANALYSIS_DIR' value='/data/michael/temp/exampleProject' />
+        <parameter name='PRM_TOOLS_DIR' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTests' />
+        <parameter name='TOOLSDIR' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/roddyExecutionStore/exec_160919_131318173_heinold_test/analysisTools/roddyTests' />
+        <parameter name='TOOL_ID' value='testScriptExitBad' />
+        <parameter name='FILENAME_IN' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/r160919_131318173_queryExtendedDataSetInfo_testScript_FILENAME_OUT_1335135711_8.auto' />
+        <parameter name='FILENAME_OUT' value='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/r160919_131318173_queryExtendedDataSetInfo_testScriptExitBad_FILENAME_OUT_95345410_8.auto' />
+        <parameter name='RODDY_PARENT_JOBS' value='(14022)' />
+      </parameters>
+      <filesbyjob>
+        <file class='de.dkfz.roddy.knowledge.examples.SimpleTestTextFile' id='1335240458' path='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/r160919_131318173_queryExtendedDataSetInfo_testScriptExitBad_FILENAME_OUT_95345410_8.auto' parentfiles='4094368' />
+      </filesbyjob>
+      <dependendies>
+        <job id='14022' fileid='4094368' filepath='/data/michael/temp/exampleProject/project/queryExtendedDataSetInfo/r160919_131318173_queryExtendedDataSetInfo_testScript_FILENAME_OUT_1335135711_8.auto' />
+      </dependendies>
+    </job>
+  </jobs>
+</jobinfo>

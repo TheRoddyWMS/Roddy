@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.config;
 
 import de.dkfz.roddy.core.ExecutionContext;
@@ -7,6 +13,7 @@ import de.dkfz.roddy.tools.BufferValue;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.TimeUnit;
 
+import java.io.File;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.List;
@@ -231,7 +238,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         public ToolFileParameter(Class<BaseFile> fileClass, List<ToolConstraint> constraints, String scriptParameterName, boolean checkFile, String filenamePatternSelectionTag, List<ToolFileParameter> childFiles, String parentVariable) {
             super(scriptParameterName);
             this.fileClass = fileClass;
-            this.constraints = constraints;
+            this.constraints = constraints != null ? constraints : new LinkedList<>();
             this.scriptParameterName = scriptParameterName;
             this.checkFile = checkFile;
             this.filenamePatternSelectionTag = filenamePatternSelectionTag;
@@ -328,11 +335,12 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
     public final String basePathId;
     public final String path;
     public final String computationResourcesFlags;
+    private String inlineScript;
+    private String inlineScriptName;
     private final List<ToolParameter> inputParameters = new LinkedList<>();
     private final List<ToolParameter> outputParameters = new LinkedList<>();
     private final List<ResourceSet> resourceSets = new LinkedList<>();
     private boolean overridesResourceSets;
-
     public ToolEntry(String id, String basePathId, String path) {
         this.id = id;
         this.basePathId = basePathId;
@@ -376,6 +384,33 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         return te;
     }
 
+    public String getLocalPath() {
+        return path;
+    }
+
+    public void setInlineScript(String script) {
+        this.inlineScript = script;
+    }
+
+    public String getInlineScript() {
+        return this.inlineScript;
+    }
+
+    public void setInlineScriptName(String scriptName) {
+        this.inlineScriptName = scriptName;
+    }
+
+    public String getInlineScriptName() {
+        return this.inlineScriptName;
+    }
+
+    public boolean hasInlineScript() {
+        if (inlineScript != null )
+            return true;
+        else
+            return false;
+    }
+
     public boolean hasResourceSets() {
         return resourceSets.size() > 0;
     }
@@ -385,21 +420,27 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         int size = key.ordinal();
 
         ResourceSet first = resourceSets.get(0);
-        if (resourceSets.size() == 1) {
+        if (resourceSets.size() == 1) { // Only one set exists.
             return resourceSets.get(0);
         }
 
         ResourceSet last = resourceSets.get(resourceSets.size() - 1);
-        if (size <= first.getSize().ordinal()) {
+        if (size <= first.getSize().ordinal()) {  // The given key is smaller than the available keys. Return the first set.
             return first;
         }
-        if (size >= last.getSize().ordinal()) {
+        if (size >= last.getSize().ordinal()) {  // The given key is larger than the available keys. Return the last set.
             return last;
         }
-        for (ResourceSet resourceSet : resourceSets) {
+        for (ResourceSet resourceSet : resourceSets) {  // Select the appropriate set
             if (resourceSet.getSize() == key)
                 return resourceSet;
         }
+        //Still no set, take the largest set, which comes after the given ordinal.
+        for(ResourceSet resourceSet : resourceSets) {
+            if(resourceSet.getSize().ordinal() > size)
+                return resourceSet;
+        }
+
         return null;
     }
 

@@ -1,11 +1,18 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.core;
 
+import java.io.Serializable;
 import java.util.logging.Level;
 
 /**
  * Different types of errors which can happen on workflow processing.
  */
-public class ExecutionContextError {
+public class ExecutionContextError implements Serializable {
 
     public static final ExecutionContextError EXECUTION_SETUP_INVALID = new ExecutionContextError("The workflow setup is not correct.", Level.SEVERE);
 
@@ -41,7 +48,7 @@ public class ExecutionContextError {
 
     public static final ExecutionContextError READBACK_NOREALJOBCALLSFILE = new ExecutionContextError("The created calls log file is missing => No information about created jobs is available.", Level.SEVERE);
 
-    public static final ExecutionContextError READBACK_NOJOBSTATESFILE = new ExecutionContextError("The job state log file is missing => No information about job states is available.", Level.WARNING);
+    public static final ExecutionContextError READBACK_NOJOBSTATESFILE = new ExecutionContextError("The job jobState log file is missing => No information about job states is available.", Level.WARNING);
 
     public static final ExecutionContextError READBACK_NOBINARYSERIALIZEDJOBS = new ExecutionContextError("The binary file with serialized job objects is missing => No extended job info is available.", Level.WARNING);
 
@@ -60,7 +67,7 @@ public class ExecutionContextError {
 
     private ExecutionContextError parent = null;
 
-    private Exception exception;
+    private transient Exception exception;
 
     private int id;
 

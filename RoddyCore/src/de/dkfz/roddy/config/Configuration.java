@@ -1,5 +1,12 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.config;
 
+import de.dkfz.roddy.core.ProjectFactory;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.config.validation.ConfigurationValidationError;
 import de.dkfz.roddy.core.ExecutionContext;
@@ -176,6 +183,9 @@ public class Configuration implements ContainerParent<Configuration> {
     }
 
     public ResourceSetSize getResourcesSize() {
+        if(configurationValues.hasValue(ConfigurationConstants.CFG_USED_RESOURCES_SIZE)) {
+            return ResourceSetSize.valueOf(configurationValues.getValue(ConfigurationConstants.CFG_USED_RESOURCES_SIZE).toString());
+        }
         return informationalConfigurationContent.usedresourcessize;
     }
 
@@ -310,7 +320,7 @@ public class Configuration implements ContainerParent<Configuration> {
     }
 
     public boolean getUseCentralAnalysisArchive() {
-        return configurationValues.getBoolean(ConfigurationConstants.CFG_USE_CENTRAL_ANALYSIS_ARCHIVE, false);
+        return configurationValues.getBoolean(ConfigurationConstants.CFG_USE_CENTRAL_ANALYSIS_ARCHIVE, true);
     }
 
     public String getSSHExecutionUser() {

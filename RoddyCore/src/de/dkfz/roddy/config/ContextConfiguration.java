@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.config;
 
 /**
@@ -10,7 +16,7 @@ public class ContextConfiguration extends AnalysisConfiguration {
     private final ProjectConfiguration projectConfiguration;
 
     public ContextConfiguration(AnalysisConfiguration configuration, ProjectConfiguration projectConfiguration) {
-        super(configuration.getInformationalConfigurationContent(), configuration.getWorkflowClass(), null, configuration, configuration.getListOfUsedTools(), configuration.getUsedToolFolders(), configuration.getCleanupScript());
+        super(configuration.getInformationalConfigurationContent(), configuration.getWorkflowClass(), configuration.getRuntimeServiceClass(), configuration, configuration.getListOfUsedTools(), configuration.getUsedToolFolders(), configuration.getCleanupScript());
         this.analysisConfiguration = configuration;
         this.projectConfiguration = projectConfiguration;
         addParent(analysisConfiguration);

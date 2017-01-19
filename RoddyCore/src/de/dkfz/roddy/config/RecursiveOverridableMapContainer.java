@@ -1,4 +1,12 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.config;
+
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -63,15 +71,10 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
         for (P parent : (List<P>) containerParent.getContainerParents()) {
             Map<K, V> tempValues = parent.getContainer(id).getAllValues();
             for (K key : tempValues.keySet()) {
-//                if (!allValues.containsKey(key))
                 allValues.put(key, tempValues.get(key));
             }
         }
         allValues.putAll(values);
-//        for(K key : values.keySet()) {
-//            System.err.println("ID: " + containerParent.getID() + "\t" + key);
-//
-//        }
         return allValues;
     }
 
@@ -126,6 +129,11 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
 
     public void add(V value) {
         this.values.put((K) value.getID(), value);
+    }
+
+    public void addAll(List<V> all) {
+        if(RoddyConversionHelperMethods.isNullOrEmpty(all)) return;
+        for(V it : all) { add(it); }
     }
 
     public int size() {

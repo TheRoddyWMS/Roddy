@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.core;
 
 import de.dkfz.roddy.AvailableFeatureToggles;
@@ -63,11 +69,17 @@ public class Analysis {
      */
     private List<DataSet> listOfAnalysisDataSets;
 
-    public Analysis(String name, Project project, Workflow workflow, AnalysisConfiguration configuration) {
+    /**
+     * Runtime service is set in the analysis config. But the user can also set it for a project. The project then goes first, afterwards the analysis.
+     */
+    private RuntimeService runtimeService;
+
+    public Analysis(String name, Project project, Workflow workflow, RuntimeService runtimeService, AnalysisConfiguration configuration) {
         this.name = name;
         this.project = project;
         this.workflow = workflow;
         this.configuration = configuration;
+        this.runtimeService = runtimeService;
     }
 
     public String getName() {
@@ -125,12 +137,8 @@ public class Analysis {
      * @return
      */
     public List<DataSet> getListOfDataSets() {
-        return getListOfDataSets(null); // Call productive
-    }
 
-    public List<DataSet> getListOfDataSets(TestDataOption testDataOption) {
-
-        RuntimeService rs = project.getRuntimeService();
+        RuntimeService rs = getRuntimeService();
         if (listOfAnalysisDataSets == null)
             listOfAnalysisDataSets = rs.loadCombinedListOfDataSets(this);
 
@@ -160,7 +168,7 @@ public class Analysis {
      */
     public File getInputBaseDirectory() {
         if (inputBaseDirectory == null)
-            inputBaseDirectory = project.getRuntimeService().getInputFolderForAnalysis(this);
+            inputBaseDirectory = getRuntimeService().getInputFolderForAnalysis(this);
         return inputBaseDirectory;
     }
 
@@ -170,7 +178,7 @@ public class Analysis {
      * @return
      */
     public File getOutputBaseDirectory() {
-        return project.getRuntimeService().getOutputFolderForAnalysis(this);
+        return getRuntimeService().getOutputFolderForAnalysis(this);
     }
 
     /**
@@ -179,7 +187,7 @@ public class Analysis {
      * @return
      */
     public File getOutputAnalysisBaseDirectory() {
-        return project.getRuntimeService().getOutputFolderForAnalysis(this);
+        return getRuntimeService().getOutputFolderForAnalysis(this);
 //        if (outputBaseDirectory == null)
 //            outputBaseDirectory = getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY).toFile(this);
 //        return outputBaseDirectory;
@@ -193,7 +201,9 @@ public class Analysis {
     }
 
     public RuntimeService getRuntimeService() {
-        return project.getRuntimeService();
+        RuntimeService rs = project.getRuntimeService();
+        if (rs == null) rs = runtimeService;
+        return rs;
     }
 
     /**
@@ -348,11 +358,9 @@ public class Analysis {
      * @param ec The execution context which will be context in a separate thread.
      */
     public void runDeferredContext(final ExecutionContext ec) {
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                executeRun(ec);
-            }
+//        ThreadGroup
+        Thread t = new Thread(() -> {
+            executeRun(ec);
         });
         t.setName(String.format("Deferred execution context execution for pid %s", ec.getDataSet().getId()));
         t.start();
@@ -376,6 +384,7 @@ public class Analysis {
         logger.postSometimesInfo("" + context.getExecutionContextLevel());
         boolean isExecutable;
         String datasetID = context.getDataSet().getId();
+        Exception eCopy = null;
         try {
             isExecutable = ExecutionService.getInstance().checkContextPermissions(context) && context.checkExecutability();
             if (!isExecutable) {
@@ -405,15 +414,19 @@ public class Analysis {
                 }
             }
         } catch (Exception e) {
+            eCopy = e;
             context.addErrorEntry(ExecutionContextError.EXECUTION_UNCATCHEDERROR.expand(e));
-            logger.postAlwaysInfo("An exception occurred: '" + e.getLocalizedMessage() + "'");
-            if (logger.isVerbosityMedium()) {
-                logger.log(Level.SEVERE, e.toString());
-                logger.log(Level.SEVERE, RoddyIOHelperMethods.getStackTraceAsString(e));
-            } else {
-                logger.postAlwaysInfo("Set --verbositylevel >=" + LoggerWrapper.VERBOSITY_WARNING + " or higher to see stack trace.");
-            }
+
         } finally {
+            if (eCopy != null) {
+                logger.postAlwaysInfo("An exception occurred: '" + eCopy.getLocalizedMessage() + "'");
+                if (logger.isVerbosityMedium()) {
+                    logger.log(Level.SEVERE, eCopy.toString());
+                    logger.postAlwaysInfo( RoddyIOHelperMethods.getStackTraceAsString(eCopy));
+                } else {
+                    logger.postAlwaysInfo("Set --verbositylevel >=" + LoggerWrapper.VERBOSITY_WARNING + " or higher to see stack trace.");
+                }
+            }
 
             // Look up errors when jobs are executed directly and when there were any started jobs.
             if (context.getStartedJobs().size() > 0) {
@@ -426,7 +439,15 @@ public class Analysis {
             // Print out context errors.
             if (context.getErrors().size() > 0) {
                 StringBuilder messages = new StringBuilder();
-                messages.append("\nThere were errors for the execution context for dataset " + datasetID);
+                boolean warningsOnly = true;
+                for (ExecutionContextError executionContextError : context.getErrors()) {
+                    if(executionContextError.getErrorLevel().intValue() > Level.WARNING.intValue())
+                        warningsOnly = false;
+                }
+                if(warningsOnly)
+                    messages.append("\nThere were warnings for the execution context for dataset " + datasetID);
+                else
+                    messages.append("\nThere were errors for the execution context for dataset " + datasetID);
                 for (ExecutionContextError executionContextError : context.getErrors()) {
                     messages.append("\n\t* ").append(executionContextError.toString());
                 }
@@ -453,7 +474,7 @@ public class Analysis {
                 //TODO Think hard if this could be generified and simplified! This is also used in other places in a similar way right?
                 ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, ExecutionContextLevel.CLEANUP, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null);
                 Job cleanupJob = new Job(context, "cleanup", ((AnalysisConfiguration) getConfiguration()).getCleanupScript(), null);
-//                Command cleanupCmd = CommandFactory.getInstance().createCommand(cleanupJob, cleanupJob.getToolPath(), new LinkedList<>());
+//                Command cleanupCmd = JobManager.getInstance().createCommand(cleanupJob, cleanupJob.getToolPath(), new LinkedList<>());
                 try {
                     ExecutionService.getInstance().writeFilesForExecution(context);
                     cleanupJob.run();

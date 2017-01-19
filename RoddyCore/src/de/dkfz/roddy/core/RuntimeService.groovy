@@ -1,14 +1,24 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.core
 
 import de.dkfz.roddy.Constants
+import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
+import de.dkfz.roddy.execution.io.BaseMetadataTable
+import de.dkfz.roddy.execution.io.MetadataTableFactory
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.LoadedFile
 import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.NodeChild
@@ -35,7 +45,7 @@ public abstract class RuntimeService extends CacheProvider {
     public static final String FILENAME_REPEATABLEJOBCALLS = "repeatableJobCalls.sh"
     public static final String FILENAME_EXECUTEDJOBS_INFO = "executedJobs.txt"
     public static final String FILENAME_ANALYSES_MD5_OVERVIEW = "zippedAnalysesMD5.txt"
-    public static final String DIRECTORY_RODDY_COMMON_EXECUTION = ".roddyExecutionDirectory"
+    public static final String DIRECTORY_RODDY_COMMON_EXECUTION = ".roddyExecutionStore"
     public static final String DIRNAME_ANALYSIS_TOOLS = "analysisTools"
     public static final String RODDY_CENTRAL_EXECUTION_DIRECTORY = "RODDY_CENTRAL_EXECUTION_DIRECTORY"
 
@@ -58,18 +68,29 @@ public abstract class RuntimeService extends CacheProvider {
     }
 
     public List<DataSet> loadCombinedListOfDataSets(Analysis analysis) {
-        List<DataSet> lid = loadListOfInputDataSets(analysis);
-        List<DataSet> lod = loadListOfOutputDataSets(analysis);
 
-        //Now combine lid and lod.
-        Collection<DataSet> additional = lod.findAll {
-            DataSet ds -> !lid.find { DataSet inLid -> inLid.getId() == ds.getId(); };
+        if(Roddy.isMetadataCLOptionSet()) {
+
+            BaseMetadataTable table = MetadataTableFactory.getTable(analysis)
+            List<String> _datasets = table.listDatasets();
+            String pOut = analysis.getOutputBaseDirectory().getAbsolutePath() + File.separator;
+            return _datasets.collect { new DataSet(analysis, it, new File(pOut + it), table); }
+
+        } else {
+
+            List<DataSet> lid = loadListOfInputDataSets(analysis);
+            List<DataSet> lod = loadListOfOutputDataSets(analysis);
+
+            //Now combine lid and lod.
+            Collection<DataSet> additional = lod.findAll {
+                DataSet ds -> !lid.find { DataSet inLid -> inLid.getId() == ds.getId(); };
+            }
+            lid += additional.each { DataSet ds -> ds.setAsAvailableInOutputOnly(); }
+            lid.removeAll { DataSet ds -> ds.getId().startsWith(".roddy"); } //Filter out roddy specific files or folders.
+            lid.sort { DataSet a, DataSet b -> a.getId().compareTo(b.getId()); }
+            logger.postAlwaysInfo("Found ${lid.size()} datasets in the in- and output directories.")
+            return lid;
         }
-        lid += additional.each { DataSet ds -> ds.setAsAvailableInOutputOnly(); }
-        lid.removeAll { DataSet ds -> ds.getId().startsWith(".roddy"); } //Filter out roddy specific files or folders.
-        lid.sort { DataSet a, DataSet b -> a.getId().compareTo(b.getId()); }
-        logger.postAlwaysInfo("Found ${lid.size()} datasets in the in- and output directories.")
-        return lid;
     }
 
     /**
@@ -154,7 +175,7 @@ public abstract class RuntimeService extends CacheProvider {
                     //TODO Load a list of the previously created jobs and query those using qstat!
                     for (String call : jobCalls) {
                         //TODO. How can we recognize different command factories? i.e. for other cluster systems?
-                        Job job = CommandFactory.getInstance().parseToJob(context, call);
+                        Job job = JobManager.getInstance().parseToJob(context, call);
                         jobsStartedInContext.add(job);
                     }
                 }
@@ -171,7 +192,7 @@ public abstract class RuntimeService extends CacheProvider {
                 for (String id : statusList.keySet()) {
                     JobState status = statusList[id];
 
-                    if (!CommandFactory.getInstance().compareJobIDs(job.getJobID(), (id)))
+                    if (!JobManager.getInstance().compareJobIDs(job.getJobID(), (id)))
                         continue;
                     job.setJobState(status);
                 }
@@ -181,7 +202,7 @@ public abstract class RuntimeService extends CacheProvider {
             Map<String, Job> unknownJobs = new LinkedHashMap<>();
             Map<String, Job> possiblyRunningJobs = new LinkedHashMap<>();
             List<String> queryList = new LinkedList<>();
-            //For every job which is still unknown or possibly running get the actual state from the cluster
+            //For every job which is still unknown or possibly running get the actual jobState from the cluster
             for (Job job : jobsStartedInContext) {
                 if (job.getJobState().isUnknown() || job.getJobState() == JobState.UNSTARTED) {
                     unknownJobs.put(job.getJobID(), job);
@@ -192,11 +213,11 @@ public abstract class RuntimeService extends CacheProvider {
                 }
             }
 
-            Map<String, JobState> map = CommandFactory.getInstance().queryJobStatus(queryList);
+            Map<String, JobState> map = JobManager.getInstance().queryJobStatus(queryList);
             for (String jobID : unknownJobs.keySet()) {
                 Job job = unknownJobs.get(jobID);
                 job.setJobState(map.get(jobID));
-                CommandFactory.getInstance().addJobStatusChangeListener(job);
+                JobManager.getInstance().addJobStatusChangeListener(job);
             }
             for (String jobID : possiblyRunningJobs.keySet()) {
                 Job job = possiblyRunningJobs.get(jobID);
@@ -204,7 +225,7 @@ public abstract class RuntimeService extends CacheProvider {
                     job.setJobState(JobState.FAILED);
                 } else {
                     job.setJobState(map.get(jobID));
-                    CommandFactory.getInstance().addJobStatusChangeListener(job);
+                    JobManager.getInstance().addJobStatusChangeListener(job);
                 }
             }
 
@@ -397,7 +418,7 @@ public abstract class RuntimeService extends CacheProvider {
         String outPath = getOutputFolderForDataSetAndAnalysis(context.getDataSet(), context.getAnalysis()).absolutePath
         String sep = FileSystemAccessProvider.getInstance().getPathSeparator();
 
-        String dirPath = "${outPath}${sep}roddyExecutionStore${sep}${ConfigurationConstants.RODDY_EXEC_DIR_PREFIX}${context.getTimeStampString()}_${context.getExecutingUser()}_${context.getAnalysis().getName()}"
+        String dirPath = "${outPath}${sep}roddyExecutionStore${sep}${ConfigurationConstants.RODDY_EXEC_DIR_PREFIX}${context.getTimestampString()}_${context.getExecutingUser()}_${context.getAnalysis().getName()}"
         if (context.getExecutionContextLevel() == ExecutionContextLevel.CLEANUP)
             dirPath += "_cleanup"
         return new File(dirPath);
@@ -472,43 +493,17 @@ public abstract class RuntimeService extends CacheProvider {
         return new File(getExecutionDirFilePrefixString(context) + FILENAME_RUNTIME_INFO);
     }
 
-    public String extractDataSetIDFromPath(File p, Analysis analysis) {
-        //Try new version first, fallback to old version if necessary.
-//        if (!Roddy.getFeatureToggleValue(AvailableFeatureToggles.UseOldDataSetIDExtraction)) {
-//            def instance = FileSystemAccessManager.getInstance();
-//            //TODO Hack! This will only work on Linux systems using bash. Extract the PID from the realjobcalls file. PID is always a parameter.
-//            def realJobCalls = new File(p, "realJobCalls.txt")
-//            try {
-//                if (instance.checkFile(realJobCalls)) {
-//                    String line = instance.getLineOfFile(realJobCalls, 0); //Get the first line of a file.
-//                    int indexOfPID = line.indexOf("PID=");
-//                    String datasetID = line.substring(indexOfPID + 4).split(StringConstants.SPLIT_COMMA)[0].split(StringConstants.SPLIT_WHITESPACE)[0]
-//                    return datasetID;
-//                }
-//            } catch (Exception ex) {
-//                //Fallback...
-//            }
-//        }
-
-        getOutputFolderForAnalysis(analysis);
-
-        String realString = analysis.getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY).toFile(analysis).getAbsolutePath();
-        String[] split = realString.split("/");
-        //TODO can be quite error prone! what if a user puts an additional / somewhere?
-        int index = -1;
-        for (int i = 0; i < split.length; i++) {
-            index++;
-            if (split[i].equals('${pid}')) {
-                break;
-            }
-        }
-        if (index == -1) {
-            return Constants.UNKNOWN;
-        }
-
-        split = p.getAbsolutePath().split("/");
-        return split[index];
-
+    /** Only the first matching ${dataSet} or ${pid} will be returned. ${dataSet} has precedence over ${pid}.
+     *  No checks are done that there is a unique solution.
+     * @param path
+     * @param analysis
+     * @return
+     */
+    public String extractDataSetIDFromPath(File path, Analysis analysis) {
+        String pattern = analysis.getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY).toFile(analysis).getAbsolutePath()
+        RoddyIOHelperMethods.getPatternVariableFromPath(pattern, "dataSet", path.getAbsolutePath()).
+                orElse(RoddyIOHelperMethods.getPatternVariableFromPath(pattern, "pid", path.getAbsolutePath()).
+                        orElse(Constants.UNKNOWN))
     }
 
     /**
@@ -528,7 +523,12 @@ public abstract class RuntimeService extends CacheProvider {
                 if (info.length < 2) return;
                 File path = new File(info[0]);
                 execDirectories << path;
-                String dataSetID = analysis.getProject().getRuntimeService().extractDataSetIDFromPath(path, analysis);
+                String dataSetID
+                try {
+                    dataSetID = analysis.getRuntimeService().extractDataSetIDFromPath(path, analysis);
+                } catch (RuntimeException e) {
+                    throw new RuntimeException(e.message + " If you moved the .roddyExecCache.txt, please delete it and restart Roddy.")
+                }
                 Analysis dataSetAnalysis = analysis.getProject().getAnalysis(info[1])
                 DataSet ds = analysis.getDataSet(dataSetID);
                 if (dataSetAnalysis == analysis) {
@@ -552,12 +552,12 @@ public abstract class RuntimeService extends CacheProvider {
 
     public File getLogFileForJob(Job job) {
         //Returns the log files path of the job.
-        File f = new File(job.getExecutionContext().getExecutionDirectory(), CommandFactory.getInstance().getLogFileName(job));
+        File f = new File(job.getExecutionContext().getExecutionDirectory(), JobManager.getInstance().getLogFileName(job));
     }
 
     public File getLogFileForCommand(Command command) {
         //Nearly the same as for the job but with a process id
-        File f = new File(getExecutionDirectory(command.getExecutionContext()), CommandFactory.getInstance().getLogFileName(command));
+        File f = new File(getExecutionDirectory(command.getExecutionContext()), JobManager.getInstance().getLogFileName(command));
     }
 
     public boolean hasLogFileForJob(Job job) {

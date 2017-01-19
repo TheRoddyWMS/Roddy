@@ -1,11 +1,19 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.client.fxuiclient.settingsviewer;
 
 import de.dkfz.roddy.Constants;
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.RunMode;
+import de.dkfz.roddy.config.AppConfig;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.LocalExecutionService;
 import de.dkfz.roddy.execution.io.SSHExecutionService;
+import de.dkfz.roddy.execution.io.fs.BashCommandSet;
 import de.dkfz.roddy.execution.io.fs.ShellCommandSet;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.client.fxuiclient.RoddyUITask;
@@ -22,7 +30,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
-import org.reflections.Reflections;
+//import org.reflections.Reflections;
 
 import java.io.File;
 import java.util.Arrays;
@@ -49,14 +57,26 @@ public class SettingsViewer extends CustomControlOnGridPane {
         Connection,
     }
 
+    @FXML
     public ListView configurationPaths;
-    public TextField txtCommandFactory;
+
+    @FXML
+    public ListView pluginPaths;
+
+    @FXML
+    public TextField txtJobManager;
+
+    @FXML
+    public TextField txtExecutionService;
+
+    @FXML
+    public TextField txtFileSystemCommandSet;
 
     @FXML
     private ComboBox cbbCLIExecutionService;
 
-    @FXML
-    private ComboBox cbbGUIExecutionService;
+//    @FXML
+//    private ComboBox cbbGUIExecutionService;
 
 
     public SettingsViewer ROOT;
@@ -76,7 +96,7 @@ public class SettingsViewer extends CustomControlOnGridPane {
 
     public SettingsViewer() {
         super();
-        loadSettingsToScreen();
+//        loadSettingsToScreen();
 
 //        visibleProperty().addListener(new ChangeListener<Boolean>() {
 //            @Override
@@ -90,12 +110,12 @@ public class SettingsViewer extends CustomControlOnGridPane {
             @Override
             public void changed(ObservableValue observableValue, Object oldObject, Object newObject) {
                 RunMode mode = RunMode.CLI;
-                if(newObject.equals(SSHExecutionService.class.getName())) {
+                if (newObject.equals(SSHExecutionService.class.getName())) {
                     SSHExecutionServiceSettingsPanelControl cPanel = new SSHExecutionServiceSettingsPanelControl(mode);
                     settingsBox.getChildren().add(settingsBox.getChildren().indexOf(overlayRoddySubSystemsSettings) + 1, cPanel);
                     createdSSHExecutionServicePanels.put(cbbCLIExecutionService, cPanel);
                 } else {
-                    if(createdSSHExecutionServicePanels.containsKey(cbbCLIExecutionService)) {
+                    if (createdSSHExecutionServicePanels.containsKey(cbbCLIExecutionService)) {
                         settingsBox.getChildren().remove(createdSSHExecutionServicePanels.get(cbbCLIExecutionService));
                         createdSSHExecutionServicePanels.remove(cbbCLIExecutionService);
                     }
@@ -103,33 +123,33 @@ public class SettingsViewer extends CustomControlOnGridPane {
             }
         });
 
-        cbbGUIExecutionService.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
-            @Override
-            public void changed(ObservableValue observableValue, Object oldObject, Object newObject) {
-                RunMode mode = RunMode.UI;
-                if(newObject.equals(SSHExecutionService.class.getName())) {
-                    SSHExecutionServiceSettingsPanelControl cPanel = new SSHExecutionServiceSettingsPanelControl(mode);
-                    settingsBox.getChildren().add(settingsBox.getChildren().indexOf(executionServiceSetup), cPanel);
-                    createdSSHExecutionServicePanels.put(cbbGUIExecutionService, cPanel);
-                } else {
-                    if(createdSSHExecutionServicePanels.containsKey(cbbGUIExecutionService)) {
-                        settingsBox.getChildren().remove(createdSSHExecutionServicePanels.get(cbbGUIExecutionService));
-                        createdSSHExecutionServicePanels.remove(cbbGUIExecutionService);
-                    }
-                }
-            }
-        });
+//        cbbGUIExecutionService.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
+//            @Override
+//            public void changed(ObservableValue observableValue, Object oldObject, Object newObject) {
+//                RunMode mode = RunMode.UI;
+//                if (newObject.equals(SSHExecutionService.class.getName())) {
+//                    SSHExecutionServiceSettingsPanelControl cPanel = new SSHExecutionServiceSettingsPanelControl(mode);
+//                    settingsBox.getChildren().add(settingsBox.getChildren().indexOf(executionServiceSetup), cPanel);
+//                    createdSSHExecutionServicePanels.put(cbbGUIExecutionService, cPanel);
+//                } else {
+//                    if (createdSSHExecutionServicePanels.containsKey(cbbGUIExecutionService)) {
+//                        settingsBox.getChildren().remove(createdSSHExecutionServicePanels.get(cbbGUIExecutionService));
+//                        createdSSHExecutionServicePanels.remove(cbbGUIExecutionService);
+//                    }
+//                }
+//            }
+//        });
 
         cbbCLIExecutionService.getSelectionModel().select(Roddy.getApplicationProperty(RunMode.CLI, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, LocalExecutionService.class.getName()));
-        cbbGUIExecutionService.getSelectionModel().select(Roddy.getApplicationProperty(RunMode.UI, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, LocalExecutionService.class.getName()));
+//        cbbGUIExecutionService.getSelectionModel().select(Roddy.getApplicationProperty(RunMode.UI, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, LocalExecutionService.class.getName()));
 
         RoddyUITask.runTask(new RoddyUITask("Load settings to settings viewer.", false) {
             @Override
             protected Object _call() throws Exception {
-                Reflections collect = Reflections.collect();
-                Set<Class<? extends ExecutionService>> lstOfExecutionServices = collect.getSubTypesOf(ExecutionService.class);
-                Set<Class<? extends FileSystemAccessProvider>> lstOfFileSystemAccessManagers = collect.getSubTypesOf(FileSystemAccessProvider.class);
-                Set<Class<? extends ShellCommandSet>> lstOfFileSystemCommandSets = collect.getSubTypesOf(ShellCommandSet.class);
+//                Reflections collect = Reflections.collect();
+//                Set<Class<? extends ExecutionService>> lstOfExecutionServices = collect.getSubTypesOf(ExecutionService.class);
+//                Set<Class<? extends FileSystemAccessProvider>> lstOfFileSystemAccessManagers = collect.getSubTypesOf(FileSystemAccessProvider.class);
+//                Set<Class<? extends ShellCommandSet>> lstOfFileSystemCommandSets = collect.getSubTypesOf(ShellCommandSet.class);
 //                collect.getSubTypesOf(de.dkfz.roddy.execution.io.RuntimeService.class);
                 return null;
             }
@@ -158,45 +178,60 @@ public class SettingsViewer extends CustomControlOnGridPane {
 
     }
 
-    private void loadSettingsToScreen() {
-        String cmdFactory = Roddy.getApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS);
-//        String execService = Roddy.getApplicationProperty(Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS);
-        String cfgDirectories = Roddy.getApplicationProperty(Constants.APP_PROPERTY_CONFIGURATION_DIRECTORIES);
-
-        configurationPaths.getItems().clear();
-        configurationPaths.getItems().add("pipelineConfigurationFiles");
-        if (cfgDirectories.trim().length() > 0)
-            configurationPaths.getItems().addAll(Arrays.asList(cfgDirectories.split(SPLIT_COMMA)));
-        txtCommandFactory.setText(cmdFactory);
-//        execServiceSettingsWrite();
-    }
-
-    private void writeSettings() {
-        ObservableList pathList = configurationPaths.getItems();
-        pathList.remove(0);
-        String workflowPaths = "";
-         for (Object entry : pathList)
-            workflowPaths += "," + entry.toString();
-
-        if (workflowPaths.length() > 0)
-            workflowPaths = workflowPaths.substring(1);
-        Roddy.setApplicationProperty(Constants.APP_PROPERTY_CONFIGURATION_DIRECTORIES, workflowPaths);
-        Roddy.setApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS, txtCommandFactory.getText());
-        Roddy.setApplicationProperty(RunMode.CLI, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, cbbCLIExecutionService.getSelectionModel().getSelectedItem().toString());
-        Roddy.setApplicationProperty(RunMode.UI, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, cbbGUIExecutionService.getSelectionModel().getSelectedItem().toString());
-        for(SSHExecutionServiceSettingsPanelControl pnl : createdSSHExecutionServicePanels.values()) {
-            pnl.writeToApplicationSettings();
-        }
-
+    public void loadSettingsToScreen(File iniFile) {
         try {
+            AppConfig cfg = new AppConfig(iniFile);
 
-            FileSystemAccessProvider.initializeProvider(true);
-            ExecutionService.initializeService(true);
-        } catch (Exception ex) {
-            logger.log(Level.SEVERE, null, ex);
-//            throw new RuntimeException(ex);
+            String cmdFactory = cfg.getProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS, "");
+            String execService = cfg.getProperty(Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, "");
+            String cfgDirectories = cfg.getProperty(Constants.APP_PROPERTY_CONFIGURATION_DIRECTORIES, "");
+            String pluginDirectories = cfg.getProperty(Constants.APP_PROPERTY_PLUGIN_DIRECTORIES, "");
+
+            configurationPaths.getItems().clear();
+            configurationPaths.getItems().add("pipelineConfigurationFiles");
+            if (cfgDirectories.trim().length() > 0)
+                configurationPaths.getItems().addAll(Arrays.asList(cfgDirectories.split(SPLIT_COMMA)));
+
+            pluginPaths.getItems().clear();
+            if (pluginDirectories.trim().length() > 0) {
+                this.pluginPaths.getItems().addAll(Arrays.asList(pluginDirectories.split(SPLIT_COMMA)));
+            }
+
+            txtJobManager.setText(cmdFactory);
+            txtExecutionService.setText(execService);
+            txtFileSystemCommandSet.setText(BashCommandSet.class.getName());
+//        execServiceSettingsWrite();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
+
+//    private void writeSettings() {
+//        ObservableList pathList = configurationPaths.getItems();
+//        pathList.remove(0);
+//        String workflowPaths = "";
+//         for (Object entry : pathList)
+//            workflowPaths += "," + entry.toString();
+//
+//        if (workflowPaths.length() > 0)
+//            workflowPaths = workflowPaths.substring(1);
+//        Roddy.setApplicationProperty(Constants.APP_PROPERTY_CONFIGURATION_DIRECTORIES, workflowPaths);
+//        Roddy.setApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS, txtJobManager.getText());
+//        Roddy.setApplicationProperty(RunMode.CLI, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, cbbCLIExecutionService.getSelectionModel().getSelectedItem().toString());
+//        Roddy.setApplicationProperty(RunMode.UI, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, cbbGUIExecutionService.getSelectionModel().getSelectedItem().toString());
+//        for(SSHExecutionServiceSettingsPanelControl pnl : createdSSHExecutionServicePanels.values()) {
+//            pnl.writeToApplicationSettings();
+//        }
+//
+//        try {
+//
+//            FileSystemAccessProvider.initializeProvider(true);
+//            ExecutionService.initializeService(true);
+//        } catch (Exception ex) {
+//            logger.log(Level.SEVERE, null, ex);
+////            throw new RuntimeException(ex);
+//        }
+//    }
 
     public void addConfigurationPath(ActionEvent actionEvent) {
         DirectoryChooser chooser = new DirectoryChooser();
@@ -214,21 +249,21 @@ public class SettingsViewer extends CustomControlOnGridPane {
         }
     }
 
-    public void setRemoteCredentialSettings(ActionEvent actionEvent) {
-        writeSettings();
-//        hideConfigurationView(true);
-    }
-
-    public void rejectRemoteCredentialSettings(ActionEvent actionEvent) {
-
-//        hideConfigurationView(true);
-    }
-
-//    public void hideConfigurationView(boolean eraseErrors) {
-//        setVisible(false);
-//        if (!eraseErrors) return;
-//        remoteExecServiceCredentials_ErrorsList.getChildren().clear();
-//        remoteExecServiceCredentials_Errors.setVisible(false);
-//        settingsBox.getChildren().remove(remoteExecServiceCredentials_Errors);
+//    public void setRemoteCredentialSettings(ActionEvent actionEvent) {
+////        writeSettings();
+////        hideConfigurationView(true);
 //    }
+//
+//    public void rejectRemoteCredentialSettings(ActionEvent actionEvent) {
+//
+////        hideConfigurationView(true);
+//    }
+//
+////    public void hideConfigurationView(boolean eraseErrors) {
+////        setVisible(false);
+////        if (!eraseErrors) return;
+////        remoteExecServiceCredentials_ErrorsList.getChildren().clear();
+////        remoteExecServiceCredentials_Errors.setVisible(false);
+////        settingsBox.getChildren().remove(remoteExecServiceCredentials_Errors);
+////    }
 }
