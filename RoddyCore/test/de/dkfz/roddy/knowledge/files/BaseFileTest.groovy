@@ -67,7 +67,7 @@ public class BaseFileTest {
         syntheticTestFileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass("FileWithFileStage", BaseFile.class as Class<FileObject>);
 
         ToolEntry toolEntry = new ToolEntry("RoddyTests", "RoddyTests", "RoddyTestScript_ExecutionServiceTest.sh");
-        toolEntry.getOutputParameters(mockupConfig).add(new ToolEntry.ToolFileParameter(syntheticTestFileClass, null, "TEST", true))
+        toolEntry.getOutputParameters(mockupConfig).add(new ToolEntry.ToolFileParameter(syntheticTestFileClass, null, "TEST", new ToolEntry.ToolFileParameterCheckCondition(true)))
 
         mockupConfig.getTools().add(toolEntry);
         mockedContext = MockupExecutionContextBuilder.createSimpleContext(BaseFileTest, mockupConfig);
