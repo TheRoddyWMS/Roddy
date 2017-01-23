@@ -14,7 +14,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="RoddyCore" />
+    <orderEntry type="module" module-name="roddy" />
     <orderEntry type="module" module-name="PluginBase" />
     <orderEntry type="library" name="roddyBundledLibraries" level="project" />
   </component>
