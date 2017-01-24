@@ -48,7 +48,7 @@ class FilenamePatternHelper {
         if (startIndex == -1)
             startIndex = temp.indexOf(commandID);
         int endIndex = temp.indexOf(BRACE_RIGHT, startIndex);
-        String command = temp[startIndex .. endIndex]
+        String command = temp[startIndex..endIndex]
 
         Map<String, CommandAttribute> attributes = [:]
 
@@ -68,8 +68,13 @@ class FilenamePatternHelper {
             attributes[name] = new CommandAttribute(name, value);
         }
 
+        def commandsWithNameTags = [
+                FilenamePattern.PLACEHOLDER_CVALUE,
+                FilenamePattern.PLACEHOLDER_JOBPARAMETER
+        ]
+
         // Check if the attribute at least has a name tag
-        if(!attributes["name"]) {
+        if (commandsWithNameTags.find { command.startsWith(it) } && !attributes["name"] ) {
             context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("The jobParameter for ${command} must have a name tag with a value."))
         }
 
