@@ -868,7 +868,7 @@ public class ConfigurationFactory {
         String parentFileVariable = extractAttributeText(child, "variable", null); //This is only the case for child files.
         ToolEntry.ToolFileParameterCheckCondition check = new ToolEntry.ToolFileParameterCheckCondition(extractAttributeText(child, "check", "true"));
 
-        if(check && check.startsWith("conditional:"))
+//        if(check && check.startsWith("conditional:"))
 
         List<ToolEntry.ToolConstraint> constraints = new LinkedList<ToolEntry.ToolConstraint>();
         for (constraint in child.constraint) {
