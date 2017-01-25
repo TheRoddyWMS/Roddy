@@ -11,4 +11,10 @@
     <orderEntry type="module" module-name="roddy" />
     <orderEntry type="library" name="roddyBundledLibraries" level="project" />
   </component>
+  <component name="PackageRequirementsSettings">
+    <option name="requirementsPath" value="" />
+  </component>
+  <component name="TestRunnerService">
+    <option name="PROJECT_TEST_RUNNER" value="Unittests" />
+  </component>
 </module>
