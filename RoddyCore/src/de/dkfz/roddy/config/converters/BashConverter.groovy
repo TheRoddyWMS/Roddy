@@ -9,6 +9,7 @@ package de.dkfz.roddy.config.converters
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationValue
@@ -202,7 +203,7 @@ class BashConverter extends ConfigurationConverter {
     private boolean isQuoted(String string) {
         (string.startsWith("'") && string.endsWith("'")) || (string.startsWith('"') && string.endsWith('"'))
     }
-    
+
     StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context, Boolean quoteSomeScalarConfigValues) {
         StringBuilder text = new StringBuilder();
         if (cv.toString().startsWith("#COMMENT")) {
@@ -334,5 +335,107 @@ class BashConverter extends ConfigurationConverter {
 
 
         return newCfg
+    }
+
+    /**
+     * The easy Bash config format.
+     *
+     * This is a very generic helper script which just converts a bash cfg to xml.
+     * Not everything is covered, it's not built in yet and it needs a lot of improvement.
+     * But for now, it works.
+     * To run it faster from within IDEA, copy the content to a groovy console and start it.
+     *
+     * Basically a file which contains some info in the header and only config values.
+     * @param text
+     * @return
+     */
+    String convertToXML(String text) {
+        String previousLine = ""
+        List<String> allLines = text.readLines()
+        List<String> header = []
+        for (int i = 0; i < allLines.size(); i++) {
+            if (!allLines[i]) continue;
+            if (isBashComment(allLines[i]))
+                header << allLines[i]
+            else
+                break;
+        }
+
+        if (!header)
+            throw new IOException("Simple Bash configuration files need a valid header")
+
+        // Convert the Bash header
+        List<String> xmlLines = [];
+        xmlLines << "<configuration name='${getHeaderValue(header, "name", "")}'".toString()
+        xmlLines << "imports='" + getHeaderValue(header, "imports", "") + "'"
+        xmlLines << "description='" + getHeaderValue(header, "description", "") + "'"
+        xmlLines << "usedresourcessize='" + getHeaderValue(header, "usedresourcessize", "l") + "' >"
+
+        xmlLines << "  <availableAnalyses>"
+        getHeaderValues(header, "analysis", []).each {
+            String analysis ->
+                String[] split = analysis.split(StringConstants.COMMA)
+                String id = split[0]
+                String cfg = split[1]
+                String plg = split[2]
+                xmlLines << "    <analysis id='${id}' configuration='${cfg}' useplugin='${plg}' />".toString()
+        }
+        xmlLines << "  </availableAnalyses>"
+
+        // Convert the configuration values.
+        xmlLines << "  <configurationvalues>"
+
+        allLines[header.size()..-1].each {
+            String[] s = it.split("[=]")
+            if (!it) return;
+            if (!s) return;
+
+            if (isBashPipe(it)) {
+
+            } else if (isBashComment(it)) {
+                if (isBashComment(previousLine)) {
+                    xmlLines << ("""     ${it}""").toString()
+                } else {
+                    xmlLines << ("""<!-- ${it}""").toString()
+                }
+            } else {
+
+                if (isBashComment(previousLine)) {
+                    xmlLines[-1] += ("""-->""").toString()
+                }
+
+                if (s.size() == 2)
+                    xmlLines << ("""    <cvalue name='${s[0]}' value='${s[1]}' type='string' />""").toString()
+                else if (s.size() == 1)
+                    xmlLines << ("""    <cvalue name='${s[0]}' value='' type='string' />""").toString()
+                else
+                    xmlLines << ("""    <cvalue name='${s[0]}' value='${s[1..-1].join("=")}' type='string' />""").toString()
+            }
+            previousLine = it;
+        }
+        xmlLines << "  </configurationvalues>"
+        xmlLines << "</configuration>"
+
+        return xmlLines.join("\n")
+    }
+
+    public static String getHeaderValue(List<String> header, String id, String defaultValue) {
+        def found = header.find { String line -> line.startsWith("#${id}") }
+        if (!found) return defaultValue
+        return found.split(StringConstants.WHITESPACE)[1]
+    }
+
+    public static List<String> getHeaderValues(List<String> header, String id, List<String> defaultValue) {
+        def found = header.findAll { String line -> line.startsWith("#${id}") }
+        if (!found) return defaultValue
+        return found.collect { String entry -> entry.split(StringConstants.WHITESPACE)[1] }
+    }
+
+    public static boolean isBashComment(String it) {
+        it.trim().startsWith("#")
+    }
+
+    public static boolean isBashPipe(String it) {
+        it.trim().startsWith("###")
     }
 }
