@@ -165,10 +165,6 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         }
 
         public abstract T clone();
-
-        public boolean isFileParameter() {
-            return false;
-        }
     }
 
     public static class ToolStringParameter extends ToolParameter<ToolStringParameter> {
@@ -274,10 +270,6 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
          */
         public abstract List<? extends ToolParameterOfFiles> getAllFiles();
         public abstract List<? extends ToolParameterOfFiles> getFiles();
-        @Override
-        public boolean isFileParameter() {
-            return true;
-        }
     }
 
 
@@ -330,7 +322,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
 
         @Override
         public List<ToolFileParameter> getAllFiles() {
-            return files.collect { it.getAllFiles() }.flatten() + [this]
+            return (files.collect { it.getAllFiles() }.flatten() + [this]) as List<ToolFileParameter>
         }
 
         @Override
@@ -369,7 +361,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
          */
         @Override
         public List<ToolFileParameter> getAllFiles() {
-            return files.collect { it.getAllFiles() }.flatten()
+            return files.collect { it.getAllFiles() }.flatten() as List<ToolFileParameter>
         }
 
         @Override
@@ -433,7 +425,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
 
         @Override
         public List<ToolFileParameter> getAllFiles() {
-            return files.collect { it.getAllFiles() }.flatten()
+            return files.collect { it.getAllFiles() }.flatten() as List<ToolFileParameter>
         }
 
         @Override
@@ -602,7 +594,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
     public List<ToolParameterOfFiles> getOutputFileParameters(Configuration configuration) {
         return getOutputParameters(configuration).
                 stream().
-                filter({ it.isFileParameter() }).
+                filter({ ToolParameterOfFiles.isInstance(it) }).
                 map({ it as ToolParameterOfFiles }).
                 collect(Collectors.toList());
     }

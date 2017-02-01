@@ -86,24 +86,25 @@ public final class MetadataTableFactory {
         return null;
     }
 
+    public static BaseMetadataTable readTable(FileReader instream, String format, Map<String, String> internalToCustomIDMap, List<String> mandatoryColumns) {
+        CSVFormat tableFormat = convertFormat(format)
+        tableFormat = tableFormat.withCommentMarker('#' as char)
+                .withIgnoreEmptyLines()
+                .withHeader();
+        CSVParser parser = tableFormat.parse(instream)
+        def map = parser.headerMap as Map<String, Integer>
+        def collect = parser.records.collect { it.toMap() }
+        def inputTable = new BaseMetadataTable(map, internalToCustomIDMap, mandatoryColumns, collect)
+        return inputTable
+    }
+
     public static BaseMetadataTable readTable(File file, String format, Map<String, String> internalToCustomIDMap, List<String> mandatoryColumns) {
         Reader instream
         try {
             instream = new FileReader(file)
-            CSVFormat tableFormat = convertFormat(format)
-            tableFormat = tableFormat.withCommentMarker('#' as char)
-                    .withIgnoreEmptyLines()
-                    .withHeader();
-            CSVParser parser = tableFormat.parse(instream)
-            def map = parser.headerMap as Map<String, Integer>
-            def collect = parser.records.collect { it.toMap() }
-            def inputTable = new BaseMetadataTable(map, internalToCustomIDMap, mandatoryColumns, collect)
-            return inputTable
+            return readTable(instream, format, internalToCustomIDMap, mandatoryColumns)
         } finally {
-            try {
-                instream.close()
-            } catch (Exception ignored) {
-            }
+            instream.close()
         }
     }
 
