@@ -7,7 +7,9 @@
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
     </content>
     <content url="file://$MODULE_DIR$/../dist/bin/current">
-      <sourceFolder url="file://$MODULE_DIR$/../dist/bin/current" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dist/bin/current/helperScripts" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../dist/bin/current/xmlvalidation" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../dist/bin/current/testFiles" type="java-test-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

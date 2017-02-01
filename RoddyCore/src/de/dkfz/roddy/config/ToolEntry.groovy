@@ -4,26 +4,25 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.config;
+package de.dkfz.roddy.config
 
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.knowledge.files.BaseFile;
-import de.dkfz.roddy.knowledge.files.FileGroup;
+import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.tools.BufferValue;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
-import de.dkfz.roddy.tools.RoddyIOHelperMethods;
-import de.dkfz.roddy.tools.TimeUnit;
-import examples.Exec;
+import de.dkfz.roddy.tools.TimeUnit
+import groovy.transform.CompileStatic;
 
 import java.lang.reflect.Method;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.stream.Collectors;
 
 import static de.dkfz.roddy.Constants.NO_VALUE;
 
 /**
  * @author michael
  */
+@CompileStatic
 public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
 
     /**
@@ -166,6 +165,10 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         }
 
         public abstract T clone();
+
+        public boolean isFileParameter() {
+            return false;
+        }
     }
 
     public static class ToolStringParameter extends ToolParameter<ToolStringParameter> {
@@ -258,12 +261,35 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         }
     }
 
+
+    public static abstract class ToolParameterOfFiles extends ToolParameter<ToolParameterOfFiles> {
+        ToolParameterOfFiles(String scriptParameterName) {
+            super(scriptParameterName);
+        }
+        public abstract boolean hasSelectionTag();
+        /**
+         * The childFiles methods only return the possibly empty set of children. The files methods
+         * return all children and possibly (for everything but pure aggregate parameters) the file
+         * itself and all its children. The getAllChildFiles returns all children recursively.
+         */
+        public abstract List<? extends ToolParameterOfFiles> getAllFiles();
+        public abstract List<? extends ToolParameterOfFiles> getFiles();
+        @Override
+        public boolean isFileParameter() {
+            return true;
+        }
+    }
+
+
     /**
      * Parameters for generic tools (tools which are not programmatically set!).
      * Parameters can be for in and for output.
      * Parameters can have constraints.
+     *
+     * ToolFileParameter may contain one or multiple files. If there are "child"-files
+     * these are dependent on the main file, like .bai files depend on the .bam file.
      */
-    public static class ToolFileParameter extends ToolParameter<ToolFileParameter> {
+    public static class ToolFileParameter extends ToolParameterOfFiles {
         public final Class<BaseFile> fileClass;
         public final List<ToolConstraint> constraints;
         public final String scriptParameterName;
@@ -279,7 +305,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         public ToolFileParameter(Class<BaseFile> fileClass, List<ToolConstraint> constraints, String scriptParameterName, ToolFileParameterCheckCondition checkFile, String filenamePatternSelectionTag, List<ToolFileParameter> childFiles, String parentVariable) {
             super(scriptParameterName);
             this.fileClass = fileClass;
-            this.constraints = constraints != null ? constraints : new LinkedList<>();
+            this.constraints = constraints != null ? constraints : new LinkedList<ToolConstraint>();
             this.scriptParameterName = scriptParameterName;
             this.checkFile = checkFile;
             this.filenamePatternSelectionTag = filenamePatternSelectionTag;
@@ -297,10 +323,17 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
             return new ToolFileParameter(fileClass, _con, scriptParameterName, checkFile, filenamePatternSelectionTag, childFiles, parentVariable);
         }
 
-        public List<ToolFileParameter> getChildFiles() {
+        @Override
+        public List<ToolFileParameter> getFiles() {
             return childFiles;
         }
 
+        @Override
+        public List<ToolFileParameter> getAllFiles() {
+            return files.collect { it.getAllFiles() }.flatten() + [this]
+        }
+
+        @Override
         public boolean hasSelectionTag() {
             return !filenamePatternSelectionTag.equals(FilenamePattern.DEFAULT_SELECTION_TAG);
         }
@@ -309,8 +342,10 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
     /**
      * This class is supposed to contain output objects from a method call.
      * You can create tuples of different sizes containt file groups and files.
+     *
+     * Tuples are supposed to contain multiple, equally important files of different types.
      */
-    public static class ToolTupleParameter extends ToolParameter<ToolTupleParameter> {
+    public static class ToolTupleParameter extends ToolParameterOfFiles {
         public final List<ToolFileParameter> files;
 
         public ToolTupleParameter(List<ToolFileParameter> files) {
@@ -324,14 +359,34 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
             for (ToolFileParameter tf : files) _files.add(tf.clone());
             return new ToolTupleParameter(_files);
         }
+
+        public List<ToolFileParameter> getFiles() {
+            return files
+        }
+
+        /**
+         * @return recursive set of files
+         */
+        @Override
+        public List<ToolFileParameter> getAllFiles() {
+            return files.collect { it.getAllFiles() }.flatten()
+        }
+
+        @Override
+        public boolean hasSelectionTag() {
+            return false;
+        }
     }
 
     /**
      * Parameters for generic tools (tools which are not programmatically set!).
      * Parameters can be for in and for output.
      * Parameters can have constraints.
+     *
+     * File groups are supposed to contain multiple files of the same type. A good example would be
+     * a group of .bed files for the different chromosomes.
      */
-    public static class ToolFileGroupParameter extends ToolParameter<ToolFileGroupParameter> {
+    public static class ToolFileGroupParameter extends ToolParameterOfFiles {
         public final Class<FileGroup> groupClass;
         public final Class<BaseFile> genericFileClass;
         public final List<ToolFileParameter> files;
@@ -370,6 +425,22 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
                 return groupClass.getName();
             }
         }
+
+        @Override
+        public boolean hasSelectionTag() {
+            return false
+        }
+
+        @Override
+        public List<ToolFileParameter> getAllFiles() {
+            return files.collect { it.getAllFiles() }.flatten()
+        }
+
+        @Override
+        public List<ToolFileParameter> getFiles() {
+            return files
+        }
+
     }
 
     public final String id;
@@ -378,10 +449,10 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
     public final String computationResourcesFlags;
     private String inlineScript;
     private String inlineScriptName;
-    private final List<ToolParameter> inputParameters = new LinkedList<>();
-    private final List<ToolParameter> outputParameters = new LinkedList<>();
+    final List<ToolParameter> inputParameters = new LinkedList<>();
+    final List<ToolParameter> outputParameters = new LinkedList<>();
     private final List<ResourceSet> resourceSets = new LinkedList<>();
-    private boolean overridesResourceSets;
+    boolean overridesResourceSets;
 
     public ToolEntry(String id, String basePathId, String path) {
         this.id = id;
@@ -502,10 +573,10 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         if (overridesResourceSets) {
             List<ToolEntry> containerParents = configuration.getTools().getInheritanceList(this.id);
             if (containerParents.size() == 1)
-                return inputParameters;
+                return inputParameters
             for (int i = containerParents.size() - 2; i >= 0; i--) {
                 if (!containerParents.get(i).overridesResourceSets)
-                    return containerParents.get(i).inputParameters;
+                    return containerParents.get(i).inputParameters
             }
         }
         return inputParameters;
@@ -522,10 +593,18 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
                 return outputParameters;
             for (int i = containerParents.size() - 2; i >= 0; i--) {
                 if (!containerParents.get(i).overridesResourceSets)
-                    return containerParents.get(i).outputParameters;
+                    return containerParents.get(i).outputParameters
             }
         }
         return outputParameters;
+    }
+
+    public List<ToolParameterOfFiles> getOutputFileParameters(Configuration configuration) {
+        return getOutputParameters(configuration).
+                stream().
+                filter({ it.isFileParameter() }).
+                map({ it as ToolParameterOfFiles }).
+                collect(Collectors.toList());
     }
 
     public List<ResourceSet> getResourceSets() {

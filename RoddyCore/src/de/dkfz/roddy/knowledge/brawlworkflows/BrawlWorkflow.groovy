@@ -12,12 +12,10 @@ import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ContextConfiguration
 import de.dkfz.roddy.config.ToolEntry;
 import de.dkfz.roddy.core.*
-import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.knowledge.methods.GenericMethod
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
-import examples.Exec
 
 import java.lang.reflect.Field
 import java.lang.reflect.Type

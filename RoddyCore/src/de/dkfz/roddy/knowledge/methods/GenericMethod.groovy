@@ -298,7 +298,7 @@ class GenericMethod {
     private FileObject createOutputFile(ToolEntry.ToolFileParameter tparm) {
         ToolEntry.ToolFileParameter fileParameter = tparm;
         BaseFile bf = convertToolFileParameterToBaseFile(fileParameter)
-        for (ToolEntry.ToolFileParameter childFileParameter in fileParameter.getChildFiles()) {
+        for (ToolEntry.ToolFileParameter childFileParameter in fileParameter.getFiles()) {
             try {
                 if (childFileParameter.parentVariable == null) {
                     continue;

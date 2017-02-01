@@ -665,16 +665,18 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
         FilenamePatterns: for (FilenamePattern _fp : availablePatterns) {
             OnScriptParameterFilenamePattern fp = _fp as OnScriptParameterFilenamePattern;
              if (fp.getToolName() == null || fp.getToolName().equals(currentToolEntry.getID())) {
-                 List<ToolEntry.ToolFileParameter> toolParameters = new LinkedList<>(currentToolEntry.getOutputParameters(baseFile.getExecutionContext().getConfiguration()) as List<ToolEntry.ToolFileParameter>)
-                 toolParameters.addAll(toolParameters.collect { it.getChildFiles() }.flatten() as List<ToolEntry.ToolFileParameter>)
-                for(ToolEntry.ToolFileParameter tp : toolParameters){
-                    if (fp.getCalledParameterId().equals(tp.scriptParameterName) && fp.getCls() == tp.fileClass){
-                        appliedPattern = fp;
-                        filename = new File(fp.apply(baseFile));
-                        continue FilenamePatterns;
-                    }
-                }
-            }
+                 List<ToolEntry.ToolFileParameter> toolParameters =
+                         currentToolEntry.getOutputFileParameters(baseFile.getExecutionContext().getConfiguration())
+                                 .collect { it.allFiles }
+                                 .flatten() as List<ToolEntry.ToolFileParameter>
+                 for(ToolEntry.ToolFileParameter tp : toolParameters){
+                     if (fp.getCalledParameterId().equals(tp.scriptParameterName) && fp.getCls() == tp.fileClass){
+                         appliedPattern = fp;
+                         filename = new File(fp.apply(baseFile));
+                         continue FilenamePatterns;
+                     }
+                 }
+             }
         }
         if (!filename || !appliedPattern) return null;
         return new Tuple2<>(filename, appliedPattern);
