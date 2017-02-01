@@ -164,7 +164,7 @@ public class BaseFileTest {
         assert obj instanceof BaseFile;
 
         def toolent = new ToolEntry("testScript", "RoddyTests", "RoddyTestScript_ExecutionServiceTest.sh")
-        toolent.getOutputParameters(mockedContext.getConfiguration()).add(new ToolEntry.ToolFileParameter(syntheticTestFileClass, null, "BAM_INDEX_FILE", true))
+        toolent.getOutputParameters(mockedContext.getConfiguration()).add(new ToolEntry.ToolFileParameter(syntheticTestFileClass, null, "BAM_INDEX_FILE", new ToolEntry.ToolFileParameterCheckCondition(true)))
         obj.getExecutionContext().setCurrentExecutedTool( toolent)
 
 
@@ -183,13 +183,15 @@ public class BaseFileTest {
     @Test
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public void testFindFilenameFromOnScriptParameterPatterns(){
-        OnScriptParameterFilenamePattern pattern = ConfigurationFactory.readOnScriptParameterFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_WITH_TOOL_AND_PARAMNAME).filename.getAt(0)) as OnScriptParameterFilenamePattern;
+        OnScriptParameterFilenamePattern pattern =
+                ConfigurationFactory.readOnScriptParameterFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage",
+                        getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_WITH_TOOL_AND_PARAMNAME).filename.getAt(0)) as OnScriptParameterFilenamePattern;
         mockedContext.getConfiguration().getFilenamePatterns().add(pattern);
 
         BaseFile obj = BaseFile.constructManual(syntheticTestFileClass, mockedContext, null, null, null, null, null, null);
         assert obj instanceof BaseFile;
         def toolEnt = new ToolEntry("testScript", "RoddyTests", "RoddyTestScript_ExecutionServiceTest.sh")
-        toolEnt.getOutputParameters(mockedContext.getConfiguration()).add(new ToolEntry.ToolFileParameter(syntheticTestFileClass, null, "BAM_INDEX_FILE", true))
+        toolEnt.getOutputParameters(mockedContext.getConfiguration()).add(new ToolEntry.ToolFileParameter(syntheticTestFileClass, null, "BAM_INDEX_FILE", new ToolEntry.ToolFileParameterCheckCondition(true)))
         obj.getExecutionContext().setCurrentExecutedTool( toolEnt)
 
         Method loadAvailableFilenamePatternsMethod = BaseFile.class.getDeclaredMethod("loadAVailableFilenamePatterns",BaseFile,ExecutionContext)
