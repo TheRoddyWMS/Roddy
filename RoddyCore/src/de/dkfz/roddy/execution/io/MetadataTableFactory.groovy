@@ -108,7 +108,7 @@ public final class MetadataTableFactory {
         }
     }
 
-    private static CSVFormat convertFormat(String format) {
+    public static CSVFormat convertFormat(String format) {
         if (format == null || format == "") format = "tsv";
         CSVFormat tableFormat
         switch (format.toLowerCase()) {
