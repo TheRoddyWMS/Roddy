@@ -899,7 +899,7 @@ public class ConfigurationFactory {
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    public ToolEntry.ToolFileGroupParameter parseFileGroup(NodeChild child, String toolID) {
+    static ToolEntry.ToolFileGroupParameter parseFileGroup(NodeChild child, String toolID) {
         String cls = child.@typeof.text();
         Class filegroupClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, FileGroup.class);
 

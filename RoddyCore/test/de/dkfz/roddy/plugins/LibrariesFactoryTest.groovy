@@ -8,6 +8,8 @@ package de.dkfz.roddy.plugins
 
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.knowledge.files.FileGroup
+import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.tools.RuntimeTools
 import groovy.transform.TypeCheckingMode
 import org.junit.AfterClass
@@ -227,6 +229,30 @@ public class LibrariesFactoryTest {
                 pluginQueueWODefaultLibs["DefaultPlugin"].prodVersion == "current";
     }
 
+    @Test
+    void testGetRoddyPackages() {
+        Package[] list = LibrariesFactory.getInstance().getRoddyPackages()
+        assert list
+        assert list.findAll { Package p -> p.name.startsWith(Roddy.package.name)} == list
+    }
+
+    @Test
+    public void testSearchForClass() {
+        Class _cls = LibrariesFactory.getInstance().searchForClass("GenericFileGroup")
+        assert _cls && _cls == GenericFileGroup
+    }
+
+    @Test
+    public void testLoadRealOrSyntheticClassRealClass() {
+        Class _cls = LibrariesFactory.getInstance().loadRealOrSyntheticClass("GenericFileGroup", "FileGroup");
+        assert _cls == GenericFileGroup
+    }
+
+    @Test
+    public void testLoadRealOrSyntheticClassSynthClass() {
+        Class _cls = LibrariesFactory.getInstance().loadRealOrSyntheticClass("ASyntheticFileGroup", "FileGroup");
+        assert _cls && _cls.name.endsWith("ASyntheticFileGroup")
+    }
 
     @Test
     public void testGenerateSyntheticFileClassWithParentClass() {

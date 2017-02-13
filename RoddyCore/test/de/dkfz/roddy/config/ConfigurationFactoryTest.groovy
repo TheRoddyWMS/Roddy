@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.config
 
+import de.dkfz.roddy.knowledge.files.GenericFile
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.LibrariesFactoryTest
@@ -110,31 +111,13 @@ public class ConfigurationFactoryTest {
         assert ConfigurationFactory.getInstance().getAvailableConfigurationsOfType(Configuration.ConfigurationType.OTHER).size() == 2;
     }
 
-    @Test
-    public void testParseFileGroupWithDefinedChildTypes() {
-        String xml =
-                """
-                    <output type="filegroup" typeof="de.dkfz.roddy.knowledge.files.GenericFileGroup">
-                        <output type="file" typeof="TestFile1" scriptparameter="FILENAME_1"/>
-                        <output type="file" typeof="TestFile2" scriptparameter="FILENAME_2"/>
-                    </output>
-                """
-        NodeChild nc = (NodeChild) new XmlSlurper().parseText(xml);
-        ToolEntry.ToolFileGroupParameter tparm = new ConfigurationFactory([]).parseFileGroup(nc, "testTool")
-        assert tparm != null;
-        assert tparm.groupClass == GenericFileGroup.class;
-        assert tparm.files[0].fileClass.name == "de.dkfz.roddy.synthetic.files.TestFile1"
-        assert tparm.files[1].fileClass.name == "de.dkfz.roddy.synthetic.files.TestFile2"
+    private NodeChild asNodeChild(String text) {
+        return (NodeChild) new XmlSlurper().parseText(text);
     }
 
     @Test
-    public void testParseFileGroupWithDefinedClass() {
-        String xml = """<output type="filegroup" typeof="de.dkfz.roddy.knowledge.files.GenericFileGroup" fileclass="TestFile" />"""
-        NodeChild nc = (NodeChild) new XmlSlurper().parseText(xml);
-        ToolEntry.ToolFileGroupParameter tparm = new ConfigurationFactory([]).parseFileGroup(nc, "testTool")
-        assert tparm.isGeneric()
-        assert tparm.getGenericClassString() == "de.dkfz.roddy.knowledge.files.GenericFileGroup<de.dkfz.roddy.synthetic.files.TestFile>"
-        assert tparm.passOptions == ToolEntry.ToolFileGroupParameter.PassOptions.parameters;
+    void testAsNodeChild() {
+        assert asNodeChild("<atag></atag>") instanceof NodeChild
     }
 
     @Test
@@ -439,6 +422,58 @@ public class ConfigurationFactoryTest {
         assert fpattern.filenamePatternDependency == FilenamePatternDependency.onScriptParameter;
         assert fpattern.pattern == "/tmp/onScript"
         assert fpattern.cls.name.endsWith("TestOnScriptParameter");
+    }
+
+    @Test
+    public void testParseFileGroupWithDefinedChildTypes() {
+        String xml =
+                """
+                    <output type="filegroup" typeof="de.dkfz.roddy.knowledge.files.GenericFileGroup">
+                        <output type="file" typeof="TestFile1" scriptparameter="FILENAME_1"/>
+                        <output type="file" typeof="TestFile2" scriptparameter="FILENAME_2"/>
+                    </output>
+                """
+        NodeChild nc = (NodeChild) new XmlSlurper().parseText(xml);
+        ToolEntry.ToolFileGroupParameter tparm = new ConfigurationFactory([]).parseFileGroup(nc, "testTool")
+        assert tparm != null;
+        assert tparm.groupClass == GenericFileGroup.class;
+        assert tparm.files[0].fileClass.name == "de.dkfz.roddy.synthetic.files.TestFile1"
+        assert tparm.files[1].fileClass.name == "de.dkfz.roddy.synthetic.files.TestFile2"
+    }
+
+    @Test
+    public void testParseFileGroupWithDefinedClass() {
+        String xml = """<output type="filegroup" typeof="de.dkfz.roddy.knowledge.files.GenericFileGroup" fileclass="TestFile" />"""
+        NodeChild nc = (NodeChild) new XmlSlurper().parseText(xml);
+        ToolEntry.ToolFileGroupParameter tparm = new ConfigurationFactory([]).parseFileGroup(nc, "testTool")
+        assert tparm.isGeneric()
+        assert tparm.getGenericClassString() == "de.dkfz.roddy.knowledge.files.GenericFileGroup<de.dkfz.roddy.synthetic.files.TestFile>"
+        assert tparm.passOptions == ToolEntry.ToolFileGroupParameter.PassOptions.parameters;
+    }
+
+    @Test
+    void testParseFileGroupForInputFileGroupPassasParameters() {
+        NodeChild nc = asNodeChild("<input type='filegroup' typeof='GenericFileGroup' fileclass='ASyntheticTestClass' passas='parameters' />")
+        ToolEntry.ToolFileGroupParameter res = ConfigurationFactory.parseFileGroup(nc, "EMPTY");
+        assert res
+        assert res.groupClass == GenericFileGroup.class
+        assert res.genericFileClass.name.endsWith("ASyntheticClass")
+        assert res.passOptions == ToolEntry.ToolFileGroupParameter.PassOptions.parameters
+    }
+
+    @Test
+    void testParseFileGroupForOutputFileGroupPassasParameters() {
+        NodeChild nc = asNodeChild("<output type='filegroup' typeof='de.dkfz.roddy.knowledge.files.GenericFileGroup' fileclass='ASyntheticClass' passas='parameters' />")
+        ToolEntry.ToolFileGroupParameter res = ConfigurationFactory.parseFileGroup(nc, "EMPTY");
+        assert res
+        assert res.groupClass == GenericFileGroup.class
+        assert res.genericFileClass.name.endsWith("ASyntheticClass")
+        assert res.passOptions == ToolEntry.ToolFileGroupParameter.PassOptions.parameters
+    }
+
+    @Test
+    void testParseFileGroupForOutputFileGroupPassasParametersWithIndexForFilenames() {
+        assert false
     }
 }
 

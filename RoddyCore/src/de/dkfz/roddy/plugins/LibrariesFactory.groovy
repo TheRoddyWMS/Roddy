@@ -19,6 +19,7 @@ import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.core.Initializable
 import groovy.transform.TypeCheckingMode
 
+import java.lang.reflect.Method
 import java.util.regex.Pattern
 
 /**
@@ -110,15 +111,62 @@ public class LibrariesFactory extends Initializable {
 
     private Map<PluginInfo, List<String>> classListCacheByPlugin = [:];
 
-    public Class searchForClass(String name) {
+    private Package[] _cachedRoddyPackages = null;
+
+    Package[] getRoddyPackages() {
+        if (!_cachedRoddyPackages) {
+            def gcl = getGroovyClassLoader()
+            Method getPackages //= gcl.class.getDeclaredMethod("getPackages")
+            for (Class clc = gcl.class; clc != null; clc = clc.superclass) {
+                def foundMethod = clc.getDeclaredMethods().find { Method m -> m.name == "getPackages" }
+                if (!foundMethod)
+                    continue;
+                getPackages = foundMethod;
+                break;
+            }
+            if (!getPackages) throw new RuntimeException("The classloader hierarchy does not contain a valid classloader with the getPackages method")
+
+            // Make method accessible
+            getPackages.setAccessible(true)
+            Package[] packageList = getPackages.invoke(gcl) as Package[]
+            // Invoke it and get list of all gcl loaded packages
+            Package[] roddyPackages = packageList.findAll { Package p -> p.name.startsWith(Roddy.package.name) }
+            // Find all Roddy packages
+            _cachedRoddyPackages = roddyPackages
+            return roddyPackages
+        }
+        return _cachedRoddyPackages
+    }
+
+    Class searchForClass(String name) {
+        def groovyClassLoader = getGroovyClassLoader()
         if (name.contains(".")) {
-            return getGroovyClassLoader().loadClass(name);
+            return groovyClassLoader.loadClass(name);
         } else {
-            //Search synthetic classes first.
+            // Search synthetic classes first.
             if (getSynthetic().map.containsKey(name))
                 return getSynthetic().map[name];
 
-            // SEVERE TODO This is a very quick hack and heavily depends on the existence of jar on the system!
+            // Search core classes second. Find packages of Roddy first. Search for the class in every! package.
+            // This is some bad reflection, but I won't get the package information without it!
+            Class foundCoreClass = null;
+            for (Package p in getRoddyPackages()) {
+                String className = "${p.name}.${name}"
+                try {
+                    Class _test = groovyClassLoader.loadClass(className)
+                    if (_test)
+                        foundCoreClass = _test
+                } catch (ClassNotFoundException ex) {
+                    // Just catch and ignore, we will fall back to the plugin strategy afterwards! Or search in the next package
+                }
+            }
+
+            // We found it in core, so return it.
+            if (foundCoreClass)
+                return foundCoreClass
+
+            // TODO This is a very quick hack and heavily depends on the existence of jar on the system!
+            // Java normally ships jar with it, so it might not be the SEVERE / SUPERBAD bad hack.
             List<String> listOfClasses = []
             synchronized (loadedPlugins) {
                 loadedPlugins.each {
@@ -147,7 +195,7 @@ public class LibrariesFactory extends Initializable {
                 return null;
             }
             if (listOfClasses.size() == 1) {
-                return getGroovyClassLoader().loadClass(listOfClasses[0]);
+                return groovyClassLoader.loadClass(listOfClasses[0]);
             }
             logger.severe("No class found for ${name}")
             return null;
@@ -169,7 +217,8 @@ public class LibrariesFactory extends Initializable {
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    public static Class generateSyntheticFileClassWithParentClass(String syntheticClassName, String constructorClassName, GroovyClassLoader classLoader = null) {
+    public
+    static Class generateSyntheticFileClassWithParentClass(String syntheticClassName, String constructorClassName, GroovyClassLoader classLoader = null) {
         String syntheticFileClass =
                 """
                 package $SYNTHETIC_PACKAGE
@@ -233,10 +282,10 @@ public class LibrariesFactory extends Initializable {
         boolean warningUnzippedDirectoriesMissing = false;
 
         for (File pBaseDirectory : pluginDirectories) {
-	    logger.postSometimesInfo("Parsing plugins folder: ${pBaseDirectory}");
+            logger.postSometimesInfo("Parsing plugins folder: ${pBaseDirectory}");
             File[] directoryList = pBaseDirectory.listFiles().sort() as File[];
             for (File pEntry in directoryList) {
-	        logger.postRareInfo("  Parsing plugin folder: ${pEntry}");
+                logger.postRareInfo("  Parsing plugin folder: ${pEntry}");
                 String dirName = pEntry.getName();
                 boolean isZip = dirName.endsWith(".zip");
                 boolean unzippedDirectoryExists = false;
@@ -247,7 +296,8 @@ public class LibrariesFactory extends Initializable {
                     //set warn unzipped dir missing.
                 }
 
-                String[] splitName = dirName.split(StringConstants.SPLIT_UNDERSCORE); //First split for .zip then for the version
+                String[] splitName = dirName.split(StringConstants.SPLIT_UNDERSCORE);
+                //First split for .zip then for the version
                 String pluginName = splitName[0];
                 if ((!pEntry.isDirectory() && !isZip) || isZip || !pluginName || blacklist.contains(pluginName))
                     continue;
@@ -263,7 +313,8 @@ public class LibrariesFactory extends Initializable {
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private static List<Tuple2<File, String[]>> checkValidPluginNames (List<Tuple2<File, String[]>> collectedPluginDirectories) {
+    private
+    static List<Tuple2<File, String[]>> checkValidPluginNames(List<Tuple2<File, String[]>> collectedPluginDirectories) {
         List<Tuple2<File, String[]>> collectedTemporary = [];
         collectedPluginDirectories.each { tuple ->
             String rev = (tuple.x.name.split("[-]") as List)[1]
@@ -282,10 +333,11 @@ public class LibrariesFactory extends Initializable {
      *  if we search for revisions and extensions.
      */
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private static List<Tuple2<File, String[]>> sortPluginDirectories(List<Tuple2<File, String[]>> collectedPluginDirectories) {
+    private
+    static List<Tuple2<File, String[]>> sortPluginDirectories(List<Tuple2<File, String[]>> collectedPluginDirectories) {
         collectedPluginDirectories = collectedPluginDirectories.sort {
             Tuple2<File, String[]> left, Tuple2<File, String[]> right ->
-				logger.postRareInfo("Call to plugin directory sort for ${left.x} vs ${right.x}");
+                logger.postRareInfo("Call to plugin directory sort for ${left.x} vs ${right.x}");
                 List<String> splitLeft = left.x.name.split("[_:.-]") as List;
                 List<String> splitRight = right.x.name.split("[_:.-]") as List;
                 Tuple5<String, Integer, Integer, Integer, Integer> tLeft = new Tuple5<>(
@@ -332,9 +384,10 @@ public class LibrariesFactory extends Initializable {
 
         Map<String, Map<String, PluginInfo>> _mapOfPlugins = [:];
         for (Tuple2<File, String[]> _entry : collectedPluginDirectories) {
-			logger.postRareInfo("Processing plugin entry: ${_entry.x}")
+            logger.postRareInfo("Processing plugin entry: ${_entry.x}")
             File pEntry = _entry.x;
-            String[] splitName = _entry.y;//pEntry.getName().split(StringConstants.SPLIT_UNDERSCORE); //First split for .zip then for the version
+            String[] splitName = _entry.y;
+//pEntry.getName().split(StringConstants.SPLIT_UNDERSCORE); //First split for .zip then for the version
 
             String pluginName = splitName[0];
             String[] pluginVersionInfo = splitName.length > 1 ? splitName[1].split(StringConstants.SPLIT_MINUS) : [PLUGIN_VERSION_CURRENT] as String[];
@@ -352,7 +405,8 @@ public class LibrariesFactory extends Initializable {
             File prodEntry = null;
             File zipFile = null;
 
-            if (pEntry.getName().endsWith(".zip")) { // Zip files are handled differently and cannot be checked for contents!
+            if (pEntry.getName().endsWith(".zip")) {
+                // Zip files are handled differently and cannot be checked for contents!
                 zipFile = pEntry;
                 if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.UnzipZippedPlugins)) {
                     if (!new File(zipFile.getAbsolutePath()[0..-5]).exists()) {
@@ -380,7 +434,8 @@ public class LibrariesFactory extends Initializable {
                 develEntry = pEntry;
             }
 
-            if (!prodEntry && !develEntry) { //Now we might have a plugin without a jar file. This is allowed to happen since 2.2.87
+            if (!prodEntry && !develEntry) {
+                //Now we might have a plugin without a jar file. This is allowed to happen since 2.2.87
                 prodEntry = pEntry;
             }
 
@@ -436,7 +491,7 @@ public class LibrariesFactory extends Initializable {
             //There are now some  as String conversions which are just there for the Idea code view... They'll be shown as faulty otherwise.
             if (version != PLUGIN_VERSION_CURRENT && !(version as String).contains("-")) version += "-0";
 
-            if(!mapOfPlugins.checkExistence(id as String, version as String)) {
+            if (!mapOfPlugins.checkExistence(id as String, version as String)) {
                 logger.severe("The plugin ${id}:${version} could not be found, are the plugin paths properly set?");
                 return null;
             }
