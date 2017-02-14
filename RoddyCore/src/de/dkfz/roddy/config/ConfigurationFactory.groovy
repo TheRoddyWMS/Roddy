@@ -836,7 +836,7 @@ public class ConfigurationFactory {
      * @return
      */
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private ToolEntry.ToolParameter parseToolParameter(String toolID, NodeChild child) {
+    static ToolEntry.ToolParameter parseToolParameter(String toolID, NodeChild child) {
         String type = child.@type.text();
         if (type == "file") { //Load a file
             return parseFile(child, toolID)
@@ -859,7 +859,7 @@ public class ConfigurationFactory {
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private ToolEntry.ToolFileParameter parseFile(NodeChild child, String toolID) {
+    static ToolEntry.ToolFileParameter parseFile(NodeChild child, String toolID) {
         String cls = child.@typeof.text();
         Class _cls = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, BaseFile.class)
 
@@ -886,7 +886,7 @@ public class ConfigurationFactory {
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private ToolEntry.ToolTupleParameter parseTuple(NodeChild child, String toolID) {
+    static ToolEntry.ToolTupleParameter parseTuple(NodeChild child, String toolID) {
         int tupleSize = child.children().size();
         if (!FileObjectTupleFactory.isValidSize(tupleSize)) {
             logger.severe("Tuple is of wrong size for tool ${toolID}.")

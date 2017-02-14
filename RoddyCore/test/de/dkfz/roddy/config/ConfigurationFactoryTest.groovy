@@ -433,7 +433,7 @@ public class ConfigurationFactoryTest {
                         <output type="file" typeof="TestFile2" scriptparameter="FILENAME_2"/>
                     </output>
                 """
-        NodeChild nc = (NodeChild) new XmlSlurper().parseText(xml);
+        NodeChild nc = asNodeChild(xml)
         ToolEntry.ToolFileGroupParameter tparm = new ConfigurationFactory([]).parseFileGroup(nc, "testTool")
         assert tparm != null;
         assert tparm.groupClass == GenericFileGroup.class;
@@ -457,7 +457,7 @@ public class ConfigurationFactoryTest {
         ToolEntry.ToolFileGroupParameter res = ConfigurationFactory.parseFileGroup(nc, "EMPTY");
         assert res
         assert res.groupClass == GenericFileGroup.class
-        assert res.genericFileClass.name.endsWith("ASyntheticClass")
+        assert res.genericFileClass.name.endsWith("ASyntheticTestClass")
         assert res.passOptions == ToolEntry.ToolFileGroupParameter.PassOptions.parameters
     }
 

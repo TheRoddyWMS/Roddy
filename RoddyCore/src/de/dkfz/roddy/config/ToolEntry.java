@@ -137,7 +137,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         public final Method onFailMethod;
         public final Method checkMethod;
 
-        private ToolConstraint(Method onFailMethod, Method checkMethod) {
+        public ToolConstraint(Method onFailMethod, Method checkMethod) {
             this.onFailMethod = onFailMethod;
             this.checkMethod = checkMethod;
         }
