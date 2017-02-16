@@ -1,11 +1,15 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.knowledge.methods
 
+import de.dkfz.roddy.config.ToolFileGroupParameter
+import de.dkfz.roddy.config.ToolFileParameter
+import de.dkfz.roddy.config.ToolFileParameterCheckCondition
+import de.dkfz.roddy.config.ToolTupleParameter
 import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.config.Configuration
@@ -49,9 +53,27 @@ class GenericMethod {
      * @param additionalInput Any additional input to the job. The input must fit the tool i/o specs in your xml file.
      * @return
      */
-    public static <F extends FileObject> F callGenericTool(String toolName, BaseFile input, Object... additionalInput) {
-        F result = callGenericToolOrToolArray(toolName, null, input, additionalInput);
+    static <F extends FileObject> F callGenericTool(String toolName, BaseFile input, Object... additionalInput) {
+        F result = new GenericMethod(toolName, null, input, null, additionalInput)._callGenericToolOrToolArray();
         return result;
+    }
+
+    /**
+     * If you need a file group output and the files in the group need an index, then this is the right method to call!
+     * @return
+     */
+    static <F extends FileGroup> F callGenericToolWithFileGroupOutput(String toolName, BaseFile input, List<String> indices, Object... additionalInput) {
+        F result = new GenericMethod(toolName, null, input, indices, additionalInput)._callGenericToolOrToolArray() as F
+        return result
+    }
+
+    /**
+     * If you need a file group output and the files in the group need an index, then this is the right method to call! This one works with number for the files from 0 .. n -1
+     * @return
+     */
+    static <F extends FileGroup> F callGenericToolWithFileGroupOutput(String toolName, BaseFile input, int numericCount, Object... additionalInput) {
+        F result = new GenericMethod(toolName, null, input, numericCount, additionalInput)._callGenericToolOrToolArray() as F
+        return result
     }
 
     /**
@@ -66,7 +88,7 @@ class GenericMethod {
      * @return
      */
     public static <F extends FileObject> F callGenericToolOrToolArray(String toolName, List<String> arrayIndices, BaseFile input, Object... additionalInput) {
-        new GenericMethod(toolName, arrayIndices, input, additionalInput)._callGenericToolOrToolArray();
+        new GenericMethod(toolName, arrayIndices, input, null, additionalInput)._callGenericToolOrToolArray();
     }
 
     /**
@@ -93,6 +115,11 @@ class GenericMethod {
      * If this is an array job, this variable contains the arrays indices
      */
     private final List<String> arrayIndices
+
+    /**
+     * This field is only set if you need index values for output file group objects (specifically said: String indices!)
+     */
+    private final List<String> outputFileGroupIndices
 
     /**
      * The primary input object. It must not be null! The context object is taken from this input object.
@@ -129,7 +156,14 @@ class GenericMethod {
      */
     private final List<FileObject> allCreatedObjects = [];
 
-    private GenericMethod(String toolName, List<String> arrayIndices, FileObject inputObject, Object... additionalInput) {
+    GenericMethod(String toolName, List<String> arrayIndices, FileObject inputObject, int numericCount, Object... additionalInput) {
+        this(toolName, arrayIndices, inputObject, (0..numericCount - 1) as List<String>, additionalInput)
+        if (numericCount <= 0)
+            throw new RuntimeException("It is not allowed to call GenericMethod with a negative count for a FileGroup output object.")
+    }
+
+    GenericMethod(String toolName, List<String> arrayIndices, FileObject inputObject, List<String> outputFileGroupIndices, Object... additionalInput) {
+        this.outputFileGroupIndices = outputFileGroupIndices
         this.additionalInput = additionalInput
         this.inputObject = inputObject
         this.allInputValues << inputObject;
@@ -148,7 +182,7 @@ class GenericMethod {
         this.calledTool = configuration.getTools().getValue(toolName);
     }
 
-    private <F extends FileObject> F _callGenericToolOrToolArray() {
+    public <F extends FileObject> F _callGenericToolOrToolArray() {
 
         context.setCurrentExecutedTool(calledTool);
 
@@ -221,8 +255,8 @@ class GenericMethod {
 
         for (int i = 0; i < calledTool.getInputParameters(context).size(); i++) {
             ToolEntry.ToolParameter toolParameter = calledTool.getInputParameters(context)[i];
-            if (toolParameter instanceof ToolEntry.ToolFileParameter) {
-                ToolEntry.ToolFileParameter _tp = (ToolEntry.ToolFileParameter) toolParameter;
+            if (toolParameter instanceof ToolFileParameter) {
+                ToolFileParameter _tp = (ToolFileParameter) toolParameter;
                 //TODO Check if input and output parameters match and also check for array indices and item count. Throw a proper error message.
                 if (!allInputValues[i].class == _tp.fileClass)
                     logger.severe("Class mismatch for " + allInputValues[i] + " should be of class " + _tp.fileClass);
@@ -233,14 +267,14 @@ class GenericMethod {
                     ToolEntry.ToolConstraint constraint ->
                         constraint.apply(firstInputFile);
                 }
-            } else if (toolParameter instanceof ToolEntry.ToolTupleParameter) {
-                ToolEntry.ToolTupleParameter _tp = (ToolEntry.ToolTupleParameter) toolParameter;
+            } else if (toolParameter instanceof ToolTupleParameter) {
+                ToolTupleParameter _tp = (ToolTupleParameter) toolParameter;
                 logger.severe("Tuples must not be used as an input parameter for tool ${toolName}.l");
-            } else if (toolParameter instanceof ToolEntry.ToolFileGroupParameter) {
-                ToolEntry.ToolFileGroupParameter _tp = toolParameter as ToolEntry.ToolFileGroupParameter;
+            } else if (toolParameter instanceof ToolFileGroupParameter) {
+                ToolFileGroupParameter _tp = toolParameter as ToolFileGroupParameter;
                 if (!allInputValues[i].class == _tp.groupClass)
                     logger.severe("Class mismatch for ${allInputValues[i]} should be of class ${_tp.groupClass}");
-                if (_tp.passOptions == ToolEntry.ToolFileGroupParameter.PassOptions.parameters) {
+                if (_tp.passOptions == ToolFileGroupParameter.PassOptions.parameters) {
                     int cnt = 0;
                     for (BaseFile bf in (List<BaseFile>) ((FileGroup) allInputValues[i]).getFilesInGroup()) {
                         parameters[_tp.scriptParameterName + "_" + cnt] = bf;
@@ -257,8 +291,8 @@ class GenericMethod {
     private void applyParameterConstraints() {
         for (int i = 0; i < calledTool.getOutputParameters(context.getConfiguration()).size(); i++) {
             ToolEntry.ToolParameter toolParameter = calledTool.getOutputParameters(context.getConfiguration())[i];
-            if (toolParameter instanceof ToolEntry.ToolFileParameter) {
-                ToolEntry.ToolFileParameter _tp = (ToolEntry.ToolFileParameter) toolParameter;
+            if (toolParameter instanceof ToolFileParameter) {
+                ToolFileParameter _tp = (ToolFileParameter) toolParameter;
                 for (ToolEntry.ToolConstraint constraint in _tp.constraints) {
                     constraint.apply(firstInputFile);
                 }
@@ -271,14 +305,14 @@ class GenericMethod {
         def configuration = firstInputFile.getExecutionContext().getConfiguration()
         if (calledTool.getOutputParameters(configuration).size() == 1) {
             ToolEntry.ToolParameter tparm = calledTool.getOutputParameters(configuration)[0];
-            if (tparm instanceof ToolEntry.ToolFileParameter) {
-                outputObject = createOutputFile(tparm as ToolEntry.ToolFileParameter) as F
+            if (tparm instanceof ToolFileParameter) {
+                outputObject = createOutputFile(tparm as ToolFileParameter) as F
 
-            } else if (tparm instanceof ToolEntry.ToolTupleParameter) {
-                outputObject = createOutputTuple(tparm as ToolEntry.ToolTupleParameter) as F
+            } else if (tparm instanceof ToolTupleParameter) {
+                outputObject = createOutputTuple(tparm as ToolTupleParameter) as F
 
-            } else if (tparm instanceof ToolEntry.ToolFileGroupParameter) {
-                outputObject = createOutputFileGroup(tparm as ToolEntry.ToolFileGroupParameter) as F
+            } else if (tparm instanceof ToolFileGroupParameter) {
+                outputObject = createOutputFileGroup(tparm as ToolFileGroupParameter) as F
             }
         }
 
@@ -295,10 +329,10 @@ class GenericMethod {
         return outputObject;
     }
 
-    private FileObject createOutputFile(ToolEntry.ToolFileParameter tparm) {
-        ToolEntry.ToolFileParameter fileParameter = tparm;
+    private FileObject createOutputFile(ToolFileParameter tparm) {
+        ToolFileParameter fileParameter = tparm;
         BaseFile bf = convertToolFileParameterToBaseFile(fileParameter)
-        for (ToolEntry.ToolFileParameter childFileParameter in fileParameter.getChildFiles()) {
+        for (ToolFileParameter childFileParameter in fileParameter.getChildFiles()) {
             try {
                 if (childFileParameter.parentVariable == null) {
                     continue;
@@ -321,7 +355,7 @@ class GenericMethod {
                     }
                     continue;
                 }
-                BaseFile childFile = convertToolFileParameterToBaseFile(childFileParameter, bf, [bf]);
+                BaseFile childFile = convertToolFileParameterToBaseFile(childFileParameter, null, bf, [bf]);
                 allCreatedObjects << childFile;
                 if (_field)
                     _field.set(bf, childFile);
@@ -334,10 +368,10 @@ class GenericMethod {
         return fileParameter.fileClass.cast(bf) as FileObject;
     }
 
-    private FileObject createOutputTuple(ToolEntry.ToolTupleParameter tfg) {
+    FileObject createOutputTuple(ToolTupleParameter tfg) {
         //TODO Auto recognize tuples?
         List<FileObject> filesInTuple = [];
-        for (ToolEntry.ToolFileParameter fileParameter in tfg.files) {
+        for (ToolFileParameter fileParameter in tfg.files) {
             BaseFile bf = convertToolFileParameterToBaseFile(fileParameter);
             filesInTuple << bf;
             allCreatedObjects << bf;
@@ -345,13 +379,30 @@ class GenericMethod {
         return FileObjectTupleFactory.createTuple(filesInTuple);
     }
 
-    private FileObject createOutputFileGroup(ToolEntry.ToolFileGroupParameter tfg) {
+    FileObject createOutputFileGroup(ToolFileGroupParameter tfg) {
         List<BaseFile> filesInGroup = [];
 
-        for (ToolEntry.ToolFileParameter fileParameter in tfg.files) {
-            BaseFile bf = convertToolFileParameterToBaseFile(fileParameter)
-            filesInGroup << bf;
-            allCreatedObjects << bf;
+        if (tfg.files) {
+            // Actually this is more like a tuple.
+            /**
+             * This can only be the case if files is set. Otherwise we need a different way to identify files. E.g. based on index values... How do we set them?
+             */
+            for (ToolFileParameter fileParameter in tfg.files) {
+                BaseFile bf = convertToolFileParameterToBaseFile(fileParameter)
+                filesInGroup << bf;
+                allCreatedObjects << bf;
+            }
+        } else {
+            // Indices need to be set! Otherwise throw an Exception
+            if (!outputFileGroupIndices) {
+                throw new RuntimeException("A tool which outputs a filegroup with index values needs to be called properly! Pass index values in the call.")
+            }
+            ToolFileParameter autoToolFileParameter = new ToolFileParameter(tfg.genericFileClass, [], "AFILEGROUP", new ToolFileParameterCheckCondition(true))
+            for (Object index in outputFileGroupIndices) {
+                BaseFile bf = convertToolFileParameterToBaseFile(autoToolFileParameter, index.toString())
+                filesInGroup << bf
+                allCreatedObjects << bf
+            }
         }
 
         Constructor cGroup = tfg.groupClass.getConstructor(List.class);
@@ -400,11 +451,23 @@ class GenericMethod {
         return outputObject;
     }
 
-    private BaseFile convertToolFileParameterToBaseFile(ToolEntry.ToolFileParameter fileParameter) {
-        convertToolFileParameterToBaseFile(fileParameter, firstInputFile, allInputFiles)
+    BaseFile convertToolFileParameterToBaseFile(ToolFileParameter fileParameter) {
+        convertToolFileParameterToBaseFile(fileParameter, null, firstInputFile, allInputFiles)
     }
 
-    private BaseFile convertToolFileParameterToBaseFile(ToolEntry.ToolFileParameter fileParameter, BaseFile firstInputFile, List<BaseFile> allInputFiles) {
+    BaseFile convertToolFileParameterToBaseFile(ToolFileParameter fileParameter, String fileGroupIndexValue) {
+        convertToolFileParameterToBaseFile(fileParameter, fileGroupIndexValue, firstInputFile, allInputFiles)
+    }
+
+    /**
+     *
+     * @param fileParameter
+     * @param fileGroupIndexValue May be null or empty! Is set, when a filegroup and its children are created. Holds the index value within the filegroup (numeric or a string)
+     * @param firstInputFile
+     * @param allInputFiles
+     * @return
+     */
+    BaseFile convertToolFileParameterToBaseFile(ToolFileParameter fileParameter, String fileGroupIndexValue, BaseFile firstInputFile, List<BaseFile> allInputFiles) {
         Constructor c = searchBaseFileConstructorForConstructionHelperObject(fileParameter.fileClass);
         BaseFile bf;
         try {
@@ -418,7 +481,7 @@ class GenericMethod {
                 context.addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_NOCONSTRUCTOR.expand("File object of type ${fileParameter?.fileClass} with input ${firstInputFile?.class} needs a constructor which takes a ConstuctionHelper object."));
                 throw new RuntimeException("Could not find valid constructor for type  ${fileParameter?.fileClass} with input ${firstInputFile?.class}.");
             } else {
-                BaseFile.ConstructionHelperForGenericCreation helper = new BaseFile.ConstructionHelperForGenericCreation(firstInputFile, allInputFiles as List<FileObject>, calledTool, toolName, fileParameter.scriptParameterName, fileParameter.filenamePatternSelectionTag, firstInputFile.fileStage, null);
+                BaseFile.ConstructionHelperForGenericCreation helper = new BaseFile.ConstructionHelperForGenericCreation(firstInputFile, allInputFiles as List<FileObject>, calledTool, toolName, fileParameter.scriptParameterName, fileParameter.filenamePatternSelectionTag, fileGroupIndexValue, firstInputFile.fileStage, null);
                 bf = c.newInstance(helper);
             }
         } catch (Exception ex) {

@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2017 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
 package de.dkfz.roddy.knowledge.files
 
 import de.dkfz.roddy.config.Configuration
@@ -12,6 +18,8 @@ import de.dkfz.roddy.config.OnScriptParameterFilenamePattern
 import de.dkfz.roddy.config.OnToolFilenamePattern
 import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.config.ToolEntry
+import de.dkfz.roddy.config.ToolFileParameter
+import de.dkfz.roddy.config.ToolFileParameterCheckCondition
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import de.dkfz.roddy.execution.jobs.JobResult
@@ -67,7 +75,7 @@ public class BaseFileTest {
         syntheticTestFileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass("FileWithFileStage", BaseFile.class as Class<FileObject>);
 
         ToolEntry toolEntry = new ToolEntry("RoddyTests", "RoddyTests", "RoddyTestScript_ExecutionServiceTest.sh");
-        toolEntry.getOutputParameters(mockupConfig).add(new ToolEntry.ToolFileParameter(syntheticTestFileClass, null, "TEST", new ToolEntry.ToolFileParameterCheckCondition(true)))
+        toolEntry.getOutputParameters(mockupConfig).add(new ToolFileParameter(syntheticTestFileClass, null, "TEST", new ToolFileParameterCheckCondition(true)))
 
         mockupConfig.getTools().add(toolEntry);
         mockedContext = MockupExecutionContextBuilder.createSimpleContext(BaseFileTest, mockupConfig);
@@ -164,7 +172,7 @@ public class BaseFileTest {
         assert obj instanceof BaseFile;
 
         def toolent = new ToolEntry("testScript", "RoddyTests", "RoddyTestScript_ExecutionServiceTest.sh")
-        toolent.getOutputParameters(mockedContext.getConfiguration()).add(new ToolEntry.ToolFileParameter(syntheticTestFileClass, null, "BAM_INDEX_FILE", true))
+        toolent.getOutputParameters(mockedContext.getConfiguration()).add(new ToolFileParameter(syntheticTestFileClass, null, "BAM_INDEX_FILE", true))
         obj.getExecutionContext().setCurrentExecutedTool( toolent)
 
 
@@ -189,7 +197,7 @@ public class BaseFileTest {
         BaseFile obj = BaseFile.constructManual(syntheticTestFileClass, mockedContext, null, null, null, null, null, null);
         assert obj instanceof BaseFile;
         def toolEnt = new ToolEntry("testScript", "RoddyTests", "RoddyTestScript_ExecutionServiceTest.sh")
-        toolEnt.getOutputParameters(mockedContext.getConfiguration()).add(new ToolEntry.ToolFileParameter(syntheticTestFileClass, null, "BAM_INDEX_FILE", true))
+        toolEnt.getOutputParameters(mockedContext.getConfiguration()).add(new ToolFileParameter(syntheticTestFileClass, null, "BAM_INDEX_FILE", true))
         obj.getExecutionContext().setCurrentExecutedTool( toolEnt)
 
         Method loadAvailableFilenamePatternsMethod = BaseFile.class.getDeclaredMethod("loadAVailableFilenamePatterns",BaseFile,ExecutionContext)

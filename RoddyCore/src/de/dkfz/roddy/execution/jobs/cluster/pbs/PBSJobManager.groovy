@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -216,7 +216,7 @@ public class PBSJobManager extends ClusterJobManager<PBSCommand> {
     }
 
     @Override
-    public ProcessingCommands convertResourceSet(Configuration configuration, ToolEntry.ResourceSet resourceSet) {
+    public ProcessingCommands convertResourceSet(Configuration configuration, ResourceSet resourceSet) {
         StringBuilder sb = new StringBuilder();
         if (resourceSet.isMemSet()) {
             String memo = resourceSet.getMem().toString(BufferUnit.M);

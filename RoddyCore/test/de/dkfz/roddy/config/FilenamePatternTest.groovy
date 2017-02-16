@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -59,7 +59,7 @@ public class FilenamePatternTest {
         testClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass("FilenamePatternTest_testFilenamePatternWithSelectionByToolID", BaseFile.class as Class<FileObject>);
 
         ToolEntry toolEntry = new ToolEntry("RoddyTests", "RoddyTests", "RoddyTestScript_ExecutionServiceTest.sh");
-        toolEntry.getOutputParameters(mockupConfig).add(new ToolEntry.ToolFileParameter(testClass, null, "TEST", new ToolEntry.ToolFileParameterCheckCondition(true)))
+        toolEntry.getOutputParameters(mockupConfig).add(new ToolFileParameter(testClass, null, "TEST", new ToolFileParameterCheckCondition(true)))
 
         mockupConfig.getTools().add(toolEntry);
     }
@@ -93,6 +93,16 @@ public class FilenamePatternTest {
     }
 
     @Test
+    void testFilenamePatternsForFileGroupWithNumericIndices() {
+
+    }
+
+    @Test
+    void testFilenamePatternsForFileGroupWithStringIndices() {
+
+    }
+
+    @Test
     void testComplexFilenamePattern() {
         assert false
     }
@@ -121,7 +131,7 @@ public class FilenamePatternTest {
             }
 
             @Override
-            ProcessingCommands convertResourceSet(Configuration configuration, ToolEntry.ResourceSet resourceSet) {
+            ProcessingCommands convertResourceSet(Configuration configuration, ResourceSet resourceSet) {
                 return null
             }
 

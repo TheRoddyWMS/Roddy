@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -520,7 +520,7 @@ public class RoddyCLIClient {
 
                 try {
                     ToolEntry tool = configuration.getTools().getValue(job.getToolID());
-                    ToolEntry.ResourceSet resourceSet = tool.getResourceSet(configuration);
+                    ResourceSet resourceSet = tool.getResourceSet(configuration);
                     ProcessingCommands convertResourceSet = JobManager.getInstance().convertResourceSet(configuration, resourceSet);
                     resources = convertResourceSet.toString();
 

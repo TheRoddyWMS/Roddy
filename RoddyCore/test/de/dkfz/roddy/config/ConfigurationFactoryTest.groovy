@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.config
 
-import de.dkfz.roddy.knowledge.files.GenericFile
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.LibrariesFactoryTest
@@ -124,10 +123,10 @@ public class ConfigurationFactoryTest {
     public void testParseFileGroupWithUndefinedClass() {
         String xml = """<output type="filegroup" typeof="GenericFileGroup2" fileclass="TestFile" />"""
         NodeChild nc = (NodeChild) new XmlSlurper().parseText(xml);
-        ToolEntry.ToolFileGroupParameter tparm = new ConfigurationFactory([]).parseFileGroup(nc, "testTool")
+        ToolFileGroupParameter tparm = new ConfigurationFactory([]).parseFileGroup(nc, "testTool")
         assert tparm.isGeneric()
         assert tparm.getGenericClassString() == "de.dkfz.roddy.synthetic.files.GenericFileGroup2<de.dkfz.roddy.synthetic.files.TestFile>"
-        assert tparm.passOptions == ToolEntry.ToolFileGroupParameter.PassOptions.parameters;
+        assert tparm.passOptions == ToolFileGroupParameter.PassOptions.parameters;
     }
 
     private NodeChild getValidToolResourceSetNodeChild() {
@@ -172,7 +171,7 @@ public class ConfigurationFactoryTest {
 
     @Test
     public void testReadInlineScript() {
-        def toolEntry = ConfigurationFactory.getInstance().readProcessingTool(getToolEntryWithInlineScript(),null)
+        def toolEntry = ConfigurationFactory.getInstance().readProcessingTool(getToolEntryWithInlineScript(), null)
         assert toolEntry.hasInlineScript()
         assert toolEntry.getInlineScript().equals("echo 'test'")
         assert toolEntry.getInlineScriptName().equals("testscript.sh")
@@ -183,10 +182,10 @@ public class ConfigurationFactoryTest {
         Method parseToolResourceSet = ConfigurationFactory.getDeclaredMethod("parseToolResourceSet", NodeChild, Configuration);
         parseToolResourceSet.setAccessible(true);
 
-        Map<ResourceSetSize, ToolEntry.ResourceSet> rsets = [:];
+        Map<ResourceSetSize, ResourceSet> rsets = [:];
 
         getNodeChildsOfValidResourceEntries().each { rset ->
-            ToolEntry.ResourceSet result = (ToolEntry.ResourceSet) parseToolResourceSet.invoke(null, rset, null);
+            ResourceSet result = (ResourceSet) parseToolResourceSet.invoke(null, rset, null);
             assert result;
             assert result.size; //Check if the size has a valid value.
 
@@ -226,12 +225,12 @@ public class ConfigurationFactoryTest {
     private static final String STR_VALID_ONMETHOD_PATTERN_WITH_METHODNAME = "<filename class='TestFileOnMethod' onMethod='getFilename' pattern='/tmp/onMethod'/>"
     private static final String STR_VALID_ONTOOL_PATTERN = "<filename class='TestFileOnTool' onTool='testScript' pattern='/tmp/onTool'/>"
     private static final String STR_VALID_FILESTAGE_PATTERN = "<filename class='FileWithFileStage' fileStage=\"GENERIC\" pattern='/tmp/filestage'/>"
-    private static final String STR_VALID_ONSCRIPTPARAMETER_WITH_TOOL_AND_PARAMNAME =  "<filename class='TestOnScriptParameter' onScriptParameter='testScript:BAM_INDEX_FILE' pattern='/tmp/onScript' />"
+    private static final String STR_VALID_ONSCRIPTPARAMETER_WITH_TOOL_AND_PARAMNAME = "<filename class='TestOnScriptParameter' onScriptParameter='testScript:BAM_INDEX_FILE' pattern='/tmp/onScript' />"
     private static final String STR_VALID_ONSCRIPTPARAMETER_ONLY_PARAMNAME = "<filename class='TestOnScriptParameter' onScriptParameter='BAM_INDEX_FILE2' pattern='/tmp/onScript' />"
     private static final String STR_VALID_ONSCRIPTPARAMETER_ONLY_COLON_AND_PARAMNAME = "<filename class='TestOnScriptParameter' onScriptParameter=':BAM_INDEX_FILE3' pattern='/tmp/onScript' />"
     private static final String STR_VALID_ONSCRIPTPARAMETER_WITH_ANY_AND_PARAMNAME = "<filename class='TestOnScriptParameter' onScriptParameter='[ANY]:BAM_INDEX_FILE4' pattern='/tmp/onScript' />"
     private static final String STR_VALID_ONSCRIPTPARAMETER_FAILED = "<filename class='TestOnScriptParameter' onScriptParameter='[AffY]:BAM_INDEX_FILE5' pattern='/tmp/onScript' />" // Error!!
-    private static final String STR_VALID_ONSCRIPTPARAMETER_WITHOUT_CLASS=  "<filename onScriptParameter='testScript:BAM_INDEX_FILE6' pattern='/tmp/onScript' />"
+    private static final String STR_VALID_ONSCRIPTPARAMETER_WITHOUT_CLASS = "<filename onScriptParameter='testScript:BAM_INDEX_FILE6' pattern='/tmp/onScript' />"
 
     private static NodeChild parseXML(String xml) {
         return (NodeChild) new XmlSlurper().parseText(xml);
@@ -280,7 +279,7 @@ public class ConfigurationFactoryTest {
     public void testLoadPatternClassWithNullAndSyntheticClass() {
         Tuple3<Class, Boolean, Integer> loadPatternClassResult = ConfigurationFactory.loadPatternClass((String) null, "ASyntheticTestClass", (Class) null);
         assert loadPatternClassResult != null;
-        assert ((Class)loadPatternClassResult.x).getName().endsWith("ASyntheticTestClass")
+        assert ((Class) loadPatternClassResult.x).getName().endsWith("ASyntheticTestClass")
     }
 
     private Map<String, FilenamePattern> readFilenamePatterns(NodeChild nodeChild) {
@@ -306,13 +305,13 @@ public class ConfigurationFactoryTest {
     @Test
     public void testReadFilenamePatternsForDerivedFromPatternType() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_DERIVEDFROM_PATTERN)
-        testReadFilenamePatternsForDerivedFromPatternType_base(xml,"TestFileWithParent" )
+        testReadFilenamePatternsForDerivedFromPatternType_base(xml, "TestFileWithParent")
     }
 
     @Test
     public void testReadFilenamePatternsForDerivedFromPatternType_WithArr() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_DERIVEDFROM_PATTERN_WITH_ARR)
-        DerivedFromFilenamePattern fpattern = testReadFilenamePatternsForDerivedFromPatternType_base(xml,"TestFileWithParentArr" )
+        DerivedFromFilenamePattern fpattern = testReadFilenamePatternsForDerivedFromPatternType_base(xml, "TestFileWithParentArr")
         assert fpattern.acceptsFileArrays == true
         assert fpattern.enforcedArraySize == 2
     }
@@ -373,9 +372,9 @@ public class ConfigurationFactoryTest {
     @Test
     public void testReadFilenamePatternForOnScriptParameterPatternType_Failed() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_FAILED)
-        try{
+        try {
             testReadFilenamePatternForOnScriptParameterPatternType_base(xml)
-        }catch(RuntimeException exp){
+        } catch (RuntimeException exp) {
             assert exp.message.equals("Illegal Argument '[..]': [AffY]")
         }
     }
@@ -384,9 +383,9 @@ public class ConfigurationFactoryTest {
     @Test
     public void testReadFilenamePatternForOnScriptParameterPatternType_WithoutClass() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_WITHOUT_CLASS)
-        try{
+        try {
             testReadFilenamePatternForOnScriptParameterPatternType_base(xml)
-        }catch(RuntimeException exp){
+        } catch (RuntimeException exp) {
             assert exp.message.startsWith("Missing 'class' attribute for onScriptParameter in:")
         }
     }
@@ -417,7 +416,7 @@ public class ConfigurationFactoryTest {
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private void testReadFilenamePatternForOnScriptParameterPatternType_base(NodeChild xml){
+    private void testReadFilenamePatternForOnScriptParameterPatternType_base(NodeChild xml) {
         OnScriptParameterFilenamePattern fpattern = ConfigurationFactory.readOnScriptParameterFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as OnScriptParameterFilenamePattern;
         assert fpattern.filenamePatternDependency == FilenamePatternDependency.onScriptParameter;
         assert fpattern.pattern == "/tmp/onScript"
@@ -434,7 +433,7 @@ public class ConfigurationFactoryTest {
                     </output>
                 """
         NodeChild nc = asNodeChild(xml)
-        ToolEntry.ToolFileGroupParameter tparm = new ConfigurationFactory([]).parseFileGroup(nc, "testTool")
+        ToolFileGroupParameter tparm = new ConfigurationFactory([]).parseFileGroup(nc, "testTool")
         assert tparm != null;
         assert tparm.groupClass == GenericFileGroup.class;
         assert tparm.files[0].fileClass.name == "de.dkfz.roddy.synthetic.files.TestFile1"
@@ -445,35 +444,43 @@ public class ConfigurationFactoryTest {
     public void testParseFileGroupWithDefinedClass() {
         String xml = """<output type="filegroup" typeof="de.dkfz.roddy.knowledge.files.GenericFileGroup" fileclass="TestFile" />"""
         NodeChild nc = (NodeChild) new XmlSlurper().parseText(xml);
-        ToolEntry.ToolFileGroupParameter tparm = new ConfigurationFactory([]).parseFileGroup(nc, "testTool")
+        ToolFileGroupParameter tparm = new ConfigurationFactory([]).parseFileGroup(nc, "testTool")
         assert tparm.isGeneric()
         assert tparm.getGenericClassString() == "de.dkfz.roddy.knowledge.files.GenericFileGroup<de.dkfz.roddy.synthetic.files.TestFile>"
-        assert tparm.passOptions == ToolEntry.ToolFileGroupParameter.PassOptions.parameters;
+        assert tparm.passOptions == ToolFileGroupParameter.PassOptions.parameters;
     }
 
     @Test
     void testParseFileGroupForInputFileGroupPassasParameters() {
         NodeChild nc = asNodeChild("<input type='filegroup' typeof='GenericFileGroup' fileclass='ASyntheticTestClass' passas='parameters' />")
-        ToolEntry.ToolFileGroupParameter res = ConfigurationFactory.parseFileGroup(nc, "EMPTY");
+        ToolFileGroupParameter res = ConfigurationFactory.parseFileGroup(nc, "EMPTY");
         assert res
         assert res.groupClass == GenericFileGroup.class
         assert res.genericFileClass.name.endsWith("ASyntheticTestClass")
-        assert res.passOptions == ToolEntry.ToolFileGroupParameter.PassOptions.parameters
+        assert res.passOptions == ToolFileGroupParameter.PassOptions.parameters
     }
 
     @Test
-    void testParseFileGroupForOutputFileGroupPassasParameters() {
+    void testParseFileGroupForOutputFileGroupPassasParametersAndDefaultFileIndex() {
         NodeChild nc = asNodeChild("<output type='filegroup' typeof='de.dkfz.roddy.knowledge.files.GenericFileGroup' fileclass='ASyntheticClass' passas='parameters' />")
-        ToolEntry.ToolFileGroupParameter res = ConfigurationFactory.parseFileGroup(nc, "EMPTY");
+        ToolFileGroupParameter res = ConfigurationFactory.parseFileGroup(nc, "EMPTY");
         assert res
         assert res.groupClass == GenericFileGroup.class
         assert res.genericFileClass.name.endsWith("ASyntheticClass")
-        assert res.passOptions == ToolEntry.ToolFileGroupParameter.PassOptions.parameters
+        assert res.passOptions == ToolFileGroupParameter.PassOptions.parameters
+        assert res.indexOptions == ToolFileGroupParameter.IndexOptions.numeric
     }
 
+
     @Test
-    void testParseFileGroupForOutputFileGroupPassasParametersWithIndexForFilenames() {
-        assert false
+    void testParseFileGroupForOutputFileGroupPassasParametersWithStringIndexForFilenames() {
+        NodeChild nc = asNodeChild("<output type='filegroup' typeof='de.dkfz.roddy.knowledge.files.GenericFileGroup' fileclass='ASyntheticClass' passas='parameters' indices='numericIndices' />")
+        ToolFileGroupParameter res = ConfigurationFactory.parseFileGroup(nc, "EMPTY");
+        assert res
+        assert res.groupClass == GenericFileGroup.class
+        assert res.genericFileClass.name.endsWith("ASyntheticClass")
+        assert res.passOptions == ToolFileGroupParameter.PassOptions.parameters
+        assert res.indexOptions == ToolFileGroupParameter.IndexOptions.strings
     }
 }
 

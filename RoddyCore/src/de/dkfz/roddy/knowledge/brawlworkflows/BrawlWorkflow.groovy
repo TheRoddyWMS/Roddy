@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -10,9 +10,11 @@ import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.AnalysisConfiguration
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ContextConfiguration
-import de.dkfz.roddy.config.ToolEntry;
+import de.dkfz.roddy.config.ToolEntry
+import de.dkfz.roddy.config.ToolFileGroupParameter
+import de.dkfz.roddy.config.ToolFileParameter
+import de.dkfz.roddy.config.ToolTupleParameter;
 import de.dkfz.roddy.core.*
-import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.knowledge.methods.GenericMethod
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -335,15 +337,15 @@ public class BrawlWorkflow extends Workflow {
         String classOfFileObject;
 
         if (outputParameters.size() == 1) {
-            if (outputParameters[0] instanceof ToolEntry.ToolFileParameter)
-                classOfFileObject = ((ToolEntry.ToolFileParameter) outputParameters[0]).fileClass.name;
-            if (outputParameters[0] instanceof ToolEntry.ToolFileGroupParameter) {
-                classOfFileObject = ((ToolEntry.ToolFileGroupParameter) outputParameters[0]).getGenericClassString()
+            if (outputParameters[0] instanceof ToolFileParameter)
+                classOfFileObject = ((ToolFileParameter) outputParameters[0]).fileClass.name;
+            if (outputParameters[0] instanceof ToolFileGroupParameter) {
+                classOfFileObject = ((ToolFileGroupParameter) outputParameters[0]).getGenericClassString()
             }
-            if (outputParameters[0] instanceof ToolEntry.ToolTupleParameter) {
+            if (outputParameters[0] instanceof ToolTupleParameter) {
 
-                ToolEntry.ToolTupleParameter tupleParameter = (ToolEntry.ToolTupleParameter) outputParameters[0]
-                String generics = tupleParameter.files.collect { ToolEntry.ToolFileParameter tfp -> return tfp.fileClass }.join(", ")
+                ToolTupleParameter tupleParameter = (ToolTupleParameter) outputParameters[0]
+                String generics = tupleParameter.files.collect { ToolFileParameter tfp -> return tfp.fileClass }.join(", ")
                 classOfFileObject = "de.dkfz.roddy.knowledge.files.Tuple" + tupleParameter.files.size() + "<$generics>";
             }
         }

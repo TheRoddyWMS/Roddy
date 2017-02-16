@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -8,7 +8,7 @@ package de.dkfz.roddy.plugins
 
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
-import de.dkfz.roddy.knowledge.files.FileGroup
+import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.tools.RuntimeTools
 import groovy.transform.TypeCheckingMode
@@ -259,6 +259,6 @@ public class LibrariesFactoryTest {
         Class _cls = LibrariesFactory.generateSyntheticFileClassWithParentClass("TestClass", "BaseFile", new GroovyClassLoader());
         assert _cls != null && _cls.name.equals(LibrariesFactory.SYNTHETIC_PACKAGE + ".TestClass");
         assert _cls.getDeclaredConstructors().size() == 1;
-        assert _cls.getDeclaredConstructors()[0].parameterTypes[0] == de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForBaseFiles
+        assert _cls.getDeclaredConstructors()[0].parameterTypes[0] == BaseFile.ConstructionHelperForBaseFiles
     }
 }

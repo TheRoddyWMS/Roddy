@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -17,8 +17,8 @@ import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration.ConfigurationType
-import de.dkfz.roddy.config.ToolEntry.ToolFileGroupParameter.PassOptions
-import de.dkfz.roddy.config.ToolEntry.ToolStringParameter.ParameterSetbyOptions
+import de.dkfz.roddy.config.ToolFileGroupParameter.PassOptions
+import de.dkfz.roddy.config.ToolStringParameter.ParameterSetbyOptions
 import de.dkfz.roddy.core.*
 
 //import de.dkfz.roddy.knowledge.files.*
@@ -442,7 +442,7 @@ public class ConfigurationFactory {
                     if (filenamePatterns.containsKey(fp.getID())) {
                         logger.severe("Duplicate filename pattern: " + (new groovy.xml.StreamingMarkupBuilder().bindNode(filename) as String));
                     }
-                        filenamePatterns.put(fp.getID(), fp);
+                    filenamePatterns.put(fp.getID(), fp);
                 } catch (Exception ex) {
                     logger.severe("${ex.message}: " + (new groovy.xml.StreamingMarkupBuilder().bindNode(filename) as String));
                 }
@@ -544,9 +544,9 @@ public class ConfigurationFactory {
         String[] splitResult = scriptParameter.trim().split(":")
         if (splitResult.size() == 1) {
             //any tool and param
-            toolName= null
+            toolName = null
             parameterName = splitResult.first()
-        } else if (splitResult.size() == 2){
+        } else if (splitResult.size() == 2) {
             toolName = splitResult[0]
             parameterName = splitResult[1]
 
@@ -625,7 +625,7 @@ public class ConfigurationFactory {
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    public ToolEntry readProcessingTool(NodeChild tool, Configuration config){
+    public ToolEntry readProcessingTool(NodeChild tool, Configuration config) {
         try {
             String toolID = tool.@name.text()
             String path = tool.@value.text()
@@ -638,13 +638,13 @@ public class ConfigurationFactory {
             if (noOfChildren > 0) {
                 List<ToolEntry.ToolParameter> inputParameters = new LinkedList<>();
                 List<ToolEntry.ToolParameter> outputParameters = new LinkedList<>();
-                List<ToolEntry.ResourceSet> resourceSets = new LinkedList<>();
+                List<ResourceSet> resourceSets = new LinkedList<>();
                 for (NodeChild child in tool.children()) {
                     String cName = child.name();
 
                     if (cName == "resourcesets") {
                         for (NodeChild rset in child.rset) {
-                            ToolEntry.ResourceSet tempSet = parseToolResourceSet(rset, config)
+                            ResourceSet tempSet = parseToolResourceSet(rset, config)
                             if (tempSet)
                                 resourceSets << tempSet;
                         }
@@ -653,8 +653,8 @@ public class ConfigurationFactory {
                     } else if (cName == "output") {
                         outputParameters << parseToolParameter(toolID, child);
                     } else if (cName == "script") {
-                        if (child.@value.text() != ""){
-                            currentEntry.setInlineScript(child.text().trim().replaceAll( '<!\\[CDATA\\[', "" ).replaceAll( ']]>', "" ))
+                        if (child.@value.text() != "") {
+                            currentEntry.setInlineScript(child.text().trim().replaceAll('<!\\[CDATA\\[', "").replaceAll(']]>', ""))
                             currentEntry.setInlineScriptName(child.@value.text())
                         }
 
@@ -669,8 +669,8 @@ public class ConfigurationFactory {
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private static ToolEntry.ResourceSet parseToolResourceSet(NodeChild rset, Configuration config) {
-        ToolEntry.ResourceSet tempSet = null;
+    private static ResourceSet parseToolResourceSet(NodeChild rset, Configuration config) {
+        ResourceSet tempSet = null;
         try {
             ResourceSetSize rsetSize = rset.@size.text();
             //Is it short defined or long defined?
@@ -690,7 +690,7 @@ public class ConfigurationFactory {
 
                 String rsetUsedQueue = extractAttributeText(rset, "queue", null);
                 String rsetUsedNodeFlag = extractAttributeText(rset, "nodeflag", null);
-                tempSet = new ToolEntry.ResourceSet(rsetSize, rsetUsedMemory, rsetUsedCores, rsetUsedNodes, rsetUsedWalltime, null, rsetUsedQueue, rsetUsedNodeFlag);
+                tempSet = new ResourceSet(rsetSize, rsetUsedMemory, rsetUsedCores, rsetUsedNodes, rsetUsedWalltime, null, rsetUsedQueue, rsetUsedNodeFlag);
             }
 //            else {
 //                String[] split = valueList.split(":");
@@ -847,11 +847,11 @@ public class ConfigurationFactory {
         } else if (type == "string") {
             ParameterSetbyOptions setby = Enum.valueOf(ParameterSetbyOptions.class, extractAttributeText(child, "setby", ParameterSetbyOptions.callingCode.name()))
             String pName = child.@scriptparameter.text();
-            ToolEntry.ToolStringParameter tsp = null;
+            ToolStringParameter tsp = null;
             if (setby == ParameterSetbyOptions.callingCode) {
-                tsp = new ToolEntry.ToolStringParameter(pName);
+                tsp = new ToolStringParameter(pName);
             } else {
-                tsp = new ToolEntry.ToolStringParameter(pName, extractAttributeText(child, "cValueID"));
+                tsp = new ToolStringParameter(pName, extractAttributeText(child, "cValueID"));
                 //TODO Validate if cValueID == null!
             }
             return tsp;
@@ -859,14 +859,14 @@ public class ConfigurationFactory {
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    static ToolEntry.ToolFileParameter parseFile(NodeChild child, String toolID) {
+    static ToolFileParameter parseFile(NodeChild child, String toolID) {
         String cls = child.@typeof.text();
         Class _cls = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, BaseFile.class)
 
         String pName = child.@scriptparameter.text();
         String fnpSelTag = extractAttributeText(child, "fnpatternselectiontag", FilenamePattern.DEFAULT_SELECTION_TAG);
         String parentFileVariable = extractAttributeText(child, "variable", null); //This is only the case for child files.
-        ToolEntry.ToolFileParameterCheckCondition check = new ToolEntry.ToolFileParameterCheckCondition(extractAttributeText(child, "check", "true"));
+        ToolFileParameterCheckCondition check = new ToolFileParameterCheckCondition(extractAttributeText(child, "check", "true"));
 
         List<ToolEntry.ToolConstraint> constraints = new LinkedList<ToolEntry.ToolConstraint>();
         for (constraint in child.constraint) {
@@ -876,34 +876,36 @@ public class ConfigurationFactory {
         }
 
         // A file can have several defined child files
-        List<ToolEntry.ToolFileParameter> subParameters = new LinkedList<ToolEntry.ToolFileParameter>();
+        List<ToolFileParameter> subParameters = new LinkedList<ToolFileParameter>();
         for (NodeChild fileChild in child.children()) {
-            subParameters << (ToolEntry.ToolFileParameter) parseToolParameter(toolID, fileChild);
+            subParameters << (ToolFileParameter) parseToolParameter(toolID, fileChild);
         }
-        ToolEntry.ToolFileParameter tp = new ToolEntry.ToolFileParameter(_cls, constraints, pName, check, fnpSelTag, subParameters, parentFileVariable);
+        ToolFileParameter tp = new ToolFileParameter(_cls, constraints, pName, check, fnpSelTag, subParameters, parentFileVariable);
 
         return tp;
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    static ToolEntry.ToolTupleParameter parseTuple(NodeChild child, String toolID) {
+    static ToolTupleParameter parseTuple(NodeChild child, String toolID) {
         int tupleSize = child.children().size();
         if (!FileObjectTupleFactory.isValidSize(tupleSize)) {
             logger.severe("Tuple is of wrong size for tool ${toolID}.")
         }
-        List<ToolEntry.ToolFileParameter> subParameters = new LinkedList<ToolEntry.ToolFileParameter>();
+        List<ToolFileParameter> subParameters = new LinkedList<ToolFileParameter>();
         for (NodeChild fileChild in child.children()) {
-            subParameters << (ToolEntry.ToolFileParameter) parseToolParameter(toolID, fileChild);
+            subParameters << (ToolFileParameter) parseToolParameter(toolID, fileChild);
         }
-        return new ToolEntry.ToolTupleParameter(subParameters);
+        return new ToolTupleParameter(subParameters);
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    static ToolEntry.ToolFileGroupParameter parseFileGroup(NodeChild child, String toolID) {
+    static ToolFileGroupParameter parseFileGroup(NodeChild child, String toolID) {
         String cls = child.@typeof.text();
         Class filegroupClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, FileGroup.class);
 
         PassOptions passas = Enum.valueOf(PassOptions.class, extractAttributeText(child, "passas", PassOptions.parameters.name()));
+        ToolFileGroupParameter.IndexOptions indexOptions = Enum.valueOf(ToolFileGroupParameter.IndexOptions.class, extractAttributeText(child, "indices", ToolFileGroupParameter.IndexOptions.numeric.name()))
+
         Class genericFileClass = null
         String fileclass = extractAttributeText(child, "fileclass", null);
         if (fileclass) {
@@ -911,14 +913,15 @@ public class ConfigurationFactory {
         }
         String pName = child.@scriptparameter.text();
 
-        List<ToolEntry.ToolFileParameter> subParameters = new LinkedList<ToolEntry.ToolFileParameter>();
+
+        List<ToolFileParameter> subParameters = new LinkedList<ToolFileParameter>();
         int childCount = child.children().size();
         if (childCount == 0 && passas != PassOptions.array)
             logger.severe("No files in the file group. Configuration is not valid.")
         for (NodeChild fileChild in child.children()) {
-            subParameters << (ToolEntry.ToolFileParameter) parseToolParameter(toolID, fileChild);
+            subParameters << (ToolFileParameter) parseToolParameter(toolID, fileChild);
         }
-        ToolEntry.ToolFileGroupParameter tpg = new ToolEntry.ToolFileGroupParameter(filegroupClass, genericFileClass, subParameters, pName, passas);
+        ToolFileGroupParameter tpg = new ToolFileGroupParameter(filegroupClass, genericFileClass, subParameters, pName, passas, indexOptions);
         return tpg;
     }
 

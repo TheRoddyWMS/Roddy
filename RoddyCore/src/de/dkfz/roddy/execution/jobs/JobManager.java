@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -9,7 +9,7 @@ package de.dkfz.roddy.execution.jobs;
 import de.dkfz.roddy.Constants;
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.config.Configuration;
-import de.dkfz.roddy.config.ToolEntry;
+import de.dkfz.roddy.config.ResourceSet;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSJobManager;
@@ -115,7 +115,7 @@ public abstract class JobManager<C extends Command> {
 
     public abstract JobDependencyID createJobDependencyID(Job job, String jobResult);
 
-    public abstract ProcessingCommands convertResourceSet(Configuration configuration, ToolEntry.ResourceSet resourceSet);
+    public abstract ProcessingCommands convertResourceSet(Configuration configuration, ResourceSet resourceSet);
 
     public abstract ProcessingCommands parseProcessingCommands(String alignmentProcessingOptions);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -16,7 +16,8 @@ import de.dkfz.roddy.config.FilenamePatternDependency
 import de.dkfz.roddy.config.OnMethodFilenamePattern
 import de.dkfz.roddy.config.OnScriptParameterFilenamePattern
 import de.dkfz.roddy.config.OnToolFilenamePattern
-import de.dkfz.roddy.config.ToolEntry;
+import de.dkfz.roddy.config.ToolEntry
+import de.dkfz.roddy.config.ToolFileParameter;
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextLevel;
 import de.dkfz.roddy.core.Workflow;
@@ -49,12 +50,14 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
         public final FileStageSettings fileStageSettings;
         public final String selectionTag
         public final JobResult jobResult
+        public final String indexInFileGroup
 
-        protected ConstructionHelperForBaseFiles(ExecutionContext context, FileStageSettings fileStageSettings, String selectionTag, JobResult jobResult) {
+        protected ConstructionHelperForBaseFiles(ExecutionContext context, FileStageSettings fileStageSettings, String selectionTag, String indexInFileGroup, JobResult jobResult) {
             this.context = context
             this.fileStageSettings = fileStageSettings
             this.selectionTag = selectionTag
             this.jobResult = jobResult
+            this.indexInFileGroup = indexInFileGroup
         }
     }
 
@@ -63,7 +66,7 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
         public final File path
 
         public ConstructionHelperForSourceFiles(File path, ExecutionContext context, FileStageSettings fileStageSettings, JobResult jobResult) {
-            super(context, fileStageSettings, null, jobResult)
+            super(context, fileStageSettings, null, null, jobResult)
             this.path = path
         }
 
@@ -83,8 +86,8 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
         public final String slotID
         public final List<FileObject> parentFiles
 
-        public ConstructionHelperForGenericCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings, JobResult jobResult) {
-            super(parentObject?.getExecutionContext(), fileStageSettings, selectionTag, jobResult)
+        public ConstructionHelperForGenericCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, String indexInFileGroup, FileStageSettings fileStageSettings, JobResult jobResult) {
+            super(parentObject?.getExecutionContext(), fileStageSettings, selectionTag, indexInFileGroup, jobResult)
             this.parentFiles = parentFiles
             this.slotID = slotID
             this.toolID = toolID
@@ -93,7 +96,7 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
         }
 
         public ConstructionHelperForGenericCreation(ExecutionContext context, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings, JobResult jobResult) {
-            super(context, fileStageSettings, selectionTag, jobResult)
+            super(context, fileStageSettings, selectionTag, null, jobResult)
             this.slotID = slotID
             this.toolID = toolID
             this.creatingTool = creatingTool
@@ -101,8 +104,12 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
     }
 
     public static class ConstructionHelperForManualCreation extends ConstructionHelperForGenericCreation {
+        public ConstructionHelperForManualCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, String indexInFileGroup, FileStageSettings fileStageSettings, JobResult jobResult) {
+            super(parentObject, parentFiles, creatingTool, toolID, slotID, selectionTag, indexInFileGroup, fileStageSettings, jobResult);
+        }
+
         public ConstructionHelperForManualCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings, JobResult jobResult) {
-            super(parentObject, parentFiles, creatingTool, toolID, slotID, selectionTag, fileStageSettings, jobResult);
+            super(parentObject, parentFiles, creatingTool, toolID, slotID, selectionTag, null, fileStageSettings, jobResult);
         }
 
         public ConstructionHelperForManualCreation(ExecutionContext context, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings, JobResult jobResult) {
@@ -116,8 +123,13 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
     }
 
     public
+    static BaseFile constructGeneric(Class<? extends BaseFile> classToConstruct, FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, String indexInFileGroup, FileStageSettings fileStageSettings, JobResult jobResult) {
+        return classToConstruct.newInstance(new ConstructionHelperForGenericCreation(parentObject, parentFiles, creatingTool, toolID, slotID, selectionTag, indexInFileGroup, fileStageSettings, jobResult));
+    }
+
+    public
     static BaseFile constructGeneric(Class<? extends BaseFile> classToConstruct, FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings, JobResult jobResult) {
-        return classToConstruct.newInstance(new ConstructionHelperForGenericCreation(parentObject, parentFiles, creatingTool, toolID, slotID, selectionTag, fileStageSettings, jobResult));
+        return classToConstruct.newInstance(new ConstructionHelperForGenericCreation(parentObject, parentFiles, creatingTool, toolID, slotID, selectionTag, null, fileStageSettings, jobResult));
     }
 
     public
@@ -179,17 +191,20 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
     private boolean isTemporaryFile;
 
     private Boolean isReadable = null;
+
     private boolean isSourceFile = false;
 
     private FilenamePattern appliedFilenamePattern = null;
 
+    private String idxInFileGroup = null;
+
     protected BaseFile(ConstructionHelperForBaseFiles helper) {
         super(helper.context);
         executionContext.addFile(this);
+        idxInFileGroup = helper.indexInFileGroup
 
         if (helper instanceof ConstructionHelperForGenericCreation) { //Manual creation is currently intrinsic.
             ConstructionHelperForGenericCreation _helper = helper as ConstructionHelperForGenericCreation;
-
             if (_helper.parentObject instanceof FileGroup) {
                 parentFiles.addAll((_helper.parentObject as FileGroup).getFilesInGroup());
                 this.fileStageSettings = _helper.fileStageSettings
@@ -224,7 +239,6 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
         this.path = parent.path;
         this.parentFiles += parent.parentFiles;
         this.fileGroups += parent.fileGroups;
-//        parent.fileGroups.each { FileGroup fg -> fg.remove(parent); }
         this.valid = parent.valid;
         this.listOfParentJobs += parent.listOfParentJobs;
         this.listOfParentProcesses += parent.listOfParentProcesses;
@@ -232,6 +246,7 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
         this.isReadable = parent.isReadable;
         this.isSourceFile = parent.isSourceFile;
         this.appliedFilenamePattern = parent.appliedFilenamePattern;
+        this.idxInFileGroup = parent.idxInFileGroup
     }
 
     private void determineFileValidityBasedOnContextLevel(ExecutionContext executionContext) {
@@ -290,6 +305,18 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
     public void setAsSourceFile() {
         isSourceFile = true;
     }
+
+    boolean hasIndexInFileGroup() {
+        return idxInFileGroup != null
+    }
+
+    String getIdxInFileGroup() {
+        return idxInFileGroup
+    }
+//
+//    void setIndexInFileGroup(String value) {
+//        this.indexInFileGroup = value
+//    }
 
     /**
      * Check if the file exists on disk. The query might be buffered, so don't
@@ -488,9 +515,9 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
 
             patternResult = findFilenameFromOnScriptParameterPatterns(baseFile, availablePatterns[FilenamePatternDependency.onScriptParameter], selectionTag) ?:
                     findFilenameFromOnMethodPatterns(baseFile, availablePatterns[FilenamePatternDependency.onMethod], selectionTag) ?:
-                    findFilenameFromOnToolIDPatterns(baseFile, availablePatterns[FilenamePatternDependency.onTool], selectionTag) ?:
-                            findFilenameFromSourcefilePatterns(baseFile, availablePatterns[FilenamePatternDependency.derivedFrom], selectionTag) ?:
-                                    findFilenameFromGenericPatterns(baseFile, availablePatterns[FilenamePatternDependency.FileStage], selectionTag);
+                            findFilenameFromOnToolIDPatterns(baseFile, availablePatterns[FilenamePatternDependency.onTool], selectionTag) ?:
+                                    findFilenameFromSourcefilePatterns(baseFile, availablePatterns[FilenamePatternDependency.derivedFrom], selectionTag) ?:
+                                            findFilenameFromGenericPatterns(baseFile, availablePatterns[FilenamePatternDependency.FileStage], selectionTag);
 
             // Do some further checks for selection tags.
             if (selectionTag.equals("default")) {
@@ -560,9 +587,9 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
                 for (BaseFile bf : (List<BaseFile>) baseFile.parentFiles) {
                     if (bf.getClass() == ((DerivedFromFilenamePattern) fp).getDerivedFromCls() && fp.getSelectionTag().equals(selectionTag)) {
                         if (fp.doesAcceptFileArrays()) {
-                            filename = new File(fp.apply((BaseFile[]) baseFile.parentFiles.toArray(new BaseFile[0])));
+                            filename = new File(fp.apply([baseFile] as BaseFile[]));
                         } else {
-                            filename = new File(fp.apply((BaseFile) baseFile.parentFiles.get(0)));
+                            filename = new File(fp.apply((BaseFile) baseFile));
                         }
                         appliedPattern = fp;
                         break;
@@ -662,13 +689,14 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
         if (!availablePatterns) return result;
 
         ToolEntry currentToolEntry = baseFile.getExecutionContext().getCurrentExecutedTool()
-        FilenamePatterns: for (FilenamePattern _fp : availablePatterns) {
+        FilenamePatterns:
+        for (FilenamePattern _fp : availablePatterns) {
             OnScriptParameterFilenamePattern fp = _fp as OnScriptParameterFilenamePattern;
-             if (fp.getToolName() == null || fp.getToolName().equals(currentToolEntry.getID())) {
-                 List<ToolEntry.ToolFileParameter> toolParameters = new LinkedList<>(currentToolEntry.getOutputParameters(baseFile.getExecutionContext().getConfiguration()) as List<ToolEntry.ToolFileParameter>)
-                 toolParameters.addAll(toolParameters.collect { it.getChildFiles() }.flatten() as List<ToolEntry.ToolFileParameter>)
-                for(ToolEntry.ToolFileParameter tp : toolParameters){
-                    if (fp.getCalledParameterId().equals(tp.scriptParameterName) && fp.getCls() == tp.fileClass){
+            if (fp.getToolName() == null || fp.getToolName().equals(currentToolEntry.getID())) {
+                List<ToolFileParameter> toolParameters = new LinkedList<>(currentToolEntry.getOutputParameters(baseFile.getExecutionContext().getConfiguration()) as List<ToolFileParameter>)
+                toolParameters.addAll(toolParameters.collect { it.getChildFiles() }.flatten() as List<ToolFileParameter>)
+                for (ToolFileParameter tp : toolParameters) {
+                    if (fp.getCalledParameterId().equals(tp.scriptParameterName) && fp.getCls() == tp.fileClass) {
                         appliedPattern = fp;
                         filename = new File(fp.apply(baseFile));
                         continue FilenamePatterns;
