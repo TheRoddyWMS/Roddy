@@ -71,7 +71,7 @@ class ToolEntryTest extends GroovyTestCase {
 
         pure = new ToolFileParameterCheckCondition("false")
         assert pure.isBoolean()
-        assert pure.evaluate(null)
+        assert pure.evaluate(null) == false
         assert pure.getCondition() == null
     }
 }

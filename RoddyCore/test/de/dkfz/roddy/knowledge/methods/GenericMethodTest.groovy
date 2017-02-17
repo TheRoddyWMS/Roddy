@@ -33,18 +33,6 @@ class GenericMethodTest {
     static Class<BaseFile> fileBaseClass
     static Class<BaseFile> derivedFileClass
 
-//    static class FileTestClass extends BaseFile {
-//        FileTestClass(BaseFile.ConstructionHelperForBaseFiles helper) {
-//            super(helper)
-//        }
-//    }
-//
-//    static class DerivedFileClass extends BaseFile {
-//        DerivedFileClass(BaseFile.ConstructionHelperForBaseFiles helper) {
-//            super(helper)
-//        }
-//    }
-
     static ExecutionContext mockupContext
 
     @BeforeClass
@@ -84,16 +72,16 @@ class GenericMethodTest {
         }
     }
 
-    @Test(expected = Exception)
+    @Test(expected = NegativeArraySizeException)
     void testCreateOutputFileGroupWithNegativeIndexValues() {
         def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, fileBaseClass, null, "APARM", ToolFileGroupParameter.PassOptions.parameters, ToolFileGroupParameter.IndexOptions.strings)
-        FileGroup fg = new GenericMethod("testTool", null, getBaseFile(), -1).createOutputFileGroup(tfg) as FileGroup
+        new GenericMethod("testTool", null, getBaseFile(), -1).createOutputFileGroup(tfg) as FileGroup
     }
 
     @Test(expected = RuntimeException)
     void testCreateOutputFileGroupWithMissingIndexValues() {
         def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, fileBaseClass, null, "APARM", ToolFileGroupParameter.PassOptions.parameters, ToolFileGroupParameter.IndexOptions.strings)
-        FileGroup fg = new GenericMethod("testTool", null, getBaseFile(), []).createOutputFileGroup(tfg) as FileGroup
+        new GenericMethod("testTool", null, getBaseFile(), []).createOutputFileGroup(tfg) as FileGroup
     }
 
     @Test

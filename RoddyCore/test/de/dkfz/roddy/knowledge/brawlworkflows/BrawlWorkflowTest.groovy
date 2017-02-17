@@ -65,7 +65,8 @@ public class BrawlWorkflowTest {
 
     @Test
     public void testAssembleCall() {
-        callAssembleCall(null, 0, null, null, null);
+//        callAssembleCall(null, 0, null, null, null);
+        assert false
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)

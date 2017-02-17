@@ -94,12 +94,12 @@ public class FilenamePatternTest {
 
     @Test
     void testFilenamePatternsForFileGroupWithNumericIndices() {
-
+        assert false
     }
 
     @Test
     void testFilenamePatternsForFileGroupWithStringIndices() {
-
+        assert false
     }
 
     @Test

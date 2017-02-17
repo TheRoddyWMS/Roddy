@@ -468,7 +468,7 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
 
     private static Map<Class, LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>>> _classPatternsCache = new LinkedHashMap<>();
 
-    private static LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>> loadAVailableFilenamePatterns(BaseFile baseFile, ExecutionContext context) {
+    static LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>> loadAvailableFilenamePatterns(BaseFile baseFile, ExecutionContext context) {
         Configuration cfg = context.getConfiguration();
         LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>> availablePatterns = new LinkedHashMap<>();
         if (!_classPatternsCache.containsKey(baseFile.getClass())) {
@@ -511,7 +511,7 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
             // Look if there is only one available: Easy, use this
             // onMethod, sourcefile, filestage
             ExecutionContext context = baseFile.getExecutionContext();
-            LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>> availablePatterns = loadAVailableFilenamePatterns(baseFile, context);
+            LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>> availablePatterns = loadAvailableFilenamePatterns(baseFile, context);
 
             patternResult = findFilenameFromOnScriptParameterPatterns(baseFile, availablePatterns[FilenamePatternDependency.onScriptParameter], selectionTag) ?:
                     findFilenameFromOnMethodPatterns(baseFile, availablePatterns[FilenamePatternDependency.onMethod], selectionTag) ?:

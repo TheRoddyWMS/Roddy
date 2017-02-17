@@ -474,8 +474,8 @@ public class ConfigurationFactoryTest {
 
     @Test
     void testParseFileGroupForOutputFileGroupPassasParametersWithStringIndexForFilenames() {
-        NodeChild nc = asNodeChild("<output type='filegroup' typeof='de.dkfz.roddy.knowledge.files.GenericFileGroup' fileclass='ASyntheticClass' passas='parameters' indices='numericIndices' />")
-        ToolFileGroupParameter res = ConfigurationFactory.parseFileGroup(nc, "EMPTY");
+        NodeChild nc = asNodeChild("<output type='filegroup' typeof='de.dkfz.roddy.knowledge.files.GenericFileGroup' fileclass='ASyntheticClass' passas='parameters' indices='strings' />")
+        ToolFileGroupParameter res = ConfigurationFactory.parseFileGroup(nc, "EMPTY")
         assert res
         assert res.groupClass == GenericFileGroup.class
         assert res.genericFileClass.name.endsWith("ASyntheticClass")

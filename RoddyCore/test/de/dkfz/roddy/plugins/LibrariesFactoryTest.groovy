@@ -226,20 +226,19 @@ public class LibrariesFactoryTest {
         Map<String, PluginInfo> pluginQueueWODefaultLibs = LibrariesFactory.buildupPluginQueue(mapOfAvailablePlugins, ["D:0.9.0"] as String[]);
         assert pluginQueueWODefaultLibs != null;
         assert pluginQueueWODefaultLibs["PluginBase"].prodVersion == "current" &&
-                pluginQueueWODefaultLibs["DefaultPlugin"].prodVersion == "current";
+               pluginQueueWODefaultLibs["DefaultPlugin"].prodVersion == "current";
     }
 
     @Test
     void testGetRoddyPackages() {
         Package[] list = LibrariesFactory.getInstance().getRoddyPackages()
-        assert list
         assert list.findAll { Package p -> p.name.startsWith(Roddy.package.name)} == list
     }
 
     @Test
     public void testSearchForClass() {
         Class _cls = LibrariesFactory.getInstance().searchForClass("GenericFileGroup")
-        assert _cls && _cls == GenericFileGroup
+        assert _cls == GenericFileGroup
     }
 
     @Test
@@ -251,7 +250,7 @@ public class LibrariesFactoryTest {
     @Test
     public void testLoadRealOrSyntheticClassSynthClass() {
         Class _cls = LibrariesFactory.getInstance().loadRealOrSyntheticClass("ASyntheticFileGroup", "FileGroup");
-        assert _cls && _cls.name.endsWith("ASyntheticFileGroup")
+        assert _cls.name.endsWith("ASyntheticFileGroup")
     }
 
     @Test

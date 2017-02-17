@@ -159,7 +159,7 @@ class GenericMethod {
     GenericMethod(String toolName, List<String> arrayIndices, FileObject inputObject, int numericCount, Object... additionalInput) {
         this(toolName, arrayIndices, inputObject, (0..numericCount - 1) as List<String>, additionalInput)
         if (numericCount <= 0)
-            throw new RuntimeException("It is not allowed to call GenericMethod with a negative count for a FileGroup output object.")
+            throw new NegativeArraySizeException("It is not allowed to call GenericMethod with a negative count for a FileGroup output object.")
     }
 
     GenericMethod(String toolName, List<String> arrayIndices, FileObject inputObject, List<String> outputFileGroupIndices, Object... additionalInput) {

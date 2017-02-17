@@ -4,22 +4,38 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.config;
+package de.dkfz.roddy.config
 
-import org.junit.Test;
+import de.dkfz.roddy.core.ExecutionContext
+import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import org.junit.BeforeClass
+import org.junit.Test
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.*
 
 /**
  * Created by heinold on 10.01.17.
  */
-public class FilenamePatternHelperTest {
+class FilenamePatternHelperTest {
+
+    static ExecutionContext mockupContext
+
+    @BeforeClass
+    static void setup() {
+        mockupContext = MockupExecutionContextBuilder.createSimpleContext(FilenamePatternHelperTest)
+    }
 
     @Test
-    public void extractCommands() throws Exception {
-        String commandID = '\${jobParameter';
+    void testSetup() {
+        assert mockupContext
+    }
+
+
+    @Test
+    void extractCommands() throws Exception {
+        String commandID = '\${jobParameter'
         String temp = '/a/real/string/${jobParameter,name="test",default="abc"}/${jobParameter,name="test2"}/a_filename.txt'
-        def result = FilenamePatternHelper.extractCommands(commandID, temp)
+        def result = FilenamePatternHelper.extractCommands(mockupContext, commandID, temp)
         assert result
         assert result.size() == 2
         assert result[0].attributes["name"].value == "test"
@@ -28,10 +44,13 @@ public class FilenamePatternHelperTest {
     }
 
     @Test
-    public void testExtractCommandsWithUnclosedLiterals() {
-        String commandID = '\${jobParameter';
+    void testExtractCommandsWithUnclosedLiterals() {
+        String commandID = '\${jobParameter'
         String temp = '/a/real/string/${jobParameter,name="test"}/${jobParameter,name="test2"/a_filename.txt'
-        assert false
+        def result = FilenamePatternHelper.extractCommands(mockupContext, commandID, temp)
+        assert result
+        // TODO What should happen?
+//        assert false
     }
 
 }

@@ -47,7 +47,7 @@ public class RuntimeToolsTest {
     @Test
     public void testGetGroovyLibrary() {
         File gPath = RuntimeTools.getGroovyLibrary();
-        File aPath = RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current", "lib", "groovy-all-2.4.5-indy.jar");
+        File aPath = RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current", "lib", "groovy-all-2.4.8.jar");
         assert gPath.getAbsolutePath().equals(aPath.getAbsolutePath());
     }
 }
