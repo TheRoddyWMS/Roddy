@@ -165,6 +165,8 @@ class GenericMethod {
 
     GenericMethod(String toolName, List<String> arrayIndices, FileObject inputObject, List<String> outputFileGroupIndices, Object... additionalInput) {
         this.outputFileGroupIndices = outputFileGroupIndices
+        if (outputFileGroupIndices != null && outputFileGroupIndices.size() == 0)
+            throw new RuntimeException("It is not allowed to call GenericMethod with an empty non null list of file group indices.")
         this.additionalInput = additionalInput
         this.inputObject = inputObject
         this.allInputValues << inputObject;
