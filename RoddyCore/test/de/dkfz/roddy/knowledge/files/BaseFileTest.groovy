@@ -47,12 +47,16 @@ public class BaseFileTest {
 
     public static final File mockedTestFilePath = new File("/tmp/RoddyTests/testfile")
 
-
-    private static final String STR_VALID_DERIVEDFROM_PATTERN = "<filename class='TestBaseFile_DERIVEDFROM' derivedFrom='TestBaseFile_DERIVEDFROMBASE' pattern='/tmp/onderivedFile'/>"
-    private static final String STR_VALID_ONMETHOD_PATTERN_WITH_CLASSNAME = "<filename class='TestBaseFile_ONMETHOD' onMethod='getFilename' pattern='/tmp/onMethodwithClassName'/>"
-    private static final String STR_VALID_ONTOOL_PATTERN = "<filename class='TestBaseFile_ONTOOL' onTool='testScript' pattern='/tmp/onTool'/>"
-    private static final String STR_VALID_FILESTAGE_PATTERN = "<filename class='TestBaseFile_FILESTAGE' fileStage=\"GENERIC\" pattern='/tmp/FileWithFileStage'/>"
-    private static final String STR_VALID_ONSCRIPTPARAMETER_WITH_TOOL_AND_PARAMNAME = "<filename class='TestBaseFile_ONSCRIPT' onScriptParameter='testScript:BAM_INDEX_FILE' pattern='/tmp/onScript' />"
+    /**
+     * The caching mechanism in BaseFile used to load patterns related to the class will not work for these tests. If they all use the same class
+     * only the first active test will be working. This is why we have so many differnt synthetic classes here.
+     */
+    public static final String TEST_BASE_FILE_PREFIX = "TestBaseFile_"
+    private static final String STR_VALID_DERIVEDFROM_PATTERN = "<filename class='${TEST_BASE_FILE_PREFIX}DERIVEDFROM' derivedFrom='${TEST_BASE_FILE_PREFIX}DERIVEDFROMBASE' pattern='/tmp/onderivedFile'/>"
+    private static final String STR_VALID_ONMETHOD_PATTERN_WITH_CLASSNAME = "<filename class='${TEST_BASE_FILE_PREFIX}ONMETHOD' onMethod='getFilename' pattern='/tmp/onMethodwithClassName'/>"
+    private static final String STR_VALID_ONTOOL_PATTERN = "<filename class='${TEST_BASE_FILE_PREFIX}ONTOOL' onTool='testScript' pattern='/tmp/onTool'/>"
+    private static final String STR_VALID_FILESTAGE_PATTERN = "<filename class='${TEST_BASE_FILE_PREFIX}FILESTAGE' fileStage=\"GENERIC\" pattern='/tmp/FileWithFileStage'/>"
+    private static final String STR_VALID_ONSCRIPTPARAMETER_WITH_TOOL_AND_PARAMNAME = "<filename class='${TEST_BASE_FILE_PREFIX}ONSCRIPT' onScriptParameter='testScript:BAM_INDEX_FILE' pattern='/tmp/onScript' />"
 
     private NodeChild getParsedFilenamePattern(String filenamePattern) { return parseXML("<filenames filestagesbase='de.dkfz.roddy.knowledge.files.FileStage'>${filenamePattern}</filenames>"); }
 
@@ -87,7 +91,7 @@ public class BaseFileTest {
     }
 
     static Class<BaseFile> getTestFileClass(String method) {
-        return LibrariesFactory.getInstance().loadRealOrSyntheticClass("TestBaseFile_${method}", BaseFile.class as Class<FileObject>)
+        return LibrariesFactory.getInstance().loadRealOrSyntheticClass("${TEST_BASE_FILE_PREFIX}${method}", BaseFile.class as Class<FileObject>)
     }
 
     @Test
