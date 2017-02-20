@@ -24,6 +24,7 @@ import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.IndexedFileObjects
 import de.dkfz.roddy.knowledge.files.FileObjectTupleFactory
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field

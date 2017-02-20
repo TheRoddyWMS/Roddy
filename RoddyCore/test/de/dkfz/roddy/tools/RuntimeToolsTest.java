@@ -7,11 +7,10 @@
 package de.dkfz.roddy.tools;
 
 import de.dkfz.roddy.Roddy;
+import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import org.junit.Test;
 
 import java.io.File;
-
-import static org.junit.Assert.*;
 
 /**
  * This test class does runtime environment specific tests. It is not very well written and uses some hardcoded elements.

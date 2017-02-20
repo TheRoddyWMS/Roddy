@@ -20,7 +20,6 @@ import de.dkfz.roddy.execution.io.FileAttributes
 import de.dkfz.roddy.knowledge.files.BaseFile
 import org.apache.commons.io.filefilter.WildcardFileFilter
 
-import java.nio.file.FileSystem
 import java.util.concurrent.locks.ReentrantLock
 
 /**

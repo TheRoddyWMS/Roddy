@@ -26,8 +26,8 @@ import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.execution.jobs.ProcessingCommands
 import de.dkfz.roddy.tools.LoggerWrapper
-import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.ScannerWrapper
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
 import static de.dkfz.roddy.Constants.ENV_LINESEPARATOR as NEWLINE
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA

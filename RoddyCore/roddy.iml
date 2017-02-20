@@ -12,6 +12,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="roddyBundledLibraries" level="project" />
+    <orderEntry type="module" module-name="RoddyToolLib" />
   </component>
   <component name="PackageRequirementsSettings">
     <option name="requirementsPath" value="" />

@@ -12,13 +12,9 @@ package de.dkfz.roddy.execution.io
 
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.core.ExecutionContextLevel
-import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
-import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.common.IOUtils
@@ -33,7 +29,6 @@ import org.apache.commons.io.filefilter.WildcardFileFilter
 import java.util.concurrent.Semaphore
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
-import java.util.logging.Level
 
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 
