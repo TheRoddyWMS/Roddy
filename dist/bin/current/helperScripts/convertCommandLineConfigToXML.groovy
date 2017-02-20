@@ -12,6 +12,10 @@
  */
 def lines = []
 File f = new File("/data/michael/Projekte/RoddyWorkflows/Plugins/rareGAPWorkflow/pedbrain_PA_platypusConfigFile.JointCall.UPDATE.sh")
+
+if(args && args[0])
+    f = new File(args[0])
+
 String previousLine = ""
 f.readLines().each {
     String[] s = it.split("[=]")

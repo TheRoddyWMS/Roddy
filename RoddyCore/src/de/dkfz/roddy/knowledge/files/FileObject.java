@@ -10,7 +10,6 @@ import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.DataSet;
 import de.dkfz.roddy.core.Project;
 import de.dkfz.roddy.execution.jobs.JobResult;
-import examples.Exec;
 
 import java.io.Serializable;
 
