@@ -12,6 +12,7 @@ import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.FileObjectTupleFactory
 import de.dkfz.roddy.knowledge.files.FileStage
+import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
 import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.Roddy
@@ -692,11 +693,6 @@ public class ConfigurationFactory {
                 String rsetUsedNodeFlag = extractAttributeText(rset, "nodeflag", null);
                 tempSet = new ResourceSet(rsetSize, rsetUsedMemory, rsetUsedCores, rsetUsedNodes, rsetUsedWalltime, null, rsetUsedQueue, rsetUsedNodeFlag);
             }
-//            else {
-//                String[] split = valueList.split(":");
-//                Integer[] splitInt = split.collect { String s -> return s.toInteger(); }
-//                tempSet = new ToolEntry.ResourceSet(rsetSize, new BufferValue(splitInt[0]), splitInt[1], new TimeUnit(split[2]), splitInt[3], null, null, null);
-//            }
         } catch (Exception ex) {
             if (config != null) config.addLoadError(new ConfigurationLoadError(config, "Resource set could not be read", "", ex));
         }
@@ -899,30 +895,25 @@ public class ConfigurationFactory {
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    static ToolFileGroupParameter parseFileGroup(NodeChild child, String toolID) {
-        String cls = child.@typeof.text();
+    static ToolFileGroupParameter parseFileGroup(NodeChild groupNode, String toolID) {
+        String cls = extractAttributeText(groupNode, "typeof", GenericFileGroup.name);
         Class filegroupClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, FileGroup.class);
+        if(!filegroupClass)
+            filegroupClass = GenericFileGroup
 
-        PassOptions passas = Enum.valueOf(PassOptions.class, extractAttributeText(child, "passas", PassOptions.parameters.name()));
-        ToolFileGroupParameter.IndexOptions indexOptions = Enum.valueOf(ToolFileGroupParameter.IndexOptions.class, extractAttributeText(child, "indices", ToolFileGroupParameter.IndexOptions.numeric.name()))
+        PassOptions passas = Enum.valueOf(PassOptions.class, extractAttributeText(groupNode, "passas", PassOptions.parameters.name()));
+        ToolFileGroupParameter.IndexOptions indexOptions = Enum.valueOf(ToolFileGroupParameter.IndexOptions.class, extractAttributeText(groupNode, "indices", ToolFileGroupParameter.IndexOptions.numeric.name()))
 
-        Class genericFileClass = null
-        String fileclass = extractAttributeText(child, "fileclass", null);
-        if (fileclass) {
-            genericFileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(fileclass, BaseFile.class)
-        }
-        String pName = child.@scriptparameter.text();
+        String fileclass = extractAttributeText(groupNode, "fileclass", null);
+        Class genericFileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(fileclass, BaseFile.class)
+        String pName = groupNode.@scriptparameter.text();
 
 
-        List<ToolFileParameter> subParameters = new LinkedList<ToolFileParameter>();
-        int childCount = child.children().size();
-        if (childCount == 0 && passas != PassOptions.array)
-            logger.severe("No files in the file group. Configuration is not valid.")
-        for (NodeChild fileChild in child.children()) {
-            subParameters << (ToolFileParameter) parseToolParameter(toolID, fileChild);
-        }
-        ToolFileGroupParameter tpg = new ToolFileGroupParameter(filegroupClass, genericFileClass, subParameters, pName, passas, indexOptions);
-        return tpg;
+        if(!pName || !fileclass)
+            throw new RuntimeException("You have to set both the parametername and the fileclass attribute for filegroup i/o parameter in ${toolID}")
+
+        ToolFileGroupParameter tpg = new ToolFileGroupParameter(filegroupClass, genericFileClass, pName, passas, indexOptions)
+        return tpg
     }
 
     ProjectConfiguration getProjectConfiguration(String s) {

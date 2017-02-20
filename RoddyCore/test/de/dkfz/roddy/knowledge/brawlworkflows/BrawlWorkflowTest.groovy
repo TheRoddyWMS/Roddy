@@ -92,7 +92,6 @@ public class BrawlWorkflowTest {
                 new ToolFileGroupParameter(
                         (new GenericFileGroup([] as List)).class as Class<FileGroup>,
                         testFileClass,
-                        null,
                         "FUZZY_GROUP",
                         ToolFileGroupParameter.PassOptions.parameters));
         cc.getTools().add(loadFastqFiles)

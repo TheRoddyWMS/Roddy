@@ -50,7 +50,7 @@ public class ExecutionServiceTestInlineScript {
         Configuration cfg = mockedContext.getConfiguration();
 
         ToolEntry toolEntry = new ToolEntry("roddyTests", "roddyTests", "");
-        toolEntry.getOutputParameters(cfg).add(new ToolFileGroupParameter(GenericFileGroup, null, [], "TEST", ToolFileGroupParameter.PassOptions.parameters))
+        toolEntry.getOutputParameters(cfg).add(new ToolFileGroupParameter(GenericFileGroup, null, "TEST"))
         def inlineScriptName = "testInlineScript.sh"
         toolEntry.setInlineScriptName(inlineScriptName)
         toolEntry.setInlineScript("echo test")
@@ -97,7 +97,7 @@ public class ExecutionServiceTestInlineScript {
         Configuration cfg = mockedContext.getConfiguration();
 
         ToolEntry toolEntry = new ToolEntry("roddyTests", "roddyTests", "");
-        toolEntry.getOutputParameters(cfg).add(new ToolFileGroupParameter(GenericFileGroup, null, [], "TEST", ToolFileGroupParameter.PassOptions.parameters))
+        toolEntry.getOutputParameters(cfg).add(new ToolFileGroupParameter(GenericFileGroup, null, "TEST"))
         def inlineScriptName = "testInlineScript.sh"
         cfg.getTools().add(toolEntry);
 

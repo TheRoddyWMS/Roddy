@@ -152,13 +152,9 @@ public class LibrariesFactory extends Initializable {
             Class foundCoreClass = null;
             for (Package p in getRoddyPackages()) {
                 String className = "${p.name}.${name}"
-                try {
-                    Class _test = groovyClassLoader.loadClass(className)
-                    if (_test)
-                        foundCoreClass = _test
-                } catch (ClassNotFoundException ex) {
-                    // Just catch and ignore, we will fall back to the plugin strategy afterwards! Or search in the next package
-                }
+                foundCoreClass = tryLoadClass(className)
+                if (foundCoreClass) break
+                // Ignore if it is empty, we will fall back to the plugin strategy afterwards! Or search in the next package
             }
 
             // We found it in core, so return it.
@@ -217,8 +213,7 @@ public class LibrariesFactory extends Initializable {
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    public
-    static Class generateSyntheticFileClassWithParentClass(String syntheticClassName, String constructorClassName, GroovyClassLoader classLoader = null) {
+    public static Class generateSyntheticFileClassWithParentClass(String syntheticClassName, String constructorClassName, GroovyClassLoader classLoader = null) {
         String syntheticFileClass =
                 """
                 package $SYNTHETIC_PACKAGE
@@ -313,8 +308,7 @@ public class LibrariesFactory extends Initializable {
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private
-    static List<Tuple2<File, String[]>> checkValidPluginNames(List<Tuple2<File, String[]>> collectedPluginDirectories) {
+    private static List<Tuple2<File, String[]>> checkValidPluginNames(List<Tuple2<File, String[]>> collectedPluginDirectories) {
         List<Tuple2<File, String[]>> collectedTemporary = [];
         collectedPluginDirectories.each { tuple ->
             String rev = (tuple.x.name.split("[-]") as List)[1]
@@ -333,8 +327,7 @@ public class LibrariesFactory extends Initializable {
      *  if we search for revisions and extensions.
      */
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private
-    static List<Tuple2<File, String[]>> sortPluginDirectories(List<Tuple2<File, String[]>> collectedPluginDirectories) {
+    private static List<Tuple2<File, String[]>> sortPluginDirectories(List<Tuple2<File, String[]>> collectedPluginDirectories) {
         collectedPluginDirectories = collectedPluginDirectories.sort {
             Tuple2<File, String[]> left, Tuple2<File, String[]> right ->
                 logger.postRareInfo("Call to plugin directory sort for ${left.x} vs ${right.x}");
@@ -387,7 +380,6 @@ public class LibrariesFactory extends Initializable {
             logger.postRareInfo("Processing plugin entry: ${_entry.x}")
             File pEntry = _entry.x;
             String[] splitName = _entry.y;
-//pEntry.getName().split(StringConstants.SPLIT_UNDERSCORE); //First split for .zip then for the version
 
             String pluginName = splitName[0];
             String[] pluginVersionInfo = splitName.length > 1 ? splitName[1].split(StringConstants.SPLIT_MINUS) : [PLUGIN_VERSION_CURRENT] as String[];
@@ -542,24 +534,6 @@ public class LibrariesFactory extends Initializable {
         }
         return pluginsToActivate;
     }
-
-//    /**
-//     * Get a list of all available plugins in their most recent version...
-//     * @return
-//     */
-//    public List<PluginInfo> getAvailablePluginVersion() {
-//        List<PluginInfo> mostCurrentPlugins = [];
-//        PluginInfoMap availablePlugins = loadMapOfAvailablePluginsForInstance();
-//        availablePlugins.each {
-//            String pluginID, Map<String, PluginInfo> versions ->
-//                if (versions.keySet().contains(PLUGIN_VERSION_CURRENT))
-//                    mostCurrentPlugins << versions[PLUGIN_VERSION_CURRENT];
-//                else
-//                    mostCurrentPlugins << versions[versions.keySet().last()]
-//        }
-//
-//        return mostCurrentPlugins;
-//    }
 
     public static boolean addFile(File f) throws IOException {
         return addURL(f.toURI().toURL());

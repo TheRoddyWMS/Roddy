@@ -43,7 +43,7 @@ public class RoddyStartupModesIntegrativeUnitTests {
     }
 
     @BeforeClass
-    public static final setupTestEnvironment() {
+    public static final void setupTestEnvironment() {
     }
 
     @Test

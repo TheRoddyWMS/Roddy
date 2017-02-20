@@ -215,12 +215,12 @@ public class FilenamePatternTest {
     }
 
     @Test
-    public testExtractCommand() {
-
+    public void testExtractCommand() {
+        assert false
     }
 
     @Test
-    public testExtractCommands() {
-
+    public void testExtractCommands() {
+        assert false
     }
 }

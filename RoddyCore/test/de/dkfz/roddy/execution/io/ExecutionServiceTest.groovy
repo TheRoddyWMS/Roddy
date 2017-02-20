@@ -80,7 +80,7 @@ public class ExecutionServiceTest {
         targetToolpath.setExecutable(true, true);
 
         ToolEntry toolEntry = new ToolEntry("RoddyTests", "RoddyTests", "RoddyTestScript_ExecutionServiceTest.sh");
-        toolEntry.getOutputParameters(config).add(new ToolFileGroupParameter(GenericFileGroup, null, [], "TEST", ToolFileGroupParameter.PassOptions.parameters))
+        toolEntry.getOutputParameters(config).add(new ToolFileGroupParameter(GenericFileGroup, null, "TEST"))
         config.getTools().add(toolEntry);
 
         // Initialize with fallback provider! Don't worry about errors at this point.

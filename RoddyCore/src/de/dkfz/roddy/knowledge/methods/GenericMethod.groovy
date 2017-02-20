@@ -382,27 +382,15 @@ class GenericMethod {
     FileObject createOutputFileGroup(ToolFileGroupParameter tfg) {
         List<BaseFile> filesInGroup = [];
 
-        if (tfg.files) {
-            // Actually this is more like a tuple.
-            /**
-             * This can only be the case if files is set. Otherwise we need a different way to identify files. E.g. based on index values... How do we set them?
-             */
-            for (ToolFileParameter fileParameter in tfg.files) {
-                BaseFile bf = convertToolFileParameterToBaseFile(fileParameter)
-                filesInGroup << bf;
-                allCreatedObjects << bf;
-            }
-        } else {
-            // Indices need to be set! Otherwise throw an Exception
-            if (!outputFileGroupIndices) {
-                throw new RuntimeException("A tool which outputs a filegroup with index values needs to be called properly! Pass index values in the call.")
-            }
-            ToolFileParameter autoToolFileParameter = new ToolFileParameter(tfg.genericFileClass, [], "AFILEGROUP", new ToolFileParameterCheckCondition(true))
-            for (Object index in outputFileGroupIndices) {
-                BaseFile bf = convertToolFileParameterToBaseFile(autoToolFileParameter, index.toString())
-                filesInGroup << bf
-                allCreatedObjects << bf
-            }
+        // Indices need to be set! Otherwise throw an Exception
+        if (!outputFileGroupIndices) {
+            throw new RuntimeException("A tool which outputs a filegroup with index values needs to be called properly! Pass index values in the call.")
+        }
+        ToolFileParameter autoToolFileParameter = new ToolFileParameter(tfg.genericFileClass, [], "AFILEGROUP", new ToolFileParameterCheckCondition(true))
+        for (Object index in outputFileGroupIndices) {
+            BaseFile bf = convertToolFileParameterToBaseFile(autoToolFileParameter, index.toString())
+            filesInGroup << bf
+            allCreatedObjects << bf
         }
 
         Constructor cGroup = tfg.groupClass.getConstructor(List.class);
@@ -414,10 +402,7 @@ class GenericMethod {
         allCreatedObjects << outputObject;
 
         //Verifiable output files:
-        List<BaseFile> filesToVerify = [];
-//        allCreatedObjects.each { FileObject fo -> if (fo instanceof BaseFile && !((BaseFile) fo).isTemporaryFile()) filesToVerify << (BaseFile) fo; }
-        return allCreatedObjects.findAll { FileObject fo -> fo instanceof BaseFile && !((BaseFile) fo).isTemporaryFile() } as List<BaseFile> //filesToVerify << (BaseFile) fo; }
-//        filesToVerify
+        return allCreatedObjects.findAll { FileObject fo -> fo instanceof BaseFile && !((BaseFile) fo).isTemporaryFile() } as List<BaseFile>
     }
 
     private FileObject createAndRunArrayJob(List<BaseFile> filesToVerify) {

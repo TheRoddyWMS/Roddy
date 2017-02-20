@@ -19,7 +19,6 @@ import groovy.transform.CompileStatic
 class ToolFileGroupParameter extends ToolEntry.ToolParameter<ToolFileGroupParameter> {
     public final Class<FileGroup> groupClass
     public final Class<BaseFile> genericFileClass
-    public final List<ToolFileParameter> files
     public final PassOptions passOptions
     public final IndexOptions indexOptions
 
@@ -33,10 +32,9 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameter<ToolFileGroupParame
         strings
     }
 
-    ToolFileGroupParameter(Class<FileGroup> groupClass, Class<BaseFile> genericFileClass, List<ToolFileParameter> files, String scriptParameterName, PassOptions passas = PassOptions.parameters, IndexOptions indexOptions = IndexOptions.numeric) {
+    ToolFileGroupParameter(Class<FileGroup> groupClass, Class<BaseFile> genericFileClass, String scriptParameterName, PassOptions passas = PassOptions.parameters, IndexOptions indexOptions = IndexOptions.numeric) {
         super(scriptParameterName)
         this.groupClass = groupClass
-        this.files = files
         this.passOptions = passas
         this.genericFileClass = genericFileClass
         this.indexOptions = indexOptions
@@ -46,11 +44,7 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameter<ToolFileGroupParame
 
     @Override
     ToolFileGroupParameter clone() {
-        List<ToolFileParameter> _files = new LinkedList<ToolFileParameter>()
-        for (ToolFileParameter tf : files) {
-            _files.add(tf.clone())
-        }
-        return new ToolFileGroupParameter(groupClass, genericFileClass, _files, scriptParameterName, passOptions)
+        return new ToolFileGroupParameter(groupClass, genericFileClass, scriptParameterName, passOptions)
     }
 
     boolean isGeneric() {

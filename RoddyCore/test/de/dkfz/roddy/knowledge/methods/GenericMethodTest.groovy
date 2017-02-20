@@ -53,7 +53,7 @@ class GenericMethodTest {
 
     @Test
     void testCreateOutputFileGroupWithNumericFGIndex() {
-        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, derivedFileClass, null, "APARM")
+        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, derivedFileClass, "APARM")
         def numericCount = 4
         FileGroup fg = new GenericMethod("testTool", null, getBaseFile(), numericCount).createOutputFileGroup(tfg) as FileGroup
         assert fg.filesInGroup.size() == numericCount
@@ -64,7 +64,7 @@ class GenericMethodTest {
 
     @Test
     void testCreateOutputFileGroupWithStringFGIndex() {
-        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, derivedFileClass, null, "APARM", ToolFileGroupParameter.PassOptions.parameters, ToolFileGroupParameter.IndexOptions.strings)
+        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, derivedFileClass, "APARM", ToolFileGroupParameter.PassOptions.parameters, ToolFileGroupParameter.IndexOptions.strings)
         FileGroup fg = new GenericMethod("testTool", null, getBaseFile(), stringIndices).createOutputFileGroup(tfg) as FileGroup
         assert fg.filesInGroup.size() == stringIndices.size()
         for (int i = 0; i < stringIndices.size(); i++) {
@@ -74,13 +74,13 @@ class GenericMethodTest {
 
     @Test(expected = NegativeArraySizeException)
     void testCreateOutputFileGroupWithNegativeIndexValues() {
-        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, fileBaseClass, null, "APARM", ToolFileGroupParameter.PassOptions.parameters, ToolFileGroupParameter.IndexOptions.strings)
+        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, fileBaseClass, "APARM", ToolFileGroupParameter.PassOptions.parameters, ToolFileGroupParameter.IndexOptions.strings)
         new GenericMethod("testTool", null, getBaseFile(), -1).createOutputFileGroup(tfg) as FileGroup
     }
 
     @Test(expected = RuntimeException)
     void testCreateOutputFileGroupWithMissingIndexValues() {
-        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, fileBaseClass, null, "APARM", ToolFileGroupParameter.PassOptions.parameters, ToolFileGroupParameter.IndexOptions.strings)
+        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, fileBaseClass, "APARM", ToolFileGroupParameter.PassOptions.parameters, ToolFileGroupParameter.IndexOptions.strings)
         new GenericMethod("testTool", null, getBaseFile(), []).createOutputFileGroup(tfg) as FileGroup
     }
 
