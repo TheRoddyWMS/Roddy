@@ -499,7 +499,7 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
                 } else {
                     //Check if the path exists and create it if necessary.
                     if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs && !FileSystemAccessProvider.getInstance().checkDirectory(patternResult.x.getParentFile(), context, true)) {
-                        throw new RuntimeException("Output path could not be created for file: " + baseFile);
+                        throw new IOException("Output path could not be created for file: " + baseFile);
                     }
                 }
             } else {
@@ -510,10 +510,10 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
 
                 //Check if the path exists and create it if necessary.
                 if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs && !FileSystemAccessProvider.getInstance().checkDirectory(patternResult.x.getParentFile(), context, true)) {
-                    throw new RuntimeException("Output path could not be created for file: " + baseFile);
+                    throw new IOException("Output path could not be created for file: " + baseFile);
                 }
             }
-        } catch (Exception ex) {
+        } catch (RuntimeException ex) {
             if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.AutoFilenames)) {
                 // In case that we did not find a pattern and therefore could not create a filename, we will now apply an automatic filename.
 

@@ -17,7 +17,6 @@ import de.dkfz.roddy.knowledge.methods.GenericMethod
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
-import examples.Exec
 
 import java.lang.reflect.Field
 import java.lang.reflect.Type

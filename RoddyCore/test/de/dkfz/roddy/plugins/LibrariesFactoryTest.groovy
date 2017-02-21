@@ -7,7 +7,13 @@
 package de.dkfz.roddy.plugins
 
 import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import de.dkfz.roddy.execution.io.ExecutionHelper
+import de.dkfz.roddy.execution.io.ExecutionService
+import de.dkfz.roddy.execution.io.LocalExecutionService
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.RuntimeTools
 import groovy.transform.TypeCheckingMode
 import org.junit.AfterClass
@@ -71,18 +77,23 @@ public class LibrariesFactoryTest {
      */
     private static PluginInfoMap mapOfAvailablePlugins
 
-    public static TemporaryFolder pluginsBaseDir = new TemporaryFolder();
+    public static TemporaryFolder pluginsBaseDirWithCorrectEntries = new TemporaryFolder();
+
+    public static TemporaryFolder pluginsBaseDirWithInvalidEntries = new TemporaryFolder();
+
+    public static File pluginsDirWithInvalidEntries
 
     @AfterClass
     public static void tearDownClass() {
-        pluginsBaseDir.delete();
+        pluginsBaseDirWithCorrectEntries.delete();
     }
 
     @BeforeClass
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public static void setupTestDataForPluginQueueTests() {
-
-        pluginsBaseDir.create();
+        ExecutionService.initializeService(LocalExecutionService, RunMode.CLI);
+        FileSystemAccessProvider.initializeProvider(true);
+        pluginsBaseDirWithCorrectEntries.create();
 
         // Create the folder and file structure so that the loadPluginsFromDirectories method will work.
         for (String plugin : mapWithTestPlugins.keySet()) {
@@ -100,11 +111,11 @@ public class LibrariesFactoryTest {
                 if (vString[1]?.contains("z")) {
                     // Touch a zip file and continue
                     folderName += ".zip"
-                    pluginsBaseDir.newFile(folderName);
+                    pluginsBaseDirWithCorrectEntries.newFile(folderName);
                     continue
                 }
 
-                File pFolder = pluginsBaseDir.newFolder(folderName);
+                File pFolder = pluginsBaseDirWithCorrectEntries.newFolder(folderName);
                 File buildinfo = new File(pFolder, "buildinfo.txt");
 
                 // Check, if there are additions to the versioning string.
@@ -117,12 +128,17 @@ public class LibrariesFactoryTest {
                 importList.each {
                     buildinfo << "dependson=${it}\n"
                 }
+                buildinfo << ""
+
+                new File(pFolder, "buildversion.txt") << "";
+                new File(pFolder, "resources/analysisTools").mkdirs()
+                new File(pFolder, "resources/configurationFiles").mkdirs()
             }
         }
 
         //Add additional "native" plugins (DefaultPlugin, PluginBase) and the temporary plugin folder
         List<File> pluginDirectories = [
-                pluginsBaseDir.root
+                pluginsBaseDirWithCorrectEntries.root
         ]
 
         mapOfAvailablePlugins = callLoadMapOfAvailablePlugins(pluginDirectories)
@@ -139,17 +155,37 @@ public class LibrariesFactoryTest {
         assert mapOfAvailablePlugins["B"]["1.0.3-0"]?.previousInChain == mapOfAvailablePlugins["B"]["1.0.2-2"] && mapOfAvailablePlugins["B"]["1.0.3-0"]?.previousInChainConnectionType == PluginInfo.PluginInfoConnection.EXTENSION
     }
 
-    public static PluginInfoMap callLoadMapOfAvailablePlugins(List<File> additionalPluginDirectories = []) {
-        List<File> pluginDirectories = [new File(Roddy.getApplicationDirectory(), "/dist/plugins/")]
-        pluginDirectories += additionalPluginDirectories
+    @BeforeClass
+    public static void setupTestDataForPluginLoaderTest() {
+        // Create a temp directory with several valid and several invalid directories.
+        // Invalid are e.g. hidden directories, directories with malformated names, directories with missing content..
+        // TODO Might be necessary to extend this to cover Auto-Detect of Python/Java/Groovy Plugins and contents. (Jar files).
+        pluginsBaseDirWithInvalidEntries.create();
 
-        // The method is static and private and should stay that way, so get it via reflection.
-        Method loadMapOfAvailablePlugins = LibrariesFactory.getDeclaredMethod("loadMapOfAvailablePlugins", List.class);
-        loadMapOfAvailablePlugins.setAccessible(true);
+        File testSource = new File(LibrariesFactory.groovyClassLoader.getResource("LibrariesFactoryTestData.zip").file)
+        pluginsDirWithInvalidEntries = pluginsBaseDirWithInvalidEntries.root
+        ExecutionHelper.executeSingleCommand("cp -r ${testSource} ${pluginsDirWithInvalidEntries}; cd ${pluginsDirWithInvalidEntries}; unzip LibrariesFactoryTestData.zip");
+        pluginsDirWithInvalidEntries = new File(pluginsDirWithInvalidEntries, "LibrariesFactoryTestData")
+        new File(pluginsDirWithInvalidEntries, "InValidContentCantRead").setReadable(false);
+    }
+
+    public static PluginInfoMap callLoadMapOfAvailablePlugins(List<File> additionalPluginDirectories = [], boolean single = false) {
+        List<File> pluginDirectories = additionalPluginDirectories
+
+        if (!single)
+            pluginDirectories += [new File(Roddy.getApplicationDirectory(), "/dist/plugins/")]
 
         // Invoke the method and check the results.
-        mapOfAvailablePlugins = LibrariesFactory.loadMapOfAvailablePlugins(pluginDirectories)
-        return mapOfAvailablePlugins
+        return LibrariesFactory.loadMapOfAvailablePlugins(pluginDirectories)
+    }
+
+    @Test
+    public void testLoadMapOfAvailablePlugins() {
+        def availablePlugins = callLoadMapOfAvailablePlugins([pluginsDirWithInvalidEntries], true);
+        assert availablePlugins != null
+        assert availablePlugins.size() == 2
+        assert availablePlugins["ValidContent"].size() == 1
+        assert availablePlugins["Valid"].size() == 1
     }
 
     @Test
