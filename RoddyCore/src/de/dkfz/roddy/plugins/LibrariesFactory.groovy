@@ -260,23 +260,40 @@ public class LibrariesFactory extends Initializable {
     static boolean isValidPluginFolder(File directory) {
         logger.postRareInfo("  Parsing plugin folder: ${directory}");
 
+        List<String> errors = []
+
         if (!directory.isDirectory())
-            return false;
+            errors << "File is not a directory"
         if (directory.isHidden())
-            return false;
+            errors << "Directory is hidden"
         if (!directory.canRead())
-            return false;
+            errors << "Directory cannot be read"
+
+        if (errors) {
+            logger.postRareInfo((["A directory was rejected as a plugin directory because:"] + errors).join("\n\t"))
+            return false
+        }
 
         String dirName = directory.getName();
-        if (!isPluginDirectoryNameValid(dirName))
-            return false;
+        if (!isPluginDirectoryNameValid(dirName)) {
+            logger.postRareInfo("A directory was rejected as a plugin directory because its name did not match the naming rules.")
+            return false
+        }
 
         def f = FileSystemAccessProvider.getInstance();
-        if (!f.checkFile(new File(directory, "buildinfo.txt")) ||
-                !f.checkFile(new File(directory, "buildversion.txt")) ||
-                !f.checkDirectory(new File(directory, "resources/analysisTools")) ||
-                !f.checkDirectory(new File(directory, "resources/configurationFiles"))
-        ) return false
+        if (!f.checkFile(new File(directory, "buildinfo.txt")))
+            errors << "The buildinfo.txt file is missing"
+        if (!f.checkFile(new File(directory, "buildversion.txt")))
+            errors << "The buildversion.txt file is missing"
+        if (!f.checkDirectory(new File(directory, "resources/analysisTools")))
+            errors << "The analysisTools resource directory is missing"
+        if (!f.checkDirectory(new File(directory, "resources/configurationFiles")))
+            errors << "The configurationFiles resource directory is missing"
+
+        if (errors) {
+            logger.postRareInfo((["A directory was rejected as a plugin directory because:"] + errors).join("\n\t"))
+            return false
+        }
         return true
     }
 
