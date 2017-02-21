@@ -17,16 +17,16 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException
 class YAMLConverter extends ConfigurationConverter {
     @Override
     String convert(ExecutionContext context, Configuration configuration) {
-        throw new NotImplementedException();
+        throw new NotImplementedException()
     }
 
     @Override
     StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context) {
-        throw new NotImplementedException();
+        throw new NotImplementedException()
     }
 
     @Override
     String convertToXML(String text) {
-        return null
+        throw new NotImplementedException()
     }
 }

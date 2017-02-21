@@ -12,6 +12,7 @@ import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
+import de.dkfz.roddy.config.ConfigurationFactory
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.ConfigurationValueBundle
 import de.dkfz.roddy.config.InformationalConfigurationContent
@@ -346,12 +347,43 @@ class BashConverter extends ConfigurationConverter {
      * To run it faster from within IDEA, copy the content to a groovy console and start it.
      *
      * Basically a file which contains some info in the header and only config values.
+     *
+     * Example:
+     * #name aConfig
+     * #imports anotherConfig
+     * #description aConfig
+     * #usedresourcessize m
+     * #analysis A,aAnalysis,TestPlugin:current
+     * #analysis B,bAnalysis,TestPlugin:current
+     * #analysis C,aAnalysis,TestPlugin:current
+     *
+     * outputBaseDirectory=/data/michael/temp/roddyLocalTest/testproject/rpp
+     * preventJobExecution=false
+     * UNZIPTOOL=gunzip
+     * ZIPTOOL_OPTIONS="-c"
+     * sampleDirectory=/data/michael/temp/roddyLocalTest/testproject/vbp/A100/${sample}/${SEQUENCER_PROTOCOL}
+     *
      * @param text
      * @return
      */
     String convertToXML(String text) {
         String previousLine = ""
         List<String> allLines = text.readLines()
+        List<String> header = extractHeader(allLines)
+
+        List<String> xmlLines = [];
+        xmlLines << "<configuration name='${getHeaderValue(header, "name", "")}'".toString()
+
+        xmlLines += convertHeader(header)
+
+        xmlLines += convertConfigurationValues(allLines, header, previousLine)
+
+        xmlLines << "</configuration>"
+
+        return xmlLines.join("\n")
+    }
+
+    private List<String> extractHeader(List<String> allLines) {
         List<String> header = []
         for (int i = 0; i < allLines.size(); i++) {
             if (!allLines[i]) continue;
@@ -363,10 +395,12 @@ class BashConverter extends ConfigurationConverter {
 
         if (!header)
             throw new IOException("Simple Bash configuration files need a valid header")
+        header
+    }
 
-        // Convert the Bash header
-        List<String> xmlLines = [];
-        xmlLines << "<configuration name='${getHeaderValue(header, "name", "")}'".toString()
+    /** Convert the Bash header **/
+    private List<String> convertHeader(List<String> header) {
+        List<String> xmlLines = []
         xmlLines << "imports='" + getHeaderValue(header, "imports", "") + "'"
         xmlLines << "description='" + getHeaderValue(header, "description", "") + "'"
         xmlLines << "usedresourcessize='" + getHeaderValue(header, "usedresourcessize", "l") + "' >"
@@ -375,14 +409,22 @@ class BashConverter extends ConfigurationConverter {
         getHeaderValues(header, "analysis", []).each {
             String analysis ->
                 String[] split = analysis.split(StringConstants.COMMA)
+                if(split.size() < 3) {
+                    ConfigurationFactory.logger.severe("The analysis string ${analysis} in the Bash configuration file is malformed.")
+                    return
+                }
                 String id = split[0]
                 String cfg = split[1]
                 String plg = split[2]
                 xmlLines << "    <analysis id='${id}' configuration='${cfg}' useplugin='${plg}' />".toString()
         }
         xmlLines << "  </availableAnalyses>"
+        return xmlLines
+    }
 
-        // Convert the configuration values.
+    /** Convert the configuration values.**/
+    private List<String> convertConfigurationValues(List<String> allLines, List<String> header, String previousLine) {
+        List<String> xmlLines = []
         xmlLines << "  <configurationvalues>"
 
         allLines[header.size()..-1].each {
@@ -414,9 +456,7 @@ class BashConverter extends ConfigurationConverter {
             previousLine = it;
         }
         xmlLines << "  </configurationvalues>"
-        xmlLines << "</configuration>"
-
-        return xmlLines.join("\n")
+        return xmlLines
     }
 
     public static String getHeaderValue(List<String> header, String id, String defaultValue) {

@@ -201,10 +201,10 @@ public class ConfigurationFactory {
         if (file.name.endsWith(".sh")) // Easy Bash importer
             return loadAndPreprocessBashFile(file.text)
 
-        if (file.name.endsWith(".yml")) // YAML import
-            return loadAndPreprocessYAMLFile(file.text)
+//        if (file.name.endsWith(".yml")) // YAML import
+//            return loadAndPreprocessYAMLFile(file.text)
 
-        throw new IOException("Unknown file type ${file.name}")
+        throw new UnknownConfigurationFileTypeException("Unknown file type ${file.name} for a configuration file.")
     }
 
     static String loadAndPreprocessYAMLFile(String s) {
