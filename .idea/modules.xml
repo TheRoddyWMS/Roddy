@@ -4,9 +4,9 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/dist/plugins/DefaultPlugin/DefaultPlugin.iml" filepath="$PROJECT_DIR$/dist/plugins/DefaultPlugin/DefaultPlugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/dist/plugins/PluginBase/PluginBase.iml" filepath="$PROJECT_DIR$/dist/plugins/PluginBase/PluginBase.iml" />
-      <module fileurl="file://$PROJECT_DIR$/RoddyCore/RoddyCore.iml" filepath="$PROJECT_DIR$/RoddyCore/RoddyCore.iml" />
       <module fileurl="file://$PROJECT_DIR$/dist/plugins/TestPluginWithJarFile/TestPluginWithJarFile.iml" filepath="$PROJECT_DIR$/dist/plugins/TestPluginWithJarFile/TestPluginWithJarFile.iml" />
       <module fileurl="file://$PROJECT_DIR$/dist/plugins/TestPluginWithoutJarFile/TestPluginWithoutJarFile.iml" filepath="$PROJECT_DIR$/dist/plugins/TestPluginWithoutJarFile/TestPluginWithoutJarFile.iml" />
+      <module fileurl="file://$PROJECT_DIR$/RoddyCore/RoddyCore.iml" filepath="$PROJECT_DIR$/RoddyCore/RoddyCore.iml" />
     </modules>
   </component>
 </project>

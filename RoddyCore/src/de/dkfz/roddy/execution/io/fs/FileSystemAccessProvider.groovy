@@ -31,7 +31,7 @@ import java.util.concurrent.locks.ReentrantLock
  */
 @groovy.transform.CompileStatic
 public class FileSystemAccessProvider extends CacheProvider {
-    private static LoggerWrapper logger = LoggerWrapper.getLogger(FileSystemAccessProvider.getClass().getName());
+    private static LoggerWrapper logger = LoggerWrapper.getLogger(FileSystemAccessProvider.class.getName());
     private static FileSystemAccessProvider fileSystemAccessProvider = null;
 
     /**
