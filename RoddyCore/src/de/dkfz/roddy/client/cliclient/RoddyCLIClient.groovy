@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -26,8 +26,8 @@ import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.execution.jobs.ProcessingCommands
 import de.dkfz.roddy.tools.LoggerWrapper
-import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.ScannerWrapper
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
 import static de.dkfz.roddy.Constants.ENV_LINESEPARATOR as NEWLINE
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
@@ -520,7 +520,7 @@ public class RoddyCLIClient {
 
                 try {
                     ToolEntry tool = configuration.getTools().getValue(job.getToolID());
-                    ToolEntry.ResourceSet resourceSet = tool.getResourceSet(configuration);
+                    ResourceSet resourceSet = tool.getResourceSet(configuration);
                     ProcessingCommands convertResourceSet = JobManager.getInstance().convertResourceSet(configuration, resourceSet);
                     resources = convertResourceSet.toString();
 

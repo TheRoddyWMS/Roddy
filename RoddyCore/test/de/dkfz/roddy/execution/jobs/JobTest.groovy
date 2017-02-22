@@ -7,19 +7,10 @@
 package de.dkfz.roddy.execution.jobs
 
 import de.dkfz.roddy.config.TestFileStageSettings
-import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder;
 import de.dkfz.roddy.knowledge.files.BaseFile
-import de.dkfz.roddy.knowledge.files.FileStageSettings
 import groovy.transform.CompileStatic;
 import org.junit.Test;
-import org.reflections.vfs.Vfs;
-
-import java.io.File;
-
-import static org.junit.Assert.*;
-import de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForBaseFiles
-import de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForManualCreation
 
 /**
  * Created by heinold on 10.01.17.
@@ -29,7 +20,7 @@ public class JobTest {
     @CompileStatic
     public static class TestFile extends BaseFile {
 
-        public TestFile(de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForSourceFiles helper) {
+        public TestFile(BaseFile.ConstructionHelperForSourceFiles helper) {
             super(helper);
         }
 

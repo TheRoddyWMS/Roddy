@@ -8,8 +8,8 @@ package de.dkfz.roddy.client.rmiclient;
 
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
-import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
+import de.dkfz.roddy.tools.LoggerWrapper;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;

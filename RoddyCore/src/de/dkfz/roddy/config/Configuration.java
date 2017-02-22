@@ -6,7 +6,6 @@
 
 package de.dkfz.roddy.config;
 
-import de.dkfz.roddy.core.ProjectFactory;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.config.validation.ConfigurationValidationError;
 import de.dkfz.roddy.core.ExecutionContext;

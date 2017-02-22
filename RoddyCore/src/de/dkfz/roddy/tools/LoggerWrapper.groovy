@@ -8,13 +8,9 @@ package de.dkfz.roddy.tools;
 
 import de.dkfz.roddy.Constants;
 import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.core.InfoObject;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
+import de.dkfz.roddy.core.InfoObject
+import org.apache.commons.io.filefilter.WildcardFileFilter
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.logging.*;
 
 /**

@@ -9,19 +9,17 @@ package de.dkfz.roddy.execution.jobs
 import de.dkfz.roddy.AvailableFeatureToggles;
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.config.FilenamePattern
 import de.dkfz.roddy.config.FilenamePatternHelper;
 import de.dkfz.roddy.execution.io.ExecutionService
-import de.dkfz.roddy.tools.LoggerWrapper;
-import de.dkfz.roddy.tools.RoddyIOHelperMethods;
+import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.ExecutionContextError;
 import de.dkfz.roddy.core.ExecutionContextLevel;
 import de.dkfz.roddy.knowledge.files.BaseFile
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.*
 import java.util.concurrent.atomic.AtomicLong;
 
 import static de.dkfz.roddy.Constants.NO_VALUE

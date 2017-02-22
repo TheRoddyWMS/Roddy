@@ -19,8 +19,10 @@ import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.tools.Tuple2
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.core.Initializable
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.TypeCheckingMode
 
+import java.lang.reflect.Method
 import java.util.regex.Pattern
 
 /**
@@ -112,15 +114,58 @@ public class LibrariesFactory extends Initializable {
 
     private Map<PluginInfo, List<String>> classListCacheByPlugin = [:];
 
-    public Class searchForClass(String name) {
+    private Package[] _cachedRoddyPackages = null;
+
+    Package[] getRoddyPackages() {
+        if (!_cachedRoddyPackages) {
+            def gcl = getGroovyClassLoader()
+            Method getPackages //= gcl.class.getDeclaredMethod("getPackages")
+            for (Class clc = gcl.class; clc != null; clc = clc.superclass) {
+                def foundMethod = clc.getDeclaredMethods().find { Method m -> m.name == "getPackages" }
+                if (!foundMethod)
+                    continue;
+                getPackages = foundMethod;
+                break;
+            }
+            if (!getPackages) throw new RuntimeException("The classloader hierarchy does not contain a valid classloader with the getPackages method")
+
+            // Make method accessible
+            getPackages.setAccessible(true)
+            Package[] packageList = getPackages.invoke(gcl) as Package[]
+            // Invoke it and get list of all gcl loaded packages
+            Package[] roddyPackages = packageList.findAll { Package p -> p.name.startsWith(Roddy.package.name) }
+            // Find all Roddy packages
+            _cachedRoddyPackages = roddyPackages
+            return roddyPackages
+        }
+        return _cachedRoddyPackages
+    }
+
+    Class searchForClass(String name) {
+        def groovyClassLoader = getGroovyClassLoader()
         if (name.contains(".")) {
-            return getGroovyClassLoader().loadClass(name);
+            return groovyClassLoader.loadClass(name);
         } else {
-            //Search synthetic classes first.
+            // Search synthetic classes first.
             if (getSynthetic().map.containsKey(name))
                 return getSynthetic().map[name];
 
-            // SEVERE TODO This is a very quick hack and heavily depends on the existence of jar on the system!
+            // Search core classes second. Find packages of Roddy first. Search for the class in every! package.
+            // This is some bad reflection, but I won't get the package information without it!
+            Class foundCoreClass = null;
+            for (Package p in getRoddyPackages()) {
+                String className = "${p.name}.${name}"
+                foundCoreClass = tryLoadClass(className)
+                if (foundCoreClass) break
+                // Ignore if it is empty, we will fall back to the plugin strategy afterwards! Or search in the next package
+            }
+
+            // We found it in core, so return it.
+            if (foundCoreClass)
+                return foundCoreClass
+
+            // TODO This is a very quick hack and heavily depends on the existence of jar on the system!
+            // Java normally ships jar with it, so it might not be the SEVERE / SUPERBAD bad hack.
             List<String> listOfClasses = []
             synchronized (loadedPlugins) {
                 loadedPlugins.each {
@@ -149,7 +194,7 @@ public class LibrariesFactory extends Initializable {
                 return null;
             }
             if (listOfClasses.size() == 1) {
-                return getGroovyClassLoader().loadClass(listOfClasses[0]);
+                return groovyClassLoader.loadClass(listOfClasses[0]);
             }
             logger.severe("No class found for ${name}")
             return null;
@@ -369,7 +414,7 @@ public class LibrariesFactory extends Initializable {
         for (Tuple2<File, String[]> _entry : collectedPluginDirectories) {
             logger.postRareInfo("Processing plugin entry: ${_entry.x}")
             File pEntry = _entry.x;
-            String[] splitName = _entry.y;//pEntry.getName().split(StringConstants.SPLIT_UNDERSCORE); //First split for .zip then for the version
+            String[] splitName = _entry.y;
 
             String pluginName = splitName[0];
             String[] pluginVersionInfo = splitName.length > 1 ? splitName[1].split(StringConstants.SPLIT_MINUS) : [PLUGIN_VERSION_CURRENT] as String[];
@@ -387,7 +432,8 @@ public class LibrariesFactory extends Initializable {
             File prodEntry = null;
             File zipFile = null;
 
-            if (pEntry.getName().endsWith(".zip")) { // Zip files are handled differently and cannot be checked for contents!
+            if (pEntry.getName().endsWith(".zip")) {
+                // Zip files are handled differently and cannot be checked for contents!
                 zipFile = pEntry;
                 if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.UnzipZippedPlugins)) {
                     if (!new File(zipFile.getAbsolutePath()[0..-5]).exists()) {
@@ -415,7 +461,8 @@ public class LibrariesFactory extends Initializable {
                 develEntry = pEntry;
             }
 
-            if (!prodEntry && !develEntry) { //Now we might have a plugin without a jar file. This is allowed to happen since 2.2.87
+            if (!prodEntry && !develEntry) {
+                //Now we might have a plugin without a jar file. This is allowed to happen since 2.2.87
                 prodEntry = pEntry;
             }
 
@@ -522,24 +569,6 @@ public class LibrariesFactory extends Initializable {
         }
         return pluginsToActivate;
     }
-
-//    /**
-//     * Get a list of all available plugins in their most recent version...
-//     * @return
-//     */
-//    public List<PluginInfo> getAvailablePluginVersion() {
-//        List<PluginInfo> mostCurrentPlugins = [];
-//        PluginInfoMap availablePlugins = loadMapOfAvailablePluginsForInstance();
-//        availablePlugins.each {
-//            String pluginID, Map<String, PluginInfo> versions ->
-//                if (versions.keySet().contains(PLUGIN_VERSION_CURRENT))
-//                    mostCurrentPlugins << versions[PLUGIN_VERSION_CURRENT];
-//                else
-//                    mostCurrentPlugins << versions[versions.keySet().last()]
-//        }
-//
-//        return mostCurrentPlugins;
-//    }
 
     public static boolean addFile(File f) throws IOException {
         return addURL(f.toURI().toURL());

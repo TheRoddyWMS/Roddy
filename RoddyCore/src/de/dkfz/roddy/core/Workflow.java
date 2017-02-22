@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -8,10 +8,12 @@ package de.dkfz.roddy.core;
 
 import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.knowledge.files.BaseFile;
+import de.dkfz.roddy.knowledge.files.FileGroup;
 import de.dkfz.roddy.knowledge.files.FileObject;
 import de.dkfz.roddy.knowledge.methods.GenericMethod;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * A worklow can be created and executed to process a set of data.
@@ -84,6 +86,14 @@ public abstract class Workflow {
      */
     protected FileObject call(String toolName, BaseFile input, Object... additionalInput) {
         return GenericMethod.callGenericTool(toolName, input, additionalInput);
+    }
+
+    protected FileGroup callWithOutputFileGroup(String toolName, BaseFile input, int numericCount, Object... additionalInput) {
+        return GenericMethod.callGenericToolWithFileGroupOutput(toolName, input, numericCount, additionalInput);
+    }
+
+    protected FileGroup callWithOutputFileGroup(String toolName, BaseFile input, List<String> indices, Object... additionalInput) {
+        return GenericMethod.callGenericToolWithFileGroupOutput(toolName, input, indices, additionalInput);
     }
 
     /**

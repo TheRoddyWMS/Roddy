@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -9,6 +9,8 @@ package de.dkfz.roddy.plugins
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.knowledge.files.BaseFile
+import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import de.dkfz.roddy.execution.io.ExecutionHelper
 import de.dkfz.roddy.execution.io.ExecutionService
@@ -260,15 +262,38 @@ public class LibrariesFactoryTest {
         Map<String, PluginInfo> pluginQueueWODefaultLibs = LibrariesFactory.buildupPluginQueue(mapOfAvailablePlugins, ["D:0.9.0"] as String[]);
         assert pluginQueueWODefaultLibs != null;
         assert pluginQueueWODefaultLibs["PluginBase"].prodVersion == "current" &&
-                pluginQueueWODefaultLibs["DefaultPlugin"].prodVersion == "current";
+               pluginQueueWODefaultLibs["DefaultPlugin"].prodVersion == "current";
     }
 
+    @Test
+    void testGetRoddyPackages() {
+        Package[] list = LibrariesFactory.getInstance().getRoddyPackages()
+        assert list.findAll { Package p -> p.name.startsWith(Roddy.package.name)} == list
+    }
+
+    @Test
+    public void testSearchForClass() {
+        Class _cls = LibrariesFactory.getInstance().searchForClass("GenericFileGroup")
+        assert _cls == GenericFileGroup
+    }
+
+    @Test
+    public void testLoadRealOrSyntheticClassRealClass() {
+        Class _cls = LibrariesFactory.getInstance().loadRealOrSyntheticClass("GenericFileGroup", "FileGroup");
+        assert _cls == GenericFileGroup
+    }
+
+    @Test
+    public void testLoadRealOrSyntheticClassSynthClass() {
+        Class _cls = LibrariesFactory.getInstance().loadRealOrSyntheticClass("ASyntheticFileGroup", "FileGroup");
+        assert _cls.name.endsWith("ASyntheticFileGroup")
+    }
 
     @Test
     public void testGenerateSyntheticFileClassWithParentClass() {
         Class _cls = LibrariesFactory.generateSyntheticFileClassWithParentClass("TestClass", "BaseFile", new GroovyClassLoader());
         assert _cls != null && _cls.name.equals(LibrariesFactory.SYNTHETIC_PACKAGE + ".TestClass");
         assert _cls.getDeclaredConstructors().size() == 1;
-        assert _cls.getDeclaredConstructors()[0].parameterTypes[0] == de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForBaseFiles
+        assert _cls.getDeclaredConstructors()[0].parameterTypes[0] == BaseFile.ConstructionHelperForBaseFiles
     }
 }
