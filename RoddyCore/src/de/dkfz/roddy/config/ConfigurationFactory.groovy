@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.config
 
+import de.dkfz.roddy.config.converters.BashConverter
+import de.dkfz.roddy.config.converters.YAMLConverter
 import de.dkfz.roddy.knowledge.brawlworkflows.BrawlWorkflow
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
@@ -88,7 +90,7 @@ public class ConfigurationFactory {
                     logger.log(Level.SEVERE, "Cannot read from configuration directory ${baseDir.absolutePath}, does the folder exist und do you have access (read/execute) rights to it?")
                     throw new RuntimeException("Cannot access (read and execute) configuration directory '${baseDir}'")
                 }
-                File[] files = baseDir.listFiles((FileFilter) new WildcardFileFilter("*.xml"));
+                File[] files = baseDir.listFiles((FileFilter) new WildcardFileFilter(["*.xml", "*.sh", "*.yml"]));
                 if (files == null) {
                     logger.info("No configuration files found in path ${baseDir.getAbsolutePath()}");
                 }
@@ -192,6 +194,27 @@ public class ConfigurationFactory {
         return availableConfigurationsByType.get(type, []);
     }
 
+    public static String loadAndPreprocessTextFromFile(File file) {
+        if (file.name.endsWith(".xml")) // Default behaviour
+            return file.text
+
+        if (file.name.endsWith(".sh")) // Easy Bash importer
+            return loadAndPreprocessBashFile(file.text)
+
+//        if (file.name.endsWith(".yml")) // YAML import
+//            return loadAndPreprocessYAMLFile(file.text)
+
+        throw new UnknownConfigurationFileTypeException("Unknown file type ${file.name} for a configuration file.")
+    }
+
+    static String loadAndPreprocessYAMLFile(String s) {
+        return new YAMLConverter().convertToXML(s)
+    }
+
+    static String loadAndPreprocessBashFile(String s) {
+        return new BashConverter().convertToXML(s)
+    }
+
     /**
      * Loads basic info about a configuration file.
      *
@@ -202,7 +225,7 @@ public class ConfigurationFactory {
      * @return An object containing basic information about a configuration.
      */
     public InformationalConfigurationContent loadInformationalConfigurationContent(File file) {
-        String text = file.text;
+        String text = loadAndPreprocessTextFromFile(file);
         NodeChild xml = (NodeChild) new XmlSlurper().parseText(text);
         return _loadInformationalConfigurationContent(file, text, xml, null);
     }
@@ -442,7 +465,7 @@ public class ConfigurationFactory {
                     if (filenamePatterns.containsKey(fp.getID())) {
                         logger.severe("Duplicate filename pattern: " + (new groovy.xml.StreamingMarkupBuilder().bindNode(filename) as String));
                     }
-                        filenamePatterns.put(fp.getID(), fp);
+                    filenamePatterns.put(fp.getID(), fp);
                 } catch (Exception ex) {
                     logger.severe("${ex.message}: " + (new groovy.xml.StreamingMarkupBuilder().bindNode(filename) as String));
                 }
@@ -544,9 +567,9 @@ public class ConfigurationFactory {
         String[] splitResult = scriptParameter.trim().split(":")
         if (splitResult.size() == 1) {
             //any tool and param
-            toolName= null
+            toolName = null
             parameterName = splitResult.first()
-        } else if (splitResult.size() == 2){
+        } else if (splitResult.size() == 2) {
             toolName = splitResult[0]
             parameterName = splitResult[1]
 
@@ -625,7 +648,7 @@ public class ConfigurationFactory {
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    public ToolEntry readProcessingTool(NodeChild tool, Configuration config){
+    public ToolEntry readProcessingTool(NodeChild tool, Configuration config) {
         try {
             String toolID = tool.@name.text()
             String path = tool.@value.text()
@@ -653,8 +676,8 @@ public class ConfigurationFactory {
                     } else if (cName == "output") {
                         outputParameters << parseToolParameter(toolID, child);
                     } else if (cName == "script") {
-                        if (child.@value.text() != ""){
-                            currentEntry.setInlineScript(child.text().trim().replaceAll( '<!\\[CDATA\\[', "" ).replaceAll( ']]>', "" ))
+                        if (child.@value.text() != "") {
+                            currentEntry.setInlineScript(child.text().trim().replaceAll('<!\\[CDATA\\[', "").replaceAll(']]>', ""))
                             currentEntry.setInlineScriptName(child.@value.text())
                         }
 

@@ -12,14 +12,13 @@
     <orderEntry type="library" name="roddyBundledLibraries" level="project" />
     <orderEntry type="module" module-name="DefaultPlugin" />
     <orderEntry type="module" module-name="PluginBase" />
-    <orderEntry type="module" module-name="RoddyCore" />
+    <orderEntry type="module" module-name="roddy" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../PluginBase/PluginBase.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <LIBRARY_FILE />
         <SOURCES />
       </library>
     </orderEntry>
