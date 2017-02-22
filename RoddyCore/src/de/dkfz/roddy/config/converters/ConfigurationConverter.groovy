@@ -74,4 +74,11 @@ public abstract class ConfigurationConverter {
     }
 
     public abstract StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context);
+
+    /**
+     * Converts "easy" files to xml configs.
+     * @param text
+     * @return
+     */
+    public abstract String convertToXML(String text);
 }
