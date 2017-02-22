@@ -310,6 +310,22 @@ public class FileSystemAccessProvider extends CacheProvider {
         return result;
     }
 
+    public boolean checkDirectory(File f, boolean createMissing = false) {
+        if (ExecutionService.getInstance().canReadFiles()) {
+            return ExecutionService.getInstance().isFileReadable(f);
+        } else {
+            if (ExecutionService.getInstance().isLocalService()) {
+                boolean result = f.canRead() && f.isDirectory();
+                if (!result && createMissing) {
+                    f.mkdirs();
+                    result = checkDirectory(f, false)
+                }
+                return result;
+            } else
+                throw new RuntimeException("Not implemented yet!");
+        }
+    }
+
     /**
      * Checks if a directory is existing and accessible.
      * @param f The directory which should be checked.
@@ -358,7 +374,7 @@ public class FileSystemAccessProvider extends CacheProvider {
             return ExecutionService.getInstance().isFileReadable(f);
         } else {
             if (ExecutionService.getInstance().isLocalService()) {
-                return f.canRead();
+                return f.canRead() && f.isFile();
             } else
                 throw new RuntimeException("Not implemented yet!");
         }

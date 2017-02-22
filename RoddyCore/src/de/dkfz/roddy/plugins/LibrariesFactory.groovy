@@ -11,6 +11,8 @@ import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.client.RoddyStartupModes
 import de.dkfz.roddy.client.cliclient.CommandLineCall
 import de.dkfz.roddy.execution.io.ExecutionHelper
+import de.dkfz.roddy.execution.io.LocalExecutionService
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.tools.*
@@ -274,38 +276,70 @@ public class LibrariesFactory extends Initializable {
 
         //Search all plugin folders and also try to join those if possible.
         List<Tuple2<File, String[]>> collectedPluginDirectories = [];
-        def blacklist = [".idea", "out", "Template", ".svn"]
         boolean warningUnzippedDirectoriesMissing = false;
 
         for (File pBaseDirectory : pluginDirectories) {
             logger.postSometimesInfo("Parsing plugins folder: ${pBaseDirectory}");
+            if (!pBaseDirectory.exists()) {
+                logger.warning("The plugins directory $pBaseDirectory does not exist.")
+                continue;
+            }
+            if (!pBaseDirectory.canRead()) {
+                logger.warning("The plugins directory $pBaseDirectory is not readable.")
+            }
+
             File[] directoryList = pBaseDirectory.listFiles().sort() as File[];
             for (File pEntry in directoryList) {
-                logger.postRareInfo("  Parsing plugin folder: ${pEntry}");
-                String dirName = pEntry.getName();
-                boolean isZip = dirName.endsWith(".zip");
-                boolean unzippedDirectoryExists = false;
-                if (isZip) {
-                    dirName = dirName[0..-5]; // Remove .zip from the end.
-                    unzippedDirectoryExists = new File(dirName).exists();
-                    if (isZip && !unzippedDirectoryExists) warningUnzippedDirectoriesMissing = true;
-                    //set warn unzipped dir missing.
-                }
 
-                String[] splitName = dirName.split(StringConstants.SPLIT_UNDERSCORE);
-                //First split for .zip then for the version
-                String pluginName = splitName[0];
-                if ((!pEntry.isDirectory() && !isZip) || isZip || !pluginName || blacklist.contains(pluginName))
+                if (!isValidPluginFolder(pEntry))
                     continue;
+
+                String[] splitName = pEntry.name.split(StringConstants.SPLIT_UNDERSCORE); //First split for .zip then for the version
                 collectedPluginDirectories << new Tuple2<File, String[]>(pEntry, splitName);
             }
         }
 
-        if (warningUnzippedDirectoriesMissing) {
-            logger.warning("There are plugins in your directories which are not unzipped. If some plugins are not found, please consider to check your zipped plugins.")
+        return loadPluginsFromDirectories(collectedPluginDirectories)
+    }
+
+    static boolean isValidPluginFolder(File directory) {
+        logger.postRareInfo("  Parsing plugin folder: ${directory}");
+
+        List<String> errors = []
+
+        if (!directory.isDirectory())
+            errors << "File is not a directory"
+        if (directory.isHidden())
+            errors << "Directory is hidden"
+        if (!directory.canRead())
+            errors << "Directory cannot be read"
+
+        if (errors) {
+            logger.postRareInfo((["A directory was rejected as a plugin directory because:"] + errors).join("\n\t"))
+            return false
         }
 
-        return loadPluginsFromDirectories(collectedPluginDirectories)
+        String dirName = directory.getName();
+        if (!isPluginDirectoryNameValid(dirName)) {
+            logger.postRareInfo("A directory was rejected as a plugin directory because its name did not match the naming rules.")
+            return false
+        }
+
+        def f = FileSystemAccessProvider.getInstance();
+        if (!f.checkFile(new File(directory, "buildinfo.txt")))
+            errors << "The buildinfo.txt file is missing"
+        if (!f.checkFile(new File(directory, "buildversion.txt")))
+            errors << "The buildversion.txt file is missing"
+        if (!f.checkDirectory(new File(directory, "resources/analysisTools")))
+            errors << "The analysisTools resource directory is missing"
+        if (!f.checkDirectory(new File(directory, "resources/configurationFiles")))
+            errors << "The configurationFiles resource directory is missing"
+
+        if (errors) {
+            logger.postRareInfo((["A directory was rejected as a plugin directory because:"] + errors).join("\n\t"))
+            return false
+        }
+        return true
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
