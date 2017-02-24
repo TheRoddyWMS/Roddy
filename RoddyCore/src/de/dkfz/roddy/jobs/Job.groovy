@@ -35,16 +35,6 @@ import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 @groovy.transform.CompileStatic
 public class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job {
 
-    public static class FakeJob extends Job {
-        public FakeJob() {
-            super(null, "Fakejob", null, [:]);
-        }
-
-        public FakeJob(ExecutionContext context) {
-            super(context, "Fakejob", null, null);
-        }
-    }
-
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(Job.class.getSimpleName());
 
     private JobType jobType = JobType.STANDARD;

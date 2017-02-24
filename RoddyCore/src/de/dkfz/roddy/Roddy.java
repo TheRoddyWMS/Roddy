@@ -37,6 +37,7 @@ import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.*;
 import java.util.*;
 
 import static de.dkfz.roddy.RunMode.CLI;
@@ -491,10 +492,11 @@ public class Roddy {
         /** Get the constructor which comes with no parameters */
         Constructor first = jobManagerClass.getDeclaredConstructor();
         jobManager = (JobManager) first.newInstance();
-
+        jobManager.setTrackingOfUserJobsEnabled(trackUserJobsOnly);
+        jobManager.setQueryOnlyStartedJobs(trackOnlyStartedJobs);
+        jobManager.setUserIDForQueries(FileSystemAccessProvider.getInstance().callWhoAmI());
         // Was in Command
 //        new File(configuration.getProperty("loggingDirectory", "/"))
-
     }
 
     private static JobManager jobManager;

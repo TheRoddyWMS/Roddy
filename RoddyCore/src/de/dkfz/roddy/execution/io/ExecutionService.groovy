@@ -227,14 +227,16 @@ public abstract class ExecutionService extends CacheProvider {
         if (res.successful) {
             exID = Roddy.getJobManager().parseJobID(res.processID ?: res.resultLines[0]);
             if (!exID) exID = Roddy.getJobManager().parseJobID(res.resultLines[0]);
-
+            ExecutionContext currentContext = command.getTag(Constants.COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext
             command.setExecutionID(Roddy.getJobManager().createJobDependencyID(command.getJob(), exID));
-            Roddy.getJobManager().storeJobStateInfo(command.getJob());
+            String jobInfo = Roddy.getJobManager().getJobStateInfoLine(command.getJob());
+            FileSystemAccessProvider.getInstance().appendLineToFile(true, currentContext.getRuntimeService().getNameOfJobStateLogFile(currentContext), jobInfo, false);
         }
         return exID;
     }
 
     public static void storeParameterFile(Command command) {
+        ExecutionContext currentContext = command.getTag(Constants.COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext
         String convertedParameters = command.getParametersForParameterFile().collect({
             ConfigurationValue cval ->
                 FileSystemAccessProvider.getInstance().getConfigurationConverter().convertConfigurationValue(cval, command.getExecutionContext()).toString();
