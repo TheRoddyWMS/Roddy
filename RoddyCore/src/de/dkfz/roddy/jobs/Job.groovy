@@ -1,33 +1,39 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.execution.jobs
+package de.dkfz.roddy.jobs
 
-import de.dkfz.roddy.AvailableFeatureToggles;
+import de.dkfz.eilslabs.batcheuphoria.jobs.Command
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobDependencyID
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobResult
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobType
+import de.dkfz.eilslabs.batcheuphoria.jobs.ProcessingCommands
+import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.config.FilenamePatternHelper;
+import de.dkfz.roddy.config.Configuration
+import de.dkfz.roddy.config.FilenamePatternHelper
+import de.dkfz.roddy.core.ExecutionContext
+import de.dkfz.roddy.core.ExecutionContextError
+import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.execution.io.ExecutionService
-import de.dkfz.roddy.tools.LoggerWrapper
-import de.dkfz.roddy.config.Configuration;
-import de.dkfz.roddy.core.ExecutionContext;
-import de.dkfz.roddy.core.ExecutionContextError;
-import de.dkfz.roddy.core.ExecutionContextLevel;
 import de.dkfz.roddy.knowledge.files.BaseFile
+import de.dkfz.roddy.knowledge.files.FileGroup
+import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
-import java.util.*
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicLong
 
 import static de.dkfz.roddy.Constants.NO_VALUE
-import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER;
+import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 
 @groovy.transform.CompileStatic
-public class Job {
-//    implements } Serializable {
+public class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job {
 
     public static class FakeJob extends Job {
         public FakeJob() {
@@ -60,7 +66,8 @@ public class Job {
     /**
      * The current context.
      */
-    public transient final ExecutionContext context;
+    public final ExecutionContext context;
+
     /**
      * The tool you want to call.
      */
@@ -153,7 +160,7 @@ public class Job {
                         dependencyIDs << jobid;
                     }
                 } catch (Exception ex) {
-                    logger.severe("Something is wrong for file: " + bf);
+                    logger.severe("No job dependency id could be retrieved from BaseFile: " + bf);
                     logger.postSometimesInfo(ex.message)
                     logger.postSometimesInfo(RoddyIOHelperMethods.getStackTraceAsString(ex))
                 }
@@ -239,6 +246,29 @@ public class Job {
         return newParameters;
     }
 
+    public static String createJobName(BaseFile bf, String toolName, boolean reduceLevel) {
+        return createJobName(bf, toolName, reduceLevel, null);
+    }
+
+    public static String createJobName(BaseFile bf, String toolName, boolean reduceLevel, List<BaseFile> inputFilesForSizeCalculation) {
+        ExecutionContext rp = bf.getExecutionContext();
+        String runtime = rp.getTimestampString();
+        StringBuilder sb = new StringBuilder();
+        sb.append("r").append(runtime).append("_").append(bf.getPid()).append("_").append(toolName);
+        return sb.toString();
+    }
+
+    public static String createJobName(ExecutionContext rp, String postfix) {
+        String runtime = rp.getTimestampString();
+        StringBuilder sb = new StringBuilder();
+        sb.append("r").append(runtime).append("_").append(rp.getDataSet().getId()).append("_").append(postfix);
+        return sb.toString();
+    }
+
+    public static String createJobName(FileGroup fg, String toolName, boolean reduceLevel, List<BaseFile> inputFilesForSizeCalculation) {
+        BaseFile bf = (BaseFile) fg.getFilesInGroup().get(0);
+        return createJobName(bf, toolName, reduceLevel, inputFilesForSizeCalculation);
+    }
 
     public static File replaceParametersInFilePath(BaseFile bf, Map<String, Object> parameters) {
         //TODO: It can occur that the regeneration of the filename is not valid!
@@ -351,7 +381,8 @@ public class Job {
 
         //Execute the job or create a dummy command.
         if (runJob) {
-            cmd = executeJob(dependencies, dbgMessage)
+            runResult = Roddy.getJobManager().runJob(this)
+            cmd = runResult.command
             jobDetailsLine << " => " + cmd.getExecutionID()
             System.out.println(jobDetailsLine.toString())
             if (cmd.getExecutionID() == null) {
@@ -361,11 +392,10 @@ public class Job {
                 }
             }
         } else {
-            cmd = JobManager.getInstance().createDummyCommand(this, context, jobName, arrayIndices);
+            runResult = Roddy.getJobManager().runJob(this, true);
             this.setJobState(JobState.DUMMY);
         }
 
-        runResult = new JobResult(context, cmd, cmd.getExecutionID(), runJob, isArrayJob, tool, parameters, parentFiles);
         //For auto filenames. Get the job id and push propagate it to all filenames.
 
         if (runResult?.jobID?.shortID) {
@@ -383,7 +413,7 @@ public class Job {
         if (isArrayJob) {
             postProcessArrayJob(runResult)
         } else {
-            JobManager.getInstance().addJobStatusChangeListener(this);
+            Roddy.getJobManager().addJobStatusChangeListener(this);
         }
         lastCommand = cmd;
         return runResult;
@@ -395,11 +425,11 @@ public class Job {
             File srcTool = configuration.getSourceToolPath(toolID);
 
             //Look in the configuration for resource options
-            ProcessingCommands extractedPCommands = JobManager.getInstance().getProcessingCommandsFromConfiguration(configuration, toolID);
+            ProcessingCommands extractedPCommands = Roddy.getJobManager().getProcessingCommandsFromConfiguration(configuration, toolID);
 
             //Look in the script if no options are configured
             if (extractedPCommands == null)
-                extractedPCommands = JobManager.getInstance().extractProcessingCommandsFromToolScript(srcTool);
+                extractedPCommands = Roddy.getJobManager().extractProcessingCommandsFromToolScript(srcTool);
 
             if (extractedPCommands != null)
                 this.addProcessingCommand(extractedPCommands);
@@ -517,13 +547,13 @@ public class Job {
         //TODO Think of proper array index handling!
         int i = 1;
         for (String arrayIndex : arrayIndices) {
-            JobResult jr = JobManager.getInstance().convertToArrayResult(this, runResult, i++);
+            JobResult jr = Roddy.getJobManager().convertToArrayResult(this, runResult, i++);
 
             Job childJob = new Job(context, jobName + "[" + arrayIndex + "]", toolID, prmsAsStringMap, parentFiles, filesToVerify);
             childJob.setJobType(JobType.ARRAY_CHILD);
             childJob.setRunResult(jr);
             arrayChildJobs.add(childJob);
-            JobManager.getInstance().addJobStatusChangeListener(childJob);
+            Roddy.getJobManager().addJobStatusChangeListener(childJob);
             this.context.addExecutedJob(childJob);
         }
     }
@@ -539,7 +569,7 @@ public class Job {
         String sep = Constants.ENV_LINESEPARATOR;
         File tool = context.getConfiguration().getProcessingToolPath(context, toolID);
         setJobState(JobState.UNSTARTED);
-        Command cmd = JobManager.getInstance().createCommand(this, tool, dependencies);
+        Command cmd = Roddy.getJobManager().createCommand(this, tool, dependencies);
         ExecutionService.getInstance().execute(cmd);
         if (LoggerWrapper.isVerbosityMedium()) {
             dbgMessage << sep << "\tcommand was created and executed for job. ID is " + cmd.getExecutionID() << sep;

@@ -6,13 +6,19 @@
 
 package de.dkfz.roddy.core
 
+import de.dkfz.eilslabs.batcheuphoria.jobs.Command
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobResult
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
 import de.dkfz.roddy.Constants
+import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.*
+import de.dkfz.roddy.jobs.Job
+import de.dkfz.roddy.jobs.ReadOutJob
 import de.dkfz.roddy.knowledge.files.*
 import de.dkfz.roddy.tools.LoggerWrapper
 
@@ -503,7 +509,7 @@ class ExecutionContext {
                 jobIDsForQuery.add(runResult.getJobID().getId())
             }
         }
-        Map<String, JobState> map = JobManager.getInstance().queryJobStatus(jobIDsForQuery)
+        Map<String, JobState> map = Roddy.getJobManager().queryJobStatus(jobIDsForQuery)
         for (JobState js : map.values()) {
             if (js.isPlannedOrRunning())
                 return true

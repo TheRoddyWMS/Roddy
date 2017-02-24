@@ -108,7 +108,7 @@ public class JobOverviewControl extends CustomControlOnBorderPane implements Ini
                 tblJobsParameters.getItems().add(new FXJobParameterWrapper(key, job.getParameters().get(key)));
             }
 
-//            for (BaseFile bf : job.getParentFiles()) {
+//            for (BaseFile bf : job.getParentJobs()) {
 //                if (bf == null || bf.getCreatingJobsResult() == null || bf.getCreatingJobsResult().getJob() == null) {
 //                    logger.info("No log file info is available for basefile " + bf.getAbsolutePath());
 //                } else {

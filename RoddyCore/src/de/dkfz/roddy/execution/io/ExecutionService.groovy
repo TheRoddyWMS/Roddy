@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.execution.io
 
+import de.dkfz.eilslabs.batcheuphoria.jobs.Command
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobDependencyID
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -21,10 +23,6 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.Command
-import de.dkfz.roddy.execution.jobs.JobDependencyID
-import de.dkfz.roddy.execution.jobs.JobManager
-import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -186,7 +184,7 @@ public abstract class ExecutionService extends CacheProvider {
         boolean configurationDisallowsJobSubmission = Roddy.getApplicationProperty(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAGS, "").contains(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAG_NOJOBSUBMISSION);
         boolean preventCalls = run.getConfiguration().getPreventJobExecution();
         boolean pidIsBlocked = blockedPIDsForJobExecution.contains(command.getExecutionContext().getDataSet());
-        boolean isDummyCommand = Command instanceof Command.DummyCommand;
+        boolean isDummyCommand = Command instanceof DummyCommand;
 
         String cmdString;
         if (!configurationDisallowsJobSubmission && !allJobsBlocked && !pidIsBlocked && !preventCalls && !isDummyCommand) {
@@ -227,11 +225,11 @@ public abstract class ExecutionService extends CacheProvider {
     protected String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, OutputStream outputStream) {
         String exID = "none";
         if (res.successful) {
-            exID = JobManager.getInstance().parseJobID(res.processID ?: res.resultLines[0]);
-            if (!exID) exID = JobManager.getInstance().parseJobID(res.resultLines[0]);
+            exID = Roddy.getJobManager().parseJobID(res.processID ?: res.resultLines[0]);
+            if (!exID) exID = Roddy.getJobManager().parseJobID(res.resultLines[0]);
 
-            command.setExecutionID(JobManager.getInstance().createJobDependencyID(command.getJob(), exID));
-            JobManager.getInstance().storeJobStateInfo(command.getJob());
+            command.setExecutionID(Roddy.getJobManager().createJobDependencyID(command.getJob(), exID));
+            Roddy.getJobManager().storeJobStateInfo(command.getJob());
         }
         return exID;
     }

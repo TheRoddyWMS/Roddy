@@ -1,13 +1,10 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.execution.jobs;
-
-import de.dkfz.roddy.core.ExecutionContext;
-import de.dkfz.roddy.knowledge.files.LoadedFile;
+package de.dkfz.roddy.jobs;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -20,10 +17,10 @@ public class LoadedJob extends ReadOutJob {
 
     private List<LoadedFile> loadedFiles = new LinkedList<>();
 
-    public LoadedJob(ExecutionContext run, String jobName, String jobID, String toolID, String toolMD5, Map<String, String> parameters, List<LoadedFile> loadedFiles, List<String> parentJobIDs) {
-        super(run, jobName, toolID, jobID, parameters, parentJobIDs);
+    public LoadedJob(String jobName, String jobID, String toolID, String toolMD5, Map<String, String> parameters, List<LoadedFile> loadedFiles, List<Job> parentJobIDs) {
+        super(jobName, jobID, parameters, parentJobIDs);
         this.toolID = toolID;
-        this.toolMD5 = toolMD5;
+        //this.toolMD5 = toolMD5;
         this.loadedFiles = loadedFiles;
     }
 }

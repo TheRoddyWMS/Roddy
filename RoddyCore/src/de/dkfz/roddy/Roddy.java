@@ -7,11 +7,15 @@
 package de.dkfz.roddy;
 
 import com.btr.proxy.search.ProxySearch;
+import de.dkfz.eilslabs.batcheuphoria.jobs.Command;
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager;
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
 import de.dkfz.roddy.client.RoddyStartupModes;
 import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
 import de.dkfz.roddy.client.rmiclient.RoddyRMIServer;
+import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSJobManager;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.tools.AppConfig;
@@ -21,14 +25,14 @@ import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.BashCommandSet;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.io.fs.ShellCommandSet;
-import de.dkfz.roddy.execution.jobs.Command;
-import de.dkfz.roddy.execution.jobs.JobManager;
 import de.dkfz.roddy.client.fxuiclient.RoddyUIController;
-import de.dkfz.roddy.execution.jobs.JobState;
 import de.dkfz.roddy.plugins.LibrariesFactory;
 import de.dkfz.roddy.tools.LoggerWrapper;
+import groovy.transform.CompileStatic;
 
 import java.io.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
@@ -225,14 +229,18 @@ public class Roddy {
 
     private static void startup(String[] args) {
         time(null);
-        LoggerWrapper.setup();
-        logger.postAlwaysInfo("Roddy version " + Constants.APP_CURRENT_VERSION_STRING);
-        time("ftoggleini");
-        List<String> list = Arrays.asList(args);
-        time("clc .1");
 
+        List<String> list = Arrays.asList(args);
         CommandLineCall clc = new CommandLineCall(list);
         commandLineCall = clc;
+        // Initialize the logger with an initial setup. At this point we don't know about things like the logger settings
+        // or the used app ini file. However, all the following methods rely on an existing valid logger setup.
+        LoggerWrapper.setup(getApplicationLogDirectory());
+
+        logger.postAlwaysInfo("Roddy version " + Constants.APP_CURRENT_VERSION_STRING);
+        time("ftoggleini");
+        time("clc .1");
+
 
         time("setup");
         initializeFeatureToggles();
@@ -243,6 +251,7 @@ public class Roddy {
         time("parseopt");
         loadPropertiesFile();
         time("loadprop");
+        LoggerWrapper.setup(applicationProperties);
 
         if (initializeServices(clc.startupMode.needsFullInit())) {
             time("initserv");
@@ -411,7 +420,7 @@ public class Roddy {
             time("init execserv");
 
             currentStep = "Initialize command factory";
-            JobManager.initializeFactory(fullSetup);
+            initializeJobManager(fullSetup);
             time("init cmd fac");
             return true;
         } catch (Exception ex) {
@@ -465,6 +474,35 @@ public class Roddy {
         }
     }
 
+    @CompileStatic
+    public static void initializeJobManager(boolean fullSetup) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
+        logger.postSometimesInfo("public static void initializeFactory(boolean fullSetup)");
+        if (!fullSetup)
+            return;
+
+        ClassLoader classLoader;
+        String jobManagerClassID;
+        Class jobManagerClass;
+
+        classLoader = LibrariesFactory.getGroovyClassLoader();
+        jobManagerClassID = Roddy.getApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS, PBSJobManager.class.getName());
+        jobManagerClass = classLoader.loadClass(jobManagerClassID);
+
+        /** Get the constructor which comes with no parameters */
+        Constructor first = jobManagerClass.getDeclaredConstructor();
+        jobManager = (JobManager) first.newInstance();
+
+        // Was in Command
+//        new File(configuration.getProperty("loggingDirectory", "/"))
+
+    }
+
+    private static JobManager jobManager;
+
+    public static JobManager getJobManager() {
+        return jobManager;
+    }
+
     private static void parseRoddyStartupModeAndRun(CommandLineCall clc) {
         if (clc.startupMode == RoddyStartupModes.ui)
             RoddyUIController.App.main(clc.getArguments().toArray(new String[0]));
@@ -488,10 +526,10 @@ public class Roddy {
         if (!option.needsFullInit())
             return;
 
-        if (JobManager.getInstance() != null && !JobManager.getInstance().executesWithoutJobSystem() && waitForJobsToFinish) {
+        if (jobManager.executesWithoutJobSystem() && waitForJobsToFinish) {
             exitCode = performWaitforJobs();
         } else {
-            List<Command> listOfCreatedCommands = JobManager.getInstance().getListOfCreatedCommands();
+            List<Command> listOfCreatedCommands = jobManager.getListOfCreatedCommands();
             for (Command command : listOfCreatedCommands) {
                 if (command.getJob().getJobState() == JobState.FAILED) exitCode++;
             }
@@ -502,7 +540,7 @@ public class Roddy {
     private static int performWaitforJobs() {
         try {
             Thread.sleep(15000); //Sleep at least 15 seconds to let any job scheduler handle things...
-            return JobManager.getInstance().waitForJobsToFinish();
+            return jobManager.waitForJobsToFinish();
         } catch (Exception ex) {
             return 250;
         }
