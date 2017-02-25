@@ -4,18 +4,18 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.client.fxuiclient;
+package de.dkfz.roddy.client.fxuiclient
 
+import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.client.fxuiclient.fxdatawrappers.*;
 import de.dkfz.roddy.client.rmiclient.RoddyRMIClientConnection;
 import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation
 import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation.ExecutionContextInfoObject;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
-import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.core.*;
 import de.dkfz.roddy.execution.io.ExecutionHelper;
 import de.dkfz.roddy.execution.jobs.Job;
-import de.dkfz.roddy.execution.jobs.JobState;
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
 import de.dkfz.roddy.execution.jobs.ReadOutJob;
 import de.dkfz.roddy.client.fxuiclient.fxcontrols.ExecutionContextOverviewControl;
 import de.dkfz.roddy.client.fxuiclient.fxcontrols.JobOverviewControl;
@@ -311,7 +311,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
      */
     public void stopPIDProcessing(ActionEvent actionEvent) {
 //        currentContext.abortJobSubmission();
-//        JobManager.getInstance().queryJobAbortion(currentContext.getExecutedJobs());
+//        Roddy.getJobManager().queryJobAbortion(currentContext.getExecutedJobs());
     }
 
     /**
@@ -368,7 +368,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
                 else
                     strings = FileSystemAccessProvider.getInstance().loadTextFile(file);
             } else if (job != null) {
-                strings = JobManager.getInstance().peekLogFile(job);
+                strings = Roddy.getJobManager().peekLogFile(job);
             }
             StringBuilder stringBuilder = new StringBuilder();
             for (String s : strings) {

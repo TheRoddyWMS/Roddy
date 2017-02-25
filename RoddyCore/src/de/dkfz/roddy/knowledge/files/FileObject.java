@@ -6,10 +6,10 @@
 
 package de.dkfz.roddy.knowledge.files;
 
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobResult;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.DataSet;
 import de.dkfz.roddy.core.Project;
-import de.dkfz.roddy.execution.jobs.JobResult;
 
 import java.io.Serializable;
 

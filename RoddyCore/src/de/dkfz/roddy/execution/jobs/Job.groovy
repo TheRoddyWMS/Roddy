@@ -4,11 +4,10 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.jobs
+package de.dkfz.roddy.execution.jobs
 
 import de.dkfz.eilslabs.batcheuphoria.jobs.Command
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobDependencyID
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobResult
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobType
@@ -33,7 +32,7 @@ import static de.dkfz.roddy.Constants.NO_VALUE
 import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 
 @groovy.transform.CompileStatic
-public class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job {
+public class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
 
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(Job.class.getSimpleName());
 
@@ -113,6 +112,7 @@ public class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job {
     private JobResult runResult;
 
     public Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices, Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
+        super(jobName, context.getConfiguration().getProcessingToolPath(context, toolID), context.getConfiguration().getProcessingToolMD5(toolID), arrayIndices, null, null);
         this.jobName = jobName;
         this.currentJobState = JobState.UNKNOWN;
         this.context = context;
@@ -170,7 +170,7 @@ public class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job {
         String jobID = getJobID();
         if (jobID == null)
             return false;
-        return JobDependencyID.FakeJobID.isFakeJobID(jobID);
+        return FakeJobID.isFakeJobID(jobID);
     }
 
     private Map<String, String> convertParameterObject(String k, Object _v) {
@@ -197,7 +197,7 @@ public class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job {
 
                     }
 
-                File autoPath = new File(context.getOutputDirectory(), [jobName, k, completeString.hashCode().abs(), slotPosition].join("_") + ".auto")
+                File autoPath = new File(context.getOutputDirectory(), [jobName, k, Math.abs(completeString.hashCode()) as int, slotPosition].join("_") + ".auto")
 //                File autoPath = new File(context.getOutputDirectory(), [jobName, k, '${RODDY_JOBID}', slotPosition].join("_") + ".auto")
                 bf.setPath(autoPath)
                 bf.setAsTemporaryFile()
@@ -321,6 +321,7 @@ public class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job {
      */
 
     protected Job(String jobName, ExecutionContext context, String toolID, Map<String, String> parameters, List<String> arrayIndices, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
+        super(jobName, context.getConfiguration().getProcessingToolPath(context, toolID), context.getConfiguration().getProcessingToolMD5(toolID), arrayIndices, parameters, null)
         this.jobName = jobName;
         this.context = context;
         this.toolID = toolID;
@@ -414,24 +415,27 @@ public class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job {
         if (getListOfProcessingCommand().size() == 0) {
             File srcTool = configuration.getSourceToolPath(toolID);
 
-            //Look in the configuration for resource options
-            ProcessingCommands extractedPCommands = Roddy.getJobManager().getProcessingCommandsFromConfiguration(configuration, toolID);
-
-            //Look in the script if no options are configured
-            if (extractedPCommands == null)
-                extractedPCommands = Roddy.getJobManager().extractProcessingCommandsFromToolScript(srcTool);
-
-            if (extractedPCommands != null)
-                this.addProcessingCommand(extractedPCommands);
+            logger.severe("Appending processing commands from config is currently not supported: Roddy/../Job.groovy appendProcessingCommands")
+//            //Look in the configuration for resource options
+//            ProcessingCommands extractedPCommands = Roddy.getJobManager().getProcessingCommandsFromConfiguration(configuration, toolID);
+//
+//            //Look in the script if no options are configured
+//            if (extractedPCommands == null)
+//                extractedPCommands = Roddy.getJobManager().extractProcessingCommandsFromToolScript(srcTool);
+//
+//            if (extractedPCommands != null)
+//                this.addProcessingCommand(extractedPCommands);
         }
     }
 
     private JobResult handleDifferentJobRun(StringBuilder dbgMessage) {
-        dbgMessage << "\tdummy job created." + Constants.ENV_LINESEPARATOR;
-        File tool = context.getConfiguration().getProcessingToolPath(context, toolID);
-        runResult = new JobResult(context, null, JobDependencyID.getNotExecutedFakeJob(this), false, tool, parameters, parentFiles);
-        this.setJobState(JobState.DUMMY);
-        return runResult;
+        logger.severe("Handling different job run is currently not supported: Roddy/../Job.groovy handleDifferentJobRun")
+//        dbgMessage << "\tdummy job created." + Constants.ENV_LINESEPARATOR;
+//        File tool = context.getConfiguration().getProcessingToolPath(context, toolID);
+//        runResult = new JobResult(context, null, JobDependencyID.getNotExecutedFakeJob(this), false, tool, parameters, parentFiles);
+//        this.setJobState(JobState.DUMMY);
+//        return runResult;
+        return null;
     }
 
     /**
@@ -593,7 +597,7 @@ public class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job {
     }
 
     public List<Job> getParentJobs() {
-        return dependencyIDs.collect { JobDependencyID jid -> jid?.job }.findAll { Job job -> job != null } as List<Job>
+        return dependencyIDs.collect { JobDependencyID jid -> jid?.job as Job }.findAll { Job job -> job != null } as List<Job>
     }
 
     public List<BaseFile> getFilesToVerify() {

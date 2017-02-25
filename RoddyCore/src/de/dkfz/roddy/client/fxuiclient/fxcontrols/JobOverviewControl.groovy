@@ -8,7 +8,7 @@ package de.dkfz.roddy.client.fxuiclient.fxcontrols;
 
 import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation;
 import de.dkfz.roddy.execution.jobs.Job;
-import de.dkfz.roddy.execution.jobs.JobState;
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
 //import de.dkfz.roddy.execution.jobs.JobStatusListener;
 import de.dkfz.roddy.client.fxuiclient.ConfigurationViewer;
 import de.dkfz.roddy.client.fxuiclient.DataSetView;

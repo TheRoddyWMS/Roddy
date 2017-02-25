@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.core
 
+import de.dkfz.eilslabs.batcheuphoria.jobs.Command
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
@@ -14,7 +16,8 @@ import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.execution.io.BaseMetadataTable
 import de.dkfz.roddy.execution.io.MetadataTableFactory
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.*
+import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.LoadedJob
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.LoadedFile
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -227,20 +230,21 @@ public abstract class RuntimeService extends CacheProvider {
                 context.addErrorEntry(ExecutionContextError.READBACK_NOEXECUTEDJOBSFILE);
                 jobsStartedInContext = new LinkedList<Job>();
             }
-
-            if (jobsStartedInContext.size() == 0) {
-                String[] jobCalls = fip.loadTextFile(getNameOfRealCallsFile(context));
-                if (jobCalls == null || jobCalls.size() == 0) {
-                    context.addErrorEntry(ExecutionContextError.READBACK_NOREALJOBCALLSFILE);
-                } else {
-                    //TODO Load a list of the previously created jobs and query those using qstat!
-                    for (String call : jobCalls) {
-                        //TODO. How can we recognize different command factories? i.e. for other cluster systems?
-                        Job job = JobManager.getInstance().parseToJob(context, call);
-                        jobsStartedInContext.add(job);
-                    }
-                }
-            }
+//
+            logger.severe("Reading in jobs is currently not possible! See RuntimeService readInExecutionContext() Line 235")
+//            if (jobsStartedInContext.size() == 0) {
+//                String[] jobCalls = fip.loadTextFile(getNameOfRealCallsFile(context));
+//                if (jobCalls == null || jobCalls.size() == 0) {
+//                    context.addErrorEntry(ExecutionContextError.READBACK_NOREALJOBCALLSFILE);
+//                } else {
+//                    //TODO Load a list of the previously created jobs and query those using qstat!
+//                    for (String call : jobCalls) {
+//                        //TODO. How can we recognize different command factories? i.e. for other cluster systems?
+//                        Job job = Roddy.getJobManager().parseToJob(context, call);
+//                        jobsStartedInContext.add(job);
+//                    }
+//                }
+//            }
 
             Map<String, JobState> statusList = readInJobStateLogFile(context)
 
@@ -253,7 +257,7 @@ public abstract class RuntimeService extends CacheProvider {
                 for (String id : statusList.keySet()) {
                     JobState status = statusList[id];
 
-                    if (!JobManager.getInstance().compareJobIDs(job.getJobID(), (id)))
+                    if (!Roddy.getJobManager().compareJobIDs(job.getJobID(), (id)))
                         continue;
                     job.setJobState(status);
                 }
@@ -274,11 +278,11 @@ public abstract class RuntimeService extends CacheProvider {
                 }
             }
 
-            Map<String, JobState> map = JobManager.getInstance().queryJobStatus(queryList);
+            Map<String, JobState> map = Roddy.getJobManager().queryJobStatus(queryList);
             for (String jobID : unknownJobs.keySet()) {
                 Job job = unknownJobs.get(jobID);
                 job.setJobState(map.get(jobID));
-                JobManager.getInstance().addJobStatusChangeListener(job);
+                Roddy.getJobManager().addJobStatusChangeListener(job);
             }
             for (String jobID : possiblyRunningJobs.keySet()) {
                 Job job = possiblyRunningJobs.get(jobID);
@@ -286,7 +290,7 @@ public abstract class RuntimeService extends CacheProvider {
                     job.setJobState(JobState.FAILED);
                 } else {
                     job.setJobState(map.get(jobID));
-                    JobManager.getInstance().addJobStatusChangeListener(job);
+                    Roddy.getJobManager().addJobStatusChangeListener(job);
                 }
             }
 
@@ -612,12 +616,12 @@ public abstract class RuntimeService extends CacheProvider {
 
     public File getLogFileForJob(Job job) {
         //Returns the log files path of the job.
-        File f = new File(job.getExecutionContext().getExecutionDirectory(), JobManager.getInstance().getLogFileName(job));
+        File f = new File(job.getExecutionContext().getExecutionDirectory(), Roddy.getJobManager().getLogFileName(job));
     }
 
     public File getLogFileForCommand(Command command) {
         //Nearly the same as for the job but with a process id
-        File f = new File(getExecutionDirectory(command.getExecutionContext()), JobManager.getInstance().getLogFileName(command));
+        File f = new File(getExecutionDirectory(command.getTag(Constants.COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext), Roddy.getJobManager().getLogFileName(command));
     }
 
     public boolean hasLogFileForJob(Job job) {
@@ -668,8 +672,13 @@ public abstract class RuntimeService extends CacheProvider {
 
     public abstract Map<String, Object> getDefaultJobParameters(ExecutionContext context, String TOOLID)
 
-    public String createJobName(ExecutionContext executionContext, BaseFile file, String TOOLID, boolean reduceLevel) {
-        return JobManager.getInstance().createJobName(file, TOOLID, reduceLevel);
+    public String createJobName(ExecutionContext executionContext, BaseFile bf, String TOOLID, boolean reduceLevel) {
+        ExecutionContext rp = bf.getExecutionContext();
+        String runtime = rp.getTimestampString();
+        String pid = rp.getDataSet().getId()
+        StringBuilder sb = new StringBuilder();
+        sb.append("r").append(runtime).append("_").append(pid).append("_").append(TOOLID);
+        return sb.toString();
     }
 
     /**

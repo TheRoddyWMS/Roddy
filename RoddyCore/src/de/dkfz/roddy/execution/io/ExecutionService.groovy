@@ -368,7 +368,7 @@ public abstract class ExecutionService extends CacheProvider {
         Configuration cfg = context.getConfiguration();
         def configurationValues = cfg.getConfigurationValues()
 
-        JobManager.getInstance().addSpecificSettingsToConfiguration(cfg)
+        Roddy.getJobManager().addSpecificSettingsToConfiguration(cfg)
         getInstance().addSpecificSettingsToConfiguration(cfg)
 
         //Add feature toggles to configuration

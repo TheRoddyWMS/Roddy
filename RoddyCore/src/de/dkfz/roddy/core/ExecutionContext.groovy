@@ -16,9 +16,8 @@ import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.*
-import de.dkfz.roddy.jobs.Job
-import de.dkfz.roddy.jobs.ReadOutJob
+import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.ReadOutJob
 import de.dkfz.roddy.knowledge.files.*
 import de.dkfz.roddy.tools.LoggerWrapper
 

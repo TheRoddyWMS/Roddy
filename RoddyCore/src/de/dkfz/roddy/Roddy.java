@@ -7,6 +7,7 @@
 package de.dkfz.roddy;
 
 import com.btr.proxy.search.ProxySearch;
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize;
 import de.dkfz.eilslabs.batcheuphoria.jobs.Command;
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager;
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
@@ -15,11 +16,11 @@ import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
 import de.dkfz.roddy.client.rmiclient.RoddyRMIServer;
+import de.dkfz.roddy.config.ConfigurationConstants;
 import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSJobManager;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.tools.AppConfig;
-import de.dkfz.roddy.config.ResourceSetSize;
 import de.dkfz.roddy.core.Initializable;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.BashCommandSet;
@@ -495,6 +496,17 @@ public class Roddy {
         jobManager.setTrackingOfUserJobsEnabled(trackUserJobsOnly);
         jobManager.setQueryOnlyStartedJobs(trackOnlyStartedJobs);
         jobManager.setUserIDForQueries(FileSystemAccessProvider.getInstance().callWhoAmI());
+        jobManager.setJobIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID);
+        jobManager.setJobIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBARRAYINDEX);
+        jobManager.setJobIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH);
+
+
+// There are many values which need to be extracted from the xml (context, project?)
+//        configuration.getProperty("PBS_AccountName", "")
+//        configuration.getProperty("email")
+//        configuration.getProperty("outputFileGroup", null)
+//        configuration.getProperty("umask", "")
+
         // Was in Command
 //        new File(configuration.getProperty("loggingDirectory", "/"))
     }

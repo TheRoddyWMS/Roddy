@@ -4,7 +4,7 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.jobs;
+package de.dkfz.roddy.execution.jobs;
 
 import java.io.File;
 import java.util.LinkedList;

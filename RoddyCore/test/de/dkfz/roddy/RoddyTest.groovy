@@ -154,7 +154,7 @@ public class RoddyTest {
 //        Roddy.initializeServices(true);
 //
 //        assert FileSystemAccessProvider.getInstance() != null;
-//        assert JobManager.getInstance() != null;
+//        assert Roddy.getJobManager() != null;
 //        assert ExecutionService.getInstance() != null;
     }
 

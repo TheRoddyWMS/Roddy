@@ -6,7 +6,8 @@
 
 package de.dkfz.roddy.client.rmiclient;
 
-import de.dkfz.roddy.execution.jobs.JobState;
+
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

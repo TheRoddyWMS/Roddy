@@ -6,6 +6,9 @@
 
 package de.dkfz.roddy.client.cliclient
 
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
+import de.dkfz.eilslabs.batcheuphoria.jobs.ProcessingCommands
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -22,9 +25,6 @@ import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.SSHExecutionService
 import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.JobManager
-import de.dkfz.roddy.execution.jobs.JobState
-import de.dkfz.roddy.execution.jobs.ProcessingCommands
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.ScannerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
@@ -521,7 +521,7 @@ public class RoddyCLIClient {
                 try {
                     ToolEntry tool = configuration.getTools().getValue(job.getToolID());
                     ResourceSet resourceSet = tool.getResourceSet(configuration);
-                    ProcessingCommands convertResourceSet = JobManager.getInstance().convertResourceSet(configuration, resourceSet);
+                    ProcessingCommands convertResourceSet = Roddy.getJobManager().convertResourceSet(resourceSet);
                     resources = convertResourceSet.toString();
 
                 } catch (Exception ex) {
@@ -687,7 +687,7 @@ public class RoddyCLIClient {
                         listOfRunningJobs << job;
                 }
             if (listOfRunningJobs)
-                JobManager.getInstance().queryJobAbortion(listOfRunningJobs)
+                Roddy.getJobManager().queryJobAbortion(listOfRunningJobs)
         }
     }
 

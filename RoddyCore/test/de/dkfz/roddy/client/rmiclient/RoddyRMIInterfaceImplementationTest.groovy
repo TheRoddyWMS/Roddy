@@ -11,7 +11,7 @@ import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import de.dkfz.roddy.execution.io.ExecutionHelper
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
-import de.dkfz.roddy.execution.jobs.JobState
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
 import de.dkfz.roddy.plugins.LibrariesFactory
 import groovy.transform.CompileStatic
 import org.junit.AfterClass

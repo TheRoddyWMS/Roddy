@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.client.fxuiclient.fxwrappercontrols;
 
-import de.dkfz.roddy.execution.jobs.JobState;
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
 import de.dkfz.roddy.client.fxuiclient.fxdatawrappers.FXLogFileWrapper;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;

@@ -13,7 +13,7 @@ import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobDependencyID
 import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.execution.jobs.JobResult
-import de.dkfz.roddy.execution.jobs.JobState
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
 import de.dkfz.roddy.execution.jobs.ProcessingCommands
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject

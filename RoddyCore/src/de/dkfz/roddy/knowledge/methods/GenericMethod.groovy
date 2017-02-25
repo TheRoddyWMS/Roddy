@@ -418,7 +418,7 @@ class GenericMethod {
         for (String arrayIndex in arrayIndices) {
             List<FileObject> newObjects = [];
             outputObjectsByArrayIndex[arrayIndex] = createOutputObject(arrayIndex);
-            JobResult jr = JobManager.getInstance().convertToArrayResult(jobResult.job, jobResult, i++);
+            JobResult jr = Roddy.getJobManager().convertToArrayResult(jobResult.job, jobResult, i++);
             for (FileObject fo : newObjects) {
                 fo.setCreatingJobsResult(jr);
             }
