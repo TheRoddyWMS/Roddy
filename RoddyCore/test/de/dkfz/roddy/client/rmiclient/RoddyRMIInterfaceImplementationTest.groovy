@@ -7,12 +7,14 @@
 package de.dkfz.roddy.client.rmiclient;
 
 import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.RoddyTest
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import de.dkfz.roddy.execution.io.ExecutionHelper
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
 import de.dkfz.roddy.plugins.LibrariesFactory
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import groovy.transform.CompileStatic
 import org.junit.AfterClass
 import org.junit.BeforeClass;
@@ -52,12 +54,16 @@ public class RoddyRMIInterfaceImplementationTest {
     public static File testIni
     public static File testConfig
     public static File testExecCache
+    public static boolean runIntegrationTests = true;
 
     /**
      * TODO The following code should be transformed into a general integration test code for e.g. submisssion etc.
      */
     @BeforeClass
     public static void createTestProjectAndConfig() {
+        runIntegrationTests = RoddyTest.runIntegrationTests()
+
+        if(!runIntegrationTests) return
 
         testSource = new File(LibrariesFactory.groovyClassLoader.getResource("exampleProject").file)
         testBase = MockupExecutionContextBuilder.getDirectory(RoddyRMIInterfaceImplementationTest.name, "exampleProject");
@@ -92,11 +98,13 @@ public class RoddyRMIInterfaceImplementationTest {
 
     @AfterClass
     public static void tearDownClass() {
+        if(!runIntegrationTests) return
         Roddy.resetMainStarted();
     }
 
     @Test
     public void testLoadAnalysis() {
+        if(!runIntegrationTests) return
         def analysis = new RoddyRMIInterfaceImplementation().loadAnalysis("test");
         assert analysis;
         assert analysis.name == "test";
@@ -104,6 +112,7 @@ public class RoddyRMIInterfaceImplementationTest {
 
     @Test
     public void testLoadLongAnalysis() {
+        if(!runIntegrationTests) return
         def analysis = new RoddyRMIInterfaceImplementation().loadAnalysis("test::abc::dd");
         assert analysis;
         assert analysis.name == "test";
@@ -111,6 +120,7 @@ public class RoddyRMIInterfaceImplementationTest {
 
     @Test
     public void listdatasets() throws Exception {
+        if(!runIntegrationTests) return
         RoddyRMIInterfaceImplementation iface = new RoddyRMIInterfaceImplementation();
 
         def listdatasets = iface.listdatasets("test");
@@ -127,6 +137,7 @@ public class RoddyRMIInterfaceImplementationTest {
 
     @Test
     public void queryExtendedDataSetInfo() throws Exception {
+        if(!runIntegrationTests) return
         RoddyRMIInterfaceImplementation iface = new RoddyRMIInterfaceImplementation();
 
         RoddyRMIInterfaceImplementation.ExtendedDataSetInfoObjectCollection info = iface.queryExtendedDataSetInfo("queryExtendedDataSetInfo", "test");
@@ -144,6 +155,7 @@ public class RoddyRMIInterfaceImplementationTest {
 
     @Test
     public void testrun() throws Exception {
+        if(!runIntegrationTests) return
         RoddyRMIInterfaceImplementation iface = new RoddyRMIInterfaceImplementation();
 
         def list = iface.run(["run"], "test");
@@ -156,6 +168,7 @@ public class RoddyRMIInterfaceImplementationTest {
 
     @Test
     public void testrerun() throws Exception {
+        if(!runIntegrationTests) return
         RoddyRMIInterfaceImplementation iface = new RoddyRMIInterfaceImplementation();
 
         iface.run(["rerun"], "test");
@@ -165,12 +178,14 @@ public class RoddyRMIInterfaceImplementationTest {
 
     @Test
     public void testQueryJobState() throws Exception {
+        if(!runIntegrationTests) return
         RoddyRMIInterfaceImplementation iface = new RoddyRMIInterfaceImplementation();
         assert false
     }
 
     @Test
     public void testReadLocalFile() throws Exception {
+        if(!runIntegrationTests) return
         RoddyRMIInterfaceImplementation iface = new RoddyRMIInterfaceImplementation();
 
         def contents = iface.readLocalFile(testIni.getAbsolutePath())
@@ -180,6 +195,7 @@ public class RoddyRMIInterfaceImplementationTest {
 
     @Test
     public void testReadRemoteFile() throws Exception {
+        if(!runIntegrationTests) return
         RoddyRMIInterfaceImplementation iface = new RoddyRMIInterfaceImplementation();
 
         def contents = iface.readRemoteFile(testIni.getAbsolutePath())

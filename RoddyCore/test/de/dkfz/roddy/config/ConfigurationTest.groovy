@@ -6,11 +6,14 @@
 
 package de.dkfz.roddy.config
 
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
 import de.dkfz.roddy.core.ProjectFactory
+import groovy.transform.CompileStatic
 
 /**
  * Created by heinold on 22.07.16.
  */
+@CompileStatic
 class ConfigurationTest extends GroovyTestCase {
 
     public InformationalConfigurationContent mockContent(String name, InformationalConfigurationContent parent) {

@@ -6,15 +6,18 @@
 
 package de.dkfz.roddy.config
 
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
-import de.dkfz.roddy.execution.jobs.Command
+import de.dkfz.eilslabs.batcheuphoria.jobs.Command
+import de.dkfz.roddy.execution.io.NoNoExecutionService
 import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.JobDependencyID
-import de.dkfz.roddy.execution.jobs.JobManager
-import de.dkfz.roddy.execution.jobs.JobResult
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobDependencyID
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobResult
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
-import de.dkfz.roddy.execution.jobs.ProcessingCommands
+import de.dkfz.eilslabs.batcheuphoria.jobs.ProcessingCommands
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.GenericFile
@@ -109,40 +112,195 @@ public class FilenamePatternTest {
 
     @Test
     public void testJobCreationWithFileUsingToolIDForNamePattern() {
-        JobManager.initializeFactory(new JobManager() {
-            @Override
-            void createUpdateDaemonThread(int interval) {
+        new JobManager(new NoNoExecutionService(), null, false) {
+//            @Override
+//            void createUpdateDaemonThread(int interval) {
+//
+//            }
+//
+//            @Override
+//            Command createCommand(de.dkfz.eilslabs.batcheuphoria.jobs.GenericJobInfo genericJobInfo) {
+//                return null
+//            }
+//
+//            @Override
+//            JobResult runJob(de.dkfz.eilslabs.batcheuphoria.jobs.Job job, boolean b) {
+//                return null
+//            }
+//
+//            @Override
+//            JobDependencyID createJobDependencyID(de.dkfz.eilslabs.batcheuphoria.jobs.Job job, String s) {
+//                return null
+//            }
+//
+//            @Override
+//            ProcessingCommands convertResourceSet(ResourceSet resourceSet) {
+//                return null
+//            }
+//
+//            @Override
+//            Command createCommand(de.dkfz.eilslabs.batcheuphoria.jobs.Job job, String s, List list, File file, Map map, List list1, List list2) {
+//                return null
+//            }
+//
+//            @Override
+//            Command createCommand(GenericJobInfo jobInfo) {
+//                return null
+//            }
+//
+//            @Override
+//            Command createCommand(Job job, ExecutionContext run, String jobName, List processingCommands, File tool, Map parameters, List dependencies, List arraySettings) {
+//                return null
+//            }
+//
+//            @Override
+//            JobDependencyID createJobDependencyID(Job job, String jobResult) {
+//                return null
+//            }
+//
+//            @Override
+//            ProcessingCommands convertResourceSet(Configuration configuration, ResourceSet resourceSet) {
+//                return null
+//            }
+//
+//            @Override
+//            ProcessingCommands parseProcessingCommands(String alignmentProcessingOptions) {
+//                return null
+//            }
+//
+//            @Override
+//            ProcessingCommands getProcessingCommandsFromConfiguration(Configuration configuration, String toolID) {
+//                return new ProcessingCommands() {}
+//            }
+//
+//            @Override
+//            ProcessingCommands extractProcessingCommandsFromToolScript(File file) {
+//                return null
+//            }
+//
+//            @Override
+//            de.dkfz.eilslabs.batcheuphoria.jobs.Job parseToJob(String s) {
+//                return null
+//            }
+//
+//            @Override
+//            de.dkfz.eilslabs.batcheuphoria.jobs.GenericJobInfo parseGenericJobInfo(String s) {
+//                return null
+//            }
+//
+//            @Override
+//            JobResult convertToArrayResult(de.dkfz.eilslabs.batcheuphoria.jobs.Job job, JobResult jobResult, int i) {
+//                return null
+//            }
+//
+//            @Override
+//            void updateJobStatus() {
+//
+//            }
+//
+//            @Override
+//            void addJobStatusChangeListener(de.dkfz.eilslabs.batcheuphoria.jobs.Job job) {
+//
+//            }
+//
+//            @Override
+//            String getLogFileWildcard(de.dkfz.eilslabs.batcheuphoria.jobs.Job job) {
+//                return null
+//            }
+//
+//            @Override
+//            Job parseToJob(ExecutionContext executionContext, String commandString) {
+//                return null
+//            }
+//
+//            @Override
+//            GenericJobInfo parseGenericJobInfo(ExecutionContext context, String command) {
+//                return null
+//            }
+//
+//            @Override
+//            JobResult convertToArrayResult(Job arrayChildJob, JobResult parentJobsResult, int arrayIndex) {
+//                return null
+//            }
+//
+//            @Override
+//            Map<String, JobState> queryJobStatus(List jobIDs) {
+//                return null
+//            }
+//
+//            @Override
+//            void queryJobAbortion(List executedJobs) {
+//
+//            }
+//
+//            @Override
+//            void addJobStatusChangeListener(Job job) {
+//
+//            }
+//
+//            @Override
+//            String getLogFileWildcard(Job job) {
+//                return null
+//            }
+//
+//            @Override
+//            boolean compareJobIDs(String jobID, String id) {
+//                return false
+//            }
+//
+//            @Override
+//            String getStringForQueuedJob() {
+//                return null
+//            }
+//
+//            @Override
+//            String getStringForJobOnHold() {
+//                return null
+//            }
+//
+//            @Override
+//            String getStringForRunningJob() {
+//                return null
+//            }
+//
+//            @Override
+//            String getSpecificJobIDIdentifier() {
+//                return null
+//            }
+//
+//            @Override
+//            String getSpecificJobArrayIndexIdentifier() {
+//                return null
+//            }
+//
+//            @Override
+//            String getSpecificJobScratchIdentifier() {
+//                return null
+//            }
 
-            }
-
             @Override
-            Command createCommand(GenericJobInfo jobInfo) {
+            Command createCommand(de.dkfz.eilslabs.batcheuphoria.jobs.GenericJobInfo genericJobInfo) {
                 return null
             }
 
             @Override
-            Command createCommand(Job job, ExecutionContext run, String jobName, List processingCommands, File tool, Map parameters, List dependencies, List arraySettings) {
+            JobResult runJob(de.dkfz.eilslabs.batcheuphoria.jobs.Job job, boolean b) {
                 return null
             }
 
             @Override
-            JobDependencyID createJobDependencyID(Job job, String jobResult) {
+            JobDependencyID createJobDependencyID(de.dkfz.eilslabs.batcheuphoria.jobs.Job job, String s) {
                 return null
             }
 
             @Override
-            ProcessingCommands convertResourceSet(Configuration configuration, ResourceSet resourceSet) {
+            ProcessingCommands convertResourceSet(ResourceSet resourceSet) {
                 return null
             }
 
             @Override
-            ProcessingCommands parseProcessingCommands(String alignmentProcessingOptions) {
+            ProcessingCommands parseProcessingCommands(String s) {
                 return null
-            }
-
-            @Override
-            ProcessingCommands getProcessingCommandsFromConfiguration(Configuration configuration, String toolID) {
-                return new ProcessingCommands() {}
             }
 
             @Override
@@ -151,49 +309,94 @@ public class FilenamePatternTest {
             }
 
             @Override
-            Job parseToJob(ExecutionContext executionContext, String commandString) {
+            de.dkfz.eilslabs.batcheuphoria.jobs.Job parseToJob(String s) {
                 return null
             }
 
             @Override
-            GenericJobInfo parseGenericJobInfo(ExecutionContext context, String command) {
+            de.dkfz.eilslabs.batcheuphoria.jobs.GenericJobInfo parseGenericJobInfo(String s) {
                 return null
             }
 
             @Override
-            JobResult convertToArrayResult(Job arrayChildJob, JobResult parentJobsResult, int arrayIndex) {
+            JobResult convertToArrayResult(de.dkfz.eilslabs.batcheuphoria.jobs.Job job, JobResult jobResult, int i) {
                 return null
             }
 
             @Override
-            Map<String, JobState> queryJobStatus(List jobIDs) {
+            void updateJobStatus() {
+
+            }
+
+            @Override
+            void addJobStatusChangeListener(de.dkfz.eilslabs.batcheuphoria.jobs.Job job) {
+
+            }
+
+            @Override
+            String getLogFileWildcard(de.dkfz.eilslabs.batcheuphoria.jobs.Job job) {
                 return null
             }
 
             @Override
-            void queryJobAbortion(List executedJobs) {
-
-            }
-
-            @Override
-            void addJobStatusChangeListener(Job job) {
-
-            }
-
-            @Override
-            String getLogFileWildcard(Job job) {
-                return null
-            }
-
-            @Override
-            boolean compareJobIDs(String jobID, String id) {
+            boolean compareJobIDs(String s, String s1) {
                 return false
             }
 
             @Override
-            String[] peekLogFile(Job job) {
+            String getStringForQueuedJob() {
+                return null
+            }
+
+            @Override
+            String getStringForJobOnHold() {
+                return null
+            }
+
+            @Override
+            String getStringForRunningJob() {
+                return null
+            }
+
+            @Override
+            String getSpecificJobIDIdentifier() {
+                return null
+            }
+
+            @Override
+            String getSpecificJobArrayIndexIdentifier() {
+                return null
+            }
+
+            @Override
+            String getSpecificJobScratchIdentifier() {
+                return null
+            }
+
+            @Override
+            void queryJobAbortion(List list) {
+
+            }
+
+            @Override
+            Map<String, JobState> queryJobStatus(List list) {
+                return null
+            }
+
+            @Override
+            Command createCommand(de.dkfz.eilslabs.batcheuphoria.jobs.Job job, String s, List list, File file, Map map, List list1, List list2) {
+                return null
+            }
+
+            @Override
+            String[] peekLogFile(de.dkfz.eilslabs.batcheuphoria.jobs.Job job) {
                 return new String[0]
             }
+
+//            @Override
+//            String[] peekLogFile(Job job) {
+//                return new String[0]
+//            }
 
             @Override
             String parseJobID(String commandOutput) {
@@ -204,7 +407,7 @@ public class FilenamePatternTest {
             String getSubmissionCommand() {
                 return null
             }
-        })
+        }
 
         FilenamePattern fp = new OnToolFilenamePattern(testClass, "RoddyTests", "/tmp/RoddyTests/testFileResult.sh", "default");
         mockedContext.getConfiguration().getFilenamePatterns().add(fp);

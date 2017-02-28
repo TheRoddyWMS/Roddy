@@ -16,8 +16,8 @@
 //import de.dkfz.roddy.execution.io.ExecutionResult;
 //import de.dkfz.roddy.execution.io.ExecutionService;
 //import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
-//import de.dkfz.roddy.execution.jobs.Command;
-//import de.dkfz.roddy.execution.jobs.JobManager;
+//import de.dkfz.eilslabs.batcheuphoria.jobs.Command;
+//import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager;
 //import de.dkfz.roddy.execution.jobs.Job;
 //import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand;
 //import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutedJobManager;

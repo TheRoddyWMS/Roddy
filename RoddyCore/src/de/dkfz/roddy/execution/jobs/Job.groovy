@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.execution.jobs
 
+import de.dkfz.eilslabs.batcheuphoria.jobs.FakeJob
+import de.dkfz.eilslabs.batcheuphoria.jobs.FakeJobID
 import de.dkfz.eilslabs.batcheuphoria.jobs.Command
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobDependencyID
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobResult

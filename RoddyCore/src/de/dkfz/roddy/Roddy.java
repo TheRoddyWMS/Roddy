@@ -8,6 +8,7 @@ package de.dkfz.roddy;
 
 import com.btr.proxy.search.ProxySearch;
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize;
+import de.dkfz.eilslabs.batcheuphoria.execution.cluster.pbs.PBSJobManager;
 import de.dkfz.eilslabs.batcheuphoria.jobs.Command;
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager;
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
@@ -17,7 +18,6 @@ import de.dkfz.roddy.client.cliclient.CommandLineCall;
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
 import de.dkfz.roddy.client.rmiclient.RoddyRMIServer;
 import de.dkfz.roddy.config.ConfigurationConstants;
-import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSJobManager;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.tools.AppConfig;
@@ -491,8 +491,8 @@ public class Roddy {
         jobManagerClass = classLoader.loadClass(jobManagerClassID);
 
         /** Get the constructor which comes with no parameters */
-        Constructor first = jobManagerClass.getDeclaredConstructor();
-        jobManager = (JobManager) first.newInstance();
+        Constructor first = jobManagerClass.getDeclaredConstructor(de.dkfz.eilslabs.batcheuphoria.execution.ExecutionService.class, AppConfig.class, boolean.class);
+        jobManager = (JobManager) first.newInstance(ExecutionService.getInstance(), getApplicationConfiguration(), true);
         jobManager.setTrackingOfUserJobsEnabled(trackUserJobsOnly);
         jobManager.setQueryOnlyStartedJobs(trackOnlyStartedJobs);
         jobManager.setUserIDForQueries(FileSystemAccessProvider.getInstance().callWhoAmI());

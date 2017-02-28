@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.config
 
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
 import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.config.converters.YAMLConverter
 import de.dkfz.roddy.knowledge.brawlworkflows.BrawlWorkflow
@@ -15,7 +17,7 @@ import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.FileObjectTupleFactory
 import de.dkfz.roddy.knowledge.files.FileStage
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
-import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
+//import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
 import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants

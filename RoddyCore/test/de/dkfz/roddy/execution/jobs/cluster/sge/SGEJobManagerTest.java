@@ -6,9 +6,11 @@
 
 package de.dkfz.roddy.execution.jobs.cluster.sge;
 
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet;
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize;
+import de.dkfz.eilslabs.batcheuphoria.execution.cluster.pbs.PBSResourceProcessingCommand;
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager;
 import de.dkfz.roddy.config.*;
-import de.dkfz.roddy.execution.jobs.JobManager;
-import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSResourceProcessingCommand;
 import de.dkfz.roddy.tools.BufferUnit;
 import de.dkfz.roddy.tools.BufferValue;
 import de.dkfz.roddy.tools.TimeUnit;
@@ -26,14 +28,14 @@ public class SGEJobManagerTest {
 
         Configuration cfg = new Configuration(new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null));
 
-        JobManager cFactory = new SGEJobManager(false);
-        PBSResourceProcessingCommand test = (PBSResourceProcessingCommand) cFactory.convertResourceSet(cfg, rset1);
+        JobManager cFactory = null; //new SGEJobManager(false);
+        PBSResourceProcessingCommand test = (PBSResourceProcessingCommand) cFactory.convertResourceSet(rset1);
         assert test.getProcessingString().trim().equals("-V -l s_data=1024M");
 
-        test = (PBSResourceProcessingCommand) cFactory.convertResourceSet(cfg, rset2);
+        test = (PBSResourceProcessingCommand) cFactory.convertResourceSet(rset2);
         assert test.getProcessingString().equals(" -V");
 
-        test = (PBSResourceProcessingCommand) cFactory.convertResourceSet(cfg, rset3);
+        test = (PBSResourceProcessingCommand) cFactory.convertResourceSet(rset3);
         assert test.getProcessingString().equals(" -V -l s_data=1024M");
     }
 

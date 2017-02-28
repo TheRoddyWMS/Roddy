@@ -8,6 +8,7 @@ package de.dkfz.roddy.client.cliclient
 
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
+import de.dkfz.eilslabs.batcheuphoria.jobs.Job as BEJob
 import de.dkfz.eilslabs.batcheuphoria.jobs.ProcessingCommands
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
@@ -674,7 +675,7 @@ public class RoddyCLIClient {
             List<AnalysisProcessingInformation> information = ds.getProcessingInformation(analysis);
             ExecutionContext context = null;
             List<Job> listOfJobs = null;
-            List<Job> listOfRunningJobs = [];
+            List<BEJob> listOfRunningJobs = [];
             if (information)
                 context = information.first().getDetailedProcessingInfo();
             if (context && context.hasRunningJobs())

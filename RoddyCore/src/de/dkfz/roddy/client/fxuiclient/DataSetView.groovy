@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.client.fxuiclient
 
+import de.dkfz.eilslabs.batcheuphoria.jobs.FakeJob
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.client.fxuiclient.fxdatawrappers.*;
 import de.dkfz.roddy.client.rmiclient.RoddyRMIClientConnection;
@@ -16,6 +17,7 @@ import de.dkfz.roddy.core.*;
 import de.dkfz.roddy.execution.io.ExecutionHelper;
 import de.dkfz.roddy.execution.jobs.Job;
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
+import de.dkfz.eilslabs.batcheuphoria.jobs.Job as BEJob;
 import de.dkfz.roddy.execution.jobs.ReadOutJob;
 import de.dkfz.roddy.client.fxuiclient.fxcontrols.ExecutionContextOverviewControl;
 import de.dkfz.roddy.client.fxuiclient.fxcontrols.JobOverviewControl;
@@ -473,7 +475,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
 
         clearJobList();
         for (RoddyRMIInterfaceImplementation.JobInfoObject job : api.getExecutedJobs()) {
-            if (job instanceof Job.FakeJob || job.isFakeJob())
+            if (job instanceof FakeJob || job.isFakeJob())
                 continue; //Ignore fake jobs.
             synchronized (allJobWrappersForEC) {
                 if (jobInfoWrappersByJobId[job.jobId] == null) {

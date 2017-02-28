@@ -4,14 +4,12 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy;
+package de.dkfz.roddy
 
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize;
 import de.dkfz.roddy.client.cliclient.CommandLineCall
-import de.dkfz.roddy.config.ResourceSetSize
-import de.dkfz.roddy.execution.io.ExecutionService;
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
-import de.dkfz.roddy.execution.jobs.JobManager;
-import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods
+import groovy.transform.CompileStatic
 import org.junit.AfterClass
 import org.junit.BeforeClass;
 import org.junit.Test
@@ -21,7 +19,14 @@ import java.lang.reflect.Modifier
 
 /**
  */
-public class RoddyTest {
+@CompileStatic
+class RoddyTest {
+
+    public static final String RUN_INTEGRATIONTESTS = "RUN_INTEGRATIONTESTS"
+
+    public static boolean runIntegrationTests() {
+        return RoddyConversionHelperMethods.toBoolean(System.getenv(RUN_INTEGRATIONTESTS), false);
+    }
 
     private static File temporarySettingsDirectory = new File(System.getProperty("user.home"), ".RODDY_TEST_SETTINGS_DIRECTORY");
 
@@ -133,6 +138,8 @@ public class RoddyTest {
 
     @Test
     public void integrationTestInitializeRoddy() {
+        if(!runIntegrationTests()) return
+
 
         // Test is broken. It is an integration test and needs to run in the new settings folder...
         // Maybe also needs to move to a different class for Roddy integration tests.

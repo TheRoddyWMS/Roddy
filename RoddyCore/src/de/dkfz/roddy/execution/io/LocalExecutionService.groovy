@@ -6,12 +6,14 @@
 
 package de.dkfz.roddy.execution.io
 
+import de.dkfz.eilslabs.batcheuphoria.jobs.Command
+import de.dkfz.roddy.Constants
+import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationValue
+import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.Command
-import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.tools.LoggerWrapper
 
 import java.lang.reflect.Field
@@ -75,7 +77,7 @@ public class LocalExecutionService extends ExecutionService {
         if (command.isBlockingCommand()) {
             command.setExecutionID(Roddy.getJobManager().createJobDependencyID(command.getJob(), res.processID));
 
-            File logFile = command.getExecutionContext().getRuntimeService().getLogFileForCommand(command)
+            File logFile = (command.getTag(Constants.COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext).getRuntimeService().getLogFileForCommand(command)
 
             // Use reflection to get access to the hidden path field :p The stream object does not natively give
             // access to it and I do not want to create a new class just for this.
