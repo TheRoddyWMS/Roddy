@@ -85,9 +85,15 @@ public class LocalExecutionService extends ExecutionService {
             File tmpFile2 = new File((String)fieldOfFile.get(outputStream));
 
             FileSystemAccessProvider.getInstance().moveFile(tmpFile2, logFile);
-            "none";
+            return "none";
         } else {
-            return super.handleServiceBasedJobExitStatus(command, res, outputStream);
+            String exID = "none";
+            if (res.successful) {
+                exID = JobManager.getInstance().parseJobID(res.resultLines[0]);
+                command.setExecutionID(JobManager.getInstance().createJobDependencyID(command.getJob(), exID));
+                JobManager.getInstance().storeJobStateInfo(command.getJob());
+            }
+            return exID;
         }
     }
 
