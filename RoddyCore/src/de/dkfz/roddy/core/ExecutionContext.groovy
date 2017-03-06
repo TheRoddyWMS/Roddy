@@ -47,7 +47,7 @@ import java.util.*
  * @author michael
  */
 @groovy.transform.CompileStatic
-class ExecutionContext {
+class ExecutionContext extends InfoObject {
 
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(ExecutionContext.class.name)
 

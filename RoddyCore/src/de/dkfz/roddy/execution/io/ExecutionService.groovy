@@ -10,6 +10,7 @@ import de.dkfz.eilslabs.batcheuphoria.jobs.Command
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobDependencyID
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
+import de.dkfz.eilslabs.batcheuphoria.jobs.DummyCommand
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -25,7 +26,6 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.eilslabs.batcheuphoria.jobs.DummyCommand
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -492,6 +492,7 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
 
         listOfFolders.keySet().parallelStream().each {
             File subFolder ->
+                if (!subFolder.isDirectory()) return
                 long startSingleCompression = System.nanoTime()
                 PluginInfo pInfo = listOfFolders[subFolder]
                 File tempFolder = File.createTempDir();
@@ -548,6 +549,8 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
 
         listOfFolders.each {
             File subFolder, PluginInfo pInfo ->
+                if(!subFolder.isDirectory())
+                    return
                 File localFile = mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive;
                 File remoteFile = new File(mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive.getName()[0..-5] + "_" + context.getTimestampString() + ".zip");
                 String archiveMD5 = mapOfPreviouslyCompressedArchivesByFolder[subFolder].md5

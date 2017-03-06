@@ -9,9 +9,7 @@ package de.dkfz.roddy;
 import com.btr.proxy.search.ProxySearch;
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize;
 import de.dkfz.eilslabs.batcheuphoria.execution.cluster.pbs.PBSJobManager;
-import de.dkfz.eilslabs.batcheuphoria.jobs.Command;
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager;
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
+import de.dkfz.eilslabs.batcheuphoria.jobs.*;
 import de.dkfz.roddy.client.RoddyStartupModes;
 import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
@@ -38,7 +36,6 @@ import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.*;
 import java.util.*;
 
 import static de.dkfz.roddy.RunMode.CLI;
@@ -491,14 +488,16 @@ public class Roddy {
         jobManagerClass = classLoader.loadClass(jobManagerClassID);
 
         /** Get the constructor which comes with no parameters */
-        Constructor first = jobManagerClass.getDeclaredConstructor(de.dkfz.eilslabs.batcheuphoria.execution.ExecutionService.class, AppConfig.class, boolean.class);
-        jobManager = (JobManager) first.newInstance(ExecutionService.getInstance(), getApplicationConfiguration(), true);
-        jobManager.setTrackingOfUserJobsEnabled(trackUserJobsOnly);
-        jobManager.setQueryOnlyStartedJobs(trackOnlyStartedJobs);
-        jobManager.setUserIDForQueries(FileSystemAccessProvider.getInstance().callWhoAmI());
-        jobManager.setJobIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID);
-        jobManager.setJobIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBARRAYINDEX);
-        jobManager.setJobIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH);
+        Constructor first = jobManagerClass.getDeclaredConstructor(de.dkfz.eilslabs.batcheuphoria.execution.ExecutionService.class, JobManagerCreationParameters.class);
+        jobManager = (JobManager) first.newInstance(ExecutionService.getInstance()
+                , new JobManagerCreationParametersBuilder()
+                .setCreateDaemon(true)
+                .setTrackUserJobsOnly(trackUserJobsOnly)
+                .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
+                .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI())
+                .setJobIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID)
+                .setJobArrayIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBARRAYINDEX)
+                .setJobScratchIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH).build());
 
 
 // There are many values which need to be extracted from the xml (context, project?)
@@ -769,6 +768,10 @@ public class Roddy {
         return LibrariesFactory.PLUGIN_VERSION_CURRENT;
     }
 
+    public static FileSystemAccessProvider getLocalFileSystemInfoProvider() {
+        return new FileSystemAccessProvider();
+    }
+
     public static ShellCommandSet getLocalCommandSet() {
         String localCommandSet = getApplicationProperty("localCommandSet");
 
@@ -801,4 +804,5 @@ public class Roddy {
             return new CommandLineCall(new LinkedList<>());
         return commandLineCall;
     }
+
 }

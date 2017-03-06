@@ -8,6 +8,8 @@ package de.dkfz.roddy.config
 
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobManagerCreationParameters
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobManagerCreationParametersBuilder
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import de.dkfz.eilslabs.batcheuphoria.jobs.Command
@@ -112,7 +114,8 @@ public class FilenamePatternTest {
 
     @Test
     public void testJobCreationWithFileUsingToolIDForNamePattern() {
-        new JobManager(new NoNoExecutionService(), null, false) {
+        new JobManager(new NoNoExecutionService(), new JobManagerCreationParametersBuilder().setCreateDaemon(false).build()) {
+/*
 //            @Override
 //            void createUpdateDaemonThread(int interval) {
 //
@@ -277,7 +280,7 @@ public class FilenamePatternTest {
 //            String getSpecificJobScratchIdentifier() {
 //                return null
 //            }
-
+*/
             @Override
             Command createCommand(de.dkfz.eilslabs.batcheuphoria.jobs.GenericJobInfo genericJobInfo) {
                 return null
