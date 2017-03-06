@@ -1,11 +1,10 @@
 package de.dkfz.roddy
 
-import org.gradle.api.file.FileCollection
-
-
 class GitRepo {
 
     final public File repoDir
+
+    public boolean debug = true
 
     GitRepo(File repoDir) {
         this.repoDir = repoDir
@@ -20,7 +19,7 @@ class GitRepo {
         return ["git", "--no-pager", "-C", "${repoDir}/"] + command.toList() as String[]
     }
 
-    private static LinkedList<String> execute (String... command) {
+    private LinkedList<String> execute (String... command) {
         Process proc = new ProcessBuilder(command).start()
         StringBuilder errStrm = new StringBuilder()
         StringBuilder outStrm = new StringBuilder()
@@ -28,6 +27,9 @@ class GitRepo {
         if (proc.waitFor() != 0) {
             throw new RuntimeException("Error executing '${command}':\nout='${outStrm}',\nerr='${errStrm}'")
         } else {
+            if (debug)
+                System.err.print(outStrm.toString())
+                System.err.print(errStrm.toString())
             return outStrm.toString().split("\n")
         }
     }

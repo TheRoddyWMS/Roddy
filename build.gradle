@@ -19,6 +19,8 @@ apply plugin: "idea"
 // TODO Print general help information with "gradlew help"
 // TODO Describe how to set up idea for gradle debugging.
 
+group = "de.dkfz.co"
+
 /**
  * -PignoreFailedTests                  Continue despite failed tests.
  * -PreleaseLevel={major,minor,patch}   When releasing, increase the major.minor.patch number. The build number is always increased.
@@ -194,15 +196,15 @@ allprojects {
     }
 
     dependencies {
-	compile 'org.codehaus.groovy:groovy-all:2.4.7'
+	    compile 'org.codehaus.groovy:groovy-all:2.4.7'
 
         // Roddy dependencies
-	compile 'org.bouncycastle:bcpg-jdk15on:1.49'
-	compile 'org.bouncycastle:bcpkix-jdk15on:1.49'
-	compile 'org.bouncycastle:bcprov-ext-jdk15on:1.49'
-	compile 'org.bouncycastle:bcprov-jdk15on:1.49'
+	    compile 'org.bouncycastle:bcpg-jdk15on:1.49'
+	    compile 'org.bouncycastle:bcpkix-jdk15on:1.49'
+	    compile 'org.bouncycastle:bcprov-ext-jdk15on:1.49'
+    	compile 'org.bouncycastle:bcprov-jdk15on:1.49'
 
-	compile 'commons-csv:commons-csv:1.2'
+	    compile 'commons-csv:commons-csv:1.2'
         compile 'commons-cli:commons-cli:1.2'
         compile 'commons-codec:commons-codec:1.8'
         compile 'commons-io:commons-io:2.4'
@@ -214,9 +216,9 @@ allprojects {
         compile 'org.reflections:reflections:0.9.9-RC1'
         compile 'org.slf4j:slf4j-api:1.7.2'
         compile 'org.slf4j:slf4j-jcl:1.7.2'
-	compile ':SSHJ:'   // local copy! We could also safely update with: compile 'com.hierynomus:SSHJ:0.19.1'
+	    compile ':SSHJ:'   // local copy! We could also safely update with: compile 'com.hierynomus:SSHJ:0.19.1'
         compile 'com.thoughtworks.xstream:xstream:1.4.5'
-	compile files("${rootProject.projectDir}/dist/runtimeDevel/jdk/jre/lib/ext/jfxrt.jar")
+	    compile files("${rootProject.projectDir}/dist/runtimeDevel/jdk/jre/lib/ext/jfxrt.jar")
 
         // Testing libraries
         testCompile 'junit:junit:4.12'
@@ -235,9 +237,9 @@ allprojects {
 
 }
 
-// Sub-projects. See settings.gradle for how the paths are found.
+// Sub-projects. Paths are configured in settings.gradle.
 
-project(":Roddy") {
+project(":RoddyCore") {
 
     ext.developmentDir = new File(rootProject.projectDir, "dist/bin/current")
     convention.add("releaseDir", new File(developmentDir, "../" + buildVersion).absoluteFile)
@@ -296,7 +298,7 @@ project(":PluginBase") {
     }
 
     dependencies {
-        compile project(":Roddy")
+        compile project(":RoddyCore")
     }
 
     def projectManifest = manifest {
@@ -330,7 +332,7 @@ project(":DefaultPlugin") {
     }
 
     dependencies {
-        compile project(":Roddy")
+        compile project(":RoddyCore")
         compile project(":PluginBase")
     }
 

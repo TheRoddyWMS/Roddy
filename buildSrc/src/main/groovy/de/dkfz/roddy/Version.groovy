@@ -46,11 +46,7 @@ class Version {
     }
 
     public String toString() {
-        if (revision == 0) {
-            return "${major}.${minor}.${patch}"
-        } else {
-            return "${major}.${minor}.${patch}-${revision}"
-        }
+        return "${major}.${minor}.${patch}-${revision}"
     }
 
     private static final versionPattern = Pattern.compile(/^(\d+)\.(\d+)\.(\d+)(-(\d+))?$/)
