@@ -673,6 +673,10 @@ public abstract class RuntimeService extends CacheProvider {
     public abstract Map<String, Object> getDefaultJobParameters(ExecutionContext context, String TOOLID)
 
     public String createJobName(ExecutionContext executionContext, BaseFile bf, String TOOLID, boolean reduceLevel) {
+        return _createJobName(executionContext, bf, TOOLID, reduceLevel)
+    }
+
+    public static String _createJobName(ExecutionContext executionContext, BaseFile bf, String TOOLID, boolean reduceLevel) {
         ExecutionContext rp = bf.getExecutionContext();
         String runtime = rp.getTimestampString();
         String pid = rp.getDataSet().getId()

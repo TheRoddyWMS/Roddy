@@ -1,27 +1,6 @@
 <component name="libraryTable">
   <library name="roddyBundledLibraries">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/sshj-0.17.2.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/reflections-0.9.9-RC1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/commons-logging-api-1.1.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/junit-4.12.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/commons-codec-1.8.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/commons-cli-1.2.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/commons-io-2.4.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/bcpg-jdk15on-1.51.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/commons-logging-1.1.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/eddsa-0.1.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/commons-logging-adapters-1.1.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/commons-csv-1.2.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/jcl-over-slf4j-1.7.7.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/slf4j-api-1.7.7.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/proxy-vole_20131209.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/xstream-1.4.5.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/hamcrest-all-1.3.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/bcprov-jdk15on-1.51.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/jzlib-1.1.3.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/bcpkix-jdk15on-1.51.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../RoddyInfra/roddy/dist/bin/current/lib/groovy-all-2.4.8-indy.jar!/" />
       <root url="jar://$PROJECT_DIR$/dist/bin/current/lib/eddsa-0.1.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/dist/bin/current/lib/bcprov-jdk15on-1.51.jar!/" />
       <root url="jar://$PROJECT_DIR$/dist/bin/current/lib/sshj-0.17.2.jar!/" />
