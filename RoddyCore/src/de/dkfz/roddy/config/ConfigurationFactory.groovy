@@ -924,22 +924,39 @@ public class ConfigurationFactory {
     static ToolFileGroupParameter parseFileGroup(NodeChild groupNode, String toolID) {
         String cls = extractAttributeText(groupNode, "typeof", GenericFileGroup.name);
         Class filegroupClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, FileGroup.class);
-        if(!filegroupClass)
+        if (!filegroupClass)
             filegroupClass = GenericFileGroup
 
         PassOptions passas = Enum.valueOf(PassOptions.class, extractAttributeText(groupNode, "passas", PassOptions.parameters.name()));
         ToolFileGroupParameter.IndexOptions indexOptions = Enum.valueOf(ToolFileGroupParameter.IndexOptions.class, extractAttributeText(groupNode, "indices", ToolFileGroupParameter.IndexOptions.numeric.name()))
 
         String fileclass = extractAttributeText(groupNode, "fileclass", null);
-        Class genericFileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(fileclass, BaseFile.class)
+        int childCount = groupNode.children().size();
         String pName = groupNode.@scriptparameter.text();
 
+        if (fileclass) {
+            Class genericFileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(fileclass, BaseFile.class)
+            if (!pName || !fileclass)
+                throw new RuntimeException("You have to set both the parametername and the fileclass attribute for filegroup i/o parameter in ${toolID}")
+            ToolFileGroupParameter tpg = new ToolFileGroupParameter(filegroupClass, genericFileClass, pName, passas, indexOptions)
+            return tpg
+        } else if (childCount) {
+            return parseChildFilesForFileGroup(groupNode, passas, toolID, pName, filegroupClass, indexOptions)
+        } else {
+            throw new RuntimeException("Either the fileclass or a list of child files need to be set for a filegroup in ${toolID}")
+        }
+    }
 
-        if(!pName || !fileclass)
-            throw new RuntimeException("You have to set both the parametername and the fileclass attribute for filegroup i/o parameter in ${toolID}")
-
-        ToolFileGroupParameter tpg = new ToolFileGroupParameter(filegroupClass, genericFileClass, pName, passas, indexOptions)
-        return tpg
+    @Deprecated
+    private static ToolFileGroupParameter parseChildFilesForFileGroup(NodeChild groupNode, PassOptions passas, String toolID, String pName, Class filegroupClass, ToolFileGroupParameter.IndexOptions indexOptions) {
+        int childCount = groupNode.children().size();
+        List<ToolFileParameter> children = new LinkedList<ToolFileParameter>();
+        if (childCount == 0 && passas != PassOptions.array)
+            logger.severe("No files in the file group. Configuration is not valid.")
+        for (Object fileChild in groupNode.children()) {
+            children << (parseToolParameter(toolID, fileChild as NodeChild) as ToolFileParameter);
+        }
+        return new ToolFileGroupParameter(filegroupClass, children, pName, passas, indexOptions)
     }
 
     ProjectConfiguration getProjectConfiguration(String s) {

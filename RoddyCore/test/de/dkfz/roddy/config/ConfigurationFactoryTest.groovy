@@ -414,6 +414,40 @@ public class ConfigurationFactoryTest {
     }
 
     @Test
+    @Deprecated
+    void testParseFileGroupWithSubChildren() {
+        NodeChild nc = asNodeChild("""
+                <output type="filegroup" scriptparameter="APARM">
+                    <output type="file" typeof="AFile" scriptparameter="FA"/>
+                    <output type="file" typeof="BFile" scriptparameter="FB"/>
+                    <output type="file" typeof="CFile" scriptparameter="FC"/>
+                </output>
+            """)
+        ToolFileGroupParameter tparm = new ConfigurationFactory([]).parseFileGroup(nc, "testTool")
+        assert tparm.files.size() == 3
+        assert tparm.files.collect { ToolFileParameter tfp -> tfp.fileClass.name } == ["AFile", "BFile", "CFile"]
+        assert tparm.scriptParameterName == "APARM"
+        assert tparm.passOptions == ToolFileGroupParameter.PassOptions.parameters
+        assert tparm.indexOptions == ToolFileGroupParameter.IndexOptions.numeric
+    }
+
+    @Test
+    void testCloneFileGroupParameter() {
+        NodeChild nc = asNodeChild("""
+                <output type="filegroup" scriptparameter="APARM">
+                    <output type="file" typeof="AFile" scriptparameter="FA"/>
+                    <output type="file" typeof="BFile" scriptparameter="FB"/>
+                    <output type="file" typeof="CFile" scriptparameter="FC"/>
+                </output>
+            """)
+        ToolFileGroupParameter tparm = new ConfigurationFactory([]).parseFileGroup(nc, "testTool")
+        def clone = tparm.clone()
+        assert clone
+        assert tparm.files.size() == clone.files.size()
+
+    }
+
+    @Test
     public void testParseFileGroupWithMinimalDefinition() {
         NodeChild nc = asNodeChild("""<output type="filegroup" fileclass="TestFile" scriptparameter="APARM"/>""")
         ToolFileGroupParameter tparm = new ConfigurationFactory([]).parseFileGroup(nc, "testTool")

@@ -50,6 +50,34 @@ public class ToolFileParameter extends ToolEntry.ToolParameter<ToolFileParameter
         return new ToolFileParameter(fileClass, _con, scriptParameterName, checkFile, filenamePatternSelectionTag, childFiles, parentVariable);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ToolFileParameter that = (ToolFileParameter) o;
+
+        // This is mostly Idea generated code. I added the loops to compare files and constraints.
+
+        if (fileClass != null ? !fileClass.equals(that.fileClass) : that.fileClass != null) return false;
+        if (constraints != null ? !constraints.equals(that.constraints) : that.constraints != null) return false;
+        if (constraints.size() != that.constraints.size()) return false;
+        for (int i = 0; i < constraints.size(); i++) {
+            if (!constraints.get(i).equals(that.constraints.get(i))) return false;
+        }
+        if (scriptParameterName != null ? !scriptParameterName.equals(that.scriptParameterName) : that.scriptParameterName != null) return false;
+        if (filenamePatternSelectionTag != null ? !filenamePatternSelectionTag.equals(that.filenamePatternSelectionTag) : that.filenamePatternSelectionTag != null) return false;
+        if (checkFile != null ? !checkFile.equals(that.checkFile) : that.checkFile != null) return false;
+        if (parentVariable != null ? !parentVariable.equals(that.parentVariable) : that.parentVariable != null) return false;
+        if (childFiles != null ? !childFiles.equals(that.childFiles) : that.childFiles != null) return false;
+
+        if (childFiles.size() != that.childFiles.size()) return false;
+        for (int i = 0; i < childFiles.size(); i++) {
+            if (!childFiles.get(i).equals(that.childFiles.get(i))) return false;
+        }
+        return true;
+    }
+
     public List<ToolFileParameter> getChildFiles() {
         return childFiles;
     }

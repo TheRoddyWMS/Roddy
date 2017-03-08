@@ -44,6 +44,17 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         public ToolConstraint clone() {
             return new ToolConstraint(onFailMethod, checkMethod);
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            ToolConstraint that = (ToolConstraint) o;
+
+            if (onFailMethod != null ? !onFailMethod.equals(that.onFailMethod) : that.onFailMethod != null) return false;
+            return checkMethod != null ? checkMethod.equals(that.checkMethod) : that.checkMethod == null;
+        }
     }
 
     public static abstract class ToolParameter<T extends ToolParameter> {

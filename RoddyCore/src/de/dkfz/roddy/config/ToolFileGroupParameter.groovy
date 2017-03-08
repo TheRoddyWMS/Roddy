@@ -22,6 +22,9 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameter<ToolFileGroupParame
     public final PassOptions passOptions
     public final IndexOptions indexOptions
 
+    @Deprecated
+    public final List<ToolFileParameter> files
+
     enum PassOptions {
         parameters,
         array
@@ -32,6 +35,16 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameter<ToolFileGroupParame
         strings
     }
 
+    @Deprecated
+    ToolFileGroupParameter(Class<FileGroup> groupClass, List<ToolFileParameter> children, String scriptParameterName, PassOptions passas = PassOptions.parameters, IndexOptions indexOptions = IndexOptions.numeric) {
+        super(scriptParameterName)
+        this.groupClass = groupClass
+        this.passOptions = passas
+        this.genericFileClass = null
+        this.indexOptions = indexOptions
+        this.files = children
+    }
+
     ToolFileGroupParameter(Class<FileGroup> groupClass, Class<BaseFile> genericFileClass, String scriptParameterName, PassOptions passas = PassOptions.parameters, IndexOptions indexOptions = IndexOptions.numeric) {
         super(scriptParameterName)
         this.groupClass = groupClass
@@ -40,11 +53,38 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameter<ToolFileGroupParame
         this.indexOptions = indexOptions
     }
 
-
+    /**
+     * Copy constructor
+     */
+    @Deprecated
+    ToolFileGroupParameter(String scriptParameterName, Class<FileGroup> groupClass, Class<BaseFile> genericFileClass, PassOptions passOptions, IndexOptions indexOptions, List<ToolFileParameter> files) {
+        super(scriptParameterName)
+        this.groupClass = groupClass
+        this.genericFileClass = genericFileClass
+        this.passOptions = passOptions
+        this.indexOptions = indexOptions
+        this.files = files
+    }
 
     @Override
     ToolFileGroupParameter clone() {
-        return new ToolFileGroupParameter(groupClass, genericFileClass, scriptParameterName, passOptions)
+        return new ToolFileGroupParameter(scriptParameterName, groupClass, genericFileClass,  passOptions, indexOptions, files?.collect { ToolFileParameter tfp -> tfp.clone() })
+    }
+
+    @Override
+    boolean equals(o) {
+        if (this.is(o)) return true
+        if (getClass() != o.class) return false
+
+        ToolFileGroupParameter that = o as ToolFileGroupParameter
+
+        if (files != that.files) return false
+        if (genericFileClass != that.genericFileClass) return false
+        if (groupClass != that.groupClass) return false
+        if (indexOptions != that.indexOptions) return false
+        if (passOptions != that.passOptions) return false
+
+        return true
     }
 
     boolean isGeneric() {
