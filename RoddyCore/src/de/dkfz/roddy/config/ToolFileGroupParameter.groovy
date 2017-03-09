@@ -75,6 +75,7 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameter<ToolFileGroupParame
     boolean equals(o) {
         if (this.is(o)) return true
         if (getClass() != o.class) return false
+        if (!super.equals(o)) return false
 
         ToolFileGroupParameter that = o as ToolFileGroupParameter
 
@@ -85,6 +86,16 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameter<ToolFileGroupParame
         if (passOptions != that.passOptions) return false
 
         return true
+    }
+
+    int hashCode() {
+        int result
+        result = (groupClass != null ? groupClass.hashCode() : 0)
+        result = 31 * result + (genericFileClass != null ? genericFileClass.hashCode() : 0)
+        result = 31 * result + (passOptions != null ? passOptions.hashCode() : 0)
+        result = 31 * result + (indexOptions != null ? indexOptions.hashCode() : 0)
+        result = 31 * result + (files != null ? files.hashCode() : 0)
+        return result
     }
 
     boolean isGeneric() {

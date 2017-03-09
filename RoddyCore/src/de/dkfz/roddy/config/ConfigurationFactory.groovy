@@ -935,9 +935,10 @@ public class ConfigurationFactory {
         String pName = groupNode.@scriptparameter.text();
 
         if (fileclass) {
-            Class genericFileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(fileclass, BaseFile.class)
-            if (!pName || !fileclass)
+            if (!pName)
                 throw new RuntimeException("You have to set both the parametername and the fileclass attribute for filegroup i/o parameter in ${toolID}")
+
+            Class genericFileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(fileclass, BaseFile.class)
             ToolFileGroupParameter tpg = new ToolFileGroupParameter(filegroupClass, genericFileClass, pName, passas, indexOptions)
             return tpg
         } else if (childCount) {
