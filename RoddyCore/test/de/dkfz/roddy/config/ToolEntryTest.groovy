@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -23,8 +23,8 @@ class ToolEntryTest extends GroovyTestCase {
 
     private ToolEntry createTestToolEntry() {
         def te = new ToolEntry("TestTool", "TestPath", "/SomewhereOverTheRainbow")
-        te.getResourceSets().add(new ToolEntry.ResourceSet(ResourceSetSize.s, new BufferValue(1), 1, 1, new TimeUnit("01:00"), new BufferValue(1), "default", ""));
-        te.getResourceSets().add(new ToolEntry.ResourceSet(ResourceSetSize.l, new BufferValue(1), 1, 1, new TimeUnit("01:00"), new BufferValue(1), "default", ""));
+        te.getResourceSets().add(new ResourceSet(ResourceSetSize.s, new BufferValue(1), 1, 1, new TimeUnit("01:00"), new BufferValue(1), "default", ""));
+        te.getResourceSets().add(new ResourceSet(ResourceSetSize.l, new BufferValue(1), 1, 1, new TimeUnit("01:00"), new BufferValue(1), "default", ""));
         return te;
     }
 
@@ -55,5 +55,23 @@ class ToolEntryTest extends GroovyTestCase {
             ResourceSetSize given, ResourceSetSize expected ->
                 assert entry.getResourceSet(createTestConfiguration(given)).getSize() == expected
         }
+    }
+
+
+    /////// Tests for ToolFileParameterCheckCondition
+    void testNewToolFileParameterCondition() {
+        def abc = new ToolFileParameterCheckCondition("conditional:abc")
+        assert ! abc.isBoolean()
+        assert abc.getCondition()
+
+        def pure = new ToolFileParameterCheckCondition("true")
+        assert pure.isBoolean()
+        assert pure.evaluate(null)
+        assert pure.getCondition() == null
+
+        pure = new ToolFileParameterCheckCondition("false")
+        assert pure.isBoolean()
+        assert pure.evaluate(null) == false
+        assert pure.getCondition() == null
     }
 }

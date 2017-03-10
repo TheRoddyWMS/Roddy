@@ -30,7 +30,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING
 @groovy.transform.CompileStatic
 public class CachedFileSystemAccessProvider extends FileSystemAccessProvider {
 
-    private static LoggerWrapper logger = LoggerWrapper.getLogger(CachedFileSystemAccessProvider.getClass().getSimpleName());
+    private static LoggerWrapper logger = LoggerWrapper.getLogger(CachedFileSystemAccessProvider.class.getSimpleName());
     private static final String TBL_FILECHACHEINFO = (CachedFileSystemAccessProvider.class.getSimpleName() + "_fileCacheInfo").toUpperCase();
     private static final String TBL_RUNOWNER = (CachedFileSystemAccessProvider.class.getSimpleName() + "_runOwner").toUpperCase();
     public static final String FORMATSTRING_FILELISTENTRY = "fileList_%08X"

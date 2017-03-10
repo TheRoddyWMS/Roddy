@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -7,7 +7,7 @@
 package de.dkfz.roddy.execution.jobs.direct.synchronousexecution;
 
 import de.dkfz.roddy.config.Configuration;
-import de.dkfz.roddy.config.ToolEntry;
+import de.dkfz.roddy.config.ResourceSet;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.execution.jobs.*;
 import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo;
@@ -38,7 +38,7 @@ public class DirectSynchronousExecutedJobManager extends JobManager<DirectComman
     }
 
     @Override
-    public ProcessingCommands convertResourceSet(Configuration configuration, ToolEntry.ResourceSet resourceSet) {
+    public ProcessingCommands convertResourceSet(Configuration configuration, ResourceSet resourceSet) {
         return null;
     }
 

@@ -19,7 +19,7 @@ apply plugin: "idea"
 // TODO Print general help information with "gradlew help"
 // TODO Describe how to set up idea for gradle debugging.
 
-group = "de.dkfz.co"
+group = "de.dkfz.eils"
 
 /**
  * -PignoreFailedTests                  Continue despite failed tests.
@@ -85,8 +85,9 @@ void declareReleaseTasks (Project project,
         task deleteReleaseDir(type: Delete) {
             description("Remove the current release directory.")
             delete releaseDir
-        } << {
-            System.err.println("Deleting ${releaseDir}")
+            doLast {
+                System.err.println("Deleting ${releaseDir}")
+            }
         }
 
         task releaseJar(type: Jar) {
@@ -120,11 +121,12 @@ void declareReleaseTasks (Project project,
             mustRunAfter("releaseJar")
             mustRunAfter("fillReleaseDir")
             //outputs.file new File(releaseDir, "${project.name}.jar.nfo").toString()
-        } << {
-            String nfoFile = new File(releaseDir, "${project.name}.jar.nfo").canonicalPath
-            System.err.println("Creating $nfoFile")
-            ["bash", "-c", "find '${releaseDir.canonicalPath}' > '${nfoFile}'"].execute().waitFor()
-            ["bash", "-c", "ls -l '${releaseDir}' >> '${nfoFile}'"].execute().waitFor()
+            doLast {
+                String nfoFile = new File(releaseDir, "${project.name}.jar.nfo").canonicalPath
+                System.err.println("Creating $nfoFile")
+                ["bash", "-c", "find '${releaseDir.canonicalPath}' > '${nfoFile}'"].execute().waitFor()
+                ["bash", "-c", "ls -l '${releaseDir}' >> '${nfoFile}'"].execute().waitFor()
+            }
         }
 
         task release {
@@ -137,9 +139,10 @@ void declareReleaseTasks (Project project,
             dependsOn("createInfoFile")
             inputs.dir developmentDir
             outputs.dir releaseDir
-        } << {
-            increaseVersion(project)
-            tagWithBuildVersion(project)
+            doLast {
+                increaseVersion(project)
+                tagWithBuildVersion(project)
+            }
         }
 
         task pack(type: Zip) {
@@ -149,8 +152,9 @@ void declareReleaseTasks (Project project,
             destinationDir = releaseDir.parentFile
             from(fileTree(releaseDir))
             archiveName = "${baseName}_${buildVersion}.zip"
-        } << {
-            System.err.println("Packing into ${archivePath}")
+            doLast {
+                System.err.println("Packing into ${archivePath}")
+            }
         }
     }
 
@@ -188,14 +192,16 @@ allprojects {
     buildDir = "${projectDir}/gradleBuild"
 
     repositories {
-	mavenCentral()
+	    mavenCentral()
+        maven {
+            url "http://central.maven.org/maven2/"
+        }
         // Manage a local copy of the required libraries.
-        flatDir dirs: ["${rootProject.projectDir}/dist/bin/current/lib/",
-                       "${rootProject.projectDir}/dist/runtimeDevel/groovy/lib",
-                       "${rootProject.projectDir}/dist/runtimeDevel/jdk/lib"]
+        flatDir dirs: ["${rootProject.projectDir}/dist/bin/current/lib/"]
     }
 
     dependencies {
+        compile 'de.dkfz.eilslabs:RoddyToolLib:'
 	    compile 'org.codehaus.groovy:groovy-all:2.4.7'
 
         // Roddy dependencies
@@ -204,19 +210,19 @@ allprojects {
 	    compile 'org.bouncycastle:bcprov-ext-jdk15on:1.49'
     	compile 'org.bouncycastle:bcprov-jdk15on:1.49'
 
-	    compile 'commons-csv:commons-csv:1.2'
+	    compile 'org.apache.commons:commons-csv:1.2'
         compile 'commons-cli:commons-cli:1.2'
         compile 'commons-codec:commons-codec:1.8'
         compile 'commons-io:commons-io:2.4'
         compile 'commons-logging:commons-logging:1.1.1'
-        compile 'commons-logging:commons-logging-adapters:1.1.1'
-        compile 'commons-logging:commons-logging-api:1.1.1'
+        compile 'commons-logging-adapters:commons-logging-adapters:1.1.1'
+        compile 'commons-logging-api:commons-logging-api:1.1.1'
         compile 'com.jcraft:jzlib:1.1.3'
         compile name: 'proxy-vole_20131209'   // local copy!
         compile 'org.reflections:reflections:0.9.9-RC1'
         compile 'org.slf4j:slf4j-api:1.7.2'
         compile 'org.slf4j:slf4j-jcl:1.7.2'
-	    compile ':SSHJ:'   // local copy! We could also safely update with: compile 'com.hierynomus:SSHJ:0.19.1'
+	    compile 'com.hierynomus:sshj:0.20.0'
         compile 'com.thoughtworks.xstream:xstream:1.4.5'
 	    compile files("${rootProject.projectDir}/dist/runtimeDevel/jdk/jre/lib/ext/jfxrt.jar")
 

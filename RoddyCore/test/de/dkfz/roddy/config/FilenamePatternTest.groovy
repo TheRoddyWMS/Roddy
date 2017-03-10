@@ -1,17 +1,13 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.config
 
-import de.dkfz.roddy.core.Analysis;
-import de.dkfz.roddy.core.DataSet;
-import de.dkfz.roddy.core.ExecutionContext;
-import de.dkfz.roddy.core.ExecutionContextLevel
+import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
-import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobDependencyID
@@ -63,7 +59,7 @@ public class FilenamePatternTest {
         testClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass("FilenamePatternTest_testFilenamePatternWithSelectionByToolID", BaseFile.class as Class<FileObject>);
 
         ToolEntry toolEntry = new ToolEntry("RoddyTests", "RoddyTests", "RoddyTestScript_ExecutionServiceTest.sh");
-        toolEntry.getOutputParameters(mockupConfig).add(new ToolEntry.ToolFileParameter(testClass, null, "TEST", true))
+        toolEntry.getOutputParameters(mockupConfig).add(new ToolFileParameter(testClass, null, "TEST", new ToolFileParameterCheckCondition(true)))
 
         mockupConfig.getTools().add(toolEntry);
     }
@@ -97,6 +93,16 @@ public class FilenamePatternTest {
     }
 
     @Test
+    void testFilenamePatternsForFileGroupWithNumericIndices() {
+        assert false
+    }
+
+    @Test
+    void testFilenamePatternsForFileGroupWithStringIndices() {
+        assert false
+    }
+
+    @Test
     void testComplexFilenamePattern() {
         assert false
     }
@@ -125,7 +131,7 @@ public class FilenamePatternTest {
             }
 
             @Override
-            ProcessingCommands convertResourceSet(Configuration configuration, ToolEntry.ResourceSet resourceSet) {
+            ProcessingCommands convertResourceSet(Configuration configuration, ResourceSet resourceSet) {
                 return null
             }
 
@@ -206,5 +212,15 @@ public class FilenamePatternTest {
         BaseFile result = (BaseFile) GenericMethod.callGenericTool("RoddyTests", sourceFile);
         assert result != null
         assert result.class == testClass;
+    }
+
+    @Test
+    public void testExtractCommand() {
+        assert false
+    }
+
+    @Test
+    public void testExtractCommands() {
+        assert false
     }
 }

@@ -11,8 +11,7 @@ import de.dkfz.roddy.client.rmiclient.RoddyRMIClientConnection;
 import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation
 import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation.ExecutionContextInfoObject;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
-import de.dkfz.roddy.execution.jobs.JobManager;
-import de.dkfz.roddy.tools.RoddyIOHelperMethods;
+import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.core.*;
 import de.dkfz.roddy.execution.io.ExecutionHelper;
 import de.dkfz.roddy.execution.jobs.Job;
@@ -23,10 +22,10 @@ import de.dkfz.roddy.client.fxuiclient.fxcontrols.JobOverviewControl;
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.CustomControlOnBorderPane;
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.GenericListViewItemCellImplementation;
 import de.dkfz.roddy.knowledge.files.BaseFile
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
 import javafx.beans.value.ChangeListener
-import javafx.beans.value.ObservableValue;
-import javafx.collections.ObservableList;
+import javafx.beans.value.ObservableValue
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;

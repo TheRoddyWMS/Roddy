@@ -113,7 +113,13 @@ public class ProjectFactory {
             Class analysisClass = LibrariesFactory.getInstance().loadClass(configuration.getConfiguredClass());
             Class workflowClass = LibrariesFactory.getInstance().loadClass(configuration.getWorkflowClass());
             String _runtimeServiceClass = configuration.getRuntimeServiceClass();
-            Workflow workflow = (Workflow) workflowClass.getConstructor().newInstance();
+            Workflow workflow
+            if (workflowClass.name.endsWith('$py')) {
+                // Jython creates a class called Workflow$py with a constructor with a single (unused) String parameter.
+                workflow = (Workflow) workflowClass.getConstructor(String).newInstance("dummy")
+            } else {
+                workflow = (Workflow) workflowClass.getConstructor().newInstance();
+            }
             RuntimeService runtimeService
 
             if (_runtimeServiceClass) {

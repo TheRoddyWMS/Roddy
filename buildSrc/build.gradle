@@ -8,11 +8,6 @@ apply plugin: 'idea'
 
 repositories {
     mavenCentral()
-	// jcenter()
-    // Manage a local copy of the required libraries.
-//    flatDir dirs: ["${rootProject.projectDir}/../dist/bin/current/lib/",
-//                   "${rootProject.projectDir}/../dist/runtimeDevel/groovy/lib",
-//                   "${rootProject.projectDir}/../dist/runtimeDevel/jdk/lib"]
 }
 
 

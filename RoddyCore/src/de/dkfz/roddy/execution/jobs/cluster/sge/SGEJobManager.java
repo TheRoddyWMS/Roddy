@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -9,7 +9,7 @@ package de.dkfz.roddy.execution.jobs.cluster.sge;
 import de.dkfz.roddy.StringConstants;
 import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.config.ConfigurationValue;
-import de.dkfz.roddy.config.ToolEntry;
+import de.dkfz.roddy.config.ResourceSet;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.jobs.Job;
@@ -63,7 +63,7 @@ public class SGEJobManager extends PBSJobManager {
     }
 
     @Override
-    public ProcessingCommands convertResourceSet(Configuration configuration, ToolEntry.ResourceSet resourceSet) {
+    public ProcessingCommands convertResourceSet(Configuration configuration, ResourceSet resourceSet) {
         // "-l mf=4G -l h_vmem=6G -l h_stack=128M -V"
         StringBuilder sb = new StringBuilder();
         sb.append(" -V"); //TODO Think if default SGE options should go somewhere else?

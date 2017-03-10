@@ -20,10 +20,10 @@ import java.util.Map;
 @groovy.transform.CompileStatic
 public class MockupExecutionContextBuilder {
 
-    public static final String DIR_PREFIX = "/tmp/RoddyTests";
+    public static final String DIR_PREFIX = "RoddyTests_";
 
     public static File getTestBaseDirectory(String testID) {
-        final File testBaseDirectory = File.createTempDir("", DIR_PREFIX + testID)
+        final File testBaseDirectory = File.createTempDir(DIR_PREFIX, "_" + testID)
         testBaseDirectory.deleteOnExit();
         testBaseDirectory
     }

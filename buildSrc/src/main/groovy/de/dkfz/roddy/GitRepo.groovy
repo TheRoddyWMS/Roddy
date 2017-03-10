@@ -4,7 +4,7 @@ class GitRepo {
 
     final public File repoDir
 
-    public boolean debug = true
+    public boolean debug = false
 
     GitRepo(File repoDir) {
         this.repoDir = repoDir
@@ -27,9 +27,10 @@ class GitRepo {
         if (proc.waitFor() != 0) {
             throw new RuntimeException("Error executing '${command}':\nout='${outStrm}',\nerr='${errStrm}'")
         } else {
-            if (debug)
+            if (debug) {
                 System.err.print(outStrm.toString())
                 System.err.print(errStrm.toString())
+            }
             return outStrm.toString().split("\n")
         }
     }
