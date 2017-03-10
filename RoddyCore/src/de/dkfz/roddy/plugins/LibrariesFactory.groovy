@@ -238,7 +238,16 @@ public class LibrariesFactory extends Initializable {
      * @param usedPlugins
      */
     public boolean resolveAndLoadPlugins(String[] usedPlugins) {
-        def queue = buildupPluginQueue(loadMapOfAvailablePluginsForInstance(), usedPlugins)
+        def mapOfAvailablePlugins = loadMapOfAvailablePluginsForInstance()
+        if (!mapOfAvailablePlugins) {
+            logger.severe("Could not load plugins from storage. Are the plugin directories properly set?\n" + Roddy.getPluginDirectories().join("\n\t"))
+            return false
+        }
+        def queue = buildupPluginQueue(mapOfAvailablePlugins, usedPlugins)
+        if (queue == null) {
+            logger.severe("Could not build the plugin queue for: \n" + usedPlugins.join("\n\t"))
+            return false
+        }
         librariesAreLoaded = loadLibraries(queue.values() as List);
         return librariesAreLoaded;
     }
@@ -256,6 +265,7 @@ public class LibrariesFactory extends Initializable {
             def directories = Roddy.getPluginDirectories()
             mapOfPlugins = loadMapOfAvailablePlugins(directories)
         };
+        return mapOfPlugins
     }
 
     /**
@@ -302,6 +312,24 @@ public class LibrariesFactory extends Initializable {
         return loadPluginsFromDirectories(collectedPluginDirectories)
     }
 
+    /**
+     * This and the following method should not be in here! We should use the FileSystemAccessProvider for it.
+     * However, the FSAP always tries to use the ExecService, if possible. All in all, with the current setup for FSAP / ES
+     * interaction, it will not work. As we already decided to change that at some point, I'll put the method in here
+     * and mark them as deprecated.
+     * @param file
+     * @return
+     */
+    @Deprecated
+    private static boolean checkFile(File file) {
+        return file.exists() && file.isFile() && file.canRead()
+    }
+
+    @Deprecated
+    private static boolean checkDirectory(File file) {
+        return file.exists() && file.isDirectory() && file.canRead() && file.canExecute()
+    }
+
     static boolean isValidPluginFolder(File directory) {
         logger.postRareInfo("  Parsing plugin folder: ${directory}");
 
@@ -325,14 +353,14 @@ public class LibrariesFactory extends Initializable {
             return false
         }
 
-        def f = FileSystemAccessProvider.getInstance();
-        if (!f.checkFile(new File(directory, "buildinfo.txt")))
+//        def f = Roddy.getLocalFileSystemInfoProvider()
+        if (!checkFile(new File(directory, "buildinfo.txt")))
             errors << "The buildinfo.txt file is missing"
-        if (!f.checkFile(new File(directory, "buildversion.txt")))
+        if (!checkFile(new File(directory, "buildversion.txt")))
             errors << "The buildversion.txt file is missing"
-        if (!f.checkDirectory(new File(directory, "resources/analysisTools")))
+        if (!checkDirectory(new File(directory, "resources/analysisTools")))
             errors << "The analysisTools resource directory is missing"
-        if (!f.checkDirectory(new File(directory, "resources/configurationFiles")))
+        if (!checkDirectory(new File(directory, "resources/configurationFiles")))
             errors << "The configurationFiles resource directory is missing"
 
         if (errors) {
@@ -531,10 +559,12 @@ public class LibrariesFactory extends Initializable {
             // version of it which may either be a revision (x:x.y-[0..n] or a higher compatible version.
             // Search the last valid entry in the chain.
             if (!usedPlugins.contains("${id}:${version}")) {
-                for (; pInfo.nextInChain != null; pInfo = pInfo.nextInChain) {
+                while (true) {
                     version = pInfo.prodVersion;
                     if (usedPlugins.contains("${id}:${version}")) //Break, if the list of used plugins contains the selected version of the plugin
-                        break;
+                        break
+                    if (pInfo.nextInChain == null) break // Break if this was the last entry in the chain
+                    pInfo = pInfo.nextInChain
                 }
             }
 
@@ -670,7 +700,7 @@ public class LibrariesFactory extends Initializable {
             return loadClass(className);
 
         } catch (any) {
-            logger.severe("Could not load class className");
+            logger.severe("Could not load class ${className}");
             return null;
         }
     }
