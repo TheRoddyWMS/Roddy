@@ -192,8 +192,12 @@ public class LibrariesFactory extends Initializable {
      */
     public boolean resolveAndLoadPlugins(String[] usedPlugins) {
         def queue = buildupPluginQueue(loadMapOfAvailablePluginsForInstance(), usedPlugins)
-        librariesAreLoaded = loadLibraries(queue.values() as List);
-        return librariesAreLoaded;
+        if (queue == null) {
+            throw new RuntimeException("Could not unambiguously resolve plugin dependencies.")
+        } else {
+            librariesAreLoaded = loadLibraries(queue.values() as List);
+            return librariesAreLoaded;
+        }
     }
 
     public boolean areLibrariesLoaded() {
@@ -464,7 +468,7 @@ public class LibrariesFactory extends Initializable {
                 if (pluginsToActivate[id as String].prodVersion != version) {
                     def msg = "Plugin version collision: Plugin ${id} cannot both be loaded in version ${version} and ${pluginsToActivate[id as String].prodVersion}. Not starting up."
                     logger.severe(msg)
-                    throw new RuntimeException(msg)
+                    return null
                 } else {
                     //Not checking again!
                 }
