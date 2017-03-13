@@ -9,8 +9,8 @@ package de.dkfz.roddy.tools
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.execution.io.ExecutionHelper
-import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import groovy.io.FileType
 import org.apache.commons.codec.digest.DigestUtils
@@ -395,7 +395,7 @@ class RoddyIOHelperMethods {
                     return Optional.of(pathC)
                 }
             } else if (patternC != pathC) {
-                throw new RuntimeException("Pattern and path have incompatible prefix path component ${index} before \${${variable}}. Pattern = ${pattern}, Path = ${path}")
+                throw new RuntimeException("Filename pattern/input path and path in the ${ConfigurationConstants.RODDY_EXEC_CACHE_FILE} have different prefix path component ${index} before \${${variable}}. Pattern = ${pattern}, ${ConfigurationConstants.RODDY_EXEC_CACHE_FILE} = ${path}")
             }
             ++index
         }
