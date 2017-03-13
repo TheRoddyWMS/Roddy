@@ -9,7 +9,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="roddyBundledLibraries" level="project" />
-    <orderEntry type="module" module-name="roddy" />
+    <orderEntry type="module" module-name="Roddy" />
   </component>
   <component name="PackageRequirementsSettings">
     <option name="requirementsPath" value="" />
