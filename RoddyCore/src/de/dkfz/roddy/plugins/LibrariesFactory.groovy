@@ -462,8 +462,9 @@ public class LibrariesFactory extends Initializable {
                 continue;
             if (pluginsToActivate[id as String] != null) {
                 if (pluginsToActivate[id as String].prodVersion != version) {
-                    logger.severe("There is a version mismatch for plugin dependencies! Not starting up.");
-                    return null;
+                    def msg = "Plugin version collision: Plugin ${id} cannot both be loaded in version ${version} and ${pluginsToActivate[id as String].prodVersion}. Not starting up."
+                    logger.severe(msg)
+                    throw new RuntimeException(msg)
                 } else {
                     //Not checking again!
                 }
