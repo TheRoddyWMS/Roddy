@@ -18,8 +18,8 @@ import static org.junit.Assert.*;
 /**
  * Created by heinold on 15.03.17.
  */
-@CompileStatic
 public class ToolFileGroupParameterTest {
+
     @Test
     public void equals() throws Exception {
         ToolFileGroupParameter a = new ToolFileGroupParameter(GenericFileGroup.class, BaseFile.class, "ABC");

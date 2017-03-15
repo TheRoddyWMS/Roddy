@@ -425,7 +425,7 @@ public class ConfigurationFactoryTest {
             """)
         ToolFileGroupParameter tparm = new ConfigurationFactory([]).parseFileGroup(nc, "testTool")
         assert tparm.files.size() == 3
-        assert tparm.files.collect { ToolFileParameter tfp -> tfp.fileClass.name } == ["AFile", "BFile", "CFile"]
+        assert tparm.files.collect { ToolFileParameter tfp -> tfp.fileClass.simpleName } == ["AFile", "BFile", "CFile"]
         assert tparm.scriptParameterName == "APARM"
         assert tparm.passOptions == ToolFileGroupParameter.PassOptions.parameters
         assert tparm.indexOptions == ToolFileGroupParameter.IndexOptions.numeric

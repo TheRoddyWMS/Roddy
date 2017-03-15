@@ -113,7 +113,7 @@ class ToolEntryTest extends GroovyTestCase {
      * @return
      */
     private ToolEntry.ToolParameter getToolParameterInstance(String parm) {
-        new ToolEntry.ToolParameter<>(parm) {
+        new ToolEntry.ToolParameter(parm) {
             @Override
             ToolEntry.ToolParameter clone() {
                 return this
