@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -7,11 +7,7 @@
 package de.dkfz.roddy.config
 
 import de.dkfz.roddy.core.ExecutionContext;
-import de.dkfz.roddy.knowledge.files.BaseFile;
-import de.dkfz.roddy.knowledge.files.FileGroup
-import de.dkfz.roddy.tools.BufferValue;
-import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
-import de.dkfz.roddy.tools.TimeUnit
+import de.dkfz.roddy.knowledge.files.BaseFile
 import groovy.transform.CompileStatic;
 
 import java.lang.reflect.Method;
@@ -23,126 +19,22 @@ import static de.dkfz.roddy.Constants.NO_VALUE;
  * @author michael
  */
 @CompileStatic
-public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
-
-    /**
-     * A resource set describes a list of resource values which are used by a script.
-     * The active set is defined in a project configuration with m as the default.
-     * The resources don't neccessarily have to be set, all values are objects and not primitives.
-     * There are also max values defined but not used or filled yet.
-     */
-    public static class ResourceSet {
-        private final String queue;
-        private ResourceSetSize size;
-        /**
-         * The target memory value.
-         */
-        private BufferValue mem;
-        private BufferValue memMax;
-
-        private Integer cores;
-        private Integer coresMax;
-        private Integer nodes;
-        private Integer nodesMax;
-        private TimeUnit walltime;
-
-        /**
-         * Hard disk storage used.
-         */
-        private BufferValue storage;
-        private BufferValue storageMax;
-        private String additionalNodeFlag;
-
-        public ResourceSet(ResourceSetSize size, BufferValue mem, Integer cores, Integer nodes, TimeUnit walltime, BufferValue storage, String queue, String additionalNodeFlag) {
-            this.size = size;
-            this.mem = mem;
-            this.cores = cores;
-            this.nodes = nodes;
-            this.walltime = walltime;
-            this.storage = storage;
-            this.queue = queue;
-            this.additionalNodeFlag = additionalNodeFlag;
-        }
-
-        public ResourceSetSize getSize() {
-            return size;
-        }
-
-        public ResourceSet clone() {
-            return new ResourceSet(size, mem, cores, nodes, walltime, storage, queue, additionalNodeFlag);
-        }
-
-        public BufferValue getMem() {
-            return mem;
-        }
-
-        public Integer getCores() {
-            return cores;
-        }
-
-        public Integer getNodes() {
-            return nodes;
-        }
-
-        public BufferValue getStorage() {
-            return storage;
-        }
-
-        public boolean isMemSet() {
-            return mem != null;
-        }
-
-        public boolean isCoresSet() {
-            return cores != null;
-        }
-
-        public boolean isNodesSet() {
-            return nodes != null;
-        }
-
-        public boolean isStorageSet() {
-            return storage != null;
-        }
-
-        public TimeUnit getWalltime() {
-            return walltime;
-        }
-
-        public boolean isWalltimeSet() {
-            return walltime != null;
-        }
-
-        public boolean isQueueSet() {
-            return !RoddyConversionHelperMethods.isNullOrEmpty(queue);
-        }
-
-        public String getQueue() {
-            return queue;
-        }
-
-        public boolean isAdditionalNodeFlagSet() {
-            return !RoddyConversionHelperMethods.isNullOrEmpty(additionalNodeFlag);
-        }
-
-        public String getAdditionalNodeFlag() {
-            return additionalNodeFlag;
-        }
-    }
+class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
 
     /**
      * A constraint for a parameter.
      * If the constraints checkMethod fails onFailMethod is called on the
      */
-    public static class ToolConstraint {
+    static class ToolConstraint {
         public final Method onFailMethod;
         public final Method checkMethod;
 
-        private ToolConstraint(Method onFailMethod, Method checkMethod) {
+        ToolConstraint(Method onFailMethod, Method checkMethod) {
             this.onFailMethod = onFailMethod;
             this.checkMethod = checkMethod;
         }
 
-        public void apply(BaseFile p) {
+        void apply(BaseFile p) {
             try {
                 boolean valid = (Boolean) checkMethod.invoke(p);
                 if (!valid)
@@ -152,8 +44,27 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
             }
         }
 
-        public ToolConstraint clone() {
+        ToolConstraint clone() {
             return new ToolConstraint(onFailMethod, checkMethod);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            // Is backed by test!
+            if (this.is(o)) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            ToolConstraint that = (ToolConstraint) o;
+
+            if (onFailMethod != null ? !onFailMethod.equals(that.onFailMethod) : that.onFailMethod != null) return false;
+            return checkMethod != null ? checkMethod.equals(that.checkMethod) : that.checkMethod == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = onFailMethod != null ? onFailMethod.hashCode() : 0;
+            result = 31 * result + (checkMethod != null ? checkMethod.hashCode() : 0);
+            return result;
         }
     }
 
@@ -164,99 +75,24 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
             this.scriptParameterName = scriptParameterName;
         }
 
-        public abstract T clone();
-    }
+        @Override
+        public boolean equals(Object o) {
+            // Is backed by test!
+            if (this.is(o)) return true;
+            if (o == null || getClass() != o.getClass()) return false;
 
-    public static class ToolStringParameter extends ToolParameter<ToolStringParameter> {
+            ToolParameter<ToolParameter> that = (ToolParameter<ToolParameter>) o;
 
-        private final String cValueID;
-        private final ParameterSetbyOptions setby;
-
-        /**
-         * How this parameter is filled.
-         * Can be set by the calling code, it must really be done there!
-         * Can also be set by a configuration value, this is done during the call.
-         */
-        public enum ParameterSetbyOptions {
-            callingCode,
-            configurationValue
-        }
-
-        /**
-         * Call this, if the value is set in code.
-         *
-         * @param scriptParameterName
-         */
-        public ToolStringParameter(String scriptParameterName) {
-            super(scriptParameterName);
-            cValueID = null;
-            setby = ParameterSetbyOptions.callingCode;
-        }
-
-        /**
-         * Call this, if you have the id of a configuration value.
-         *
-         * @param scriptParameterName
-         * @param cValueID
-         */
-        public ToolStringParameter(String scriptParameterName, String cValueID) {
-            super(scriptParameterName);
-            this.cValueID = cValueID;
-            setby = ParameterSetbyOptions.configurationValue;
-        }
-
-        private ToolStringParameter(String scriptParameterName, String cValueID, ParameterSetbyOptions setby) {
-            super(scriptParameterName);
-            this.cValueID = cValueID;
-            this.setby = setby;
+            return scriptParameterName != null ? scriptParameterName.equals(that.scriptParameterName) : that.scriptParameterName == null;
         }
 
         @Override
-        public ToolStringParameter clone() {
-            return new ToolStringParameter(scriptParameterName, cValueID, setby);
+        public int hashCode() {
+            return scriptParameterName != null ? scriptParameterName.hashCode() : 0;
         }
+
+        public abstract T clone();
     }
-
-    /**
-     * The class defines a state for the check tag of tool output parameters
-     * check can hold:
-     *  true                   - The value will be checked on rerun
-     *  false                  - The value will NOT be checked
-     *  conditionial:somevalue - The check is true or false depending on the somevalue named variable
-     */
-    public static class ToolFileParameterCheckCondition {
-
-        private String condition;
-
-        private Boolean booleanValue;
-
-        public ToolFileParameterCheckCondition(boolean value) {
-            this.booleanValue = Boolean.valueOf(value);
-        }
-
-        public ToolFileParameterCheckCondition(String condition) {
-            if(condition.startsWith("conditional:"))
-                this.condition = condition.substring(12);
-            else {
-                this.booleanValue = RoddyConversionHelperMethods.toBoolean(condition, true);
-            }
-        }
-
-        public boolean isBoolean() {
-            return booleanValue != null;
-        }
-
-        public String getCondition() {
-            return condition;
-        }
-
-        public boolean evaluate(ExecutionContext context) {
-            if (booleanValue != null)
-                return booleanValue;
-            return context.getConfiguration().getConfigurationValues().getBoolean(condition, true);
-        }
-    }
-
 
     public static abstract class ToolParameterOfFiles extends ToolParameter<ToolParameterOfFiles> {
         ToolParameterOfFiles(String scriptParameterName) {
@@ -272,169 +108,6 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         public abstract List<? extends ToolParameterOfFiles> getFiles();
     }
 
-
-    /**
-     * Parameters for generic tools (tools which are not programmatically set!).
-     * Parameters can be for in and for output.
-     * Parameters can have constraints.
-     *
-     * ToolFileParameter may contain one or multiple files. If there are "child"-files
-     * these are dependent on the main file, like .bai files depend on the .bam file.
-     */
-    public static class ToolFileParameter extends ToolParameterOfFiles {
-        public final Class<BaseFile> fileClass;
-        public final List<ToolConstraint> constraints;
-        public final String scriptParameterName;
-        public final String filenamePatternSelectionTag;
-        public final ToolFileParameterCheckCondition checkFile;
-        public final String parentVariable;
-        private List<ToolFileParameter> childFiles;
-
-        public ToolFileParameter(Class<BaseFile> fileClass, List<ToolConstraint> constraints, String scriptParameterName, ToolFileParameterCheckCondition checkFile) {
-            this(fileClass, constraints, scriptParameterName, checkFile, FilenamePattern.DEFAULT_SELECTION_TAG, null, null);
-        }
-
-        public ToolFileParameter(Class<BaseFile> fileClass, List<ToolConstraint> constraints, String scriptParameterName, ToolFileParameterCheckCondition checkFile, String filenamePatternSelectionTag, List<ToolFileParameter> childFiles, String parentVariable) {
-            super(scriptParameterName);
-            this.fileClass = fileClass;
-            this.constraints = constraints != null ? constraints : new LinkedList<ToolConstraint>();
-            this.scriptParameterName = scriptParameterName;
-            this.checkFile = checkFile;
-            this.filenamePatternSelectionTag = filenamePatternSelectionTag;
-            this.childFiles = childFiles;
-            if (this.childFiles == null) this.childFiles = new LinkedList<>();
-            this.parentVariable = parentVariable;
-        }
-
-        @Override
-        public ToolFileParameter clone() {
-            List<ToolConstraint> _con = new LinkedList<ToolConstraint>();
-            for (ToolConstraint tc : constraints) {
-                _con.add(tc.clone());
-            }
-            return new ToolFileParameter(fileClass, _con, scriptParameterName, checkFile, filenamePatternSelectionTag, childFiles, parentVariable);
-        }
-
-        @Override
-        public List<ToolFileParameter> getFiles() {
-            return childFiles;
-        }
-
-        @Override
-        public List<ToolFileParameter> getAllFiles() {
-            return (files.collect { it.getAllFiles() }.flatten() + [this]) as List<ToolFileParameter>
-        }
-
-        @Override
-        public boolean hasSelectionTag() {
-            return !filenamePatternSelectionTag.equals(FilenamePattern.DEFAULT_SELECTION_TAG);
-        }
-    }
-
-    /**
-     * This class is supposed to contain output objects from a method call.
-     * You can create tuples of different sizes containt file groups and files.
-     *
-     * Tuples are supposed to contain multiple, equally important files of different types.
-     */
-    public static class ToolTupleParameter extends ToolParameterOfFiles {
-        public final List<ToolFileParameter> files;
-
-        public ToolTupleParameter(List<ToolFileParameter> files) {
-            super(NO_VALUE); //Tuples are not passed
-            this.files = files;
-        }
-
-        @Override
-        public ToolTupleParameter clone() {
-            List<ToolFileParameter> _files = new LinkedList<>();
-            for (ToolFileParameter tf : files) _files.add(tf.clone());
-            return new ToolTupleParameter(_files);
-        }
-
-        public List<ToolFileParameter> getFiles() {
-            return files
-        }
-
-        /**
-         * @return recursive set of files
-         */
-        @Override
-        public List<ToolFileParameter> getAllFiles() {
-            return files.collect { it.getAllFiles() }.flatten() as List<ToolFileParameter>
-        }
-
-        @Override
-        public boolean hasSelectionTag() {
-            return false;
-        }
-    }
-
-    /**
-     * Parameters for generic tools (tools which are not programmatically set!).
-     * Parameters can be for in and for output.
-     * Parameters can have constraints.
-     *
-     * File groups are supposed to contain multiple files of the same type. A good example would be
-     * a group of .bed files for the different chromosomes.
-     */
-    public static class ToolFileGroupParameter extends ToolParameterOfFiles {
-        public final Class<FileGroup> groupClass;
-        public final Class<BaseFile> genericFileClass;
-        public final List<ToolFileParameter> files;
-        public final PassOptions passOptions;
-
-        public enum PassOptions {
-            parameters,
-            array
-        }
-
-        public ToolFileGroupParameter(Class<FileGroup> groupClass, Class<BaseFile> genericFileClass, List<ToolFileParameter> files, String scriptParameterName, PassOptions passas) {
-            super(scriptParameterName);
-            this.groupClass = groupClass;
-            this.files = files;
-            this.passOptions = passas;
-            this.genericFileClass = genericFileClass;
-        }
-
-        @Override
-        public ToolFileGroupParameter clone() {
-            List<ToolFileParameter> _files = new LinkedList<ToolFileParameter>();
-            for (ToolFileParameter tf : files) {
-                _files.add(tf.clone());
-            }
-            return new ToolFileGroupParameter(groupClass, genericFileClass, _files, scriptParameterName, passOptions);
-        }
-
-        public boolean isGeneric() {
-            return genericFileClass != null;
-        }
-
-        public String getGenericClassString() {
-            if (isGeneric()) {
-                return groupClass.getName() + "<" + genericFileClass.getName() + ">";
-            } else {
-                return groupClass.getName();
-            }
-        }
-
-        @Override
-        public boolean hasSelectionTag() {
-            return false
-        }
-
-        @Override
-        public List<ToolFileParameter> getAllFiles() {
-            return files.collect { it.getAllFiles() }.flatten() as List<ToolFileParameter>
-        }
-
-        @Override
-        public List<ToolFileParameter> getFiles() {
-            return files
-        }
-
-    }
-
     public final String id;
     public final String basePathId;
     public final String path;
@@ -443,34 +116,34 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
     private String inlineScriptName;
     final List<ToolParameter> inputParameters = new LinkedList<>();
     final List<ToolParameter> outputParameters = new LinkedList<>();
-    private final List<ResourceSet> resourceSets = new LinkedList<>();
+    final List<ResourceSet> resourceSets = new LinkedList<>();
     boolean overridesResourceSets;
 
-    public ToolEntry(String id, String basePathId, String path) {
+    ToolEntry(String id, String basePathId, String path) {
         this.id = id;
         this.basePathId = basePathId;
         this.path = path;
         this.computationResourcesFlags = "";
     }
 
-    public ToolEntry(String id, String basePathId, String path, String computationResourcesFlags) {
+    ToolEntry(String id, String basePathId, String path, String computationResourcesFlags) {
         this.id = id;
         this.basePathId = basePathId;
         this.path = path;
         this.computationResourcesFlags = computationResourcesFlags != null ? computationResourcesFlags : "";
     }
 
-    public boolean isToolGeneric() {
+    boolean isToolGeneric() {
         return overridesResourceSets || (inputParameters.size() > 0 || outputParameters.size() > 0);
     }
 
-    public void setGenericOptions(List<ToolParameter> input, List<ToolParameter> output, List<ResourceSet> resourceSets) {
+    void setGenericOptions(List<ToolParameter> input, List<ToolParameter> output, List<ResourceSet> resourceSets) {
         inputParameters.addAll(input);
         outputParameters.addAll(output);
         this.resourceSets.addAll(resourceSets);
     }
 
-    public ToolEntry clone() {
+    ToolEntry clone() {
         List<ToolParameter> _inp = new LinkedList<ToolParameter>();
         List<ToolParameter> _outp = new LinkedList<ToolParameter>();
         List<ResourceSet> _rsets = new LinkedList<>();
@@ -489,81 +162,81 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         return te;
     }
 
-    public String getLocalPath() {
+    String getLocalPath() {
         return path;
     }
 
-    public void setInlineScript(String script) {
+    void setInlineScript(String script) {
         this.inlineScript = script;
     }
 
-    public String getInlineScript() {
+    String getInlineScript() {
         return this.inlineScript;
     }
 
-    public void setInlineScriptName(String scriptName) {
+    void setInlineScriptName(String scriptName) {
         this.inlineScriptName = scriptName;
     }
 
-    public String getInlineScriptName() {
+    String getInlineScriptName() {
         return this.inlineScriptName;
     }
 
-    public boolean hasInlineScript() {
+    boolean hasInlineScript() {
         if (inlineScript != null)
-            return true;
+            return true
         else
-            return false;
+            return false
     }
 
-    public boolean hasResourceSets() {
-        return resourceSets.size() > 0;
+    boolean hasResourceSets() {
+        return resourceSets.size() > 0
     }
 
-    public ResourceSet getResourceSet(Configuration configuration) {
+    ResourceSet getResourceSet(Configuration configuration) {
         ResourceSetSize key = configuration.getResourcesSize();
-        int size = key.ordinal();
+        int size = key.ordinal()
 
         ResourceSet first = resourceSets.get(0);
         if (resourceSets.size() == 1) { // Only one set exists.
-            return resourceSets.get(0);
+            return resourceSets.get(0)
         }
 
         ResourceSet last = resourceSets.get(resourceSets.size() - 1);
         if (size <= first.getSize().ordinal()) {  // The given key is smaller than the available keys. Return the first set.
-            return first;
+            return first
         }
         if (size >= last.getSize().ordinal()) {  // The given key is larger than the available keys. Return the last set.
             return last;
         }
         for (ResourceSet resourceSet : resourceSets) {  // Select the appropriate set
             if (resourceSet.getSize() == key)
-                return resourceSet;
+                return resourceSet
         }
         //Still no set, take the largest set, which comes after the given ordinal.
         for (ResourceSet resourceSet : resourceSets) {
             if (resourceSet.getSize().ordinal() > size)
-                return resourceSet;
+                return resourceSet
         }
 
         return null;
     }
 
-    public void setOverridesResourceSets() {
-        overridesResourceSets = true;
+    void setOverridesResourceSets() {
+        overridesResourceSets = true
     }
 
-    public boolean doesOverrideResourceSets() {
-        return overridesResourceSets;
+    boolean doesOverrideResourceSets() {
+        return overridesResourceSets
     }
 
-    public List<ToolParameter> getInputParameters(ExecutionContext context) {
+    List<ToolParameter> getInputParameters(ExecutionContext context) {
         return getInputParameters(context.getConfiguration());
     }
 
-    public List<ToolParameter> getInputParameters(Configuration configuration) {
+    List<ToolParameter> getInputParameters(Configuration configuration) {
         if (overridesResourceSets) {
-            List<ToolEntry> containerParents = configuration.getTools().getInheritanceList(this.id);
+            List<ToolEntry> containerParents = configuration.getTools().getInheritanceList(this.id)
             if (containerParents.size() == 1)
                 return inputParameters
             for (int i = containerParents.size() - 2; i >= 0; i--) {
@@ -574,11 +247,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         return inputParameters;
     }
 
-//    public List<ToolParameter> getOutputParameters(ExecutionContext context) {
-//        return getOutputParameters(context.getConfiguration());
-//    }
-
-    public List<ToolParameter> getOutputParameters(Configuration configuration) {
+    List<ToolParameter> getOutputParameters(Configuration configuration) {
         if (overridesResourceSets) {
             List<ToolEntry> containerParents = configuration.getTools().getInheritanceList(this.id);
             if (containerParents.size() == 1)
@@ -591,7 +260,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         return outputParameters;
     }
 
-    public List<ToolParameterOfFiles> getOutputFileParameters(Configuration configuration) {
+    List<ToolParameterOfFiles> getOutputFileParameters(Configuration configuration) {
         return getOutputParameters(configuration).
                 stream().
                 filter({ ToolParameterOfFiles.isInstance(it) }).
@@ -599,12 +268,12 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
                 collect(Collectors.toList());
     }
 
-    public List<ResourceSet> getResourceSets() {
+    List<ResourceSet> getResourceSets() {
         return resourceSets;
     }
 
     @Override
-    public String getID() {
+    String getID() {
         return id;
     }
 }

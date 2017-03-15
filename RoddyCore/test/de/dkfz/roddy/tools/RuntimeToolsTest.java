@@ -7,11 +7,10 @@
 package de.dkfz.roddy.tools;
 
 import de.dkfz.roddy.Roddy;
+import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import org.junit.Test;
 
 import java.io.File;
-
-import static org.junit.Assert.*;
 
 /**
  * This test class does runtime environment specific tests. It is not very well written and uses some hardcoded elements.
@@ -47,7 +46,7 @@ public class RuntimeToolsTest {
     @Test
     public void testGetGroovyLibrary() {
         File gPath = RuntimeTools.getGroovyLibrary();
-        File aPath = RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current", "lib", "groovy-all-2.4.5-indy.jar");
+        File aPath = RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current", "lib", "groovy-all-2.4.8.jar");
         assert gPath.getAbsolutePath().equals(aPath.getAbsolutePath());
     }
 }

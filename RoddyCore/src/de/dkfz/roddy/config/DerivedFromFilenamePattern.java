@@ -37,7 +37,7 @@ public class DerivedFromFilenamePattern extends FilenamePattern {
 
     @Override
     protected BaseFile getSourceFile(BaseFile[] baseFiles) {
-        return baseFiles[0];
+        return (BaseFile) baseFiles[0].getParentFiles().get(0);
     }
 
     public Class<BaseFile> getDerivedFromCls() {

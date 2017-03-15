@@ -4,7 +4,9 @@
       <root url="file://$PROJECT_DIR$/dist/bin/current/lib" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../RoddyInfra/RoddyToolLib/src/main/groovy" />
+    </SOURCES>
     <jarDirectory url="file://$PROJECT_DIR$/dist/bin/current/lib" recursive="false" />
   </library>
 </component>

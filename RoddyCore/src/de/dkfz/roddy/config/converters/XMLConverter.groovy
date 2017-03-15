@@ -82,4 +82,9 @@ class XMLConverter extends ConfigurationConverter {
     StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context) {
         throw new NotImplementedException();
     }
+
+    @Override
+    String convertToXML(String text) {
+        return text;
+    }
 }

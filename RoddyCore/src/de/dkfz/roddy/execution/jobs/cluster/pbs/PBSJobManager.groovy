@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -13,12 +13,13 @@ import de.dkfz.roddy.tools.BufferUnit;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.cluster.ClusterJobManager;
-import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo;
-import de.dkfz.roddy.tools.*;
+import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo
 import de.dkfz.roddy.config.*;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.execution.io.ExecutionResult;
 import de.dkfz.roddy.execution.jobs.*
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -216,7 +217,7 @@ public class PBSJobManager extends ClusterJobManager<PBSCommand> {
     }
 
     @Override
-    public ProcessingCommands convertResourceSet(Configuration configuration, ToolEntry.ResourceSet resourceSet) {
+    public ProcessingCommands convertResourceSet(Configuration configuration, ResourceSet resourceSet) {
         StringBuilder sb = new StringBuilder();
         if (resourceSet.isMemSet()) {
             String memo = resourceSet.getMem().toString(BufferUnit.M);

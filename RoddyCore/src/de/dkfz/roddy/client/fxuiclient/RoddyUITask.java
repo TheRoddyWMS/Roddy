@@ -12,7 +12,6 @@ import de.dkfz.roddy.execution.io.ExecutionService;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableMap;
 import javafx.concurrent.Task;
 
 import java.util.LinkedHashMap;
@@ -20,7 +19,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Logger;
 
 /**
  */

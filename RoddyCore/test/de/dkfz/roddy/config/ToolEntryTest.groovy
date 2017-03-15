@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -9,6 +9,9 @@ package de.dkfz.roddy.config
 import de.dkfz.roddy.tools.BufferValue
 import de.dkfz.roddy.tools.TimeUnit
 import groovy.transform.CompileStatic
+
+import java.lang.reflect.Method
+
 import static de.dkfz.roddy.config.ResourceSetSize.*
 
 /**
@@ -23,8 +26,8 @@ class ToolEntryTest extends GroovyTestCase {
 
     private ToolEntry createTestToolEntry() {
         def te = new ToolEntry("TestTool", "TestPath", "/SomewhereOverTheRainbow")
-        te.getResourceSets().add(new ToolEntry.ResourceSet(ResourceSetSize.s, new BufferValue(1), 1, 1, new TimeUnit("01:00"), new BufferValue(1), "default", ""));
-        te.getResourceSets().add(new ToolEntry.ResourceSet(ResourceSetSize.l, new BufferValue(1), 1, 1, new TimeUnit("01:00"), new BufferValue(1), "default", ""));
+        te.getResourceSets().add(new ResourceSet(ResourceSetSize.s, new BufferValue(1), 1, 1, new TimeUnit("01:00"), new BufferValue(1), "default", ""));
+        te.getResourceSets().add(new ResourceSet(ResourceSetSize.l, new BufferValue(1), 1, 1, new TimeUnit("01:00"), new BufferValue(1), "default", ""));
         return te;
     }
 
@@ -60,18 +63,61 @@ class ToolEntryTest extends GroovyTestCase {
 
     /////// Tests for ToolFileParameterCheckCondition
     void testNewToolFileParameterCondition() {
-        def abc = new ToolEntry.ToolFileParameterCheckCondition("conditional:abc")
+        def abc = new ToolFileParameterCheckCondition("conditional:abc")
         assert ! abc.isBoolean()
         assert abc.getCondition()
 
-        def pure = new ToolEntry.ToolFileParameterCheckCondition("true")
+        def pure = new ToolFileParameterCheckCondition("true")
         assert pure.isBoolean()
         assert pure.evaluate(null)
         assert pure.getCondition() == null
 
-        pure = new ToolEntry.ToolFileParameterCheckCondition("false")
+        pure = new ToolFileParameterCheckCondition("false")
         assert pure.isBoolean()
-        assert pure.evaluate(null)
+        assert pure.evaluate(null) == false
         assert pure.getCondition() == null
+    }
+
+    void testToolConstraintEquals() {
+        Method ma = Integer.getMethod("valueOf", int)
+        Method mb = Integer.getMethod("bitCount", int)
+        Method mc = Integer.getMethod("decode", String)
+
+        ToolEntry.ToolConstraint a = new ToolEntry.ToolConstraint(ma, mb)
+        ToolEntry.ToolConstraint b = new ToolEntry.ToolConstraint(ma, mb)
+        ToolEntry.ToolConstraint c = new ToolEntry.ToolConstraint(ma, mc)
+        ToolEntry.ToolConstraint d = new ToolEntry.ToolConstraint(mb, mc)
+
+        assert a.equals(b)
+        assert !a.equals(c)
+        assert !a.equals(d)
+        assert !b.equals(c)
+        assert !b.equals(d)
+        assert !c.equals(d)
+    }
+
+    void testToolParameterEquals() {
+        ToolEntry.ToolParameter a = getToolParameterInstance("ABC")
+        ToolEntry.ToolParameter b = getToolParameterInstance("ABC")
+        ToolEntry.ToolParameter c = getToolParameterInstance("ABCEF")
+
+        assert a.equals(a)
+        assert a.equals(b)
+        assert !a.equals(c)
+        assert !b.equals(c)
+    }
+
+    /**
+     * Tool parameter is abstract. Still want to test it.
+     * @param parm
+     * @return
+     */
+    private ToolEntry.ToolParameter getToolParameterInstance(String parm) {
+        new ToolEntry.ToolParameter(parm) {
+            @Override
+            ToolEntry.ToolParameter clone() {
+                return this
+            }
+        }
     }
 }

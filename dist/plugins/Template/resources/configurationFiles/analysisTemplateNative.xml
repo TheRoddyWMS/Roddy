@@ -1,3 +1,9 @@
+<!--
+  ~ Copyright (c) 2017 eilslabs.
+  ~
+  ~ Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+  -->
+
 <configuration name='templateNativeAnalysis' description='A template for native workflows.'
                configurationType='analysis' class='de.dkfz.roddy.core.Analysis'
                workflowClass='de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow'
