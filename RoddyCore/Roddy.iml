@@ -8,6 +8,7 @@
     </content>
     <content url="file://$MODULE_DIR$/../dist/bin/current">
       <sourceFolder url="file://$MODULE_DIR$/../dist/bin/current" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/build" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

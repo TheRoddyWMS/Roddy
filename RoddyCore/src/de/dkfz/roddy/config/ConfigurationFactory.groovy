@@ -625,7 +625,12 @@ public class ConfigurationFactory {
             throw new RuntimeException("Filestage was not specified correctly. Need a base package/class or full qualified name.")
         }
 
-        Class baseClass = LibrariesFactory.getInstance().tryLoadClass(filestagesbase);
+        Class baseClass
+        try {
+            baseClass = LibrariesFactory.getInstance().tryLoadClass(filestagesbase)
+        } catch (ClassNotFoundException ex) {
+            logger.severe("Could not load class ${filestagesbase}")
+        }
         if (baseClass) {
             Field f = baseClass.getDeclaredField(fileStage);
             boolean isStatic = Modifier.isStatic(f.getModifiers());
