@@ -18,8 +18,6 @@ import org.junit.AfterClass
 import org.junit.BeforeClass;
 import org.junit.Test
 
-import java.nio.file.Files
-
 /**
  * Test class with integration tests for the RMI interface.
  * <p>

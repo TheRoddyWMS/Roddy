@@ -4,22 +4,17 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.execution.io;
+package de.dkfz.roddy.execution.io
 
-import com.sun.xml.internal.ws.api.addressing.WSEndpointReference;
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.StringConstants;
 import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.config.ConfigurationValue
-import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
 import de.dkfz.roddy.core.Analysis
-import de.dkfz.roddy.core.Project;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import groovy.transform.CompileStatic
 import org.apache.commons.csv.CSVFormat
-import org.apache.commons.csv.CSVParser;
-
-import java.io.File;
+import org.apache.commons.csv.CSVParser
 
 /**
  * A factory to construct Roddys metadata table instance.

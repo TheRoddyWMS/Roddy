@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -7,17 +7,14 @@
 package de.dkfz.roddy.config;
 
 import de.dkfz.roddy.Roddy;
-import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.knowledge.files.BaseFile;
+import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.knowledge.files.FileStageSettings;
 
 
 import java.io.File;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
 
-import static de.dkfz.roddy.StringConstants.*;
 import de.dkfz.roddy.config.FilenamePatternHelper.Command;
 import de.dkfz.roddy.config.FilenamePatternHelper.CommandAttribute;
 
@@ -78,10 +75,11 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
     protected String fillVariables(BaseFile baseFile, String temp) {
         ExecutionContext context = baseFile.getExecutionContext();
         Configuration cfg = context.getConfiguration();
+
         //Different output folder
         String oPath = context.getOutputDirectory().getAbsolutePath();
-//        temp = temp.replace("${outputbasepath}", oPath);
         temp = temp.replace("${outputAnalysisBaseDirectory}", oPath);
+
         //Replace output directories containing OutputDirectory
         final String odComp = "OutputDirectory";
         if (temp.contains(odComp)) {
@@ -121,11 +119,13 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
     protected String fillVariablesFromSourceFileValues(BaseFile baseFile, String temp) {
         FileStageSettings fs = baseFile.getFileStage();
         String _temp = temp;
-        temp = fs.fillStringContent(temp);
+        if (fs != null)
+            temp = fs.fillStringContent(temp);
         if (temp == null)
             temp = _temp; //TODO Look why temp gets null. This should not be the case.
         //pid, sample, run...
-        temp = temp.replace("${fileStageID}", fs.getIDString());
+        if (fs != null)
+            temp = temp.replace("${fileStageID}", fs.getIDString());
         temp = temp.replace("${pid}", baseFile.getDataSet().toString()); // TODO: Move to plugin.
         temp = temp.replace("${dataSet}", baseFile.getDataSet().toString());
         return temp;
@@ -202,6 +202,9 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
                     }
 
             }
+
+            if(baseFile.hasIndexInFileGroup())
+                temp = temp.replace("${fgindex}", baseFile.getIdxInFileGroup());
 
             temp = fillVariables(baseFile, temp);
             temp = fillVariablesFromSourceFileValues(baseFile, temp);

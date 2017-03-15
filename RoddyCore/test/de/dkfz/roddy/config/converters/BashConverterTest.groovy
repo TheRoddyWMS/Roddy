@@ -39,6 +39,42 @@ public class BashConverterTest {
     public static final String CVAL_TEST_SPACE_NQUOTE_ALREADY_QUOTED = "testQuotedSpaces"
     public static final String CVAL_TEST_EQUALITY_SIGN = "testEqualitySign"
 
+    public static final String sampleBashCode = [
+            "#name aConfig",
+            "#imports anotherConfig",
+            "#description aConfig",
+            "#usedresourcessize m",
+            "#analysis A,aAnalysis,TestPlugin:current",
+            "#analysis B,bAnalysis,TestPlugin:current",
+            "#analysis C,aAnalysis,TestPlugin:current",
+
+            "outputBaseDirectory=/data/michael/temp/roddyLocalTest/testproject/rpp",
+            "preventJobExecution=false",
+            "UNZIPTOOL=gunzip",
+            'ZIPTOOL_OPTIONS="-c"',
+            'sampleDirectory=/data/michael/temp/roddyLocalTest/testproject/vbp/A100/${sample}/${SEQUENCER_PROTOCOL}'
+    ].join("\n")
+
+    public static final String sampleXMLCode = [
+            '<configuration name=\'aConfig\'',
+            "imports='anotherConfig'",
+            "description='aConfig'",
+            "usedresourcessize='m' >",
+            "  <availableAnalyses>",
+            "    <analysis id='A' configuration='aAnalysis' useplugin='TestPlugin:current' />",
+            "    <analysis id='B' configuration='bAnalysis' useplugin='TestPlugin:current' />",
+            "    <analysis id='C' configuration='aAnalysis' useplugin='TestPlugin:current' />",
+            "  </availableAnalyses>",
+            "  <configurationvalues>",
+            "    <cvalue name='outputBaseDirectory' value='/data/michael/temp/roddyLocalTest/testproject/rpp' type='string' />",
+            "    <cvalue name='preventJobExecution' value='false' type='string' />",
+            "    <cvalue name='UNZIPTOOL' value='gunzip' type='string' />",
+            "    <cvalue name='ZIPTOOL_OPTIONS' value='\"-c\"' type='string' />",
+            '    <cvalue name=\'sampleDirectory\' value=\'/data/michael/temp/roddyLocalTest/testproject/vbp/A100/${sample}/${SEQUENCER_PROTOCOL}\' type=\'string\' />',
+            "  </configurationvalues>",
+            "</configuration>"
+    ].join("\n")
+
     @BeforeClass
     public static final void setup() {
         ExecutionService.initializeService(NoNoExecutionService, RunMode.UI)
@@ -160,4 +196,31 @@ public class BashConverterTest {
         }
     }
 
+    @Test
+    public void testGetHeaderValue() {
+        assert new BashConverter().getHeaderValue(sampleBashCode.readLines(), "description", "") == "aConfig"
+    }
+
+    @Test
+    public void testGetHeaderValues() {
+        List<String> values = new BashConverter().getHeaderValues(sampleBashCode.readLines(), "analysis", [])
+        assert values.size() == 3
+
+    }
+
+    @Test
+    public void testConvertToXML() {
+
+        def converted = new BashConverter().convertToXML(sampleBashCode)
+        boolean valid = converted == sampleXMLCode
+        def xmlLines = sampleXMLCode.readLines()
+        def convertedLines = converted.readLines()
+        assert convertedLines.size() == xmlLines.size()
+        for (int i = 0; i < convertedLines.size(); i++) {
+            def validated = convertedLines[i] == xmlLines[i]
+            if(!validated) println(convertedLines[i] + "\n" + xmlLines[i])
+            valid &= validated
+        }
+        assert valid
+    }
 }

@@ -7,7 +7,6 @@
 package de.dkfz.roddy.client.rmiclient
 
 import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.core.DataSet
 import de.dkfz.roddy.execution.io.ExecutionHelper
 import de.dkfz.roddy.execution.jobs.JobState
 import groovy.transform.CompileStatic

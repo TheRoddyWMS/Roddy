@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -9,13 +9,7 @@ package de.dkfz.roddy.execution.io
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
-import de.dkfz.roddy.core.RuntimeService
-import de.dkfz.roddy.execution.io.ExecutionService
-import de.dkfz.roddy.execution.io.LocalExecutionService
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.LibrariesFactoryTest
@@ -56,7 +50,7 @@ public class ExecutionServiceTestInlineScript {
         Configuration cfg = mockedContext.getConfiguration();
 
         ToolEntry toolEntry = new ToolEntry("roddyTests", "roddyTests", "");
-        toolEntry.getOutputParameters(cfg).add(new ToolEntry.ToolFileGroupParameter(GenericFileGroup, null, [], "TEST", ToolEntry.ToolFileGroupParameter.PassOptions.parameters))
+        toolEntry.getOutputParameters(cfg).add(new ToolFileGroupParameter(GenericFileGroup, null, "TEST"))
         def inlineScriptName = "testInlineScript.sh"
         toolEntry.setInlineScriptName(inlineScriptName)
         toolEntry.setInlineScript("echo test")
@@ -103,7 +97,7 @@ public class ExecutionServiceTestInlineScript {
         Configuration cfg = mockedContext.getConfiguration();
 
         ToolEntry toolEntry = new ToolEntry("roddyTests", "roddyTests", "");
-        toolEntry.getOutputParameters(cfg).add(new ToolEntry.ToolFileGroupParameter(GenericFileGroup, null, [], "TEST", ToolEntry.ToolFileGroupParameter.PassOptions.parameters))
+        toolEntry.getOutputParameters(cfg).add(new ToolFileGroupParameter(GenericFileGroup, null, "TEST"))
         def inlineScriptName = "testInlineScript.sh"
         cfg.getTools().add(toolEntry);
 
