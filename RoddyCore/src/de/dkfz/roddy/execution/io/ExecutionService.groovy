@@ -7,7 +7,6 @@
 package de.dkfz.roddy.execution.io
 
 import de.dkfz.eilslabs.batcheuphoria.jobs.Command
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobDependencyID
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
 import de.dkfz.eilslabs.batcheuphoria.jobs.DummyCommand
@@ -26,6 +25,7 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.execution.jobs.JobDependencyID
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -156,7 +156,7 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
         File path = context.getConfiguration().getProcessingToolPath(context, toolID);
 
 //        Job wrapperJob = new Job(context, context.getTimestampString() + jobNameExtension + toolID, toolID, null);
-//        DirectSynchronousExecutedJobManager dcfac = new DirectSynchronousExecutedJobManager();
+//        DirectSynchronousExecutionJobManager dcfac = new DirectSynchronousExecutionJobManager();
 //        DirectCommand wrapperJobCommand = dcfac.createCommand(wrapperJob, context.getConfiguration().getProcessingToolPath(context, toolID), new LinkedList<>());
         String cmd = FileSystemAccessProvider.getInstance().commandSet.getExecuteScriptCommand(path);
         return execute(cmd).resultLines;
@@ -642,7 +642,7 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
 
         List<Command> commandCalls = context.getCommandCalls();
         StringBuilder realCalls = new StringBuilder();
-        List<JobDependencyID> jobIDs = new LinkedList<JobDependencyID>();
+        List<de.dkfz.roddy.execution.jobs.JobDependencyID> jobIDs = new LinkedList<>();
         int cnt = 0;
         Map<String, String> jobIDReplacement = new HashMap<String, String>();
         StringBuilder repeatCalls = new StringBuilder();

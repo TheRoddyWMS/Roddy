@@ -10,12 +10,14 @@ import com.btr.proxy.search.ProxySearch;
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize;
 import de.dkfz.eilslabs.batcheuphoria.execution.cluster.pbs.PBSJobManager;
 import de.dkfz.eilslabs.batcheuphoria.jobs.*;
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager;
 import de.dkfz.roddy.client.RoddyStartupModes;
 import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
 import de.dkfz.roddy.client.rmiclient.RoddyRMIServer;
 import de.dkfz.roddy.config.ConfigurationConstants;
+import de.dkfz.roddy.execution.jobs.*;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.tools.AppConfig;
@@ -227,6 +229,8 @@ public class Roddy {
 
 
     private static void startup(String[] args) {
+        CompatibilityPreserver.prepareCompatiblityEntries();
+
         time(null);
 
         List<String> list = Arrays.asList(args);

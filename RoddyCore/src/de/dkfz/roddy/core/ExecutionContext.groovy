@@ -7,7 +7,7 @@
 package de.dkfz.roddy.core
 
 import de.dkfz.eilslabs.batcheuphoria.jobs.Command
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobResult
+import de.dkfz.roddy.execution.jobs.JobResult
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy

@@ -23,7 +23,7 @@ import de.dkfz.roddy.config.ToolFileParameter
 import de.dkfz.roddy.config.ToolFileParameterCheckCondition
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobResult
+import de.dkfz.roddy.execution.jobs.JobResult
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.LibrariesFactoryTest
 import groovy.transform.TypeCheckingMode

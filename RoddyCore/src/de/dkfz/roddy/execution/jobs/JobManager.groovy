@@ -24,8 +24,14 @@ import de.dkfz.roddy.knowledge.files.BaseFile
 @Deprecated()
 class JobManager {
 
+    private de.dkfz.eilslabs.batcheuphoria.jobs.JobManager jobManager
+    
     static JobManager getInstance() {
         return new JobManager(Roddy.getJobManager())
+    }
+
+    JobManager(de.dkfz.eilslabs.batcheuphoria.jobs.JobManager jobManager) {
+        this.jobManager = jobManager
     }
 
     String createJobName(BaseFile baseFile, String toolID, boolean reduceLevel) {
@@ -33,106 +39,106 @@ class JobManager {
     }
 
     Command createCommand(GenericJobInfo jobInfo) {
-        getInstance().createCommand(jobInfo)
+        jobManager.createCommand(jobInfo)
     }
 
-    de.dkfz.eilslabs.batcheuphoria.jobs.JobResult runJob(de.dkfz.eilslabs.batcheuphoria.jobs.Job job, boolean runDummy) {
-        instance.runJob(job, runDummy)
+    de.dkfz.roddy.execution.jobs.JobResult runJob(de.dkfz.eilslabs.batcheuphoria.jobs.Job job, boolean runDummy) {
+        jobManager.runJob(job, runDummy)
     }
 
     de.dkfz.eilslabs.batcheuphoria.jobs.JobDependencyID createJobDependencyID(de.dkfz.eilslabs.batcheuphoria.jobs.Job job, String jobResult) {
-        instance.createJobDependencyID(job, jobResult)
+        jobManager.createJobDependencyID(job, jobResult)
     }
 
     ProcessingCommands convertResourceSet(ResourceSet resourceSet) {
-        instance.convertResourceSet(resourceSet)
+        jobManager.convertResourceSet(resourceSet)
     }
 
     ProcessingCommands parseProcessingCommands(String alignmentProcessingOptions) {
-        instance.parseProcessingCommands(alignmentProcessingOptions)
+        jobManager.parseProcessingCommands(alignmentProcessingOptions)
     }
 
     ProcessingCommands extractProcessingCommandsFromToolScript(File file) {
-        instance.extractProcessingCommandsFromToolScript(file)
+        jobManager.extractProcessingCommandsFromToolScript(file)
     }
 
     de.dkfz.eilslabs.batcheuphoria.jobs.Job parseToJob(String commandString) {
-        instance.parseToJob(commandString)
+        jobManager.parseToJob(commandString)
     }
 
     GenericJobInfo parseGenericJobInfo(String command) {
-        instance.parseGenericJobInfo(command)
+        jobManager.parseGenericJobInfo(command)
     }
 
-    de.dkfz.eilslabs.batcheuphoria.jobs.JobResult convertToArrayResult(de.dkfz.eilslabs.batcheuphoria.jobs.Job arrayChildJob, de.dkfz.eilslabs.batcheuphoria.jobs.JobResult parentJobsResult, int arrayIndex) {
-        instance.convertToArrayResult(arrayChildJob, parentJobsResult, arrayIndex)
+    de.dkfz.roddy.execution.jobs.JobResult convertToArrayResult(de.dkfz.eilslabs.batcheuphoria.jobs.Job arrayChildJob, de.dkfz.roddy.execution.jobs.JobResult parentJobsResult, int arrayIndex) {
+        jobManager.convertToArrayResult(arrayChildJob, parentJobsResult, arrayIndex)
     }
 
     void updateJobStatus() {
-        instance.updateJobStatus()
+        jobManager.updateJobStatus()
     }
 
     void addJobStatusChangeListener(de.dkfz.eilslabs.batcheuphoria.jobs.Job job) {
-        instance.addJobStatusChangeListener(job)
+        jobManager.addJobStatusChangeListener(job)
     }
 
     String getLogFileWildcard(de.dkfz.eilslabs.batcheuphoria.jobs.Job job) {
-        instance.getLogFileWildcard(job)
+        jobManager.getLogFileWildcard(job)
     }
 
     boolean compareJobIDs(String jobID, String id) {
-        instance.compareJobIDs(jobID, id)
+        jobManager.compareJobIDs(jobID, id)
     }
 
     String getStringForQueuedJob() {
-        instance.getStringForQueuedJob()
+        jobManager.getStringForQueuedJob()
     }
 
     String getStringForJobOnHold() {
-        instance.getStringForJobOnHold()
+        jobManager.getStringForJobOnHold()
     }
 
     String getStringForRunningJob() {
-        instance.getStringForRunningJob()
+        jobManager.getStringForRunningJob()
     }
 
     String getSpecificJobIDIdentifier() {
-        instance.getSpecificJobIDIdentifier()
+        jobManager.getSpecificJobIDIdentifier()
     }
 
     String getSpecificJobArrayIndexIdentifier() {
-        instance.getSpecificJobArrayIndexIdentifier()
+        jobManager.getSpecificJobArrayIndexIdentifier()
     }
 
     String getSpecificJobScratchIdentifier() {
-        instance.getSpecificJobScratchIdentifier()
+        jobManager.getSpecificJobScratchIdentifier()
     }
 
     String[] peekLogFile(de.dkfz.eilslabs.batcheuphoria.jobs.Job job) {
-        instance.peekLogFile(job)
+        jobManager.peekLogFile(job)
     }
 
     String parseJobID(String commandOutput) {
-        instance.parseToJob(commandOutput)
+        jobManager.parseToJob(commandOutput)
     }
 
     String getSubmissionCommand() {
-        instance.getSubmissionCommand()
+        jobManager.getSubmissionCommand()
     }
 
     void queryJobAbortion(List executedJobs) {
-        instance.queryJobAbortion(executedJobs)
+        jobManager.queryJobAbortion(executedJobs)
     }
 
     Map<String, JobState> queryJobStatus(List jobIDs) {
-        instance.queryJobStatus(jobIDs)
+        jobManager.queryJobStatus(jobIDs)
     }
 
     Command createCommand(de.dkfz.eilslabs.batcheuphoria.jobs.Job job, String jobName, List processingCommands, File tool, Map parameters, List dependencies, List arraySettings) {
-        instance.createCommand(job, jobName, processingCommands, tool, parameters, dependencies, arraySettings)
+        jobManager.createCommand(job, jobName, processingCommands, tool, parameters, dependencies, arraySettings)
     }
 
     boolean executesWithoutJobSystem() {
-        return instance.executesWithoutJobSystem()
+        return jobManager.executesWithoutJobSystem()
     }
 }

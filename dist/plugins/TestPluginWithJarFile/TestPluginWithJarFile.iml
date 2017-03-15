@@ -13,5 +13,6 @@
     <orderEntry type="module" module-name="PluginBase" />
     <orderEntry type="library" name="roddyBundledLibraries" level="project" />
     <orderEntry type="module" module-name="RoddyToolLib" />
+    <orderEntry type="module" module-name="Roddy" />
   </component>
 </module>

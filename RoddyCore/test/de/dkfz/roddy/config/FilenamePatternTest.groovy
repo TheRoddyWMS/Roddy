@@ -8,23 +8,20 @@ package de.dkfz.roddy.config
 
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobManagerCreationParameters
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobManagerCreationParametersBuilder
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import de.dkfz.eilslabs.batcheuphoria.jobs.Command
 import de.dkfz.roddy.execution.io.NoNoExecutionService
-import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobDependencyID
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobResult
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
 import de.dkfz.eilslabs.batcheuphoria.jobs.ProcessingCommands
+import de.dkfz.roddy.execution.jobs.JobResult
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.GenericFile
 import de.dkfz.roddy.knowledge.methods.GenericMethod
-import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.LibrariesFactoryTest
 import org.junit.BeforeClass;

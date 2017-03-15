@@ -9,8 +9,8 @@ package de.dkfz.roddy.execution.jobs
 import de.dkfz.eilslabs.batcheuphoria.jobs.FakeJob
 import de.dkfz.eilslabs.batcheuphoria.jobs.FakeJobID
 import de.dkfz.eilslabs.batcheuphoria.jobs.Command
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobDependencyID
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobResult
+import de.dkfz.roddy.execution.jobs.JobDependencyID
+import de.dkfz.roddy.execution.jobs.JobResult
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobType
 import de.dkfz.eilslabs.batcheuphoria.jobs.ProcessingCommands
@@ -614,7 +614,7 @@ public class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
         return allValid;
     }
 
-    public JobResult getRunResult() {
+    public de.dkfz.roddy.execution.jobs.JobResult getRunResult() {
         return runResult;
     }
 

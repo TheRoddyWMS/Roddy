@@ -155,7 +155,11 @@ public class LibrariesFactory extends Initializable {
             Class foundCoreClass = null;
             for (Package p in getRoddyPackages()) {
                 String className = "${p.name}.${name}"
-                foundCoreClass = tryLoadClass(className)
+                try {
+                    foundCoreClass = tryLoadClass(className)
+                } catch (ClassNotFoundException ex) {
+                    // Silently ignored. The class may or may not be in core.
+                }
                 if (foundCoreClass) break
                 // Ignore if it is empty, we will fall back to the plugin strategy afterwards! Or search in the next package
             }
@@ -687,13 +691,7 @@ public class LibrariesFactory extends Initializable {
     }
 
     public Class tryLoadClass(String className) throws ClassNotFoundException {
-        try {
-            return loadClass(className);
-
-        } catch (any) {
-            logger.severe("Could not load class ${className}")
-            return null;
-        }
+        return loadClass(className);
     }
 
     public Class loadClass(String className) throws ClassNotFoundException {

@@ -20,7 +20,7 @@
 //import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager;
 //import de.dkfz.roddy.execution.jobs.Job;
 //import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand;
-//import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutedJobManager;
+//import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager;
 //import de.dkfz.roddy.plugins.LibrariesFactory;
 //
 //import java.io.File;
@@ -74,7 +74,7 @@
 //        String toolID = aCfg.getNativeToolID();
 //        Job wrapperJob = new Job(context, context.getTimestampString() + "_nativeJobWrapper:" + toolID, toolID, null);
 //
-//        DirectSynchronousExecutedJobManager dcfac = new DirectSynchronousExecutedJobManager();
+//        DirectSynchronousExecutionJobManager dcfac = new DirectSynchronousExecutionJobManager();
 //        DirectCommand wrapperJobCommand = dcfac.createCommand(wrapperJob, aCfg.getProcessingToolPath(context, toolID), new LinkedList<>());
 //        String submissionCommand = targetJobManager.getSubmissionCommand();
 //        if (submissionCommand == null) {

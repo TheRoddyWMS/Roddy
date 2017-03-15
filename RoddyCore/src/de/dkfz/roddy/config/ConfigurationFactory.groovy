@@ -17,6 +17,7 @@ import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.FileObjectTupleFactory
 import de.dkfz.roddy.knowledge.files.FileStage
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
+
 //import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
 import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.Roddy
@@ -627,7 +628,11 @@ public class ConfigurationFactory {
             throw new RuntimeException("Filestage was not specified correctly. Need a base package/class or full qualified name.")
         }
 
-        Class baseClass = LibrariesFactory.getInstance().tryLoadClass(filestagesbase);
+        try {
+            Class baseClass = LibrariesFactory.getInstance().tryLoadClass(filestagesbase);
+        } catch (ClassNotFoundException ex) {
+            logger.severe("Could not load class ${filestagesbase}")
+        }
         if (baseClass) {
             Field f = baseClass.getDeclaredField(fileStage);
             boolean isStatic = Modifier.isStatic(f.getModifiers());
@@ -649,7 +654,11 @@ public class ConfigurationFactory {
         for (NodeChild tool in configurationNode.processingTools.tool) {
             String toolID = tool.@name.text()
             logger.postRareInfo("Processing tool ${toolID}");
-            toolEntries[toolID] = readProcessingTool(tool, config)
+            def toolEntry = readProcessingTool(tool, config)
+            if (!toolEntry)
+                logger.severe("Tool ${toolID} could not be read and will not be available.")
+            else
+                toolEntries[toolID] = toolEntry
         }
     }
 
@@ -686,14 +695,13 @@ public class ConfigurationFactory {
                             currentEntry.setInlineScript(child.text().trim().replaceAll('<!\\[CDATA\\[', "").replaceAll(']]>', ""))
                             currentEntry.setInlineScriptName(child.@value.text())
                         }
-
                     }
                 }
                 currentEntry.setGenericOptions(inputParameters, outputParameters, resourceSets);
             }
             return currentEntry;
         } catch (Exception ex) {
-            println(ex);
+            config.addLoadError(new ConfigurationLoadError(config, "ToolEntry could not be read", ex.getMessage(), ex))
         }
     }
 
@@ -888,7 +896,7 @@ public class ConfigurationFactory {
         Class _cls = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, BaseFile.class)
 
         String pName = child.@scriptparameter.text();
-        String fnpSelTag = extractAttributeText(child, "fnpatternselectiontag", FilenamePattern.DEFAULT_SELECTION_TAG);
+        String fnpSelTag = extractAttributeText(child, "selectiontag", extractAttributeText(child, "fnpatternselectiontag", FilenamePattern.DEFAULT_SELECTION_TAG));
         String parentFileVariable = extractAttributeText(child, "variable", null); //This is only the case for child files.
         ToolFileParameterCheckCondition check = new ToolFileParameterCheckCondition(extractAttributeText(child, "check", "true"));
 
@@ -926,18 +934,24 @@ public class ConfigurationFactory {
     static ToolFileGroupParameter parseFileGroup(NodeChild groupNode, String toolID) {
         String cls = extractAttributeText(groupNode, "typeof", GenericFileGroup.name);
         Class filegroupClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, FileGroup.class);
-        if(!filegroupClass)
+        if (!filegroupClass)
             filegroupClass = GenericFileGroup
 
         PassOptions passas = Enum.valueOf(PassOptions.class, extractAttributeText(groupNode, "passas", PassOptions.parameters.name()));
         ToolFileGroupParameter.IndexOptions indexOptions = Enum.valueOf(ToolFileGroupParameter.IndexOptions.class, extractAttributeText(groupNode, "indices", ToolFileGroupParameter.IndexOptions.numeric.name()))
 
         String fileclass = extractAttributeText(groupNode, "fileclass", null);
-        Class genericFileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(fileclass, BaseFile.class)
+        Class genericFileClass
+        if (fileclass == null && groupNode.output.size() == 0)
+            throw new RuntimeException("You cannot leave out the file class and don't set sub output files for ${toolID}")
+        else if (fileclass) {
+            genericFileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(fileclass, BaseFile.class)
+        }
+
         String pName = groupNode.@scriptparameter.text();
 
 
-        if(!pName || !fileclass)
+        if (!pName || !fileclass)
             throw new RuntimeException("You have to set both the parametername and the fileclass attribute for filegroup i/o parameter in ${toolID}")
 
         ToolFileGroupParameter tpg = new ToolFileGroupParameter(filegroupClass, genericFileClass, pName, passas, indexOptions)

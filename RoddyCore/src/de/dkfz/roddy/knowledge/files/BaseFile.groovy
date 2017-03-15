@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.knowledge.files
 
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobResult;
+//import de.dkfz.eilslabs.batcheuphoria.jobs.JobResult;
 import de.dkfz.roddy.AvailableFeatureToggles;
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.config.Configuration
@@ -23,7 +23,8 @@ import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextLevel;
 import de.dkfz.roddy.core.Workflow;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
-import de.dkfz.roddy.execution.jobs.Job;
+import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.JobResult;
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.Tuple2
 

@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.execution.jobs;
 
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobResult;
+import de.dkfz.roddy.execution.jobs.JobResult;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.tools.AppConfig;

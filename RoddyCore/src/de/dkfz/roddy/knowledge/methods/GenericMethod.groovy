@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.knowledge.methods
 
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobResult
+import de.dkfz.roddy.execution.jobs.JobResult
 import de.dkfz.roddy.Roddy
 
 import static de.dkfz.eilslabs.batcheuphoria.jobs.JobConstants.*
