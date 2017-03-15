@@ -20,7 +20,6 @@ import de.dkfz.roddy.execution.io.FileAttributes
 import de.dkfz.roddy.knowledge.files.BaseFile
 import org.apache.commons.io.filefilter.WildcardFileFilter
 
-import java.nio.file.FileSystem
 import java.util.concurrent.locks.ReentrantLock
 
 /**
@@ -31,7 +30,7 @@ import java.util.concurrent.locks.ReentrantLock
  */
 @groovy.transform.CompileStatic
 public class FileSystemAccessProvider extends CacheProvider {
-    private static LoggerWrapper logger = LoggerWrapper.getLogger(FileSystemAccessProvider.getClass().getName());
+    private static LoggerWrapper logger = LoggerWrapper.getLogger(FileSystemAccessProvider.class.getName());
     private static FileSystemAccessProvider fileSystemAccessProvider = null;
 
     /**
@@ -311,6 +310,22 @@ public class FileSystemAccessProvider extends CacheProvider {
         return result;
     }
 
+    public boolean checkDirectory(File f, boolean createMissing = false) {
+        if (ExecutionService.getInstance().canReadFiles()) {
+            return ExecutionService.getInstance().isFileReadable(f);
+        } else {
+            if (ExecutionService.getInstance().isLocalService()) {
+                boolean result = f.canRead() && f.isDirectory();
+                if (!result && createMissing) {
+                    f.mkdirs();
+                    result = checkDirectory(f, false)
+                }
+                return result;
+            } else
+                throw new RuntimeException("Not implemented yet!");
+        }
+    }
+
     /**
      * Checks if a directory is existing and accessible.
      * @param f The directory which should be checked.
@@ -359,7 +374,7 @@ public class FileSystemAccessProvider extends CacheProvider {
             return ExecutionService.getInstance().isFileReadable(f);
         } else {
             if (ExecutionService.getInstance().isLocalService()) {
-                return f.canRead();
+                return f.canRead() && f.isFile();
             } else
                 throw new RuntimeException("Not implemented yet!");
         }

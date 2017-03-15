@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -13,12 +13,11 @@ import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.InformationalConfigurationContent
 import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.config.ToolEntry
+import de.dkfz.roddy.config.ToolFileGroupParameter
 import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.LibrariesFactoryTest
@@ -81,7 +80,7 @@ public class ExecutionServiceTest {
         targetToolpath.setExecutable(true, true);
 
         ToolEntry toolEntry = new ToolEntry("RoddyTests", "RoddyTests", "RoddyTestScript_ExecutionServiceTest.sh");
-        toolEntry.getOutputParameters(config).add(new ToolEntry.ToolFileGroupParameter(GenericFileGroup, null, [], "TEST", ToolEntry.ToolFileGroupParameter.PassOptions.parameters))
+        toolEntry.getOutputParameters(config).add(new ToolFileGroupParameter(GenericFileGroup, null, "TEST"))
         config.getTools().add(toolEntry);
 
         // Initialize with fallback provider! Don't worry about errors at this point.

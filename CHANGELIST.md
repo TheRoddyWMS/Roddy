@@ -1,5 +1,9 @@
 # Work in progress
 
+* Version update to 2.3.139
+
+* Version update to 2.3.134
+
 * Version update to 2.3.133
 
 This section contains features which are currently in development. Testable / active features

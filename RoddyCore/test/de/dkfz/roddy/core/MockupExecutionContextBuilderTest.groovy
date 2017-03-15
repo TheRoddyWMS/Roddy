@@ -8,14 +8,18 @@ package de.dkfz.roddy.core
 
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.knowledge.files.BaseFile
+import groovy.transform.CompileStatic
 
 /**
  * Created by heinold on 05.07.16.
  */
+@CompileStatic
 class MockupExecutionContextBuilderTest extends GroovyTestCase {
 
     void testGetTestBaseDirectory() {
-        assert MockupExecutionContextBuilder.getTestBaseDirectory(MockupExecutionContextBuilderTest.name) == new File(MockupExecutionContextBuilder.DIR_PREFIX + MockupExecutionContextBuilderTest.name);
+        String testDir = MockupExecutionContextBuilder.getTestBaseDirectory(MockupExecutionContextBuilderTest.name).absolutePath
+        assert testDir.startsWith("/tmp/" + MockupExecutionContextBuilder.DIR_PREFIX)
+        assert testDir.endsWith("_" + MockupExecutionContextBuilderTest.name)
     }
 
     void testGetDirectory() {
@@ -41,7 +45,11 @@ class MockupExecutionContextBuilderTest extends GroovyTestCase {
 
     void testCreateSimpleRuntimeService() {
         def rs = MockupExecutionContextBuilder.createSimpleRuntimeService(MockupExecutionContextBuilderTest.class.name);
-        assert rs.getLoggingDirectory(null) == MockupExecutionContextBuilder.getTestLoggingDirectory(MockupExecutionContextBuilderTest.class.name)
+        // The following test will fail, because a new temporary file is created when accessing getTestLoggingDirectory.
+        // We'll have to do that differently.
+//        assert rs.getLoggingDirectory(null) == MockupExecutionContextBuilder.getTestLoggingDirectory(MockupExecutionContextBuilderTest.class.name)
+        String logDir = rs.getLoggingDirectory(null).getAbsolutePath()
+        assert logDir.startsWith("/tmp/RoddyTests_") && logDir.endsWith("_" + MockupExecutionContextBuilderTest.class.name + "/logdir")
     }
 
     void testCreateSimpleContextWithClass() {

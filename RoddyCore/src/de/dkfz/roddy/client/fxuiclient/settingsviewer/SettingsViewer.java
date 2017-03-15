@@ -9,18 +9,14 @@ package de.dkfz.roddy.client.fxuiclient.settingsviewer;
 import de.dkfz.roddy.Constants;
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.RunMode;
-import de.dkfz.roddy.config.AppConfig;
-import de.dkfz.roddy.execution.io.ExecutionService;
+import de.dkfz.roddy.tools.AppConfig;
 import de.dkfz.roddy.execution.io.LocalExecutionService;
 import de.dkfz.roddy.execution.io.SSHExecutionService;
 import de.dkfz.roddy.execution.io.fs.BashCommandSet;
-import de.dkfz.roddy.execution.io.fs.ShellCommandSet;
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.client.fxuiclient.RoddyUITask;
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.CustomControlOnGridPane;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
@@ -36,8 +32,6 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.logging.Level;
 
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA;
 

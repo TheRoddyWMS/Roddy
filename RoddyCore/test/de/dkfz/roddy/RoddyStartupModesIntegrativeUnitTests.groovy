@@ -42,6 +42,10 @@ public class RoddyStartupModesIntegrativeUnitTests {
         }
     }
 
+    @BeforeClass
+    public static final void setupTestEnvironment() {
+    }
+
     @Test
     public void testPrintappconfig() {
         withSemaphore {

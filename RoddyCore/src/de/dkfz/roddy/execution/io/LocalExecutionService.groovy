@@ -15,7 +15,6 @@ import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.tools.LoggerWrapper
 
 import java.lang.reflect.Field
-import java.util.logging.Logger
 
 /**
  * The local execution service executes commands on the local machine. For this groovy's execute() method is used.
@@ -85,9 +84,15 @@ public class LocalExecutionService extends ExecutionService {
             File tmpFile2 = new File((String)fieldOfFile.get(outputStream));
 
             FileSystemAccessProvider.getInstance().moveFile(tmpFile2, logFile);
-            "none";
+            return "none";
         } else {
-            return super.handleServiceBasedJobExitStatus(command, res, outputStream);
+            String exID = "none";
+            if (res.successful) {
+                exID = JobManager.getInstance().parseJobID(res.resultLines[0]);
+                command.setExecutionID(JobManager.getInstance().createJobDependencyID(command.getJob(), exID));
+                JobManager.getInstance().storeJobStateInfo(command.getJob());
+            }
+            return exID;
         }
     }
 
