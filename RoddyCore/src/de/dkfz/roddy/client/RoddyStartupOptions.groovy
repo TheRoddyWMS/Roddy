@@ -30,6 +30,8 @@ public enum RoddyStartupOptions {
     useconfig(true),
     usefeaturetoggleconfig(true),
     verbositylevel(true),
+    v(false), // Verbosity of 3
+    vv(false), // Verbosity of 5
     debugOptions(true),
     waitforjobs,
     test,

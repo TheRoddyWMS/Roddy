@@ -261,8 +261,18 @@ class GenericMethod {
             if (toolParameter instanceof ToolFileParameter) {
                 ToolFileParameter _tp = (ToolFileParameter) toolParameter;
                 //TODO Check if input and output parameters match and also check for array indices and item count. Throw a proper error message.
-                if (!allInputValues[i].class == _tp.fileClass)
-                    logger.severe("Class mismatch for " + allInputValues[i] + " should be of class " + _tp.fileClass);
+                if(allInputValues.size() <= i ) {
+                    logger.severe("Not all input parameters were set for ${calledTool.id}. Expected ${calledTool.getInputParameters(context).size()}. Breaking loop and trying to go on.")
+                    continue
+                }
+                if(allInputValues[i] == null){
+                    logger.severe("There is an input mismatch for the tool ${calledTool.id}. Expected ${_tp.fileClass} but got null. Trying to go on.")
+                    continue
+                }
+                if (!allInputValues[i].class == _tp.fileClass){
+                    logger.severe("Class mismatch for " + allInputValues[i] + " should be of class " + _tp.fileClass + '. Trying to go on.');
+                    continue
+                }
                 if (_tp.scriptParameterName) {
                     parameters[_tp.scriptParameterName] = ((BaseFile) allInputValues[i]);
                 }
@@ -284,8 +294,7 @@ class GenericMethod {
                         cnt++;
                     }
                 } else { //Arrays
-                    int cnt = 0;
-                    parameters[_tp.scriptParameterName] = ((FileGroup) allInputValues[i]).getFilesInGroup();//paths;
+                    parameters[_tp.scriptParameterName] = ((FileGroup) allInputValues[i]).getFilesInGroup()
                 }
             }
         }
