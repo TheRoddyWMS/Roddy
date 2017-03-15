@@ -86,6 +86,11 @@ public abstract class BaseFile<FS extends FileStageSettings> extends FileObject 
         public final String slotID
         public final List<FileObject> parentFiles
 
+        @Deprecated
+        public ConstructionHelperForGenericCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings, JobResult jobResult) {
+            this(parentObject, parentFiles, creatingTool, toolID, slotID, selectionTag, null, fileStageSettings, jobResult)
+        }
+
         public ConstructionHelperForGenericCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, String indexInFileGroup, FileStageSettings fileStageSettings, JobResult jobResult) {
             super(parentObject?.getExecutionContext(), fileStageSettings, selectionTag, indexInFileGroup, jobResult)
             this.parentFiles = parentFiles
