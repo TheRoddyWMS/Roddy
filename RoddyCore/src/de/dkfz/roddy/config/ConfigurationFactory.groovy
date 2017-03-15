@@ -625,7 +625,12 @@ public class ConfigurationFactory {
             throw new RuntimeException("Filestage was not specified correctly. Need a base package/class or full qualified name.")
         }
 
-        Class baseClass = LibrariesFactory.getInstance().tryLoadClass(filestagesbase);
+        Class baseClass
+        try {
+            baseClass = LibrariesFactory.getInstance().tryLoadClass(filestagesbase)
+        } catch (ClassNotFoundException ex) {
+            logger.severe("Could not load class ${filestagesbase}")
+        }
         if (baseClass) {
             Field f = baseClass.getDeclaredField(fileStage);
             boolean isStatic = Modifier.isStatic(f.getModifiers());
@@ -924,7 +929,7 @@ public class ConfigurationFactory {
     static ToolFileGroupParameter parseFileGroup(NodeChild groupNode, String toolID) {
         String cls = extractAttributeText(groupNode, "typeof", GenericFileGroup.name);
         Class filegroupClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, FileGroup.class);
-        if(!filegroupClass)
+        if (!filegroupClass)
             filegroupClass = GenericFileGroup
 
         PassOptions passas = Enum.valueOf(PassOptions.class, extractAttributeText(groupNode, "passas", PassOptions.parameters.name()));
@@ -935,7 +940,7 @@ public class ConfigurationFactory {
         String pName = groupNode.@scriptparameter.text();
 
 
-        if(!pName || !fileclass)
+        if (!pName || !fileclass)
             throw new RuntimeException("You have to set both the parametername and the fileclass attribute for filegroup i/o parameter in ${toolID}")
 
         ToolFileGroupParameter tpg = new ToolFileGroupParameter(filegroupClass, genericFileClass, pName, passas, indexOptions)
