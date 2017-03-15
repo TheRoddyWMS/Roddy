@@ -47,6 +47,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
 
         @Override
         public boolean equals(Object o) {
+            // Is backed by test!
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             if (!super.equals(o)) return false;
@@ -74,6 +75,7 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
 
         @Override
         public boolean equals(Object o) {
+            // Is backed by test!
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             if (!super.equals(o)) return false;

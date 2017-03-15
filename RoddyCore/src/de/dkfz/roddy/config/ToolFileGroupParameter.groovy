@@ -73,6 +73,7 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameter<ToolFileGroupParame
 
     @Override
     boolean equals(o) {
+        //Backed by test
         if (this.is(o)) return true
         if (getClass() != o.class) return false
         if (!super.equals(o)) return false

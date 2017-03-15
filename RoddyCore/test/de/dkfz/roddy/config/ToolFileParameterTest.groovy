@@ -21,7 +21,6 @@ public class ToolFileParameterTest {
     public void testCloneAndEquals() throws Exception {
         def src = new ToolFileParameter(BaseFile, [], "ABC", new ToolFileParameterCheckCondition(true), "DEF", null, "abc")
         def clone = src.clone()
-        assert clone == src
-
+        assert clone.equals(src)
     }
 }

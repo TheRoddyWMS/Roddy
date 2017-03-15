@@ -52,6 +52,7 @@ public class ToolFileParameter extends ToolEntry.ToolParameter<ToolFileParameter
 
     @Override
     public boolean equals(Object o) {
+        //Backed by test
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
