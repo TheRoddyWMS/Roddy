@@ -4,34 +4,37 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.config;
+package de.dkfz.roddy.config
 
 import de.dkfz.roddy.core.ExecutionContext;
-import de.dkfz.roddy.knowledge.files.BaseFile;
+import de.dkfz.roddy.knowledge.files.BaseFile
+import groovy.transform.CompileStatic;
 
 import java.lang.reflect.Method;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.stream.Collectors;
+
+import static de.dkfz.roddy.Constants.NO_VALUE;
 
 /**
  * @author michael
  */
-public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
+@CompileStatic
+class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
 
     /**
      * A constraint for a parameter.
      * If the constraints checkMethod fails onFailMethod is called on the
      */
-    public static class ToolConstraint {
+    static class ToolConstraint {
         public final Method onFailMethod;
         public final Method checkMethod;
 
-        public ToolConstraint(Method onFailMethod, Method checkMethod) {
+        ToolConstraint(Method onFailMethod, Method checkMethod) {
             this.onFailMethod = onFailMethod;
             this.checkMethod = checkMethod;
         }
 
-        public void apply(BaseFile p) {
+        void apply(BaseFile p) {
             try {
                 boolean valid = (Boolean) checkMethod.invoke(p);
                 if (!valid)
@@ -41,16 +44,15 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
             }
         }
 
-        public ToolConstraint clone() {
+        ToolConstraint clone() {
             return new ToolConstraint(onFailMethod, checkMethod);
         }
 
         @Override
         public boolean equals(Object o) {
             // Is backed by test!
-            if (this == o) return true;
+            if (this.is(o)) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            if (!super.equals(o)) return false;
 
             ToolConstraint that = (ToolConstraint) o;
 
@@ -76,11 +78,10 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         @Override
         public boolean equals(Object o) {
             // Is backed by test!
-            if (this == o) return true;
+            if (this.is(o)) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            if (!super.equals(o)) return false;
 
-            ToolParameter<?> that = (ToolParameter<?>) o;
+            ToolParameter<ToolParameter> that = (ToolParameter<ToolParameter>) o;
 
             return scriptParameterName != null ? scriptParameterName.equals(that.scriptParameterName) : that.scriptParameterName == null;
         }
@@ -93,42 +94,56 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         public abstract T clone();
     }
 
+    public static abstract class ToolParameterOfFiles extends ToolParameter<ToolParameterOfFiles> {
+        ToolParameterOfFiles(String scriptParameterName) {
+            super(scriptParameterName);
+        }
+        public abstract boolean hasSelectionTag();
+        /**
+         * The childFiles methods only return the possibly empty set of children. The files methods
+         * return all children and possibly (for everything but pure aggregate parameters) the file
+         * itself and all its children. The getAllChildFiles returns all children recursively.
+         */
+        public abstract List<? extends ToolParameterOfFiles> getAllFiles();
+        public abstract List<? extends ToolParameterOfFiles> getFiles();
+    }
+
     public final String id;
     public final String basePathId;
     public final String path;
     public final String computationResourcesFlags;
     private String inlineScript;
     private String inlineScriptName;
-    private final List<ToolParameter> inputParameters = new LinkedList<>();
-    private final List<ToolParameter> outputParameters = new LinkedList<>();
-    private final List<ResourceSet> resourceSets = new LinkedList<>();
-    private boolean overridesResourceSets;
+    final List<ToolParameter> inputParameters = new LinkedList<>();
+    final List<ToolParameter> outputParameters = new LinkedList<>();
+    final List<ResourceSet> resourceSets = new LinkedList<>();
+    boolean overridesResourceSets;
 
-    public ToolEntry(String id, String basePathId, String path) {
+    ToolEntry(String id, String basePathId, String path) {
         this.id = id;
         this.basePathId = basePathId;
         this.path = path;
         this.computationResourcesFlags = "";
     }
 
-    public ToolEntry(String id, String basePathId, String path, String computationResourcesFlags) {
+    ToolEntry(String id, String basePathId, String path, String computationResourcesFlags) {
         this.id = id;
         this.basePathId = basePathId;
         this.path = path;
         this.computationResourcesFlags = computationResourcesFlags != null ? computationResourcesFlags : "";
     }
 
-    public boolean isToolGeneric() {
+    boolean isToolGeneric() {
         return overridesResourceSets || (inputParameters.size() > 0 || outputParameters.size() > 0);
     }
 
-    public void setGenericOptions(List<ToolParameter> input, List<ToolParameter> output, List<ResourceSet> resourceSets) {
+    void setGenericOptions(List<ToolParameter> input, List<ToolParameter> output, List<ResourceSet> resourceSets) {
         inputParameters.addAll(input);
         outputParameters.addAll(output);
         this.resourceSets.addAll(resourceSets);
     }
 
-    public ToolEntry clone() {
+    ToolEntry clone() {
         List<ToolParameter> _inp = new LinkedList<ToolParameter>();
         List<ToolParameter> _outp = new LinkedList<ToolParameter>();
         List<ResourceSet> _rsets = new LinkedList<>();
@@ -147,110 +162,118 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         return te;
     }
 
-    public String getLocalPath() {
+    String getLocalPath() {
         return path;
     }
 
-    public void setInlineScript(String script) {
+    void setInlineScript(String script) {
         this.inlineScript = script;
     }
 
-    public String getInlineScript() {
+    String getInlineScript() {
         return this.inlineScript;
     }
 
-    public void setInlineScriptName(String scriptName) {
+    void setInlineScriptName(String scriptName) {
         this.inlineScriptName = scriptName;
     }
 
-    public String getInlineScriptName() {
+    String getInlineScriptName() {
         return this.inlineScriptName;
     }
 
-    public boolean hasInlineScript() {
+    boolean hasInlineScript() {
         if (inlineScript != null)
-            return true;
+            return true
         else
-            return false;
+            return false
     }
 
-    public boolean hasResourceSets() {
-        return resourceSets.size() > 0;
+    boolean hasResourceSets() {
+        return resourceSets.size() > 0
     }
 
-    public ResourceSet getResourceSet(Configuration configuration) {
+    ResourceSet getResourceSet(Configuration configuration) {
         ResourceSetSize key = configuration.getResourcesSize();
-        int size = key.ordinal();
+        int size = key.ordinal()
 
         ResourceSet first = resourceSets.get(0);
         if (resourceSets.size() == 1) { // Only one set exists.
-            return resourceSets.get(0);
+            return resourceSets.get(0)
         }
 
         ResourceSet last = resourceSets.get(resourceSets.size() - 1);
         if (size <= first.getSize().ordinal()) {  // The given key is smaller than the available keys. Return the first set.
-            return first;
+            return first
         }
         if (size >= last.getSize().ordinal()) {  // The given key is larger than the available keys. Return the last set.
             return last;
         }
         for (ResourceSet resourceSet : resourceSets) {  // Select the appropriate set
             if (resourceSet.getSize() == key)
-                return resourceSet;
+                return resourceSet
         }
         //Still no set, take the largest set, which comes after the given ordinal.
         for (ResourceSet resourceSet : resourceSets) {
             if (resourceSet.getSize().ordinal() > size)
-                return resourceSet;
+                return resourceSet
         }
 
         return null;
     }
 
-    public void setOverridesResourceSets() {
-        overridesResourceSets = true;
+    void setOverridesResourceSets() {
+        overridesResourceSets = true
     }
 
-    public boolean doesOverrideResourceSets() {
-        return overridesResourceSets;
+    boolean doesOverrideResourceSets() {
+        return overridesResourceSets
     }
 
-    public List<ToolParameter> getInputParameters(ExecutionContext context) {
+    List<ToolParameter> getInputParameters(ExecutionContext context) {
         return getInputParameters(context.getConfiguration());
     }
 
-    public List<ToolParameter> getInputParameters(Configuration configuration) {
+    List<ToolParameter> getInputParameters(Configuration configuration) {
         if (overridesResourceSets) {
-            List<ToolEntry> containerParents = configuration.getTools().getInheritanceList(this.id);
+            List<ToolEntry> containerParents = configuration.getTools().getInheritanceList(this.id)
             if (containerParents.size() == 1)
-                return inputParameters;
+                return inputParameters
             for (int i = containerParents.size() - 2; i >= 0; i--) {
                 if (!containerParents.get(i).overridesResourceSets)
-                    return containerParents.get(i).inputParameters;
+                    return containerParents.get(i).inputParameters
             }
         }
         return inputParameters;
     }
 
-    public List<ToolParameter> getOutputParameters(Configuration configuration) {
+    List<ToolParameter> getOutputParameters(Configuration configuration) {
         if (overridesResourceSets) {
             List<ToolEntry> containerParents = configuration.getTools().getInheritanceList(this.id);
             if (containerParents.size() == 1)
                 return outputParameters;
             for (int i = containerParents.size() - 2; i >= 0; i--) {
                 if (!containerParents.get(i).overridesResourceSets)
-                    return containerParents.get(i).outputParameters;
+                    return containerParents.get(i).outputParameters
             }
         }
         return outputParameters;
     }
 
-    public List<ResourceSet> getResourceSets() {
+    List<ToolParameterOfFiles> getOutputFileParameters(Configuration configuration) {
+        return getOutputParameters(configuration).
+                stream().
+                filter({ ToolParameterOfFiles.isInstance(it) }).
+                map({ it as ToolParameterOfFiles }).
+                collect(Collectors.toList());
+    }
+
+    List<ResourceSet> getResourceSets() {
         return resourceSets;
     }
 
     @Override
-    public String getID() {
+    String getID() {
         return id;
     }
 }

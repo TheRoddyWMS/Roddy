@@ -14,8 +14,10 @@ import static de.dkfz.roddy.Constants.NO_VALUE;
 /**
  * This class is supposed to contain output objects from a method call.
  * You can create tuples of different sizes containt file groups and files.
+ *
+ * Tuples are supposed to contain multiple, equally important files of different types.
  */
-public class ToolTupleParameter extends ToolEntry.ToolParameter<ToolTupleParameter> {
+public class ToolTupleParameter extends ToolEntry.ToolParameterOfFiles {
     public final List<ToolFileParameter> files;
 
     public ToolTupleParameter(List<ToolFileParameter> files) {
@@ -29,4 +31,18 @@ public class ToolTupleParameter extends ToolEntry.ToolParameter<ToolTupleParamet
         for (ToolFileParameter tf : files) _files.add(tf.clone());
         return new ToolTupleParameter(_files);
     }
+
+    @Override
+    public List<ToolFileParameter> getFiles() {
+        return files;
+    }
+
+    @Override
+    public List<ToolFileParameter> getAllFiles() { return files; }
+
+    @Override
+    public boolean hasSelectionTag() {
+        return false;
+    }
+
 }

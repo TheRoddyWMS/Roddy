@@ -199,8 +199,15 @@ public class LibrariesFactoryTest {
     @Test
     public void testPerformIncompatibleAPIChecks() {
         assert false == LibrariesFactory.performAPIChecks([
-                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", RuntimeTools.roddyRuntimeVersion, RuntimeTools.javaRuntimeVersion, RuntimeTools.groovyRuntimeVersion, null),
+                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "000", "1.3", "1.3", null),
                 new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", "1.3", null)])
+        assert false == LibrariesFactory.performAPIChecks([
+                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "000", "1.3", null),
+                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", "1.3", null)])
+        assert false == LibrariesFactory.performAPIChecks([
+                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", "000", null),
+                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", "1.3", null)])
+
     }
 
     @Test
