@@ -289,8 +289,18 @@ public class Roddy {
         displayShortWorkflowList = clc.isOptionSet(RoddyStartupOptions.shortlist);
         if (clc.isOptionSet(RoddyStartupOptions.useconfig))
             customPropertiesFile = clc.getOptionValue(RoddyStartupOptions.useconfig);
+        else if(clc.isOptionSet(RoddyStartupOptions.c))
+            customPropertiesFile = clc.getOptionValue(RoddyStartupOptions.c);
 
         for (RoddyStartupOptions startupOption : clc.getOptionList()) {
+
+            if (startupOption == (RoddyStartupOptions.v)) {
+                LoggerWrapper.setVerbosityLevel(LoggerWrapper.VERBOSITY_MEDIUM);
+            }
+
+            if (startupOption == (RoddyStartupOptions.vv)) {
+                LoggerWrapper.setVerbosityLevel(LoggerWrapper.VERBOSITY_HIGH);
+            }
 
             if (startupOption == (RoddyStartupOptions.verbositylevel)) {
                 int level = RoddyConversionHelperMethods.toInt(clc.getOptionValue(startupOption), 5);
