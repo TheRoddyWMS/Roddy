@@ -69,11 +69,7 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameterOfFiles {
 
     @Override
     public ToolFileGroupParameter clone() {
-        List<ToolFileParameter> _files = new LinkedList<ToolFileParameter>()
-        for (ToolFileParameter tf : files) {
-            _files.add(tf.clone())
-        }
-        return new ToolFileGroupParameter(scriptParameterName, groupClass, genericFileClass, passOptions, indexOptions, _files)
+        return new ToolFileGroupParameter(scriptParameterName, groupClass, genericFileClass,  passOptions, indexOptions, files?.collect { ToolFileParameter tfp -> tfp.clone() })
     }
 
     @Override
