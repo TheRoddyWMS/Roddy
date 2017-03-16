@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.core;
 
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager;
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
 import de.dkfz.roddy.AvailableFeatureToggles;
 import de.dkfz.roddy.Roddy;
@@ -18,6 +19,7 @@ import de.dkfz.roddy.config.*;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import java.io.File;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -326,7 +328,7 @@ public class Analysis {
         t.start();
     }
 
-    /*
+        /*
     /**
      * Executes the context object.
      * If the contexts level is QUERY_STATUS:
@@ -416,6 +418,7 @@ public class Analysis {
 
         }
     }
+
 
     /**
      * Calls a cleanup script and / or a workflows cleanup method to cleanup the directories of a workflow.

@@ -16,7 +16,10 @@ import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
 import de.dkfz.roddy.client.rmiclient.RoddyRMIServer;
+import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.config.ConfigurationConstants;
+import de.dkfz.roddy.config.ConfigurationValue;
+import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues;
 import de.dkfz.roddy.execution.jobs.*;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
@@ -229,7 +232,6 @@ public class Roddy {
 
 
     private static void startup(String[] args) {
-        CompatibilityPreserver.prepareCompatiblityEntries();
 
         time(null);
 
@@ -477,6 +479,22 @@ public class Roddy {
         }
     }
 
+
+    private static Configuration applicationSpecificConfiguration = null;
+    public static Configuration getApplicationSpecificConfiguration() {
+        if(applicationSpecificConfiguration == null) {
+            applicationSpecificConfiguration = new Configuration(null);
+            RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
+            JobManager jobManager = Roddy.getJobManager();
+            Map<String, String> specificEnvironmentSettings = jobManager.getSpecificEnvironmentSettings();
+            for (String k : specificEnvironmentSettings.keySet()) {
+                logger.postSometimesInfo("Add job manager value " + k + "=" + specificEnvironmentSettings.get(k) + " to context configuration");
+                configurationValues.add(new ConfigurationValue(k, specificEnvironmentSettings.get(k)));
+            }
+        }
+        return applicationSpecificConfiguration;
+    }
+
     @CompileStatic
     public static void initializeJobManager(boolean fullSetup) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
         logger.postSometimesInfo("public static void initializeFactory(boolean fullSetup)");
@@ -499,9 +517,9 @@ public class Roddy {
                 .setTrackUserJobsOnly(trackUserJobsOnly)
                 .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
                 .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI())
-                .setJobIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID)
-                .setJobArrayIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBARRAYINDEX)
-                .setJobScratchIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH).build());
+                .setJobIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW)
+                .setJobArrayIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBARRAYINDEX_RAW)
+                .setJobScratchIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW).build());
 
 
 // There are many values which need to be extracted from the xml (context, project?)

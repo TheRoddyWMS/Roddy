@@ -170,7 +170,7 @@ class BashConverter extends ConfigurationConverter {
                 String value = cv.toString()
                 if (value != null && value.startsWith("#"))
                     continue;
-                def dependencies = cv.getIDsForParrentValues();
+                def dependencies = cv.getIDsForParentValues();
                 int noOfDependencies = dependencies.size();
                 int noOfOriginalDependencies = dependencies.size();
                 List<String> notFound = [];

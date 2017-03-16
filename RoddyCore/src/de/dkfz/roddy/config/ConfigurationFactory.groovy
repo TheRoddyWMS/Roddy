@@ -628,8 +628,9 @@ public class ConfigurationFactory {
             throw new RuntimeException("Filestage was not specified correctly. Need a base package/class or full qualified name.")
         }
 
+        Class baseClass
         try {
-            Class baseClass = LibrariesFactory.getInstance().tryLoadClass(filestagesbase);
+            baseClass = LibrariesFactory.getInstance().tryLoadClass(filestagesbase);
         } catch (ClassNotFoundException ex) {
             logger.severe("Could not load class ${filestagesbase}")
         }

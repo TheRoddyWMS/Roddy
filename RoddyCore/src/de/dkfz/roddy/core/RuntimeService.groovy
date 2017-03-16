@@ -13,6 +13,7 @@ import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
+import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
 import de.dkfz.roddy.execution.io.BaseMetadataTable
 import de.dkfz.roddy.execution.io.MetadataTableFactory
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -490,9 +491,17 @@ public abstract class RuntimeService extends CacheProvider {
     }
 
     public File getCommonExecutionDirectory(ExecutionContext context) {
-        File configuredPath = context.getConfiguration().getConfigurationValues().get(RODDY_CENTRAL_EXECUTION_DIRECTORY, null)?.toFile(context);
-        if (configuredPath)
-            return configuredPath;
+        try {
+
+            def values = context.getConfiguration().getConfigurationValues()
+            if(values.hasValue(RODDY_CENTRAL_EXECUTION_DIRECTORY)) {
+                File configuredPath = values.get(RODDY_CENTRAL_EXECUTION_DIRECTORY, null)?.toFile(context);
+                if (configuredPath)
+                    return configuredPath;
+            }
+        } catch (Exception ex) {
+            logger.severe("There was an error in toFile for cvalue ${RODDY_CENTRAL_EXECUTION_DIRECTORY} in RuntimeService:getCommonExecutionDirectory()")
+        }
         return new File(getOutputFolderForProject(context).getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + DIRECTORY_RODDY_COMMON_EXECUTION);
     }
 
