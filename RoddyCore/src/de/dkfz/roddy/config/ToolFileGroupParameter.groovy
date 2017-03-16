@@ -14,16 +14,17 @@ import groovy.transform.CompileStatic
  * Parameters for generic tools (tools which are not programmatically set!).
  * Parameters can be for in and for output.
  * Parameters can have constraints.
+ *
+ * File groups are supposed to contain multiple files of the same type. A good example would be
+ * a group of .bed files for the different chromosomes.
  */
 @CompileStatic
-class ToolFileGroupParameter extends ToolEntry.ToolParameter<ToolFileGroupParameter> {
+class ToolFileGroupParameter extends ToolEntry.ToolParameterOfFiles {
     public final Class<FileGroup> groupClass
     public final Class<BaseFile> genericFileClass
+    public final List<ToolFileParameter> files
     public final PassOptions passOptions
     public final IndexOptions indexOptions
-
-    @Deprecated
-    public final List<ToolFileParameter> files
 
     enum PassOptions {
         parameters,
@@ -67,7 +68,7 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameter<ToolFileGroupParame
     }
 
     @Override
-    ToolFileGroupParameter clone() {
+    public ToolFileGroupParameter clone() {
         return new ToolFileGroupParameter(scriptParameterName, groupClass, genericFileClass,  passOptions, indexOptions, files?.collect { ToolFileParameter tfp -> tfp.clone() })
     }
 
@@ -110,4 +111,21 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameter<ToolFileGroupParame
             return groupClass.getName()
         }
     }
+
+        @Override
+    public boolean hasSelectionTag() {
+        return false
+    }
+
+    @Override
+    public List<ToolFileParameter> getAllFiles() {
+        return files.collect { it.getAllFiles() }.flatten() as List<ToolFileParameter>
+    }
+
+    @Override
+    public List<ToolFileParameter> getFiles() {
+        return files
+    }
+
+
 }
