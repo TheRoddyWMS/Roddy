@@ -627,7 +627,7 @@ public class ConfigurationFactory {
 
         Class baseClass
         try {
-            baseClass = LibrariesFactory.getInstance().tryLoadClass(filestagesbase)
+            baseClass = LibrariesFactory.getInstance().loadClass(filestagesbase)
         } catch (ClassNotFoundException ex) {
             logger.severe("Could not load class ${filestagesbase}")
         }
