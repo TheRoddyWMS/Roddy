@@ -152,7 +152,10 @@ public enum RoddyStartupModes {
         println("================================")
         System.out.println(Constants.ENV_LINESEPARATOR + Constants.ENV_LINESEPARATOR + "Common additional options");
         System.out.println("    --useconfig={file}              - Use {file} as the application configuration.\n" +
-                           "                                      The order is: full path, .roddy folder, Roddy directory.");
+                           "    --c={file}                        The order is: full path, .roddy folder, Roddy directory.");
+        System.out.println("    --verbositylevel={1,3,5}        - Set how much Roddy will print to the console, 1 is default, 3 is more, 5 is a lot.\n" +
+                           "    --v                               Set verbosity to 3.\n" +
+                           "    --vv                               Set verbosity to 5.");
         System.out.println("    --useiodir=[fileIn],{fileOut}   - Use fileIn/fileOut as the base input and output directories for your project.\n" +
                            "                                      If fileOut is not specified, fileIn is used for that as well.\n" +
                            "                                      format can be: tsv, csv or excel");
