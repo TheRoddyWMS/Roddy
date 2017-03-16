@@ -275,6 +275,8 @@ public class Roddy {
         displayShortWorkflowList = clc.isOptionSet(RoddyStartupOptions.shortlist);
         if (clc.isOptionSet(RoddyStartupOptions.useconfig))
             customPropertiesFile = clc.getOptionValue(RoddyStartupOptions.useconfig);
+        else if(clc.isOptionSet(RoddyStartupOptions.c))
+            customPropertiesFile = clc.getOptionValue(RoddyStartupOptions.c);
 
         for (RoddyStartupOptions startupOption : clc.getOptionList()) {
 

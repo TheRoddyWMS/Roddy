@@ -28,6 +28,7 @@ public enum RoddyStartupOptions {
     showentrysources,
     autocleanup,
     useconfig(true),
+    c(true),
     usefeaturetoggleconfig(true),
     verbositylevel(true),
     v(false), // Verbosity of 3
