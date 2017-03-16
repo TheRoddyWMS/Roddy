@@ -9,10 +9,13 @@ package de.dkfz.roddy.knowledge.methods
 import de.dkfz.roddy.config.DerivedFromFilenamePattern
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.config.ToolFileGroupParameter
+import de.dkfz.roddy.config.ToolFileParameter
+import de.dkfz.roddy.config.ToolFileParameterCheckCondition
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
+import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.LibrariesFactoryTest
@@ -49,6 +52,17 @@ class GenericMethodTest {
 
     BaseFile getBaseFile() {
         return BaseFile.constructSourceFile(fileBaseClass, new File("/tmp/someFile"), mockupContext)
+    }
+
+    @Test
+    @Deprecated
+    void testCreateOutputFileGroupWithSubFiles() {
+        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, [
+                new ToolFileParameter(LibrariesFactory.getInstance().loadRealOrSyntheticClass("AFile", BaseFile as Class<FileObject>), null, "PARMA", new ToolFileParameterCheckCondition(true)),
+                new ToolFileParameter(LibrariesFactory.getInstance().loadRealOrSyntheticClass("AFile", BaseFile as Class<FileObject>), null, "PARMB", new ToolFileParameterCheckCondition(true))
+        ], "APARM")
+        FileGroup fg = new GenericMethod("testTool", null, getBaseFile(), null).createOutputFileGroup(tfg) as FileGroup
+        assert fg.filesInGroup.size() == 2
     }
 
     @Test

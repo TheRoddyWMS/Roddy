@@ -6,9 +6,6 @@
 
 package de.dkfz.roddy.config;
 
-/**
- * @Michael: What is the difference between CFG_, RODDY_, CVALUE_ prefixes?
- */
 public class ConfigurationConstants {
     public static final String CFG_INPUT_BASE_DIRECTORY = "inputBaseDirectory";
     public static final String CFG_OUTPUT_BASE_DIRECTORY = "outputBaseDirectory";

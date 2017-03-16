@@ -55,7 +55,7 @@ public class ExecutionContextTest {
         f << "abc"
         def context = createEmptyContext()
         assert context.directoryIsAccessible(f.parentFile, "var")
-        assert !context.directoryIsAccessible(new File(f.parent + "_abc"), "var")
+        assert !context.directoryIsAccessible(new File(f.parent + "_invalidDirectory"), "var")
         assert context.getErrors().size() == 1
     }
 

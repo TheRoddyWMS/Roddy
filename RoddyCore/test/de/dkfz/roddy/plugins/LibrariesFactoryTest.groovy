@@ -141,7 +141,8 @@ public class LibrariesFactoryTest {
         //Add additional "native" plugins (DefaultPlugin, PluginBase) and the temporary plugin folder
         List<File> pluginDirectories = [
                 pluginsBaseDirWithCorrectEntries.root
-        ]
+
+        ] + Roddy.getPluginDirectories()
 
         mapOfAvailablePlugins = callLoadMapOfAvailablePlugins(pluginDirectories)
 

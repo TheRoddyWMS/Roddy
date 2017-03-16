@@ -158,7 +158,7 @@ public class LibrariesFactory extends Initializable {
                 try {
                     foundCoreClass = tryLoadClass(className)
                 } catch (ClassNotFoundException ex) {
-                    // Silently ignored. The class may or may not be in core.
+                    // Silently ignored. The class may or may not be in core. If the class can not be found, it is fine here.
                 }
                 if (foundCoreClass) break
                 // Ignore if it is empty, we will fall back to the plugin strategy afterwards! Or search in the next package
@@ -242,7 +242,16 @@ public class LibrariesFactory extends Initializable {
      * @param usedPlugins
      */
     public boolean resolveAndLoadPlugins(String[] usedPlugins) {
-        def queue = buildupPluginQueue(loadMapOfAvailablePluginsForInstance(), usedPlugins)
+        def mapOfAvailablePlugins = loadMapOfAvailablePluginsForInstance()
+        if (!mapOfAvailablePlugins) {
+            logger.severe("Could not load plugins from storage. Are the plugin directories properly set?\n" + Roddy.getPluginDirectories().join("\n\t"))
+            return false
+        }
+        def queue = buildupPluginQueue(mapOfAvailablePlugins, usedPlugins)
+        if (queue == null) {
+            logger.severe("Could not build the plugin queue for: \n" + usedPlugins.join("\n\t"))
+            return false
+        }
         librariesAreLoaded = loadLibraries(queue.values() as List);
         return librariesAreLoaded;
     }
@@ -260,6 +269,7 @@ public class LibrariesFactory extends Initializable {
             def directories = Roddy.getPluginDirectories()
             mapOfPlugins = loadMapOfAvailablePlugins(directories)
         };
+        return mapOfPlugins
     }
 
     /**
@@ -556,10 +566,12 @@ public class LibrariesFactory extends Initializable {
             // version of it which may either be a revision (x:x.y-[0..n] or a higher compatible version.
             // Search the last valid entry in the chain.
             if (!usedPlugins.contains("${id}:${version}")) {
-                for (; pInfo.nextInChain != null; pInfo = pInfo.nextInChain) {
+                while (true) {
                     version = pInfo.prodVersion;
                     if (usedPlugins.contains("${id}:${version}")) //Break, if the list of used plugins contains the selected version of the plugin
-                        break;
+                        break
+                    if (pInfo.nextInChain == null) break // Break if this was the last entry in the chain
+                    pInfo = pInfo.nextInChain
                 }
             }
 
@@ -569,8 +581,9 @@ public class LibrariesFactory extends Initializable {
                 continue;
             if (pluginsToActivate[id as String] != null) {
                 if (pluginsToActivate[id as String].prodVersion != version) {
-                    logger.severe("There is a version mismatch for plugin dependencies! Not starting up.");
-                    return null;
+                    def msg = "Plugin version collision: Plugin ${id} cannot both be loaded in version ${version} and ${pluginsToActivate[id as String].prodVersion}. Not starting up."
+                    logger.severe(msg)
+                    return null
                 } else {
                     //Not checking again!
                 }
