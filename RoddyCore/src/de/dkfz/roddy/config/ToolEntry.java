@@ -44,6 +44,26 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
         public ToolConstraint clone() {
             return new ToolConstraint(onFailMethod, checkMethod);
         }
+
+        @Override
+        public boolean equals(Object o) {
+            // Is backed by test!
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            if (!super.equals(o)) return false;
+
+            ToolConstraint that = (ToolConstraint) o;
+
+            if (onFailMethod != null ? !onFailMethod.equals(that.onFailMethod) : that.onFailMethod != null) return false;
+            return checkMethod != null ? checkMethod.equals(that.checkMethod) : that.checkMethod == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = onFailMethod != null ? onFailMethod.hashCode() : 0;
+            result = 31 * result + (checkMethod != null ? checkMethod.hashCode() : 0);
+            return result;
+        }
     }
 
     public static abstract class ToolParameter<T extends ToolParameter> {
@@ -51,6 +71,23 @@ public class ToolEntry implements RecursiveOverridableMapContainer.Identifiable 
 
         public ToolParameter(String scriptParameterName) {
             this.scriptParameterName = scriptParameterName;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            // Is backed by test!
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            if (!super.equals(o)) return false;
+
+            ToolParameter<?> that = (ToolParameter<?>) o;
+
+            return scriptParameterName != null ? scriptParameterName.equals(that.scriptParameterName) : that.scriptParameterName == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return scriptParameterName != null ? scriptParameterName.hashCode() : 0;
         }
 
         public abstract T clone();
