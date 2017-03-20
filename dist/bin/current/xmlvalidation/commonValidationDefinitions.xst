@@ -107,6 +107,7 @@
         <xs:attribute type="xs:string" name="type"/>
         <xs:attribute type="xs:string" name="typeof"/>
         <xs:attribute type="xs:string" name="scriptparameter"/>
+        <xs:attribute type="xs:string" name="fileclass"/>
         <xs:attribute type="xs:string" name="setby"/>
         <xs:attribute type="xs:string" name="passas" use="optional"/>
     </xs:complexType>

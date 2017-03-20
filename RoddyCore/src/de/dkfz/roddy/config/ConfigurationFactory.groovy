@@ -925,6 +925,11 @@ public class ConfigurationFactory {
         return new ToolTupleParameter(subParameters);
     }
 
+    @Deprecated
+    static boolean isInputFileGroup(NodeChild groupNode) {
+        return groupNode.name() == "input"
+    }
+
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     static ToolFileGroupParameter parseFileGroup(NodeChild groupNode, String toolID) {
         String cls = extractAttributeText(groupNode, "typeof", GenericFileGroup.name);
@@ -949,7 +954,9 @@ public class ConfigurationFactory {
         } else if (childCount) {
             return parseChildFilesForFileGroup(groupNode, passas, toolID, pName, filegroupClass, indexOptions)
         } else {
-            throw new RuntimeException("Either the fileclass or a list of child files need to be set for a filegroup in ${toolID}")
+            if (!isInputFileGroup(groupNode)) {
+                throw new RuntimeException("Either the fileclass or a list of child files need to be set for a filegroup in ${toolID}")
+            }
         }
     }
 
