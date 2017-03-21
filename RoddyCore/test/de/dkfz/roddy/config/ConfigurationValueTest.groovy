@@ -16,7 +16,7 @@ import org.junit.Test
 class ConfigurationValueTest {
 
     @Test
-    public void testCValueSubstitutionWithCfgDuo() {
+    public void testCValueSubstitutionWithCfgDualChain() {
         // Two dependent values in base cfg
         // Overriden in extended cfg
 
@@ -34,5 +34,36 @@ class ConfigurationValueTest {
         assert cvExt["a"].value == "def"
         assert cvExt["b"].value == 'abc${a}'
         assert cvExt["b"].toString() == "abcdef"
+    }
+
+    /**
+     * A = { a = "abc", b = "def" }
+     * B = { a = "hij", b = "$a" }
+     * C = { a = "klm" }
+     * C.b = "klm"
+     * B.b = "hij"
+     */
+    @Test
+    public void testCValueSubstitutionWithCfgTripleChain() {
+        Configuration A = new Configuration(null)
+        Configuration B = new Configuration(null, A)
+        Configuration C = new Configuration(null, B)
+
+        def cvA = A.getConfigurationValues()
+        def cvB = B.getConfigurationValues()
+        def cvC = C.getConfigurationValues()
+
+        cvA << new ConfigurationValue(A, "a", "abc")
+        cvA << new ConfigurationValue(A, "b", 'def')
+
+        cvB << new ConfigurationValue(B, "a", "hij")
+        cvB << new ConfigurationValue(B, "b", '${a}')
+
+        cvC << new ConfigurationValue(C, "a", "klm")
+
+        assert cvB["a"].value == "hij"
+        assert cvB["b"].value == '${a}'
+        assert cvB["b"].toString() == "hij"
+        assert cvC["b"].toString() == "klm"
     }
 }
