@@ -41,6 +41,13 @@ public class RecursiveOverridableMapContainerForConfigurationValues extends Recu
         return hasValue(id) ? getValue(id).toBoolean() : b;
     }
 
+    @Override
+    protected ConfigurationValue copyValueToThisContainer(ConfigurationValue src) {
+        ConfigurationValue cpy = new ConfigurationValue(this.getContainerParent(), src.id, src.value, src.getType(), src.getDescription(), new LinkedList<>(src.getListOfTags()));
+        add(cpy);
+        return cpy;
+    }
+
     /**
      * Returns the value converted to a string or an empty string ("") if the value could not be found.
      *
@@ -65,5 +72,6 @@ public class RecursiveOverridableMapContainerForConfigurationValues extends Recu
     public void put(String id, String value, String type) {
         super.add(new ConfigurationValue(id, value, type));
     }
+
 
 }

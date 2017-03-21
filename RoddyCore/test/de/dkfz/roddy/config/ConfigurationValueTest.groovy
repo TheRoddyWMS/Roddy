@@ -13,15 +13,26 @@ import org.junit.Test
  * Created by heinold on 14.07.16.
  */
 @CompileStatic
-class ConfigurationValueTest extends GroovyTestCase {
-
-    // Test for determineTypeOfValue is in RoddyConversionHelperMethodsTest.groovy
-    // The method is directly bound to several methods of the conversion class and has nearly no
-    // logic of its own. So we put it there.
+class ConfigurationValueTest {
 
     @Test
-    public void testNothing() {
-        // Asimple test so the class really fails.
-        assert false
+    public void testCValueSubstitutionWithCfgDuo() {
+        // Two dependent values in base cfg
+        // Overriden in extended cfg
+
+        Configuration cfgBase = new Configuration(null)
+        Configuration cfgExt = new Configuration(null, cfgBase)
+
+        def cvBase = cfgBase.getConfigurationValues()
+        def cvExt = cfgExt.getConfigurationValues()
+
+        cvBase << new ConfigurationValue(cfgBase, "a", "abc")
+        cvBase << new ConfigurationValue(cfgBase, "b", 'abc${a}')
+
+        cvExt << new ConfigurationValue(cfgExt, "a", "def")
+
+        assert cvExt["a"].value == "def"
+        assert cvExt["b"].value == 'abc${a}'
+        assert cvExt["b"].toString() == "abcdef"
     }
 }

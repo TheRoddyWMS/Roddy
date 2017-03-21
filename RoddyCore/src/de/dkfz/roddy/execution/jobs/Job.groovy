@@ -688,46 +688,6 @@ public class Job {
         return lastCommand;
     }
 
-//    private transient final Deque<JobStatusListener> listeners = new ConcurrentLinkedDeque<>();
-//
-//    public void addJobStatusListener(JobStatusListener listener, boolean replaceOfSameClass) {
-//        //TODO Synchronize
-//        if (replaceOfSameClass) {
-//            Class c = listener.getClass();
-//            Deque<JobStatusListener> listenersToKeep = new ConcurrentLinkedDeque<>();
-//            for (JobStatusListener jsl : this.listeners) {
-//                if (jsl.getClass() != c)
-//                    listenersToKeep.add(jsl);
-//            }
-//            listeners.clear();
-//            listeners.addAll(listenersToKeep);
-//        }
-//        addJobStatusListener(listener);
-//    }
-//
-//    public void addJobStatusListener(JobStatusListener listener) {
-//        synchronized (listeners) {
-//            if (this.listeners.contains(listener)) return;
-//            this.listeners.add(listener);
-//        }
-//    }
-//
-//    private void fireJobStatusChangedEvent(JobState old, JobState newState) {
-//        //TODO Synchronize
-//        if (old == newState) return;
-//        for (JobStatusListener jsl : listeners)
-//            jsl.jobStatusChanged(this, old, newState);
-//    }
-//
-//    public void removeJobStatusListener(JobStatusListener listener) {
-//        if (listener == null)
-//            return;
-//        synchronized (listeners) {
-//            if (this.listeners.contains(listener))
-//                this.listeners.remove(listener);
-//        }
-//    }
-
     public Map<String, String> getParameters() {
         return parameters;
     }
