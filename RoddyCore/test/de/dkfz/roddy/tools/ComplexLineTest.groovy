@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.tools
 
+import groovy.json.internal.IO
 import groovy.transform.CompileStatic
 import org.junit.Rule
 import org.junit.Test
@@ -33,8 +34,6 @@ class ComplexLineTest {
             " b={something[in a braquet]}",
             " method(a(b()))"
     ]
-
-    public static final String faultyLineExample = "a(b(c())"
 
     @Test
     void testIsOpeningOrClosingCharacter() {
@@ -93,7 +92,8 @@ class ComplexLineTest {
     public ExpectedException thrown = ExpectedException.none()
 
     @Test
-    void testFaultyLine() {
+    void testMissingClosingParen() {
+        String faultyLineExample = "a(b(c())"
         thrown.expect(IOException)
         thrown.expectMessage("The line $faultyLineExample is malformed. There is a closing literal missing.")
         ComplexLine.parseLine(faultyLineExample)
@@ -101,15 +101,39 @@ class ComplexLineTest {
     }
 
     @Test
-    void testMoreFaultyTests() {
-        assert false
-//        forgotten closing paren: "(blabla"
-//        confused/non-matching paren types: "(a\"b)\""
-//        forgotten opening paren: "balbla}"
-//        non-matching paren types: "\"blabla\'"
-//        singleton opening paren: "{"
-//        singleton closing paren: ")"
-//        etc.
+    void testSimpleMissingClosingParen() {
+        thrown.expect(IOException)
+        ComplexLine.parseLine("(blabla")
+    }
+
+    @Test
+    void testConfusedQuotes() {
+        thrown.expect(IOException)
+        ComplexLine.parseLine("(a-\"b)-\"")
+    }
+
+    @Test
+    void testMissingOpeningBrace() {
+        thrown.expect(IOException)
+        ComplexLine.parseLine("blabla}")
+    }
+
+    @Test
+    void testMissingClosingQuote() {
+        thrown.expect(IOException)
+        ComplexLine.parseLine("\"blabla'")
+    }
+
+    @Test
+    void testOpeningBraceOnly() {
+        thrown.expect(IOException)
+        ComplexLine.parseLine("{")
+    }
+
+    @Test
+    void testClosingParenOnly() {
+        thrown.expect(IOException)
+        ComplexLine.parseLine(")")
     }
 
     @Test
