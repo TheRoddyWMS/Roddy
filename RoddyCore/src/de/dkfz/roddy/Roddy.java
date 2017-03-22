@@ -12,6 +12,7 @@ import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
 import de.dkfz.roddy.client.rmiclient.RoddyRMIServer;
+import de.dkfz.roddy.execution.io.ExecutionHelper;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.tools.AppConfig;
@@ -227,6 +228,10 @@ public class Roddy {
         time(null);
         LoggerWrapper.setup();
         logger.postAlwaysInfo("Roddy version " + Constants.APP_CURRENT_VERSION_STRING);
+
+        if(!performInitialCheck())
+            exit(1);
+
         time("ftoggleini");
         List<String> list = Arrays.asList(args);
         time("clc .1");
@@ -256,6 +261,22 @@ public class Roddy {
         time("exit");
     }
 
+    public static boolean performInitialCheck() {
+        List<String> errors = new LinkedList<>();
+        errors.add("Roddy cannot run:");
+        if(!ExecutionHelper.executeCommandWithExtendedResult("which jar").isSuccessful())
+            errors.add("\tTool jar not found.");
+        if(!ExecutionHelper.executeCommandWithExtendedResult("which zip").isSuccessful())
+            errors.add("\tTool zip not found.");
+        if(!ExecutionHelper.executeCommandWithExtendedResult("which unzip").isSuccessful())
+            errors.add("\tTool unzip not found.");
+
+        if(errors.size() == 1) return true;
+
+        logger.severe(RoddyIOHelperMethods.joinArray(errors.toArray(new String[0]), "\n"));
+        return false;
+    }
+
     public static void performInitialSetup(String[] args, RoddyStartupModes option) {
 
         runMode = CLI;
@@ -275,7 +296,7 @@ public class Roddy {
         displayShortWorkflowList = clc.isOptionSet(RoddyStartupOptions.shortlist);
         if (clc.isOptionSet(RoddyStartupOptions.useconfig))
             customPropertiesFile = clc.getOptionValue(RoddyStartupOptions.useconfig);
-        else if(clc.isOptionSet(RoddyStartupOptions.c))
+        else if (clc.isOptionSet(RoddyStartupOptions.c))
             customPropertiesFile = clc.getOptionValue(RoddyStartupOptions.c);
 
         for (RoddyStartupOptions startupOption : clc.getOptionList()) {
@@ -352,7 +373,6 @@ public class Roddy {
                 }
             }
         }
-//        return newArguments.toArray(new String[0]);
     }
 
     private static void initializeFeatureToggles() {
@@ -693,11 +713,17 @@ public class Roddy {
     }
 
     public static String getUsedRoddyVersion() {
-        String[] strClassPath = System.getProperty("java.class.path").split("[;:]");
-        if (getCommandLineCall().isOptionSet(RoddyStartupOptions.useRoddyVersion))
-            return getCommandLineCall().getOptionValue(RoddyStartupOptions.useRoddyVersion);
-        else
-            return getApplicationProperty("useRoddyVersion", LibrariesFactory.PLUGIN_VERSION_CURRENT);
+        String result = "";
+        CommandLineCall clc = getCommandLineCall();
+        for (RoddyStartupOptions opt : Arrays.asList(
+                RoddyStartupOptions.useRoddyVersion,
+                RoddyStartupOptions.useroddyversion,
+                RoddyStartupOptions.rv)) {
+            if (clc.isOptionSet(opt))
+                result = clc.getOptionValue(opt);
+        }
+        if (!RoddyConversionHelperMethods.isNullOrEmpty(result)) return result;
+        return getApplicationProperty("useRoddyVersion", LibrariesFactory.PLUGIN_VERSION_CURRENT);
     }
 
     public static File getRoddyBinaryFolder() {

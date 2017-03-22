@@ -21,8 +21,6 @@ public class ContextConfiguration extends AnalysisConfiguration {
         this.projectConfiguration = projectConfiguration;
         addParent(analysisConfiguration);
         addParent(projectConfiguration);
-//        for(Configuration c : configuration.getContainerParents())
-//            addParent(c);
     }
 
     public AnalysisConfiguration getAnalysisConfiguration() {

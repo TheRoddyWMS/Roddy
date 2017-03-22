@@ -108,7 +108,11 @@ public class Analysis {
         }
     }
 
-
+    /**
+     * The object should actually move to context itself. However, currently, this would break a lot.
+     * Mark it as Deprecated for now.
+     */
+    @Deprecated
     private ContextConfiguration _contextConfiguration = null;
 
     public Configuration getConfiguration() {
