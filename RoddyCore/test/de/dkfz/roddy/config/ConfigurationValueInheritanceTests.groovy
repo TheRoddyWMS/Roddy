@@ -10,14 +10,15 @@ import groovy.transform.CompileStatic
 import org.junit.Test
 
 /**
+ * Test cases for configuration and configuration value inheritance
  * Created by heinold on 14.07.16.
  */
 @CompileStatic
-class ConfigurationValueTest {
+class ConfigurationValueInheritanceTests {
 
     /**
      * Given are two configurations:
-     * C extends B, B extends A
+     * B extends A
      * =>   A -> B
      *
      * Configurations contain variables a and b
@@ -82,6 +83,10 @@ class ConfigurationValueTest {
 
     /**
      * Test a complex hierarchy
+     * C1 extends B1 and B2, B1 extends A1 and A2
+     * B2 has a higher priority than B1
+     * A2 has a higher priority than A1
+     *
      * =>   {{A1, A2} -> B1, B2} -> C1
      *
      * A1 = { a = 'A1.a', b = '${a}' }              <br/> Idea will try to pull A B C on the same line on code format.
@@ -97,7 +102,7 @@ class ConfigurationValueTest {
      * B1.b = 'A2.b'
      * B1.d = 'A2.a'
      *
-     * B2.a = 'B2.b + ${c}'
+     * B2.a = 'B2.b + ${c}'     c is not set in A* or B* and therefore will not be evaluated
      *
      * C1.a = 'B2.b + C.c'
      * C1.b = 'B2.b'
