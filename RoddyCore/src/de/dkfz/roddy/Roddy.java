@@ -264,7 +264,7 @@ public class Roddy {
     public static boolean performInitialCheck() {
         List<String> errors = new LinkedList<>();
         errors.add("Roddy cannot run:");
-        if(!ExecutionHelper.executeCommandWithExtendedResult("which jart").isSuccessful())
+        if(!ExecutionHelper.executeCommandWithExtendedResult("which jar").isSuccessful())
             errors.add("\tTool jar not found.");
         if(!ExecutionHelper.executeCommandWithExtendedResult("which zip").isSuccessful())
             errors.add("\tTool zip not found.");
