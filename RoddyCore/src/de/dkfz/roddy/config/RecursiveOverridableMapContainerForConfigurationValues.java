@@ -25,6 +25,29 @@ public class RecursiveOverridableMapContainerForConfigurationValues extends Recu
         }
     }
 
+    /**
+     * Temporary elevation makes it possible for Roddy to evaluate variables with dependent values properly.
+     *
+     * Given are two configurations:
+     * C extends B, B extends A
+     * =>   A -> B
+     *
+     * Configurations contain variables a and b
+     * A = { a = 'abc', b = 'abc${a}' }         <br/> Idea will try to pull A B C on the same line on code format.
+     * B = { a = 'def' }                        <br/>
+     * expected C.b = 'klm'
+     * expected B.b = 'hij'
+     *
+     * If you do not elevate the value, B.b would resolve to B.b = 'abc', because the configuration value does only know about its parent and predecessors
+     *
+     * @param src
+     * @return
+     */
+    @Override
+    protected ConfigurationValue temporarilyElevateValue(ConfigurationValue src) {
+        return new ConfigurationValue(this.getContainerParent(), src.id, src.value, src.getType(), src.getDescription(), new LinkedList<>(src.getListOfTags()));
+    }
+
     public ConfigurationValue get(String id) {
         return get(id, "");
     }
@@ -39,13 +62,6 @@ public class RecursiveOverridableMapContainerForConfigurationValues extends Recu
 
     public boolean getBoolean(String id, boolean b) {
         return hasValue(id) ? getValue(id).toBoolean() : b;
-    }
-
-    @Override
-    protected ConfigurationValue copyValueToThisContainer(ConfigurationValue src) {
-        ConfigurationValue cpy = new ConfigurationValue(this.getContainerParent(), src.id, src.value, src.getType(), src.getDescription(), new LinkedList<>(src.getListOfTags()));
-        add(cpy);
-        return cpy;
     }
 
     /**
@@ -70,8 +86,11 @@ public class RecursiveOverridableMapContainerForConfigurationValues extends Recu
      * @param type
      */
     public void put(String id, String value, String type) {
-        super.add(new ConfigurationValue(id, value, type));
+        super.add(new ConfigurationValue(this.getContainerParent(), id, value, type));
     }
 
+    public void put(String id, String value) {
+        this.put(id, value, "string");
+    }
 
 }

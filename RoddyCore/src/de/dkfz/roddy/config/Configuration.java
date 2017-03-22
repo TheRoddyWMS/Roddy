@@ -104,6 +104,13 @@ public class Configuration implements ContainerParent<Configuration> {
         this.addParent(parentConfig);
     }
 
+    public Configuration(InformationalConfigurationContent informationalConfigurationContent, List<Configuration> parentConfigurations) {
+        this.informationalConfigurationContent = informationalConfigurationContent;
+        for (Configuration parentConfiguration : parentConfigurations) {
+            addParent(parentConfiguration);
+        }
+    }
+
     /**
      * For main configurations
      */

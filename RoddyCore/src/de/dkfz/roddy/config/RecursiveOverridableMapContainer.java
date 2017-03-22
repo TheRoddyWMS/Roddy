@@ -18,8 +18,6 @@ import java.util.Map;
  */
 public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableMapContainer.Identifiable, P extends ContainerParent> {
 
-
-
     public interface Identifiable {
         String getID();
     }
@@ -28,7 +26,6 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
      * A list of values in this container's configuration
      */
     protected final Map<K, V> values = new LinkedHashMap<>();
-
 
     private final P containerParent;
 
@@ -123,8 +120,7 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
      * @param src
      * @return
      */
-    protected V copyValueToThisContainer(V src) {
-        add(src);
+    protected V temporarilyElevateValue(V src) {
         return src;
     }
 
@@ -136,7 +132,7 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
     protected V _getValueUnchecked(String id) {
         V cval = getAllValues().get(id);
         if(!values.containsKey(id))
-            return copyValueToThisContainer(cval);
+            return temporarilyElevateValue(cval);
 
         return cval;
     }

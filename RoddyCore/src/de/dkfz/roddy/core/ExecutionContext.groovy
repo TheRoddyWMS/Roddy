@@ -289,6 +289,14 @@ class ExecutionContext {
         return analysis.getConfiguration()
     }
 
+    Configuration getJobConfiguration(Job job) {
+
+    }
+
+    Configuration getFileConfiguration(BaseFile baseFile) {
+
+    }
+
     RecursiveOverridableMapContainerForConfigurationValues getConfigurationValues() {
         return configuration.getConfigurationValues()
     }
