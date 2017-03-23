@@ -6,7 +6,6 @@
 
 package de.dkfz.roddy.tools
 
-import groovy.json.internal.IO
 import groovy.transform.CompileStatic
 import org.junit.Rule
 import org.junit.Test
