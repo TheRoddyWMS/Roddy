@@ -424,6 +424,16 @@ class GenericMethod {
                 filesInGroup << bf
                 allCreatedObjects << bf
             }
+            parameters.remove(tfg.scriptParameterName)
+        }
+        if (tfg.passOptions == ToolFileGroupParameter.PassOptions.parameters) {
+            int cnt = 0;
+            for (BaseFile bf in (List<BaseFile>) filesInGroup) {
+                parameters[tfg.scriptParameterName + "_" + cnt] = bf;
+                cnt++;
+            }
+        } else { //Arrays
+            parameters[tfg.scriptParameterName] = filesInGroup
         }
 
         Constructor cGroup = tfg.groupClass.getConstructor(List.class);
