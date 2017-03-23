@@ -35,7 +35,6 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
     public final String value;
     private final Configuration configuration;
     private final String type;
-    private boolean quoteOnConversion;
 
     /**
      * A description or comment for a configuration value.

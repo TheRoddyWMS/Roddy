@@ -53,6 +53,8 @@ public enum RoddyStartupOptions {
     disabletoggles(true),
 
     useRoddyVersion(true),
+    useroddyversion(true),
+    rv(true),
     usePluginVersion(true),
     pluginDirectories(true), 
     configurationDirectories(true),
