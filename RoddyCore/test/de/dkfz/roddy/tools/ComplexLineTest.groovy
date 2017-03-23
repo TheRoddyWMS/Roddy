@@ -91,18 +91,17 @@ class ComplexLineTest {
     public ExpectedException thrown = ExpectedException.none()
 
     @Test
-    void testMissingClosingParen() {
+    void testMissingClosingParenthesis() {
         String faultyLineExample = "a(b(c())"
         thrown.expect(IOException)
         thrown.expectMessage("The line $faultyLineExample is malformed. There is a closing literal missing.")
         ComplexLine.parseLine(faultyLineExample)
 
-    }
-
-    @Test
-    void testSimpleMissingClosingParen() {
         thrown.expect(IOException)
         ComplexLine.parseLine("(blabla")
+
+        thrown.expect(IOException)
+        ComplexLine.parseLine(")")
     }
 
     @Test
@@ -127,12 +126,6 @@ class ComplexLineTest {
     void testOpeningBraceOnly() {
         thrown.expect(IOException)
         ComplexLine.parseLine("{")
-    }
-
-    @Test
-    void testClosingParenOnly() {
-        thrown.expect(IOException)
-        ComplexLine.parseLine(")")
     }
 
     @Test
