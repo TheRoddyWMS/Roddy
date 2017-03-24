@@ -209,7 +209,7 @@ class BashConverter extends ConfigurationConverter {
         StringBuilder text = new StringBuilder();
         String declareVar = ""
         String declareInt = ""
-        if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.UseDeclareFunctionalityForBashConverter)) {
+        if (context.getFeatureToggleStatus(AvailableFeatureToggles.UseDeclareFunctionalityForBashConverter)) {
             declareVar = "declare -x   "
             declareInt = "declare -x -i"
         }
