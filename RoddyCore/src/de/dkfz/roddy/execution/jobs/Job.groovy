@@ -115,159 +115,6 @@ public class Job {
      */
     private JobResult runResult;
 
-    public Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices, Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
-        this.jobName = jobName;
-        this.currentJobState = JobState.UNKNOWN;
-        this.context = context;
-        this.toolID = toolID;
-        this.toolMD5 = toolID ? context.getConfiguration().getProcessingToolMD5(toolID) : "";
-        this.parameters = [:];
-
-        Map<String, Object> defaultParameters = context.getDefaultJobParameters(toolID);
-        if (inputParameters != null)
-            defaultParameters.putAll(inputParameters);
-        this.allRawInputParameters = defaultParameters;
-
-        for (String k : defaultParameters.keySet()) {
-            if (this.parameters.containsKey(k)) continue;
-            Object _v = defaultParameters[k];
-            if (_v == null) {
-                context.addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("The parameter " + k + " has no valid value and will be set to <NO_VALUE>."));
-                this.parameters[k] = NO_VALUE;
-            } else {
-                Map<String, String> newParameters = convertParameterObject(k, _v);
-                this.parameters.putAll(newParameters);
-            }
-        }
-        if (inputParameters != null)
-            initialInputParameters.putAll(inputParameters);
-
-        this.arrayIndices = arrayIndices ?: new LinkedList<String>();
-        this.parentFiles = parentFiles ?: new LinkedList<BaseFile>();
-        if (parentFiles != null) {
-            for (BaseFile bf : parentFiles) {
-                if (bf.isSourceFile() && bf.getCreatingJobsResult() == null) continue;
-                try {
-                    JobDependencyID jobid = bf.getCreatingJobsResult()?.getJobID();
-                    if (jobid?.isValidID()) {
-                        dependencyIDs << jobid;
-                    }
-                } catch (Exception ex) {
-                    logger.severe("Something is wrong for file: " + bf);
-                    logger.postSometimesInfo(ex.message)
-                    logger.postSometimesInfo(RoddyIOHelperMethods.getStackTraceAsString(ex))
-                }
-            }
-        }
-        this.filesToVerify = filesToVerify ?: new LinkedList<BaseFile>();
-        this.context.addExecutedJob(this);
-        if (arrayIndices == null)
-            return;
-    }
-
-    public boolean isFakeJob() {
-        if (this instanceof FakeJob)
-            return true;
-        if (jobName != null && jobName.equals("Fakejob"))
-            return true;
-        String jobID = getJobID();
-        if (jobID == null)
-            return false;
-        return JobDependencyID.FakeJobID.isFakeJobID(jobID);
-    }
-
-    private Map<String, String> convertParameterObject(String k, Object _v) {
-        Map<String, String> newParameters = new LinkedHashMap<>();
-//            String v = "";
-        if (_v instanceof File) {
-            newParameters.put(k, ((File) _v).getAbsolutePath());
-        } else if (_v instanceof BaseFile) {
-            BaseFile bf = (BaseFile) _v;
-            String newPath = replaceParametersInFilePath(bf, allRawInputParameters);
-
-            //Explicitely query newPath for a proper value!
-            if (newPath == null) {
-                // Auto path!
-                int slotPosition = allRawInputParameters.keySet().asList().indexOf(k);
-                String completeString = jobName + k + slotPosition;
-                if (parentFiles)
-                    parentFiles.each {
-                        BaseFile p ->
-                            if (!p instanceof BaseFile) return;
-
-                            BaseFile _bf = (BaseFile) p;
-                            completeString += ("" + _bf.getAbsolutePath())
-
-                    }
-
-                File autoPath = new File(context.getOutputDirectory(), [jobName, k, completeString.hashCode().abs(), slotPosition].join("_") + ".auto")
-//                File autoPath = new File(context.getOutputDirectory(), [jobName, k, '${RODDY_JOBID}', slotPosition].join("_") + ".auto")
-                bf.setPath(autoPath)
-                bf.setAsTemporaryFile()
-                newPath = autoPath.absolutePath;
-            }
-
-            newParameters.put(k, newPath);
-//            newParameters.put(k + "_path", newPath);
-            //TODO Create a toStringList method for filestages. The method should then be very generic.
-//                this.parameters.put(k + "_fileStage_numericIndex", "" + bf.getFileStage().getNumericIndex());
-//                this.parameters.put(k + "_fileStage_index", bf.getFileStage().getIndex());
-//                this.parameters.put(k + "_fileStage_laneID", bf.getFileStage().getLaneId());
-//                this.parameters.put(k + "_fileStage_runID", bf.getFileStage().getRunID());
-        } else if (_v instanceof Collection) {
-            //TODO This is not the best way to do this, think of a better one which is more generic.
-
-            List<Object> convertedParameters = new LinkedList<>();
-            for (Object o : _v as Collection) {
-                if (o instanceof BaseFile) {
-                    if (((BaseFile) o).getPath() != null)
-                        convertedParameters.add(((BaseFile) o).getAbsolutePath());
-                } else
-                    convertedParameters.add(o.toString());
-            }
-            this.parameters[k] = "(${RoddyIOHelperMethods.joinArray(convertedParameters.toArray(), " ")})".toString();
-
-//        } else if(_v.getClass().isArray()) {
-//            newParameters.put(k, "parameterArray=(" + RoddyIOHelperMethods.joinArray((Object[]) _v, " ") + ")"); //TODO Put conversion to roddy helper methods?
-        } else {
-            try {
-                newParameters[k] = _v.toString();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        return newParameters;
-    }
-
-
-    public static File replaceParametersInFilePath(BaseFile bf, Map<String, Object> parameters) {
-        //TODO: It can occur that the regeneration of the filename is not valid!
-
-        // Replace $_JOBPARAMETER items in path with proper values.
-        File path = bf.getPath()
-        if (path == null) {
-            return null;
-        }
-
-        String absolutePath = path.getAbsolutePath()
-        List<FilenamePatternHelper.Command> commands = FilenamePatternHelper.extractCommands(bf.getExecutionContext(), PLACEHOLDER_JOBPARAMETER, absolutePath);
-        for (FilenamePatternHelper.Command command : commands) {
-            FilenamePatternHelper.CommandAttribute name = command.attributes.get("name");
-            if (name != null) {
-                String val = parameters[name.value];
-                if (val == null) {
-                    val = NO_VALUE;
-                    bf.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("A value named " + name.value + " cannot be found in the jobs parameter list for a file of ${bf.class.name}. The value is set to <NO_VALUE>"));
-                }
-                absolutePath = absolutePath.replace(command.name, val);
-            }
-            path = new File(absolutePath);
-            bf.setPath(path);
-        }
-        path
-    }
-
-
     public Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices, Map<String, Object> parameters, List<BaseFile> parentFiles) {
         this(context, jobName, toolID, arrayIndices, parameters, parentFiles, null);
     }
@@ -299,7 +146,6 @@ public class Job {
     /**
      * This is for job implementations which do the writeConfigurationFile on their own.
      */
-
     protected Job(String jobName, ExecutionContext context, String toolID, Map<String, String> parameters, List<String> arrayIndices, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
         this.jobName = jobName;
         this.context = context;
@@ -311,6 +157,146 @@ public class Job {
         this.context.addExecutedJob(this);
         if (toolID != null && toolID.trim().length() > 0)
             this.toolMD5 = context.getConfiguration().getProcessingToolMD5(toolID);
+    }
+
+    public Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices, Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
+        this.jobName = jobName;
+        this.currentJobState = JobState.UNKNOWN;
+        this.context = context;
+        this.toolID = toolID;
+        this.toolMD5 = toolID ? context.getConfiguration().getProcessingToolMD5(toolID) : "";
+        this.parameters = [:];
+
+        Map<String, Object> defaultParameters = context.getDefaultJobParameters(toolID);
+        if (inputParameters != null)
+            defaultParameters.putAll(inputParameters);
+        this.allRawInputParameters = defaultParameters;
+
+        for (String k : defaultParameters.keySet()) {
+            if (this.parameters.containsKey(k)) continue;
+            Object _v = defaultParameters[k];
+            if (_v == null) {
+                context.addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("The parameter " + k + " has no valid value and will be set to <NO_VALUE>."));
+                this.parameters[k] = NO_VALUE;
+            } else {
+                Map<String, String> newParameters = convertParameterObject(k, _v);
+                this.parameters.putAll(newParameters);
+            }
+        }
+        if (inputParameters != null)
+            initialInputParameters.putAll(inputParameters);
+
+        this.arrayIndices = arrayIndices ?: new LinkedList<String>();
+        this.parentFiles = parentFiles ?: new LinkedList<BaseFile>();
+        // Collect dependency ids
+        if (parentFiles != null) {
+            for (BaseFile bf : parentFiles) {
+                if (bf.isSourceFile() && bf.getCreatingJobsResult() == null) continue;
+                try {
+                    JobDependencyID jobid = bf.getCreatingJobsResult()?.getJobID();
+                    if (jobid?.isValidID()) {
+                        dependencyIDs << jobid;
+                    }
+                } catch (Exception ex) {
+                    logger.severe("Something is wrong for file: " + bf);
+                    logger.postSometimesInfo(ex.message)
+                    logger.postSometimesInfo(RoddyIOHelperMethods.getStackTraceAsString(ex))
+                }
+            }
+        }
+        this.filesToVerify = filesToVerify ?: new LinkedList<BaseFile>();
+        this.context.addExecutedJob(this);
+        if (arrayIndices == null)
+            return;
+    }
+
+    private Map<String, String> convertParameterObject(String k, Object _v) {
+        Map<String, String> newParameters = new LinkedHashMap<>();
+        if (_v instanceof File) {
+            newParameters.put(k, ((File) _v).getAbsolutePath());
+        } else if (_v instanceof BaseFile) {
+            BaseFile bf = (BaseFile) _v;
+            String newPath = replaceParametersInFilePath(bf, allRawInputParameters);
+
+            //Explicitely query newPath for a proper value!
+            if (newPath == null) {
+                // Auto path!
+                int slotPosition = allRawInputParameters.keySet().asList().indexOf(k);
+                String completeString = jobName + k + slotPosition;
+                parentFiles?.each {
+                    BaseFile p ->
+                        if (!p instanceof BaseFile) return;
+
+                        BaseFile _bf = (BaseFile) p;
+                        completeString += ("" + _bf.getAbsolutePath())
+                }
+
+                File autoPath = new File(context.getOutputDirectory(), [jobName, k, completeString.hashCode().abs(), slotPosition].join("_") + ".auto")
+                bf.setPath(autoPath)
+                bf.setAsTemporaryFile()
+                newPath = autoPath.absolutePath;
+            }
+
+            newParameters.put(k, newPath);
+        } else if (_v instanceof Collection) {
+            //TODO This is not the best way to do this, think of a better one which is more generic.
+
+            List<Object> convertedParameters = new LinkedList<>();
+            for (Object o : _v as Collection) {
+                if (o instanceof BaseFile) {
+                    if (((BaseFile) o).getPath() != null)
+                        convertedParameters.add(((BaseFile) o).getAbsolutePath());
+                } else
+                    convertedParameters.add(o.toString());
+            }
+            this.parameters[k] = "(${RoddyIOHelperMethods.joinArray(convertedParameters.toArray(), " ")})".toString();
+
+        } else {
+            try {
+                newParameters[k] = _v.toString();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return newParameters;
+    }
+
+    public static File replaceParametersInFilePath(BaseFile bf, Map<String, Object> parameters) {
+        //TODO: It can occur that the regeneration of the filename is not valid!
+
+        // Replace $_JOBPARAMETER items in path with proper values.
+        File path = bf.getPath()
+        if (path == null) {
+            return null;
+        }
+
+        String absolutePath = path.getAbsolutePath()
+        List<FilenamePatternHelper.Command> commands = FilenamePatternHelper.extractCommands(bf.getExecutionContext(), PLACEHOLDER_JOBPARAMETER, absolutePath);
+        for (FilenamePatternHelper.Command command : commands) {
+            FilenamePatternHelper.CommandAttribute name = command.attributes.get("name");
+            if (name != null) {
+                String val = parameters[name.value];
+                if (val == null) {
+                    val = NO_VALUE;
+                    bf.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("A value named " + name.value + " cannot be found in the jobs parameter list for a file of ${bf.class.name}. The value is set to <NO_VALUE>"));
+                }
+                absolutePath = absolutePath.replace(command.fullString, val);
+            }
+            path = new File(absolutePath);
+            bf.setPath(path);
+        }
+        path
+    }
+
+    boolean isFakeJob() {
+        if (this instanceof FakeJob)
+            return true
+        if (jobName == "Fakejob")
+            return true
+        String jobID = getJobID()
+        if (jobID == null)
+            return false
+        return JobDependencyID.FakeJobID.isFakeJobID(jobID)
     }
 
     private void setJobType(JobType jobType) {
@@ -390,7 +376,7 @@ public class Job {
     }
 
     private void appendProcessingCommands(Configuration configuration) {
-// Only extract commands from file if none are set
+        // Only extract commands from file if none are set
         if (getListOfProcessingCommand().size() == 0) {
             File srcTool = configuration.getSourceToolPath(toolID);
 
