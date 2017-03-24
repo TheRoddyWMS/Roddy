@@ -253,7 +253,7 @@ class BashConverter extends ConfigurationConverter {
     @Override
     @CompileStatic
     StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context) {
-        convertConfigurationValue(cv, context, true)
+        convertConfigurationValue(cv, context, context.getFeatureToggleStatus(AvailableFeatureToggles.QuoteSomeScalarConfigValues))
     }
 
     public Configuration loadShellScript(String configurationFile) {
