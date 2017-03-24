@@ -14,6 +14,7 @@ public enum AvailableFeatureToggles {
 
     ForbidSubmissionOnRunning(false),
     BreakSubmissionOnError(false),
+    QuoteSomeScalarConfigValues(true),
     UseDeclareFunctionalityForBashConverter(true);
 
     public final boolean defaultValue;

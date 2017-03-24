@@ -457,12 +457,14 @@ public class LibrariesFactory extends Initializable {
 
             int revisionNumber = pluginRevision as Integer;
 
-            CommandLineCall clc = Roddy.getCommandLineCall();
-            boolean helpMode = clc ? clc.startupMode == RoddyStartupModes.help : false
-
             File develEntry = null;
             File prodEntry = null;
             File zipFile = null;
+
+            if (pEntry.getName().endsWith(".zip")) {
+                // Zip files are handled differently and cannot be checked for contents!
+                continue;
+            }
 
             if (zipFile != null) { // Only "releases" / packages have a zip file and need not to be dissected further.
                 continue;
