@@ -416,8 +416,8 @@ class ExecutionContext extends InfoObject {
         return analysisToolsDirectory
     }
 
-    File getParameterFilename(Command command) {
-        new File(getExecutionDirectory(), "${command.getJob().getJobName()}_${command.getJob().jobCreationCounter}.parameters")
+    File getParameterFilename(Job job) {
+        new File(getExecutionDirectory(), "${job.getJobName()}_${job.jobCreationCounter}.parameters")
     }
 
 

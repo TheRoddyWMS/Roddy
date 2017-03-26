@@ -16,6 +16,7 @@ import de.dkfz.eilslabs.batcheuphoria.jobs.ProcessingCommands
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.knowledge.files.BaseFile
+import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 /**
  * (Proxy) Compatibility class for 2.3.x until 2.4
@@ -72,6 +73,10 @@ class JobManager {
 
     de.dkfz.roddy.execution.jobs.JobResult convertToArrayResult(de.dkfz.eilslabs.batcheuphoria.jobs.Job arrayChildJob, de.dkfz.roddy.execution.jobs.JobResult parentJobsResult, int arrayIndex) {
         jobManager.convertToArrayResult(arrayChildJob, parentJobsResult, arrayIndex)
+    }
+
+    void storeJobStateInfo(de.dkfz.eilslabs.batcheuphoria.jobs.Job job) {
+        throw new NotImplementedException()
     }
 
     void updateJobStatus() {

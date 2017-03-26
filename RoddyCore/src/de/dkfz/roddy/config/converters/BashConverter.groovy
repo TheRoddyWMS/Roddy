@@ -182,7 +182,7 @@ class BashConverter extends ConfigurationConverter {
                 }
 
                 if (noOfDependencies > 0) {
-                    logger.postRareInfo("CValue not accepted in dependancy resolution round: ${cv.id} = ${cv.value} $separator" + notFound.collect { "Could not resolve: ${it}" }.join(separator));
+                    logger.postRareInfo("CValue not accepted in dependency resolution pass: ${cv.id} = ${cv.value} $separator" + notFound.collect { "Could not resolve: ${it}" }.join(separator));
                     continue;
                 }
 

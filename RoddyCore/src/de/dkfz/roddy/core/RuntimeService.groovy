@@ -78,7 +78,7 @@ public abstract class RuntimeService extends CacheProvider {
 
     public List<DataSet> loadCombinedListOfPossibleDataSets(Analysis analysis) {
 
-        if(Roddy.isMetadataCLOptionSet()) {
+        if (Roddy.isMetadataCLOptionSet()) {
 
             BaseMetadataTable table = MetadataTableFactory.getTable(analysis)
             List<String> _datasets = table.listDatasets();
@@ -149,7 +149,7 @@ public abstract class RuntimeService extends CacheProvider {
         if (_listOfPossibleDataSetsByAnalysis[analysis] == null)
             _listOfPossibleDataSetsByAnalysis[analysis] = loadCombinedListOfPossibleDataSets(analysis);
 
-        if(!avoidRecursion) {
+        if (!avoidRecursion) {
             List<AnalysisProcessingInformation> previousExecs = readoutExecCacheFile(analysis);
 
             for (DataSet ds : _listOfPossibleDataSetsByAnalysis[analysis]) {
@@ -189,7 +189,6 @@ public abstract class RuntimeService extends CacheProvider {
             logger.postAlwaysInfo("There were no available datasets for the provided pattern.");
         return selectedDatasets;
     }
-
 
     /**
      * The method tries to read back an execution context from a directory structure.
@@ -432,6 +431,10 @@ public abstract class RuntimeService extends CacheProvider {
                         }
                         dependendies {
                             for (BaseFile bf in ej.getParentFiles()) {
+                                if (bf.isSourceFile())
+                                    continue;
+                                if (bf.creatingJobsResult == null)
+                                    continue;
                                 String depJobID;
                                 try {
                                     depJobID = bf.getCreatingJobsResult().getJob().getJobID();
@@ -494,7 +497,7 @@ public abstract class RuntimeService extends CacheProvider {
         try {
 
             def values = context.getConfiguration().getConfigurationValues()
-            if(values.hasValue(RODDY_CENTRAL_EXECUTION_DIRECTORY)) {
+            if (values.hasValue(RODDY_CENTRAL_EXECUTION_DIRECTORY)) {
                 File configuredPath = values.get(RODDY_CENTRAL_EXECUTION_DIRECTORY, null)?.toFile(context);
                 if (configuredPath)
                     return configuredPath;
@@ -762,7 +765,6 @@ public abstract class RuntimeService extends CacheProvider {
 
         return result;
     }
-
 
     /**
      * Releases the cache in this provider

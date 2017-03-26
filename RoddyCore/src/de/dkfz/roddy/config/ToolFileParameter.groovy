@@ -43,7 +43,6 @@ public class ToolFileParameter extends ToolEntry.ToolParameterOfFiles {
             this.parentVariable = parentVariable
         }
 
-    @Override
     public ToolFileParameter clone() {
         List<ToolEntry.ToolConstraint> _con = new LinkedList<ToolEntry.ToolConstraint>();
         for (ToolEntry.ToolConstraint tc : constraints) {

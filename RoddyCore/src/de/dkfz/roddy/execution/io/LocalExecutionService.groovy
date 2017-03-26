@@ -14,6 +14,7 @@ import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.tools.LoggerWrapper
 
 import java.lang.reflect.Field

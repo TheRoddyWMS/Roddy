@@ -21,7 +21,7 @@ public class LoadedJob extends ReadOutJob {
 
     public LoadedJob(ExecutionContext context, String jobName, String jobID, String toolID, String toolMD5, Map<String, String> parameters, List<LoadedFile> loadedFiles, List<Job> parentJobIDs) {
         super(context, jobName, toolID, jobID, parameters, parentJobIDs);
-        this.toolID = toolID;
+//        this.toolID = toolID;
         //this.toolMD5 = toolMD5;
         this.loadedFiles = loadedFiles;
     }

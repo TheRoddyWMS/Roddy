@@ -18,6 +18,7 @@ import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.plugins.LibrariesFactory
@@ -83,7 +84,7 @@ public class ExecutionServiceTest {
         targetToolpath.setExecutable(true, true);
 
         ToolEntry toolEntry = new ToolEntry("RoddyTests", "RoddyTests", "RoddyTestScript_ExecutionServiceTest.sh");
-        toolEntry.getOutputParameters(config).add(new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, null, "TEST"))
+        toolEntry.getOutputParameters(config).add(new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, (Class<BaseFile>)null, "TEST"))
         config.getTools().add(toolEntry);
 
         // Initialize with fallback provider! Don't worry about errors at this point.

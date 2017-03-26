@@ -25,6 +25,7 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobDependencyID
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
@@ -179,13 +180,12 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
         } else {
             er = new ExecutionResult(false, -1, Arrays.asList("Command not valid. String is empty."), "");
         }
-//        fireStringExecutedEvent(string, er);
         return er;
     }
 
     @Override
     public ExecutionResult execute(Command command, boolean waitFor = true) {
-        ExecutionContext context = command.getTag(Constants.COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext;
+        ExecutionContext context = ((Job)command.getJob()).getExecutionContext()
         boolean configurationDisallowsJobSubmission = Roddy.getApplicationProperty(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAGS, "").contains(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAG_NOJOBSUBMISSION);
         boolean preventCalls = context.getConfiguration().getPreventJobExecution();
         boolean pidIsBlocked = blockedPIDsForJobExecution.contains(context.getDataSet());
@@ -232,23 +232,25 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
         if (res.successful) {
             exID = Roddy.getJobManager().parseJobID(res.processID ?: res.resultLines[0]);
             if (!exID) exID = Roddy.getJobManager().parseJobID(res.resultLines[0]);
-            ExecutionContext currentContext = command.getTag(Constants.COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext
-            command.setExecutionID(Roddy.getJobManager().createJobDependencyID(command.getJob(), exID));
-            String jobInfo = Roddy.getJobManager().getJobStateInfoLine(command.getJob());
+            def job = command.getJob()
+            ExecutionContext currentContext = (job as Job).getExecutionContext()
+            def jobDependencyID = Roddy.getJobManager().createJobDependencyID(job, exID)
+            command.setExecutionID(jobDependencyID);
+            job.setRunResult(new de.dkfz.eilslabs.batcheuphoria.jobs.JobResult(command, jobDependencyID, true, false, job.tool, job.parameters, job.parentJobs as List<de.dkfz.eilslabs.batcheuphoria.jobs.Job>))
+            String jobInfo = Roddy.getJobManager().getJobStateInfoLine(job);
             FileSystemAccessProvider.getInstance().appendLineToFile(true, currentContext.getRuntimeService().getNameOfJobStateLogFile(currentContext), jobInfo, false);
         }
         return exID;
     }
 
     public static void storeParameterFile(Command command) {
-        ExecutionContext context = command.getTag(Constants.COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext
-        throw new NotImplementedException()
-//        String convertedParameters = command.getParametersForParameterFile().collect({
-//            ConfigurationValue cval ->
-//                FileSystemAccessProvider.getInstance().getConfigurationConverter().convertConfigurationValue(cval, context).toString();
-//        }).join("\n")
-//        if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
-//            FileSystemAccessProvider.getInstance().writeTextFile(command.getParameterFile(), convertedParameters, context);
+        command.job.parameters
+        ExecutionContext context = ((Job)command.job).executionContext
+//        throw new NotImplementedException()
+        String convertedParameters = command.job.finalParameters().join("\n")
+        if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
+            FileSystemAccessProvider.getInstance().writeTextFile(command.job.getParameterFile(), convertedParameters, context);
+//        logger.severe("Storing parameter files is currently not supported.")
     }
 
     public static long measureStart() { return System.nanoTime(); }

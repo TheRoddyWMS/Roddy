@@ -355,6 +355,10 @@ public class Analysis {
                 try {
                     ExecutionService.getInstance().writeFilesForExecution(context);
                     context.execute();
+
+                    // Needs to be made much better!
+                    logger.postAlwaysInfo("Make startHeldJobs call safe!");
+                    Roddy.getJobManager().startHeldJobs(context.getExecutedJobs());
                 } finally {
                     if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) { //Clean up
                         //Query file validity of all files
