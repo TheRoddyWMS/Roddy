@@ -81,7 +81,7 @@ public final class MetadataTableFactory {
         return null;
     }
 
-    public static BaseMetadataTable readTable(FileReader instream, String format, Map<String, String> internalToCustomIDMap, List<String> mandatoryColumns) {
+    public static BaseMetadataTable readTable(Reader instream, String format, Map<String, String> internalToCustomIDMap, List<String> mandatoryColumns) {
         CSVFormat tableFormat = convertFormat(format)
         tableFormat = tableFormat.withCommentMarker('#' as char)
                 .withIgnoreEmptyLines()
