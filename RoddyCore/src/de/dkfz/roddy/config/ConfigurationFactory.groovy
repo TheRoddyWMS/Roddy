@@ -956,6 +956,8 @@ public class ConfigurationFactory {
         } else {
             if (!isInputFileGroup(groupNode)) { // TODO: Enforce fileclass attributes for output filegroup <https://eilslabs-phabricator.dkfz.de/T2015>
                 throw new RuntimeException("Either the fileclass or a list of child files need to be set for a filegroup in ${toolID}")
+            } else {
+                return new ToolFileGroupParameter(filegroupClass, BaseFile.class, pName, passas, indexOptions)
             }
         }
     }

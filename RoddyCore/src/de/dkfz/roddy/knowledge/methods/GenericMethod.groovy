@@ -418,7 +418,7 @@ class GenericMethod {
             if (!outputFileGroupIndices) {
                 throw new RuntimeException("A tool which outputs a filegroup with index values needs to be called properly! Pass index values in the call.")
             }
-            ToolFileParameter autoToolFileParameter = new ToolFileParameter(tfg.genericFileClass, [], "AFILEGROUP", new ToolFileParameterCheckCondition(true))
+            ToolFileParameter autoToolFileParameter = new ToolFileParameter(tfg.genericFileClass, [], tfg.scriptParameterName, new ToolFileParameterCheckCondition(true))
             for (Object index in outputFileGroupIndices) {
                 BaseFile bf = convertToolFileParameterToBaseFile(autoToolFileParameter, index.toString())
                 filesInGroup << bf

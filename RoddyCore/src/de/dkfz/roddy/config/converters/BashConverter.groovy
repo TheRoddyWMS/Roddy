@@ -207,21 +207,28 @@ class BashConverter extends ConfigurationConverter {
 
     StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context, Boolean quoteSomeScalarConfigValues) {
         StringBuilder text = new StringBuilder();
+        String declareVar = ""
+        String declareInt = ""
+        if (context.getFeatureToggleStatus(AvailableFeatureToggles.UseDeclareFunctionalityForBashConverter)) {
+            declareVar = "declare -x   "
+            declareInt = "declare -x -i"
+        }
         if (cv.toString().startsWith("#COMMENT")) {
             text << cv.toString();
         } else {
-            String tmp;
-            if (cv.type && cv.type.toLowerCase() == "basharray") {
+            String tmp
+
+                if (cv.type && cv.type.toLowerCase() == "basharray") {
                 // Check, if it is already quoted.
                 // If so, take the existing quotes.
                 if (isQuoted(cv.value))
-                    return new StringBuilder("declare -x    ${cv.id}=${cv.toString()}".toString());
+                    return new StringBuilder("${declareVar} ${cv.id}=${cv.toString()}".toString());
                 // If not, quote
-                return new StringBuilder("declare -x    ${cv.id}=\"${cv.toString()}\"".toString());
+                return new StringBuilder("${declareVar} ${cv.id}=\"${cv.toString()}\"".toString());
             } else if (cv.type && cv.type.toLowerCase() == "integer") {
-                return new StringBuilder("declare -x -i ${cv.id}=${cv.toString()}".toString());
+                return new StringBuilder("${declareInt} ${cv.id}=${cv.toString()}".toString());
             } else if (cv.type && ["double", "float"].contains(cv.type.toLowerCase())) {
-                return new StringBuilder("declare -x    ${cv.id}=${cv.toString()}".toString());
+                return new StringBuilder("${declareVar} ${cv.id}=${cv.toString()}".toString());
             } else if (cv.type && cv.type.toLowerCase() == "path") {
                 tmp = "${cv.toFile(context)}".toString();
             } else {
@@ -233,7 +240,7 @@ class BashConverter extends ConfigurationConverter {
                     tmp = "${cv.toString()}".toString();
                 }
             }
-            text << "declare -x    ${cv.id}=";
+            text << "${declareVar} ${cv.id}=";
             //TODO Important, this is a serious hack! It must be removed soon
             if (tmp.startsWith("bundledFiles/")) {
                 text << Roddy.getApplicationDirectory().getAbsolutePath() << FileSystemAccessProvider.getInstance().getPathSeparator();
@@ -246,7 +253,7 @@ class BashConverter extends ConfigurationConverter {
     @Override
     @CompileStatic
     StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context) {
-        convertConfigurationValue(cv, context, Roddy.getFeatureToggleValue(AvailableFeatureToggles.QuoteSomeScalarConfigValues))
+        convertConfigurationValue(cv, context, context.getFeatureToggleStatus(AvailableFeatureToggles.QuoteSomeScalarConfigValues))
     }
 
     public Configuration loadShellScript(String configurationFile) {

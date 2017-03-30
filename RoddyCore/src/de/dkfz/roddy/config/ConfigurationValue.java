@@ -284,7 +284,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         List<String> parentValues = new LinkedList<>();
 
         Matcher m = variableDetection.matcher(value);
-//            Findall is not available in standard java, so I use groovy here.
+        // Findall is not available in standard java, so I use groovy here.
         for (String s : ConfigurationValueHelper.callFindAllForPatternMatcher(m)) {
             String vName = s.replaceAll("[${}]", "");
             parentValues.add(vName);

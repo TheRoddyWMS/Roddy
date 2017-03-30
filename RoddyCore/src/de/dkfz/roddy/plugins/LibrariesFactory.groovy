@@ -457,22 +457,12 @@ public class LibrariesFactory extends Initializable {
 
             int revisionNumber = pluginRevision as Integer;
 
-            CommandLineCall clc = Roddy.getCommandLineCall();
-            boolean helpMode = clc ? clc.startupMode == RoddyStartupModes.help : false
-
             File develEntry = null;
             File prodEntry = null;
             File zipFile = null;
 
             if (pEntry.getName().endsWith(".zip")) {
                 // Zip files are handled differently and cannot be checked for contents!
-                zipFile = pEntry;
-                if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.UnzipZippedPlugins)) {
-                    if (!new File(zipFile.getAbsolutePath()[0..-5]).exists()) {
-                        if (!helpMode) logger.postAlwaysInfo("Unzipping zipped plugin (this is done unchecked and unlocked, processes could interfere with each other!)")
-                        (new RoddyIOHelperMethods.NativeLinuxZipCompressor()).decompress(zipFile, null, zipFile.getParentFile());
-                    }
-                }
                 continue;
             }
 

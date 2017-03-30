@@ -8,6 +8,7 @@ package de.dkfz.roddy.core;
 
 import de.dkfz.roddy.config.*;
 import de.dkfz.roddy.knowledge.files.BaseFile;
+import groovy.transform.CompileStatic;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -16,6 +17,7 @@ import java.util.Map;
 /**
  * Created by heinold on 09.11.15.
  */
+@CompileStatic
 public class RuntimeServiceTest {
 
     private static RuntimeService mockedService;

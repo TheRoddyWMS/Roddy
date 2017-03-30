@@ -541,17 +541,6 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
                 }
             }
         } catch (RuntimeException ex) {
-            if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.AutoFilenames)) {
-                // In case that we did not find a pattern and therefore could not create a filename, we will now apply an automatic filename.
-
-                // This might work for GenericMethod calls! But surely not for other ones...
-
-                // The problem is, that we need to get some sort of jobname and / or an internal job id. But! Jobs normally get created after the files.
-                // Then files get assigned to the job on its creation. However, GenericMethod calls, at least have some info about the running script.
-                // Manual calls might miss this information and it will possibly get ugly to extract info on this.
-            } else {
-                throw ex;
-            }
         } finally {
             return patternResult;
         }

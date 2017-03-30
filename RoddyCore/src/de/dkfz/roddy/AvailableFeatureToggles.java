@@ -12,16 +12,10 @@ package de.dkfz.roddy;
  */
 public enum AvailableFeatureToggles {
 
-    XMLValidation(true),
     ForbidSubmissionOnRunning(false),
     BreakSubmissionOnError(false),
-    RollbackOnSubmissionOnError(false),
-    // Modify bash arrays and pass them with a different separator. (comma instead of whitespace)
-    ModifiedVariablePassing(true),
     QuoteSomeScalarConfigValues(true),
-    UseOldDataSetIDExtraction(true),
-    AutoFilenames(false),
-    UnzipZippedPlugins(false);
+    UseDeclareFunctionalityForBashConverter(true);
 
     public final boolean defaultValue;
 
