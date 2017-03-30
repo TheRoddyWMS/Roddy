@@ -232,12 +232,17 @@ allprojects {
     }
 
     test {
-        workingDir = rootProject.projectDir
+        workingDir = projectDir
         ignoreFailures = project.hasProperty("ignoreFailedTests")
+
         testLogging {
-            events "started", "skipped", "failed"
+            debug {
+                events "started", "skipped", "failed"
+                exceptionFormat "full"
+            }
+            events "failed"
             exceptionFormat "full"
-            showStandardStreams true
+            showStandardStreams false
         }
     }
 
