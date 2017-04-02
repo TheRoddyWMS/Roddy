@@ -56,6 +56,9 @@ public abstract class RuntimeService extends CacheProvider {
 
     public RuntimeService() {
         super("RuntimeService");
+
+            logger.severe("Reading in jobs is not fully enabled! See RuntimeService readInExecutionContext(). The method does not reconstruct parent files and dependencies.")
+
     }
 
     /**
@@ -231,20 +234,20 @@ public abstract class RuntimeService extends CacheProvider {
                 jobsStartedInContext = new LinkedList<Job>();
             }
 //
-            logger.severe("Reading in jobs is currently not possible! See RuntimeService readInExecutionContext() Line 235")
-//            if (jobsStartedInContext.size() == 0) {
-//                String[] jobCalls = fip.loadTextFile(getNameOfRealCallsFile(context));
-//                if (jobCalls == null || jobCalls.size() == 0) {
-//                    context.addErrorEntry(ExecutionContextError.READBACK_NOREALJOBCALLSFILE);
-//                } else {
-//                    //TODO Load a list of the previously created jobs and query those using qstat!
-//                    for (String call : jobCalls) {
-//                        //TODO. How can we recognize different command factories? i.e. for other cluster systems?
-//                        Job job = Roddy.getJobManager().parseToJob(context, call);
-//                        jobsStartedInContext.add(job);
-//                    }
-//                }
-//            }
+            if (jobsStartedInContext.size() == 0) {
+                String[] jobCalls = fip.loadTextFile(getNameOfRealCallsFile(context));
+                if (jobCalls == null || jobCalls.size() == 0) {
+                    context.addErrorEntry(ExecutionContextError.READBACK_NOREALJOBCALLSFILE);
+                } else {
+                    //TODO Load a list of the previously created jobs and query those using qstat!
+                    for (String call : jobCalls) {
+                        //TODO. How can we recognize different command factories? i.e. for other cluster systems?
+                        de.dkfz.eilslabs.batcheuphoria.jobs.Job beJob = Roddy.getJobManager().parseToJob(call);
+                        Job job = new Job(context, beJob.jobName, beJob.toolID, beJob.parameters as Map<String, Object>, new LinkedList<BaseFile>(), new LinkedList<BaseFile>())
+                        jobsStartedInContext.add(job);
+                    }
+                }
+            }
 
             Map<String, JobState> statusList = readInJobStateLogFile(context)
 
@@ -271,25 +274,23 @@ public abstract class RuntimeService extends CacheProvider {
             for (Job job : jobsStartedInContext) {
                 if (job.getJobState().isUnknown() || job.getJobState() == JobState.UNSTARTED) {
                     unknownJobs.put(job.getJobID(), job);
-                    queryList.add(job.getJobID());
                 } else if (job.getJobState() == JobState.STARTED) {
                     possiblyRunningJobs.put(job.getJobID(), job);
-                    queryList.add(job.getJobID());
                 }
             }
 
-            Map<String, JobState> map = Roddy.getJobManager().queryJobStatus(queryList);
+            Map<de.dkfz.eilslabs.batcheuphoria.jobs.Job, JobState> map = Roddy.getJobManager().queryJobStatus(jobsStartedInContext as List<de.dkfz.eilslabs.batcheuphoria.jobs.Job>);
             for (String jobID : unknownJobs.keySet()) {
-                Job job = unknownJobs.get(jobID);
-                job.setJobState(map.get(jobID));
-                Roddy.getJobManager().addJobStatusChangeListener(job);
+                Job job = unknownJobs[jobID]
+                job.setJobState(map[job])
+                Roddy.getJobManager().addJobStatusChangeListener(job)
             }
             for (String jobID : possiblyRunningJobs.keySet()) {
-                Job job = possiblyRunningJobs.get(jobID);
-                if (map.get(jobID) == null) {
+                Job job = possiblyRunningJobs[jobID];
+                if (map[job] == null) {
                     job.setJobState(JobState.FAILED);
                 } else {
-                    job.setJobState(map.get(jobID));
+                    job.setJobState(map[job]);
                     Roddy.getJobManager().addJobStatusChangeListener(job);
                 }
             }

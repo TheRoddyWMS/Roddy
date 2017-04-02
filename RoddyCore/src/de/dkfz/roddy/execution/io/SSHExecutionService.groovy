@@ -337,28 +337,25 @@ class SSHExecutionService extends RemoteExecutionService {
         return result.toString("UTF-8")
     }
 
-//    @Override
-    public
-    synchronized List<String> _execute(String command, boolean waitFor = true, boolean ignoreError = false, OutputStream outputStream = null) {
+    // This method actually overrides a base class. But if we keep the @Override, the Groovy (or Java) compiler constantly
+    // claims, that the method does not override it's base method.
+    // That is, why we keep it in but only as a comment.
+    //    @Override
+    synchronized ExecutionResult _execute(String command, boolean waitFor = true, boolean ignoreError = false, OutputStream outputStream = null) {
         SSHPoolConnectionSet set = waitForService()
         SSHClient sshClient = set.client;
 
         if (waitFor) {
-//            long id = fireExecutionStartedEvent(command)
-
             set.acquire();
             Session session = sshClient.startSession();
             Session.Command cmd;
-            //long tBefore = System.nanoTime()
+
             try {
                 cmd = session.exec(command)
             } finally {
                 set.release();
             }
-            //String content = IOUtils.readFully(cmd.getInputStream()).toString();
             String content = readStream(cmd.getInputStream())
-            //measureStop(tBefore, "SSH: ${command}", LoggerWrapper.VERBOSITY_ALWAYS)
-            //session.close();
 
             cmd.join();
             session.close();
@@ -369,9 +366,7 @@ class SSHExecutionService extends RemoteExecutionService {
             if (exitStatus == null) exitStatus = 256;
 
             List<String> output = new LinkedList<String>()
-            output << "" + exitStatus;
-//            measureStop(id, "blocking command [sshclient:${set.id}] '" + RoddyIOHelperMethods.truncateCommand(command, Roddy.getApplicationProperty("commandLogTruncate", '20').toInteger()) + "'");
-//            fireExecutionStoppedEvent(id, command);
+//            output << "" + exitStatus;
 
             if (exitStatus > 0) {
                 if (ignoreError) {
@@ -384,13 +379,12 @@ class SSHExecutionService extends RemoteExecutionService {
                                             ? " Caught signal is " + cmd.getExitSignal().name()
                                             : "\n\tCommand Str. " + RoddyIOHelperMethods.truncateCommand(command,
                                                 Roddy.getApplicationProperty("commandLogTruncate", '80').toInteger())));
-                    // IOUtils.readFully(cmd.getErrorStream()).toString();
                 }
             } else {
                 content.readLines().each { String line -> output << "" + line }
             }
 
-            return output;
+            return new ExecutionResult(exitStatus == 0, exitStatus, output, "0")
         }
 
         Runnable runnable = new Runnable() {
@@ -416,20 +410,18 @@ class SSHExecutionService extends RemoteExecutionService {
         Thread thread = new Thread(runnable)
         thread.setName("SSHExecutionService::_execute()")
         thread.start();
-        return ["0"];
+        return new ExecutionResult(true, 0, [], "");
     }
 
 
-    @Override
-    public ExecutionResult execute(String string, boolean waitFor = true) {
-        List<String> result = _execute(string, waitFor);
-        String returnCodeStr = result[0];
-        int returnCode = result.size() > 0 && result[0] != "null" ? Integer.parseInt(returnCodeStr) : 256;
-        result.remove(0);
-        ExecutionResult er = new ExecutionResult(returnCode == 0, returnCode, result, "");
-//        fireStringExecutedEvent(string, er);
-        return er;
-    }
+//    @Override
+//    public ExecutionResult execute(String string, boolean waitFor = true) {
+//        ExecutionResult result = _execute(string, waitFor);
+//        int returnCode = result.size() > 0 && result[0] != "null" ? result.exitValue : 256;
+//        result.remove(0)
+//        ExecutionResult er = new ExecutionResult(returnCode == 0, returnCode, result, "");
+//        return _execute(string, waitFor)
+//    }
 
     @Override
     boolean copyFile(File _in, File _out) {

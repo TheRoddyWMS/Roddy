@@ -9,10 +9,12 @@ package de.dkfz.roddy.core
 import de.dkfz.eilslabs.batcheuphoria.jobs.Command
 import de.dkfz.roddy.execution.jobs.JobResult
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
+import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
+import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -294,6 +296,25 @@ class ExecutionContext extends InfoObject {
         return analysis.getConfiguration()
     }
 
+    Configuration getJobConfiguration(Job job) {
+
+    }
+
+    Configuration getFileConfiguration(BaseFile baseFile) {
+
+    }
+
+    boolean getFeatureToggleStatus(AvailableFeatureToggles toggle) {
+        if (toggle.applicationLevelOnly) {
+            logger.warning("The feature toggle ${toggle} is marked as application level only. The application level value will be used.")
+        } else {
+            def cvalues = configuration.configurationValues
+            if (cvalues.hasValue(toggle.name()))
+                return cvalues.get(toggle.name()).toBoolean()
+        }
+        return Roddy.getFeatureToggleValue(toggle)
+    }
+
     RecursiveOverridableMapContainerForConfigurationValues getConfigurationValues() {
         return configuration.getConfigurationValues()
     }
@@ -508,7 +529,7 @@ class ExecutionContext extends InfoObject {
                 jobIDsForQuery.add(runResult.getJobID().getId())
             }
         }
-        Map<String, JobState> map = Roddy.getJobManager().queryJobStatus(jobIDsForQuery)
+        Map<de.dkfz.eilslabs.batcheuphoria.jobs.Job, JobState> map = Roddy.getJobManager().queryJobStatus(jobsForProcess as List<de.dkfz.eilslabs.batcheuphoria.jobs.Job>)
         for (JobState js : map.values()) {
             if (js.isPlannedOrRunning())
                 return true

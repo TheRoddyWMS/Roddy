@@ -305,7 +305,7 @@ public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
     }
 
     @Override
-    Map<String, JobState> queryJobState(List<String> jobIds) throws RemoteException {
+    Map<String, JobState> queryJobState(List<de.dkfz.eilslabs.batcheuphoria.jobs.Job> jobIds) throws RemoteException {
         return withServer([:], { Roddy.getJobManager().queryJobStatus(jobIds); }) as Map<String, JobState>
     }
 

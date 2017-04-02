@@ -26,8 +26,6 @@ public class ContextConfiguration extends AnalysisConfiguration {
         addParent(applicationSpecificConfiguration);
         addParent(analysisConfiguration);
         addParent(projectConfiguration);
-//        for(Configuration c : configuration.getContainerParents())
-//            addParent(c);
     }
 
     public AnalysisConfiguration getAnalysisConfiguration() {

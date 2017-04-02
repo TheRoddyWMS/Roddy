@@ -76,6 +76,7 @@ class JobManager {
     }
 
     void storeJobStateInfo(de.dkfz.eilslabs.batcheuphoria.jobs.Job job) {
+//        jobManager.store
         throw new NotImplementedException()
     }
 
@@ -124,7 +125,7 @@ class JobManager {
     }
 
     String parseJobID(String commandOutput) {
-        jobManager.parseToJob(commandOutput)
+        jobManager.parseJobID(commandOutput)
     }
 
     String getSubmissionCommand() {

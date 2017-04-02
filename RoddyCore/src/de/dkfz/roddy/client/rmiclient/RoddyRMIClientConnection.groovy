@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.client.rmiclient
 
+import de.dkfz.eilslabs.batcheuphoria.jobs.Job
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.execution.io.ExecutionHelper
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
@@ -200,7 +201,7 @@ public class RoddyRMIClientConnection {
     }
 
 
-    public Map<String, JobState> queryJobState(List<String> jobIds) {
+    public Map<String, JobState> queryJobState(List<Job> jobIds) {
         try {
             return connection.queryJobState(jobIds);
         } catch (Exception ex) {

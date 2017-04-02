@@ -8,11 +8,9 @@ package de.dkfz.roddy.config
 
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
-import de.dkfz.roddy.knowledge.files.BaseFile
 import groovy.transform.CompileStatic
 
 import static de.dkfz.roddy.StringConstants.BRACE_RIGHT
-import static de.dkfz.roddy.StringConstants.EMPTY
 import static de.dkfz.roddy.StringConstants.EMPTY
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 import static de.dkfz.roddy.StringConstants.SPLIT_EQUALS
@@ -24,11 +22,13 @@ import static de.dkfz.roddy.StringConstants.SPLIT_EQUALS
 class FilenamePatternHelper {
 
     public static class Command {
-        public final String name;
+        public final String rawName
+        public final String fullString
         public final Map<String, CommandAttribute> attributes = new HashMap<String, CommandAttribute>();
 
-        public Command(String name, Map<String, CommandAttribute> attributes) {
-            this.name = name;
+        public Command(String fullString, Map<String, CommandAttribute> attributes) {
+            this.fullString = fullString;
+            this.rawName = fullString[2 .. -2].split(",")[0]
             if (attributes != null)
                 this.attributes.putAll(attributes);
         }
@@ -45,6 +45,8 @@ class FilenamePatternHelper {
     }
 
     public static Command extractCommand(ExecutionContext context, String commandID, String temp, int startIndex = -1) {
+        if (!commandID.startsWith('${'))
+            commandID = '${' + commandID
         if (startIndex == -1)
             startIndex = temp.indexOf(commandID);
         int endIndex = temp.indexOf(BRACE_RIGHT, startIndex);
@@ -74,7 +76,7 @@ class FilenamePatternHelper {
         ]
 
         // Check if the attribute at least has a name tag
-        if (commandsWithNameTags.find { command.startsWith(it) } && !attributes["name"] ) {
+        if (commandsWithNameTags.find { command.startsWith(it) } && !attributes["name"]) {
             context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("The jobParameter for ${command} must have a name tag with a value."))
         }
 

@@ -631,7 +631,9 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
                 synchronized (allJobWrappersForEC) {
                     jobsToCheck += jobInfoWrappersByJobId.values().collect { FXJobInfoObjectWrapper wrapper -> wrapper.job.jobId }
                 }
-                newStates = RoddyUIController.getMainUIController().getRMIConnection(analysisLongId).queryJobState(jobsToCheck);
+                logger.severe("Querying the jobstate from DataSetView is currently not possible.")
+//                newStates = RoddyUIController.getMainUIController().getRMIConnection(analysisLongId).queryJobState(jobsToCheck);
+                newStates = [:]
                 return null;
             }
 

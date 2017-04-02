@@ -10,6 +10,7 @@ import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.RoddyTest
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import de.dkfz.roddy.execution.io.ExecutionHelper
+import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
@@ -40,8 +41,8 @@ public class RoddyRMIInterfaceImplementationTest {
         }
 
         @Override
-        protected List<String> _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream) {
-            def list = super._execute(string, waitFor, ignoreErrors, outputStream);
+        protected ExecutionResult _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream) {
+            ExecutionResult list = super._execute(string, waitFor, ignoreErrors, outputStream);
             executedCommands << string;
             return list;
         }

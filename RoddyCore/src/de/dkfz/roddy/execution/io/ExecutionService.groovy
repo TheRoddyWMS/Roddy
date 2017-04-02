@@ -7,6 +7,7 @@
 package de.dkfz.roddy.execution.io
 
 import de.dkfz.eilslabs.batcheuphoria.jobs.Command
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
 import de.dkfz.eilslabs.batcheuphoria.jobs.DummyCommand
@@ -151,36 +152,20 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
 //        this.listOfListeners.clear();
     }
 
-    protected abstract List<String> _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream);
+    protected abstract ExecutionResult _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream);
 
     public List<String> executeTool(ExecutionContext context, String toolID, String jobNameExtension = "_executedScript:") {
         File path = context.getConfiguration().getProcessingToolPath(context, toolID);
-
-//        Job wrapperJob = new Job(context, context.getTimestampString() + jobNameExtension + toolID, toolID, null);
-//        DirectSynchronousExecutionJobManager dcfac = new DirectSynchronousExecutionJobManager();
-//        DirectCommand wrapperJobCommand = dcfac.createCommand(wrapperJob, context.getConfiguration().getProcessingToolPath(context, toolID), new LinkedList<>());
         String cmd = FileSystemAccessProvider.getInstance().commandSet.getExecuteScriptCommand(path);
         return execute(cmd).resultLines;
     }
 
     public ExecutionResult execute(String string, boolean waitFor = true, OutputStream outputStream = null) {
-        ExecutionResult er = null;
         if (string) {
-            List<String> result = _execute(string, waitFor, true, outputStream);
-            String returnCodeStr = result[0];
-            String processID = result[1];
-            if (returnCodeStr == null) {
-                returnCodeStr = 65535;
-                result << "65535";
-            }
-            int returnCode = Integer.parseInt(returnCodeStr);
-            result.remove(0);
-            result.remove(0);
-            er = new ExecutionResult(returnCode == 0, returnCode, result, processID);
+            return _execute(string, waitFor, true, outputStream);
         } else {
-            er = new ExecutionResult(false, -1, Arrays.asList("Command not valid. String is empty."), "");
+            return new ExecutionResult(false, -1, Arrays.asList("Command not valid. String is empty."), "");
         }
-        return er;
     }
 
     @Override
@@ -208,7 +193,7 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
                 }
                 command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.OK);
 
-                handleServiceBasedJobExitStatus(command, res, outputStream);
+//                handleServiceBasedJobExitStatus(command, res, outputStream);
 
                 context.addCalledCommand(command);
             } catch (Exception ex) {
@@ -227,20 +212,18 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
 
     protected FileOutputStream createServiceBasedOutputStream(Command command, boolean waitFor) { return null; }
 
-    protected String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, OutputStream outputStream) {
+    @Override
+    String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, OutputStream outputStream) {
+        def jobManager = Roddy.getJobManager()
+//        jobManager.extractAndSetJobResultFromExecutionResult(command, res)
         String exID = "none";
         if (res.successful) {
-            exID = Roddy.getJobManager().parseJobID(res.processID ?: res.resultLines[0]);
-            if (!exID) exID = Roddy.getJobManager().parseJobID(res.resultLines[0]);
             def job = command.getJob()
             ExecutionContext currentContext = (job as Job).getExecutionContext()
-            def jobDependencyID = Roddy.getJobManager().createJobDependencyID(job, exID)
-            command.setExecutionID(jobDependencyID);
-            job.setRunResult(new de.dkfz.eilslabs.batcheuphoria.jobs.JobResult(command, jobDependencyID, true, false, job.tool, job.parameters, job.parentJobs as List<de.dkfz.eilslabs.batcheuphoria.jobs.Job>))
-            String jobInfo = Roddy.getJobManager().getJobStateInfoLine(job);
-            FileSystemAccessProvider.getInstance().appendLineToFile(true, currentContext.getRuntimeService().getNameOfJobStateLogFile(currentContext), jobInfo, false);
+            String jobInfo = jobManager.getJobStateInfoLine(job)
+            FileSystemAccessProvider.getInstance().appendLineToFile(true, currentContext.getRuntimeService().getNameOfJobStateLogFile(currentContext), jobInfo, false)
         }
-        return exID;
+        return exID
     }
 
     public static void storeParameterFile(Command command) {

@@ -295,7 +295,7 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
                     val = NO_VALUE
                     bf.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("A value named " + name.value + " cannot be found in the jobs parameter list for a file of ${bf.class.name}. The value is set to <NO_VALUE>"))
                 }
-                absolutePath = absolutePath.replace(command.name, val)
+                absolutePath = absolutePath.replace(command.fullString, val)
             }
             path = new File(absolutePath)
             bf.setPath(path)

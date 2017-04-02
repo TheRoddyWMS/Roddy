@@ -8,14 +8,14 @@ package de.dkfz.roddy.config
 
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import groovy.transform.CompileStatic
 import org.junit.BeforeClass
 import org.junit.Test
-
-import static org.junit.Assert.*
 
 /**
  * Created by heinold on 10.01.17.
  */
+@CompileStatic
 class FilenamePatternHelperTest {
 
     static ExecutionContext mockupContext
@@ -30,6 +30,24 @@ class FilenamePatternHelperTest {
         assert mockupContext
     }
 
+    @Test
+    void extractEmptyCommand() {
+        // Extract empty command means to detect something unknown inside ${ .. }
+        def val = 'abc${value}def'
+        def result = FilenamePatternHelper.extractCommand(mockupContext, "", val)
+        assert result.rawName == "value"
+    }
+
+    @Test
+    void extractRegularCommand() {
+        // Extract empty command means to detect something unknown inside ${ .. }
+        def val = 'abc${cvalue,name="value"}def'
+        def result = FilenamePatternHelper.extractCommand(mockupContext, '\${cvalue', val)
+        assert result.rawName == "cvalue"
+        assert result.fullString == '${cvalue,name="value"}'
+        assert result.attributes.size() == 1
+        assert result.attributes["name"].value == "value"
+    }
 
     @Test
     void extractCommands() throws Exception {

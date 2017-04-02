@@ -111,7 +111,11 @@ public class Analysis {
         }
     }
 
-
+    /**
+     * The object should actually move to context itself. However, currently, this would break a lot.
+     * Mark it as Deprecated for now.
+     */
+    @Deprecated
     private ContextConfiguration _contextConfiguration = null;
 
     public Configuration getConfiguration() {
@@ -355,11 +359,10 @@ public class Analysis {
                 try {
                     ExecutionService.getInstance().writeFilesForExecution(context);
                     context.execute();
-
-                    // Needs to be made much better!
-                    logger.postAlwaysInfo("Make startHeldJobs call safe!");
-                    Roddy.getJobManager().startHeldJobs(context.getExecutedJobs());
+                    finallyStartJobsOfContext(context);
                 } finally {
+                    abortStartedJobsOfContext(context);
+
                     if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) { //Clean up
                         //Query file validity of all files
                         FileSystemAccessProvider.getInstance().validateAllFilesInContext(context);
@@ -420,6 +423,34 @@ public class Analysis {
                 logger.postAlwaysInfo(messages.toString());
             }
 
+        }
+    }
+
+    /**
+     * Will start all the jobs in the context.
+     * @param context
+     */
+    private void finallyStartJobsOfContext(ExecutionContext context) {
+        // Needs to be made much better!
+        logger.postAlwaysInfo("Make startHeldJobs call safe!");
+        Roddy.getJobManager().startHeldJobs(context.getExecutedJobs());
+    }
+
+    /**
+     * Checks, whether strict mode AND rollback toggles are enabled and
+     * try to abort jobs by calling the job manager.
+     * Occurring exceptions are catched so following code can be executed properly.
+     *
+     * @param context
+     */
+    private void abortStartedJobsOfContext(ExecutionContext context) {
+        if(Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.RollbackOnWorkflowError)) {
+            try {
+                logger.severe("An workflow error occurred, try to rollback / abort submitted jobs.");
+                Roddy.getJobManager().queryJobAbortion(context.jobsForProcess);
+            } catch (Exception ex) {
+                logger.severe("Could not successfully abort jobs.", ex);
+            }
         }
     }
 
