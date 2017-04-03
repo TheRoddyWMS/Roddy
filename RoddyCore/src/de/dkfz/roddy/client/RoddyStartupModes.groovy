@@ -111,8 +111,8 @@ enum RoddyStartupModes {
         System.out.println(String.format("  %s %s " + Constants.ENV_LINESEPARATOR + "\t%s" + Constants.ENV_LINESEPARATOR, option.toString(), parameters, formattedDescription.toString()))
     }
 
-    static void printCommands(List<Object[]> commands) {
-        commands.each { Object[] it ->
+    static void printCommands(List<List<Object>> commands) {
+        commands.each { List<Object> it ->
             printCommand(it[0] as RoddyStartupModes, it[1] as String, it[2..-1] as String[])
         }
     }
@@ -151,7 +151,7 @@ enum RoddyStartupModes {
                 [RoddyStartupModes.checkworkflowstatus, "(configuration@analysis) [pid_0,..,pid_n] [--detailed] [--useconfig={file}]", "Shows a generic overview about all datasets for a configuration", "If some datasets are selected, a more detailed output is generated.", "If detailed is set, information about all started jobs and their status is shown."],
                 [RoddyStartupModes.setup, "[--useconfig={file}]", "Sets up Roddy for command line execution."],
                 [RoddyStartupModes.ui, "[--useconfig={file}]", "Open Roddys graphical user interface."]
-        ] as List<Object[]>)
+        ])
 
         println("== Advanced developer options ==\n")
         printCommands([
@@ -159,7 +159,7 @@ enum RoddyStartupModes {
                 [RoddyStartupModes.pack, "", "Creates a copy of the current version and puts the version number to the file name."],
                 [RoddyStartupModes.compileplugin, "(plugin ID) [--useconfig={file}]", "Compiles a plugin ."],
                 [RoddyStartupModes.packplugin, "(plugin ID) [--useconfig={file}]", "Packages the compiled plugin in dist/plugins and creates a version number for it.", "Please note that you can indeed override contents of a zip file if you do not update / compile the plugin jar!"]
-        ] as List<Object[]>)
+        ])
 
         println("================================")
         System.out.println(Constants.ENV_LINESEPARATOR + Constants.ENV_LINESEPARATOR + "Common additional options")
