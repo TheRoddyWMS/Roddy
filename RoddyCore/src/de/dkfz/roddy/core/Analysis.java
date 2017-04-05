@@ -332,7 +332,6 @@ public class Analysis {
         t.start();
     }
 
-        /*
     /**
      * Executes the context object.
      * If the contexts level is QUERY_STATUS:
@@ -342,7 +341,6 @@ public class Analysis {
      * If its level is QUERY_STATUS:
      * Check the file validity after execution.<br />
      * Also there are no files written for this level.
-     *
      *
      * @param context
      */
@@ -406,7 +404,8 @@ public class Analysis {
             }
 
             // Print out context errors.
-            if (context.getErrors().size() > 0) {
+            // Only print them out if !QUERY_STATUS and the runmode is testrun or testrerun.
+            if (context.getErrors().size() > 0 && context.getExecutionContextLevel() != ExecutionContextLevel.QUERY_STATUS) {
                 StringBuilder messages = new StringBuilder();
                 boolean warningsOnly = true;
                 for (ExecutionContextError executionContextError : context.getErrors()) {
@@ -428,6 +427,7 @@ public class Analysis {
 
     /**
      * Will start all the jobs in the context.
+     *
      * @param context
      */
     private void finallyStartJobsOfContext(ExecutionContext context) {
@@ -444,7 +444,7 @@ public class Analysis {
      * @param context
      */
     private void abortStartedJobsOfContext(ExecutionContext context) {
-        if(Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.RollbackOnWorkflowError)) {
+        if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.RollbackOnWorkflowError)) {
             try {
                 logger.severe("An workflow error occurred, try to rollback / abort submitted jobs.");
                 Roddy.getJobManager().queryJobAbortion(context.jobsForProcess);

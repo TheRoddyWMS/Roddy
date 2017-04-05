@@ -113,142 +113,7 @@ class FilenamePatternTest {
 
     @Test
     public void testJobCreationWithFileUsingToolIDForNamePattern() {
-        new JobManager(new NoNoExecutionService(), new JobManagerCreationParametersBuilder().setCreateDaemon(false).build()) {
-            @Override
-            Command createCommand(de.dkfz.eilslabs.batcheuphoria.jobs.GenericJobInfo genericJobInfo) {
-                return null
-            }
-
-            @Override
-            JobResult runJob(de.dkfz.eilslabs.batcheuphoria.jobs.Job job, boolean b) {
-                return null
-            }
-
-            @Override
-            JobDependencyID createJobDependencyID(de.dkfz.eilslabs.batcheuphoria.jobs.Job job, String s) {
-                return null
-            }
-
-            @Override
-            ProcessingCommands convertResourceSet(ResourceSet resourceSet) {
-                return null
-            }
-
-            @Override
-            ProcessingCommands parseProcessingCommands(String s) {
-                return null
-            }
-
-            @Override
-            ProcessingCommands extractProcessingCommandsFromToolScript(File file) {
-                return null
-            }
-
-            @Override
-            de.dkfz.eilslabs.batcheuphoria.jobs.Job parseToJob(String s) {
-                return null
-            }
-
-            @Override
-            de.dkfz.eilslabs.batcheuphoria.jobs.GenericJobInfo parseGenericJobInfo(String s) {
-                return null
-            }
-
-            @Override
-            JobResult convertToArrayResult(de.dkfz.eilslabs.batcheuphoria.jobs.Job job, JobResult jobResult, int i) {
-                return null
-            }
-
-            @Override
-            void updateJobStatus() {
-
-            }
-
-            @Override
-            Map<Job, GenericJobInfo> queryExtendedJobState(List list, boolean forceUpdate) {
-                return null
-            }
-
-            @Override
-            void addJobStatusChangeListener(de.dkfz.eilslabs.batcheuphoria.jobs.Job job) {
-
-            }
-
-            @Override
-            String getLogFileWildcard(de.dkfz.eilslabs.batcheuphoria.jobs.Job job) {
-                return null
-            }
-
-            @Override
-            boolean compareJobIDs(String s, String s1) {
-                return false
-            }
-
-            @Override
-            String getStringForQueuedJob() {
-                return null
-            }
-
-            @Override
-            String getStringForJobOnHold() {
-                return null
-            }
-
-            @Override
-            String getStringForRunningJob() {
-                return null
-            }
-
-            @Override
-            String getSpecificJobIDIdentifier() {
-                return null
-            }
-
-            @Override
-            String getSpecificJobArrayIndexIdentifier() {
-                return null
-            }
-
-            @Override
-            String getSpecificJobScratchIdentifier() {
-                return null
-            }
-
-            @Override
-            void queryJobAbortion(List list) {
-
-            }
-
-            @Override
-            Map<String, JobState> queryJobStatus(List list) {
-                return null
-            }
-
-            @Override
-            Command createCommand(de.dkfz.eilslabs.batcheuphoria.jobs.Job job, String s, List list, File file, Map map, List list1, List list2) {
-                return null
-            }
-
-            @Override
-            String[] peekLogFile(de.dkfz.eilslabs.batcheuphoria.jobs.Job job) {
-                return new String[0]
-            }
-
-            @Override
-            String parseJobID(String commandOutput) {
-                return null
-            }
-
-            @Override
-            String getSubmissionCommand() {
-                return null
-            }
-
-            @Override
-            Map<Job, JobState> queryJobStatus(List list, boolean forceUpdate) {
-                return null
-            }
-        }
+        MockupExecutionContextBuilder.createMockupJobManager()
 
         FilenamePattern fp = new OnToolFilenamePattern(testClass, "RoddyTests", "/tmp/RoddyTests/testFileResult.sh", "default")
         mockedContext.getConfiguration().getFilenamePatterns().add(fp)
@@ -257,6 +122,8 @@ class FilenamePatternTest {
         assert result != null
         assert result.class == testClass
     }
+
+
 
     @Test
     void testExtractCommand() {

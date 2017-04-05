@@ -80,8 +80,9 @@ public class ProjectFactory {
         try {
             _projectClass = configuration.getConfiguredClass();
             _runtimeServiceClass = configuration.getRuntimeServiceClass();
-            logger.postSometimesInfo("Found project class " + _projectClass);
-            logger.postSometimesInfo("Found runtime service class " + _runtimeServiceClass);
+            logger.postSometimesInfo("Found project class: " + _projectClass);
+            if(_runtimeServiceClass)
+                logger.postSometimesInfo("Found runtime service class set in project configuration: " + _runtimeServiceClass);
             projectClass = LibrariesFactory.getInstance().loadClass(_projectClass);
             RuntimeService runtimeService
             if (_runtimeServiceClass) {

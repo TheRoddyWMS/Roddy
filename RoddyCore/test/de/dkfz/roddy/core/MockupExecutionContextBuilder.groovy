@@ -6,9 +6,20 @@
 
 package de.dkfz.roddy.core
 
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
+import de.dkfz.eilslabs.batcheuphoria.jobs.Command
+import de.dkfz.eilslabs.batcheuphoria.jobs.GenericJobInfo
+import de.dkfz.eilslabs.batcheuphoria.jobs.Job
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobDependencyID
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobManagerCreationParametersBuilder
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
+import de.dkfz.eilslabs.batcheuphoria.jobs.ProcessingCommands
 import de.dkfz.roddy.config.AnalysisConfiguration;
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ProjectConfiguration
+import de.dkfz.roddy.execution.io.NoNoExecutionService
+import de.dkfz.roddy.execution.jobs.JobResult
 import de.dkfz.roddy.knowledge.files.BaseFile;
 
 import java.io.File;
@@ -147,4 +158,142 @@ public class MockupExecutionContextBuilder {
         };
     }
 
+    public static JobManager createMockupJobManager() {
+        new JobManager(new NoNoExecutionService(), new JobManagerCreationParametersBuilder().setCreateDaemon(false).build()) {
+            @Override
+            Command createCommand(GenericJobInfo genericJobInfo) {
+                return null
+            }
+
+            @Override
+            JobResult runJob(Job job, boolean b) {
+                return null
+            }
+
+            @Override
+            JobDependencyID createJobDependencyID(Job job, String s) {
+                return null
+            }
+
+            @Override
+            ProcessingCommands convertResourceSet(ResourceSet resourceSet) {
+                return null
+            }
+
+            @Override
+            ProcessingCommands parseProcessingCommands(String s) {
+                return null
+            }
+
+            @Override
+            ProcessingCommands extractProcessingCommandsFromToolScript(File file) {
+                return null
+            }
+
+            @Override
+            Job parseToJob(String s) {
+                return null
+            }
+
+            @Override
+            GenericJobInfo parseGenericJobInfo(String s) {
+                return null
+            }
+
+            @Override
+            JobResult convertToArrayResult(Job job, JobResult jobResult, int i) {
+                return null
+            }
+
+            @Override
+            void updateJobStatus() {
+
+            }
+
+            @Override
+            Map<Job, GenericJobInfo> queryExtendedJobState(List list, boolean forceUpdate) {
+                return null
+            }
+
+            @Override
+            void addJobStatusChangeListener(Job job) {
+
+            }
+
+            @Override
+            String getLogFileWildcard(Job job) {
+                return null
+            }
+
+            @Override
+            boolean compareJobIDs(String s, String s1) {
+                return false
+            }
+
+            @Override
+            String getStringForQueuedJob() {
+                return null
+            }
+
+            @Override
+            String getStringForJobOnHold() {
+                return null
+            }
+
+            @Override
+            String getStringForRunningJob() {
+                return null
+            }
+
+            @Override
+            String getSpecificJobIDIdentifier() {
+                return null
+            }
+
+            @Override
+            String getSpecificJobArrayIndexIdentifier() {
+                return null
+            }
+
+            @Override
+            String getSpecificJobScratchIdentifier() {
+                return null
+            }
+
+            @Override
+            void queryJobAbortion(List list) {
+
+            }
+
+            @Override
+            Map<String, JobState> queryJobStatus(List list) {
+                return null
+            }
+
+            @Override
+            Command createCommand(Job job, String s, List list, File file, Map map, List list1, List list2) {
+                return null
+            }
+
+            @Override
+            String[] peekLogFile(Job job) {
+                return new String[0]
+            }
+
+            @Override
+            String parseJobID(String commandOutput) {
+                return null
+            }
+
+            @Override
+            String getSubmissionCommand() {
+                return null
+            }
+
+            @Override
+            Map<Job, JobState> queryJobStatus(List list, boolean forceUpdate) {
+                return null
+            }
+        }
+    }
 }
