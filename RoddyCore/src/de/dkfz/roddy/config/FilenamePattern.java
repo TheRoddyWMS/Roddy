@@ -14,6 +14,8 @@ import de.dkfz.roddy.knowledge.files.FileStageSettings;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import de.dkfz.roddy.config.FilenamePatternHelper.Command;
 import de.dkfz.roddy.config.FilenamePatternHelper.CommandAttribute;
@@ -219,6 +221,8 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
 
         /** Try and resolve the leftofer ${someKindOfValue}, stop, when nothing changed. **/
         somethingChanged = true;
+        Map<String, String> blacklist = new LinkedHashMap<>();
+        int blacklistID = 1000;
         while (src.contains("${") && somethingChanged) {
             somethingChanged = false; //Reset
             Command command = FilenamePatternHelper.extractCommand(context, EMPTY, src);
@@ -228,9 +232,21 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
             // Only change it, if the value is in the configuration.
             if(configurationValues.hasValue(command.rawName)) {
                 src = src.replace(command.fullString, configurationValues.get(command.rawName).toString());
+            } else {
+                String value = "###" + blacklistID + "###";
+                blacklist.put(value, command.fullString);
+                src = src.replace(command.fullString, value);
+                blacklistID++;
+                somethingChanged = true;
             }
             if (oldValue != src) somethingChanged = true;
         }
+
+        for(String key : blacklist.keySet()) {
+            String original = blacklist.get(key);
+            src = src.replace(key, original);
+        }
+
         return src;
     }
 
