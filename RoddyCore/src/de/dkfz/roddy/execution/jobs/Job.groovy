@@ -9,6 +9,7 @@ package de.dkfz.roddy.execution.jobs
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
 import de.dkfz.eilslabs.batcheuphoria.jobs.Command
+import de.dkfz.eilslabs.batcheuphoria.jobs.DummyCommand
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
@@ -358,7 +359,9 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
                 }
             }
         } else {
-            runResult = Roddy.getJobManager().runJob(this, true)
+            Command command = new DummyCommand(Roddy.getJobManager(), this, jobName, false)
+            setJobState(JobState.DUMMY)
+            setRunResult(new de.dkfz.eilslabs.batcheuphoria.jobs.JobResult(command, command.getExecutionID(), false, false, this.tool, parameters, parentJobs as List<de.dkfz.eilslabs.batcheuphoria.jobs.Job>))
             this.setJobState(JobState.DUMMY)
         }
 
