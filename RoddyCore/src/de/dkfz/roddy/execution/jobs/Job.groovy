@@ -37,6 +37,10 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
 
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(Job.class.getSimpleName())
 
+    public static final String TOOLID_WRAPIN_SCRIPT = "wrapinScript"
+    public static final String PARM_WRAPPED_SCRIPT = "WRAPPED_SCRIPT"
+    public static final String PARM_WRAPPED_SCRIPT_MD5 = "WRAPPED_SCRIPT_MD5"
+
     /**
      * The current context.
      */
@@ -115,8 +119,8 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
 
     Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices, Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
         super(jobName
-                , context.getConfiguration().getProcessingToolPath(context, toolID)
-                , getToolMD5(toolID, context)
+                , context.getConfiguration().getProcessingToolPath(context, TOOLID_WRAPIN_SCRIPT)
+                , getToolMD5(TOOLID_WRAPIN_SCRIPT, context)
                 , getResourceSetFromConfiguration(toolID, context)
                 , arrayIndices
                 , [:]
@@ -142,6 +146,10 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
                 this.parameters.putAll(newParameters)
             }
         }
+
+        this.parameters[PARM_WRAPPED_SCRIPT] = context.getConfiguration().getProcessingToolPath(context, toolID).getAbsolutePath()
+        this.parameters[PARM_WRAPPED_SCRIPT_MD5] = getToolMD5(toolID, context)
+
         if (inputParameters != null)
             initialInputParameters.putAll(inputParameters)
 
