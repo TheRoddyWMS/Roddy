@@ -193,8 +193,6 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
                 }
                 command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.OK);
 
-//                handleServiceBasedJobExitStatus(command, res, outputStream);
-
                 context.addCalledCommand(command);
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, ex.toString());
