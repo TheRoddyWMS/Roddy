@@ -400,7 +400,7 @@ public class Analysis {
             }
 
             // Print out context errors.
-            if (context.getErrors().size() > 0) {
+            if (context.getExecutionContextLevel() != ExecutionContextLevel.QUERY_STATUS && context.getErrors().size() > 0) {
                 StringBuilder messages = new StringBuilder();
                 boolean warningsOnly = true;
                 for (ExecutionContextError executionContextError : context.getErrors()) {
