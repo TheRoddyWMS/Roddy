@@ -506,13 +506,13 @@ public class RoddyCLIClient {
             def numberOfJobs = collectedJobs.size()
 
             if (numberOfJobs > 0) {
-                sb << "#FWHITE##BGBLUE#Information about run test for dataset: " << ec.getDataSet().getId() << "#CLEAR#" << separator;
-                sb << "  Input directory     : ${ec.getInputDirectory()}" << separator;
-                sb << "  Output directory    : ${ec.getOutputDirectory()}" << separator;
-                sb << "  Execution directory : ${ec.getExecutionDirectory()}" << separator;
+                sb << "\n#FWHITE##BGBLUE#Information about run test for dataset: " << ec.getDataSet().getId() << "#CLEAR#" << separator;
+                sb << "  #FWHITE#Input directory#CLEAR#     : ${ec.getInputDirectory()}" << separator;
+                sb << "  #FWHITE#Output directory#CLEAR#    : ${ec.getOutputDirectory()}" << separator;
+                sb << "  #FWHITE#Execution directory#CLEAR# : ${ec.getExecutionDirectory()}" << separator;
                 sb << "  #FWHITE#List of jobs (${numberOfJobs}):#CLEAR#" << separator;
             } else {
-                sb << "There were no executed jobs for dataset " << ec.getDataSet().getId() << separator;
+                sb << "#FRED#There were no executed jobs for dataset " << ec.getDataSet().getId() << "#CLEAR#" << separator;
             }
 
             for (Job job : collectedJobs) {
@@ -542,7 +542,7 @@ public class RoddyCLIClient {
                         parm = parm.replace("(", "(\n" + " ".padRight(38));
                         parm = parm.replace(")", "\n" + " ".padRight(34) + ")");
                     }
-                    sb << "      #FYELLOW#${_k.padRight(26)}: ${parm}" << "#CLEAR#" << separator;
+                    sb << "      ${_k.padRight(26)}: ${parm}"  << separator;
                 }
             }
 

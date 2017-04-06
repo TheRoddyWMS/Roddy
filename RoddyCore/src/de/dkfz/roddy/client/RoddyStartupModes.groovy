@@ -159,7 +159,7 @@ enum RoddyStartupModes {
                 [RoddyStartupModes.pack, "", "Creates a copy of the current version and puts the version number to the file name."],
                 [RoddyStartupModes.compileplugin, "(plugin ID) [--useconfig={file}]", "Compiles a plugin ."],
                 [RoddyStartupModes.packplugin, "(plugin ID) [--useconfig={file}]", "Packages the compiled plugin in dist/plugins and creates a version number for it.", "Please note that you can indeed override contents of a zip file if you do not update / compile the plugin jar!"]
-        ] )
+        ])
 
         println("================================")
         System.out.println(Constants.ENV_LINESEPARATOR + Constants.ENV_LINESEPARATOR + "Common additional options")

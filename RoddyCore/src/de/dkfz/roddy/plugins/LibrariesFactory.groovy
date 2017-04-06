@@ -200,7 +200,7 @@ public class LibrariesFactory extends Initializable {
             if (listOfClasses.size() == 1) {
                 return groovyClassLoader.loadClass(listOfClasses[0]);
             }
-            logger.severe("No class found for ${name}")
+            logger.postSometimesInfo("No class found for ${name}")
             return null;
         }
     }
@@ -210,7 +210,7 @@ public class LibrariesFactory extends Initializable {
         if (_cls == null) {
             _cls = generateSyntheticFileClassWithParentClass(classOfFileObject, baseClassOfFileObject, LibrariesFactory.getGroovyClassLoader())
             LibrariesFactory.getInstance().getSynthetic().addClass(_cls);
-            logger.severe("Class ${classOfFileObject} could not be found, created synthetic class ${_cls.name}.");
+            logger.postSometimesInfo("Class ${classOfFileObject} could not be found, created synthetic class ${_cls.name}.");
         }
         return _cls
     }

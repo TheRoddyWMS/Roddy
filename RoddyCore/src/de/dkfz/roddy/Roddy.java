@@ -250,7 +250,7 @@ public class Roddy {
 
         logger.postAlwaysInfo("Roddy version " + Constants.APP_CURRENT_VERSION_STRING);
 
-        if(!performInitialCheck())
+        if (!performInitialCheck())
             exit(1);
 
         time("ftoggleini");
@@ -283,14 +283,14 @@ public class Roddy {
     public static boolean performInitialCheck() {
         List<String> errors = new LinkedList<>();
         errors.add("Roddy cannot run:");
-        if(!ExecutionHelper.executeCommandWithExtendedResult("which jar").successful)
+        if (!ExecutionHelper.executeCommandWithExtendedResult("which jar").isSuccessful())
             errors.add("\tTool jar not found.");
-        if(!ExecutionHelper.executeCommandWithExtendedResult("which zip").successful)
+        if (!ExecutionHelper.executeCommandWithExtendedResult("which zip").isSuccessful())
             errors.add("\tTool zip not found.");
-        if(!ExecutionHelper.executeCommandWithExtendedResult("which unzip").successful)
+        if (!ExecutionHelper.executeCommandWithExtendedResult("which unzip").isSuccessful())
             errors.add("\tTool unzip not found.");
 
-        if(errors.size() == 1) return true;
+        if (errors.size() == 1) return true;
 
         logger.severe(RoddyIOHelperMethods.joinArray(errors.toArray(new String[0]), "\n"));
         return false;
@@ -408,7 +408,7 @@ public class Roddy {
             toggleIni = new File(getSettingsDirectory(), "featureToggles.ini");
         }
         if (toggleIni != null && toggleIni.exists()) { // Use default values, if the file is not available
-            logger.postAlwaysInfo("Loading a feature toggle file.");
+            logger.postAlwaysInfo("Loading feature toggle file " + toggleIni.getAbsolutePath());
             AppConfig appConfig = new AppConfig(toggleIni);
             featureToggleConfig = appConfig;
         } else {
@@ -418,19 +418,39 @@ public class Roddy {
             });
         }
         //Override toggles in ini
-        if (commandLineCall.isOptionSet(RoddyStartupOptions.enabletoggles)) {
-            List<String> enabledToggles = commandLineCall.getOptionList(RoddyStartupOptions.enabletoggles);
-            enabledToggles.forEach(toggle -> {
-                if (AvailableFeatureToggles.valueOf(toggle) != null) featureToggleConfig.setProperty(toggle, "true");
-            });
+        boolean successful = true;
+        successful &= retrieveAndSetToggleValuesFromCLI(RoddyStartupOptions.enabletoggles, true);
+        successful &= retrieveAndSetToggleValuesFromCLI(RoddyStartupOptions.disabletoggles, false);
+
+        // TODO:STRICT In Strict mode we should exit after all toggles were checked.
+        if (!successful) {
+            String toggleNames = RoddyIOHelperMethods.joinArray(AvailableFeatureToggles.values(), "\n\t");
+            logger.severe("Available toggle values are:\n\t" + toggleNames);
+        }
+    }
+
+    private static boolean retrieveAndSetToggleValuesFromCLI(RoddyStartupOptions opt, final boolean enabled) {
+        if (!(opt == RoddyStartupOptions.enabletoggles || opt == RoddyStartupOptions.disabletoggles)) {
+            // If the method is misused, we just exit. This is a programmatic error and should not punish the user.
+            return true;
         }
 
-        if (commandLineCall.isOptionSet(RoddyStartupOptions.disabletoggles)) {
-            List<String> enabledToggles = commandLineCall.getOptionList(RoddyStartupOptions.enabletoggles);
-            enabledToggles.forEach(toggle -> {
-                if (AvailableFeatureToggles.valueOf(toggle) != null) featureToggleConfig.setProperty(toggle, "false");
-            });
+        // Stores if an error happened
+        boolean error = false;
+        if (commandLineCall.isOptionSet(opt)) {
+            List<String> listOfToggles = commandLineCall.getOptionList(opt);
+            for (String toggle : listOfToggles) {
+                try {
+                    if (AvailableFeatureToggles.valueOf(toggle) != null)
+                        featureToggleConfig.setProperty(toggle, "" + enabled);
+                } catch (IllegalArgumentException e) {
+                    // Just catch and tell the user what's wrong.
+                    logger.severe("Toggle with name " + toggle + " is either misspelled or not available.");
+                    error = true;
+                }
+            }
         }
+        return !error;
     }
 
     public static boolean getFeatureToggleValue(AvailableFeatureToggles toggle) {
@@ -516,8 +536,9 @@ public class Roddy {
 
 
     private static Configuration applicationSpecificConfiguration = null;
+
     public static Configuration getApplicationSpecificConfiguration() {
-        if(applicationSpecificConfiguration == null) {
+        if (applicationSpecificConfiguration == null) {
             applicationSpecificConfiguration = new Configuration(null);
             RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
             JobManager jobManager = Roddy.getJobManager();
@@ -548,13 +569,13 @@ public class Roddy {
         Constructor first = jobManagerClass.getDeclaredConstructor(de.dkfz.eilslabs.batcheuphoria.execution.ExecutionService.class, JobManagerCreationParameters.class);
         jobManager = (JobManager) first.newInstance(ExecutionService.getInstance()
                 , new JobManagerCreationParametersBuilder()
-                .setCreateDaemon(true)
-                .setTrackUserJobsOnly(trackUserJobsOnly)
-                .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
-                .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI())
-                .setJobIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW)
-                .setJobArrayIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBARRAYINDEX_RAW)
-                .setJobScratchIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW).build());
+                        .setCreateDaemon(true)
+                        .setTrackUserJobsOnly(trackUserJobsOnly)
+                        .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
+                        .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI())
+                        .setJobIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW)
+                        .setJobArrayIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBARRAYINDEX_RAW)
+                        .setJobScratchIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW).build());
 
 
 // There are many values which need to be extracted from the xml (context, project?)
@@ -622,19 +643,18 @@ public class Roddy {
     }
 
     public static void exit(int ecode) {
-//        writePropertiesFile();
         Initializable.destroyAll();
         System.exit(ecode <= 250 ? ecode : 250); //Exit codes should be in range from 0 .. 255
     }
 
     public static void loadPropertiesFile() {
         File file = getPropertiesFilePath();
-        logger.postSometimesInfo("Loading properties file: " + file.getAbsolutePath());
-        if (!file.exists()) {
+        if (file == null || !file.exists()) {
             // Skip and exit!
-            logger.postAlwaysInfo("Could not load the application properties file: Exitting");
+            logger.postAlwaysInfo("Could not load the application properties file. Roddy will exit.");
             exit(1);
         }
+        logger.postSometimesInfo("Loading properties file: " + file.getAbsolutePath());
 
         applicationProperties = new AppConfig(file);
 
@@ -642,7 +662,6 @@ public class Roddy {
         getApplicationProperty("usePluginVersion");
         getApplicationProperty("pluginDirectories");
         getApplicationProperty("configurationDirectories");
-
     }
 
     public static AppConfig getApplicationConfiguration() {
@@ -723,8 +742,7 @@ public class Roddy {
             if (cpf.exists())
                 return cpf;
 
-        logger.postAlwaysInfo("The configuration file " + customPropertiesFile + " does not exist in any known location and will not be loaded. A default configuration will be created and used.");
-        return new File(getSettingsDirectory(), Constants.APP_PROPERTIES_FILENAME);
+        return null;
     }
 
     public static File getCompressedAnalysisToolsDirectory() {

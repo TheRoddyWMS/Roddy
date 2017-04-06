@@ -1,5 +1,7 @@
 # Work in progress
 
+* Version update to 2.3.154
+
 * Version update to 2.3.139
 
 * Version update to 2.3.134
