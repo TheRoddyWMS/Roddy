@@ -530,7 +530,7 @@ public class RoddyUIController extends BorderPane implements Initializable, Proj
                 ToggleGroup tgAnalyses = new ToggleGroup();
 
                 for (String analysis : analysesList) {
-                    List fullAnalysisID = ProjectFactory.dissectFullAnalysisID(analysis);
+                    List fullAnalysisID = ProjectLoader.dissectFullAnalysisID(analysis);
                     String id = analysis.split("[:][:]")[0];
                     String plugin = fullAnalysisID.size() > 0 ? "\n - " + fullAnalysisID.get(0).toString() : "";
 
@@ -625,7 +625,7 @@ public class RoddyUIController extends BorderPane implements Initializable, Proj
     public RoddyRMIClientConnection getRMIConnection(String analysis) {
         if (RoddyConversionHelperMethods.isNullOrEmpty(analysis) && !analysis.contains("::"))
             System.err.println("Malformed analysis " + analysis + " for getRMIConnection(), needs to be fully specified.");
-        List<String> dissected = ProjectFactory.dissectFullAnalysisID(analysis);
+        List<String> dissected = ProjectLoader.dissectFullAnalysisID(analysis);
         String pluginID = dissected.get(0);
 
         String shortAnalysisId = analysis.split("[:][:]")[0];
@@ -678,7 +678,7 @@ public class RoddyUIController extends BorderPane implements Initializable, Proj
                 List<FXDataSetWrapper> _dataSetWrappers = new LinkedList<>();
 
                 // Run a remote RMI Roddy task and load datasets from the new instance.
-                List<String> dissected = ProjectFactory.dissectFullAnalysisID(currentAnalysis);
+                List<String> dissected = ProjectLoader.dissectFullAnalysisID(currentAnalysis);
                 String shortAnalysisId = currentAnalysis.split("[:][:]")[0];
                 String pluginID = dissected.get(0);
                 if (RoddyConversionHelperMethods.isNullOrEmpty(pluginID))

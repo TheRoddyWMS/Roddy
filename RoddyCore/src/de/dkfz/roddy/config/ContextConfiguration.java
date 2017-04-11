@@ -23,9 +23,9 @@ public class ContextConfiguration extends AnalysisConfiguration {
         this.applicationSpecificConfiguration = Roddy.getApplicationSpecificConfiguration();
         this.analysisConfiguration = configuration;
         this.projectConfiguration = projectConfiguration;
-        addParent(applicationSpecificConfiguration);
         addParent(analysisConfiguration);
         addParent(projectConfiguration);
+        addParent(applicationSpecificConfiguration);
     }
 
     public AnalysisConfiguration getAnalysisConfiguration() {

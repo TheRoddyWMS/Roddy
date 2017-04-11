@@ -6,8 +6,8 @@
 
 package de.dkfz.roddy.client.rmiclient
 
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
 import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.client.cliclient.RoddyCLIClient
 import de.dkfz.roddy.core.Analysis
 import de.dkfz.roddy.core.AnalysisProcessingInformation
 import de.dkfz.roddy.core.DataSet
@@ -16,7 +16,7 @@ import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.ExecutionContextSubLevel
 import de.dkfz.roddy.core.InfoObject
-import de.dkfz.roddy.core.ProjectFactory
+import de.dkfz.roddy.core.ProjectLoader
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
@@ -200,8 +200,9 @@ public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
     public synchronized Analysis loadAnalysis(String analysisId) {
         analysisId = reformatAnalysisId(analysisId); // ensure, that long id's also work.
         if (!analysesById.containsKey(analysisId)) {
+            // We correct the analysisId and load it a bit differently than usual
             String project = Roddy.getCommandLineCall().getArguments()[1].split("[@]")[0]
-            analysesById[analysisId] = ProjectFactory.getInstance().loadAnalysis("${project}@${analysisId}");
+            analysesById[analysisId] =RoddyCLIClient.loadAnalysisOrFail("${project}@${analysisId}");
         }
         return analysesById[analysisId];
     }
