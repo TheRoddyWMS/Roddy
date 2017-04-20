@@ -542,6 +542,8 @@ public class RoddyCLIClient {
                         parm = parm.replace("(", "(\n" + " ".padRight(38));
                         parm = parm.replace(")", "\n" + " ".padRight(34) + ")");
                     }
+                    if(parm.endsWith(".auto"))
+                        parm = "#BLUE##BGYELLOW#${parm}#CLEAR#"
                     sb << "      ${_k.padRight(26)}: ${parm}" << separator;
                 }
             }

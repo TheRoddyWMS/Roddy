@@ -170,7 +170,7 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
 
     @Override
     public ExecutionResult execute(Command command, boolean waitFor = true) {
-        ExecutionContext context = ((Job)command.getJob()).getExecutionContext()
+        ExecutionContext context = ((Job) command.getJob()).getExecutionContext()
         boolean configurationDisallowsJobSubmission = Roddy.getApplicationProperty(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAGS, "").contains(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAG_NOJOBSUBMISSION);
         boolean preventCalls = context.getConfiguration().getPreventJobExecution();
         boolean pidIsBlocked = blockedPIDsForJobExecution.contains(context.getDataSet());
@@ -226,7 +226,7 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
 
     public static void storeParameterFile(Command command) {
         command.job.parameters
-        ExecutionContext context = ((Job)command.job).executionContext
+        ExecutionContext context = ((Job) command.job).executionContext
 //        throw new NotImplementedException()
         String convertedParameters = command.job.finalParameters().join("\n")
         if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
@@ -327,7 +327,7 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
      *
      * @param context
      */
-    public void writeFilesForExecution(ExecutionContext context) {
+    void writeFilesForExecution(ExecutionContext context) {
         context.setDetailedExecutionContextLevel(ExecutionContextSubLevel.RUN_SETUP_INIT);
 
         FileSystemAccessProvider provider = FileSystemAccessProvider.getInstance();
@@ -406,6 +406,46 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
         String configXML = new XMLConverter().convert(context, cfg);
         provider.writeTextFile(context.getRuntimeService().getNameOfXMLConfigurationFile(context), configXML, context);
         context.setDetailedExecutionContextLevel(ExecutionContextSubLevel.RUN_RUN);
+    }
+
+    /**
+     * Checks all the files created in writeFilesForExecution
+     * If strict mode is enabled, all missing files will lead to false.
+     * If strict mode is disabled, only neccessary files are checked.
+     * @return
+     */
+    boolean checkFilesPreparedForExecution(ExecutionContext context) {
+        if (!context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) return true
+        boolean strict = Roddy.isStrictModeEnabled()
+        def runtimeService = context.getRuntimeService()
+
+        boolean neccessaryFilesExist = true
+        boolean ignorableFilesExist = true
+
+        // Use the context check methods, so we automatically get an error message
+        [
+                runtimeService.getBaseExecutionDirectory(context),
+                context.getExecutionDirectory(),
+                context.getAnalysisToolsDirectory(),
+                context.getTemporaryDirectory(),
+                context.getLockFilesDirectory(),
+                context.getCommonExecutionDirectory(),
+        ].each {
+            neccessaryFilesExist &= context.directoryIsAccessible(it)
+        }
+
+        neccessaryFilesExist &= context.fileIsAccessible(runtimeService.getNameOfJobStateLogFile(context))
+        neccessaryFilesExist &= context.fileIsAccessible(runtimeService.getNameOfXMLConfigurationFile(context))
+        neccessaryFilesExist &= context.fileIsAccessible(runtimeService.getNameOfConfigurationFile(context))
+
+        // Check the ignorable files. It is still nice to see whether they are there
+        ignorableFilesExist &= context.fileIsAccessible(runtimeService.getNameOfExecCacheFile(context.getAnalysis()))
+        ignorableFilesExist &= context.fileIsAccessible(runtimeService.getNameOfRuntimeFile(context))
+        ignorableFilesExist &= context.fileIsAccessible(new File(context.getExecutionDirectory(), "applicationProperties.ini"))
+        ignorableFilesExist &= context.fileIsAccessible(runtimeService.getNameOfXMLConfigurationFile(context))
+
+        // Return true, if the neccessary files are there and if strict mode is enabled and in this case all ignorable files exist
+        return neccessaryFilesExist && (!strict || ignorableFilesExist)
     }
 
     /**
@@ -532,7 +572,7 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
 
         listOfFolders.each {
             File subFolder, PluginInfo pInfo ->
-                if(!subFolder.isDirectory())
+                if (!subFolder.isDirectory())
                     return
                 File localFile = mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive;
                 File remoteFile = new File(mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive.getName()[0..-5] + "_" + context.getTimestampString() + ".zip");

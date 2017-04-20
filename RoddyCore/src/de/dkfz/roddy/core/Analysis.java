@@ -345,19 +345,23 @@ public class Analysis {
      * @param context
      */
     protected void executeRun(ExecutionContext context) {
-        logger.postSometimesInfo("" + context.getExecutionContextLevel());
+        logger.rare("" + context.getExecutionContextLevel());
         boolean isExecutable;
         String datasetID = context.getDataSet().getId();
         Exception eCopy = null;
         try {
             isExecutable = ExecutionService.getInstance().checkContextPermissions(context) && context.checkExecutability();
             if (!isExecutable) {
-                logger.postAlwaysInfo("The workflow does not seem to be executable for dataset " + datasetID);
+                logger.severe("The workflow does not seem to be executable for dataset " + datasetID);
             } else {
                 try {
                     ExecutionService.getInstance().writeFilesForExecution(context);
+                    if (!ExecutionService.getInstance().checkFilesPreparedForExecution(context)) {
+                       logger.severe("Some files could not be written. Workflow will not execute for dataset " + datasetID);
+                    } else {
                     context.execute();
                     finallyStartJobsOfContext(context);
+                    }
                 } finally {
                     abortStartedJobsOfContext(context);
 
@@ -431,8 +435,6 @@ public class Analysis {
      * @param context
      */
     private void finallyStartJobsOfContext(ExecutionContext context) {
-        // Needs to be made much better!
-        logger.postAlwaysInfo("Make startHeldJobs call safe!");
         Roddy.getJobManager().startHeldJobs(context.getExecutedJobs());
     }
 

@@ -26,6 +26,7 @@ import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobResult;
 import de.dkfz.roddy.plugins.LibrariesFactory
+import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.Tuple2
 
 import java.util.*;
@@ -45,6 +46,8 @@ import java.util.*;
  */
 @groovy.transform.CompileStatic
 abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
+
+    private static LoggerWrapper logger = LoggerWrapper.getLogger(BaseFile)
 
     static abstract class ConstructionHelperForBaseFiles {
         public final ExecutionContext context;
@@ -481,10 +484,17 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
                     availablePatterns[fp.getFilenamePatternDependency()] << fp;
                 }
             }
+            Collection<FilenamePattern> allFoundPatterns = availablePatterns.values().sum() as Collection<FilenamePattern>
+            if (allFoundPatterns.size() > 0) {
+                logger.sometimes("Found ${allFoundPatterns.size()} filename patterns for file class ${baseFile.class.name}")
+                logger.rare("\t\n" + allFoundPatterns.collect { it.class.simpleName + ": " + it.pattern }.join("\t\n"))
+            } else {
+                logger.severe("Could not find any matching filename patterns for file class ${baseFile.class.name}")
+            }
         } else {
             availablePatterns = _classPatternsCache.get(baseFile.getClass());
         }
-        return availablePatterns;
+        return availablePatterns
     }
 
     /**
@@ -499,7 +509,6 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
      * @param baseFile
      * @return
      */
-
     static Tuple2<File, FilenamePattern> getFilename(BaseFile baseFile, String selectionTag) {
         if (!selectionTag)
             selectionTag = "default";
@@ -682,19 +691,19 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         FilenamePatterns:
         for (FilenamePattern _fp : availablePatterns) {
             OnScriptParameterFilenamePattern fp = _fp as OnScriptParameterFilenamePattern;
-             if (fp.getToolName() == null || fp.getToolName().equals(currentToolEntry.getID())) {
-                 List<ToolFileParameter> toolParameters =
-                         currentToolEntry.getOutputFileParameters(baseFile.getExecutionContext().getConfiguration())
-                                 .collect { it.allFiles }
-                                 .flatten() as List<ToolFileParameter>
-                 for(ToolFileParameter tp : toolParameters){
-                     if (fp.getCalledParameterId().equals(tp.scriptParameterName) && fp.getCls() == tp.fileClass) {
-                         appliedPattern = fp
-                         filename = new File(fp.apply(baseFile))
-                         continue FilenamePatterns
-                     }
-                 }
-             }
+            if (fp.getToolName() == null || fp.getToolName().equals(currentToolEntry.getID())) {
+                List<ToolFileParameter> toolParameters =
+                        currentToolEntry.getOutputFileParameters(baseFile.getExecutionContext().getConfiguration())
+                                .collect { it.allFiles }
+                                .flatten() as List<ToolFileParameter>
+                for (ToolFileParameter tp : toolParameters) {
+                    if (fp.getCalledParameterId().equals(tp.scriptParameterName) && fp.getCls() == tp.fileClass) {
+                        appliedPattern = fp
+                        filename = new File(fp.apply(baseFile))
+                        continue FilenamePatterns
+                    }
+                }
+            }
         }
         if (!filename || !appliedPattern) return null;
         return new Tuple2<>(filename, appliedPattern);

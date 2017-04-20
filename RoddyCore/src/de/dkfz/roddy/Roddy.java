@@ -242,7 +242,6 @@ public class Roddy {
 
     private static void startup(String[] args) {
 
-        logger.postAlwaysInfo("Roddy version " + Constants.APP_CURRENT_VERSION_STRING);
         time(null);
 
         List<String> list = Arrays.asList(args);
@@ -255,6 +254,7 @@ public class Roddy {
         // or the used app ini file. However, all the following methods rely on an existing valid logger setup.
         LoggerWrapper.setup(getApplicationLogDirectory());
 
+        logger.postAlwaysInfo("Roddy version " + Constants.APP_CURRENT_VERSION_STRING);
 
         time("initial checks");
         if (!performInitialCheck())
@@ -269,7 +269,11 @@ public class Roddy {
         time("parseopt");
         loadPropertiesFile();
         time("loadprop");
+
+        // Reset the logger with the new setings but keep the old logfile
+        File clf = LoggerWrapper.getCentralLogFile();
         LoggerWrapper.setup(applicationProperties);
+        LoggerWrapper.setCentralLogFile(clf);
 
         if (initializeServices(clc.startupMode.needsFullInit())) {
             time("initserv");
@@ -312,7 +316,7 @@ public class Roddy {
         }
     }
 
-    protected static boolean parseAdditionalStartupOptions(CommandLineCall clc) {
+    protected static void parseAdditionalStartupOptions(CommandLineCall clc) {
 
         try {
             //Parse different options out of the args back from behind

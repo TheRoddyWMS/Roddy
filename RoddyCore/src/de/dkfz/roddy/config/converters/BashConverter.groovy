@@ -155,8 +155,8 @@ class BashConverter extends ConfigurationConverter {
         while (somethingChanged) { //Passes
             somethingChanged = false;
             i++;
-            if (LoggerWrapper.isVerbosityHigh())
-                println "Pass ${i}, left ${listOfUnsortedValues.values().size()}";
+//            if (LoggerWrapper.isVerbosityHigh())
+//                println "Pass ${i}, left ${listOfUnsortedValues.values().size()}";
             Map<String, ConfigurationValue> foundValues = [:];
 
             //TODO Add command manager specific arguments to the command manager class, leave central things here.
@@ -182,7 +182,7 @@ class BashConverter extends ConfigurationConverter {
                 }
 
                 if (noOfDependencies > 0) {
-                    logger.postRareInfo("CValue not accepted in dependency resolution pass: ${cv.id} = ${cv.value} $separator" + notFound.collect { "Could not resolve: ${it}" }.join(separator));
+//                    logger.postRareInfo("CValue not accepted in dependency resolution pass: ${cv.id} = ${cv.value} $separator" + notFound.collect { "Could not resolve: ${it}" }.join(separator));
                     continue;
                 }
 

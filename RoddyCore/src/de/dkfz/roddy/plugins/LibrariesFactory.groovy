@@ -400,7 +400,6 @@ public class LibrariesFactory extends Initializable {
     private static List<Tuple2<File, String[]>> sortPluginDirectories(List<Tuple2<File, String[]>> collectedPluginDirectories) {
         collectedPluginDirectories = collectedPluginDirectories.sort {
             Tuple2<File, String[]> left, Tuple2<File, String[]> right ->
-                logger.postRareInfo("Call to plugin directory sort for ${left.x} vs ${right.x}");
                 List<String> splitLeft = left.x.name.split("[_:.-]") as List;
                 List<String> splitRight = right.x.name.split("[_:.-]") as List;
                 Tuple5<String, Integer, Integer, Integer, Integer> tLeft = new Tuple5<>(
