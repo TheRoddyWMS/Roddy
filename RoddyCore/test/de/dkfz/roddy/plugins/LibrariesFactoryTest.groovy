@@ -16,6 +16,7 @@ import de.dkfz.roddy.execution.io.ExecutionHelper
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.RuntimeTools
 import groovy.transform.TypeCheckingMode
 import org.junit.AfterClass
@@ -82,6 +83,10 @@ public class LibrariesFactoryTest {
     public static TemporaryFolder pluginsBaseDirWithCorrectEntries = new TemporaryFolder();
 
     public static TemporaryFolder pluginsBaseDirWithInvalidEntries = new TemporaryFolder();
+
+    public static TemporaryFolder pluginsBaseDirForResourceTests = new TemporaryFolder();
+
+    public static Map<String, PluginInfo> pluginInfoObjectsForResourceTests = [:]
 
     public static File pluginsDirWithInvalidEntries
 
@@ -171,6 +176,24 @@ public class LibrariesFactoryTest {
         ExecutionHelper.executeSingleCommand(copyTestSourceommand);
         pluginsDirWithInvalidEntries = new File(pluginsDirWithInvalidEntries, "LibrariesFactoryTestData")
         new File(pluginsDirWithInvalidEntries, "InValidContentCantRead").setReadable(false);
+    }
+
+    @BeforeClass
+    static void setupTestDataForResourceTests() {
+        pluginsBaseDirForResourceTests.create()
+        pluginInfoObjectsForResourceTests;
+
+        ["A", "B"].each { String pID ->
+            File pFolder = RoddyIOHelperMethods.assembleLocalPath(pluginsBaseDirForResourceTests.root, pID)
+            ["toolDirA", "toolDirB", "toolDirC"].each { RoddyIOHelperMethods.assembleLocalPath(pFolder, "resources", "analysisTools", it).mkdirs() }
+            pluginInfoObjectsForResourceTests[pID] = new PluginInfo(pID, null, pFolder, null, null, null, null, null, null)
+        }
+
+        ["C", "D"].each { String pID ->
+            File pFolder = RoddyIOHelperMethods.assembleLocalPath(pluginsBaseDirForResourceTests.root, pID)
+            ["toolDirD", "toolDirE", "toolDirF"].each { RoddyIOHelperMethods.assembleLocalPath(pFolder, "resources", "analysisTools", it).mkdirs() }
+            pluginInfoObjectsForResourceTests[pID] = new PluginInfo(pID, null, pFolder, null, null, null, null, null, null)
+        }
     }
 
     public static PluginInfoMap callLoadMapOfAvailablePlugins(List<File> additionalPluginDirectories = [], boolean single = false) {
@@ -271,13 +294,25 @@ public class LibrariesFactoryTest {
         Map<String, PluginInfo> pluginQueueWODefaultLibs = LibrariesFactory.buildupPluginQueue(mapOfAvailablePlugins, ["D:0.9.0"] as String[]);
         assert pluginQueueWODefaultLibs != null;
         assert pluginQueueWODefaultLibs["PluginBase"].prodVersion == "current" &&
-               pluginQueueWODefaultLibs["DefaultPlugin"].prodVersion == "current";
+                pluginQueueWODefaultLibs["DefaultPlugin"].prodVersion == "current";
+    }
+
+    @Test
+    void testCheckOnToolDirDuplicatesWithDuplicates() {
+        assert LibrariesFactory.checkOnToolDirDuplicates([pluginInfoObjectsForResourceTests["A"], pluginInfoObjectsForResourceTests["B"]])
+        assert LibrariesFactory.checkOnToolDirDuplicates([pluginInfoObjectsForResourceTests["C"], pluginInfoObjectsForResourceTests["D"]])
+    }
+
+    @Test
+    void testCheckOnToolDirDuplicatesWithoutDuplicates() {
+        assert !LibrariesFactory.checkOnToolDirDuplicates([pluginInfoObjectsForResourceTests["A"], pluginInfoObjectsForResourceTests["C"]])
+        assert !LibrariesFactory.checkOnToolDirDuplicates([pluginInfoObjectsForResourceTests["B"], pluginInfoObjectsForResourceTests["D"]])
     }
 
     @Test
     void testGetRoddyPackages() {
         Package[] list = LibrariesFactory.getInstance().getRoddyPackages()
-        assert list.findAll { Package p -> p.name.startsWith(Roddy.package.name)} == list
+        assert list.findAll { Package p -> p.name.startsWith(Roddy.package.name) } == list
     }
 
     @Test

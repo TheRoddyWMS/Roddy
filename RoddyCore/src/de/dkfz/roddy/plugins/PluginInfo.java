@@ -100,31 +100,7 @@ public class PluginInfo {
                     String toolsDir = file.getName();
                     listOfToolDirectories.put(toolsDir, file);
                 }
-
             }
-
-//            else if() { //Otherwise, finally look into the zip file. (Which must be existing at this point!)
-//                directory = RoddyIOHelperMethods.assembleLocalPath(zipFile.getParent(), zipFile.getName().split(".zip")[0]);
-//                toolsBaseDir = RoddyIOHelperMethods.assembleLocalPath(directory, "resources", "analysisTools");
-//                ZipFile zFile = new ZipFile(zipFile);
-//                try {
-//                    Enumeration<? extends ZipEntry> e = zFile.entries();
-//                    while (e.hasMoreElements()) {
-//                        String entry = e.nextElement().getName();
-//                        if (entry.endsWith("/") && !entry.endsWith("analysisTools/") && entry.contains("resources/analysisTools")) {
-//                            String name = entry.split("resources/analysisTools/")[1].split(StringConstants.SPLIT_SLASH)[0];
-//                            listOfToolDirectories.put(name, RoddyIOHelperMethods.assembleLocalPath(toolsBaseDir, name));
-//                        }
-//                    }
-//                } finally {
-//                    try {
-//                        if (zFile != null)
-//                            zFile.close();
-//                    } catch (IOException ioe) {
-//                        System.out.println("Error while closing zip file" + ioe);
-//                    }
-//                }
-//            }
         } catch (Exception ex) {
         }
     }

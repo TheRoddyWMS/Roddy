@@ -252,6 +252,13 @@ public class LibrariesFactory extends Initializable {
             logger.severe("Could not build the plugin queue for: \n" + usedPlugins.join("\n\t"))
             return false
         }
+
+        boolean finalChecksPassed = checkOnToolDirDuplicates(queue.values() as List<PluginInfo>);
+        if (!finalChecksPassed) {
+            logger.severe("Final checks for plugin loading failed. There were duplicate tool directories.")
+            return false
+        };
+
         librariesAreLoaded = loadLibraries(queue.values() as List);
         return librariesAreLoaded;
     }
@@ -595,6 +602,17 @@ public class LibrariesFactory extends Initializable {
             }
         }
         return pluginsToActivate;
+    }
+
+    /**
+     * Returns true, if there are any duplicate tool directories in the provided list of plugins
+     * @param plugins
+     * @return
+     */
+    static boolean checkOnToolDirDuplicates(List<PluginInfo> plugins) {
+        Collection<String> original = plugins.collect { it.toolsDirectories.keySet() }.flatten() as Collection<String>  // Put all elements into one list
+        def normalized = original.unique(false)  // Normalize the list, so that duplicates are removed.
+        return normalized.size() != original.size() // Test, if the size changed. If so, original contained duplicates.
     }
 
     public static boolean addFile(File f) throws IOException {
