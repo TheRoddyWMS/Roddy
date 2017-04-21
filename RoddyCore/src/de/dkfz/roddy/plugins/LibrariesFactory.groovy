@@ -253,7 +253,7 @@ public class LibrariesFactory extends Initializable {
             return false
         }
 
-        boolean finalChecksPassed = checkOnToolDirDuplicates(queue.values() as List<PluginInfo>);
+        boolean finalChecksPassed = !checkOnToolDirDuplicates(queue.values() as List<PluginInfo>);
         if (!finalChecksPassed) {
             logger.severe("Final checks for plugin loading failed. There were duplicate tool directories.")
             return false
@@ -612,7 +612,13 @@ public class LibrariesFactory extends Initializable {
     static boolean checkOnToolDirDuplicates(List<PluginInfo> plugins) {
         Collection<String> original = plugins.collect { it.toolsDirectories.keySet() }.flatten() as Collection<String>  // Put all elements into one list
         def normalized = original.unique(false)  // Normalize the list, so that duplicates are removed.
-        return normalized.size() != original.size() // Test, if the size changed. If so, original contained duplicates.
+        boolean result = normalized.size() != original.size() // Test, if the size changed. If so, original contained duplicates.
+
+        // For verbose output
+
+        logger.sometimes((["", "Found tool folders:"] + (plugins.collect { it.toolsDirectories.collect { String k, File v -> k.padRight(30) + " : " + v } }.flatten().sort() as List<String>)).join("\n\t"));
+
+        return result
     }
 
     public static boolean addFile(File f) throws IOException {

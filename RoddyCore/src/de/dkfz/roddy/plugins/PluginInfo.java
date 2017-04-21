@@ -7,6 +7,7 @@
 package de.dkfz.roddy.plugins;
 
 import de.dkfz.roddy.StringConstants;
+import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.tools.RuntimeTools;
@@ -24,6 +25,8 @@ import java.util.zip.ZipFile;
  * An informational class for loaded plugins.
  */
 public class PluginInfo {
+
+    private static LoggerWrapper logger = LoggerWrapper.getLogger(PluginInfo.class);
 
     public enum PluginInfoConnection {
         /**
@@ -97,6 +100,11 @@ public class PluginInfo {
 
             if (toolsBaseDir != null && toolsBaseDir.exists() && toolsBaseDir.isDirectory()) { //Search through the default folders, if possible.
                 for (File file : toolsBaseDir.listFiles()) {
+                    if(!file.isDirectory() || file.isHidden()) {
+                        logger.always("Ignore directory " + file.getAbsolutePath() + "; It is not a valid tools directory.");
+                        continue;
+                    }
+
                     String toolsDir = file.getName();
                     listOfToolDirectories.put(toolsDir, file);
                 }
@@ -171,23 +179,6 @@ public class PluginInfo {
                 && roddyAPIVersion == RuntimeTools.getGroovyRuntimeVersion();
     }
 
-    public boolean isJavaProject() {
-        File srcFolder = new File(directory, "src");
-        // Java projects need a valid jar file
-        // Scan for java files?? Only in src?
-        return false;
-    }
-
-    public boolean isGroovyProject() {
-        // Scan for groovy files?? Only in src?
-        return false;
-    }
-
-    public boolean hasValidJarFile() {
-        // Check
-        return false;
-    }
-
     public int getRevision() {
         int result = 0;
         try {
@@ -198,7 +189,6 @@ public class PluginInfo {
                 result = RoddyConversionHelperMethods.toInt(split[1], 0);
         } catch (Exception e) {
             System.out.println("Error for revision fetch of " + this.name + " in " + this.directory);
-//            e.printStackTrace();
         }
         return result;
     }
