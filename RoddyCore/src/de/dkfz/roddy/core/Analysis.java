@@ -356,11 +356,18 @@ public class Analysis {
             } else {
                 try {
                     ExecutionService.getInstance().writeFilesForExecution(context);
+                    boolean execute = true;
                     if (!ExecutionService.getInstance().checkFilesPreparedForExecution(context)) {
-                       logger.severe("Some files could not be written. Workflow will not execute for dataset " + datasetID);
-                    } else {
-                    context.execute();
-                    finallyStartJobsOfContext(context);
+                        logger.severe("Some files could not be written. Workflow will not execute for dataset " + datasetID);
+                        execute = false;
+                    }
+                    if (!ExecutionService.getInstance().checkCopiedAnalysisTools(context)) {
+                        logger.severe("Some declared tools are not executable. Workflow will not execute for dataset " + datasetID);
+                        execute = false;
+                    }
+                    if (execute) {
+                        context.execute();
+                        finallyStartJobsOfContext(context);
                     }
                 } finally {
                     abortStartedJobsOfContext(context);

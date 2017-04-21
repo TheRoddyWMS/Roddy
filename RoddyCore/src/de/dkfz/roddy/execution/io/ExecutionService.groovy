@@ -449,6 +449,34 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
     }
 
     /**
+     * Which tools should be checked?
+     * My best guess is to check all the defined tools.
+     * @return
+     */
+    boolean checkCopiedAnalysisTools(ExecutionContext context) {
+        boolean checked = true
+        context.getConfiguration().getTools().each {
+            ToolEntry tool ->
+                File toolPath = context.configuration.getProcessingToolPath(context, tool.id)
+                checked &= context.fileIsExecutable(toolPath)
+        }
+        return checked
+    }
+
+    void markConfiguredToolsAsExecutable(ExecutionContext context) {
+        logger.severe("ExecutionService.markConfiguredToolsAsExecutable is not implemented yet! Only checks for executability are available.")
+//        context.getConfiguration().getTools().each {
+//            ToolEntry tool ->
+//                File toolPath = context.configuration.getProcessingToolPath(context, tool.id)
+//
+//                def instance = FileSystemAccessProvider.getInstance()
+//
+//                instance.setDefaultAccessRights()
+//
+//        }
+    }
+
+    /**
      * Copy and link analysis tools folders to the target analysis tools directory. Analysis tools folder names must be unique over all plugins.
      * However this is not enforced.
      * @param context
@@ -504,6 +532,7 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
                     provider.setDefaultAccessRightsRecursively(dstAnalysisToolsDirectory, context);
             }
         }
+        markConfiguredToolsAsExecutable(context)
     }
 
     /**
