@@ -206,7 +206,7 @@ class BashConverter extends ConfigurationConverter {
         (string.startsWith("'") && string.endsWith("'")) || (string.startsWith('"') && string.endsWith('"'))
     }
 
-    StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context, Boolean quoteSomeScalarConfigValues) {
+    StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context, Boolean quoteSomeScalarConfigValues, Boolean autoQuoteArrays) {
         StringBuilder text = new StringBuilder();
         String declareVar = ""
         String declareInt = ""
@@ -219,13 +219,13 @@ class BashConverter extends ConfigurationConverter {
         } else {
             String tmp
 
-                if (cv.type && cv.type.toLowerCase() == "basharray") {
-                // Check, if it is already quoted.
-                // If so, take the existing quotes.
-                if (isQuoted(cv.value))
-                    return new StringBuilder("${declareVar} ${cv.id}=${cv.toString()}".toString());
-                // If not, quote
-                return new StringBuilder("${declareVar} ${cv.id}=\"${cv.toString()}\"".toString());
+            if (cv.type && cv.type.toLowerCase() == "basharray") {
+                // Check, if it is already quoted OR auto quote is disabled
+                // If so, take the existing quotes, if not auto-quote
+                if (isQuoted(cv.value) || !autoQuoteArrays)
+                    return new StringBuilder("${declareVar} ${cv.id}=${cv.toString()}".toString())
+                else
+                    return new StringBuilder("${declareVar} ${cv.id}=\"${cv.toString()}\"".toString());
             } else if (cv.type && cv.type.toLowerCase() == "integer") {
                 return new StringBuilder("${declareInt} ${cv.id}=${cv.toString()}".toString());
             } else if (cv.type && ["double", "float"].contains(cv.type.toLowerCase())) {
@@ -254,7 +254,12 @@ class BashConverter extends ConfigurationConverter {
     @Override
     @CompileStatic
     StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context) {
-        convertConfigurationValue(cv, context, context.getFeatureToggleStatus(AvailableFeatureToggles.QuoteSomeScalarConfigValues))
+        convertConfigurationValue(
+                cv
+                , context
+                , context.getFeatureToggleStatus(AvailableFeatureToggles.QuoteSomeScalarConfigValues)
+                , context.getFeatureToggleStatus(AvailableFeatureToggles.AutoQuoteBashArrayVariables)
+        )
     }
 
     public Configuration loadShellScript(String configurationFile) {
