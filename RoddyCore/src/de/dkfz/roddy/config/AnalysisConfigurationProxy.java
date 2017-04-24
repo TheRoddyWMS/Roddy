@@ -283,11 +283,6 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
-    public boolean getUseCentralAnalysisArchive() {
-        return checkAnalysisConfig().getUseCentralAnalysisArchive();
-    }
-
-    @Override
     public String getSSHExecutionUser() {
         return checkAnalysisConfig().getSSHExecutionUser();
     }

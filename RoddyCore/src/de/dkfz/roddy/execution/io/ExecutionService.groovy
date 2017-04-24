@@ -7,9 +7,7 @@
 package de.dkfz.roddy.execution.io
 
 import de.dkfz.eilslabs.batcheuphoria.jobs.Command
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
 import de.dkfz.eilslabs.batcheuphoria.jobs.DummyCommand
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
@@ -33,7 +31,6 @@ import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
-import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 import java.util.logging.Level
 
@@ -350,8 +347,8 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
 
         if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) {
             provider.checkDirectories([executionBaseDirectory, executionDirectory, temporaryDirectory, lockFilesDirectory], context, true);
-            logger.postAlwaysInfo("Creating the following execution directory to store information about this process:")
-            logger.postAlwaysInfo("\t${executionDirectory.getAbsolutePath()}");
+            logger.always("Creating the following execution directory to store information about this process:")
+            logger.always("\t${executionDirectory.getAbsolutePath()}");
         }
 
         Configuration cfg = context.getConfiguration();
@@ -486,7 +483,6 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
         Configuration cfg = context.getConfiguration();
         File dstExecutionDirectory = context.getExecutionDirectory();
         File dstAnalysisToolsDirectory = context.getAnalysisToolsDirectory();
-        boolean useCentralAnalysisArchive = cfg.getUseCentralAnalysisArchive();
 
         //Current analysisTools directory (they are also used for execution)
         Map<File, PluginInfo> sourcePaths = [:];
@@ -495,73 +491,103 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
         }
 
         provider.checkDirectory(dstExecutionDirectory, context, true);
-        if (useCentralAnalysisArchive) {
-            String[] existingArchives = provider.loadTextFile(context.getFileForAnalysisToolsArchiveOverview());
-            Roddy.getCompressedAnalysisToolsDirectory().mkdir();
 
-            Map<File, PluginInfo> listOfFolders = sourcePaths.findAll { File it, PluginInfo pInfo -> !it.getName().contains(".svn"); }
+        String[] existingArchives = provider.loadTextFile(context.getFileForAnalysisToolsArchiveOverview());
+        Roddy.getCompressedAnalysisToolsDirectory().mkdir();
 
-            //Add used base paths to configuration.
-            listOfFolders.each {
-                File folder, PluginInfo pInfo ->
-                    def bPathID = folder.getName()
-                    String basepathConfigurationID = ConfigurationConverter.createVariableName(ConfigurationConstants.CVALUE_PREFIX_BASEPATH, bPathID);
-                    cfg.getConfigurationValues().add(new ConfigurationValue(basepathConfigurationID, RoddyIOHelperMethods.assembleLocalPath(dstExecutionDirectory, "analysisTools", bPathID).getAbsolutePath(), "string"));
-            }
+        Map<File, PluginInfo> listOfFolders = sourcePaths.findAll { File it, PluginInfo pInfo -> !it.getName().contains(".svn"); }
 
-            Map<String, List<Map<String, String>>> mapOfInlineScripts = [:]
+        //Add used base paths to configuration.
+        listOfFolders.each {
+            File folder, PluginInfo pInfo ->
+                def bPathID = folder.getName()
+                String basepathConfigurationID = ConfigurationConverter.createVariableName(ConfigurationConstants.CVALUE_PREFIX_BASEPATH, bPathID);
+                cfg.getConfigurationValues().add(new ConfigurationValue(basepathConfigurationID, RoddyIOHelperMethods.assembleLocalPath(dstExecutionDirectory, "analysisTools", bPathID).getAbsolutePath(), "string"));
+        }
 
-            for (ToolEntry tool in cfg.getTools().allValuesAsList) {
-                if (tool.hasInlineScript()) {
-                    mapOfInlineScripts.get(tool.basePathId, []) << ["inlineScript": tool.getInlineScript(), "inlineScriptName": tool.getInlineScriptName()]
-                }
-            }
+        Map<String, List<Map<String, String>>> mapOfInlineScripts = [:]
 
-            long startParallelCompression = System.nanoTime()
-            writeInlineScriptsAndCompressToolFolders(listOfFolders, mapOfInlineScripts)
-            logger.postRareInfo("Overall tool compression took ${(System.nanoTime() - startParallelCompression) / 1000000} ms.");
-
-            // Now check if the local file with its md5 sum exists on the remote site.
-            moveCompressedToolFilesToRemoteLocation(listOfFolders, existingArchives, provider, context)
-
-        } else {
-            sourcePaths.each {
-                File sourcePath, PluginInfo pInfo ->
-                    provider.checkDirectory(dstAnalysisToolsDirectory, context, true);
-                    provider.copyDirectory(sourcePath, dstAnalysisToolsDirectory);
-                    provider.setDefaultAccessRightsRecursively(dstAnalysisToolsDirectory, context);
+        for (ToolEntry tool in cfg.getTools().allValuesAsList) {
+            if (tool.hasInlineScript()) {
+                mapOfInlineScripts.get(tool.basePathId, []) << ["inlineScript": tool.getInlineScript(), "inlineScriptName": tool.getInlineScriptName()]
             }
         }
+
+        long startParallelCompression = System.nanoTime()
+
+        // Check and override the listOfFolders, eventually create new temporary folders, if inline scripts are used
+        listOfFolders = writeInlineScriptsAndCorrectListOfFolders(listOfFolders, mapOfInlineScripts)
+
+        // Compress the new (or old) folder list.
+        compressToolFolders(listOfFolders, mapOfInlineScripts)
+        logger.postRareInfo("Overall tool compression took ${(System.nanoTime() - startParallelCompression) / 1000000} ms.");
+
+        // Now check if the local file with its md5 sum exists on the remote site.
+        moveCompressedToolFilesToRemoteLocation(listOfFolders, existingArchives, provider, context)
+
         markConfiguredToolsAsExecutable(context)
     }
 
     /**
      * Add inline scripts and compress existing tool folders to a central location and generate some md5 sums for them.
+     *
+     * 1. Create a new temp folder
+     * 2.a If there are inline scripts in the folder:
+     *  3. copy the script subfolder to the newly created temp folder AND
+     *  4. Copy all inline scripts to files.
+     *  5. Create a corrected entry in the new map
+     * 2.b If not, put the original folder entry to the map
+     *
      * @param listOfFolders
      * @param mapOfInlineScriptsBySubfolder - Map<SubfolderName,ScriptName>
      */
-    public void writeInlineScriptsAndCompressToolFolders(Map<File, PluginInfo> listOfFolders, Map<String, List<Map<String, String>>> mapOfInlineScriptsBySubfolder) {
+    Map<File, PluginInfo> writeInlineScriptsAndCorrectListOfFolders(Map<File, PluginInfo> listOfFolders, Map<String, List<Map<String, String>>> mapOfInlineScriptsBySubfolder) {
+
+        Map<File, PluginInfo> correctedListOfFolders = [:]
 
         listOfFolders.keySet().parallelStream().each {
             File subFolder ->
                 if (!subFolder.isDirectory()) return
-                long startSingleCompression = System.nanoTime()
                 PluginInfo pInfo = listOfFolders[subFolder]
+
+                if (!mapOfInlineScriptsBySubfolder.containsKey(subFolder.getName())){
+                    correctedListOfFolders[subFolder] = pInfo
+                    return
+                }
+
+                // Create the temp folder
                 File tempFolder = File.createTempDir();
                 tempFolder.deleteOnExit()
                 tempFolder = RoddyIOHelperMethods.assembleLocalPath(tempFolder, subFolder.getName())
+
+                // Copy the original scripts to the new folder
                 RoddyIOHelperMethods.copyDirectory(subFolder, tempFolder);
                 logger.postSometimesInfo("Folder ${subFolder.getName()} copied to ${tempFolder.getAbsolutePath()}");
-                // Create files...
-                if (mapOfInlineScriptsBySubfolder.containsKey(subFolder.getName())) {
-                    mapOfInlineScriptsBySubfolder[subFolder.getName()].each {
-                        scriptEntry ->
-                            new File(tempFolder, scriptEntry["inlineScriptName"]) << scriptEntry["inlineScript"]
-                    }
-                }
 
+                // Create inline script files in new folder
+                mapOfInlineScriptsBySubfolder[subFolder.getName()].each {
+                    scriptEntry ->
+                        new File(tempFolder, scriptEntry["inlineScriptName"]) << scriptEntry["inlineScript"]
+                }
+                correctedListOfFolders[tempFolder] = pInfo
+        }
+        return correctedListOfFolders
+    }
+
+    /**
+     * Compress all folders in the given list of folders.
+     * Also create some sort of (md5 based) checksum for this.
+     * @param listOfFolders
+     * @param mapOfInlineScriptsBySubfolder
+     */
+    void compressToolFolders(Map<File, PluginInfo> listOfFolders, Map<String, List<Map<String, String>>> mapOfInlineScriptsBySubfolder) {
+        listOfFolders.keySet().parallelStream().each {
+            File subFolder ->
+                long startSingleCompression = System.nanoTime()
+
+                PluginInfo pInfo = listOfFolders[subFolder]
                 // Md5sum from tempFolder
-                String md5sum = RoddyIOHelperMethods.getSingleMD5OfFilesInDirectory(tempFolder);
+                String md5sum = RoddyIOHelperMethods.getSingleMD5OfFilesInDirectory(subFolder);
                 String zipFilename = "cTools_${pInfo.getName()}:${pInfo.getProdVersion()}_${subFolder.getName()}.zip";
                 String zipMD5Filename = zipFilename + "_contentmd5";
                 File tempFile = new File(Roddy.getCompressedAnalysisToolsDirectory(), zipFilename);
@@ -574,7 +600,7 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
                     createNew = true;
 
                 if (createNew) {
-                    RoddyIOHelperMethods.compressDirectory(tempFolder, tempFile)
+                    RoddyIOHelperMethods.compressDirectory(subFolder, tempFile)
                     zipMD5File << md5sum
                 }
 
