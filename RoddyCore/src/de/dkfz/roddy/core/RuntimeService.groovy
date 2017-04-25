@@ -51,7 +51,10 @@ public abstract class RuntimeService extends CacheProvider {
     public static final String FILENAME_EXECUTEDJOBS_INFO = "executedJobs.txt"
     public static final String FILENAME_ANALYSES_MD5_OVERVIEW = "zippedAnalysesMD5.txt"
     public static final String DIRECTORY_RODDY_COMMON_EXECUTION = ".roddyExecutionStore"
+    public static final String DIRNAME_RESOURCES = "resources"
     public static final String DIRNAME_ANALYSIS_TOOLS = "analysisTools"
+    public static final String DIRNAME_BRAWLWORKFLOWS = "brawlworkflows"
+    public static final String DIRNAME_CONFIG_FILES = "configurationFiles"
     public static final String RODDY_CENTRAL_EXECUTION_DIRECTORY = "RODDY_CENTRAL_EXECUTION_DIRECTORY"
 
     public RuntimeService() {

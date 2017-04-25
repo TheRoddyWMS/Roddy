@@ -7,6 +7,7 @@
 package de.dkfz.roddy.plugins
 
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import org.junit.BeforeClass
 
@@ -27,12 +28,12 @@ class PluginInfoTest extends GroovyTestCase {
         validPlugin = RoddyIOHelperMethods.assembleLocalPath(testdir, "Valid")
         badPlugin = RoddyIOHelperMethods.assembleLocalPath(testdir, "Invalid")
         ["1", "2"].each {
-            RoddyIOHelperMethods.assembleLocalPath(testdir, "Valid", "resources", "analysisTools", it).mkdirs()
+            RoddyIOHelperMethods.assembleLocalPath(testdir, "Valid", RuntimeService.DIRNAME_RESOURCES, RuntimeService.DIRNAME_ANALYSIS_TOOLS, it).mkdirs()
         }
         ["1", ".3"].each {
-            RoddyIOHelperMethods.assembleLocalPath(testdir, "Invalid", "resources", "analysisTools", it).mkdirs()
+            RoddyIOHelperMethods.assembleLocalPath(testdir, "Invalid", RuntimeService.DIRNAME_RESOURCES, RuntimeService.DIRNAME_ANALYSIS_TOOLS, it).mkdirs()
         }
-        RoddyIOHelperMethods.assembleLocalPath(testdir, "Invalid", "resources", "analysisTools", "file") << "TOUCHED"
+        RoddyIOHelperMethods.assembleLocalPath(testdir, "Invalid", RuntimeService.DIRNAME_RESOURCES, RuntimeService.DIRNAME_ANALYSIS_TOOLS, "file") << "TOUCHED"
     }
 
     void testConstructionWithValidDirectoryEntries() {
