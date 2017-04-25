@@ -7,6 +7,7 @@
 package de.dkfz.roddy.config;
 
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize;
+import de.dkfz.roddy.core.RuntimeService;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.config.validation.ConfigurationValidationError;
 import de.dkfz.roddy.core.ExecutionContext;
@@ -326,7 +327,7 @@ public class Configuration implements ContainerParent<Configuration> {
 
     public File getProcessingToolPath(ExecutionContext context, String tool) {
         ToolEntry te = tools.getValue(tool);
-        File toolPath = new File(new File(new File(context.getExecutionDirectory(), "analysisTools"), te.basePathId), te.path);
+        File toolPath = new File(new File(new File(context.getExecutionDirectory(), RuntimeService.DIRNAME_ANALYSIS_TOOLS), te.basePathId), te.path);
         return toolPath;
     }
 

@@ -7,6 +7,7 @@
 package de.dkfz.roddy.plugins;
 
 import de.dkfz.roddy.StringConstants;
+import de.dkfz.roddy.core.RuntimeService;
 import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
@@ -92,11 +93,7 @@ public class PluginInfo {
     private void fillListOfToolDirectories() {
         File toolsBaseDir = null;
         try {
-            if (developmentDirectory != null && developmentDirectory.exists()) {
-                toolsBaseDir = new File(new File(developmentDirectory, "resources"), "analysisTools");
-            } else if (directory != null && directory.exists()) {
-                toolsBaseDir = new File(new File(directory, "resources"), "analysisTools");
-            }
+            toolsBaseDir = getToolsDirectory();
 
             if (toolsBaseDir != null && toolsBaseDir.exists() && toolsBaseDir.isDirectory()) { //Search through the default folders, if possible.
                 for (File file : toolsBaseDir.listFiles()) {
@@ -113,12 +110,21 @@ public class PluginInfo {
         }
     }
 
+    public File getToolsDirectory() {
+        if (developmentDirectory != null && developmentDirectory.exists()) {
+            return new File(new File(developmentDirectory, RuntimeService.DIRNAME_RESOURCES), RuntimeService.DIRNAME_ANALYSIS_TOOLS);
+        } else if (directory != null && directory.exists()) {
+            return new File(new File(directory, RuntimeService.DIRNAME_RESOURCES), RuntimeService.DIRNAME_ANALYSIS_TOOLS);
+        }
+        return null;
+    }
+
     public File getBrawlWorkflowDirectory() {
-        return new File(new File(directory, "resources"), "brawlworkflows");
+        return new File(new File(directory, RuntimeService.DIRNAME_RESOURCES), RuntimeService.DIRNAME_BRAWLWORKFLOWS);
     }
 
     public File getConfigurationDirectory() {
-        return new File(new File(directory, "resources"), "configurationFiles");
+        return new File(new File(directory, RuntimeService.DIRNAME_RESOURCES), RuntimeService.DIRNAME_CONFIG_FILES);
     }
 
     public String getName() {
