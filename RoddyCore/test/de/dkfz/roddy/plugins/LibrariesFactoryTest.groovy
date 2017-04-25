@@ -9,6 +9,7 @@ package de.dkfz.roddy.plugins
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
@@ -185,13 +186,13 @@ public class LibrariesFactoryTest {
 
         ["A", "B"].each { String pID ->
             File pFolder = RoddyIOHelperMethods.assembleLocalPath(pluginsBaseDirForResourceTests.root, pID)
-            ["toolDirA", "toolDirB", "toolDirC"].each { RoddyIOHelperMethods.assembleLocalPath(pFolder, "resources", "analysisTools", it).mkdirs() }
+            ["toolDirA", "toolDirB", "toolDirC"].each { RoddyIOHelperMethods.assembleLocalPath(pFolder, RuntimeService.DIRNAME_RESOURCES, RuntimeService.DIRNAME_ANALYSIS_TOOLS, it).mkdirs() }
             pluginInfoObjectsForResourceTests[pID] = new PluginInfo(pID, null, pFolder, null, null, null, null, null, null)
         }
 
         ["C", "D"].each { String pID ->
             File pFolder = RoddyIOHelperMethods.assembleLocalPath(pluginsBaseDirForResourceTests.root, pID)
-            ["toolDirD", "toolDirE", "toolDirF"].each { RoddyIOHelperMethods.assembleLocalPath(pFolder, "resources", "analysisTools", it).mkdirs() }
+            ["toolDirD", "toolDirE", "toolDirF"].each { RoddyIOHelperMethods.assembleLocalPath(pFolder, RuntimeService.DIRNAME_RESOURCES, RuntimeService.DIRNAME_ANALYSIS_TOOLS, it).mkdirs() }
             pluginInfoObjectsForResourceTests[pID] = new PluginInfo(pID, null, pFolder, null, null, null, null, null, null)
         }
     }
