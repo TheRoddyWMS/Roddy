@@ -206,7 +206,7 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
         }
 
         if (resourceSets.size() == 0)
-            return new ResourceSet(null, null, null, null, null, null, null, null)
+            return new EmptyResourceSet()
 
         ResourceSet first = resourceSets.get(0);
         ResourceSet last = resourceSets.get(resourceSets.size() - 1);
@@ -226,7 +226,7 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
                 return resourceSet
         }
 
-        return new ResourceSet(null, null, null, null, null, null, null, null)
+        return new EmptyResourceSet()
     }
 
     void setOverridesResourceSets() {

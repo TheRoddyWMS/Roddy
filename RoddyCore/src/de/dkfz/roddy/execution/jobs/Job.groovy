@@ -214,6 +214,10 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
             if (newPath == null) {
                 // Auto path!
                 int slotPosition = allRawInputParameters.keySet().asList().indexOf(k)
+                if(Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.FailOnAutoFilenames))
+                    throw new RuntimeException("Auto filenames are forbidden when strict mode is active.")
+                else
+                    context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("An auto filename will be used for ${jobName}:${slotPosition} / ${bf.class.name}"))
                 String completeString = jobName + k + slotPosition
                 if (parentFiles)
                     parentFiles.each {

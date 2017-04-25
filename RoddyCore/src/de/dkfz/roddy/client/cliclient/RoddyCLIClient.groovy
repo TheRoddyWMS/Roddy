@@ -532,14 +532,15 @@ public class RoddyCLIClient {
 
             for (Job job : collectedJobs) {
 
-                String resources = "Unknown resource entry";
+                String resources = " Unknown resource entry ";
 
                 try {
                     ToolEntry tool = configuration.getTools().getValue(job.getToolID());
                     ResourceSet resourceSet = tool.getResourceSet(configuration);
-                    ProcessingCommands convertResourceSet = Roddy.getJobManager().convertResourceSet(resourceSet);
-                    resources = convertResourceSet.toString();
-
+                    if (!resourceSet instanceof EmptyResourceSet) {
+                        ProcessingCommands convertResourceSet = Roddy.getJobManager().convertResourceSet(resourceSet);
+                        resources = convertResourceSet.toString();
+                    }
                 } catch (Exception ex) {
                 }
 

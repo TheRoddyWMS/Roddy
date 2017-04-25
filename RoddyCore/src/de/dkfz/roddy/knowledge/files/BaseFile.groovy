@@ -202,10 +202,13 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
 
     private String idxInFileGroup = null;
 
+    private ConstructionHelperForBaseFiles helperObject = null
+
     protected BaseFile(ConstructionHelperForBaseFiles helper) {
         super(helper.context);
         executionContext.addFile(this);
         idxInFileGroup = helper.indexInFileGroup
+        this.helperObject = helper
 
         if (helper instanceof ConstructionHelperForGenericCreation) { //Manual creation is currently intrinsic.
             ConstructionHelperForGenericCreation _helper = helper as ConstructionHelperForGenericCreation;
@@ -682,29 +685,25 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
      */
     private static Tuple2<File, FilenamePattern> findFilenameFromOnScriptParameterPatterns(BaseFile baseFile, LinkedList<FilenamePattern> availablePatterns, String selectionTag) {
         Tuple2<File, FilenamePattern> result = null;
-        File filename = null;
-        FilenamePattern appliedPattern = null;
+
         //Find the called basefile method, if on_method patterns are available.
         if (!availablePatterns) return result;
 
-        ToolEntry currentToolEntry = baseFile.getExecutionContext().getCurrentExecutedTool()
-        FilenamePatterns:
-        for (FilenamePattern _fp : availablePatterns) {
-            OnScriptParameterFilenamePattern fp = _fp as OnScriptParameterFilenamePattern;
-            if (fp.getToolName() == null || fp.getToolName().equals(currentToolEntry.getID())) {
-                List<ToolFileParameter> toolParameters =
-                        currentToolEntry.getOutputFileParameters(baseFile.getExecutionContext().getConfiguration())
-                                .collect { it.allFiles }
-                                .flatten() as List<ToolFileParameter>
-                for (ToolFileParameter tp : toolParameters) {
-                    if (fp.getCalledParameterId().equals(tp.scriptParameterName) && fp.getCls() == tp.fileClass) {
-                        appliedPattern = fp
-                        filename = new File(fp.apply(baseFile))
-                        continue FilenamePatterns
-                    }
-                }
-            }
+        ConstructionHelperForGenericCreation helper = baseFile.helperObject as ConstructionHelperForGenericCreation
+
+        if (helper == null)
+            throw new RuntimeException("To use on script parameter patterns, an object of type ConstructionHelperForGenericCreation is needed.")
+
+        FilenamePattern appliedPattern = availablePatterns.find {
+            FilenamePattern _fp ->
+                OnScriptParameterFilenamePattern fp = _fp as OnScriptParameterFilenamePattern
+                boolean parameterFound = fp.calledParameterId == helper.slotID
+                boolean scriptValid = fp.toolName ? fp.toolName == helper.toolID : true
+
+                return parameterFound && scriptValid
         }
+        File filename = new File(appliedPattern.apply(baseFile))
+
         if (!filename || !appliedPattern) return null;
         return new Tuple2<>(filename, appliedPattern);
     }
