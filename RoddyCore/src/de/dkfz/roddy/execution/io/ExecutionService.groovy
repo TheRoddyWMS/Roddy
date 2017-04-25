@@ -452,10 +452,9 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
      */
     boolean checkCopiedAnalysisTools(ExecutionContext context) {
         boolean checked = true
-        context.getConfiguration().getTools().each {
-            ToolEntry tool ->
-                File toolPath = context.configuration.getProcessingToolPath(context, tool.id)
-                checked &= context.fileIsExecutable(toolPath)
+        for (ToolEntry tool in context.getConfiguration().getTools().getAllValuesAsList()) {
+            File toolPath = context.configuration.getProcessingToolPath(context, tool.id)
+            checked &= context.fileIsExecutable(toolPath)
         }
         return checked
     }
