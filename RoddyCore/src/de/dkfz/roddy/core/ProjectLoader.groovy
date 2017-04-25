@@ -121,28 +121,33 @@ class ProjectLoader {
      * @return An analysis object containing linking a project and an analysis configuration.
      */
     Analysis loadAnalysisAndProject(String configurationIdentifier) {
-        if (_analysisCache.containsKey(configurationIdentifier))
-            return _analysisCache[configurationIdentifier];
+        try {
+            if (_analysisCache.containsKey(configurationIdentifier))
+                return _analysisCache[configurationIdentifier];
 
-        extractProjectIDAndAnalysisIDOrFail(configurationIdentifier)
+            extractProjectIDAndAnalysisIDOrFail(configurationIdentifier)
 
-        loadPluginsOrFail(getFullAnalysisID(projectID, analysisID), analysisID)
+            loadPluginsOrFail(projectID, analysisID)
 
-        loadProjectConfigurationOrFail(projectID, analysisID)
+            loadProjectConfigurationOrFail(projectID, analysisID)
 
-        createProjectFromConfigurationOrFail()
+            createProjectFromConfigurationOrFail()
 
-        loadAnalysisOrFail()
+            loadAnalysisOrFail()
 
-        // Also a failed analysis object should go to cache.
-        // Put into cache
-        _analysisCache[configurationIdentifier] = analysis;
+            // Also a failed analysis object should go to cache.
+            // Put into cache
+            _analysisCache[configurationIdentifier] = analysis;
 
-        performFinalChecksOrFail(analysis, configurationIdentifier, projectConfiguration, projectID)
+            performFinalChecksOrFail(analysis, configurationIdentifier, projectConfiguration, projectID)
 
-        // Try to build up the metadata table from here on. Project and analysis are ready.
-        MetadataTableFactory.getTable(analysis);
-        return analysis;
+            // Try to build up the metadata table from here on. Project and analysis are ready.
+            MetadataTableFactory.getTable(analysis);
+            return analysis;
+        } catch (ProjectLoaderException ex) {
+            logger.severe(ex.message);
+            return null;
+        }
     }
 
     void extractProjectIDAndAnalysisIDOrFail(String configurationIdentifier) {
@@ -158,7 +163,9 @@ class ProjectLoader {
             throw new ProjectLoaderException("Could not extract analysis for ${configurationIdentifier}.");
     }
 
-    void loadPluginsOrFail(String fullAnalysisID, String analysisID) {
+    void loadPluginsOrFail(String projectID, String analysisID) {
+        String fullAnalysisID = getFullAnalysisID(projectID, analysisID)
+
         def res
         LibrariesFactory librariesFactory = LibrariesFactory.initializeFactory();
         boolean pluginsAreLoaded = false;
