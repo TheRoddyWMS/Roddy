@@ -664,7 +664,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         String id = baseFile.getExecutionContext().getCurrentExecutedTool().getID();
         for (FilenamePattern _fp : availablePatterns) {
             OnToolFilenamePattern fp = _fp as OnToolFilenamePattern;
-            if (fp.getCalledScriptID().equals(id)) {
+            if (fp.getCalledScriptID().equals(id) && fp.selectionTag == selectionTag) {
                 appliedPattern = fp;
                 filename = new File(fp.apply(baseFile));
                 break;

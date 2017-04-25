@@ -165,7 +165,7 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
 
     static ResourceSet getResourceSetFromConfiguration(String toolID, ExecutionContext context) {
         ToolEntry te = context.getConfiguration().getTools().getValue(toolID)
-        return te.getResourceSet(context.configuration)
+        return te.getResourceSet(context.configuration) ?: new ResourceSet(null, null, null, null, null, null, null, null);
     }
 
     static String getToolMD5(String toolID, ExecutionContext context) {
@@ -267,6 +267,8 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
     Map<String, String> convertResourceSetToParameters() {
         def rs = getResourceSet()
         Map<String, String> rsParameters = [:]
+        if (rs == null) return rsParameters
+
         if (rs.isMemSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_MEM"] = rs.mem.toString()
         if (rs.isCoresSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_CORES"] = rs.cores.toString()
         if (rs.isNodesSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_NODES"] = rs.nodes.toString()

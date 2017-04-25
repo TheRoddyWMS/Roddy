@@ -36,7 +36,8 @@ public class SimpleRuntimeService extends RuntimeService {
 
     @Override
     public String createJobName(ExecutionContext executionContext, BaseFile file, String TOOLID, boolean reduceLevel) {
-        return executionContext.createJobName(file, TOOLID, reduceLevel);
+        //return executionContext.createJobName(file, TOOLID, reduceLevel);
+        return "RoddyTest_${TOOLID}"
     }
 
     @Override

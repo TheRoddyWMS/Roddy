@@ -78,6 +78,7 @@ class ProjectLoader {
             }
             def constructor = analysisClass.getConstructor(String.class, Project.class, Workflow.class, RuntimeService.class, AnalysisConfiguration.class)
             analysis = (Analysis) constructor.newInstance(analysisName, project, workflow, runtimeService, configuration);
+            logger.sometimes("Created an analysis object of class ${analysis.class.name} with workflow class ${workflow.class.name}.")
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (InstantiationException e) {

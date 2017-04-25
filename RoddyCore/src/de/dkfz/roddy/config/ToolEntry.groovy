@@ -100,6 +100,7 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
         ToolParameterOfFiles(String scriptParameterName) {
             super(scriptParameterName);
         }
+
         public abstract boolean hasSelectionTag();
         /**
          * The childFiles methods only return the possibly empty set of children. The files methods
@@ -107,6 +108,7 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
          * itself and all its children. The getAllChildFiles returns all children recursively.
          */
         public abstract List<? extends ToolParameterOfFiles> getAllFiles();
+
         public abstract List<? extends ToolParameterOfFiles> getFiles();
     }
 
@@ -199,11 +201,14 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
         ResourceSetSize key = configuration.getResourcesSize();
         int size = key.ordinal()
 
-        ResourceSet first = resourceSets.get(0);
         if (resourceSets.size() == 1) { // Only one set exists.
             return resourceSets.get(0)
         }
 
+        if (resourceSets.size() == 0)
+            return new ResourceSet(null, null, null, null, null, null, null, null)
+
+        ResourceSet first = resourceSets.get(0);
         ResourceSet last = resourceSets.get(resourceSets.size() - 1);
         if (size <= first.getSize().ordinal()) {  // The given key is smaller than the available keys. Return the first set.
             return first
@@ -221,7 +226,7 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
                 return resourceSet
         }
 
-        return null;
+        return new ResourceSet(null, null, null, null, null, null, null, null)
     }
 
     void setOverridesResourceSets() {

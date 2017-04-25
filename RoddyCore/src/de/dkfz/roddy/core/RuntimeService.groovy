@@ -60,7 +60,7 @@ public abstract class RuntimeService extends CacheProvider {
     public RuntimeService() {
         super("RuntimeService");
 
-            logger.severe("Reading in jobs is not fully enabled! See RuntimeService readInExecutionContext(). The method does not reconstruct parent files and dependencies.")
+        logger.warning("Reading in jobs is not fully enabled! See RuntimeService readInExecutionContext(). The method does not reconstruct parent files and dependencies.")
 
     }
 
