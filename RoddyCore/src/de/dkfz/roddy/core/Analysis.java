@@ -177,6 +177,10 @@ public class Analysis {
         return rs;
     }
 
+    public List<ExecutionContext> run(List<String> pidFilters, ExecutionContextLevel level) {
+        return run(pidFilters, level, false);
+    }
+
     /**
      * Executes this analysis for the specified list of identifiers.
      * An identifier can contain wildcards. The Apache WildCardFileFilter is used for wildcard resolution.
@@ -185,7 +189,7 @@ public class Analysis {
      * @param level      The level for the context execution
      * @return
      */
-    public List<ExecutionContext> run(List<String> pidFilters, ExecutionContextLevel level) {
+    public List<ExecutionContext> run(List<String> pidFilters, ExecutionContextLevel level, boolean preventLoggingOnQueryStatus) {
         List<DataSet> selectedDatasets = getRuntimeService().loadDatasetsWithFilter(this, pidFilters);
         List<ExecutionContext> runs = new LinkedList<>();
 
@@ -196,7 +200,7 @@ public class Analysis {
 
             ExecutionContext ec = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, level, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null, creationCheckPoint);
 
-            executeRun(ec);
+            executeRun(ec, preventLoggingOnQueryStatus);
             runs.add(ec);
         }
         return runs;
@@ -332,6 +336,10 @@ public class Analysis {
         t.start();
     }
 
+    protected void executeRun(ExecutionContext context) {
+        executeRun(context, false);
+    }
+
     /**
      * Executes the context object.
      * If the contexts level is QUERY_STATUS:
@@ -344,7 +352,7 @@ public class Analysis {
      *
      * @param context
      */
-    protected void executeRun(ExecutionContext context) {
+    protected void executeRun(ExecutionContext context, boolean preventLoggingOnQueryStatus) {
         logger.rare("" + context.getExecutionContextLevel());
         boolean isExecutable;
         String datasetID = context.getDataSet().getId();
@@ -365,15 +373,15 @@ public class Analysis {
                 try {
                     ExecutionService.getInstance().writeFilesForExecution(context);
                     boolean execute = true;
-                    if (!ExecutionService.getInstance().checkFilesPreparedForExecution(context)) {
-                        logger.severe("Some files could not be written. Workflow will not execute for dataset " + datasetID);
-                        execute = false;
-                    }
-                    if (!ExecutionService.getInstance().checkCopiedAnalysisTools(context)) {
-                        logger.severe("Some declared tools are not executable. Workflow will not execute for dataset " + datasetID);
-                        execute = false;
-                    }
-                    if (execute) {
+                    boolean preparedFilesAreValid = ExecutionService.getInstance().checkFilesPreparedForExecution(context);
+                    boolean copiedAnalysisToolsAreExecutable = ExecutionService.getInstance().checkCopiedAnalysisTools(context);
+                    execute &= preparedFilesAreValid && copiedAnalysisToolsAreExecutable;
+                    if (!execute) {
+                        StringBuilder message = new StringBuilder("There were errors after prerapating the workflow run for dataset " + datasetID);
+                        if (!preparedFilesAreValid) message.append("\n\tSome files could not be written. Workflow will not execute.");
+                        if (!copiedAnalysisToolsAreExecutable) message.append("\n\tSome declared tools are not executable. Workflow will not execute.");
+                        logger.always(message.toString());
+                    } else {
                         context.execute();
                         finallyStartJobsOfContext(context);
                     }
@@ -438,7 +446,7 @@ public class Analysis {
 
             // Print out context errors.
             // Only print them out if !QUERY_STATUS and the runmode is testrun or testrerun.
-            if (context.getErrors().size() > 0 && context.getExecutionContextLevel() != ExecutionContextLevel.QUERY_STATUS) {
+            if (context.getErrors().size() > 0 && (!preventLoggingOnQueryStatus || (context.getExecutionContextLevel() != ExecutionContextLevel.QUERY_STATUS))) {
                 StringBuilder messages = new StringBuilder();
                 boolean warningsOnly = true;
 

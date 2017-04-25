@@ -480,7 +480,7 @@ public class RoddyCLIClient {
     public static List<ExecutionContext> rerun(CommandLineCall clc) {
         Analysis analysis = loadAnalysisOrFail(clc)
 
-        List<ExecutionContext> executionContexts = analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.QUERY_STATUS);
+        List<ExecutionContext> executionContexts = analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.QUERY_STATUS, true);
         return analysis.rerun(executionContexts, false);
     }
 
@@ -491,8 +491,8 @@ public class RoddyCLIClient {
     public static void testrun(CommandLineCall clc, boolean testrerun = false) {
         Analysis analysis = loadAnalysisOrFail(clc)
 
-        List<ExecutionContext> executionContexts = analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.QUERY_STATUS);
-        if (testrerun) executionContexts = analysis.rerun(executionContexts, true);
+        List<ExecutionContext> executionContexts = analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.QUERY_STATUS, testrerun)
+        if (testrerun) executionContexts = analysis.rerun(executionContexts, true)
 
         outputRerunResult(executionContexts, testrerun)
     }
