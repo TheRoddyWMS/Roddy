@@ -350,9 +350,17 @@ public class Analysis {
         String datasetID = context.getDataSet().getId();
         Exception eCopy = null;
         try {
-            isExecutable = ExecutionService.getInstance().checkContextPermissions(context) && context.checkExecutability();
+            boolean contextPermissions = ExecutionService.getInstance().checkContextPermissions(context);
+            boolean contextExecutability = context.checkExecutability();
+            boolean configurarionValidity = Roddy.isStrictModeEnabled() ? !getConfiguration().hasErrors() : true;
+            isExecutable = contextPermissions && contextExecutability && configurarionValidity;
+
             if (!isExecutable) {
-                logger.severe("The workflow does not seem to be executable for dataset " + datasetID);
+                StringBuilder message = new StringBuilder("The workflow does not seem to be executable for dataset " + datasetID);
+                if (!contextPermissions) message.append("\n\tContext permissions could not be validated.");
+                if (!contextExecutability) message.append("\n\tContext and workflow is not considered executable.");
+                if (!configurarionValidity) message.append("\n\tContext configuration has errors.");
+                logger.always(message.toString());
             } else {
                 try {
                     ExecutionService.getInstance().writeFilesForExecution(context);
@@ -397,12 +405,12 @@ public class Analysis {
 
         } finally {
             if (eCopy != null) {
-                logger.postAlwaysInfo("An exception occurred: '" + eCopy.getLocalizedMessage() + "'");
+                logger.always("An exception occurred: '" + eCopy.getLocalizedMessage() + "'");
                 if (logger.isVerbosityMedium()) {
                     logger.log(Level.SEVERE, eCopy.toString());
-                    logger.postAlwaysInfo(RoddyIOHelperMethods.getStackTraceAsString(eCopy));
+                    logger.always(RoddyIOHelperMethods.getStackTraceAsString(eCopy));
                 } else {
-                    logger.postAlwaysInfo("Set --verbositylevel >=" + LoggerWrapper.VERBOSITY_WARNING + " or higher to see stack trace.");
+                    logger.always("Set verbosity option -v or --vv to see the stack trace. Or look in to the log files in ~/.roddy/logs.");
                 }
             }
 
@@ -414,11 +422,26 @@ public class Analysis {
                 }
             }
 
+            // It is very nice now, that a lot of error messages will be printen. But how about colours?
+            // Normally the CLI client takes care of it.
+
+            // Print out configuration errors (for context configuration! Not only for analysis)
+            // Don't know, if this is the right place.
+            if (context.getConfiguration().hasErrors()) {
+                StringBuilder messages = new StringBuilder();
+                messages.append("There were configuration errors for dataset " + datasetID);
+                for (ConfigurationLoadError configurationLoadError : context.getConfiguration().getListOfLoadErrors()) {
+                    messages.append(configurationLoadError.toString());
+                }
+                logger.always(messages.toString());
+            }
+
             // Print out context errors.
             // Only print them out if !QUERY_STATUS and the runmode is testrun or testrerun.
             if (context.getErrors().size() > 0 && context.getExecutionContextLevel() != ExecutionContextLevel.QUERY_STATUS) {
                 StringBuilder messages = new StringBuilder();
                 boolean warningsOnly = true;
+
                 for (ExecutionContextError executionContextError : context.getErrors()) {
                     if (executionContextError.getErrorLevel().intValue() > Level.WARNING.intValue())
                         warningsOnly = false;

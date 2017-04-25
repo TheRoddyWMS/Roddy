@@ -211,6 +211,14 @@ public class RoddyCLIClient {
             logger.severe("Could not load analysis ${analysisID}")
             Roddy.exit(1)
         }
+
+        // This check only applies for analysis configuration files.
+        if (Roddy.strictModeEnabled && analysis.getConfiguration().hasErrors()) {
+            logger.severe("There were configuration errors and Roddy will not start. (Strict mode is enabled)")
+            StringBuilder sb = new StringBuilder();
+            printConfigurationLoadErrors(analysis.getConfiguration(), sb, 0, Constants.ENV_LINESEPARATOR)
+            System.out.println(ConsoleStringFormatter.getFormatter().formatAll(sb.toString()))
+        }
         return analysis
     }
 
@@ -254,16 +262,7 @@ public class RoddyCLIClient {
 
         List<ValidationError> errors = wcv.getValidationErrors();
 
-        int i = 0;
-
-        for (ConfigurationLoadError error : configuration.getListOfLoadErrors()) {
-            sb << "#FRED#" << "${i}: ".padLeft(6) << "Load error #CLEAR#" << separator;
-            sb << "      ID:          " << error.id << separator;
-            sb << "      Description: " << error.description << separator;
-            if (error.exception)
-                sb << "      #FWHITE##BRED#" << error.exception.toString() << "#CLEAR#" << separator;
-            i++;
-        }
+        int i = printConfigurationLoadErrors(configuration, sb, 0, separator)
 
         for (ValidationError error : errors) {
             sb << "#FRED#" << "${i}: ".padLeft(6) << "Validation error:#CLEAR#" << separator;
@@ -275,6 +274,18 @@ public class RoddyCLIClient {
         }
 
         System.out.println(ConsoleStringFormatter.getFormatter().formatAll(sb.toString()));
+    }
+
+    private static int printConfigurationLoadErrors(Configuration configuration, StringBuilder sb, int i, String separator) {
+        for (ConfigurationLoadError error : configuration.getListOfLoadErrors()) {
+            sb << "#FRED#" << "${i}: ".padLeft(6) << "Load error #CLEAR#" << separator;
+            sb << "      ID:          " << error.id << separator;
+            sb << "      Description: " << error.description << separator;
+            if (error.exception)
+                sb << "      #FWHITE##BRED#" << error.exception.toString() << "#CLEAR#" << separator;
+            i++;
+        }
+        i
     }
 
     public static void printReducedRuntimeConfiguration(CommandLineCall commandLineCall) {
@@ -542,7 +553,7 @@ public class RoddyCLIClient {
                         parm = parm.replace("(", "(\n" + " ".padRight(38));
                         parm = parm.replace(")", "\n" + " ".padRight(34) + ")");
                     }
-                    if(parm.endsWith(".auto"))
+                    if (parm.endsWith(".auto"))
                         parm = "#BLUE##BGYELLOW#${parm}#CLEAR#"
                     sb << "      ${_k.padRight(26)}: ${parm}" << separator;
                 }

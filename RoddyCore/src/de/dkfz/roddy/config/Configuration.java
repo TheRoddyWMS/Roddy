@@ -390,6 +390,17 @@ public class Configuration implements ContainerParent<Configuration> {
         return errors;
     }
 
+
+    public boolean hasErrors() {
+        boolean hasErrors = listOfLoadErrors.size() > 0;
+        if(parents != null) {
+            for (Configuration parent : parents) {
+                hasErrors |= parent.hasErrors();
+            }
+        }
+        return hasErrors;
+    }
+
     public boolean isInvalid() {
         return this.listOfValidationErrors.size() > 0;
     }
