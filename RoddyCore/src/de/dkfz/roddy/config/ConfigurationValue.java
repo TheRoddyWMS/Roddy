@@ -273,6 +273,11 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         if (configuration != null) {
             List<String> valueIDs = getIDsForParentValues();
             for (String vName : valueIDs) {
+                if (temp.contains("${" + vName) || temp.contains("${cvalue,name=\"" + vName)){
+                    RuntimeException exc = new RuntimeException("Cyclic dependency found for cvalue '" + vName + "'");
+                    configuration.addLoadError(new ConfigurationLoadError(configuration, "cValues", "Cyclic dependency found for cvalue '" + vName + "'", exc));
+                    throw exc;
+                }
                 if (configuration.getConfigurationValues().hasValue(vName))
                     temp = temp.replace("${" + vName + '}', configuration.getConfigurationValues().get(vName).toString());
             }
