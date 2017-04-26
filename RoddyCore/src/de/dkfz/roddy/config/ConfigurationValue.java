@@ -11,6 +11,7 @@ import de.dkfz.roddy.core.Analysis;
 import de.dkfz.roddy.core.DataSet;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
+import de.dkfz.roddy.tools.CollectionHelperMethods;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 
 import java.io.File;
@@ -269,17 +270,25 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
 
     @Override
     public String toString() {
+        return toString(new LinkedList<>());
+    }
+
+    public String toString(List<String> blackList) {
         String temp = value;
         if (configuration != null) {
             List<String> valueIDs = getIDsForParentValues();
+            if (CollectionHelperMethods.intersects(blackList, valueIDs)) {
+                RuntimeException exc = new RuntimeException("Cyclic dependency found for cvalue '" + this.id + "' in file " + (configuration.informationalConfigurationContent != null ? configuration.informationalConfigurationContent.file : configuration.getID()));
+                configuration.addLoadError(new ConfigurationLoadError(configuration, "cValues", exc.getMessage(), exc));
+                throw exc;
+            }
+
             for (String vName : valueIDs) {
-                if (temp.contains("${" + vName) || temp.contains("${cvalue,name=\"" + vName)){
-                    RuntimeException exc = new RuntimeException("Cyclic dependency found for cvalue '" + vName + "'");
-                    configuration.addLoadError(new ConfigurationLoadError(configuration, "cValues", "Cyclic dependency found for cvalue '" + vName + "'", exc));
-                    throw exc;
+                if (configuration.getConfigurationValues().hasValue(vName)) {
+                    List<String> subBlackList = new LinkedList<>(blackList);
+                    subBlackList.add(vName);
+                    temp = temp.replace("${" + vName + '}', configuration.getConfigurationValues().get(vName).toString(subBlackList));
                 }
-                if (configuration.getConfigurationValues().hasValue(vName))
-                    temp = temp.replace("${" + vName + '}', configuration.getConfigurationValues().get(vName).toString());
             }
         }
         return temp;
