@@ -10,6 +10,7 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.plugins.LibrariesFactory
+import de.dkfz.roddy.tools.ComplexLine
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.core.CacheProvider
@@ -336,7 +337,7 @@ public class FileSystemAccessProvider extends CacheProvider {
         final String path = f.absolutePath
         String id = String.format("checkDirectory_%08X", path.hashCode());
         if (!_directoryExistsAndIsAccessible.containsKey(path)) {
-            if(createMissing) {
+            if (createMissing) {
                 String outputAccessRightsForDirectories = context.getOutputDirectoryAccess();
                 String outputFileGroup = context.getOutputGroupString()
                 String cmd = commandSet.getCheckDirectoryCommand(f, true, outputFileGroup, outputAccessRightsForDirectories);
@@ -437,6 +438,11 @@ public class FileSystemAccessProvider extends CacheProvider {
         return _userName;
     }
 
+    List<String> getListOfGroups() {
+        // Result could be a single line or several lines. So just combine and split again. This way, we are safe.
+        new ComplexLine(ExecutionService.getInstance().execute(commandSet.getListOfGroupsCommand()).resultLines.join(" ")).splitBy(" ") as List<String>
+    }
+
     public String getMyGroup() {
         _groupID = getSingleCommandValueOnValueIsNull(_groupID, commandSet.getMyGroupCommand(), "groupID");
         return _groupID;
@@ -445,7 +451,6 @@ public class FileSystemAccessProvider extends CacheProvider {
     int getGroupID() {
         return getGroupID(getMyGroup());
     }
-
 
     int getGroupID(String groupID) {
         synchronized (_groupIDsByGroup) {
@@ -456,6 +461,10 @@ public class FileSystemAccessProvider extends CacheProvider {
 
             return _groupIDsByGroup[groupID];
         }
+    }
+
+    boolean isGroupAvailable(String groupID) {
+        getListOfGroups().find { it == groupID }
     }
 
     private String _getOwnerOfPath(File file) {

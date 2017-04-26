@@ -72,6 +72,9 @@ public class BashCommandSet extends ShellCommandSet {
     }
 
     @Override
+    String getListOfGroupsCommand() { return "groups" }
+
+    @Override
     String getMyGroupCommand() { return "groups | cut -d \" \" -f 1"; }
 
     @Override
