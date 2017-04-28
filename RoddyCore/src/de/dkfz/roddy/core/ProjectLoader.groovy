@@ -15,6 +15,8 @@ import de.dkfz.roddy.execution.io.MetadataTableFactory
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.plugins.PluginInfoMap
+import de.dkfz.roddy.plugins.PluginLoaderException
+import jdk.internal.org.xml.sax.SAXParseException
 
 import java.lang.reflect.InvocationTargetException
 
@@ -78,6 +80,7 @@ class ProjectLoader {
             }
             def constructor = analysisClass.getConstructor(String.class, Project.class, Workflow.class, RuntimeService.class, AnalysisConfiguration.class)
             analysis = (Analysis) constructor.newInstance(analysisName, project, workflow, runtimeService, configuration);
+            logger.sometimes("Created an analysis object of class ${analysis.class.name} with workflow class ${workflow.class.name}.")
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (InstantiationException e) {
@@ -145,8 +148,11 @@ class ProjectLoader {
             MetadataTableFactory.getTable(analysis);
             return analysis;
         } catch (ProjectLoaderException ex) {
-            logger.severe(ex.message);
+            logger.severe(ex.message)
             return null;
+        } catch (PluginLoaderException ex) {
+            logger.severe(ex.message)
+            return null
         }
     }
 

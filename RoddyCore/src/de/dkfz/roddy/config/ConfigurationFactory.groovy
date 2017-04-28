@@ -34,6 +34,7 @@ import de.dkfz.roddy.tools.TimeUnit
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.*
+import jdk.internal.org.xml.sax.SAXParseException
 import org.apache.commons.io.filefilter.WildcardFileFilter
 
 import java.lang.reflect.*
@@ -161,11 +162,14 @@ public class ConfigurationFactory {
 
                 } else {
                     if (availableConfigurations[icc.name].file != icc.file)
-                        throw new RuntimeException("Configuration with name ${icc.name} already exists! Names must be unique.")
+                        throw new ProjectLoaderException("Configuration with name ${icc.name} already exists! Names must be unique.")
                 }
+            } catch (org.xml.sax.SAXParseException ex) {
+                throw new ProjectLoaderException("The validation of a configuration file ${it.absolutePath} failed.")
             } catch (Exception ex) {
-                logger.severe("File ${it.absolutePath} cannot be loaded! Error in config file! ${ex.toString()}");
-                logger.severe(RoddyIOHelperMethods.getStackTraceAsString(ex));
+                logger.severe("An unknown exception occured during the atempt to load a configuration file:\n\t${it.absolutePath} cannot be loaded.\n\t${ex.toString()}")
+                logger.sometimes(RoddyIOHelperMethods.getStackTraceAsString(ex));
+                throw ex
             }
         }
     }
@@ -698,6 +702,16 @@ public class ConfigurationFactory {
                         }
                     }
                 }
+                def allparameters = (inputParameters + outputParameters).collect {
+                    if(it instanceof ToolEntry.ToolParameterOfFiles) {
+                        ((ToolEntry.ToolParameterOfFiles)it).allFiles.collect  {it.scriptParameterName}
+                    } else {
+                        it.scriptParameterName
+                    }
+                }.flatten()
+
+                if(allparameters.size() != allparameters.unique(false).size())
+                    throw new Exception("There were duplicate i/o script parameter names.")
                 currentEntry.setGenericOptions(inputParameters, outputParameters, resourceSets);
             }
             return currentEntry;

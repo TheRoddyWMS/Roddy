@@ -241,6 +241,27 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
     }
 
     /**
+     * Check, if access rights setting is enabled and also, if the user and the group exist.
+     *
+     * @param context
+     * @return
+     */
+    boolean checkAccessRightsSettings(ExecutionContext context) {
+        boolean valid = true
+        if(context.isAccessRightsModificationAllowed()) {
+//            context.getExecutingUser()
+
+            def userGroup = context.getOutputGroupString()
+            boolean isGroupAvailable = FileSystemAccessProvider.getInstance().isGroupAvailable(userGroup)
+            if(!isGroupAvailable) {
+                context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("The requested user group ${userGroup} is not available on the target system.\n\tDisable Roddys access rights managemd by setting outputAllowAccessRightsModification to true or\n\tSelect a proper group by setting outputFileGroup."))
+                valid = false;
+            }
+        }
+        return valid
+    }
+
+    /**
      * Check different directories and files to see, if files are accessible.
      * Will not check everything but at least some of the well-known sources of errors.
      * The method also check for some files, if they exist. If so, the read / write access will be checked.
@@ -248,7 +269,7 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
      * @param context The context object which needs to be checked.
      * @return
      */
-    public boolean checkContextPermissions(ExecutionContext context) {
+    public boolean checkContextDirectoriesAndFiles(ExecutionContext context) {
         FileSystemAccessProvider fis = FileSystemAccessProvider.getInstance();
         Analysis analysis = context.getAnalysis()
 

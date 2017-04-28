@@ -151,4 +151,26 @@ class ConfigurationValueInheritanceTests {
         assert cvC1['c'].toString() == 'C.c'
         assert cvC1['d'].toString() == 'B2.b + C.c'
     }
+
+    @Test(expected = Exception)
+    void testCyclicDependenciesSimple() {
+        Configuration A1 = new Configuration(null)
+        def cvA1 = A1.configurationValues
+        cvA1.put('a', '${b}')
+        cvA1.put('b', '${a}')
+
+        cvA1.get("a").toString()
+    }
+
+    @Test(expected = Exception)
+    void testCyclicDependenciesComplex() {
+        Configuration A1 = new Configuration(null)
+        def cvA1 = A1.configurationValues
+        cvA1.put('a', '${b}')
+        cvA1.put('b', '${c}')
+        cvA1.put('c', '${d}')
+        cvA1.put('d', '${a}')
+
+        cvA1["a"].toString()
+    }
 }

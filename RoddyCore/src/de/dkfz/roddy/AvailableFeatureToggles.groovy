@@ -12,11 +12,13 @@ package de.dkfz.roddy;
  */
 enum AvailableFeatureToggles {
 
-    ////////////////////////
+    /**
+     ////////////////////////
     // "Permanent" toggles
     //  These toggles are meant to be somewhat permanent
     //  However, their default value might change to enable or disable them permanently on startup.
     ////////////////////////
+    */
     /**
      * If Strict mode is set, a lot of checks will result to rollback or Roddy refuses to run at all.
      * As strict mode is such an important and early set feature, it should only be set via ini or cli.
@@ -31,10 +33,12 @@ enum AvailableFeatureToggles {
      */
     RollbackOnWorkflowError(true),
 
+    /**
     ////////////////////////
     // "Semi-permanent" toggles
     //  These toggles will be most likely be removed at some point.
     ////////////////////////
+    */
     @Deprecated
     ForbidSubmissionOnRunning(false),
 
@@ -51,7 +55,12 @@ enum AvailableFeatureToggles {
      * Enable this, to have Bash arrays in the runtime config auto quoted to something like
      * declare -x BASH_ARRAY="value"
      */
-    AutoQuoteBashArrayVariables(true)
+    AutoQuoteBashArrayVariables(true),
+
+    /**
+     * Fail, if strict mode is enabled and auto filenames would be created.
+     */
+    FailOnAutoFilenames(false)
 
     public final boolean defaultValue
 
