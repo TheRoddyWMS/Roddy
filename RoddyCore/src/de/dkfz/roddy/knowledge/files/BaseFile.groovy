@@ -369,6 +369,10 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         _cacheIsFileValid = true;
     }
 
+    void setFileStage(FS fileStage) {
+        this.fileStageSettings = fileStage;
+    }
+
     FS getFileStage() {
         return fileStageSettings;
     }
