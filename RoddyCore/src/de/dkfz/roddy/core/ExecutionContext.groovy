@@ -604,6 +604,14 @@ class ExecutionContext extends InfoObject {
         return true
     }
 
+    boolean fileIsExecutable(File file, String variableName = null) {
+        if(!(fileIsAccessible(file, variableName) && FileSystemAccessProvider.getInstance().isExecutable(file))) {
+            addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("File '${file}' is not executable${variableName ? ": " + variableName : "."}"))
+            return false
+        }
+        return true
+    }
+
     boolean directoryIsAccessible(File directory, String variableName = null) {
         if (valueIsEmpty(directory, variableName) || !FileSystemAccessProvider.getInstance().checkDirectory(directory, this, false)) {
             addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("Directory '${directory}' not accessible${variableName ? ": " + variableName : "."}"))

@@ -27,6 +27,7 @@ public class CommandLineCall {
     private final List<String> arguments;
     private final List<String> parameters;
     private Map<RoddyStartupOptions, List<String>> optionsMap;
+    final boolean malformed
 
     CommandLineCall(List<String> args) {
         parameters = [];
@@ -48,6 +49,7 @@ public class CommandLineCall {
         }
 
         //Parse options
+        List<String> errors = []
         Map<RoddyStartupOptions, List<String>> parsedOptions = [:];
         for (String optArg in options) {
             String[] split = optArg.split(StringConstants.SPLIT_EQUALS);
@@ -61,12 +63,17 @@ public class CommandLineCall {
                 if (option.acceptsParameters)
                     if (values)
                         parsedOptions[option] = values;
-                    else
-                        logger.severe("The option " + option + " is malformed!");
+                    else {
+                        errors << "The option " + option + " is malformed!"
+                    }
             } catch (Exception ex) {
-                logger.postAlwaysInfo("The option with " + optArg + " is malformed!");
+                errors << "The option with " + optArg + " is malformed!";
             }
         }
+
+        if(errors)
+            logger.severe(errors.join("\n\t"))
+        malformed = errors
 
         // Store all parameters and remove the startup mode.
         if (parameters.size() > 1)

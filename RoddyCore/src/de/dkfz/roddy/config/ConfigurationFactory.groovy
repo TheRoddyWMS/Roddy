@@ -135,7 +135,7 @@ public class ConfigurationFactory {
         List<File> allFiles = []
         Map<File, PluginInfo> pluginsByFile = [:]
         for (PluginInfo pi in LibrariesFactory.getInstance().getLoadedPlugins()) {
-            File configPath = RoddyIOHelperMethods.assembleLocalPath(pi.directory, "resources", "configurationFiles");
+            File configPath = pi.getConfigurationDirectory();
             File[] configFiles = configPath.listFiles((FileFilter) new WildcardFileFilter("*.xml"));
             for (File f in configFiles) {
                 allFiles.add(f);

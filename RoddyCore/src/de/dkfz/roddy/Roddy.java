@@ -47,6 +47,9 @@ import java.util.*;
 
 import static de.dkfz.roddy.RunMode.CLI;
 import static de.dkfz.roddy.StringConstants.FALSE;
+import static de.dkfz.roddy.config.ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY;
+import static de.dkfz.roddy.config.ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY;
+import static de.dkfz.roddy.config.ConfigurationConstants.CFG_USED_RESOURCES_SIZE;
 
 /**
  * This is the main class for the Roddy command line application.
@@ -244,29 +247,33 @@ public class Roddy {
         List<String> list = Arrays.asList(args);
         CommandLineCall clc = new CommandLineCall(list);
         commandLineCall = clc;
+        if(clc.isMalformed())
+            exit(1);
+
         // Initialize the logger with an initial setup. At this point we don't know about things like the logger settings
         // or the used app ini file. However, all the following methods rely on an existing valid logger setup.
         LoggerWrapper.setup(getApplicationLogDirectory());
 
         logger.postAlwaysInfo("Roddy version " + Constants.APP_CURRENT_VERSION_STRING);
 
+        time("initial checks");
         if (!performInitialCheck())
             exit(1);
 
         time("ftoggleini");
-        time("clc .1");
-
-
-        time("setup");
         initializeFeatureToggles();
-        time("clc");
+        time("initialize mode, print arguments");
         performInitialSetup(args, clc.startupMode);
         time("initial");
         parseAdditionalStartupOptions(clc);
         time("parseopt");
         loadPropertiesFile();
         time("loadprop");
+
+        // Reset the logger with the new setings but keep the old logfile
+        File clf = LoggerWrapper.getCentralLogFile();
         LoggerWrapper.setup(applicationProperties);
+        LoggerWrapper.setCentralLogFile(clf);
 
         if (initializeServices(clc.startupMode.needsFullInit())) {
             time("initserv");
@@ -311,86 +318,91 @@ public class Roddy {
 
     protected static void parseAdditionalStartupOptions(CommandLineCall clc) {
 
-        //Parse different options out of the args back from behind
-        displayShortWorkflowList = clc.isOptionSet(RoddyStartupOptions.shortlist);
-        if (clc.isOptionSet(RoddyStartupOptions.useconfig))
-            customPropertiesFile = clc.getOptionValue(RoddyStartupOptions.useconfig);
-        else if (clc.isOptionSet(RoddyStartupOptions.c))
-            customPropertiesFile = clc.getOptionValue(RoddyStartupOptions.c);
+        try {
+            //Parse different options out of the args back from behind
+            displayShortWorkflowList = clc.isOptionSet(RoddyStartupOptions.shortlist);
+            if (clc.isOptionSet(RoddyStartupOptions.useconfig))
+                customPropertiesFile = clc.getOptionValue(RoddyStartupOptions.useconfig);
+            else if (clc.isOptionSet(RoddyStartupOptions.c))
+                customPropertiesFile = clc.getOptionValue(RoddyStartupOptions.c);
 
-        for (RoddyStartupOptions startupOption : clc.getOptionList()) {
+            for (RoddyStartupOptions startupOption : clc.getOptionList()) {
 
-            if (startupOption == (RoddyStartupOptions.v)) {
-                LoggerWrapper.setVerbosityLevel(LoggerWrapper.VERBOSITY_MEDIUM);
-            }
-
-            if (startupOption == (RoddyStartupOptions.vv)) {
-                LoggerWrapper.setVerbosityLevel(LoggerWrapper.VERBOSITY_HIGH);
-            }
-
-            if (startupOption == (RoddyStartupOptions.verbositylevel)) {
-                int level = RoddyConversionHelperMethods.toInt(clc.getOptionValue(startupOption), 5);
-                LoggerWrapper.setVerbosityLevel(level);
-            }
-
-            //Enable the setup of all debug options via the command line.
-            if (startupOption == (RoddyStartupOptions.debugOptions)) {
-                String[] options = clc.getOptionList(startupOption).toArray(new String[0]);
-
-            }
-
-            if (runMode.isCommandLineMode()) {
-                // Instead of terminating, Roddy waits for all submitted jobs to finish.
-                if (startupOption == (RoddyStartupOptions.waitforjobs)) {
-                    waitForJobsToFinish = true;
+                if (startupOption == (RoddyStartupOptions.v)) {
+                    LoggerWrapper.setVerbosityLevel(LoggerWrapper.VERBOSITY_MEDIUM);
                 }
 
-                if (startupOption == (RoddyStartupOptions.useiodir)) {
-                    useCustomIODirectories = true;
+                if (startupOption == (RoddyStartupOptions.vv)) {
+                    LoggerWrapper.setVerbosityLevel(LoggerWrapper.VERBOSITY_HIGH);
+                }
 
-                    List<String> directories = clc.getOptionList(startupOption);
-                    if (directories.size() == 0 || directories.size() > 2) {
-                        throw new RuntimeException("Arguments for useasiodir are wrong");
+                if (startupOption == (RoddyStartupOptions.verbositylevel)) {
+                    int level = RoddyConversionHelperMethods.toInt(clc.getOptionValue(startupOption), 5);
+                    LoggerWrapper.setVerbosityLevel(level);
+                }
+
+                //Enable the setup of all debug options via the command line.
+                if (startupOption == (RoddyStartupOptions.debugOptions)) {
+                    String[] options = clc.getOptionList(startupOption).toArray(new String[0]);
+
+                }
+
+                if (runMode.isCommandLineMode()) {
+                    // Instead of terminating, Roddy waits for all submitted jobs to finish.
+                    if (startupOption == (RoddyStartupOptions.waitforjobs)) {
+                        waitForJobsToFinish = true;
                     }
 
-                    useSingleIODirectory = directories.size() == 1;
-                    baseInputDirectory = directories.get(0);
-                    baseOutputDirectory = useSingleIODirectory ? baseInputDirectory : directories.get(1);
-                }
+                    if (startupOption == (RoddyStartupOptions.useiodir)) {
+                        useCustomIODirectories = true;
 
-                if (startupOption == (RoddyStartupOptions.disabletrackonlyuserjobs)) {
-                    trackUserJobsOnly = false;
-                }
+                        List<String> directories = clc.getOptionList(startupOption);
+                        if (directories.size() == 0 || directories.size() > 2) {
+                            throw new RuntimeException("Arguments for useasiodir are wrong");
+                        }
 
-                if (startupOption == (RoddyStartupOptions.trackonlystartedjobs)) {
-                    trackOnlyStartedJobs = true;
-                }
+                        useSingleIODirectory = directories.size() == 1;
+                        baseInputDirectory = directories.get(0);
+                        baseOutputDirectory = useSingleIODirectory ? baseInputDirectory : directories.get(1);
+                    }
 
-                // When a job is not submitted successfully, Roddy will wait try to do it again
-                if (startupOption == (RoddyStartupOptions.resubmitjobonerror)) {
-                    repeatJobSubmission = true;
-                    List<String> options = clc.getOptionList(startupOption);
-                    if (options.size() > 0)
-                        repeatJobSubmissionAmount = RoddyConversionHelperMethods.toInt(options.get(0));
-                    if (options.size() > 1)
-                        repeatJobSubmissionWait = RoddyConversionHelperMethods.toInt(options.get(1));
-                }
+                    if (startupOption == (RoddyStartupOptions.disabletrackonlyuserjobs)) {
+                        trackUserJobsOnly = false;
+                    }
 
-                if (startupOption == (RoddyStartupOptions.autosubmit)) {
-                    autosubmitMode = true;
-                    if (clc.getOptionValue(startupOption) != null)
-                        autosubmitMaxBatchCount = RoddyConversionHelperMethods.toInt(clc.getOptionValue(startupOption));
-                }
+                    if (startupOption == (RoddyStartupOptions.trackonlystartedjobs)) {
+                        trackOnlyStartedJobs = true;
+                    }
 
-                //Enable setup of workflow run flags from the command line
-                if (startupOption == (RoddyStartupOptions.run)) {
-                    String[] flags = clc.getOptionList(startupOption).toArray(new String[0]);
-                }
+                    // When a job is not submitted successfully, Roddy will wait try to do it again
+                    if (startupOption == (RoddyStartupOptions.resubmitjobonerror)) {
+                        repeatJobSubmission = true;
+                        List<String> options = clc.getOptionList(startupOption);
+                        if (options.size() > 0)
+                            repeatJobSubmissionAmount = RoddyConversionHelperMethods.toInt(options.get(0));
+                        if (options.size() > 1)
+                            repeatJobSubmissionWait = RoddyConversionHelperMethods.toInt(options.get(1));
+                    }
 
-                if (startupOption == (RoddyStartupOptions.dontrun)) {
-                    String[] flags = clc.getOptionList(startupOption).toArray(new String[0]);
+                    if (startupOption == (RoddyStartupOptions.autosubmit)) {
+                        autosubmitMode = true;
+                        if (clc.getOptionValue(startupOption) != null)
+                            autosubmitMaxBatchCount = RoddyConversionHelperMethods.toInt(clc.getOptionValue(startupOption));
+                    }
+
+                    //Enable setup of workflow run flags from the command line
+                    if (startupOption == (RoddyStartupOptions.run)) {
+                        String[] flags = clc.getOptionList(startupOption).toArray(new String[0]);
+                    }
+
+                    if (startupOption == (RoddyStartupOptions.dontrun)) {
+                        String[] flags = clc.getOptionList(startupOption).toArray(new String[0]);
+                    }
                 }
             }
+        } catch (RuntimeException e) {
+            logger.severe("Parsing startup options failed.");
+            exit(1);
         }
     }
 
@@ -407,6 +419,7 @@ public class Roddy {
         } else {
             toggleIni = new File(getSettingsDirectory(), "featureToggles.ini");
         }
+
         if (toggleIni != null && toggleIni.exists()) { // Use default values, if the file is not available
             logger.postAlwaysInfo("Loading feature toggle file " + toggleIni.getAbsolutePath());
             AppConfig appConfig = new AppConfig(toggleIni);
@@ -417,6 +430,7 @@ public class Roddy {
                 featureToggleConfig.setProperty(toggle.name(), "" + toggle.defaultValue);
             });
         }
+
         //Override toggles in ini
         boolean successful = true;
         successful &= retrieveAndSetToggleValuesFromCLI(RoddyStartupOptions.enabletoggles, true);
@@ -426,6 +440,8 @@ public class Roddy {
         if (!successful) {
             String toggleNames = RoddyIOHelperMethods.joinArray(AvailableFeatureToggles.values(), "\n\t");
             logger.severe("Available toggle values are:\n\t" + toggleNames);
+            if(isStrictModeEnabled())
+                exit(1);
         }
     }
 
@@ -547,6 +563,21 @@ public class Roddy {
                 logger.postSometimesInfo("Add job manager value " + k + "=" + specificEnvironmentSettings.get(k) + " to context configuration");
                 configurationValues.add(new ConfigurationValue(k, specificEnvironmentSettings.get(k)));
             }
+
+            // Add custom command line values to the project configuration.
+            List<ConfigurationValue> externalConfigurationValues = getCommandLineCall().getSetConfigurationValues();
+
+            configurationValues.addAll(externalConfigurationValues);
+
+            if (useCustomIODirectories()) {
+                configurationValues.add(new ConfigurationValue(CFG_INPUT_BASE_DIRECTORY, Roddy.getCustomBaseInputDirectory(), "path"));
+                configurationValues.add(new ConfigurationValue(CFG_OUTPUT_BASE_DIRECTORY, Roddy.getCustomBaseOutputDirectory(), "path"));
+            }
+
+            if (getUsedResourcesSize() != null) {
+                configurationValues.add(new ConfigurationValue(CFG_USED_RESOURCES_SIZE, Roddy.getUsedResourcesSize().toString(), "string"));
+            }
+
         }
         return applicationSpecificConfiguration;
     }
