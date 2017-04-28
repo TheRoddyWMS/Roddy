@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.config
 
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet;
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.knowledge.files.BaseFile
 import groovy.transform.CompileStatic;
@@ -275,5 +277,10 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
     @Override
     String getID() {
         return id;
+    }
+
+    @Override
+    public String toString() {
+        return "ToolEntry " + id;
     }
 }

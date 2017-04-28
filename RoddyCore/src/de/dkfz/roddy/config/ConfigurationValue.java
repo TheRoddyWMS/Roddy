@@ -271,7 +271,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
     public String toString() {
         String temp = value;
         if (configuration != null) {
-            List<String> valueIDs = getIDsForParrentValues();
+            List<String> valueIDs = getIDsForParentValues();
             for (String vName : valueIDs) {
                 if (configuration.getConfigurationValues().hasValue(vName))
                     temp = temp.replace("${" + vName + '}', configuration.getConfigurationValues().get(vName).toString());
@@ -280,7 +280,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         return temp;
     }
 
-    public List<String> getIDsForParrentValues() {
+    public List<String> getIDsForParentValues() {
         List<String> parentValues = new LinkedList<>();
 
         Matcher m = variableDetection.matcher(value);

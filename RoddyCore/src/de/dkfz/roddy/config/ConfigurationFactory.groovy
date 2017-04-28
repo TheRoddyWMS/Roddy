@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.config
 
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
 import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.config.converters.YAMLConverter
 import de.dkfz.roddy.knowledge.brawlworkflows.BrawlWorkflow
@@ -15,7 +17,8 @@ import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.FileObjectTupleFactory
 import de.dkfz.roddy.knowledge.files.FileStage
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
-import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
+
+//import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
 import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
@@ -652,7 +655,11 @@ public class ConfigurationFactory {
         for (NodeChild tool in configurationNode.processingTools.tool) {
             String toolID = tool.@name.text()
             logger.postRareInfo("Processing tool ${toolID}");
-            toolEntries[toolID] = readProcessingTool(tool, config)
+            def toolEntry = readProcessingTool(tool, config)
+            if (!toolEntry)
+                logger.severe("Tool ${toolID} could not be read and will not be available.")
+            else
+                toolEntries[toolID] = toolEntry
         }
     }
 
@@ -689,14 +696,13 @@ public class ConfigurationFactory {
                             currentEntry.setInlineScript(child.text().trim().replaceAll('<!\\[CDATA\\[', "").replaceAll(']]>', ""))
                             currentEntry.setInlineScriptName(child.@value.text())
                         }
-
                     }
                 }
                 currentEntry.setGenericOptions(inputParameters, outputParameters, resourceSets);
             }
             return currentEntry;
         } catch (Exception ex) {
-            println(ex);
+            config.addLoadError(new ConfigurationLoadError(config, "ToolEntry could not be read", ex.getMessage(), ex))
         }
     }
 
@@ -891,7 +897,7 @@ public class ConfigurationFactory {
         Class _cls = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, BaseFile.class)
 
         String pName = child.@scriptparameter.text();
-        String fnpSelTag = extractAttributeText(child, "fnpatternselectiontag", FilenamePattern.DEFAULT_SELECTION_TAG);
+        String fnpSelTag = extractAttributeText(child, "selectiontag", extractAttributeText(child, "fnpatternselectiontag", FilenamePattern.DEFAULT_SELECTION_TAG));
         String parentFileVariable = extractAttributeText(child, "variable", null); //This is only the case for child files.
         ToolFileParameterCheckCondition check = new ToolFileParameterCheckCondition(extractAttributeText(child, "check", "true"));
 

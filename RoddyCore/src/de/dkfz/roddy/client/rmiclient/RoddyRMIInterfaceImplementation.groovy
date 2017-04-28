@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.client.rmiclient
 
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.core.Analysis
 import de.dkfz.roddy.core.AnalysisProcessingInformation
@@ -18,8 +19,7 @@ import de.dkfz.roddy.core.InfoObject
 import de.dkfz.roddy.core.ProjectFactory
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.JobManager
-import de.dkfz.roddy.execution.jobs.JobState
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
@@ -305,8 +305,8 @@ public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
     }
 
     @Override
-    Map<String, JobState> queryJobState(List<String> jobIds) throws RemoteException {
-        return withServer([:], { JobManager.getInstance().queryJobStatus(jobIds); }) as Map<String, JobState>
+    Map<String, JobState> queryJobState(List<de.dkfz.eilslabs.batcheuphoria.jobs.Job> jobIds) throws RemoteException {
+        return withServer([:], { Roddy.getJobManager().queryJobStatus(jobIds); }) as Map<String, JobState>
     }
 
     @Override

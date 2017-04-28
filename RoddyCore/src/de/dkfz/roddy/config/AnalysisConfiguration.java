@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.config;
 
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize;
+
 import java.util.LinkedList;
 import java.util.List;
 

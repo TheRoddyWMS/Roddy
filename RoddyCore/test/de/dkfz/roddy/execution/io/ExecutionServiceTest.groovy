@@ -6,27 +6,31 @@
 
 package de.dkfz.roddy.execution.io
 
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationFactory
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.InformationalConfigurationContent
-import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.config.ToolFileGroupParameter
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.knowledge.files.BaseFile
+import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.LibrariesFactoryTest
+import groovy.transform.CompileStatic
 import org.junit.BeforeClass;
 import org.junit.Test
 
 /**
  * Created by heinold on 25.11.15.
  */
+@CompileStatic
 public class ExecutionServiceTest {
     public static ExecutionContext mockedContext;
 
@@ -80,7 +84,7 @@ public class ExecutionServiceTest {
         targetToolpath.setExecutable(true, true);
 
         ToolEntry toolEntry = new ToolEntry("RoddyTests", "RoddyTests", "RoddyTestScript_ExecutionServiceTest.sh");
-        toolEntry.getOutputParameters(config).add(new ToolFileGroupParameter(GenericFileGroup, null, "TEST"))
+        toolEntry.getOutputParameters(config).add(new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, (Class<BaseFile>)null, "TEST"))
         config.getTools().add(toolEntry);
 
         // Initialize with fallback provider! Don't worry about errors at this point.

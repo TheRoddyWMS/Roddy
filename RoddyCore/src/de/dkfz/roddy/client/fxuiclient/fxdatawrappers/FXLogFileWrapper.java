@@ -6,8 +6,9 @@
 
 package de.dkfz.roddy.client.fxuiclient.fxdatawrappers;
 
+
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
 import de.dkfz.roddy.execution.jobs.Job;
-import de.dkfz.roddy.execution.jobs.JobState;
 import de.dkfz.roddy.execution.jobs.ReadOutJob;
 
 import java.io.File;

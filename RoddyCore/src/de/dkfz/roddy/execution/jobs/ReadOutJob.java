@@ -1,14 +1,18 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.execution.jobs;
 
+import de.dkfz.roddy.execution.jobs.JobResult;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.knowledge.files.BaseFile;
+import de.dkfz.roddy.tools.AppConfig;
+import de.dkfz.eilslabs.batcheuphoria.execution.ExecutionService;
 
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -28,19 +32,19 @@ public class ReadOutJob extends Job {
      */
     public final String jobID;
 
-    private final List<String> parentJobs;
+    private final List<Job> parentJobs;
 
-    public ReadOutJob(ExecutionContext process, String jobName, String toolID, String executedJobID, Map<String,String> parameters, List<String> parentJobs) {
-        super(jobName, process, toolID, parameters, null, null, new LinkedList<BaseFile>());
+    public ReadOutJob(ExecutionContext context, String jobName, String toolID, String executedJobID, Map<String,String> parameters, List<Job> parentJobs) {
+        super(context, jobName, toolID, new LinkedHashMap<>(), new LinkedList<BaseFile>());
         this.parentJobs = parentJobs;
         this.readOut = true;
         this.jobID = executedJobID;
     }
-
-    @Override
-    public JobResult run() {
-        throw new RuntimeException("A read out job cannot be run!");
-    }
+//
+//    @Override
+//    public JobResult run(ExecutionService executionService, AppConfig configuration, Map<String, String> parameters) {
+//        throw new RuntimeException("A read out job cannot be run!");
+//    }
 
     /**
      * Returns the read out jobs id.

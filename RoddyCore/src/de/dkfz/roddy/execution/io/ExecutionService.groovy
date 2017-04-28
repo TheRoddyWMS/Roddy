@@ -6,6 +6,11 @@
 
 package de.dkfz.roddy.execution.io
 
+import de.dkfz.eilslabs.batcheuphoria.jobs.Command
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
+import de.dkfz.eilslabs.batcheuphoria.jobs.DummyCommand
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -21,15 +26,14 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.Command
+import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobDependencyID
-import de.dkfz.roddy.execution.jobs.JobManager
-import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
+import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 import java.util.logging.Level
 
@@ -42,7 +46,7 @@ import static de.dkfz.roddy.config.ConfigurationConstants.*
  *
  */
 @CompileStatic
-public abstract class ExecutionService extends CacheProvider {
+public abstract class ExecutionService extends CacheProvider implements de.dkfz.eilslabs.batcheuphoria.execution.ExecutionService {
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(ExecutionService.class.name);
     private static ExecutionService executionService;
 
@@ -148,45 +152,30 @@ public abstract class ExecutionService extends CacheProvider {
 //        this.listOfListeners.clear();
     }
 
-    protected abstract List<String> _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream);
+    protected abstract ExecutionResult _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream);
 
     public List<String> executeTool(ExecutionContext context, String toolID, String jobNameExtension = "_executedScript:") {
         File path = context.getConfiguration().getProcessingToolPath(context, toolID);
-
-//        Job wrapperJob = new Job(context, context.getTimestampString() + jobNameExtension + toolID, toolID, null);
-//        DirectSynchronousExecutedJobManager dcfac = new DirectSynchronousExecutedJobManager();
-//        DirectCommand wrapperJobCommand = dcfac.createCommand(wrapperJob, context.getConfiguration().getProcessingToolPath(context, toolID), new LinkedList<>());
         String cmd = FileSystemAccessProvider.getInstance().commandSet.getExecuteScriptCommand(path);
         return execute(cmd).resultLines;
     }
 
     public ExecutionResult execute(String string, boolean waitFor = true, OutputStream outputStream = null) {
-        ExecutionResult er = null;
         if (string) {
-            List<String> result = _execute(string, waitFor, true, outputStream);
-            String returnCodeStr = result[0];
-            String processID = result[1];
-            if (returnCodeStr == null) {
-                returnCodeStr = 65535;
-                result << "65535";
-            }
-            int returnCode = Integer.parseInt(returnCodeStr);
-            result.remove(0);
-            result.remove(0);
-            er = new ExecutionResult(returnCode == 0, returnCode, result, processID);
+            return _execute(string, waitFor, true, outputStream);
         } else {
-            er = new ExecutionResult(false, -1, Arrays.asList("Command not valid. String is empty."), "");
+            return new ExecutionResult(false, -1, Arrays.asList("Command not valid. String is empty."), "");
         }
-//        fireStringExecutedEvent(string, er);
-        return er;
     }
 
-    public void execute(Command command, boolean waitFor = true) {
-        ExecutionContext run = command.getExecutionContext();
+    @Override
+    public ExecutionResult execute(Command command, boolean waitFor = true) {
+        ExecutionContext context = ((Job)command.getJob()).getExecutionContext()
         boolean configurationDisallowsJobSubmission = Roddy.getApplicationProperty(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAGS, "").contains(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAG_NOJOBSUBMISSION);
-        boolean preventCalls = run.getConfiguration().getPreventJobExecution();
-        boolean pidIsBlocked = blockedPIDsForJobExecution.contains(command.getExecutionContext().getDataSet());
-        boolean isDummyCommand = Command instanceof Command.DummyCommand;
+        boolean preventCalls = context.getConfiguration().getPreventJobExecution();
+        boolean pidIsBlocked = blockedPIDsForJobExecution.contains(context.getDataSet());
+        boolean isDummyCommand = Command instanceof DummyCommand;
+        ExecutionResult res;
 
         String cmdString;
         if (!configurationDisallowsJobSubmission && !allJobsBlocked && !pidIsBlocked && !preventCalls && !isDummyCommand) {
@@ -196,8 +185,7 @@ public abstract class ExecutionService extends CacheProvider {
 
                 OutputStream outputStream = createServiceBasedOutputStream(command, waitFor);
 
-                ExecutionResult res;
-                if (run.getExecutionContextLevel() == ExecutionContextLevel.TESTRERUN) {
+                if (context.getExecutionContextLevel() == ExecutionContextLevel.TESTRERUN) {
                     String pid = String.format("0x%08X", System.nanoTime());
                     res = new ExecutionResult(true, 0, [pid], pid);
                 } else {
@@ -205,9 +193,7 @@ public abstract class ExecutionService extends CacheProvider {
                 }
                 command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.OK);
 
-                handleServiceBasedJobExitStatus(command, res, outputStream);
-
-                command.getExecutionContext().addCalledCommand(command);
+                context.addCalledCommand(command);
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, ex.toString());
             }
@@ -219,30 +205,33 @@ public abstract class ExecutionService extends CacheProvider {
             reason << allJobsBlocked ? "The execution service is no longer allowed to execute commands. " : "";
             logger.postSometimesInfo("Skipping command " + command + " for reason: " + reason);
         }
-//        fireCommandExecutedEvent(command);
+        return res;
     }
 
     protected FileOutputStream createServiceBasedOutputStream(Command command, boolean waitFor) { return null; }
 
-    protected String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, OutputStream outputStream) {
+    @Override
+    String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, OutputStream outputStream) {
+        def jobManager = Roddy.getJobManager()
+//        jobManager.extractAndSetJobResultFromExecutionResult(command, res)
         String exID = "none";
         if (res.successful) {
-            exID = JobManager.getInstance().parseJobID(res.processID ?: res.resultLines[0]);
-            if (!exID) exID = JobManager.getInstance().parseJobID(res.resultLines[0]);
-
-            command.setExecutionID(JobManager.getInstance().createJobDependencyID(command.getJob(), exID));
-            JobManager.getInstance().storeJobStateInfo(command.getJob());
+            def job = command.getJob()
+            ExecutionContext currentContext = (job as Job).getExecutionContext()
+            String jobInfo = jobManager.getJobStateInfoLine(job)
+            FileSystemAccessProvider.getInstance().appendLineToFile(true, currentContext.getRuntimeService().getNameOfJobStateLogFile(currentContext), jobInfo, false)
         }
-        return exID;
+        return exID
     }
 
     public static void storeParameterFile(Command command) {
-        String convertedParameters = command.getParametersForParameterFile().collect({
-            ConfigurationValue cval ->
-                FileSystemAccessProvider.getInstance().getConfigurationConverter().convertConfigurationValue(cval, command.getExecutionContext()).toString();
-        }).join("\n")
-        if (command.getExecutionContext().getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
-            FileSystemAccessProvider.getInstance().writeTextFile(command.getParameterFile(), convertedParameters, command.getExecutionContext());
+        command.job.parameters
+        ExecutionContext context = ((Job)command.job).executionContext
+//        throw new NotImplementedException()
+        String convertedParameters = command.job.finalParameters().join("\n")
+        if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
+            FileSystemAccessProvider.getInstance().writeTextFile(command.job.getParameterFile(), convertedParameters, context);
+//        logger.severe("Storing parameter files is currently not supported.")
     }
 
     public static long measureStart() { return System.nanoTime(); }
@@ -368,7 +357,7 @@ public abstract class ExecutionService extends CacheProvider {
         Configuration cfg = context.getConfiguration();
         def configurationValues = cfg.getConfigurationValues()
 
-        JobManager.getInstance().addSpecificSettingsToConfiguration(cfg)
+        Roddy.getJobManager().getSpecificEnvironmentSettings().each { String k, String v -> cfg.getConfigurationValues().put(k, v, "string") }
         getInstance().addSpecificSettingsToConfiguration(cfg)
 
         //Add feature toggles to configuration
@@ -486,6 +475,7 @@ public abstract class ExecutionService extends CacheProvider {
 
         listOfFolders.keySet().parallelStream().each {
             File subFolder ->
+                if (!subFolder.isDirectory()) return
                 long startSingleCompression = System.nanoTime()
                 PluginInfo pInfo = listOfFolders[subFolder]
                 File tempFolder = File.createTempDir();
@@ -542,6 +532,8 @@ public abstract class ExecutionService extends CacheProvider {
 
         listOfFolders.each {
             File subFolder, PluginInfo pInfo ->
+                if(!subFolder.isDirectory())
+                    return
                 File localFile = mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive;
                 File remoteFile = new File(mapOfPreviouslyCompressedArchivesByFolder[subFolder].localArchive.getName()[0..-5] + "_" + context.getTimestampString() + ".zip");
                 String archiveMD5 = mapOfPreviouslyCompressedArchivesByFolder[subFolder].md5
@@ -633,7 +625,7 @@ public abstract class ExecutionService extends CacheProvider {
 
         List<Command> commandCalls = context.getCommandCalls();
         StringBuilder realCalls = new StringBuilder();
-        List<JobDependencyID> jobIDs = new LinkedList<JobDependencyID>();
+        List<de.dkfz.roddy.execution.jobs.JobDependencyID> jobIDs = new LinkedList<>();
         int cnt = 0;
         Map<String, String> jobIDReplacement = new HashMap<String, String>();
         StringBuilder repeatCalls = new StringBuilder();

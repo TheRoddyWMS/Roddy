@@ -8,7 +8,7 @@ package de.dkfz.roddy.client.fxuiclient.fxdatawrappers;
 
 import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation;
 import de.dkfz.roddy.execution.jobs.Job;
-import de.dkfz.roddy.execution.jobs.JobState;
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
 //import de.dkfz.roddy.execution.jobs.JobStatusListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;

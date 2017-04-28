@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.config
 
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
 import groovy.util.slurpersupport.NodeChild
 
 /**

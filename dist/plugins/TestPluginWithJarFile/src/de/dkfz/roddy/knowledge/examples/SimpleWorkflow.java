@@ -6,9 +6,9 @@
 
 package de.dkfz.roddy.knowledge.examples;
 
+
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.Workflow;
-import de.dkfz.roddy.knowledge.methods.GenericMethod;
 
 /**
  */

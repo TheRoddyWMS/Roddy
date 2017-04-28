@@ -7,15 +7,12 @@
 package de.dkfz.roddy.core;
 
 import de.dkfz.roddy.execution.io.BaseMetadataTable;
-import de.dkfz.roddy.execution.io.MetadataTableFactory;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
-import de.dkfz.roddy.execution.jobs.Job;
 
 import java.io.File;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * Represents a unique dataset like i.e. a PID or a cohort.

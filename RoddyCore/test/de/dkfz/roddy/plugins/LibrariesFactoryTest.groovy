@@ -167,7 +167,8 @@ public class LibrariesFactoryTest {
 
         File testSource = new File(LibrariesFactory.groovyClassLoader.getResource("LibrariesFactoryTestData.zip").file)
         pluginsDirWithInvalidEntries = pluginsBaseDirWithInvalidEntries.root
-        ExecutionHelper.executeSingleCommand("cp -r ${testSource} ${pluginsDirWithInvalidEntries}; cd ${pluginsDirWithInvalidEntries}; unzip LibrariesFactoryTestData.zip");
+        String copyTestSourceommand = "unzip -d ${pluginsDirWithInvalidEntries} ${testSource}"
+        ExecutionHelper.executeSingleCommand(copyTestSourceommand);
         pluginsDirWithInvalidEntries = new File(pluginsDirWithInvalidEntries, "LibrariesFactoryTestData")
         new File(pluginsDirWithInvalidEntries, "InValidContentCantRead").setReadable(false);
     }

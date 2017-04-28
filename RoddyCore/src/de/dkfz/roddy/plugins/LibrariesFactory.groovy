@@ -158,7 +158,7 @@ public class LibrariesFactory extends Initializable {
                 try {
                     foundCoreClass = loadClass(className)
                 } catch (ClassNotFoundException ex) {
-                    // Silently ignore it. If the class can not be found, it is fine here.
+                    // Silently ignored. The class may or may not be in core. If the class can not be found, it is fine here.
                 }
                 if (foundCoreClass) break
                 // Ignore if it is empty, we will fall back to the plugin strategy afterwards! Or search in the next package
@@ -317,7 +317,7 @@ public class LibrariesFactory extends Initializable {
     }
 
     /**
-     * This and the following method should not be in here! We should use the FileSystemAccessProvider for it.
+     * This and the following method should not be in here! We should use the FileSystemAccessProvider for it. 
      * However, the FSAP always tries to use the ExecService, if possible. All in all, with the current setup for FSAP / ES
      * interaction, it will not work. As we already decided to change that at some point, I'll put the method in here
      * and mark them as deprecated.
@@ -339,8 +339,11 @@ public class LibrariesFactory extends Initializable {
 
         List<String> errors = []
 
-        if (!directory.isDirectory())
-            errors << "File is not a directory"
+        if (!directory.isDirectory()) {
+            // Just return silently here.
+//            errors << "File is not a directory"
+            return false;
+        }
         if (directory.isHidden())
             errors << "Directory is hidden"
         if (!directory.canRead())

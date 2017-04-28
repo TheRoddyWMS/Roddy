@@ -7,29 +7,38 @@
 package de.dkfz.roddy;
 
 import com.btr.proxy.search.ProxySearch;
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize;
+import de.dkfz.eilslabs.batcheuphoria.execution.cluster.pbs.PBSJobManager;
+import de.dkfz.eilslabs.batcheuphoria.jobs.*;
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager;
 import de.dkfz.roddy.client.RoddyStartupModes;
 import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
 import de.dkfz.roddy.client.rmiclient.RoddyRMIServer;
+import de.dkfz.roddy.config.Configuration;
+import de.dkfz.roddy.config.ConfigurationConstants;
+import de.dkfz.roddy.config.ConfigurationValue;
+import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues;
+import de.dkfz.roddy.execution.jobs.*;
 import de.dkfz.roddy.execution.io.ExecutionHelper;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.tools.AppConfig;
-import de.dkfz.roddy.config.ResourceSetSize;
 import de.dkfz.roddy.core.Initializable;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.BashCommandSet;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.io.fs.ShellCommandSet;
-import de.dkfz.roddy.execution.jobs.Command;
-import de.dkfz.roddy.execution.jobs.JobManager;
 import de.dkfz.roddy.client.fxuiclient.RoddyUIController;
-import de.dkfz.roddy.execution.jobs.JobState;
 import de.dkfz.roddy.plugins.LibrariesFactory;
 import de.dkfz.roddy.tools.LoggerWrapper;
+import groovy.lang.GroovyClassLoader;
+import groovy.transform.CompileStatic;
 
 import java.io.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
@@ -116,6 +125,10 @@ public class Roddy {
     private static boolean exitAllowed = true;
 
     private static AppConfig featureToggleConfig;
+
+    public static boolean isStrictModeEnabled() {
+        return getFeatureToggleValue(AvailableFeatureToggles.StrictMode);
+    }
 
     public static int getRepeatSubmissionAmount() {
         if (!repeatJobSubmission)
@@ -225,19 +238,24 @@ public class Roddy {
 
 
     private static void startup(String[] args) {
+
         time(null);
-        LoggerWrapper.setup();
+
+        List<String> list = Arrays.asList(args);
+        CommandLineCall clc = new CommandLineCall(list);
+        commandLineCall = clc;
+        // Initialize the logger with an initial setup. At this point we don't know about things like the logger settings
+        // or the used app ini file. However, all the following methods rely on an existing valid logger setup.
+        LoggerWrapper.setup(getApplicationLogDirectory());
+
         logger.postAlwaysInfo("Roddy version " + Constants.APP_CURRENT_VERSION_STRING);
 
         if (!performInitialCheck())
             exit(1);
 
         time("ftoggleini");
-        List<String> list = Arrays.asList(args);
         time("clc .1");
 
-        CommandLineCall clc = new CommandLineCall(list);
-        commandLineCall = clc;
 
         time("setup");
         initializeFeatureToggles();
@@ -248,6 +266,7 @@ public class Roddy {
         time("parseopt");
         loadPropertiesFile();
         time("loadprop");
+        LoggerWrapper.setup(applicationProperties);
 
         if (initializeServices(clc.startupMode.needsFullInit())) {
             time("initserv");
@@ -404,7 +423,7 @@ public class Roddy {
         successful &= retrieveAndSetToggleValuesFromCLI(RoddyStartupOptions.disabletoggles, false);
 
         // TODO:STRICT In Strict mode we should exit after all toggles were checked.
-        if(!successful) {
+        if (!successful) {
             String toggleNames = RoddyIOHelperMethods.joinArray(AvailableFeatureToggles.values(), "\n\t");
             logger.severe("Available toggle values are:\n\t" + toggleNames);
         }
@@ -420,7 +439,7 @@ public class Roddy {
         boolean error = false;
         if (commandLineCall.isOptionSet(opt)) {
             List<String> listOfToggles = commandLineCall.getOptionList(opt);
-            for(String toggle : listOfToggles) {
+            for (String toggle : listOfToggles) {
                 try {
                     if (AvailableFeatureToggles.valueOf(toggle) != null)
                         featureToggleConfig.setProperty(toggle, "" + enabled);
@@ -461,7 +480,7 @@ public class Roddy {
             time("init execserv");
 
             currentStep = "Initialize command factory";
-            JobManager.initializeFactory(fullSetup);
+            initializeJobManager(fullSetup);
             time("init cmd fac");
             return true;
         } catch (Exception ex) {
@@ -515,6 +534,66 @@ public class Roddy {
         }
     }
 
+
+    private static Configuration applicationSpecificConfiguration = null;
+
+    public static Configuration getApplicationSpecificConfiguration() {
+        if (applicationSpecificConfiguration == null) {
+            applicationSpecificConfiguration = new Configuration(null);
+            RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
+            JobManager jobManager = Roddy.getJobManager();
+            Map<String, String> specificEnvironmentSettings = jobManager.getSpecificEnvironmentSettings();
+            for (String k : specificEnvironmentSettings.keySet()) {
+                logger.postSometimesInfo("Add job manager value " + k + "=" + specificEnvironmentSettings.get(k) + " to context configuration");
+                configurationValues.add(new ConfigurationValue(k, specificEnvironmentSettings.get(k)));
+            }
+        }
+        return applicationSpecificConfiguration;
+    }
+
+    @CompileStatic
+    public static void initializeJobManager(boolean fullSetup) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
+        logger.postSometimesInfo("public static void initializeFactory(boolean fullSetup)");
+        if (!fullSetup)
+            return;
+
+        ClassLoader classLoader;
+        String jobManagerClassID;
+        Class jobManagerClass;
+
+        classLoader = LibrariesFactory.getGroovyClassLoader();
+        jobManagerClassID = Roddy.getApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS, PBSJobManager.class.getName());
+        jobManagerClass = classLoader.loadClass(jobManagerClassID);
+
+        /** Get the constructor which comes with no parameters */
+        Constructor first = jobManagerClass.getDeclaredConstructor(de.dkfz.eilslabs.batcheuphoria.execution.ExecutionService.class, JobManagerCreationParameters.class);
+        jobManager = (JobManager) first.newInstance(ExecutionService.getInstance()
+                , new JobManagerCreationParametersBuilder()
+                        .setCreateDaemon(true)
+                        .setTrackUserJobsOnly(trackUserJobsOnly)
+                        .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
+                        .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI())
+                        .setJobIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW)
+                        .setJobArrayIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBARRAYINDEX_RAW)
+                        .setJobScratchIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW).build());
+
+
+// There are many values which need to be extracted from the xml (context, project?)
+//        configuration.getProperty("PBS_AccountName", "")
+//        configuration.getProperty("email")
+//        configuration.getProperty("outputFileGroup", null)
+//        configuration.getProperty("umask", "")
+
+        // Was in Command
+//        new File(configuration.getProperty("loggingDirectory", "/"))
+    }
+
+    private static JobManager jobManager;
+
+    public static JobManager getJobManager() {
+        return jobManager;
+    }
+
     private static void parseRoddyStartupModeAndRun(CommandLineCall clc) {
         if (clc.startupMode == RoddyStartupModes.ui)
             RoddyUIController.App.main(clc.getArguments().toArray(new String[0]));
@@ -538,10 +617,10 @@ public class Roddy {
         if (!option.needsFullInit())
             return;
 
-        if (JobManager.getInstance() != null && !JobManager.getInstance().executesWithoutJobSystem() && waitForJobsToFinish) {
+        if (jobManager.executesWithoutJobSystem() && waitForJobsToFinish) {
             exitCode = performWaitforJobs();
         } else {
-            List<Command> listOfCreatedCommands = JobManager.getInstance().getListOfCreatedCommands();
+            List<Command> listOfCreatedCommands = jobManager.getListOfCreatedCommands();
             for (Command command : listOfCreatedCommands) {
                 if (command.getJob().getJobState() == JobState.FAILED) exitCode++;
             }
@@ -552,7 +631,7 @@ public class Roddy {
     private static int performWaitforJobs() {
         try {
             Thread.sleep(15000); //Sleep at least 15 seconds to let any job scheduler handle things...
-            return JobManager.getInstance().waitForJobsToFinish();
+            return jobManager.waitForJobsToFinish();
         } catch (Exception ex) {
             return 250;
         }
@@ -770,6 +849,10 @@ public class Roddy {
         return LibrariesFactory.PLUGIN_VERSION_CURRENT;
     }
 
+    public static FileSystemAccessProvider getLocalFileSystemInfoProvider() {
+        return new FileSystemAccessProvider();
+    }
+
     public static ShellCommandSet getLocalCommandSet() {
         String localCommandSet = getApplicationProperty("localCommandSet");
 
@@ -802,4 +885,5 @@ public class Roddy {
             return new CommandLineCall(new LinkedList<>());
         return commandLineCall;
     }
+
 }

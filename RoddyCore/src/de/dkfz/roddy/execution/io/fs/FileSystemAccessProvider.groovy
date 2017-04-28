@@ -336,12 +336,19 @@ public class FileSystemAccessProvider extends CacheProvider {
         final String path = f.absolutePath
         String id = String.format("checkDirectory_%08X", path.hashCode());
         if (!_directoryExistsAndIsAccessible.containsKey(path)) {
-            String outputAccessRightsForDirectories = context.getOutputDirectoryAccess();
-            String outputFileGroup = context.getOutputGroupString();
-            String cmd = commandSet.getCheckDirectoryCommand(f, createMissing, outputFileGroup, outputAccessRightsForDirectories);
-            ExecutionResult er = ExecutionService.getInstance().execute(cmd);
-            _directoryExistsAndIsAccessible[path] = (er.firstLine == commandSet.getReadabilityTestPositiveResult());
-            fireCacheValueAddedEvent(id, path);
+            if(createMissing) {
+                String outputAccessRightsForDirectories = context.getOutputDirectoryAccess();
+                String outputFileGroup = context.getOutputGroupString()
+                String cmd = commandSet.getCheckDirectoryCommand(f, true, outputFileGroup, outputAccessRightsForDirectories);
+                ExecutionResult er = ExecutionService.getInstance().execute(cmd);
+                _directoryExistsAndIsAccessible[path] = (er.firstLine == commandSet.getReadabilityTestPositiveResult());
+                fireCacheValueAddedEvent(id, path);
+            } else {
+                String cmd = commandSet.getCheckDirectoryCommand(f)
+                ExecutionResult er = ExecutionService.getInstance().execute(cmd);
+                _directoryExistsAndIsAccessible[path] = (er.firstLine == commandSet.getReadabilityTestPositiveResult());
+                fireCacheValueAddedEvent(id, path);
+            }
         }
         fireCacheValueReadEvent(id, -1);
         return _directoryExistsAndIsAccessible[path];

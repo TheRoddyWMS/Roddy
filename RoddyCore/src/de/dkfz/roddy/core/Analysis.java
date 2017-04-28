@@ -6,17 +6,20 @@
 
 package de.dkfz.roddy.core;
 
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager;
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
 import de.dkfz.roddy.AvailableFeatureToggles;
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
-import de.dkfz.roddy.execution.jobs.*;
+import de.dkfz.roddy.execution.jobs.Job;
 import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.config.*;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import java.io.File;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -329,7 +332,6 @@ public class Analysis {
         t.start();
     }
 
-    /*
     /**
      * Executes the context object.
      * If the contexts level is QUERY_STATUS:
@@ -339,7 +341,6 @@ public class Analysis {
      * If its level is QUERY_STATUS:
      * Check the file validity after execution.<br />
      * Also there are no files written for this level.
-     *
      *
      * @param context
      */
@@ -356,7 +357,10 @@ public class Analysis {
                 try {
                     ExecutionService.getInstance().writeFilesForExecution(context);
                     context.execute();
+                    finallyStartJobsOfContext(context);
                 } finally {
+                    abortStartedJobsOfContext(context);
+
                     if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) { //Clean up
                         //Query file validity of all files
                         FileSystemAccessProvider.getInstance().validateAllFilesInContext(context);
@@ -400,7 +404,8 @@ public class Analysis {
             }
 
             // Print out context errors.
-            if (context.getExecutionContextLevel() != ExecutionContextLevel.QUERY_STATUS && context.getErrors().size() > 0) {
+            // Only print them out if !QUERY_STATUS and the runmode is testrun or testrerun.
+            if (context.getErrors().size() > 0 && context.getExecutionContextLevel() != ExecutionContextLevel.QUERY_STATUS) {
                 StringBuilder messages = new StringBuilder();
                 boolean warningsOnly = true;
                 for (ExecutionContextError executionContextError : context.getErrors()) {
@@ -421,6 +426,36 @@ public class Analysis {
     }
 
     /**
+     * Will start all the jobs in the context.
+     *
+     * @param context
+     */
+    private void finallyStartJobsOfContext(ExecutionContext context) {
+        // Needs to be made much better!
+        logger.postAlwaysInfo("Make startHeldJobs call safe!");
+        Roddy.getJobManager().startHeldJobs(context.getExecutedJobs());
+    }
+
+    /**
+     * Checks, whether strict mode AND rollback toggles are enabled and
+     * try to abort jobs by calling the job manager.
+     * Occurring exceptions are catched so following code can be executed properly.
+     *
+     * @param context
+     */
+    private void abortStartedJobsOfContext(ExecutionContext context) {
+        if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.RollbackOnWorkflowError)) {
+            try {
+                logger.severe("An workflow error occurred, try to rollback / abort submitted jobs.");
+                Roddy.getJobManager().queryJobAbortion(context.jobsForProcess);
+            } catch (Exception ex) {
+                logger.severe("Could not successfully abort jobs.", ex);
+            }
+        }
+    }
+
+
+    /**
      * Calls a cleanup script and / or a workflows cleanup method to cleanup the directories of a workflow.
      * If you call the cleanup script, a new execution context log directory will be created for this purpose. This directory will not be created if
      * the workflows cleanup method is called!.
@@ -437,7 +472,7 @@ public class Analysis {
                 //TODO Think hard if this could be generified and simplified! This is also used in other places in a similar way right?
                 ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, ExecutionContextLevel.CLEANUP, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null);
                 Job cleanupJob = new Job(context, "cleanup", ((AnalysisConfiguration) getConfiguration()).getCleanupScript(), null);
-//                Command cleanupCmd = JobManager.getInstance().createCommand(cleanupJob, cleanupJob.getToolPath(), new LinkedList<>());
+//                Command cleanupCmd = Roddy.getJobManager().createCommand(cleanupJob, cleanupJob.getToolPath(), new LinkedList<>());
                 try {
                     ExecutionService.getInstance().writeFilesForExecution(context);
                     cleanupJob.run();

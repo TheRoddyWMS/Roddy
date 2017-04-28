@@ -167,9 +167,10 @@ class BashConverter extends ConfigurationConverter {
                 boolean isValidationRule = cv.id.contains("cfgValidationRule");
                 if (isValidationRule)
                     continue;
-                if (cv.toString().startsWith("#"))
+                String value = cv.toString()
+                if (value != null && value.startsWith("#"))
                     continue;
-                def dependencies = cv.getIDsForParrentValues();
+                def dependencies = cv.getIDsForParentValues();
                 int noOfDependencies = dependencies.size();
                 int noOfOriginalDependencies = dependencies.size();
                 List<String> notFound = [];
@@ -181,7 +182,7 @@ class BashConverter extends ConfigurationConverter {
                 }
 
                 if (noOfDependencies > 0) {
-                    logger.postRareInfo("CValue not accepted in dependecy resolution round: ${cv.id} = ${cv.value} $separator" + notFound.collect { "Could not resolve: ${it}" }.join(separator));
+                    logger.postRareInfo("CValue not accepted in dependency resolution pass: ${cv.id} = ${cv.value} $separator" + notFound.collect { "Could not resolve: ${it}" }.join(separator));
                     continue;
                 }
 
@@ -368,8 +369,7 @@ class BashConverter extends ConfigurationConverter {
      * preventJobExecution=false
      * UNZIPTOOL=gunzip
      * ZIPTOOL_OPTIONS="-c"
-     * sampleDirectory=/data/michael/temp/roddyLocalTest/testproject/vbp/A100/${sample}/${SEQUENCER_PROTOCOL}
-     *
+     * sampleDirectory=/data/michael/temp/roddyLocalTest/testproject/vbp/A100/${sample}/${SEQUENCER_PROTOCOL}*
      * @param text
      * @return
      */
@@ -416,7 +416,7 @@ class BashConverter extends ConfigurationConverter {
         getHeaderValues(header, "analysis", []).each {
             String analysis ->
                 String[] split = analysis.split(StringConstants.COMMA)
-                if(split.size() < 3) {
+                if (split.size() < 3) {
                     ConfigurationFactory.logger.severe("The analysis string ${analysis} in the Bash configuration file is malformed.")
                     return
                 }
