@@ -15,6 +15,7 @@ import de.dkfz.roddy.execution.io.MetadataTableFactory
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.plugins.PluginInfoMap
+import de.dkfz.roddy.plugins.PluginLoaderException
 
 import java.lang.reflect.InvocationTargetException
 
@@ -146,8 +147,11 @@ class ProjectLoader {
             MetadataTableFactory.getTable(analysis);
             return analysis;
         } catch (ProjectLoaderException ex) {
-            logger.severe(ex.message);
+            logger.severe(ex.message)
             return null;
+        } catch (PluginLoaderException ex) {
+            logger.severe(ex.message)
+            return null
         }
     }
 

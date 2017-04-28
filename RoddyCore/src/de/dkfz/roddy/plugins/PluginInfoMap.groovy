@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.plugins
 
+import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 
 /**
@@ -72,10 +73,12 @@ class PluginInfoMap {
      */
     public PluginInfo getPluginInfo(String pluginID, String version) {
         if (!version) version = "current";
+        String additionalMessage = "\n#FRED#Please check, if you have proper access to all plugin directories. Plugins are in the following directories:\n\t#CLEAR#"
+        additionalMessage += Roddy.getPluginDirectories().collect { it.getAbsolutePath() }.join("\n\t")
         if (!mapOfPlugins[pluginID]) //Can this case occur?
-            throw new RuntimeException("Plugin ${pluginID} is not available, available are:\n\t" + mapOfPlugins.keySet().join("\t\n"))
+            throw new PluginLoaderException("Plugin ${pluginID} is not available, available are:\n\t" + mapOfPlugins.keySet().join("\n\t") + additionalMessage)
         if (!mapOfPlugins[pluginID][version])
-            throw new RuntimeException("Version ${version} of plugin ${pluginID} is not available, know versions are:\n\t" + mapOfPlugins[pluginID].keySet().join("\t\n"))
+            throw new PluginLoaderException("Version ${version} of plugin ${pluginID} is not available, know versions are:\n\t" + mapOfPlugins[pluginID].keySet().join("\t\n") + additionalMessage)
         return mapOfPlugins[pluginID][version]
     }
 

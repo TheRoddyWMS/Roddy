@@ -302,11 +302,11 @@ public class LibrariesFactory extends Initializable {
         for (File pBaseDirectory : pluginDirectories) {
             logger.postSometimesInfo("Parsing plugins folder: ${pBaseDirectory}");
             if (!pBaseDirectory.exists()) {
-                logger.warning("The plugins directory $pBaseDirectory does not exist.")
+                logger.severe("The plugins directory $pBaseDirectory does not exist.")
                 continue;
             }
             if (!pBaseDirectory.canRead()) {
-                logger.warning("The plugins directory $pBaseDirectory is not readable.")
+                logger.severe("The plugins directory $pBaseDirectory is not readable.")
             }
 
             File[] directoryList = pBaseDirectory.listFiles().sort() as File[];
