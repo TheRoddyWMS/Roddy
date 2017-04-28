@@ -308,6 +308,11 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
+    public boolean hasErrors() {
+        return checkAnalysisConfig().hasErrors();
+    }
+
+    @Override
     public List<ConfigurationLoadError> getListOfLoadErrors() {
         return checkAnalysisConfig().getListOfLoadErrors();
     }

@@ -702,6 +702,16 @@ public class ConfigurationFactory {
                         }
                     }
                 }
+                def allparameters = (inputParameters + outputParameters).collect {
+                    if(it instanceof ToolEntry.ToolParameterOfFiles) {
+                        ((ToolEntry.ToolParameterOfFiles)it).allFiles.collect  {it.scriptParameterName}
+                    } else {
+                        it.scriptParameterName
+                    }
+                }.flatten()
+
+                if(allparameters.size() != allparameters.unique(false).size())
+                    throw new Exception("There were duplicate i/o script parameter names.")
                 currentEntry.setGenericOptions(inputParameters, outputParameters, resourceSets);
             }
             return currentEntry;

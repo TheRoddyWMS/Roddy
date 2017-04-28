@@ -165,7 +165,7 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
 
     static ResourceSet getResourceSetFromConfiguration(String toolID, ExecutionContext context) {
         ToolEntry te = context.getConfiguration().getTools().getValue(toolID)
-        return te.getResourceSet(context.configuration)
+        return te.getResourceSet(context.configuration) ?: new ResourceSet(null, null, null, null, null, null, null, null);
     }
 
     static String getToolMD5(String toolID, ExecutionContext context) {
@@ -214,6 +214,10 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
             if (newPath == null) {
                 // Auto path!
                 int slotPosition = allRawInputParameters.keySet().asList().indexOf(k)
+                if(Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.FailOnAutoFilenames))
+                    throw new RuntimeException("Auto filenames are forbidden when strict mode is active.")
+                else
+                    context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("An auto filename will be used for ${jobName}:${slotPosition} / ${bf.class.name}"))
                 String completeString = jobName + k + slotPosition
                 if (parentFiles)
                     parentFiles.each {
@@ -267,6 +271,8 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
     Map<String, String> convertResourceSetToParameters() {
         def rs = getResourceSet()
         Map<String, String> rsParameters = [:]
+        if (rs == null) return rsParameters
+
         if (rs.isMemSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_MEM"] = rs.mem.toString()
         if (rs.isCoresSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_CORES"] = rs.cores.toString()
         if (rs.isNodesSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_NODES"] = rs.nodes.toString()

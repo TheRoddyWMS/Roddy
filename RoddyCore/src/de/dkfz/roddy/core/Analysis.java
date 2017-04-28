@@ -367,20 +367,25 @@ public class Analysis {
                 if (!contextPermissions) message.append("\n\tContext permissions could not be validated.");
                 if (!contextExecutability) message.append("\n\tContext and workflow is not considered executable.");
                 if (!configurarionValidity) message.append("\n\tContext configuration has errors.");
-                logger.always(message.toString());
+                logger.severe(message.toString());
             } else {
                 try {
                     ExecutionService.getInstance().writeFilesForExecution(context);
                     boolean execute = true;
-                    boolean preparedFilesAreValid = ExecutionService.getInstance().checkFilesPreparedForExecution(context);
-                    boolean copiedAnalysisToolsAreExecutable = ExecutionService.getInstance().checkCopiedAnalysisTools(context);
-                    execute &= preparedFilesAreValid && copiedAnalysisToolsAreExecutable;
-                    if (!execute) {
-                        StringBuilder message = new StringBuilder("There were errors after prerapating the workflow run for dataset " + datasetID);
-                        if (!preparedFilesAreValid) message.append("\n\tSome files could not be written. Workflow will not execute.");
-                        if (!copiedAnalysisToolsAreExecutable) message.append("\n\tSome declared tools are not executable. Workflow will not execute.");
-                        logger.always(message.toString());
-                    } else {
+                    if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) { // Only do these checks, if we are not in query mode!
+                        boolean preparedFilesAreValid = ExecutionService.getInstance().checkFilesPreparedForExecution(context);
+                        boolean copiedAnalysisToolsAreExecutable = ExecutionService.getInstance().checkCopiedAnalysisTools(context);
+                        execute &= preparedFilesAreValid && copiedAnalysisToolsAreExecutable;
+                        if (!execute) {
+                            StringBuilder message = new StringBuilder("There were errors after preparing the workflow run for dataset " + datasetID);
+                            if (!preparedFilesAreValid) message.append("\n\tSome files could not be written. Workflow will not execute.");
+                            if (!copiedAnalysisToolsAreExecutable) message.append("\n\tSome declared tools are not executable. Workflow will not execute.");
+                            logger.severe(message.toString());
+                        }
+                    }
+
+                    // Finally, if execution is allowed, run it and start the submitted jobs (if hold jobs is enabled)
+                    if (execute) {
                         context.execute();
                         finallyStartJobsOfContext(context);
                     }
@@ -413,12 +418,13 @@ public class Analysis {
         } finally {
             if (eCopy != null) {
                 logger.always("An exception occurred: '" + eCopy.getLocalizedMessage() + "'");
-                if (logger.isVerbosityMedium()) {
-                    logger.log(Level.SEVERE, eCopy.toString());
-                    logger.always(RoddyIOHelperMethods.getStackTraceAsString(eCopy));
-                } else {
-                    logger.always("Set verbosity option -v or --vv to see the stack trace. Or look in to the log files in ~/.roddy/logs.");
-                }
+                // This error should always be visible fully. We have a lot of known errors, which are properly catched. So unknown things should be visible.
+                logger.always(RoddyIOHelperMethods.getStackTraceAsString(eCopy));
+//                if (logger.isVerbosityMedium()) {
+//                    logger.log(Level.SEVERE, eCopy.toString());
+//                } else {
+//                    logger.always("Set verbosity option -v or --vv to see the stack trace. Or look in to the log files in ~/.roddy/logs.");
+//                }
             }
 
             // Look up errors when jobs are executed directly and when there were any started jobs.

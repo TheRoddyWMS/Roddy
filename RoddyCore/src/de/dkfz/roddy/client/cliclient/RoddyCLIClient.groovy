@@ -213,11 +213,12 @@ public class RoddyCLIClient {
         }
 
         // This check only applies for analysis configuration files.
-        if (Roddy.strictModeEnabled && analysis.getConfiguration().hasErrors()) {
-            logger.severe("There were configuration errors and Roddy will not start. (Strict mode is enabled)")
+        if (analysis.getConfiguration().hasErrors()) {
+            logger.severe("There were configuration errors and Roddy will not start.")
             StringBuilder sb = new StringBuilder();
             printConfigurationLoadErrors(analysis.getConfiguration(), sb, 0, Constants.ENV_LINESEPARATOR)
             System.out.println(ConsoleStringFormatter.getFormatter().formatAll(sb.toString()))
+            Roddy.exit(1)
         }
         return analysis
     }
@@ -278,11 +279,14 @@ public class RoddyCLIClient {
 
     private static int printConfigurationLoadErrors(Configuration configuration, StringBuilder sb, int i, String separator) {
         for (ConfigurationLoadError error : configuration.getListOfLoadErrors()) {
-            sb << "#FRED#" << "${i}: ".padLeft(6) << "Load error #CLEAR#" << separator;
-            sb << "      ID:          " << error.id << separator;
-            sb << "      Description: " << error.description << separator;
-            if (error.exception)
-                sb << "      #FWHITE##BRED#" << error.exception.toString() << "#CLEAR#" << separator;
+            String f = error.configuration?.informationalConfigurationContent?.file?.absolutePath
+            sb << "#FRED#" << "${i}: ".padLeft(6) << "Load error #CLEAR#"
+            sb << separator << "      FILE:        " << f ?: "#FBLUE#NO FILE#CLEAR#"
+            sb << separator << "      ID:          " << error.id
+            sb << separator << "      Description: " << error.description
+            if (RoddyIOHelperMethods.getStackTraceAsString(error.exception))
+                sb << separator << "      #FYELLOW#" << error.exception.toString() << "#CLEAR#"
+            sb << separator
             i++;
         }
         i
@@ -528,14 +532,15 @@ public class RoddyCLIClient {
 
             for (Job job : collectedJobs) {
 
-                String resources = "Unknown resource entry";
+                String resources = " Unknown resource entry ";
 
                 try {
                     ToolEntry tool = configuration.getTools().getValue(job.getToolID());
                     ResourceSet resourceSet = tool.getResourceSet(configuration);
-                    ProcessingCommands convertResourceSet = Roddy.getJobManager().convertResourceSet(resourceSet);
-                    resources = convertResourceSet.toString();
-
+                    if (!resourceSet instanceof EmptyResourceSet) {
+                        ProcessingCommands convertResourceSet = Roddy.getJobManager().convertResourceSet(resourceSet);
+                        resources = convertResourceSet.toString();
+                    }
                 } catch (Exception ex) {
                 }
 
