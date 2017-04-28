@@ -15,6 +15,7 @@ import de.dkfz.roddy.execution.io.MetadataTableFactory
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.plugins.PluginInfoMap
+import jdk.internal.org.xml.sax.SAXParseException
 
 import java.lang.reflect.InvocationTargetException
 
