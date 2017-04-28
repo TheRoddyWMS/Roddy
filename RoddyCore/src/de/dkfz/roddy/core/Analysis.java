@@ -177,6 +177,10 @@ public class Analysis {
         return rs;
     }
 
+    public List<ExecutionContext> run(List<String> pidFilters, ExecutionContextLevel level) {
+        return run(pidFilters, level, false);
+    }
+
     /**
      * Executes this analysis for the specified list of identifiers.
      * An identifier can contain wildcards. The Apache WildCardFileFilter is used for wildcard resolution.
@@ -185,7 +189,7 @@ public class Analysis {
      * @param level      The level for the context execution
      * @return
      */
-    public List<ExecutionContext> run(List<String> pidFilters, ExecutionContextLevel level) {
+    public List<ExecutionContext> run(List<String> pidFilters, ExecutionContextLevel level, boolean preventLoggingOnQueryStatus) {
         List<DataSet> selectedDatasets = getRuntimeService().loadDatasetsWithFilter(this, pidFilters);
         List<ExecutionContext> runs = new LinkedList<>();
 
@@ -196,7 +200,7 @@ public class Analysis {
 
             ExecutionContext ec = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, level, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null, creationCheckPoint);
 
-            executeRun(ec);
+            executeRun(ec, preventLoggingOnQueryStatus);
             runs.add(ec);
         }
         return runs;
@@ -332,6 +336,10 @@ public class Analysis {
         t.start();
     }
 
+    protected void executeRun(ExecutionContext context) {
+        executeRun(context, false);
+    }
+
     /**
      * Executes the context object.
      * If the contexts level is QUERY_STATUS:
@@ -344,20 +352,39 @@ public class Analysis {
      *
      * @param context
      */
-    protected void executeRun(ExecutionContext context) {
-        logger.postSometimesInfo("" + context.getExecutionContextLevel());
+    protected void executeRun(ExecutionContext context, boolean preventLoggingOnQueryStatus) {
+        logger.rare("" + context.getExecutionContextLevel());
         boolean isExecutable;
         String datasetID = context.getDataSet().getId();
         Exception eCopy = null;
         try {
-            isExecutable = ExecutionService.getInstance().checkContextPermissions(context) && context.checkExecutability();
+            boolean contextPermissions = ExecutionService.getInstance().checkContextPermissions(context);
+            boolean contextExecutability = context.checkExecutability();
+            boolean configurarionValidity = Roddy.isStrictModeEnabled() ? !getConfiguration().hasErrors() : true;
+            isExecutable = contextPermissions && contextExecutability && configurarionValidity;
+
             if (!isExecutable) {
-                logger.postAlwaysInfo("The workflow does not seem to be executable for dataset " + datasetID);
+                StringBuilder message = new StringBuilder("The workflow does not seem to be executable for dataset " + datasetID);
+                if (!contextPermissions) message.append("\n\tContext permissions could not be validated.");
+                if (!contextExecutability) message.append("\n\tContext and workflow is not considered executable.");
+                if (!configurarionValidity) message.append("\n\tContext configuration has errors.");
+                logger.always(message.toString());
             } else {
                 try {
                     ExecutionService.getInstance().writeFilesForExecution(context);
-                    context.execute();
-                    finallyStartJobsOfContext(context);
+                    boolean execute = true;
+                    boolean preparedFilesAreValid = ExecutionService.getInstance().checkFilesPreparedForExecution(context);
+                    boolean copiedAnalysisToolsAreExecutable = ExecutionService.getInstance().checkCopiedAnalysisTools(context);
+                    execute &= preparedFilesAreValid && copiedAnalysisToolsAreExecutable;
+                    if (!execute) {
+                        StringBuilder message = new StringBuilder("There were errors after prerapating the workflow run for dataset " + datasetID);
+                        if (!preparedFilesAreValid) message.append("\n\tSome files could not be written. Workflow will not execute.");
+                        if (!copiedAnalysisToolsAreExecutable) message.append("\n\tSome declared tools are not executable. Workflow will not execute.");
+                        logger.always(message.toString());
+                    } else {
+                        context.execute();
+                        finallyStartJobsOfContext(context);
+                    }
                 } finally {
                     abortStartedJobsOfContext(context);
 
@@ -386,12 +413,12 @@ public class Analysis {
 
         } finally {
             if (eCopy != null) {
-                logger.postAlwaysInfo("An exception occurred: '" + eCopy.getLocalizedMessage() + "'");
+                logger.always("An exception occurred: '" + eCopy.getLocalizedMessage() + "'");
                 if (logger.isVerbosityMedium()) {
                     logger.log(Level.SEVERE, eCopy.toString());
-                    logger.postAlwaysInfo(RoddyIOHelperMethods.getStackTraceAsString(eCopy));
+                    logger.always(RoddyIOHelperMethods.getStackTraceAsString(eCopy));
                 } else {
-                    logger.postAlwaysInfo("Set --verbositylevel >=" + LoggerWrapper.VERBOSITY_WARNING + " or higher to see stack trace.");
+                    logger.always("Set verbosity option -v or --vv to see the stack trace. Or look in to the log files in ~/.roddy/logs.");
                 }
             }
 
@@ -403,11 +430,26 @@ public class Analysis {
                 }
             }
 
+            // It is very nice now, that a lot of error messages will be printen. But how about colours?
+            // Normally the CLI client takes care of it.
+
+            // Print out configuration errors (for context configuration! Not only for analysis)
+            // Don't know, if this is the right place.
+            if (context.getConfiguration().hasErrors()) {
+                StringBuilder messages = new StringBuilder();
+                messages.append("There were configuration errors for dataset " + datasetID);
+                for (ConfigurationLoadError configurationLoadError : context.getConfiguration().getListOfLoadErrors()) {
+                    messages.append(configurationLoadError.toString());
+                }
+                logger.always(messages.toString());
+            }
+
             // Print out context errors.
             // Only print them out if !QUERY_STATUS and the runmode is testrun or testrerun.
-            if (context.getErrors().size() > 0 && context.getExecutionContextLevel() != ExecutionContextLevel.QUERY_STATUS) {
+            if (context.getErrors().size() > 0 && (!preventLoggingOnQueryStatus || (context.getExecutionContextLevel() != ExecutionContextLevel.QUERY_STATUS))) {
                 StringBuilder messages = new StringBuilder();
                 boolean warningsOnly = true;
+
                 for (ExecutionContextError executionContextError : context.getErrors()) {
                     if (executionContextError.getErrorLevel().intValue() > Level.WARNING.intValue())
                         warningsOnly = false;
@@ -431,8 +473,6 @@ public class Analysis {
      * @param context
      */
     private void finallyStartJobsOfContext(ExecutionContext context) {
-        // Needs to be made much better!
-        logger.postAlwaysInfo("Make startHeldJobs call safe!");
         Roddy.getJobManager().startHeldJobs(context.getExecutedJobs());
     }
 

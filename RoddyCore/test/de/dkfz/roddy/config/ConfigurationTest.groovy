@@ -7,7 +7,6 @@
 package de.dkfz.roddy.config
 
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
-import de.dkfz.roddy.core.ProjectFactory
 import groovy.transform.CompileStatic
 
 /**

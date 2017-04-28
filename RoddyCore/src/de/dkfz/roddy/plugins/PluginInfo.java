@@ -7,6 +7,8 @@
 package de.dkfz.roddy.plugins;
 
 import de.dkfz.roddy.StringConstants;
+import de.dkfz.roddy.core.RuntimeService;
+import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.tools.RuntimeTools;
@@ -24,6 +26,8 @@ import java.util.zip.ZipFile;
  * An informational class for loaded plugins.
  */
 public class PluginInfo {
+
+    private static LoggerWrapper logger = LoggerWrapper.getLogger(PluginInfo.class);
 
     public enum PluginInfoConnection {
         /**
@@ -89,52 +93,38 @@ public class PluginInfo {
     private void fillListOfToolDirectories() {
         File toolsBaseDir = null;
         try {
-            if (developmentDirectory != null && developmentDirectory.exists()) {
-                toolsBaseDir = new File(new File(developmentDirectory, "resources"), "analysisTools");
-            } else if (directory != null && directory.exists()) {
-                toolsBaseDir = new File(new File(directory, "resources"), "analysisTools");
-            }
+            toolsBaseDir = getToolsDirectory();
 
             if (toolsBaseDir != null && toolsBaseDir.exists() && toolsBaseDir.isDirectory()) { //Search through the default folders, if possible.
                 for (File file : toolsBaseDir.listFiles()) {
+                    if(!file.isDirectory() || file.isHidden()) {
+                        logger.always("Ignore directory " + file.getAbsolutePath() + "; It is not a valid tools directory.");
+                        continue;
+                    }
+
                     String toolsDir = file.getName();
                     listOfToolDirectories.put(toolsDir, file);
                 }
-
             }
-
-//            else if() { //Otherwise, finally look into the zip file. (Which must be existing at this point!)
-//                directory = RoddyIOHelperMethods.assembleLocalPath(zipFile.getParent(), zipFile.getName().split(".zip")[0]);
-//                toolsBaseDir = RoddyIOHelperMethods.assembleLocalPath(directory, "resources", "analysisTools");
-//                ZipFile zFile = new ZipFile(zipFile);
-//                try {
-//                    Enumeration<? extends ZipEntry> e = zFile.entries();
-//                    while (e.hasMoreElements()) {
-//                        String entry = e.nextElement().getName();
-//                        if (entry.endsWith("/") && !entry.endsWith("analysisTools/") && entry.contains("resources/analysisTools")) {
-//                            String name = entry.split("resources/analysisTools/")[1].split(StringConstants.SPLIT_SLASH)[0];
-//                            listOfToolDirectories.put(name, RoddyIOHelperMethods.assembleLocalPath(toolsBaseDir, name));
-//                        }
-//                    }
-//                } finally {
-//                    try {
-//                        if (zFile != null)
-//                            zFile.close();
-//                    } catch (IOException ioe) {
-//                        System.out.println("Error while closing zip file" + ioe);
-//                    }
-//                }
-//            }
         } catch (Exception ex) {
         }
     }
 
+    public File getToolsDirectory() {
+        if (developmentDirectory != null && developmentDirectory.exists()) {
+            return new File(new File(developmentDirectory, RuntimeService.DIRNAME_RESOURCES), RuntimeService.DIRNAME_ANALYSIS_TOOLS);
+        } else if (directory != null && directory.exists()) {
+            return new File(new File(directory, RuntimeService.DIRNAME_RESOURCES), RuntimeService.DIRNAME_ANALYSIS_TOOLS);
+        }
+        return null;
+    }
+
     public File getBrawlWorkflowDirectory() {
-        return new File(new File(directory, "resources"), "brawlworkflows");
+        return new File(new File(directory, RuntimeService.DIRNAME_RESOURCES), RuntimeService.DIRNAME_BRAWLWORKFLOWS);
     }
 
     public File getConfigurationDirectory() {
-        return new File(new File(directory, "resources"), "configurationFiles");
+        return new File(new File(directory, RuntimeService.DIRNAME_RESOURCES), RuntimeService.DIRNAME_CONFIG_FILES);
     }
 
     public String getName() {
@@ -195,23 +185,6 @@ public class PluginInfo {
                 && roddyAPIVersion == RuntimeTools.getGroovyRuntimeVersion();
     }
 
-    public boolean isJavaProject() {
-        File srcFolder = new File(directory, "src");
-        // Java projects need a valid jar file
-        // Scan for java files?? Only in src?
-        return false;
-    }
-
-    public boolean isGroovyProject() {
-        // Scan for groovy files?? Only in src?
-        return false;
-    }
-
-    public boolean hasValidJarFile() {
-        // Check
-        return false;
-    }
-
     public int getRevision() {
         int result = 0;
         try {
@@ -222,7 +195,6 @@ public class PluginInfo {
                 result = RoddyConversionHelperMethods.toInt(split[1], 0);
         } catch (Exception e) {
             System.out.println("Error for revision fetch of " + this.name + " in " + this.directory);
-//            e.printStackTrace();
         }
         return result;
     }

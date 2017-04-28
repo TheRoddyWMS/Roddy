@@ -132,6 +132,7 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
         this.toolID = toolID
 
         Map<String, Object> defaultParameters = context.getDefaultJobParameters(toolID)
+
         if (inputParameters != null)
             defaultParameters.putAll(inputParameters)
         this.allRawInputParameters = defaultParameters
@@ -147,6 +148,8 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
                 this.parameters.putAll(newParameters)
             }
         }
+
+        parameters.putAll(convertResourceSetToParameters())
 
         this.parameters[PARM_WRAPPED_SCRIPT] = context.getConfiguration().getProcessingToolPath(context, toolID).getAbsolutePath()
         this.parameters[PARM_WRAPPED_SCRIPT_MD5] = getToolMD5(toolID, context)
@@ -259,6 +262,19 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
             }
         }
         return newParameters
+    }
+
+    Map<String, String> convertResourceSetToParameters() {
+        def rs = getResourceSet()
+        Map<String, String> rsParameters = [:]
+        if (rs.isMemSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_MEM"] = rs.mem.toString()
+        if (rs.isCoresSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_CORES"] = rs.cores.toString()
+        if (rs.isNodesSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_NODES"] = rs.nodes.toString()
+        if (rs.isQueueSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_QUEUE"] = rs.queue.toString()
+        if (rs.isWalltimeSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_WALLTIME"] = rs.walltime.toString()
+        if (rs.isAdditionalNodeFlagSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_NODEFLAGS"] = rs.additionalNodeFlag.toString()
+        if (rs.isStorageSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_STORAGE"] = rs.storage.toString()
+        return rsParameters
     }
 
     static String createJobName(BaseFile bf, String toolName, boolean reduceLevel) {

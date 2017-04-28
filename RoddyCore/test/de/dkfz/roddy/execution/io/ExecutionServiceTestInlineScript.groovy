@@ -65,7 +65,7 @@ public class ExecutionServiceTestInlineScript {
             }
         }
 
-        ExecutionService.getInstance().writeInlineScriptsAndCompressToolFolders(listOfFolders,mapOfInlineScripts)
+        ExecutionService.getInstance().writeInlineScriptsAndCorrectListOfFolders(listOfFolders,mapOfInlineScripts)
 
         assert  listOfFolders.size() == 2
         boolean hasCompressedFolder = false
@@ -111,7 +111,7 @@ public class ExecutionServiceTestInlineScript {
             }
         }
 
-        ExecutionService.getInstance().writeInlineScriptsAndCompressToolFolders(listOfFolders,mapOfInlineScripts)
+        ExecutionService.getInstance().writeInlineScriptsAndCorrectListOfFolders(listOfFolders,mapOfInlineScripts)
 
         assert  listOfFolders.size() == 2
         boolean hasCompressedFolder = false

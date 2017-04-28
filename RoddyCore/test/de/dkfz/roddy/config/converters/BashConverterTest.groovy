@@ -170,7 +170,7 @@ public class BashConverterTest {
     @Test
     public void convertConfigurationValueToShellScriptLine() throws Exception {
         def configuration = createTestConfiguration()
-        Map<String, String> list = [
+        Map<String, String> listWiAutoQuoting = [
                 (CVAL_TEST_OUTPUT_DIRECTORY)           : "declare -x    testOutputDirectory=testvalue",
                 (CVAL_TEST_BASHARRAY)                  : "declare -x    testBashArray=\"( a b c d )\"",
                 (CVAL_TEST_BASHARRAY_QUOTES)           : "declare -x    testBashArrayQuotes='( a b c d )'",
@@ -187,12 +187,21 @@ public class BashConverterTest {
                 (CVAL_TEST_EQUALITY_SIGN)              : "declare -x    ${CVAL_TEST_EQUALITY_SIGN}=\"--par1=val1 --par2=val2\"".toString(),
         ]
 
+        Map<String, String> listWOAutoQuoting = [
+                (CVAL_TEST_BASHARRAY)                  : "declare -x    testBashArray=( a b c d )",
+        ]
+
         ExecutionContext context = MockupExecutionContextBuilder.createSimpleContext(BashConverterTest, configuration)
 
-        list.each { String id, String expected ->
-            def val = new BashConverter().convertConfigurationValue(configuration.getConfigurationValues()[id], context, true).toString();
+        listWiAutoQuoting.each { String id, String expected ->
+            def val = new BashConverter().convertConfigurationValue(configuration.getConfigurationValues()[id], context, true, true).toString();
 
             assert val.toString() == expected
+        }
+
+        // DISABLE auto quoting.
+        listWOAutoQuoting.each { String id, String expected ->
+            def val = new BashConverter().convertConfigurationValue(configuration.getConfigurationValues()[id], context, true, false).toString();
         }
     }
 
@@ -218,7 +227,7 @@ public class BashConverterTest {
         assert convertedLines.size() == xmlLines.size()
         for (int i = 0; i < convertedLines.size(); i++) {
             def validated = convertedLines[i] == xmlLines[i]
-            if(!validated) println(convertedLines[i] + "\n" + xmlLines[i])
+            if (!validated) println(convertedLines[i] + "\n" + xmlLines[i])
             valid &= validated
         }
         assert valid

@@ -45,7 +45,13 @@ enum AvailableFeatureToggles {
     QuoteSomeScalarConfigValues(true),
 
     @Deprecated
-    UseDeclareFunctionalityForBashConverter(true)
+    UseDeclareFunctionalityForBashConverter(true),
+
+    /**
+     * Enable this, to have Bash arrays in the runtime config auto quoted to something like
+     * declare -x BASH_ARRAY="value"
+     */
+    AutoQuoteBashArrayVariables(true)
 
     public final boolean defaultValue
 

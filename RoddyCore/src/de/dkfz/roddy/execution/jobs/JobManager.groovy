@@ -35,9 +35,14 @@ class JobManager {
         this.jobManager = jobManager
     }
 
-    String createJobName(BaseFile baseFile, String toolID, boolean reduceLevel) {
+    static String createJobName(BaseFile baseFile, String toolID, boolean reduceLevel) {
         return RuntimeService._createJobName(baseFile.executionContext, baseFile, toolID, reduceLevel)
     }
+
+    // Backward compatibility issue. Should be static
+//    String createJobName(BaseFile baseFile, String toolID, boolean reduceLevel) {
+//        return RuntimeService._createJobName(baseFile.executionContext, baseFile, toolID, reduceLevel)
+//    }
 
     Command createCommand(GenericJobInfo jobInfo) {
         jobManager.createCommand(jobInfo)
