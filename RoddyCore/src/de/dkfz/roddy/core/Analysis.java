@@ -6,20 +6,17 @@
 
 package de.dkfz.roddy.core;
 
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager;
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
 import de.dkfz.roddy.AvailableFeatureToggles;
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.Job;
-import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.config.*;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import java.io.File;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -358,13 +355,15 @@ public class Analysis {
         String datasetID = context.getDataSet().getId();
         Exception eCopy = null;
         try {
-            boolean contextPermissions = ExecutionService.getInstance().checkContextPermissions(context);
+            boolean contextRightsSettings = ExecutionService.getInstance().checkAccessRightsSettings(context);
+            boolean contextPermissions = ExecutionService.getInstance().checkContextDirectoriesAndFiles(context);
             boolean contextExecutability = context.checkExecutability();
             boolean configurarionValidity = Roddy.isStrictModeEnabled() ? !getConfiguration().hasErrors() : true;
-            isExecutable = contextPermissions && contextExecutability && configurarionValidity;
+            isExecutable = contextRightsSettings && contextPermissions && contextExecutability && configurarionValidity;
 
             if (!isExecutable) {
                 StringBuilder message = new StringBuilder("The workflow does not seem to be executable for dataset " + datasetID);
+                if (!contextRightsSettings) message.append("\n\tContext access rights settings could not be validated.");
                 if (!contextPermissions) message.append("\n\tContext permissions could not be validated.");
                 if (!contextExecutability) message.append("\n\tContext and workflow is not considered executable.");
                 if (!configurarionValidity) message.append("\n\tContext configuration has errors.");
