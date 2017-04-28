@@ -14,11 +14,14 @@
         <cvalue name='analysisMethodNameOnOutput' value='testAnalysis' type='string'/>
 
         <cvalue name="testAOutputDirectory" value="testfiles" type="path"/>
+        <!--<cvalue name="valuec" value="${valuea}"/>-->
+        <!--<cvalue name="valuea" value="${valueb}"/>-->
+        <!--<cvalue name="valueb" value="${valuea}"/>-->
         <cvalue name="testOutputDirectory" value="${outputAnalysisBaseDirectory}/testfiles" type="path"/>
-        <cvalue name="testInnerOutputDirectory" value="${testOutputDirectory}/testfilesw2" />
+        <cvalue name="testInnerOutputDirectory" value="${testOutputDirectory}/testfilesw2"/>
     </configurationvalues>
     <processingTools>
-        <tool name="cleanupScript" value="cleanupScript.sh" basepath="roddyTests" >
+        <tool name="cleanupScript" value="cleanupScript.sh" basepath="roddyTests">
             <resourcesets>
                 <rset size="l" memory="0.1" cores="1" nodes="1" walltime="1"/>
             </resourcesets>
