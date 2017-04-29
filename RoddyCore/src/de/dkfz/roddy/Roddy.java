@@ -501,6 +501,7 @@ public class Roddy {
             return true;
         } catch (Exception ex) {
             logger.severe("initializeServices failed with an unhandled error. The step in which the error occurred was: " + currentStep + "\nSee the following stacktrace for more details.", ex);
+            logger.severe(RoddyIOHelperMethods.getStackTraceAsString(ex));
             return false;
         }
     }

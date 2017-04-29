@@ -389,8 +389,10 @@ public class Analysis {
                         context.execute();
                         finallyStartJobsOfContext(context);
                     }
-                } finally {
+                } catch(Exception ex) {
+                    // (Maybe) abort jobs in strict mode
                     abortStartedJobsOfContext(context);
+                } finally {
 
                     if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) { //Clean up
                         //Query file validity of all files
@@ -496,6 +498,9 @@ public class Analysis {
             } catch (Exception ex) {
                 logger.severe("Could not successfully abort jobs.", ex);
             }
+        } else {
+            logger.severe("An workflow error occurred. However, strict mode is disabled and/or RollbackOnWorkflowError is disabled and therefore, all submitted jobs will be left running." +
+                    "\n\tYou might consider to enable Roddy strict mode by setting the feature toggles 'StrictMode' and 'RollbackOnWorkflowError'.");
         }
     }
 
