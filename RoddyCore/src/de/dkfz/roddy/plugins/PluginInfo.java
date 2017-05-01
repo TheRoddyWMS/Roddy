@@ -127,8 +127,20 @@ public class PluginInfo {
         return new File(new File(directory, RuntimeService.DIRNAME_RESOURCES), RuntimeService.DIRNAME_CONFIG_FILES);
     }
 
+    public File getNativeToolsDirectory() {
+        return new File(getToolsDirectory(), "nativeTools");
+    }
+
     public String getName() {
         return name;
+    }
+
+    public boolean isBetaPlugin() {
+        return isBetaPlugin;
+    }
+
+    public void setIsBetaPlugin(boolean betaPlugin) {
+        isBetaPlugin = betaPlugin;
     }
 
     public File getDirectory() {
@@ -159,12 +171,24 @@ public class PluginInfo {
         return dependencies;
     }
 
+    public void setNextInChain(PluginInfo nextInChain) {
+        this.nextInChain = nextInChain;
+    }
+
     public PluginInfo getNextInChain() {
         return nextInChain;
     }
 
+    public void setPreviousInChain(PluginInfo previousInChain) {
+        this.previousInChain = previousInChain;
+    }
+
     public PluginInfo getPreviousInChain() {
         return previousInChain;
+    }
+
+    public void setPreviousInChainConnectionType(PluginInfoConnection previousInChainConnectionType) {
+        this.previousInChainConnectionType = previousInChainConnectionType;
     }
 
     public PluginInfoConnection getPreviousInChainConnectionType() {

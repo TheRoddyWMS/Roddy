@@ -6,20 +6,15 @@
 
 package de.dkfz.roddy.plugins
 
-import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.client.RoddyStartupModes
-import de.dkfz.roddy.client.cliclient.CommandLineCall
 import de.dkfz.roddy.execution.io.ExecutionHelper
-import de.dkfz.roddy.execution.io.LocalExecutionService
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.tools.Tuple2
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.core.Initializable
-import de.dkfz.roddy.tools.RoddyIOHelperMethods
+import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 
 import java.lang.reflect.Method
@@ -274,30 +269,56 @@ public class LibrariesFactory extends Initializable {
     public PluginInfoMap loadMapOfAvailablePluginsForInstance() {
         if (!mapOfPlugins) {
             def directories = Roddy.getPluginDirectories()
-            mapOfPlugins = loadMapOfAvailablePlugins(directories)
+            List<PluginDirectoryInfo> mapOfIdentifiedPlugins = loadMapOfAvailablePlugins(directories)
+            mapOfIdentifiedPlugins = convertNativePluginsIfNeccessary(mapOfIdentifiedPlugins)
+            mapOfPlugins = loadPluginsFromDirectories(mapOfIdentifiedPlugins)
         };
+
         return mapOfPlugins
+    }
+
+    static List<PluginDirectoryInfo> convertNativePluginsIfNeccessary(List<PluginDirectoryInfo> pluginDirectories) {
+        List<PluginDirectoryInfo> correctedList = pluginDirectories.collect() {
+            PluginDirectoryInfo pdi ->
+                if (pdi.type == PluginType.NATIVE) {
+                    // Check if there already is a directory
+                    File folderForConvertedPlugins = Roddy.getFolderForConvertedNativePlugins()
+                    File pluginDir = new File(folderForConvertedPlugins, pdi.directory.name)
+                    PluginInfo pluginInfo = new PluginInfo(pdi.pluginID, null, pluginDir, null, pdi.version, null, null, null, null)
+                    if (!pluginDir.exists()) {
+                        pluginInfo.getConfigurationDirectory().mkdirs()
+                        pluginInfo.getNativeToolsDirectory().mkdirs()
+
+
+                        // Copy all scripts from original directory to the tools directory
+
+                        // 
+                    }
+                }
+
+                return pdi
+        }
+        return correctedList
     }
 
     /**
      * This method returns a list of all plugins found in plugin directories.
      * This method distinguishes between Roddy environments for development and packed Roddy versions.
      * If the user is a developer, the development directories are set and preferred over bundled libraries.
-     * * Why is this necessary?
-     * - If you develop scripts and plugins, you possibly use a version control system. However the scripts are copied to the
+     * * Why is this necessary?d to the
      *   plugin directory on compilation (and possibly out of version control. So Roddy tries to take the "original" version
      *   which resides in the plugins project space.
      * * Where can plugins be found?
+     * - If you develop scripts and plugins, you possibly use a version control system. However the scripts are copie
      * - In the dist/libraries folder (non developer)
      * - In any other configured folder. You as the developer has to set external projects up in the configuration. (developer)
      *
      * @return
      */
-    static PluginInfoMap loadMapOfAvailablePlugins(List<File> pluginDirectories) {
+    static List<PluginDirectoryInfo> loadMapOfAvailablePlugins(List<File> pluginDirectories) {
 
         //Search all plugin folders and also try to join those if possible.
-        List<Tuple2<File, String[]>> collectedPluginDirectories = [];
-        boolean warningUnzippedDirectoriesMissing = false;
+        List<PluginDirectoryInfo> collectedPluginDirectories = [];
 
         for (File pBaseDirectory : pluginDirectories) {
             logger.postSometimesInfo("Parsing plugins folder: ${pBaseDirectory}");
@@ -312,15 +333,15 @@ public class LibrariesFactory extends Initializable {
             File[] directoryList = pBaseDirectory.listFiles().sort() as File[];
             for (File pEntry in directoryList) {
 
-                if (!isValidPluginFolder(pEntry))
-                    continue;
+                def workflowType = determinePluginType(pEntry)
+                if (workflowType == PluginType.INVALID)
+                    continue
 
-                String[] splitName = pEntry.name.split(StringConstants.SPLIT_UNDERSCORE); //First split for .zip then for the version
-                collectedPluginDirectories << new Tuple2<File, String[]>(pEntry, splitName);
+                collectedPluginDirectories << new PluginDirectoryInfo(pEntry, workflowType);
             }
         }
 
-        return loadPluginsFromDirectories(collectedPluginDirectories)
+        return collectedPluginDirectories
     }
 
     /**
@@ -341,7 +362,7 @@ public class LibrariesFactory extends Initializable {
         return file.exists() && file.isDirectory() && file.canRead() && file.canExecute()
     }
 
-    static boolean isValidPluginFolder(File directory) {
+    static PluginType determinePluginType(File directory) {
         logger.postRareInfo("  Parsing plugin folder: ${directory}");
 
         List<String> errors = []
@@ -349,7 +370,7 @@ public class LibrariesFactory extends Initializable {
         if (!directory.isDirectory()) {
             // Just return silently here.
 //            errors << "File is not a directory"
-            return false;
+            PluginType.INVALID
         }
         if (directory.isHidden())
             errors << "Directory is hidden"
@@ -358,34 +379,43 @@ public class LibrariesFactory extends Initializable {
 
         if (errors) {
             logger.postRareInfo((["A directory was rejected as a plugin directory because:"] + errors).join("\n\t"))
-            return false
+            PluginType.INVALID
         }
 
         String dirName = directory.getName();
         if (!isPluginDirectoryNameValid(dirName)) {
             logger.postRareInfo("A directory was rejected as a plugin directory because its name did not match the naming rules.")
-            return false
+            PluginType.INVALID
         }
 
-//        def f = Roddy.getLocalFileSystemInfoProvider()
-        if (!checkFile(new File(directory, "buildinfo.txt")))
-            errors << "The buildinfo.txt file is missing"
-        if (!checkFile(new File(directory, "buildversion.txt")))
-            errors << "The buildversion.txt file is missing"
-        if (!checkDirectory(new File(directory, "resources/analysisTools")))
-            errors << "The analysisTools resource directory is missing"
-        if (!checkDirectory(new File(directory, "resources/configurationFiles")))
-            errors << "The configurationFiles resource directory is missing"
+        // Check if it is a native workflow
+        // Search for a runWorkflow_[scheduler].sh
+        File runWorkflowSkript = directory.listFiles().find { it.name.startsWith("runWorkflow_") && it.name.endsWith(".sh") && it.name.length() < 18 }
+        if (checkFile(runWorkflowSkript) && checkFile(new File(directory, "analysisConfiguration.sh"))) {
+
+            return PluginType.NATIVE
+        } else {
+
+            // If not, check for regular workflows.
+            if (!checkFile(new File(directory, "buildinfo.txt")))
+                errors << "The buildinfo.txt file is missing"
+            if (!checkFile(new File(directory, "buildversion.txt")))
+                errors << "The buildversion.txt file is missing"
+            if (!checkDirectory(new File(directory, "resources/analysisTools")))
+                errors << "The analysisTools resource directory is missing"
+            if (!checkDirectory(new File(directory, "resources/configurationFiles")))
+                errors << "The configurationFiles resource directory is missing"
+        }
 
         if (errors) {
             logger.postRareInfo((["A directory was rejected as a plugin directory because:"] + errors).join("\n\t"))
-            return false
+            return PluginType.INVALID
         }
-        return true
+        return PluginType.RODDY
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private static List<Tuple2<File, String[]>> checkValidPluginNames(List<Tuple2<File, String[]>> collectedPluginDirectories) {
+    private static List<PluginDirectoryInfo> checkValidPluginNames(List<PluginDirectoryInfo> collectedPluginDirectories) {
         List<Tuple2<File, String[]>> collectedTemporary = [];
         collectedPluginDirectories.each { tuple ->
             String rev = (tuple.x.name.split("[-]") as List)[1]
@@ -403,12 +433,12 @@ public class LibrariesFactory extends Initializable {
     /** Make sure that the plugin directories are properly sorted before we start. This is especially useful
      *  if we search for revisions and extensions.
      */
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private static List<Tuple2<File, String[]>> sortPluginDirectories(List<Tuple2<File, String[]>> collectedPluginDirectories) {
+    @CompileStatic(TypeCheckingMode.SKIP)
+    private static List<PluginDirectoryInfo> sortPluginDirectories(List<PluginDirectoryInfo> collectedPluginDirectories) {
         collectedPluginDirectories = collectedPluginDirectories.sort {
-            Tuple2<File, String[]> left, Tuple2<File, String[]> right ->
-                List<String> splitLeft = left.x.name.split("[_:.-]") as List;
-                List<String> splitRight = right.x.name.split("[_:.-]") as List;
+            PluginDirectoryInfo left, PluginDirectoryInfo right ->
+                List<String> splitLeft = left.directory.name.split("[_:.-]") as List
+                List<String> splitRight = right.directory.name.split("[_:.-]") as List
                 Tuple5<String, Integer, Integer, Integer, Integer> tLeft = new Tuple5<>(
                         splitLeft[0],
                         (splitLeft[1] ?: Integer.MAX_VALUE) as Integer,
@@ -423,12 +453,12 @@ public class LibrariesFactory extends Initializable {
                         (splitRight[3] ?: Integer.MAX_VALUE) as Integer,
                         (splitRight[4] ?: 0) as Integer
                 );
-                if (tLeft.x != tRight.x) return tLeft.x.compareTo(tRight.x);
-                if (tLeft.y != tRight.y) return tLeft.y.compareTo(tRight.y);
-                if (tLeft.z != tRight.z) return tLeft.z.compareTo(tRight.z);
-                if (tLeft.w != tRight.w) return tLeft.w.compareTo(tRight.w);
-                if (tLeft.q != tRight.q) return tLeft.q.compareTo(tRight.q);
-                return 0;
+                if (tLeft.x != tRight.x) return tLeft.x.compareTo(tRight.x)
+                if (tLeft.y != tRight.y) return tLeft.y.compareTo(tRight.y)
+                if (tLeft.z != tRight.z) return tLeft.z.compareTo(tRight.z)
+                if (tLeft.w != tRight.w) return tLeft.w.compareTo(tRight.w)
+                if (tLeft.q != tRight.q) return tLeft.q.compareTo(tRight.q)
+                return 0
         }
         return collectedPluginDirectories
     }
@@ -447,18 +477,16 @@ public class LibrariesFactory extends Initializable {
      * @param collectedPluginDirectories
      * @return
      */
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private static PluginInfoMap loadPluginsFromDirectories(List<Tuple2<File, String[]>> collectedPluginDirectories) {
+    private static PluginInfoMap loadPluginsFromDirectories(List<PluginDirectoryInfo> collectedPluginDirectories) {
         collectedPluginDirectories = sortPluginDirectories(checkValidPluginNames(collectedPluginDirectories))
 
         Map<String, Map<String, PluginInfo>> _mapOfPlugins = [:];
-        for (Tuple2<File, String[]> _entry : collectedPluginDirectories) {
-            logger.postRareInfo("Processing plugin entry: ${_entry.x}")
-            File pEntry = _entry.x;
-            String[] splitName = _entry.y;
+        for (PluginDirectoryInfo _entry : collectedPluginDirectories) {
+            logger.postRareInfo("Processing plugin entry: ${_entry.directory}")
+            File directory = _entry.directory;
 
-            String pluginName = splitName[0];
-            String[] pluginVersionInfo = splitName.length > 1 ? splitName[1].split(StringConstants.SPLIT_MINUS) : [PLUGIN_VERSION_CURRENT] as String[];
+            String pluginName = _entry.pluginID;
+            String[] pluginVersionInfo = _entry.version.split(StringConstants.SPLIT_MINUS) as String[];
             String pluginVersion = pluginVersionInfo[0];
             String pluginRevision = pluginVersionInfo.length > 1 ? pluginVersionInfo[1] : "0";
             String pluginFullVersion = pluginVersion + "-" + pluginRevision;
@@ -470,7 +498,7 @@ public class LibrariesFactory extends Initializable {
             File prodEntry = null;
             File zipFile = null;
 
-            if (pEntry.getName().endsWith(".zip")) {
+            if (directory.getName().endsWith(".zip")) {
                 // Zip files are handled differently and cannot be checked for contents!
                 continue;
             }
@@ -479,28 +507,27 @@ public class LibrariesFactory extends Initializable {
                 continue;
             }
 
-            // TODO Sort file list before validation?
-            // TODO Get version also from directory in case that the zip file is missing?
+            if ()
 
-            File prodJarFile = pEntry.listFiles().find { File f -> f.name.endsWith ".jar"; }
+                File prodJarFile = directory.listFiles().find { File f -> f.name.endsWith ".jar"; }
             if (prodJarFile) {
-                prodEntry = pEntry;
+                prodEntry = directory;
             }
 
-            File devSrcPath = pEntry.listFiles().find { File f -> f.name == "src"; }
+            File devSrcPath = directory.listFiles().find { File f -> f.name == "src"; }
             if (devSrcPath) {
-                develEntry = pEntry;
+                develEntry = directory;
             }
 
             if (!prodEntry && !develEntry) {
                 //Now we might have a plugin without a jar file. This is allowed to happen since 2.2.87
-                prodEntry = pEntry;
+                prodEntry = directory;
             }
 
 
             def pluginMap = _mapOfPlugins.get(pluginName, new LinkedHashMap<String, PluginInfo>())
 
-            BuildInfoFileHelper biHelper = new BuildInfoFileHelper(pluginName, pluginFullVersion, pEntry.listFiles().find { File f -> f.name == BUILDINFO_TEXTFILE })
+            BuildInfoFileHelper biHelper = new BuildInfoFileHelper(pluginName, pluginFullVersion, directory.listFiles().find { File f -> f.name == BUILDINFO_TEXTFILE })
 
             PluginInfo previousPlugin = pluginMap.values().size() > 0 ? pluginMap.values().last() : null;
             boolean isRevisionOfPlugin = previousPlugin?.getMajorAndMinor() == pluginVersion && previousPlugin?.getRevision() == revisionNumber - 1;
