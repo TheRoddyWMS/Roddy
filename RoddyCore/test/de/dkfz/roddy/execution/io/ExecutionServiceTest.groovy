@@ -9,7 +9,7 @@ package de.dkfz.roddy.execution.io
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationFactory
+import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.InformationalConfigurationContent
 import de.dkfz.roddy.config.ToolEntry

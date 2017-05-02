@@ -10,13 +10,13 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.*
+import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.validation.XSDValidator
 import de.dkfz.roddy.execution.io.MetadataTableFactory
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.plugins.PluginInfoMap
 import de.dkfz.roddy.plugins.PluginLoaderException
-import jdk.internal.org.xml.sax.SAXParseException
 
 import java.lang.reflect.InvocationTargetException
 
