@@ -35,7 +35,6 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
     public final String value;
     private final Configuration configuration;
     private final String type;
-    private boolean quoteOnConversion;
 
     /**
      * A description or comment for a configuration value.
@@ -285,7 +284,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         List<String> parentValues = new LinkedList<>();
 
         Matcher m = variableDetection.matcher(value);
-//            Findall is not available in standard java, so I use groovy here.
+        // Findall is not available in standard java, so I use groovy here.
         for (String s : ConfigurationValueHelper.callFindAllForPatternMatcher(m)) {
             String vName = s.replaceAll("[${}]", "");
             parentValues.add(vName);

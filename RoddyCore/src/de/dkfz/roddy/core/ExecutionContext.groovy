@@ -6,9 +6,12 @@
 
 package de.dkfz.roddy.core
 
+import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
+import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
+import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -287,6 +290,21 @@ class ExecutionContext {
 
     Configuration getConfiguration() {
         return analysis.getConfiguration()
+    }
+
+    Configuration getJobConfiguration(Job job) {
+
+    }
+
+    Configuration getFileConfiguration(BaseFile baseFile) {
+
+    }
+
+    boolean getFeatureToggleStatus(AvailableFeatureToggles toggle) {
+        def cvalues = getConfiguration().getConfigurationValues()
+        if(cvalues.hasValue(toggle.name()))
+            return cvalues.get(toggle.name()).toBoolean()
+        return Roddy.getFeatureToggleValue(toggle)
     }
 
     RecursiveOverridableMapContainerForConfigurationValues getConfigurationValues() {

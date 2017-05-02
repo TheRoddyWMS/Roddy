@@ -155,7 +155,11 @@ public class LibrariesFactory extends Initializable {
             Class foundCoreClass = null;
             for (Package p in getRoddyPackages()) {
                 String className = "${p.name}.${name}"
-                foundCoreClass = tryLoadClass(className)
+                try {
+                    foundCoreClass = loadClass(className)
+                } catch (ClassNotFoundException ex) {
+                    // Silently ignore it. If the class can not be found, it is fine here.
+                }
                 if (foundCoreClass) break
                 // Ignore if it is empty, we will fall back to the plugin strategy afterwards! Or search in the next package
             }
@@ -238,7 +242,16 @@ public class LibrariesFactory extends Initializable {
      * @param usedPlugins
      */
     public boolean resolveAndLoadPlugins(String[] usedPlugins) {
-        def queue = buildupPluginQueue(loadMapOfAvailablePluginsForInstance(), usedPlugins)
+        def mapOfAvailablePlugins = loadMapOfAvailablePluginsForInstance()
+        if (!mapOfAvailablePlugins) {
+            logger.severe("Could not load plugins from storage. Are the plugin directories properly set?\n" + Roddy.getPluginDirectories().join("\n\t"))
+            return false
+        }
+        def queue = buildupPluginQueue(mapOfAvailablePlugins, usedPlugins)
+        if (queue == null) {
+            logger.severe("Could not build the plugin queue for: \n" + usedPlugins.join("\n\t"))
+            return false
+        }
         librariesAreLoaded = loadLibraries(queue.values() as List);
         return librariesAreLoaded;
     }
@@ -256,6 +269,7 @@ public class LibrariesFactory extends Initializable {
             def directories = Roddy.getPluginDirectories()
             mapOfPlugins = loadMapOfAvailablePlugins(directories)
         };
+        return mapOfPlugins
     }
 
     /**
@@ -302,6 +316,24 @@ public class LibrariesFactory extends Initializable {
         return loadPluginsFromDirectories(collectedPluginDirectories)
     }
 
+    /**
+     * This and the following method should not be in here! We should use the FileSystemAccessProvider for it.
+     * However, the FSAP always tries to use the ExecService, if possible. All in all, with the current setup for FSAP / ES
+     * interaction, it will not work. As we already decided to change that at some point, I'll put the method in here
+     * and mark them as deprecated.
+     * @param file
+     * @return
+     */
+    @Deprecated
+    private static boolean checkFile(File file) {
+        return file.exists() && file.isFile() && file.canRead()
+    }
+
+    @Deprecated
+    private static boolean checkDirectory(File file) {
+        return file.exists() && file.isDirectory() && file.canRead() && file.canExecute()
+    }
+
     static boolean isValidPluginFolder(File directory) {
         logger.postRareInfo("  Parsing plugin folder: ${directory}");
 
@@ -325,14 +357,14 @@ public class LibrariesFactory extends Initializable {
             return false
         }
 
-        def f = FileSystemAccessProvider.getInstance();
-        if (!f.checkFile(new File(directory, "buildinfo.txt")))
+//        def f = Roddy.getLocalFileSystemInfoProvider()
+        if (!checkFile(new File(directory, "buildinfo.txt")))
             errors << "The buildinfo.txt file is missing"
-        if (!f.checkFile(new File(directory, "buildversion.txt")))
+        if (!checkFile(new File(directory, "buildversion.txt")))
             errors << "The buildversion.txt file is missing"
-        if (!f.checkDirectory(new File(directory, "resources/analysisTools")))
+        if (!checkDirectory(new File(directory, "resources/analysisTools")))
             errors << "The analysisTools resource directory is missing"
-        if (!f.checkDirectory(new File(directory, "resources/configurationFiles")))
+        if (!checkDirectory(new File(directory, "resources/configurationFiles")))
             errors << "The configurationFiles resource directory is missing"
 
         if (errors) {
@@ -425,22 +457,12 @@ public class LibrariesFactory extends Initializable {
 
             int revisionNumber = pluginRevision as Integer;
 
-            CommandLineCall clc = Roddy.getCommandLineCall();
-            boolean helpMode = clc ? clc.startupMode == RoddyStartupModes.help : false
-
             File develEntry = null;
             File prodEntry = null;
             File zipFile = null;
 
             if (pEntry.getName().endsWith(".zip")) {
                 // Zip files are handled differently and cannot be checked for contents!
-                zipFile = pEntry;
-                if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.UnzipZippedPlugins)) {
-                    if (!new File(zipFile.getAbsolutePath()[0..-5]).exists()) {
-                        if (!helpMode) logger.postAlwaysInfo("Unzipping zipped plugin (this is done unchecked and unlocked, processes could interfere with each other!)")
-                        (new RoddyIOHelperMethods.NativeLinuxZipCompressor()).decompress(zipFile, null, zipFile.getParentFile());
-                    }
-                }
                 continue;
             }
 
@@ -531,10 +553,12 @@ public class LibrariesFactory extends Initializable {
             // version of it which may either be a revision (x:x.y-[0..n] or a higher compatible version.
             // Search the last valid entry in the chain.
             if (!usedPlugins.contains("${id}:${version}")) {
-                for (; pInfo.nextInChain != null; pInfo = pInfo.nextInChain) {
+                while (true) {
                     version = pInfo.prodVersion;
                     if (usedPlugins.contains("${id}:${version}")) //Break, if the list of used plugins contains the selected version of the plugin
-                        break;
+                        break
+                    if (pInfo.nextInChain == null) break // Break if this was the last entry in the chain
+                    pInfo = pInfo.nextInChain
                 }
             }
 
@@ -544,8 +568,9 @@ public class LibrariesFactory extends Initializable {
                 continue;
             if (pluginsToActivate[id as String] != null) {
                 if (pluginsToActivate[id as String].prodVersion != version) {
-                    logger.severe("There is a version mismatch for plugin dependencies! Not starting up.");
-                    return null;
+                    def msg = "Plugin version collision: Plugin ${id} cannot both be loaded in version ${version} and ${pluginsToActivate[id as String].prodVersion}. Not starting up."
+                    logger.severe(msg)
+                    return null
                 } else {
                     //Not checking again!
                 }
@@ -645,9 +670,9 @@ public class LibrariesFactory extends Initializable {
      * Perform checks, if all API versions match the current runtime setup.
      * Includes Groovy, Java and Roddy.
      */
-    public static boolean performAPIChecks(List<PluginInfo> pluginInfo) {
+    public static boolean performAPIChecks(List<PluginInfo> pluginInfos) {
         List<PluginInfo> incompatiblePlugins = []
-        for (pi in pluginInfo) {
+        for (pi in pluginInfos) {
             if (!(RuntimeTools.groovyRuntimeVersion == pi.getGroovyVersion() &&
                     RuntimeTools.javaRuntimeVersion == pi.getJdkVersion() &&
                     RuntimeTools.roddyRuntimeVersion == pi.getRoddyAPIVersion()))
@@ -663,16 +688,6 @@ public class LibrariesFactory extends Initializable {
 
     public List<String> getLoadedLibrariesInfoList() {
         return loadedLibrariesInfo;
-    }
-
-    public Class tryLoadClass(String className) throws ClassNotFoundException {
-        try {
-            return loadClass(className);
-
-        } catch (any) {
-            logger.severe("Could not load class className");
-            return null;
-        }
     }
 
     public Class loadClass(String className) throws ClassNotFoundException {

@@ -28,8 +28,11 @@ public enum RoddyStartupOptions {
     showentrysources,
     autocleanup,
     useconfig(true),
+    c(true),
     usefeaturetoggleconfig(true),
     verbositylevel(true),
+    v(false), // Verbosity of 3
+    vv(false), // Verbosity of 5
     debugOptions(true),
     waitforjobs,
     test,
@@ -50,6 +53,8 @@ public enum RoddyStartupOptions {
     disabletoggles(true),
 
     useRoddyVersion(true),
+    useroddyversion(true),
+    rv(true),
     usePluginVersion(true),
     pluginDirectories(true), 
     configurationDirectories(true),

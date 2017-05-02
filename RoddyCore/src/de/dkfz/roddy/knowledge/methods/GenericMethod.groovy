@@ -78,6 +78,15 @@ class GenericMethod {
     }
 
     /**
+     * If you need a file group output and the files are already set in the cfg, then this is the right method to call.
+     * @return
+     */
+    static <F extends FileGroup> F callGenericToolWithFileGroupOutput(String toolName, BaseFile input, Object... additionalInput) {
+        F result = new GenericMethod(toolName, null, input, null, additionalInput)._callGenericToolOrToolArray() as F
+        return result
+    }
+
+    /**
      * This is Roddys most magic method!
      * It uses all the input parameters and the tool description and magically assembles a full job object.
      * The generated tool object is run() at the end.
@@ -261,8 +270,18 @@ class GenericMethod {
             if (toolParameter instanceof ToolFileParameter) {
                 ToolFileParameter _tp = (ToolFileParameter) toolParameter;
                 //TODO Check if input and output parameters match and also check for array indices and item count. Throw a proper error message.
-                if (!allInputValues[i].class == _tp.fileClass)
-                    logger.severe("Class mismatch for " + allInputValues[i] + " should be of class " + _tp.fileClass);
+                if(allInputValues.size() <= i ) {
+                    logger.severe("Not all input parameters were set for ${calledTool.id}. Expected ${calledTool.getInputParameters(context).size()}. Breaking loop and trying to go on.")
+                    continue
+                }
+                if(allInputValues[i] == null){
+                    logger.severe("There is an input mismatch for the tool ${calledTool.id}. Expected ${_tp.fileClass} but got null. Trying to go on.")
+                    continue
+                }
+                if (!allInputValues[i].class == _tp.fileClass){
+                    logger.severe("Class mismatch for " + allInputValues[i] + " should be of class " + _tp.fileClass + '. Trying to go on.');
+                    continue
+                }
                 if (_tp.scriptParameterName) {
                     parameters[_tp.scriptParameterName] = ((BaseFile) allInputValues[i]);
                 }
@@ -284,8 +303,7 @@ class GenericMethod {
                         cnt++;
                     }
                 } else { //Arrays
-                    int cnt = 0;
-                    parameters[_tp.scriptParameterName] = ((FileGroup) allInputValues[i]).getFilesInGroup();//paths;
+                    parameters[_tp.scriptParameterName] = ((FileGroup) allInputValues[i]).getFilesInGroup()
                 }
             }
         }
@@ -335,7 +353,7 @@ class GenericMethod {
     private FileObject createOutputFile(ToolFileParameter tparm) {
         ToolFileParameter fileParameter = tparm;
         BaseFile bf = convertToolFileParameterToBaseFile(fileParameter)
-        for (ToolFileParameter childFileParameter in fileParameter.getChildFiles()) {
+        for (ToolFileParameter childFileParameter in fileParameter.getFiles()) {
             try {
                 if (childFileParameter.parentVariable == null) {
                     continue;
@@ -384,16 +402,38 @@ class GenericMethod {
 
     FileObject createOutputFileGroup(ToolFileGroupParameter tfg) {
         List<BaseFile> filesInGroup = [];
+        if (tfg.files) {
+            // Actually this is more like a tuple.
+            /**
+             * This can only be the case if files is set. Otherwise we need a different way to identify files. E.g. based on index values... How do we set them?
+             */
+            for (ToolFileParameter fileParameter in tfg.files) {
+                BaseFile bf = convertToolFileParameterToBaseFile(fileParameter)
+                filesInGroup << bf;
+                allCreatedObjects << bf;
+            }
+        } else {
 
-        // Indices need to be set! Otherwise throw an Exception
-        if (!outputFileGroupIndices) {
-            throw new RuntimeException("A tool which outputs a filegroup with index values needs to be called properly! Pass index values in the call.")
+            // Indices need to be set! Otherwise throw an Exception
+            if (!outputFileGroupIndices) {
+                throw new RuntimeException("A tool which outputs a filegroup with index values needs to be called properly! Pass index values in the call.")
+            }
+            ToolFileParameter autoToolFileParameter = new ToolFileParameter(tfg.genericFileClass, [], tfg.scriptParameterName, new ToolFileParameterCheckCondition(true))
+            for (Object index in outputFileGroupIndices) {
+                BaseFile bf = convertToolFileParameterToBaseFile(autoToolFileParameter, index.toString())
+                filesInGroup << bf
+                allCreatedObjects << bf
+            }
+            parameters.remove(tfg.scriptParameterName)
         }
-        ToolFileParameter autoToolFileParameter = new ToolFileParameter(tfg.genericFileClass, [], "AFILEGROUP", new ToolFileParameterCheckCondition(true))
-        for (Object index in outputFileGroupIndices) {
-            BaseFile bf = convertToolFileParameterToBaseFile(autoToolFileParameter, index.toString())
-            filesInGroup << bf
-            allCreatedObjects << bf
+        if (tfg.passOptions == ToolFileGroupParameter.PassOptions.parameters) {
+            int cnt = 0;
+            for (BaseFile bf in (List<BaseFile>) filesInGroup) {
+                parameters[tfg.scriptParameterName + "_" + cnt] = bf;
+                cnt++;
+            }
+        } else { //Arrays
+            parameters[tfg.scriptParameterName] = filesInGroup
         }
 
         Constructor cGroup = tfg.groupClass.getConstructor(List.class);

@@ -64,6 +64,11 @@ public class Configuration implements ContainerParent<Configuration> {
      * The prototype with basic information about this configuration
      */
     protected final InformationalConfigurationContent informationalConfigurationContent;
+
+    /**
+     * A list of parent configuration objects. Order matters! Configurations are stored with
+     * increasing priority, so parents[0] has the lowest and parents[n -1] has the highest priority
+     */
     private final List<Configuration> parents = new LinkedList<>();
 
     private final Map<String, Configuration> subConfigurations = new LinkedHashMap<>();
@@ -102,6 +107,20 @@ public class Configuration implements ContainerParent<Configuration> {
     public Configuration(InformationalConfigurationContent informationalConfigurationContent, Configuration parentConfig) {
         this.informationalConfigurationContent = informationalConfigurationContent;
         this.addParent(parentConfig);
+    }
+
+    /**
+     * @param informationalConfigurationContent
+     * @param parentConfigurations A list of parent configuration objects.
+     *                             Order matters! Configurations are stored with
+     *                             increasing priority, so pcs[0] has the lowest
+     *                             and pcs[n -1] has the highest priority
+     */
+    public Configuration(InformationalConfigurationContent informationalConfigurationContent, List<Configuration> parentConfigurations) {
+        this.informationalConfigurationContent = informationalConfigurationContent;
+        for (Configuration parentConfiguration : parentConfigurations) {
+            addParent(parentConfiguration);
+        }
     }
 
     /**
@@ -242,11 +261,20 @@ public class Configuration implements ContainerParent<Configuration> {
         return null;
     }
 
+    /**
+     * Clears the list of parent configuration objects and sets c as the single parent.
+     * @param c
+     */
     public void setParent(Configuration c) {
         parents.clear();
         parents.add(c);
     }
 
+    /**
+     * Add a parent to the parents list. Note, that the added configuration has a higher priority
+     * than the ones already in the list.
+     * @param p
+     */
     public void addParent(Configuration p) {
         if (p == null) return;
         if (!parents.contains(p))

@@ -219,8 +219,7 @@ public class ProjectFactory {
 
         ProjectConfiguration projectConfiguration = fac.getProjectConfiguration(projectID);
         InformationalConfigurationContent iccAnalysis = ((AnalysisConfigurationProxy) projectConfiguration.getAnalysis(analysisID)).informationalConfigurationContent;
-        if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.XMLValidation))
-            XSDValidator.validateTree(iccAnalysis);
+        XSDValidator.validateTree(iccAnalysis);
         Project project = loadConfiguration(projectConfiguration);
 
         AnalysisConfiguration ac = projectConfiguration.getAnalysis(analysisID);
@@ -325,6 +324,7 @@ public class ProjectFactory {
     public static InformationalConfigurationContent loadAndValidateProjectICC(String projectID) {
         ConfigurationFactory fac = ConfigurationFactory.getInstance();
         InformationalConfigurationContent iccProject = fac.getAllAvailableConfigurations()[projectID];
+        logger.postRareInfo("Loading information configuration context for ${projectID} from ${iccProject.file}")
 
         if (iccProject == null) {
             logger.postAlwaysInfo("The project configuration \"${projectID}\" could not be found (call Roddy with listworkflows)")
@@ -332,8 +332,7 @@ public class ProjectFactory {
         }
 
         //Validate the project icc
-        if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.XMLValidation))
-            XSDValidator.validateTree(iccProject);
+        XSDValidator.validateTree(iccProject);
         return iccProject;
     }
 

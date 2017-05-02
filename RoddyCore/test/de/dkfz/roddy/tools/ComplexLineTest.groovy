@@ -34,8 +34,6 @@ class ComplexLineTest {
             " method(a(b()))"
     ]
 
-    public static final String faultyLineExample = "a(b(c())"
-
     @Test
     void testIsOpeningOrClosingCharacter() {
         assert ComplexLine.isOpeningOrClosingCharacter('\'' as Character);
@@ -93,23 +91,41 @@ class ComplexLineTest {
     public ExpectedException thrown = ExpectedException.none()
 
     @Test
-    void testFaultyLine() {
+    void testMissingClosingParenthesis() {
+        String faultyLineExample = "a(b(c())"
         thrown.expect(IOException)
         thrown.expectMessage("The line $faultyLineExample is malformed. There is a closing literal missing.")
         ComplexLine.parseLine(faultyLineExample)
 
+        thrown.expect(IOException)
+        ComplexLine.parseLine("(blabla")
+
+        thrown.expect(IOException)
+        ComplexLine.parseLine(")")
     }
 
     @Test
-    void testMoreFaultyTests() {
-        assert false
-//        forgotten closing paren: "(blabla"
-//        confused/non-matching paren types: "(a\"b)\""
-//        forgotten opening paren: "balbla}"
-//        non-matching paren types: "\"blabla\'"
-//        singleton opening paren: "{"
-//        singleton closing paren: ")"
-//        etc.
+    void testConfusedQuotes() {
+        thrown.expect(IOException)
+        ComplexLine.parseLine("(a-\"b)-\"")
+    }
+
+    @Test
+    void testMissingOpeningBrace() {
+        thrown.expect(IOException)
+        ComplexLine.parseLine("blabla}")
+    }
+
+    @Test
+    void testMissingClosingQuote() {
+        thrown.expect(IOException)
+        ComplexLine.parseLine("\"blabla'")
+    }
+
+    @Test
+    void testOpeningBraceOnly() {
+        thrown.expect(IOException)
+        ComplexLine.parseLine("{")
     }
 
     @Test

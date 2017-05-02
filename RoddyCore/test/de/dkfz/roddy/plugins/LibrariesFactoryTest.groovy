@@ -141,7 +141,8 @@ public class LibrariesFactoryTest {
         //Add additional "native" plugins (DefaultPlugin, PluginBase) and the temporary plugin folder
         List<File> pluginDirectories = [
                 pluginsBaseDirWithCorrectEntries.root
-        ]
+
+        ] + Roddy.getPluginDirectories()
 
         mapOfAvailablePlugins = callLoadMapOfAvailablePlugins(pluginDirectories)
 
@@ -199,15 +200,16 @@ public class LibrariesFactoryTest {
 
     @Test
     public void testPerformIncompatibleAPIChecks() {
-        assert !LibrariesFactory.performAPIChecks([
+        assert false == LibrariesFactory.performAPIChecks([
                 new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "000", "1.3", "1.3", null),
                 new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", "1.3", null)])
-        assert !LibrariesFactory.performAPIChecks([
+        assert false == LibrariesFactory.performAPIChecks([
                 new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "000", "1.3", null),
                 new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", "1.3", null)])
-        assert !LibrariesFactory.performAPIChecks([
+        assert false == LibrariesFactory.performAPIChecks([
                 new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", "000", null),
                 new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", "1.3", null)])
+
     }
 
     @Test
