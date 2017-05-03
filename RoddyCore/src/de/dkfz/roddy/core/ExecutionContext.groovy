@@ -605,7 +605,8 @@ class ExecutionContext extends InfoObject {
     }
 
     boolean fileIsExecutable(File file, String variableName = null) {
-        if(!(fileIsAccessible(file, variableName) && FileSystemAccessProvider.getInstance().isExecutable(file))) {
+        if (!(fileIsAccessible(file, variableName))) return;
+        if (!FileSystemAccessProvider.getInstance().isExecutable(file)) {
             addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("File '${file}' is not executable${variableName ? ": " + variableName : "."}"))
             return false
         }

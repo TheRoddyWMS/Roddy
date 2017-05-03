@@ -165,7 +165,8 @@ class ProcessingToolReader {
                 throw new ConfigurationLoaderException("There were ${loadErrors.size()} errors")
             return currentEntry
         } catch (ConfigurationLoaderException ex) {
-            addLoadErr("ToolEntry ${toolID} could not be read:\n        " + loadErrors.join("\n        "))
+            // In this case we actually do not need a message. ConfigurationLoaderErrors are somewhat well known
+            //addLoadErr("ToolEntry ${toolID} could not be read:\n        " + loadErrors.join("\n        "))
             return null
         } catch (Exception ex) {
             addLoadErr("ToolEntry ${toolID} could not be read with an unexpected error:\n        " +

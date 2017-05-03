@@ -693,11 +693,12 @@ class ConfigurationFactory {
             if (toolReader.hasErrors()) {
                 String xml
                 try {
-                    xml = XmlUtil.serialize(new StreamingMarkupBuilder().bind { it -> it.faulty tool }.toString())
+                    xml = "          " + XmlUtil.serialize(new StreamingMarkupBuilder().bind { it -> it.faulty tool }.toString()).readLines()[1 .. -2].join("\n          ")
+
                 } catch (Exception ex) {
-                    println (ex)
+                    xml = "Cannot display xml code for tool node."
                 }
-                config.addLoadError(new ConfigurationLoadError(config, "CFactory", "Tool ${toolID} could not be read and will not be available. Please check the tool syntax:\n" + xml, null ))
+                config.addLoadError(new ConfigurationLoadError(config, "ConfigurationFactory - " + (toolID ?: "Tool id was not properly set"), "Tool ${toolID} could not be read. Please check the tool syntax:\n" + xml, null ))
                 config.addLoadErrors(toolReader.loadErrors)
                 hasErrors = true
             } else
