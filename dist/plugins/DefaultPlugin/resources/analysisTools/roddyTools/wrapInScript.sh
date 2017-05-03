@@ -127,7 +127,7 @@ else
 
   [[ ${exitCode} -eq 0 ]] && exit 0
 
-  [[ ${exitCode} -eq 100 ]] && Finished script with 99 for compatibility reasons with Sun Grid Engine. 100 is reserved for SGE usage. && exit 99
+  [[ ${exitCode} -eq 100 ]] && echo "Finished script with 99 for compatibility reasons with Sun Grid Engine. 100 is reserved for SGE usage." && exit 99
   exit $exitCode
 
 fi
