@@ -121,6 +121,7 @@
         <xs:attribute type="xs:string" name="scriptparameter" use="optional"/>
         <xs:attribute type="xs:string" name="fileclass"/>
         <xs:attribute type="xs:string" name="fnpatternselectiontag" use="optional"/>
+        <xs:attribute type="xs:string" name="selectiontag" use="optional"/>
         <xs:attribute type="xs:string" name="passas" use="optional"/>
         <xs:attribute type="xs:boolean" name="check" use="optional"/>
     </xs:complexType>

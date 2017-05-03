@@ -6,15 +6,19 @@
 
 package de.dkfz.roddy.core
 
+import de.dkfz.eilslabs.batcheuphoria.jobs.Command
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
+import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
 import de.dkfz.roddy.execution.io.BaseMetadataTable
 import de.dkfz.roddy.execution.io.MetadataTableFactory
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.*
+import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.LoadedJob
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.LoadedFile
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -47,11 +51,17 @@ public abstract class RuntimeService extends CacheProvider {
     public static final String FILENAME_EXECUTEDJOBS_INFO = "executedJobs.txt"
     public static final String FILENAME_ANALYSES_MD5_OVERVIEW = "zippedAnalysesMD5.txt"
     public static final String DIRECTORY_RODDY_COMMON_EXECUTION = ".roddyExecutionStore"
+    public static final String DIRNAME_RESOURCES = "resources"
     public static final String DIRNAME_ANALYSIS_TOOLS = "analysisTools"
+    public static final String DIRNAME_BRAWLWORKFLOWS = "brawlworkflows"
+    public static final String DIRNAME_CONFIG_FILES = "configurationFiles"
     public static final String RODDY_CENTRAL_EXECUTION_DIRECTORY = "RODDY_CENTRAL_EXECUTION_DIRECTORY"
 
     public RuntimeService() {
         super("RuntimeService");
+
+        logger.warning("Reading in jobs is not fully enabled! See RuntimeService readInExecutionContext(). The method does not reconstruct parent files and dependencies.")
+
     }
 
     /**
@@ -74,7 +84,7 @@ public abstract class RuntimeService extends CacheProvider {
 
     public List<DataSet> loadCombinedListOfPossibleDataSets(Analysis analysis) {
 
-        if(Roddy.isMetadataCLOptionSet()) {
+        if (Roddy.isMetadataCLOptionSet()) {
 
             BaseMetadataTable table = MetadataTableFactory.getTable(analysis)
             List<String> _datasets = table.listDatasets();
@@ -145,7 +155,7 @@ public abstract class RuntimeService extends CacheProvider {
         if (_listOfPossibleDataSetsByAnalysis[analysis] == null)
             _listOfPossibleDataSetsByAnalysis[analysis] = loadCombinedListOfPossibleDataSets(analysis);
 
-        if(!avoidRecursion) {
+        if (!avoidRecursion) {
             List<AnalysisProcessingInformation> previousExecs = readoutExecCacheFile(analysis);
 
             for (DataSet ds : _listOfPossibleDataSetsByAnalysis[analysis]) {
@@ -186,261 +196,20 @@ public abstract class RuntimeService extends CacheProvider {
         return selectedDatasets;
     }
 
-
-    /**
-     * The method tries to read back an execution context from a directory structure.
-     * In some cases, the method tries to recover information from other sources, if files are missing.
-     *
-     * @param api
-     * @return
-     */
-    public ExecutionContext readInExecutionContext(AnalysisProcessingInformation api) {
-//        Roddy.getInstance().queryJobStatus(new LinkedList<String>());
-        FileSystemAccessProvider fip = FileSystemAccessProvider.getInstance();
-
-        File executionDirectory = api.getExecPath();
-
-        //Set the read time stamp before anything else. Otherwise a new Run Directory will be created!
-        String[] executionContextDirName = executionDirectory.getName().split(StringConstants.SPLIT_UNDERSCORE);
-        String timeStamp = executionContextDirName[1] + StringConstants.UNDERSCORE + executionContextDirName[2];
-        String userID = null;
-        String analysisID = null;
-        if (executionContextDirName.length > 3) {
-            //New style with additional information
-            userID = executionContextDirName[3];
-            analysisID = executionContextDirName[4];
-        }
-
-        //ERROR?
-        ExecutionContext context = new ExecutionContext(api, InfoObject.parseTimestampString(timeStamp));
-
-        try {
-            if (userID == null)
-                context.setExecutingUser(fip.getOwnerOfPath(executionDirectory));
-            else
-                context.setExecutingUser(userID);
-
-            //First, try to read in the executedJobInfo file
-            //All necessary information about jobs is stored there.
-            List<Job> jobsStartedInContext = readJobInfoFile(context);
-            if (jobsStartedInContext == null || jobsStartedInContext.size() == 0) {
-                context.addErrorEntry(ExecutionContextError.READBACK_NOEXECUTEDJOBSFILE);
-                jobsStartedInContext = new LinkedList<Job>();
-            }
-
-            if (jobsStartedInContext.size() == 0) {
-                String[] jobCalls = fip.loadTextFile(getNameOfRealCallsFile(context));
-                if (jobCalls == null || jobCalls.size() == 0) {
-                    context.addErrorEntry(ExecutionContextError.READBACK_NOREALJOBCALLSFILE);
-                } else {
-                    //TODO Load a list of the previously created jobs and query those using qstat!
-                    for (String call : jobCalls) {
-                        //TODO. How can we recognize different command factories? i.e. for other cluster systems?
-                        Job job = JobManager.getInstance().parseToJob(context, call);
-                        jobsStartedInContext.add(job);
-                    }
-                }
-            }
-
-            Map<String, JobState> statusList = readInJobStateLogFile(context)
-
-            for (Job job : jobsStartedInContext) {
-                if (job == null) continue;
-                if (job.jobID == "Unknown")
-                    job.setJobState(JobState.FAILED)
-                else
-                    job.setJobState(JobState.UNSTARTED);
-                for (String id : statusList.keySet()) {
-                    JobState status = statusList[id];
-
-                    if (!JobManager.getInstance().compareJobIDs(job.getJobID(), (id)))
-                        continue;
-                    job.setJobState(status);
-                }
-            }
-
-
-            Map<String, Job> unknownJobs = new LinkedHashMap<>();
-            Map<String, Job> possiblyRunningJobs = new LinkedHashMap<>();
-            List<String> queryList = new LinkedList<>();
-            //For every job which is still unknown or possibly running get the actual jobState from the cluster
-            for (Job job : jobsStartedInContext) {
-                if (job.getJobState().isUnknown() || job.getJobState() == JobState.UNSTARTED) {
-                    unknownJobs.put(job.getJobID(), job);
-                    queryList.add(job.getJobID());
-                } else if (job.getJobState() == JobState.STARTED) {
-                    possiblyRunningJobs.put(job.getJobID(), job);
-                    queryList.add(job.getJobID());
-                }
-            }
-
-            Map<String, JobState> map = JobManager.getInstance().queryJobStatus(queryList);
-            for (String jobID : unknownJobs.keySet()) {
-                Job job = unknownJobs.get(jobID);
-                job.setJobState(map.get(jobID));
-                JobManager.getInstance().addJobStatusChangeListener(job);
-            }
-            for (String jobID : possiblyRunningJobs.keySet()) {
-                Job job = possiblyRunningJobs.get(jobID);
-                if (map.get(jobID) == null) {
-                    job.setJobState(JobState.FAILED);
-                } else {
-                    job.setJobState(map.get(jobID));
-                    JobManager.getInstance().addJobStatusChangeListener(job);
-                }
-            }
-
-        } catch (Exception ex) {
-            System.out.println(ex);
-            for (Object o : ex.getStackTrace())
-                System.out.println(o.toString());
-        }
-        return context;
+    ExecutionContext readInExecutionContext(AnalysisProcessingInformation api) {
+        return new ExecutionContextReaderAndWriter(this).readInExecutionContext(api)
     }
 
-    /**
-     * Read in all states from the job states logfile and set those to all jobsStartedInContext entries.
-     * @param context
-     * @param jobsStartedInContext
-     */
-    public Map<String, JobState> readInJobStateLogFile(ExecutionContext context) {
-        FileSystemAccessProvider fip = FileSystemAccessProvider.getInstance();
-        File jobStatesLogFile = context.getRuntimeService().getNameOfJobStateLogFile(context);
-        String[] jobStateList = fip.loadTextFile(jobStatesLogFile);
-
-        if (jobStateList == null || jobStateList.size() == 0) {
-            context.addErrorEntry(ExecutionContextError.READBACK_NOJOBSTATESFILE);
-            return [:];
-        } else {
-            //All in which were completed!
-            Map<String, JobState> statusList = new LinkedHashMap<>();
-            Map<String, Long> timestampList = new LinkedHashMap<>();
-
-            for (String stateEntry : jobStateList) {
-                if (stateEntry.startsWith("null"))
-                    continue; //Skip null:N:...
-                String[] split = stateEntry.split(SPLIT_COLON);
-                if (split.length < 2) continue;
-
-                String id = split[0];
-                JobState status = JobState.parseJobState(split[1]);
-                long timestamp = 0;
-                if (split.length == 3)
-                    timestamp = Long.parseLong(split[2]);
-
-                //Override if previous timestamp is lower or equal
-                if (timestampList.get(id, 0L) <= timestamp) {
-                    statusList[id] = status;
-                    timestampList[id] = timestamp;
-                }
-            }
-
-            return statusList;
-        }
+    Map<String, JobState> readInJobStateLogFile(ExecutionContext context) {
+        return new ExecutionContextReaderAndWriter(this).readInJobStateLogFile(context)
     }
 
-    /**
-     * Read in the real job calls file which contains a detailed description of all started jobs for a context.
-     * The real job calls file is an xml file, thus the method itself is not checked on compilation.
-     * @param context
-     * @return
-     */
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private static List<Job> readJobInfoFile(ExecutionContext context) {
-        List<Job> jobList = new LinkedList<>();
-        final File jobInfoFile = context.getRuntimeService().getNameOfJobInfoFile(context);
-        String[] _text = FileSystemAccessProvider.getInstance().loadTextFile(jobInfoFile);
-        String text = _text.join(EMPTY);
-        if (!text)
-            return jobList;
-
-        NodeChild jobinfo = (NodeChild) new XmlSlurper().parseText(text);
-
-        try {
-            for (job in jobinfo.jobs.job) {
-                String jobID = job.@id.text()
-                String jobToolID = job.tool.@toolid.text()
-                String jobToolMD5 = job.tool.@md5
-                String jobName = job.@name.text()
-                Map<String, String> jobsParameters = [:];
-                List<LoadedFile> loadedFiles = [];
-                List<String> parentJobsIDs = [];
-
-                for (parameter in job.parameters.parameter) {
-                    String name = parameter.@name.text();
-                    String value = parameter.@value.text();
-                    jobsParameters[name] = value;
-                }
-
-                for (file in job.filesbyjob.file) {
-                    String fileid = file.@id.text();
-                    String path = file.@path.text();
-                    String cls = file.@class.text();
-                    List<String> _parentFiles = Arrays.asList(file.@parentfiles.text().split(SPLIT_COMMA));
-                    LoadedFile rb = new LoadedFile(new File(path), jobID, context, _parentFiles, cls);
-                    loadedFiles << rb;
-                }
-
-                for (dependency in job.dependencies.job) {
-                    String id = dependency.@id.text();
-                    String fileid = dependency.@fileid.text();
-                    String filepath = dependency.@filepath.text();
-                    parentJobsIDs << id;
-                }
-                jobList << new LoadedJob(context, jobName, jobID, jobToolID, jobToolMD5, jobsParameters, loadedFiles, parentJobsIDs);
-            }
-        } catch (Exception ex) {
-            logger.warning("Could not read in xml file " + ex.toString());
-            context.addErrorEntry(ExecutionContextError.READBACK_NOEXECUTEDJOBSFILE.expand(ex));
-            return null;
-        }
-        return jobList;
+    List<Job> readJobInfoFile(ExecutionContext context) {
+        return new ExecutionContextReaderAndWriter(this).readJobInfoFile(context)
     }
 
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    public String writeJobInfoFile(ExecutionContext context) {
-        final File jobInfoFile = context.getRuntimeService().getNameOfJobInfoFile(context);
-        final List<Job> executedJobs = context.getExecutedJobs();
-
-        def writer = new StringWriter()
-        def xml = new MarkupBuilder(writer)
-
-        xml.jobinfo {
-            jobs {
-                for (Job ej in executedJobs) {
-                    if (ej.isFakeJob()) continue; //Skip fake jobs.
-                    job(id: ej.getJobID(), name: ej.jobName) {
-                        String commandString = ej.getLastCommand() != null ? ej.getLastCommand().toString() : "";
-                        calledcommand(command: commandString);
-                        tool(id: ej.getToolID(), md5: ej.getToolMD5())
-                        parameters {
-                            ej.getParameters().each {
-                                String k, String v ->
-                                    parameter(name: k, value: v)
-                            }
-                        }
-                        filesbyjob {
-                            for (BaseFile bf in ej.getFilesToVerify()) {
-                                String pfiles = bf.getParentFiles().collect({ BaseFile baseFile -> baseFile.absolutePath.hashCode(); }).join(",");
-                                file(class: bf.class.name, id: bf.absolutePath.hashCode(), path: bf.absolutePath, parentfiles: pfiles)
-                            }
-                        }
-                        dependendies {
-                            for (BaseFile bf in ej.getParentFiles()) {
-                                String depJobID;
-                                try {
-                                    depJobID = bf.getCreatingJobsResult().getJob().getJobID();
-                                } catch (Exception ex) {
-                                    depJobID = "Error"
-                                }
-                                job(id: depJobID, fileid: bf.absolutePath.hashCode(), filepath: bf.absolutePath)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        FileSystemAccessProvider.getInstance().writeTextFile(jobInfoFile, writer.toString(), context);
+    String writeJobInfoFile(ExecutionContext context) {
+        return new ExecutionContextReaderAndWriter(this).writeJobInfoFile(context)
     }
 
     public List<String> collectNamesOfRunsForPID(DataSet dataSet) {
@@ -486,9 +255,17 @@ public abstract class RuntimeService extends CacheProvider {
     }
 
     public File getCommonExecutionDirectory(ExecutionContext context) {
-        File configuredPath = context.getConfiguration().getConfigurationValues().get(RODDY_CENTRAL_EXECUTION_DIRECTORY, null)?.toFile(context);
-        if (configuredPath)
-            return configuredPath;
+        try {
+
+            def values = context.getConfiguration().getConfigurationValues()
+            if (values.hasValue(RODDY_CENTRAL_EXECUTION_DIRECTORY)) {
+                File configuredPath = values.get(RODDY_CENTRAL_EXECUTION_DIRECTORY, null)?.toFile(context);
+                if (configuredPath)
+                    return configuredPath;
+            }
+        } catch (Exception ex) {
+            logger.severe("There was an error in toFile for cvalue ${RODDY_CENTRAL_EXECUTION_DIRECTORY} in RuntimeService:getCommonExecutionDirectory()")
+        }
         return new File(getOutputFolderForProject(context).getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + DIRECTORY_RODDY_COMMON_EXECUTION);
     }
 
@@ -612,12 +389,12 @@ public abstract class RuntimeService extends CacheProvider {
 
     public File getLogFileForJob(Job job) {
         //Returns the log files path of the job.
-        File f = new File(job.getExecutionContext().getExecutionDirectory(), JobManager.getInstance().getLogFileName(job));
+        File f = new File(job.getExecutionContext().getExecutionDirectory(), Roddy.getJobManager().getLogFileName(job));
     }
 
     public File getLogFileForCommand(Command command) {
         //Nearly the same as for the job but with a process id
-        File f = new File(getExecutionDirectory(command.getExecutionContext()), JobManager.getInstance().getLogFileName(command));
+        File f = new File(getExecutionDirectory(command.getTag(Constants.COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext), Roddy.getJobManager().getLogFileName(command));
     }
 
     public boolean hasLogFileForJob(Job job) {
@@ -668,8 +445,17 @@ public abstract class RuntimeService extends CacheProvider {
 
     public abstract Map<String, Object> getDefaultJobParameters(ExecutionContext context, String TOOLID)
 
-    public String createJobName(ExecutionContext executionContext, BaseFile file, String TOOLID, boolean reduceLevel) {
-        return JobManager.getInstance().createJobName(file, TOOLID, reduceLevel);
+    public String createJobName(ExecutionContext executionContext, BaseFile bf, String TOOLID, boolean reduceLevel) {
+        return _createJobName(executionContext, bf, TOOLID, reduceLevel)
+    }
+
+    public static String _createJobName(ExecutionContext executionContext, BaseFile bf, String TOOLID, boolean reduceLevel) {
+        ExecutionContext rp = bf.getExecutionContext();
+        String runtime = rp.getTimestampString();
+        String pid = rp.getDataSet().getId()
+        StringBuilder sb = new StringBuilder();
+        sb.append("r").append(runtime).append("_").append(pid).append("_").append(TOOLID);
+        return sb.toString();
     }
 
     /**
@@ -740,7 +526,6 @@ public abstract class RuntimeService extends CacheProvider {
 
         return result;
     }
-
 
     /**
      * Releases the cache in this provider

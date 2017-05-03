@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.config;
 
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize;
 import de.dkfz.roddy.config.validation.ConfigurationValidationError;
 import de.dkfz.roddy.core.ExecutionContext;
 import groovy.util.slurpersupport.NodeChild;
@@ -282,11 +283,6 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
-    public boolean getUseCentralAnalysisArchive() {
-        return checkAnalysisConfig().getUseCentralAnalysisArchive();
-    }
-
-    @Override
     public String getSSHExecutionUser() {
         return checkAnalysisConfig().getSSHExecutionUser();
     }
@@ -309,6 +305,11 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     @Override
     public void addLoadError(ConfigurationLoadError error) {
         super.addLoadError(error);
+    }
+
+    @Override
+    public boolean hasErrors() {
+        return checkAnalysisConfig().hasErrors();
     }
 
     @Override

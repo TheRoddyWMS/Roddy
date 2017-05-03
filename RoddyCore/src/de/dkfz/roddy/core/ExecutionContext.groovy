@@ -6,6 +6,9 @@
 
 package de.dkfz.roddy.core
 
+import de.dkfz.eilslabs.batcheuphoria.jobs.Command
+import de.dkfz.roddy.execution.jobs.JobResult
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -15,7 +18,8 @@ import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.*
+import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.ReadOutJob
 import de.dkfz.roddy.knowledge.files.*
 import de.dkfz.roddy.tools.LoggerWrapper
 
@@ -45,7 +49,7 @@ import java.util.*
  * @author michael
  */
 @groovy.transform.CompileStatic
-class ExecutionContext {
+class ExecutionContext extends InfoObject {
 
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(ExecutionContext.class.name)
 
@@ -301,9 +305,13 @@ class ExecutionContext {
     }
 
     boolean getFeatureToggleStatus(AvailableFeatureToggles toggle) {
-        def cvalues = getConfiguration().getConfigurationValues()
-        if(cvalues.hasValue(toggle.name()))
-            return cvalues.get(toggle.name()).toBoolean()
+        if (toggle.applicationLevelOnly) {
+            logger.warning("The feature toggle ${toggle} is marked as application level only. The application level value will be used.")
+        } else {
+            def cvalues = configuration.configurationValues
+            if (cvalues.hasValue(toggle.name()))
+                return cvalues.get(toggle.name()).toBoolean()
+        }
         return Roddy.getFeatureToggleValue(toggle)
     }
 
@@ -429,8 +437,8 @@ class ExecutionContext {
         return analysisToolsDirectory
     }
 
-    File getParameterFilename(Command command) {
-        new File(getExecutionDirectory(), "${command.getJob().getJobName()}_${command.getJob().jobCreationCounter}.parameters")
+    File getParameterFilename(Job job) {
+        new File(getExecutionDirectory(), "${job.getJobName()}_${job.jobCreationCounter}.parameters")
     }
 
 
@@ -521,7 +529,7 @@ class ExecutionContext {
                 jobIDsForQuery.add(runResult.getJobID().getId())
             }
         }
-        Map<String, JobState> map = JobManager.getInstance().queryJobStatus(jobIDsForQuery)
+        Map<de.dkfz.eilslabs.batcheuphoria.jobs.Job, JobState> map = Roddy.getJobManager().queryJobStatus(jobsForProcess as List<de.dkfz.eilslabs.batcheuphoria.jobs.Job>)
         for (JobState js : map.values()) {
             if (js.isPlannedOrRunning())
                 return true
@@ -591,6 +599,14 @@ class ExecutionContext {
     boolean fileIsAccessible(File file, String variableName = null) {
         if (valueIsEmpty(file, variableName) || !FileSystemAccessProvider.getInstance().checkFile(file, false, this)) {
             addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("File '${file}' not accessible${variableName ? ": " + variableName : "."}"))
+            return false
+        }
+        return true
+    }
+
+    boolean fileIsExecutable(File file, String variableName = null) {
+        if(!(fileIsAccessible(file, variableName) && FileSystemAccessProvider.getInstance().isExecutable(file))) {
+            addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("File '${file}' is not executable${variableName ? ": " + variableName : "."}"))
             return false
         }
         return true

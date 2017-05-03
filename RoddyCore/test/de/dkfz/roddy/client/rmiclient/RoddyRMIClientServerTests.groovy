@@ -7,6 +7,7 @@
 package de.dkfz.roddy.client.rmiclient
 
 import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.RoddyTest
 import de.dkfz.roddy.execution.io.ExecutionHelper
 import org.junit.AfterClass
 import org.junit.BeforeClass
@@ -30,12 +31,17 @@ public class RoddyRMIClientServerTests extends GroovyTestCase {
 
     private static String debugClassDirectory = "${applicationDirectory}/out/production/RoddyCore"
 
+    private static boolean runIntegrationTests
+
     /**
      * Setup the rmiregistry, if it is not yet running
      * TODO Actually nearly noone is using the rmiregistry but: We are not sure about it. The whole process will fail, if someone else uses rmiregistry.
      */
     @BeforeClass
     public static void setup() {
+        runIntegrationTests = RoddyTest.runIntegrationTests()
+        if(!runIntegrationTests) return
+
         checkAndStartRegistry();
         assert checkRMIRegistryProcess();
     }
@@ -85,6 +91,7 @@ public class RoddyRMIClientServerTests extends GroovyTestCase {
 
     @Test
     public void testStartAndCloseRMIServerViaRoddyStarterScript() {
+        if(!runIntegrationTests) return
         def inifile = "/data/michael/.roddy/applicationProperties.ini"
         def project = "coWorkflowsTestProject"
         def analysis = "delly"
@@ -101,6 +108,7 @@ public class RoddyRMIClientServerTests extends GroovyTestCase {
      */
     @Test
     public void testStartAndCloseRMIServer() {
+        if(!runIntegrationTests) return
 
 //        List<RoddyRMIClientConnection> clients = [];
 //        for (int i = 0; i < 1; i++) {

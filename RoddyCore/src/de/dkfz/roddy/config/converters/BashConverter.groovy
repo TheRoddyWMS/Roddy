@@ -155,8 +155,8 @@ class BashConverter extends ConfigurationConverter {
         while (somethingChanged) { //Passes
             somethingChanged = false;
             i++;
-            if (LoggerWrapper.isVerbosityHigh())
-                println "Pass ${i}, left ${listOfUnsortedValues.values().size()}";
+//            if (LoggerWrapper.isVerbosityHigh())
+//                println "Pass ${i}, left ${listOfUnsortedValues.values().size()}";
             Map<String, ConfigurationValue> foundValues = [:];
 
             //TODO Add command manager specific arguments to the command manager class, leave central things here.
@@ -167,9 +167,10 @@ class BashConverter extends ConfigurationConverter {
                 boolean isValidationRule = cv.id.contains("cfgValidationRule");
                 if (isValidationRule)
                     continue;
-                if (cv.toString().startsWith("#"))
+                String value = cv.toString()
+                if (value != null && value.startsWith("#"))
                     continue;
-                def dependencies = cv.getIDsForParrentValues();
+                def dependencies = cv.getIDsForParentValues();
                 int noOfDependencies = dependencies.size();
                 int noOfOriginalDependencies = dependencies.size();
                 List<String> notFound = [];
@@ -181,7 +182,7 @@ class BashConverter extends ConfigurationConverter {
                 }
 
                 if (noOfDependencies > 0) {
-                    logger.postRareInfo("CValue not accepted in dependecy resolution round: ${cv.id} = ${cv.value} $separator" + notFound.collect { "Could not resolve: ${it}" }.join(separator));
+//                    logger.postRareInfo("CValue not accepted in dependency resolution pass: ${cv.id} = ${cv.value} $separator" + notFound.collect { "Could not resolve: ${it}" }.join(separator));
                     continue;
                 }
 
@@ -205,7 +206,7 @@ class BashConverter extends ConfigurationConverter {
         (string.startsWith("'") && string.endsWith("'")) || (string.startsWith('"') && string.endsWith('"'))
     }
 
-    StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context, Boolean quoteSomeScalarConfigValues) {
+    StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context, Boolean quoteSomeScalarConfigValues, Boolean autoQuoteArrays) {
         StringBuilder text = new StringBuilder();
         String declareVar = ""
         String declareInt = ""
@@ -218,13 +219,13 @@ class BashConverter extends ConfigurationConverter {
         } else {
             String tmp
 
-                if (cv.type && cv.type.toLowerCase() == "basharray") {
-                // Check, if it is already quoted.
-                // If so, take the existing quotes.
-                if (isQuoted(cv.value))
-                    return new StringBuilder("${declareVar} ${cv.id}=${cv.toString()}".toString());
-                // If not, quote
-                return new StringBuilder("${declareVar} ${cv.id}=\"${cv.toString()}\"".toString());
+            if (cv.type && cv.type.toLowerCase() == "basharray") {
+                // Check, if it is already quoted OR auto quote is disabled
+                // If so, take the existing quotes, if not auto-quote
+                if (isQuoted(cv.value) || !autoQuoteArrays)
+                    return new StringBuilder("${declareVar} ${cv.id}=${cv.toString()}".toString())
+                else
+                    return new StringBuilder("${declareVar} ${cv.id}=\"${cv.toString()}\"".toString());
             } else if (cv.type && cv.type.toLowerCase() == "integer") {
                 return new StringBuilder("${declareInt} ${cv.id}=${cv.toString()}".toString());
             } else if (cv.type && ["double", "float"].contains(cv.type.toLowerCase())) {
@@ -253,7 +254,12 @@ class BashConverter extends ConfigurationConverter {
     @Override
     @CompileStatic
     StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context) {
-        convertConfigurationValue(cv, context, context.getFeatureToggleStatus(AvailableFeatureToggles.QuoteSomeScalarConfigValues))
+        convertConfigurationValue(
+                cv
+                , context
+                , context.getFeatureToggleStatus(AvailableFeatureToggles.QuoteSomeScalarConfigValues)
+                , context.getFeatureToggleStatus(AvailableFeatureToggles.AutoQuoteBashArrayVariables)
+        )
     }
 
     public Configuration loadShellScript(String configurationFile) {
@@ -368,8 +374,7 @@ class BashConverter extends ConfigurationConverter {
      * preventJobExecution=false
      * UNZIPTOOL=gunzip
      * ZIPTOOL_OPTIONS="-c"
-     * sampleDirectory=/data/michael/temp/roddyLocalTest/testproject/vbp/A100/${sample}/${SEQUENCER_PROTOCOL}
-     *
+     * sampleDirectory=/data/michael/temp/roddyLocalTest/testproject/vbp/A100/${sample}/${SEQUENCER_PROTOCOL}*
      * @param text
      * @return
      */
@@ -416,7 +421,7 @@ class BashConverter extends ConfigurationConverter {
         getHeaderValues(header, "analysis", []).each {
             String analysis ->
                 String[] split = analysis.split(StringConstants.COMMA)
-                if(split.size() < 3) {
+                if (split.size() < 3) {
                     ConfigurationFactory.logger.severe("The analysis string ${analysis} in the Bash configuration file is malformed.")
                     return
                 }

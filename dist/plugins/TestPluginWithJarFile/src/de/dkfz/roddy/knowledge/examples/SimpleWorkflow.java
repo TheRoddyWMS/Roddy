@@ -6,9 +6,10 @@
 
 package de.dkfz.roddy.knowledge.examples;
 
+
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.Workflow;
-import de.dkfz.roddy.knowledge.methods.GenericMethod;
+import de.dkfz.roddy.knowledge.files.Tuple4;
 
 /**
  */
@@ -20,6 +21,8 @@ public class SimpleWorkflow extends Workflow {
         SimpleTestTextFile textFile1 = initialTextFile.test1(); //(TextFile) GenericMethod.callGenericTool("testScript", initialTextFile);
         SimpleTestTextFile textFile2 = textFile1.test2();//(TextFile) GenericMethod.callGenericTool("testScript", textFile1);
         SimpleTestTextFile textFile3 = textFile2.test3(); //(TextFile) GenericMethod.callGenericTool("testScriptExitBad", textFile2);
+        Tuple4 mout1 = (Tuple4) call("testScriptWithMultiOut", textFile3);
+        Tuple4 mout2 = (Tuple4) call("testScriptWithMultiOut2", textFile3);
         return true;
     }
 }

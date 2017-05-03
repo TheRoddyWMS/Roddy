@@ -29,6 +29,8 @@ public abstract class ShellCommandSet {
 
     public abstract String getWhoAmICommand();
 
+    abstract String getListOfGroupsCommand()
+
     public abstract String getMyGroupCommand();
 
     public abstract String getGetUsermaskCommand();

@@ -8,7 +8,7 @@ package de.dkfz.roddy.client.fxuiclient.fxcontrols;
 
 import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation;
 import de.dkfz.roddy.execution.jobs.Job;
-import de.dkfz.roddy.execution.jobs.JobState;
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
 //import de.dkfz.roddy.execution.jobs.JobStatusListener;
 import de.dkfz.roddy.client.fxuiclient.ConfigurationViewer;
 import de.dkfz.roddy.client.fxuiclient.DataSetView;
@@ -108,7 +108,7 @@ public class JobOverviewControl extends CustomControlOnBorderPane implements Ini
                 tblJobsParameters.getItems().add(new FXJobParameterWrapper(key, job.getParameters().get(key)));
             }
 
-//            for (BaseFile bf : job.getParentFiles()) {
+//            for (BaseFile bf : job.getParentJobs()) {
 //                if (bf == null || bf.getCreatingJobsResult() == null || bf.getCreatingJobsResult().getJob() == null) {
 //                    logger.info("No log file info is available for basefile " + bf.getAbsolutePath());
 //                } else {

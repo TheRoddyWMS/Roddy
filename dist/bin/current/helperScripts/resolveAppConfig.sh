@@ -18,7 +18,7 @@ function grepFromConfigFile() {
 
 function tryExtractRoddyVersionFromPlugin() {
   [[ $parm1 == compile* ]] && echo "current" # Output current in case of compilation
-  echo $( getValueFromConfigOrCommandLine useRoddyVersion useRoddyVersion )
+  echo $( getValueFromConfigOrCommandLine useRoddyVersion useRoddyVersion rv )
 }
 
 function tryExtractPluginIDFromConfig() {
@@ -40,16 +40,23 @@ function setRoddyBinaryVariables() {
 function getValueFromConfigOrCommandLine() {
   local valueNameInCfg=$1
   local valueNameOnCLI=$2
+  local valueNameOnCLIShort=$3
+  [[ -z "$3" ]] && valueNameOnCLIShort=$valueNameOnCLI
   local var="none"
+  local startIndex
+
   IFS=""
   for i in ${fullParameterList[@]}; do
-    if [[ $i == --${valueNameOnCLI}* ]]; then
+    if [[ $i == --${valueNameOnCLI}*  ]]; then
       startIndex=$(expr 2 + ${#valueNameOnCLI} + 1)
+      var=${i:$startIndex:800}
+    elif [[ -z ${valueNameOnCLIShort-} || $i == --${valueNameOnCLIShort} || $i == --${valueNameOnCLIShort}"="* ]]; then
+      startIndex=$(expr 2 + ${#valueNameOnCLIShort} + 1)
       var=${i:$startIndex:800}
     fi
   done
   if [[ ${var-none} == none ]]; then
-    local var=$(grepFromConfigFile $valueNameInCfg)
+    var=$(grepFromConfigFile $valueNameInCfg)
   fi
   IFS=$OFS
   echo $var
@@ -58,6 +65,7 @@ function getValueFromConfigOrCommandLine() {
 for option in $@
 do
     [[ $option == --useconfig* ]] && customconfigfile=${option:12:800}
+    [[ $option == --c* ]]         && customconfigfile=${option:4:800}
 done
 
 if [[ ${customconfigfile-false} != false ]]
@@ -73,13 +81,14 @@ then
         customconfigfile=`dirname $0`/${customconfigfile}
     fi
 
-    _temp=`cat ${customconfigfile} | grep useRoddyVersion || echo 0` 
+    _temp=`cat ${customconfigfile} | grep useRoddyVersion || echo 0`
     if [[ $_temp != 0 ]] && [[ $_temp != "useRoddyVersion=" ]]
     then
         setRoddyBinaryVariables $(tryExtractRoddyVersionFromPlugin)
         foundPluginID=$(tryExtractPluginIDFromConfig)
     fi
 fi
+
 
 overrideRoddyVersionParameter=""
 
@@ -139,7 +148,7 @@ if [[ $autoSelectRoddy == true && ! $parm1 == autoselect ]]; then
     # Store the fullParameterList variable to a new variable to prevent a mess up in Bashs array handling:
     #   a=`echo ${a[@]} sed 's/d/f/g'`  replaced the 4th parameter in fullParameterList so that:
     #   a=( a b c d ) would become a=( a b c f b c d )
-    
+
     export fullParameterListFinal=""
     if [[ ${fullParameterList[@]} == *useRoddyVersion=auto* ]]; then
       # Replace what is set as a parameter

@@ -21,8 +21,8 @@ public class NoNoExecutionService extends ExecutionService {
     }
 
     @Override
-    protected List<String> _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream) {
-        return new LinkedList<>();
+    protected ExecutionResult _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream) {
+        return new ExecutionResult(true, 0, new LinkedList<>(), "");
     }
 
     @Override

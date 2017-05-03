@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.execution.io
 
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.core.ExecutionContext
@@ -64,7 +65,7 @@ public class ExecutionServiceTestInlineScript {
             }
         }
 
-        ExecutionService.getInstance().writeInlineScriptsAndCompressToolFolders(listOfFolders,mapOfInlineScripts)
+        ExecutionService.getInstance().writeInlineScriptsAndCorrectListOfFolders(listOfFolders,mapOfInlineScripts)
 
         assert  listOfFolders.size() == 2
         boolean hasCompressedFolder = false
@@ -110,7 +111,7 @@ public class ExecutionServiceTestInlineScript {
             }
         }
 
-        ExecutionService.getInstance().writeInlineScriptsAndCompressToolFolders(listOfFolders,mapOfInlineScripts)
+        ExecutionService.getInstance().writeInlineScriptsAndCorrectListOfFolders(listOfFolders,mapOfInlineScripts)
 
         assert  listOfFolders.size() == 2
         boolean hasCompressedFolder = false

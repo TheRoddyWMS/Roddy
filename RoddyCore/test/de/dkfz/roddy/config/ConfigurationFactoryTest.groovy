@@ -6,10 +6,16 @@
 
 package de.dkfz.roddy.config
 
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
+import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
+import de.dkfz.roddy.RunMode
+import de.dkfz.roddy.execution.io.ExecutionService
+import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.LibrariesFactoryTest
 import de.dkfz.roddy.tools.BufferValue
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.TimeUnit
 import de.dkfz.roddy.tools.Tuple3
 import groovy.transform.TypeCheckingMode
@@ -19,7 +25,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder
-import static ResourceSetSize.*;
+import static de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize.*;
 
 import java.lang.reflect.Method
 
@@ -44,6 +50,10 @@ public class ConfigurationFactoryTest {
 
     @BeforeClass
     public static void setupClass() {
+
+        ExecutionService.initializeService(LocalExecutionService, RunMode.CLI);
+
+        FileSystemAccessProvider.initializeProvider(true)
 
         LibrariesFactory.initializeFactory(true);
         LibrariesFactory.getInstance().loadLibraries(LibrariesFactory.buildupPluginQueue(LibrariesFactoryTest.callLoadMapOfAvailablePlugins(), "DefaultPlugin").values() as List);

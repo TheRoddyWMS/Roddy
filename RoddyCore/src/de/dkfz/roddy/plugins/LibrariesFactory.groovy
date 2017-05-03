@@ -158,7 +158,7 @@ public class LibrariesFactory extends Initializable {
                 try {
                     foundCoreClass = loadClass(className)
                 } catch (ClassNotFoundException ex) {
-                    // Silently ignore it. If the class can not be found, it is fine here.
+                    // Silently ignored. The class may or may not be in core. If the class can not be found, it is fine here.
                 }
                 if (foundCoreClass) break
                 // Ignore if it is empty, we will fall back to the plugin strategy afterwards! Or search in the next package
@@ -252,6 +252,13 @@ public class LibrariesFactory extends Initializable {
             logger.severe("Could not build the plugin queue for: \n" + usedPlugins.join("\n\t"))
             return false
         }
+
+        boolean finalChecksPassed = !checkOnToolDirDuplicates(queue.values() as List<PluginInfo>);
+        if (!finalChecksPassed) {
+            logger.severe("Final checks for plugin loading failed. There were duplicate tool directories.")
+            return false
+        };
+
         librariesAreLoaded = loadLibraries(queue.values() as List);
         return librariesAreLoaded;
     }
@@ -295,11 +302,11 @@ public class LibrariesFactory extends Initializable {
         for (File pBaseDirectory : pluginDirectories) {
             logger.postSometimesInfo("Parsing plugins folder: ${pBaseDirectory}");
             if (!pBaseDirectory.exists()) {
-                logger.warning("The plugins directory $pBaseDirectory does not exist.")
+                logger.severe("The plugins directory $pBaseDirectory does not exist.")
                 continue;
             }
             if (!pBaseDirectory.canRead()) {
-                logger.warning("The plugins directory $pBaseDirectory is not readable.")
+                logger.severe("The plugins directory $pBaseDirectory is not readable.")
             }
 
             File[] directoryList = pBaseDirectory.listFiles().sort() as File[];
@@ -317,7 +324,7 @@ public class LibrariesFactory extends Initializable {
     }
 
     /**
-     * This and the following method should not be in here! We should use the FileSystemAccessProvider for it.
+     * This and the following method should not be in here! We should use the FileSystemAccessProvider for it. 
      * However, the FSAP always tries to use the ExecService, if possible. All in all, with the current setup for FSAP / ES
      * interaction, it will not work. As we already decided to change that at some point, I'll put the method in here
      * and mark them as deprecated.
@@ -339,8 +346,11 @@ public class LibrariesFactory extends Initializable {
 
         List<String> errors = []
 
-        if (!directory.isDirectory())
-            errors << "File is not a directory"
+        if (!directory.isDirectory()) {
+            // Just return silently here.
+//            errors << "File is not a directory"
+            return false;
+        }
         if (directory.isHidden())
             errors << "Directory is hidden"
         if (!directory.canRead())
@@ -397,7 +407,6 @@ public class LibrariesFactory extends Initializable {
     private static List<Tuple2<File, String[]>> sortPluginDirectories(List<Tuple2<File, String[]>> collectedPluginDirectories) {
         collectedPluginDirectories = collectedPluginDirectories.sort {
             Tuple2<File, String[]> left, Tuple2<File, String[]> right ->
-                logger.postRareInfo("Call to plugin directory sort for ${left.x} vs ${right.x}");
                 List<String> splitLeft = left.x.name.split("[_:.-]") as List;
                 List<String> splitRight = right.x.name.split("[_:.-]") as List;
                 Tuple5<String, Integer, Integer, Integer, Integer> tLeft = new Tuple5<>(
@@ -595,6 +604,23 @@ public class LibrariesFactory extends Initializable {
         return pluginsToActivate;
     }
 
+    /**
+     * Returns true, if there are any duplicate tool directories in the provided list of plugins
+     * @param plugins
+     * @return
+     */
+    static boolean checkOnToolDirDuplicates(List<PluginInfo> plugins) {
+        Collection<String> original = plugins.collect { it.toolsDirectories.keySet() }.flatten() as Collection<String>  // Put all elements into one list
+        def normalized = original.unique(false)  // Normalize the list, so that duplicates are removed.
+        boolean result = normalized.size() != original.size() // Test, if the size changed. If so, original contained duplicates.
+
+        // For verbose output
+
+        logger.sometimes((["", "Found tool folders:"] + (plugins.collect { it.toolsDirectories.collect { String k, File v -> k.padRight(30) + " : " + v } }.flatten().sort() as List<String>)).join("\n\t"));
+
+        return result
+    }
+
     public static boolean addFile(File f) throws IOException {
         return addURL(f.toURI().toURL());
     }
@@ -651,7 +677,7 @@ public class LibrariesFactory extends Initializable {
                 return;
             }
 
-            def loadInfo = "The plugin ${pi.getName()} [ Version: ${pi.getProdVersion()} ] was loaded."
+            def loadInfo = "The plugin ${pi.getName()} [ Version: ${pi.getProdVersion()} ] was loaded (${pi.getDirectory()})."
             logger.postAlwaysInfo(loadInfo)
             synchronized (loadedLibrariesInfo) {
                 loadedPlugins << pi;

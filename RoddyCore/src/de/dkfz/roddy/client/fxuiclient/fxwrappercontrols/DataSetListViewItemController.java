@@ -11,7 +11,7 @@ import de.dkfz.roddy.client.rmiclient.RoddyRMIClientConnection;
 import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation;
 import de.dkfz.roddy.core.*;
 import de.dkfz.roddy.execution.jobs.Job;
-import de.dkfz.roddy.execution.jobs.JobState;
+import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
 import de.dkfz.roddy.client.fxuiclient.RoddyUITask;
 import de.dkfz.roddy.client.fxuiclient.fxcontrols.ExecutionContextPresenter;
 import de.dkfz.roddy.client.fxuiclient.fxdatawrappers.FXDataSetWrapper;
