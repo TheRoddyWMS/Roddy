@@ -23,6 +23,7 @@ import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.BufferValue
 import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.TimeUnit
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
@@ -44,7 +45,9 @@ class ProcessingToolReader {
 
     Configuration config
 
-    List<String> loadErrors = []
+    List<ConfigurationLoadError> loadErrors = []
+
+    String toolID
 
     ProcessingToolReader(NodeChild tool, Configuration config) {
         this.tool = tool
@@ -55,19 +58,32 @@ class ProcessingToolReader {
         return loadErrors // Auto boolean to true or false
     }
 
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    static String readTag(NodeChild node, String tag) {
-        return node.@"$tag".text()
+    void addLoadErr(String desc, Exception ex = null) {
+        loadErrors << new ConfigurationLoadError(config, getClass().simpleName + (toolID ? " - tool: ${toolID}" : " - The id of the processed tool could not be read, is the tag toolID set?"), desc, ex)
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    static Collection<NodeChild> readCollection(NodeChild node, String id) {
-        return node."$id" as Collection<NodeChild>
+    String readTag(NodeChild node, String tag) {
+        String text = node.@"$tag".text()
+        if (!text)
+            addLoadErr("Could not get tag value for '${tag}'", null)
+        return text
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    static Collection<NodeChild> readCollection(NodeChildren node, String id) {
-        return node."$id" as Collection<NodeChild>
+    Collection<NodeChild> readCollection(NodeChild node, String id) {
+        def collection = node."$id" as Collection<NodeChild>
+//        if(!collection)
+//            loadErrors << "Could not load collection for '${id}"
+        return collection
+    }
+
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    Collection<NodeChild> readCollection(NodeChildren node, String id) {
+        def collection = node."$id" as Collection<NodeChild>
+//        if(!collection)
+//            loadErrors << "Could not load collection for '${id}"
+        return collection
     }
 
     /**
@@ -75,8 +91,10 @@ class ProcessingToolReader {
      * @return
      */
     ToolEntry readProcessingTool() {
+        String toolID
         try {
-            String toolID = readTag(tool, "name") //tool.@name.text()
+            toolID = readTag(tool, "name") //tool.@name.text()
+            this.toolID = toolID
             String path = readTag(tool, "value")
             String basePathId = readTag(tool, "basepath")
             boolean overrideresourcesets = extractAttributeText(tool, "overrideresourcesets", "false").toBoolean()
@@ -88,7 +106,9 @@ class ProcessingToolReader {
                 List<ToolEntry.ToolParameter> inputParameters = []
                 List<ToolEntry.ToolParameter> outputParameters = []
                 List<ResourceSet> resourceSets = new LinkedList<>()
-                for (NodeChild child in readCollection(tool, "children")) {
+                int noOfInputParameters = 0
+                int noOfOutputParameters = 0
+                for (NodeChild child in (tool.children() as List<NodeChild>)) {
                     String cName = child.name()
 
                     if (cName == "resourcesets") {
@@ -99,8 +119,10 @@ class ProcessingToolReader {
                         }
                     } else if (cName == "input") {
                         inputParameters << parseToolParameter(toolID, child)
+                        noOfInputParameters++
                     } else if (cName == "output") {
                         outputParameters << parseToolParameter(toolID, child)
+                        noOfOutputParameters++
                     } else if (cName == "script") {
                         if (readTag(child, "value") != "") {
                             currentEntry.setInlineScript(child.text().trim().replaceAll('<!\\[CDATA\\[', "").replaceAll(']]>', ""))
@@ -108,22 +130,48 @@ class ProcessingToolReader {
                         }
                     }
                 }
+
+                if (noOfInputParameters != inputParameters.size())
+                    addLoadErr("The number of read input parameters does not match to the input parameters in the configuration.", null)
+                if (noOfOutputParameters != outputParameters.size())
+                    addLoadErr("The number of read output parameters does not match to the output parameters in the configuration.", null)
+
+                if ((inputParameters && !outputParameters) || (!inputParameters && outputParameters)) {
+                    if (!inputParameters)
+                        addLoadErr("Output parameters are set but input parameters are not. You need to set both or none.", null)
+                    if (!outputParameters)
+                        addLoadErr("Input parameters are set but output parameters are not. You need to set both or none.", null)
+                }
+
                 def allparameters = (inputParameters + outputParameters).collect {
-                    if (it instanceof ToolEntry.ToolParameterOfFiles) {
-                        ((ToolEntry.ToolParameterOfFiles) it).allFiles.collect { it.scriptParameterName }
+                    if (it instanceof ToolTupleParameter) {
+                        ((ToolTupleParameter) it).allFiles.collect { it.scriptParameterName }
+                    } else if (it instanceof ToolFileGroupParameter) {
+                        ToolFileGroupParameter tfg = (ToolFileGroupParameter) it
+                        if (tfg.genericFileClass)
+                            it.scriptParameterName
+                        else
+                            tfg.allFiles.collect { it.scriptParameterName }
                     } else {
                         it.scriptParameterName
                     }
                 }.flatten()
 
                 if (allparameters.size() != allparameters.unique(false).size())
-                    throw new Exception("There were duplicate i/o script parameter names.")
+                    addLoadErr("There were duplicate i/o script parameter names. This is not allowed.")
                 currentEntry.setGenericOptions(inputParameters, outputParameters, resourceSets)
             }
+            if (hasErrors())
+                throw new ConfigurationLoaderException("There were ${loadErrors.size()} errors")
             return currentEntry
-        } catch (Exception ex) {
-            config.addLoadError(new ConfigurationLoadError(config, "ToolEntry could not be read", ex.getMessage(), ex))
+        } catch (ConfigurationLoaderException ex) {
+            addLoadErr("ToolEntry ${toolID} could not be read:\n        " + loadErrors.join("\n        "))
             return null
+        } catch (Exception ex) {
+            addLoadErr("ToolEntry ${toolID} could not be read with an unexpected error:\n        " +
+                    (hasErrors() ? loadErrors.join("\n        ") + "\n        " : "") +
+                    RoddyIOHelperMethods.getStackTraceAsString(ex), ex)
+            throw ex
         }
     }
 
@@ -151,7 +199,7 @@ class ProcessingToolReader {
                 tempSet = new ResourceSet(rsetSize, rsetUsedMemory, rsetUsedCores, rsetUsedNodes, rsetUsedWalltime, null, rsetUsedQueue, rsetUsedNodeFlag)
             }
         } catch (Exception ex) {
-            if (config != null) config.addLoadError(new ConfigurationLoadError(config, "Resource set could not be read", "", ex))
+            if (config != null) addLoadErr("Resource set could not be read", ex)
         }
         return tempSet
     }
@@ -201,7 +249,7 @@ class ProcessingToolReader {
 
         // A file can have several defined child files
         List<ToolFileParameter> subParameters = new LinkedList<ToolFileParameter>()
-        for (NodeChild fileChild in readCollection(child, "children")) {
+        for (NodeChild fileChild in (child.children() as List<NodeChild>)) {
             subParameters << (ToolFileParameter) parseToolParameter(toolID, fileChild)
         }
         ToolFileParameter tp = new ToolFileParameter(_cls, constraints, pName, check, fnpSelTag, subParameters, parentFileVariable)
@@ -215,7 +263,7 @@ class ProcessingToolReader {
             logger.severe("Tuple is of wrong size for tool ${toolID}.")
         }
         List<ToolFileParameter> subParameters = new LinkedList<ToolFileParameter>()
-        for (NodeChild fileChild in readCollection(child, "children")) {
+        for (NodeChild fileChild in (child.children() as List<NodeChild>)) {
             subParameters << (ToolFileParameter) parseToolParameter(toolID, fileChild)
         }
         return new ToolTupleParameter(subParameters)
@@ -237,20 +285,24 @@ class ProcessingToolReader {
 
         String fileclass = extractAttributeText(groupNode, "fileclass", null)
         int childCount = groupNode.children().size()
-        String pName = readTag(groupNode, "scriptparameter")
 
         if (fileclass) {
-            if (!pName)
-                throw new RuntimeException("You have to set both the parametername and the fileclass attribute for filegroup i/o parameter in ${toolID}")
+            // The parameter name is only used if no children are set.
+            String pName = readTag(groupNode, "scriptparameter")
+            if (!pName) {
+                addLoadErr("You have to set both the parametername and the fileclass attribute for filegroup i/o parameter in ${toolID}")
+            }
 
             Class<BaseFile> genericFileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(fileclass, BaseFile.class.name)
             ToolFileGroupParameter tpg = new ToolFileGroupParameter(filegroupClass, genericFileClass, pName, passas, indexOptions)
             return tpg
         } else if (childCount) {
-            return parseChildFilesForFileGroup(groupNode, passas, toolID, pName, filegroupClass, indexOptions)
+            return parseChildFilesForFileGroup(groupNode, passas, toolID, null, filegroupClass, indexOptions)
         } else {
+            String pName = readTag(groupNode, "scriptparameter")
             if (!isInputFileGroup(groupNode)) { // TODO: Enforce fileclass attributes for output filegroup <https://eilslabs-phabricator.dkfz.de/T2015>
-                throw new RuntimeException("Either the fileclass or a list of child files need to be set for a filegroup in ${toolID}")
+                addLoadErr("Either the fileclass or a list of child files need to be set for a filegroup in ${toolID}")
+                return null
             } else {
                 return new ToolFileGroupParameter(filegroupClass, BaseFile.class, pName, passas, indexOptions)
             }

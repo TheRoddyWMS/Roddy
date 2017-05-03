@@ -384,6 +384,10 @@ public class Configuration implements ContainerParent<Configuration> {
         this.listOfLoadErrors.add(error);
     }
 
+    public void addLoadErrors(Collection<ConfigurationLoadError> errors) {
+        this.listOfLoadErrors.addAll(errors);
+    }
+
     public List<ConfigurationLoadError> getListOfLoadErrors() {
         LinkedList<ConfigurationLoadError> errors = new LinkedList<>();
         for(Configuration c : parents) {

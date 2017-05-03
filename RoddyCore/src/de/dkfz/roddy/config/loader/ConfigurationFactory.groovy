@@ -56,6 +56,8 @@ import de.dkfz.roddy.tools.TimeUnit
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.*
+import groovy.xml.StreamingMarkupBuilder
+import groovy.xml.XmlUtil
 import org.apache.commons.io.filefilter.WildcardFileFilter
 
 import java.lang.reflect.*
@@ -325,7 +327,7 @@ class ConfigurationFactory {
             throw new RuntimeException("The configuration identified by \"${usedConfiguration}\" cannot be found, is the identifier correct? Is the configuration available?.")
         }
 
-        loadConfiguration(icc)
+        Configuration config = loadConfiguration(icc)
     }
 
     Configuration loadConfiguration(InformationalConfigurationContent icc) {
@@ -352,45 +354,51 @@ class ConfigurationFactory {
         NodeChild configurationNode = icc.configurationNode
         Configuration config = null
 
+        //If the configurationNode is a project or a variant then it is allowed to import analysis configurations.
+        config = createConfigurationObject(icc, configurationNode, parentConfig)
+
+        boolean configurationWasLoadedProperly = true;
+
+        // Errors are always catched and a message is appended. We want to see everything, if possible.
+
         try {
-            //If the configurationNode is a project or a variant then it is allowed to import analysis configurations.
-            config = createConfigurationObject(icc, configurationNode, parentConfig)
-
-            try {
-                readConfigurationValues(configurationNode, config)
-            } catch (Exception ex) {
-                config.addLoadError(new ConfigurationLoadError(config, "cValues", "Could not read configuration values for configuration ${icc.id}", ex))
-            }
-
-            try {
-                readValueBundles(configurationNode, config)
-            } catch (Exception ex) {
-                config.addLoadError(new ConfigurationLoadError(config, "cValues", "Could not read configuration value bundles for configuration ${icc.id}", ex))
-            }
-
-            try {
-                config.filenamePatterns.map.putAll(readFilenamePatterns(configurationNode))
-            } catch (Exception ex) {
-                config.addLoadError(new ConfigurationLoadError(config, "cValues", "Could not read filename patterns for configuration ${icc.id}", ex))
-            }
-
-            try {
-                readProcessingTools(configurationNode, config)
-            } catch (Exception ex) {
-                config.addLoadError(new ConfigurationLoadError(config, "cValues", "Could not read processing tools for configuration ${icc.id}", ex))
-            }
-
-            try {
-                readEnums(config, configurationNode)
-            } catch (Exception ex) {
-                config.addLoadError(new ConfigurationLoadError(config, "cValues", "Could not read enumerations for configuration ${icc.id}", ex))
-            }
-
-            return config
+            readConfigurationValues(configurationNode, config)
         } catch (Exception ex) {
-            logger.severe("Configuration ${icc.id} cannot be loaded!" + ex.toString())
-            return null
+            config.addLoadError(new ConfigurationLoadError(config, "cValues", "Could not read configuration values for configuration ${icc.id}", ex))
+            configurationWasLoadedProperly = false
         }
+
+        try {
+            readValueBundles(configurationNode, config)
+        } catch (Exception ex) {
+            config.addLoadError(new ConfigurationLoadError(config, "cValues", "Could not read configuration value bundles for configuration ${icc.id}", ex))
+            configurationWasLoadedProperly = false
+        }
+
+        try {
+            config.filenamePatterns.map.putAll(readFilenamePatterns(configurationNode))
+        } catch (Exception ex) {
+            config.addLoadError(new ConfigurationLoadError(config, "cValues", "Could not read filename patterns for configuration ${icc.id}", ex))
+            configurationWasLoadedProperly = false
+        }
+
+        try {
+            configurationWasLoadedProperly &= readProcessingTools(configurationNode, config)
+        } catch (Exception ex) {
+
+        }
+
+        try {
+            readEnums(config, configurationNode)
+        } catch (Exception ex) {
+            config.addLoadError(new ConfigurationLoadError(config, "cValues", "Could not read enumerations for configuration ${icc.id}", ex))
+            configurationWasLoadedProperly = false
+        }
+
+        return config
+        /**
+         * TODO Maybe transform the ConfigurationFactory to object form thus allowing to store errors there.
+         */
     }
 
     /**
@@ -673,20 +681,29 @@ class ConfigurationFactory {
         return fp
     }
 
-
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    void readProcessingTools(NodeChild configurationNode, Configuration config) {
+    boolean readProcessingTools(NodeChild configurationNode, Configuration config) {
         Map<String, ToolEntry> toolEntries = config.getTools().getMap()
+        boolean hasErrors = false
         for (NodeChild tool in configurationNode.processingTools.tool) {
             String toolID = tool.@name.text()
             logger.postRareInfo("Processing tool ${toolID}")
             def toolReader = new ProcessingToolReader(tool, config)
             def toolEntry = toolReader.readProcessingTool()
-            if (toolReader.hasErrors())
-                logger.severe("Tool ${toolID} could not be read and will not be available.")
-            else
+            if (toolReader.hasErrors()) {
+                String xml
+                try {
+                    xml = XmlUtil.serialize(new StreamingMarkupBuilder().bind { it -> it.faulty tool }.toString())
+                } catch (Exception ex) {
+                    println (ex)
+                }
+                config.addLoadError(new ConfigurationLoadError(config, "CFactory", "Tool ${toolID} could not be read and will not be available. Please check the tool syntax:\n" + xml, null ))
+                config.addLoadErrors(toolReader.loadErrors)
+                hasErrors = true
+            } else
                 toolEntries[toolID] = toolEntry
         }
+        return !hasErrors
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)

@@ -18,4 +18,10 @@ class ConfigurationLoadError extends ConfigurationError {
     ConfigurationLoadError(Configuration configuration, String id, String description, Exception exception) {
         super(description, configuration, id, exception)
     }
+
+
+    @Override
+    public String toString() {
+        return "${id.padRight(20)}: ${description}";
+    }
 }
