@@ -373,12 +373,12 @@ public class Analysis {
                     ExecutionService.getInstance().writeFilesForExecution(context);
                     boolean execute = true;
                     if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) { // Only do these checks, if we are not in query mode!
-                        boolean preparedFilesAreValid = ExecutionService.getInstance().checkFilesPreparedForExecution(context);
+                        List<String> invalidPreparedFiles = ExecutionService.getInstance().checkFilesPreparedForExecution(context);
                         boolean copiedAnalysisToolsAreExecutable = ExecutionService.getInstance().checkCopiedAnalysisTools(context);
-                        execute &= preparedFilesAreValid && copiedAnalysisToolsAreExecutable;
+                        execute &= invalidPreparedFiles.size() == 0 && copiedAnalysisToolsAreExecutable;
                         if (!execute) {
                             StringBuilder message = new StringBuilder("There were errors after preparing the workflow run for dataset " + datasetID);
-                            if (!preparedFilesAreValid) message.append("\n\tSome files could not be written. Workflow will not execute.");
+                            if (invalidPreparedFiles.size() > 0) message.append("\n\tSome files could not be written. Workflow will not execute.\n\t" + RoddyIOHelperMethods.joinArray(invalidPreparedFiles.toArray(), "\t\n"));
                             if (!copiedAnalysisToolsAreExecutable) message.append("\n\tSome declared tools are not executable. Workflow will not execute.");
                             logger.severe(message.toString());
                         }
