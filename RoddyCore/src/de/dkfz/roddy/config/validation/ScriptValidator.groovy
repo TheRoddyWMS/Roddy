@@ -7,7 +7,6 @@
 package de.dkfz.roddy.config.validation
 import de.dkfz.roddy.config.AnalysisConfiguration
 import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationFactory
 import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.core.ExecutionContextError
 
