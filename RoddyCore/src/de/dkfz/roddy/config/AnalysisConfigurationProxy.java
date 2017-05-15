@@ -7,6 +7,8 @@
 package de.dkfz.roddy.config;
 
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize;
+import de.dkfz.roddy.config.loader.ConfigurationFactory;
+import de.dkfz.roddy.config.loader.ConfigurationLoadError;
 import de.dkfz.roddy.config.validation.ConfigurationValidationError;
 import de.dkfz.roddy.core.ExecutionContext;
 import groovy.util.slurpersupport.NodeChild;

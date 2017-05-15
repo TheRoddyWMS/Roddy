@@ -10,7 +10,7 @@ import com.stackoverflow.questions.xmlvalidation.ResourceResolver
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants;
 import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationFactory;
+import de.dkfz.roddy.config.loader.ConfigurationFactory;
 import de.dkfz.roddy.config.InformationalConfigurationContent
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import org.xml.sax.ErrorHandler

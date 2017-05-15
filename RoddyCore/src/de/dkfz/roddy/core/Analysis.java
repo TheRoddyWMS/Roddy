@@ -9,6 +9,7 @@ package de.dkfz.roddy.core;
 import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
 import de.dkfz.roddy.AvailableFeatureToggles;
 import de.dkfz.roddy.Roddy;
+import de.dkfz.roddy.config.loader.ConfigurationLoadError;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.Job;
@@ -389,9 +390,9 @@ public class Analysis {
                         context.execute();
                         finallyStartJobsOfContext(context);
                     }
-                } catch(Exception ex) {
+                } catch (Exception ex) {
                     // (Maybe) abort jobs in strict mode
-                    abortStartedJobsOfContext(context);
+                    maybeAbortStartedJobsOfContext(context);
                 } finally {
 
                     if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) { //Clean up
@@ -490,16 +491,16 @@ public class Analysis {
      *
      * @param context
      */
-    private void abortStartedJobsOfContext(ExecutionContext context) {
+    private void maybeAbortStartedJobsOfContext(ExecutionContext context) {
         if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.RollbackOnWorkflowError)) {
             try {
-                logger.severe("An workflow error occurred, try to rollback / abort submitted jobs.");
+                logger.severe("A workflow error occurred, try to rollback / abort submitted jobs.");
                 Roddy.getJobManager().queryJobAbortion(context.jobsForProcess);
             } catch (Exception ex) {
                 logger.severe("Could not successfully abort jobs.", ex);
             }
         } else {
-            logger.severe("An workflow error occurred. However, strict mode is disabled and/or RollbackOnWorkflowError is disabled and therefore, all submitted jobs will be left running." +
+            logger.severe("A workflow error occurred. However, strict mode is disabled and/or RollbackOnWorkflowError is disabled and therefore, all submitted jobs will be left running." +
                     "\n\tYou might consider to enable Roddy strict mode by setting the feature toggles 'StrictMode' and 'RollbackOnWorkflowError'.");
         }
     }

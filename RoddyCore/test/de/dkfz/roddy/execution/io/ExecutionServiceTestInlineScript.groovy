@@ -9,6 +9,7 @@ package de.dkfz.roddy.execution.io
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.*
+import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import de.dkfz.roddy.knowledge.files.GenericFileGroup

@@ -15,7 +15,7 @@ import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.tools.AppConfig;
-import de.dkfz.roddy.config.ConfigurationFactory;
+import de.dkfz.roddy.config.loader.ConfigurationFactory;
 import de.dkfz.roddy.config.InformationalConfigurationContent;
 import de.dkfz.roddy.core.*;
 import de.dkfz.roddy.execution.io.ExecutionService;
