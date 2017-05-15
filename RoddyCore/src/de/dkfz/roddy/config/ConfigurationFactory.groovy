@@ -136,8 +136,7 @@ public class ConfigurationFactory {
         List<File> allFiles = []
         Map<File, PluginInfo> pluginsByFile = [:]
         for (PluginInfo pi in LibrariesFactory.getInstance().getLoadedPlugins()) {
-            File configPath = pi.getConfigurationDirectory();
-            File[] configFiles = configPath.listFiles((FileFilter) new WildcardFileFilter("*.xml"));
+            List<File> configFiles = pi.getConfigurationFiles()
             for (File f in configFiles) {
                 allFiles.add(f);
                 pluginsByFile[f] = pi;
@@ -210,7 +209,7 @@ public class ConfigurationFactory {
             return file.text
 
         if (file.name.endsWith(".sh")) // Easy Bash importer
-            return loadAndPreprocessBashFile(file.text)
+            return loadAndPreprocessBashFile(file)
 
 //        if (file.name.endsWith(".yml")) // YAML import
 //            return loadAndPreprocessYAMLFile(file.text)
@@ -218,11 +217,11 @@ public class ConfigurationFactory {
         throw new UnknownConfigurationFileTypeException("Unknown file type ${file.name} for a configuration file.")
     }
 
-    static String loadAndPreprocessYAMLFile(String s) {
+    static String loadAndPreprocessYAMLFile(File s) {
         return new YAMLConverter().convertToXML(s)
     }
 
-    static String loadAndPreprocessBashFile(String s) {
+    static String loadAndPreprocessBashFile(File s) {
         return new BashConverter().convertToXML(s)
     }
 
@@ -301,7 +300,9 @@ public class ConfigurationFactory {
         InformationalConfigurationContent icc = availableConfigurations[usedConfiguration];
 
         if (icc == null) {
-            throw new RuntimeException("The configuration identified by \"${usedConfiguration}\" cannot be found, is the identifier correct? Is the configuration available?.")
+            throw new ProjectLoaderException("The configuration identified by \"${usedConfiguration}\" cannot be found, is the identifier correct? Is the configuration available? Possible are:\n\t"
+                    + availableAnalysisConfigurations.collect { it.id }.join("\n\t")
+            )
         }
 
         loadConfiguration(icc);
@@ -502,7 +503,7 @@ public class ConfigurationFactory {
     public static Tuple3<Class, Boolean, Integer> loadPatternClass(String pkg, String className, Class constructorClass = null) {
 
         String cls
-        boolean packageIsSet = pkg && pkg != LibrariesFactory.SYNTHETIC_PACKAGE;
+        boolean packageIsSet = pkg && pkg != SyntheticPluginInfo.SYNTHETIC_PACKAGE;
         Class foundClass = !packageIsSet ? LibrariesFactory.instance.searchForClass(className) : null;
         if (foundClass)
             cls = foundClass.name;
@@ -703,14 +704,14 @@ public class ConfigurationFactory {
                     }
                 }
                 def allparameters = (inputParameters + outputParameters).collect {
-                    if(it instanceof ToolEntry.ToolParameterOfFiles) {
-                        ((ToolEntry.ToolParameterOfFiles)it).allFiles.collect  {it.scriptParameterName}
+                    if (it instanceof ToolEntry.ToolParameterOfFiles) {
+                        ((ToolEntry.ToolParameterOfFiles) it).allFiles.collect { it.scriptParameterName }
                     } else {
                         it.scriptParameterName
                     }
                 }.flatten()
 
-                if(allparameters.size() != allparameters.unique(false).size())
+                if (allparameters.size() != allparameters.unique(false).size())
                     throw new Exception("There were duplicate i/o script parameter names.")
                 currentEntry.setGenericOptions(inputParameters, outputParameters, resourceSets);
             }

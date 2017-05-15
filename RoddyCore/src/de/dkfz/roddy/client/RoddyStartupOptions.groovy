@@ -38,6 +38,9 @@ public enum RoddyStartupOptions {
     test,
     useiodir(true),
     usemetadatatable(true),
+
+    forcenativepluginconversion(false),
+
     /**
      * Override project speicifc usedresourcessize
      */

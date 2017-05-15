@@ -262,6 +262,10 @@ class BashConverter extends ConfigurationConverter {
         )
     }
 
+    public Configuration loadShellScript(File configurationFile) {
+        return loadShellScript(configurationFile.getAbsolutePath())
+    }
+
     public Configuration loadShellScript(String configurationFile) {
         if (!configurationFile) {
             throw new IOException("Configuration file must be specified.")
@@ -375,16 +379,27 @@ class BashConverter extends ConfigurationConverter {
      * UNZIPTOOL=gunzip
      * ZIPTOOL_OPTIONS="-c"
      * sampleDirectory=/data/michael/temp/roddyLocalTest/testproject/vbp/A100/${sample}/${SEQUENCER_PROTOCOL}*
-     * @param text
+     * @param file
      * @return
      */
-    String convertToXML(String text) {
+    String convertToXML(File file) {
         String previousLine = ""
-        List<String> allLines = text.readLines()
+        List<String> allLines = file.readLines()
         List<String> header = extractHeader(allLines)
 
         List<String> xmlLines = [];
-        xmlLines << "<configuration name='${getHeaderValue(header, "name", "")}'".toString()
+
+        String type = ""
+        String additionalEntries = ""
+        if (file.name.startsWith("projects")) {
+            type = 'configurationType="project"'
+        } else if (file.name.startsWith("analysis")) {
+            type = 'configurationType="analysis"'
+            additionalEntries="class='de.dkfz.roddy.core.Analysis' workflowClass='de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow' runtimeServiceClass=\"de.dkfz.roddy.knowledge.examples.SimpleRuntimeService\""
+        } else  {
+        }
+
+        xmlLines << "<configuration ${type} ${additionalEntries} name='${getHeaderValue(header, "name", file.parentFile.name + "Analysis")}'".toString()
 
         xmlLines += convertHeader(header)
 
@@ -405,8 +420,8 @@ class BashConverter extends ConfigurationConverter {
                 break;
         }
 
-        if (!header)
-            throw new IOException("Simple Bash configuration files need a valid header")
+//        if (!header)
+//            throw new IOException("Simple Bash configuration files need a valid header")
         header
     }
 
@@ -417,8 +432,10 @@ class BashConverter extends ConfigurationConverter {
         xmlLines << "description='" + getHeaderValue(header, "description", "") + "'"
         xmlLines << "usedresourcessize='" + getHeaderValue(header, "usedresourcessize", "l") + "' >"
 
+        def headerValues = getHeaderValues(header, "analysis", [])
         xmlLines << "  <availableAnalyses>"
-        getHeaderValues(header, "analysis", []).each {
+
+        headerValues.each {
             String analysis ->
                 String[] split = analysis.split(StringConstants.COMMA)
                 if (split.size() < 3) {

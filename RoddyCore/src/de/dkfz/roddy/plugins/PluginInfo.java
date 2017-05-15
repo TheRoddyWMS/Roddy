@@ -12,12 +12,12 @@ import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.tools.RuntimeTools;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
-import java.util.Enumeration;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -50,15 +50,15 @@ public class PluginInfo {
         INCOMPATIBLE
     }
 
-    private String name;
-    private File directory;
-    private File developmentDirectory;
-    private String prodVersion;
-    private final String roddyAPIVersion;
-    private final String jdkVersion;
-    private final String groovyVersion;
-    private Map<String, String> dependencies;
-    private final File zipFile;
+    protected String name;
+    protected File directory;
+    protected File developmentDirectory;
+    protected String prodVersion;
+    protected final String roddyAPIVersion;
+    protected final String jdkVersion;
+    protected final String groovyVersion;
+    protected Map<String, String> dependencies;
+    protected final File zipFile;
 
     /**
      * Stores the next entry in the plugin chain or null if there is nor further plugin available.
@@ -75,8 +75,13 @@ public class PluginInfo {
 
     private boolean isBetaPlugin = false;
 
-    private Map<String, File> listOfToolDirectories = new LinkedHashMap<>();
+    protected final Map<String, File> listOfToolDirectories = new LinkedHashMap<>();
 
+    public PluginInfo(String name, File directory, String version, String roddyAPIVersion, String jdkVersion, String groovyVersion, Map<String, String> dependencies) {
+        this(name, null, directory, null, version, roddyAPIVersion, jdkVersion, groovyVersion, dependencies);
+    }
+
+    @Deprecated
     public PluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, String roddyAPIVersion, String jdkVersion, String groovyVersion, Map<String, String> dependencies) {
         this.name = name;
         this.directory = directory;
@@ -90,14 +95,14 @@ public class PluginInfo {
         fillListOfToolDirectories();
     }
 
-    private void fillListOfToolDirectories() {
+    protected void fillListOfToolDirectories() {
         File toolsBaseDir = null;
         try {
             toolsBaseDir = getToolsDirectory();
 
             if (toolsBaseDir != null && toolsBaseDir.exists() && toolsBaseDir.isDirectory()) { //Search through the default folders, if possible.
                 for (File file : toolsBaseDir.listFiles()) {
-                    if(!file.isDirectory() || file.isHidden()) {
+                    if (!file.isDirectory() || file.isHidden()) {
                         logger.always("Ignore directory " + file.getAbsolutePath() + "; It is not a valid tools directory.");
                         continue;
                     }
@@ -111,12 +116,11 @@ public class PluginInfo {
     }
 
     public File getToolsDirectory() {
-        if (developmentDirectory != null && developmentDirectory.exists()) {
-            return new File(new File(developmentDirectory, RuntimeService.DIRNAME_RESOURCES), RuntimeService.DIRNAME_ANALYSIS_TOOLS);
-        } else if (directory != null && directory.exists()) {
-            return new File(new File(directory, RuntimeService.DIRNAME_RESOURCES), RuntimeService.DIRNAME_ANALYSIS_TOOLS);
-        }
-        return null;
+        // Had a bad side effect...
+//        if (directory != null && directory.exists()) {
+        return new File(new File(directory, RuntimeService.DIRNAME_RESOURCES), RuntimeService.DIRNAME_ANALYSIS_TOOLS);
+//        }
+//        return null;
     }
 
     public File getBrawlWorkflowDirectory() {
@@ -127,8 +131,9 @@ public class PluginInfo {
         return new File(new File(directory, RuntimeService.DIRNAME_RESOURCES), RuntimeService.DIRNAME_CONFIG_FILES);
     }
 
-    public File getNativeToolsDirectory() {
-        return new File(getToolsDirectory(), "nativeTools");
+    public List<File> getConfigurationFiles() {
+        File configPath = getConfigurationDirectory();
+        return Arrays.asList(configPath.listFiles((FileFilter) new WildcardFileFilter(new String[] {"*.sh", "*.xml"})));
     }
 
     public String getName() {
@@ -145,6 +150,10 @@ public class PluginInfo {
 
     public File getDirectory() {
         return directory;
+    }
+
+    protected void setDirectory(File f) {
+        directory = f;
     }
 
     public String getProdVersion() {
@@ -204,9 +213,10 @@ public class PluginInfo {
     }
 
     public boolean isCompatibleToRuntimeSystem() {
-        return jdkVersion == RuntimeTools.getJavaRuntimeVersion()
-                && groovyVersion == RuntimeTools.getRoddyRuntimeVersion()
-                && roddyAPIVersion == RuntimeTools.getGroovyRuntimeVersion();
+        boolean jdkEquals = jdkVersion.equals(RuntimeTools.getJavaRuntimeVersion());
+        boolean groovyEquals = groovyVersion.equals(RuntimeTools.getGroovyRuntimeVersion());
+        boolean apiEquals =roddyAPIVersion.equals(RuntimeTools.getRoddyRuntimeVersion());
+        return jdkEquals && groovyEquals && apiEquals;
     }
 
     public int getRevision() {

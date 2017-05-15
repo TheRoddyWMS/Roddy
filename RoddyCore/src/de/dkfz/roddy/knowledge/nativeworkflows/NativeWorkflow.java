@@ -21,6 +21,7 @@ import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.eilslabs.batcheuphoria.jobs.Command;
 import de.dkfz.roddy.execution.jobs.Job;
 import de.dkfz.roddy.plugins.LibrariesFactory;
+import de.dkfz.roddy.tools.LoggerWrapper;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -40,8 +41,11 @@ import java.util.Map;
  * Created by michael on 06.02.15.
  */
 public class NativeWorkflow extends Workflow {
+    static final LoggerWrapper logger = LoggerWrapper.getLogger(NativeWorkflow.class);
+
     @Override
     public boolean execute(ExecutionContext context) {
+        logger.severe("You are using the Native Workflow interface. This might be unstable");
 
         ExecutionContextLevel level = context.getExecutionContextLevel();
 
@@ -100,11 +104,11 @@ public class NativeWorkflow extends Workflow {
 //            jInfo.getParameters().put(PRM_TOOL_ID, jInfo.getToolID());
         }
         for (GenericJobInfo jInfo : callsByID.values()) {
-            if(jInfo.getParentJobIDs() != null) {
+            if (jInfo.getParentJobIDs() != null) {
                 //Replace all ids!
                 List<String> newIDs = new LinkedList<>();
                 List<String> parentJobIDs = jInfo.getParentJobIDs();
-                for(String id : parentJobIDs) {
+                for (String id : parentJobIDs) {
                     newIDs.add(fakeIDWithRealID.get(id));
                 }
                 jInfo.setParentJobIDs(newIDs);

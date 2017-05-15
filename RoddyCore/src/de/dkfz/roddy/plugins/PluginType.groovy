@@ -17,20 +17,26 @@ enum PluginType {
     /**
      * Invalid folders
      */
-    INVALID,
+    INVALID(false),
 
     /**
      * A regular Roddy workflow with or without a Jar file
      */
-    RODDY,
+    RODDY(true),
 
     /**
      * Native workflows like e.g. Bash
      */
-    NATIVE,
+    NATIVE(false),
 
     /**
      * A snakemake based workflow
      */
-    SNAKEMAKE,
+    SNAKEMAKE(false);
+
+    final boolean needsBuildInfoFile
+
+    PluginType(boolean needsBuildInfoFile) {
+        this.needsBuildInfoFile = needsBuildInfoFile
+    }
 }

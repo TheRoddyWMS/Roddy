@@ -204,7 +204,7 @@ public class LibrariesFactoryTest {
             pluginDirectories += [new File(Roddy.getApplicationDirectory(), "/dist/plugins/")]
 
         // Invoke the method and check the results.
-        return LibrariesFactory.loadMapOfAvailablePlugins(pluginDirectories)
+        return LibrariesFactory.loadPluginsFromDirectories(LibrariesFactory.loadMapOfAvailablePlugins(pluginDirectories))
     }
 
     @Test
@@ -312,7 +312,7 @@ public class LibrariesFactoryTest {
 
     @Test
     void testGetRoddyPackages() {
-        Package[] list = LibrariesFactory.getInstance().getRoddyPackages()
+        Package[] list = new ClassLoaderHelper().getRoddyPackages()
         assert list.findAll { Package p -> p.name.startsWith(Roddy.package.name) } == list
     }
 
@@ -337,7 +337,7 @@ public class LibrariesFactoryTest {
     @Test
     public void testGenerateSyntheticFileClassWithParentClass() {
         Class _cls = LibrariesFactory.generateSyntheticFileClassWithParentClass("TestClass", "BaseFile", new GroovyClassLoader());
-        assert _cls != null && _cls.name.equals(LibrariesFactory.SYNTHETIC_PACKAGE + ".TestClass");
+        assert _cls != null && _cls.name.equals(SyntheticPluginInfo.SYNTHETIC_PACKAGE + ".TestClass");
         assert _cls.getDeclaredConstructors().size() == 1;
         assert _cls.getDeclaredConstructors()[0].parameterTypes[0] == BaseFile.ConstructionHelperForBaseFiles
     }
