@@ -452,7 +452,7 @@ class SSHExecutionService extends RemoteExecutionService {
 //            fireExecutionStoppedEvent(id, "");
         }
         if (retry) {
-            logger.warning("Catched no such file exception, attempting to retry copyFile ${_in.absolutePath} to ${_out.absolutePath}")
+            logger.warning("Caught no such file exception, attempting to retry copyFile ${_in.absolutePath} to ${_out.absolutePath}")
             result = copyFile(_in, _out, retries + 1);
         }
         return result

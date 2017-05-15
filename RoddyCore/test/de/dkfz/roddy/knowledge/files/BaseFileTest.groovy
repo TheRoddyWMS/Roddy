@@ -7,7 +7,7 @@
 package de.dkfz.roddy.knowledge.files
 
 import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationFactory
+import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.DerivedFromFilenamePattern
 import de.dkfz.roddy.config.FileStageFilenamePattern
 import de.dkfz.roddy.config.FilenamePattern
