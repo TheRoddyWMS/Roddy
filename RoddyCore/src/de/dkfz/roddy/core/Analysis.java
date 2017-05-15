@@ -389,9 +389,9 @@ public class Analysis {
                         context.execute();
                         finallyStartJobsOfContext(context);
                     }
-                } catch(Exception ex) {
+                } catch (Exception ex) {
                     // (Maybe) abort jobs in strict mode
-                    abortStartedJobsOfContext(context);
+                    maybeAbortStartedJobsOfContext(context);
                 } finally {
 
                     if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) { //Clean up
@@ -490,7 +490,7 @@ public class Analysis {
      *
      * @param context
      */
-    private void abortStartedJobsOfContext(ExecutionContext context) {
+    private void maybeAbortStartedJobsOfContext(ExecutionContext context) {
         if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.RollbackOnWorkflowError)) {
             try {
                 logger.severe("An workflow error occurred, try to rollback / abort submitted jobs.");
