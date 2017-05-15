@@ -607,7 +607,7 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
 
                 PluginInfo pInfo = listOfFolders[subFolder]
                 // Md5sum from tempFolder
-                String md5sum = RoddyIOHelperMethods.getSingleMD5OfFilesInDirectory(subFolder);
+                String md5sum = RoddyIOHelperMethods.getSingleMD5OfFilesInDirectoryIncludingDirectoryNames(subFolder);
                 String zipFilename = "cTools_${pInfo.getName()}:${pInfo.getProdVersion()}_${subFolder.getName()}.zip";
                 String zipMD5Filename = zipFilename + "_contentmd5";
                 File tempFile = new File(Roddy.getCompressedAnalysisToolsDirectory(), zipFilename);

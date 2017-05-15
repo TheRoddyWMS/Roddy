@@ -43,7 +43,7 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameterOfFiles {
         this.passOptions = passas
         this.genericFileClass = null
         this.indexOptions = indexOptions
-        this.files = children
+        this.files = children ?: new LinkedList<ToolFileParameter>()
     }
 
     ToolFileGroupParameter(Class<FileGroup> groupClass, Class<BaseFile> genericFileClass, String scriptParameterName, PassOptions passas = PassOptions.parameters, IndexOptions indexOptions = IndexOptions.numeric) {
@@ -52,6 +52,7 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameterOfFiles {
         this.passOptions = passas
         this.genericFileClass = genericFileClass
         this.indexOptions = indexOptions
+        this.files = new LinkedList<ToolFileParameter>()
     }
 
     /**
@@ -64,12 +65,12 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameterOfFiles {
         this.genericFileClass = genericFileClass
         this.passOptions = passOptions
         this.indexOptions = indexOptions
-        this.files = files
+        this.files = files ?: new LinkedList<ToolFileParameter>()
     }
 
     @Override
     public ToolFileGroupParameter clone() {
-        return new ToolFileGroupParameter(scriptParameterName, groupClass, genericFileClass,  passOptions, indexOptions, files?.collect { ToolFileParameter tfp -> tfp.clone() })
+        return new ToolFileGroupParameter(scriptParameterName, groupClass, genericFileClass, passOptions, indexOptions, files?.collect { ToolFileParameter tfp -> tfp.clone() })
     }
 
     @Override
@@ -112,14 +113,14 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameterOfFiles {
         }
     }
 
-        @Override
+    @Override
     public boolean hasSelectionTag() {
         return false
     }
 
     @Override
     public List<ToolFileParameter> getAllFiles() {
-        return files?.collect { it.getAllFiles() }.flatten() as List<ToolFileParameter>
+        return files.collect { it.getAllFiles() }.flatten() as List<ToolFileParameter>
     }
 
     @Override

@@ -327,7 +327,7 @@ class ConfigurationFactory {
             throw new RuntimeException("The configuration identified by \"${usedConfiguration}\" cannot be found, is the identifier correct? Is the configuration available?.")
         }
 
-        Configuration config = loadConfiguration(icc)
+        return loadConfiguration(icc)
     }
 
     Configuration loadConfiguration(InformationalConfigurationContent icc) {
@@ -359,28 +359,12 @@ class ConfigurationFactory {
 
         boolean configurationWasLoadedProperly = true;
 
-        // Errors are always catched and a message is appended. We want to see everything, if possible.
+        // Errors are always caught and a message is appended. We want to see everything, if possible.
 
-        try {
-            readConfigurationValues(configurationNode, config)
-        } catch (Exception ex) {
-            config.addLoadError(new ConfigurationLoadError(config, "cValues", "Could not read configuration values for configuration ${icc.id}", ex))
-            configurationWasLoadedProperly = false
-        }
-
-        try {
-            readValueBundles(configurationNode, config)
-        } catch (Exception ex) {
-            config.addLoadError(new ConfigurationLoadError(config, "cValues", "Could not read configuration value bundles for configuration ${icc.id}", ex))
-            configurationWasLoadedProperly = false
-        }
-
-        try {
-            config.filenamePatterns.map.putAll(readFilenamePatterns(configurationNode))
-        } catch (Exception ex) {
-            config.addLoadError(new ConfigurationLoadError(config, "cValues", "Could not read filename patterns for configuration ${icc.id}", ex))
-            configurationWasLoadedProperly = false
-        }
+        configurationWasLoadedProperly &= withErrorEntryOnException(config, "Could not read configuration values for configuration ${icc.id}", { readConfigurationValues(configurationNode, config) })
+        configurationWasLoadedProperly &= withErrorEntryOnException(config, "Could not read configuration value bundles for configuration ${icc.id}", { readValueBundles(configurationNode, config) })
+        configurationWasLoadedProperly &= withErrorEntryOnException(config, "Could not read filename patterns for configuration ${icc.id}", { config.filenamePatterns.map.putAll(readFilenamePatterns(configurationNode)) })
+        configurationWasLoadedProperly &= withErrorEntryOnException(config, "Could not read enumerations for configuration ${icc.id}", { readEnums(config, configurationNode) })
 
         try {
             configurationWasLoadedProperly &= readProcessingTools(configurationNode, config)
@@ -388,17 +372,21 @@ class ConfigurationFactory {
 
         }
 
-        try {
-            readEnums(config, configurationNode)
-        } catch (Exception ex) {
-            config.addLoadError(new ConfigurationLoadError(config, "cValues", "Could not read enumerations for configuration ${icc.id}", ex))
-            configurationWasLoadedProperly = false
-        }
-
         return config
         /**
          * TODO Maybe transform the ConfigurationFactory to object form thus allowing to store errors there.
+         * Also evaluate the configurationWasLoadedProperly variable.
          */
+    }
+
+    private boolean withErrorEntryOnException(Configuration config, String msg, Closure blk) {
+        try {
+            blk.call()
+        } catch (Exception ex) {
+            config.addLoadError(new ConfigurationLoadError(config, "cValues", msg, ex))
+            return false
+        }
+        return true
     }
 
     /**
