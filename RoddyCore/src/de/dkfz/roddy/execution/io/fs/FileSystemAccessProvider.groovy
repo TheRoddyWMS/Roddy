@@ -335,24 +335,25 @@ public class FileSystemAccessProvider extends CacheProvider {
      */
     public boolean checkDirectory(File f, ExecutionContext context, boolean createMissing) {
         final String path = f.absolutePath
+        boolean checkGood = false
         String id = String.format("checkDirectory_%08X", path.hashCode());
-        if (!_directoryExistsAndIsAccessible.containsKey(path)) {
+//        if (!_directoryExistsAndIsAccessible.containsKey(path)) {
             if (createMissing) {
                 String outputAccessRightsForDirectories = context.getOutputDirectoryAccess();
                 String outputFileGroup = context.getOutputGroupString()
                 String cmd = commandSet.getCheckDirectoryCommand(f, true, outputFileGroup, outputAccessRightsForDirectories);
                 ExecutionResult er = ExecutionService.getInstance().execute(cmd);
-                _directoryExistsAndIsAccessible[path] = (er.firstLine == commandSet.getReadabilityTestPositiveResult());
+                checkGood = (er.firstLine == commandSet.getReadabilityTestPositiveResult());
                 fireCacheValueAddedEvent(id, path);
             } else {
                 String cmd = commandSet.getCheckDirectoryCommand(f)
                 ExecutionResult er = ExecutionService.getInstance().execute(cmd);
-                _directoryExistsAndIsAccessible[path] = (er.firstLine == commandSet.getReadabilityTestPositiveResult());
+                checkGood = (er.firstLine == commandSet.getReadabilityTestPositiveResult());
                 fireCacheValueAddedEvent(id, path);
             }
-        }
+//        }
         fireCacheValueReadEvent(id, -1);
-        return _directoryExistsAndIsAccessible[path];
+        return checkGood
     }
 
     public boolean checkBaseFiles(BaseFile... filesToCheck) {
