@@ -26,6 +26,7 @@ import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
+import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
@@ -173,6 +174,8 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
     }
 
     static List<Job> collectParentJobsFromFiles(List<BaseFile> parentFiles) {
+        if (!parentFiles) return []
+
         List<Job> parentJobs = parentFiles.collect {
             BaseFile bf -> bf?.getCreatingJobsResult()?.job
         }.findAll {
@@ -214,7 +217,7 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
             if (newPath == null) {
                 // Auto path!
                 int slotPosition = allRawInputParameters.keySet().asList().indexOf(k)
-                if(Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.FailOnAutoFilenames))
+                if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.FailOnAutoFilenames))
                     throw new RuntimeException("Auto filenames are forbidden when strict mode is active.")
                 else
                     context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("An auto filename will be used for ${jobName}:${slotPosition} / ${bf.class.name}"))

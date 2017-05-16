@@ -456,31 +456,32 @@ class BashConverter extends ConfigurationConverter {
         List<String> xmlLines = []
         xmlLines << "  <configurationvalues>"
 
-        allLines[header.size()..-1].each {
-            String[] s = it.split("[=]")
+        allLines[header.size()..-1].each { String line ->
+            String it = line.trim()
+            String[] s = it.trim().split("[=]")
             if (!it) return;
             if (!s) return;
 
             if (isBashPipe(it)) {
 
             } else if (isBashComment(it)) {
-                if (isBashComment(previousLine)) {
-                    xmlLines << ("""     ${it}""").toString()
-                } else {
-                    xmlLines << ("""<!-- ${it}""").toString()
-                }
+//                if (isBashComment(previousLine)) {
+//                    xmlLines << ("""     ${it}""").toString()
+//                } else {
+                    xmlLines << ("""<!-- ${it} -->""").toString()
+//                }
             } else {
 
-                if (isBashComment(previousLine)) {
-                    xmlLines[-1] += ("""-->""").toString()
-                }
+//                if (isBashComment(previousLine)) {
+//                    xmlLines[-1] += ("""-->""").toString()
+//                }
 
                 if (s.size() == 2)
-                    xmlLines << ("""    <cvalue name='${s[0]}' value='${s[1]}' type='string' />""").toString()
+                    xmlLines << ("""    <cvalue name='${s[0].trim()}' value='${s[1]}' type='string' />""").toString()
                 else if (s.size() == 1)
-                    xmlLines << ("""    <cvalue name='${s[0]}' value='' type='string' />""").toString()
+                    xmlLines << ("""    <cvalue name='${s[0].trim()}' value='' type='string' />""").toString()
                 else
-                    xmlLines << ("""    <cvalue name='${s[0]}' value='${s[1..-1].join("=")}' type='string' />""").toString()
+                    xmlLines << ("""    <cvalue name='${s[0].trim()}' value='${s[1..-1].join("=")}' type='string' />""").toString()
             }
             previousLine = it;
         }

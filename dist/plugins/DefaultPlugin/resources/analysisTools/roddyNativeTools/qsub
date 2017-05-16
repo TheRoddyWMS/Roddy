@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+#set -xv
+cur=`head -n 1 $tmpFileCnt`
+cur=`expr $cur + 1`
+echo "100000$cur, qsub $*" >> $tmpFileCall
+echo $cur > $tmpFileCnt
+#set +xv
+echo "100000$cur"

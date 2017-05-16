@@ -41,7 +41,7 @@ import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
  * @author michael
  */
 @CompileStatic
-public abstract class RuntimeService extends CacheProvider {
+public class RuntimeService extends CacheProvider {
     private static LoggerWrapper logger = LoggerWrapper.getLogger(RuntimeService.class.getSimpleName());
     public static final String FILENAME_RUNTIME_INFO = "versionsInfo.txt"
     public static final String FILENAME_RUNTIME_CONFIGURATION = "runtimeConfig.sh"
@@ -443,7 +443,18 @@ public abstract class RuntimeService extends CacheProvider {
         return analysisToolsDirectory;
     }
 
-    public abstract Map<String, Object> getDefaultJobParameters(ExecutionContext context, String TOOLID)
+    public Map<String, Object> getDefaultJobParameters(ExecutionContext context, String TOOLID) {
+        def fs = context.getRuntimeService();
+        //File cf = fs..createTemporaryConfigurationFile(executionContext);
+        String pid = context.getDataSet().toString()
+        Map<String, Object> parameters = [
+                pid         : (Object) pid,
+                PID         : pid,
+                CONFIG_FILE : fs.getNameOfConfigurationFile(context).getAbsolutePath(),
+                ANALYSIS_DIR: context.getOutputDirectory().getParentFile().getParent()
+        ]
+        return parameters;
+    }
 
     public String createJobName(ExecutionContext executionContext, BaseFile bf, String TOOLID, boolean reduceLevel) {
         return _createJobName(executionContext, bf, TOOLID, reduceLevel)

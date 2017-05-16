@@ -94,8 +94,12 @@ class NativePluginInfo extends PluginInfo {
         return new File(getConfigurationDirectory(), "analysis${getName()}.xml")
     }
 
-    List<String> getToolIDs() {
+    List<String> getToolFileNames() {
         return getConvertedToolsDirectory().listFiles().collect { File file -> file.name }
+    }
+
+    List<String> getToolIDs() {
+        return getToolFileNames().collect { String filename -> filename.replaceAll("[.]", "_") }
     }
 
     @Override

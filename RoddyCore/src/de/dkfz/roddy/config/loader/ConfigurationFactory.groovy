@@ -8,6 +8,7 @@ package de.dkfz.roddy.config.loader
 
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
 import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
+import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.config.AnalysisConfiguration
 import de.dkfz.roddy.config.AnalysisConfigurationProxy
 import de.dkfz.roddy.config.Configuration
@@ -39,6 +40,7 @@ import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.FileObjectTupleFactory
 import de.dkfz.roddy.knowledge.files.FileStage
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
+import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
 
 //import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
 import de.dkfz.roddy.tools.*
@@ -438,7 +440,7 @@ class ConfigurationFactory {
             config = new AnalysisConfiguration(icc, workflowClass, runtimeServiceClass, parentConfig, listOfUsedTools, usedToolFolders, cleanupScript)
 
             if (workflowTool && jobManagerClass) {
-                ((AnalysisConfiguration) config).setNativeToolID(workflowTool)
+                ((AnalysisConfiguration) config).setNativeToolID(workflowTool.replace(".", "_"))
                 ((AnalysisConfiguration) config).setJobManagerFactory(jobManagerClass)
             }
             if (brawlWorkflow) {
@@ -771,7 +773,7 @@ class ConfigurationFactory {
         for (NodeChild cvalueNode in configurationNode.configurationvalues.cvalue) {
             //TODO Code deduplication! Also in readCVBundle.
             ConfigurationValue cvalue = readConfigurationValue(cvalueNode, config)
-            if (configurationValues.containsKey(cvalue.id)) {
+            if (!Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.ignorecvalueduplicates) && configurationValues.containsKey(cvalue.id)) {
                 String cval0 = configurationValues[cvalue.id].value//?.length() > 20 ? configurationValues[cvalue.id].value[0 .. 20] : configurationValues[cvalue.id].value;
                 String cval1 = cvalue.value//?.length() ? cvalue.value[0..20] : cvalue.value;
                 config.addLoadError(new ConfigurationLoadError(config, "cValues", "Value ${cvalue.id} in config ${config.getID()} with value ${cval0} is not unique and will be overriden with value ${cval1}".toString(), null))

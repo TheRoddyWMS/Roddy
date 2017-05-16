@@ -40,6 +40,8 @@ public enum RoddyStartupOptions {
     usemetadatatable(true),
 
     forcenativepluginconversion(false),
+    forcekeepexecutiondirectory(false),
+    ignorecvalueduplicates(false),
 
     /**
      * Override project speicifc usedresourcessize
