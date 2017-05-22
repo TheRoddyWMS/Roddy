@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# qsub replacement for Grid Engine / PBS cluster systems.
+# lsub replacement for lsf cluster systems
 
 #set -xv
 cur=`head -n 1 $tmpFileCnt`

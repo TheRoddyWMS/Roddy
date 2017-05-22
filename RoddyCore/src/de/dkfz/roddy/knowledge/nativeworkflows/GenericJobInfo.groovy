@@ -49,10 +49,10 @@ class GenericJobInfo {
         parameters = jInfo.parameters
         parentJobIDs = jInfo.parentJobIDs
         walltime = jInfo.walltime
-        memory = jInfo.memory
+        memory = jInfo.maxMemory
         memoryBufferUnit = jInfo.memoryBufferUnit
-        cpus = jInfo.cpus
-        nodes = jInfo.nodes
+        cpus = jInfo.maxCpus
+        nodes = jInfo.maxNodes
         queue = jInfo.queue
         otherSettings = jInfo.otherSettings
 
