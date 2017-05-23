@@ -6,15 +6,9 @@
 
 package de.dkfz.roddy.client.fxuiclient.fxdatawrappers;
 
-import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation;
-import de.dkfz.roddy.core.*;
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
-import groovy.transform.CompileStatic;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleObjectProperty;
-
-import java.util.List;
+import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation
+import de.dkfz.roddy.execution.jobs.JobState;
+import groovy.transform.CompileStatic
 
 /**
  * Encapsulates DataSets (like i.e. PIDs)

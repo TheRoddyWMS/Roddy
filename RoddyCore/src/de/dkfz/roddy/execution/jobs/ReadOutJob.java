@@ -6,11 +6,8 @@
 
 package de.dkfz.roddy.execution.jobs;
 
-import de.dkfz.roddy.execution.jobs.JobResult;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.knowledge.files.BaseFile;
-import de.dkfz.roddy.tools.AppConfig;
-import de.dkfz.eilslabs.batcheuphoria.execution.ExecutionService;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -32,9 +29,9 @@ public class ReadOutJob extends Job {
      */
     public final String jobID;
 
-    private final List<Job> parentJobs;
+    private final List<BEJob> parentJobs;
 
-    public ReadOutJob(ExecutionContext context, String jobName, String toolID, String executedJobID, Map<String,String> parameters, List<Job> parentJobs) {
+    public ReadOutJob(ExecutionContext context, String jobName, String toolID, String executedJobID, Map<String,String> parameters, List<BEJob> parentJobs) {
         super(context, jobName, toolID, new LinkedHashMap<>(), new LinkedList<BaseFile>());
         this.parentJobs = parentJobs;
         this.readOut = true;

@@ -6,9 +6,10 @@
 
 package de.dkfz.roddy.execution.io
 
-import de.dkfz.eilslabs.batcheuphoria.jobs.Command
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
-import de.dkfz.eilslabs.batcheuphoria.jobs.DummyCommand
+import de.dkfz.roddy.execution.jobs.Command
+import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.JobState
+import de.dkfz.roddy.execution.jobs.DummyCommand
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -24,7 +25,6 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobDependencyID
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
@@ -43,7 +43,7 @@ import static de.dkfz.roddy.config.ConfigurationConstants.*
  *
  */
 @CompileStatic
-public abstract class ExecutionService extends CacheProvider implements de.dkfz.eilslabs.batcheuphoria.execution.ExecutionService {
+public abstract class ExecutionService extends CacheProvider implements de.dkfz.roddy.execution.ExecutionService {
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(ExecutionService.class.name);
     private static ExecutionService executionService;
 

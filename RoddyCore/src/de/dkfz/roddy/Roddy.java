@@ -7,10 +7,9 @@
 package de.dkfz.roddy;
 
 import com.btr.proxy.search.ProxySearch;
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize;
-import de.dkfz.eilslabs.batcheuphoria.execution.cluster.pbs.PBSJobManager;
-import de.dkfz.eilslabs.batcheuphoria.jobs.*;
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager;
+import de.dkfz.roddy.config.ResourceSetSize;
+import de.dkfz.roddy.execution.cluster.pbs.PBSJobManager;
+import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager;
 import de.dkfz.roddy.client.RoddyStartupModes;
 import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
@@ -33,7 +32,6 @@ import de.dkfz.roddy.execution.io.fs.ShellCommandSet;
 import de.dkfz.roddy.client.fxuiclient.RoddyUIController;
 import de.dkfz.roddy.plugins.LibrariesFactory;
 import de.dkfz.roddy.tools.LoggerWrapper;
-import groovy.lang.GroovyClassLoader;
 import groovy.transform.CompileStatic;
 
 import java.io.*;
@@ -490,7 +488,7 @@ public class Roddy {
             FileSystemAccessProvider.initializeProvider(fullSetup);
             time("init fsap");
 
-            //Do not touch the calling order, execution service must be set before JobManager.
+            //Do not touch the calling order, execution service must be set before BatchEuphoriaJobManager.
             currentStep = "Initialize execution service";
             ExecutionService.initializeService(fullSetup);
             time("init execserv");
@@ -558,7 +556,7 @@ public class Roddy {
         if (applicationSpecificConfiguration == null) {
             applicationSpecificConfiguration = new Configuration(null);
             RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
-            JobManager jobManager = Roddy.getJobManager();
+            BatchEuphoriaJobManager jobManager = Roddy.getJobManager();
             Map<String, String> specificEnvironmentSettings = jobManager.getSpecificEnvironmentSettings();
             for (String k : specificEnvironmentSettings.keySet()) {
                 logger.postSometimesInfo("Add job manager value " + k + "=" + specificEnvironmentSettings.get(k) + " to context configuration");
@@ -598,8 +596,8 @@ public class Roddy {
         jobManagerClass = classLoader.loadClass(jobManagerClassID);
 
         /** Get the constructor which comes with no parameters */
-        Constructor first = jobManagerClass.getDeclaredConstructor(de.dkfz.eilslabs.batcheuphoria.execution.ExecutionService.class, JobManagerCreationParameters.class);
-        jobManager = (JobManager) first.newInstance(ExecutionService.getInstance()
+        Constructor first = jobManagerClass.getDeclaredConstructor(de.dkfz.roddy.execution.ExecutionService.class, JobManagerCreationParameters.class);
+        jobManager = (BatchEuphoriaJobManager) first.newInstance(ExecutionService.getInstance()
                 , new JobManagerCreationParametersBuilder()
                         .setCreateDaemon(true)
                         .setTrackUserJobsOnly(trackUserJobsOnly)
@@ -620,9 +618,9 @@ public class Roddy {
 //        new File(configuration.getProperty("loggingDirectory", "/"))
     }
 
-    private static JobManager jobManager;
+    private static BatchEuphoriaJobManager jobManager;
 
-    public static JobManager getJobManager() {
+    public static BatchEuphoriaJobManager getJobManager() {
         return jobManager;
     }
 

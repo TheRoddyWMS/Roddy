@@ -6,8 +6,8 @@
 
 package de.dkfz.roddy.config
 
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet;
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize;
+import de.dkfz.roddy.config.ResourceSet;
+import de.dkfz.roddy.config.ResourceSetSize;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.knowledge.files.BaseFile
 import groovy.transform.CompileStatic;
