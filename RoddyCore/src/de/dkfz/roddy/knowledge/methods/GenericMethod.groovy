@@ -176,6 +176,16 @@ class GenericMethod {
         this.outputFileGroupIndices = outputFileGroupIndices
         if (outputFileGroupIndices != null && outputFileGroupIndices.size() == 0)
             throw new RuntimeException("It is not allowed to call GenericMethod with an empty non null list of file group indices.")
+
+        this.toolName = toolName
+        this.configuration = context.getConfiguration();
+        this.calledTool = configuration.getTools().getValue(toolName);
+        if(calledTool.usesAutoCheckpoint()) {
+            context.runtimeService.calculateAutoCheckpointFilename(calledTool, ([inputObject] as List<Object>) + additionalInput as List<Object>)
+
+            logger.info("Create an automatic checkpoint for tool ${toolName}")
+        }
+
         this.additionalInput = additionalInput
         this.inputObject = inputObject
         this.allInputValues << inputObject;
@@ -189,9 +199,6 @@ class GenericMethod {
         }
         this.context = inputObject.getExecutionContext();
         this.arrayIndices = arrayIndices
-        this.toolName = toolName
-        this.configuration = context.getConfiguration();
-        this.calledTool = configuration.getTools().getValue(toolName);
     }
 
     public <F extends FileObject> F _callGenericToolOrToolArray() {

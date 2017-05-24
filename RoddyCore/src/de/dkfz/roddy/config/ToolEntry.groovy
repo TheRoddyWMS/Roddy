@@ -122,6 +122,7 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
     final List<ToolParameter> outputParameters = new LinkedList<>();
     final List<ResourceSet> resourceSets = new LinkedList<>();
     boolean overridesResourceSets;
+    boolean useAutoCheckpoint;
 
     ToolEntry(String id, String basePathId, String path) {
         this.id = id;
@@ -235,6 +236,14 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
 
     boolean doesOverrideResourceSets() {
         return overridesResourceSets
+    }
+
+    void setUseAutoCheckpoint() {
+        useAutoCheckpoint = true
+    }
+
+    boolean usesAutoCheckpoint() {
+        return useAutoCheckpoint
     }
 
     List<ToolParameter> getInputParameters(ExecutionContext context) {
