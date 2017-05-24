@@ -374,7 +374,7 @@ public class Analysis {
                     ExecutionService.getInstance().writeFilesForExecution(context);
                     boolean execute = true;
                     if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) { // Only do these checks, if we are not in query mode!
-                        List<String> invalidPreparedFiles = ExecutionService.getInstance().checkFilesPreparedForExecution(context);
+                        List<String> invalidPreparedFiles = ExecutionService.getInstance().checkForInaccessiblePreparedFiles(context);
                         boolean copiedAnalysisToolsAreExecutable = ExecutionService.getInstance().checkCopiedAnalysisTools(context);
                         execute &= invalidPreparedFiles.size() == 0 && copiedAnalysisToolsAreExecutable;
                         if (!execute) {
