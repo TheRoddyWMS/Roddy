@@ -13,7 +13,6 @@ import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.ComplexLine
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
-import de.dkfz.roddy.core.CacheProvider
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.ExecutionService
@@ -30,7 +29,7 @@ import java.util.concurrent.locks.ReentrantLock
  * I.e. setting file access rights is only available with SSH. This needs to be completed!
  */
 @groovy.transform.CompileStatic
-public class FileSystemAccessProvider extends CacheProvider {
+public class FileSystemAccessProvider {
     private static LoggerWrapper logger = LoggerWrapper.getLogger(FileSystemAccessProvider.class.getName());
     private static FileSystemAccessProvider fileSystemAccessProvider = null;
 
@@ -80,7 +79,6 @@ public class FileSystemAccessProvider extends CacheProvider {
     protected Object _appendLineToFileLock = new Object();
 
     public FileSystemAccessProvider() {
-        super(getClass().simpleName, true);
     }
 
     public static void initializeProvider(boolean fullSetup) {
@@ -146,17 +144,6 @@ public class FileSystemAccessProvider extends CacheProvider {
         } finally {
             fileSystemAccessProviderLock.unlock();
         }
-    }
-
-
-    @Override
-    boolean initialize() {
-
-    }
-
-    @Override
-    void destroy() {
-
     }
 
     ShellCommandSet getCommandSet() {
@@ -336,21 +323,16 @@ public class FileSystemAccessProvider extends CacheProvider {
     public boolean checkDirectory(File f, ExecutionContext context, boolean createMissing) {
         final String path = f.absolutePath
         boolean directoryIsAccessible
-        String id = String.format("checkDirectory_%08X", path.hashCode());
+        String cmd
         if (createMissing) {
             String outputAccessRightsForDirectories = context.getOutputDirectoryAccess();
             String outputFileGroup = context.getOutputGroupString()
-            String cmd = commandSet.getCheckDirectoryCommand(f, true, outputFileGroup, outputAccessRightsForDirectories);
-            ExecutionResult er = ExecutionService.getInstance().execute(cmd);
-            directoryIsAccessible = (er.firstLine == commandSet.getReadabilityTestPositiveResult());
-            fireCacheValueAddedEvent(id, path);
+            cmd = commandSet.getCheckDirectoryCommand(f, true, outputFileGroup, outputAccessRightsForDirectories);
         } else {
-            String cmd = commandSet.getCheckDirectoryCommand(f)
-            ExecutionResult er = ExecutionService.getInstance().execute(cmd);
-            directoryIsAccessible = (er.firstLine == commandSet.getReadabilityTestPositiveResult());
-            fireCacheValueAddedEvent(id, path);
+            cmd = commandSet.getCheckDirectoryCommand(f)
         }
-        fireCacheValueReadEvent(id, -1);
+        ExecutionResult er = ExecutionService.getInstance().execute(cmd);
+        directoryIsAccessible = (er.firstLine == commandSet.getReadabilityTestPositiveResult());
         return directoryIsAccessible
     }
 
@@ -387,10 +369,6 @@ public class FileSystemAccessProvider extends CacheProvider {
         }
     }
 
-//    public void checkDirectories(List<String> directories) {
-//        String cmd = commandSet.getCheckAndCreateDirectoryCommand()
-//    }
-
     /**
      * The method returns the directory of the current user (or i.e. the ssh user's directory on the target system).
      * This method is called so often, that it is cached by default!
@@ -406,9 +384,7 @@ public class FileSystemAccessProvider extends CacheProvider {
                 ExecutionResult er = ExecutionService.getInstance().execute(cmd);
                 _userHome = new File(er.resultLines[0]);
             }
-            fireCacheValueAddedEvent("userHome", _userHome.getAbsolutePath());
         }
-        fireCacheValueReadEvent("userHome", -1);
         return _userHome;
     }
 
@@ -416,9 +392,7 @@ public class FileSystemAccessProvider extends CacheProvider {
         if (_value == null) {
             ExecutionResult er = ExecutionService.getInstance().execute(command);
             _value = er.resultLines[0];
-            fireCacheValueAddedEvent(cacheEventID, _value);
         }
-        fireCacheValueReadEvent(cacheEventID, -1);
         return _value;
     }
 
@@ -745,13 +719,6 @@ public class FileSystemAccessProvider extends CacheProvider {
 
     public String getPathSeparator() {
         return commandSet.getPathSeparator();
-    }
-
-    @Override
-    void releaseCache() {
-        _userHome = null;
-        _userName = null;
-        _directoryExistsAndIsAccessible.clear();
     }
 
     public String getNewLineString() {

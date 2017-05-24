@@ -68,7 +68,7 @@ enum RoddyStartupModes {
 
     abort(SCOPE_FULL, [useconfig, verbositylevel]),
 
-    ui(SCOPE_FULL, [useconfig, verbositylevel]),
+//    ui(SCOPE_FULL, [useconfig, verbositylevel]),
 
     rmi(SCOPE_FULL, [useconfig]),
 
@@ -82,7 +82,7 @@ enum RoddyStartupModes {
 
     createworkflow(SCOPE_REDUCED, [useconfig]),
 
-    setup(SCOPE_CLI)
+//    setup(SCOPE_CLI)
 
     public final int scope
 
@@ -149,8 +149,8 @@ enum RoddyStartupModes {
                 [RoddyStartupModes.cleanup, "(configuration@analysis) [pid_0,..,pid_n] [--useconfig={file}]", "Calls a workflows cleanup method or a setup cleanup script to clean (i.e. remove or set to file size zero) output files."],
                 [RoddyStartupModes.abort, "(configuration@analysis) [pid_0,..,pid_n] [--useconfig={file}]", "Aborts the running jobs of a workflow for a pid."],
                 [RoddyStartupModes.checkworkflowstatus, "(configuration@analysis) [pid_0,..,pid_n] [--detailed] [--useconfig={file}]", "Shows a generic overview about all datasets for a configuration", "If some datasets are selected, a more detailed output is generated.", "If detailed is set, information about all started jobs and their status is shown."],
-                [RoddyStartupModes.setup, "[--useconfig={file}]", "Sets up Roddy for command line execution."],
-                [RoddyStartupModes.ui, "[--useconfig={file}]", "Open Roddys graphical user interface."]
+//                [RoddyStartupModes.setup, "[--useconfig={file}]", "Sets up Roddy for command line execution."],
+//                [RoddyStartupModes.ui, "[--useconfig={file}]", "Open Roddys graphical user interface."]
         ])
 
         println("== Advanced developer options ==\n")

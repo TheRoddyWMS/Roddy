@@ -6,25 +6,25 @@
 
 package de.dkfz.roddy.client.fxuiclient
 
-import de.dkfz.eilslabs.batcheuphoria.jobs.FakeJob
-import de.dkfz.roddy.Roddy;
+import FakeJob
+import Roddy;
 import de.dkfz.roddy.client.fxuiclient.fxdatawrappers.*;
-import de.dkfz.roddy.client.rmiclient.RoddyRMIClientConnection;
-import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation
-import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation.ExecutionContextInfoObject;
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
+import RoddyRMIClientConnection;
+import RoddyRMIInterfaceImplementation
+import ExecutionContextInfoObject;
+import FileSystemAccessProvider;
 import de.dkfz.roddy.core.*;
-import de.dkfz.roddy.execution.io.ExecutionHelper;
-import de.dkfz.roddy.execution.jobs.Job;
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
-import de.dkfz.eilslabs.batcheuphoria.jobs.Job as BEJob;
-import de.dkfz.roddy.execution.jobs.ReadOutJob;
-import de.dkfz.roddy.client.fxuiclient.fxcontrols.ExecutionContextOverviewControl;
-import de.dkfz.roddy.client.fxuiclient.fxcontrols.JobOverviewControl;
-import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.CustomControlOnBorderPane;
-import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.GenericListViewItemCellImplementation;
-import de.dkfz.roddy.knowledge.files.BaseFile
-import de.dkfz.roddy.tools.RoddyIOHelperMethods
+import ExecutionHelper;
+import Job;
+import JobState;
+import Job as BEJob;
+import ReadOutJob;
+import ExecutionContextOverviewControl;
+import JobOverviewControl;
+import CustomControlOnBorderPane;
+import GenericListViewItemCellImplementation;
+import BaseFile
+import RoddyIOHelperMethods
 import groovy.transform.CompileStatic
 import javafx.beans.value.ChangeListener
 import javafx.beans.value.ObservableValue
@@ -50,7 +50,7 @@ import java.util.*;
 @groovy.transform.CompileStatic
 public class DataSetView extends CustomControlOnBorderPane implements Initializable {
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(DataSetView.class.getSimpleName());
+    private static final LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(DataSetView.class.getSimpleName());
 
     @FXML
     private ListView lstRuns;
@@ -178,12 +178,12 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
     }
 
     private void loadAPIList(final String analysis, final FXDataSetWrapper ds) {
-        RoddyUITask.runTask(new RoddyUITask<List<RoddyRMIInterfaceImplementation.ExtendedDataSetInfoObject>>("load list of api's") {
-            RoddyRMIInterfaceImplementation.ExtendedDataSetInfoObjectCollection dataSetInfoObjects;
+        RoddyUITask.runTask(new RoddyUITask<List<ExtendedDataSetInfoObject>>("load list of api's") {
+            ExtendedDataSetInfoObjectCollection dataSetInfoObjects;
 
             @Override
             @CompileStatic
-            public List<RoddyRMIInterfaceImplementation.ExtendedDataSetInfoObject> _call() throws Exception {
+            public List<ExtendedDataSetInfoObject> _call() throws Exception {
                 RoddyRMIClientConnection rmiConnection = RoddyUIController.getMainUIController().getRMIConnection(ds.getLongAnalysisId());
                 dataSetInfoObjects = rmiConnection.queryExtendedDataSetInfo(ds.getId(), ds.getAnalysis());
                 initialThreadIsRunning = false;
@@ -195,7 +195,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
             public void _succeeded() {
                 if (!dataSetInfoObjects)
                     return;
-                for (RoddyRMIInterfaceImplementation.ExecutionContextInfoObject contextInfoObject : dataSetInfoObjects.list) {
+                for (ExecutionContextInfoObject contextInfoObject : dataSetInfoObjects.list) {
                     lstRuns.getItems().add(new FXExecutionContextInfoObjectWrapper(contextInfoObject));
                 }
 //                dataSetInfoObjects
@@ -464,7 +464,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
     }
 
     private void selectedExecutionContextChanged(FXExecutionContextInfoObjectWrapper fxapi) {
-        final RoddyRMIInterfaceImplementation.ExecutionContextInfoObject api = fxapi.getExecutionContextInfoObject();
+        final ExecutionContextInfoObject api = fxapi.getExecutionContextInfoObject();
 //        lstFilesCreatedByWorkflow.getItems().clear();
 //        final ExecutionContext ec = api.getDetailedProcessingInfo();
         executionContextOverview.setContext(api);
@@ -474,7 +474,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
 //        loadFilesCreatedByWorkflow(ec);
 
         clearJobList();
-        for (RoddyRMIInterfaceImplementation.JobInfoObject job : api.getExecutedJobs()) {
+        for (JobInfoObject job : api.getExecutedJobs()) {
             if (job instanceof FakeJob || job.isFakeJob())
                 continue; //Ignore fake jobs.
             synchronized (allJobWrappersForEC) {
@@ -577,7 +577,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
                 jState = JobState.OK;
             }
             for (FXJobInfoObjectWrapper jobWrapper : allJobWrappersForEC) {
-                RoddyRMIInterfaceImplementation.JobInfoObject job = jobWrapper.getJob();
+                JobInfoObject job = jobWrapper.getJob();
                 if (job instanceof ReadOutJob && job.getJobState() == jState) {
                     lstJobsOfRun.getItems().add(jobWrapper);
                 }
@@ -591,7 +591,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
                 logger.warning("No FXJobInfoObjectWrapper object for selectedJobChanged()");
                 return;
             }
-            RoddyRMIInterfaceImplementation.JobInfoObject job = jobWrapper.getJob();
+            JobInfoObject job = jobWrapper.getJob();
             if (job == null) {
                 logger.warning("No Job object for selectedJobChanged()");
                 return;

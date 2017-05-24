@@ -43,7 +43,7 @@ import static de.dkfz.roddy.config.ConfigurationConstants.*
  *
  */
 @CompileStatic
-public abstract class ExecutionService extends CacheProvider implements de.dkfz.eilslabs.batcheuphoria.execution.ExecutionService {
+public abstract class ExecutionService  implements de.dkfz.eilslabs.batcheuphoria.execution.ExecutionService {
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(ExecutionService.class.name);
     private static ExecutionService executionService;
 
@@ -107,7 +107,6 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
     }
 
     public ExecutionService() {
-        super("ExecutionService", true);
     }
 
     public static ExecutionService getInstance() {
@@ -123,15 +122,13 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
     }
 
     public boolean initialize() {
-        initialize(false);
     }
 
     public boolean tryInitialize(boolean waitFor) {
         try {
             long t1 = System.nanoTime();
-            def var = initialize(waitFor);
             logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("initialize exec service", t1, System.nanoTime()));
-            return var
+            return true
         } catch (Exception ex) {
             return false;
         }

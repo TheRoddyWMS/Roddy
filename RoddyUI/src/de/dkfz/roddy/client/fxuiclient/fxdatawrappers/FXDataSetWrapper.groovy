@@ -6,10 +6,10 @@
 
 package de.dkfz.roddy.client.fxuiclient.fxdatawrappers;
 
-import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation;
+import RoddyRMIInterfaceImplementation;
 import de.dkfz.roddy.core.*;
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
+import FileSystemAccessProvider;
+import JobState;
 import groovy.transform.CompileStatic;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -29,7 +29,7 @@ public class FXDataSetWrapper implements Comparable<FXDataSetWrapper> {
     JobState jobState = JobState.UNKNOWN;
     boolean executable = false;
 
-    private RoddyRMIInterfaceImplementation.ExtendedDataSetInfoObjectCollection extendedDataSetInfoObjectCollection = null;
+    private ExtendedDataSetInfoObjectCollection extendedDataSetInfoObjectCollection = null;
 
     public FXDataSetWrapper(String project, String analysis, String longAnalysisId, String id, String folder) {
         this.project = project;

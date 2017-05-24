@@ -80,23 +80,8 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            public void releaseCache() {
-
-            }
-
-            @Override
             File getLoggingDirectory(ExecutionContext context) {
                 return getTestLoggingDirectory(testClassName)
-            }
-
-            @Override
-            public boolean initialize() {
-                return false;
-            }
-
-            @Override
-            public void destroy() {
-
             }
 
         }

@@ -105,8 +105,4 @@ public class NoNoExecutionService extends ExecutionService {
         return true;
     }
 
-    @Override
-    public void releaseCache() {
-
-    }
 }

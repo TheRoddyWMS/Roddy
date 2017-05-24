@@ -45,20 +45,6 @@ class RuntimeServiceTest {
                 return false
             }
 
-            @Override
-            void releaseCache() {
-
-            }
-
-            @Override
-            boolean initialize() {
-                return false
-            }
-
-            @Override
-            void destroy() {
-
-            }
         }
 
         final Configuration mockupConfig = new Configuration(new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null))

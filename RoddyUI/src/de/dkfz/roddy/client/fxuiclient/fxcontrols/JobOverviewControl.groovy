@@ -6,17 +6,17 @@
 
 package de.dkfz.roddy.client.fxuiclient.fxcontrols;
 
-import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation;
-import de.dkfz.roddy.execution.jobs.Job;
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
+import RoddyRMIInterfaceImplementation;
+import Job;
+import JobState;
 //import de.dkfz.roddy.execution.jobs.JobStatusListener;
-import de.dkfz.roddy.client.fxuiclient.ConfigurationViewer;
-import de.dkfz.roddy.client.fxuiclient.DataSetView;
-import de.dkfz.roddy.client.fxuiclient.RoddyUIController;
-import de.dkfz.roddy.client.fxuiclient.RoddyUITask;
-import de.dkfz.roddy.client.fxuiclient.fxdatawrappers.FXJobParameterWrapper;
-import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.CustomControlOnBorderPane;
-import de.dkfz.roddy.knowledge.files.BaseFile
+import ConfigurationViewer;
+import DataSetView;
+import RoddyUIController;
+import RoddyUITask;
+import FXJobParameterWrapper;
+import CustomControlOnBorderPane;
+import BaseFile
 import groovy.transform.CompileStatic;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -40,7 +40,7 @@ import java.util.ResourceBundle;
 @CompileStatic
 public class JobOverviewControl extends CustomControlOnBorderPane implements Initializable {
 //        , JobStatusListener {
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(JobOverviewControl.class.getSimpleName());
+    private static final LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(JobOverviewControl.class.getSimpleName());
 
     @FXML
     private Label lblJobID;
@@ -62,7 +62,7 @@ public class JobOverviewControl extends CustomControlOnBorderPane implements Ini
 
     @FXML
     private WebView txtClusterLogFile;
-    private RoddyRMIInterfaceImplementation.JobInfoObject currentJob;
+    private JobInfoObject currentJob;
 
     private String analysisLongId;
 
@@ -91,7 +91,7 @@ public class JobOverviewControl extends CustomControlOnBorderPane implements Ini
 
     }
 
-    public synchronized void setJob(RoddyRMIInterfaceImplementation.JobInfoObject job, String analysisLongId) {
+    public synchronized void setJob(JobInfoObject job, String analysisLongId) {
         try {
             this.analysisLongId = analysisLongId;
             currentJob = job;
@@ -138,7 +138,7 @@ public class JobOverviewControl extends CustomControlOnBorderPane implements Ini
         RoddyUITask.invokeASAP(new Runnable() {
             @Override
             public void run() {
-                RoddyRMIInterfaceImplementation.JobInfoObject job = currentJob;
+                JobInfoObject job = currentJob;
                 String text = RoddyUIController.getMainUIController().getRMIConnection(analysisLongId).readRemoteFile(job.getLogFile().getAbsolutePath()).join("<br>");
                 txtClusterLogFile.getEngine().loadContent("<html><body>${text}</body></html>");
                 if (currentJob == null) return;

@@ -278,7 +278,6 @@ class SSHExecutionService extends RemoteExecutionService {
         return initialize(false);
     }
 
-    @Override
     boolean initialize(boolean waitFor) {
         if (!waitFor) {
             Thread.start { connectionPool.initialize() };
@@ -860,10 +859,5 @@ class SSHExecutionService extends RemoteExecutionService {
 
     @Override
     boolean canQueryFileAttributes() { return true; }
-
-    @Override
-    void releaseCache() {
-
-    }
 
 }
