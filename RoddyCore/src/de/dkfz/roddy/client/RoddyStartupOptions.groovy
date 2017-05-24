@@ -52,6 +52,8 @@ public enum RoddyStartupOptions {
     enabletoggles(true),
     disabletoggles(true),
 
+    ignorepreparedfilechecks(false),
+
     useRoddyVersion(true),
     useroddyversion(true),
     rv(true),

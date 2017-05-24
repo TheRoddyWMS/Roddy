@@ -121,6 +121,7 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
     Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices, Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
         super(jobName
                 , context.getConfiguration().getProcessingToolPath(context, TOOLID_WRAPIN_SCRIPT)
+                , null
                 , getToolMD5(TOOLID_WRAPIN_SCRIPT, context)
                 , getResourceSetFromConfiguration(toolID, context)
                 , arrayIndices
