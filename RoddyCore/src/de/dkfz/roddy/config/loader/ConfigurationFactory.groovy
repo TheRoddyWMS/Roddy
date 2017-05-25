@@ -238,7 +238,7 @@ class ConfigurationFactory {
             if (file.name.endsWith(".sh")) // Easy Bash importer
                 return loadAndPreprocessBashFile(file.text)
         } catch (ConfigurationLoaderException ex) {
-            logger.severe("The file ${file.absolutePath} does not appear to be a valid Bash configuration file:\n\t" + ex.message)
+            logger.severe("The file ${file.absolutePath} does not appear to be a valid Bash configuration file and will be ignored:\n\t" + ex.message)
         }
 
 //        if (file.name.endsWith(".yml")) // YAML import
