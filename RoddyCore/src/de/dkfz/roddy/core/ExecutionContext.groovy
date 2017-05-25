@@ -6,19 +6,19 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.eilslabs.batcheuphoria.jobs.Command
+import de.dkfz.roddy.execution.jobs.Command
+import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobResult
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
+import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
-import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.ReadOutJob
 import de.dkfz.roddy.knowledge.files.*
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -31,7 +31,7 @@ import java.util.*
  * <ul>
  * <li>Created files</li>
  * <li>Executed jobs and commands</li>
- * <li>Job states</li>
+ * <li>BEJob states</li>
  * <li>Log files</li>
  * </ul>
  * It also contains information about context specific settings like:<br />
@@ -72,7 +72,7 @@ class ExecutionContext extends InfoObject {
     /**
      * Keeps a list of all (previously) started jobs which belong to this process.
      */
-    protected final List<Job> jobsForProcess = new LinkedList<Job>()
+    protected final List<Job> jobsForProcess = new LinkedList<>()
     /**
      * Stores a list of all calls which were passed to the job system within this context.
      */
@@ -506,7 +506,7 @@ class ExecutionContext extends InfoObject {
 
         //Query readout jobs.
         if (jobsForProcess.get(0) instanceof ReadOutJob) {
-            for (Job job : jobsForProcess) {
+            for (BEJob job : jobsForProcess) {
                 ReadOutJob rj = (ReadOutJob) job
 
                 def state = rj.getJobState()
@@ -523,13 +523,13 @@ class ExecutionContext extends InfoObject {
 
         //Query current jobs, i.e. on recheck
         List<String> jobIDsForQuery = new LinkedList<>()
-        for (Job job : jobsForProcess) {
+        for (BEJob job : jobsForProcess) {
             JobResult runResult = job.getRunResult()
             if (runResult != null && runResult.getJobID().getId() != null) {
                 jobIDsForQuery.add(runResult.getJobID().getId())
             }
         }
-        Map<de.dkfz.eilslabs.batcheuphoria.jobs.Job, JobState> map = Roddy.getJobManager().queryJobStatus(jobsForProcess as List<de.dkfz.eilslabs.batcheuphoria.jobs.Job>)
+        Map<BEJob, JobState> map = Roddy.getJobManager().queryJobStatus(jobsForProcess as List<BEJob>)
         for (JobState js : map.values()) {
             if (js.isPlannedOrRunning())
                 return true
@@ -548,7 +548,7 @@ class ExecutionContext extends InfoObject {
 
     List<File> getLogFilesForExecutedJobs() {
         List<File> allFiles = new LinkedList<>()
-        for (Job j : getExecutedJobs()) {
+        for (BEJob j : getExecutedJobs()) {
             allFiles.add(j.getLogFile())
         }
         return allFiles

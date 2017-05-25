@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.execution.io
 
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
+import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.loader.ConfigurationFactory

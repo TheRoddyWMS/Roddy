@@ -6,9 +6,6 @@
 
 package de.dkfz.roddy.execution.jobs
 
-import de.dkfz.eilslabs.batcheuphoria.jobs.Command
-import de.dkfz.eilslabs.batcheuphoria.jobs.FakeJob
-import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import groovy.transform.CompileStatic
 
@@ -19,7 +16,7 @@ import groovy.transform.CompileStatic
 class CommandTest extends GroovyTestCase {
     void testGetParametersForParameterFile() {
         def context = MockupExecutionContextBuilder.createSimpleContext(CommandTest)
-//        Command mock = new Command(new FakeJob(context), context, "MockupCommand", [
+//        Command mock = new Command(new FakeBEJob(context), context, "MockupCommand", [
 //                "ParmA": "Value",
 //                "arr"  : "(a b c )",
 //                "int"  : "1"

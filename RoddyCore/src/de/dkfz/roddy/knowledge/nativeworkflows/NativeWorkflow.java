@@ -6,7 +6,7 @@
 //
 //package de.dkfz.roddy.knowledge.nativeworkflows;
 //
-//import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager;
+//import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager;
 //import de.dkfz.roddy.config.AnalysisConfiguration;
 //import de.dkfz.roddy.config.ContextConfiguration;
 //import de.dkfz.roddy.core.ExecutionContext;
@@ -16,9 +16,9 @@
 //import de.dkfz.roddy.execution.io.ExecutionResult;
 //import de.dkfz.roddy.execution.io.ExecutionService;
 //import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
-//import de.dkfz.eilslabs.batcheuphoria.jobs.Command;
-//import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager;
-//import de.dkfz.roddy.execution.jobs.Job;
+//import de.dkfz.roddy.execution.jobs.Command;
+//import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager;
+//import de.dkfz.roddy.execution.jobs.BEJob;
 //import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand;
 //import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager;
 //import de.dkfz.roddy.plugins.LibrariesFactory;
@@ -57,14 +57,14 @@
 //        AnalysisConfiguration aCfg = configuration.getAnalysisConfiguration();
 //
 //        //Get the target command factory, initialize it and create an alias for the submission command (i.e. qsub)
-//        JobManager targetJobManager = null;
+//        BatchEuphoriaJobManager targetJobManager = null;
 //        try {
 //            String clz = aCfg.getTargetJobManagerClass();
 //            ClassLoader classLoader = LibrariesFactory.getGroovyClassLoader();
 //            Class<?> targetJobManagerClass = classLoader.loadClass(clz);
 //            Constructor[] c = targetJobManagerClass.getConstructors();
 //            Constructor first = c[0];
-//            targetJobManager = (JobManager) first.newInstance();
+//            targetJobManager = (BatchEuphoriaJobManager) first.newInstance();
 //        } catch (Exception e) {
 //            context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("Wrong target command factory class is set."));
 //            return false;
@@ -72,7 +72,7 @@
 //
 //        // In normal cases commands are executed by the default factory. In this case we want the command to be executed directly.
 //        String toolID = aCfg.getNativeToolID();
-//        Job wrapperJob = new Job(context, context.getTimestampString() + "_nativeJobWrapper:" + toolID, toolID, null);
+//        BEJob wrapperJob = new BEJob(context, context.getTimestampString() + "_nativeJobWrapper:" + toolID, toolID, null);
 //
 //        DirectSynchronousExecutionJobManager dcfac = new DirectSynchronousExecutionJobManager();
 //        DirectCommand wrapperJobCommand = dcfac.createCommand(wrapperJob, aCfg.getProcessingToolPath(context, toolID), new LinkedList<>());

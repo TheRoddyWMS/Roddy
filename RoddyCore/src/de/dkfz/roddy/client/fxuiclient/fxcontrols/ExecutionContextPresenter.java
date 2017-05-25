@@ -8,13 +8,11 @@ package de.dkfz.roddy.client.fxuiclient.fxcontrols;
 
 import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.CustomCellItemsHelper;
 import de.dkfz.roddy.core.*;
-import de.dkfz.roddy.execution.jobs.Job;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
-import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
 

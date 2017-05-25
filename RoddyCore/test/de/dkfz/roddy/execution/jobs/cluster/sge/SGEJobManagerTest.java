@@ -6,10 +6,10 @@
 
 package de.dkfz.roddy.execution.jobs.cluster.sge;
 
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet;
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize;
-import de.dkfz.eilslabs.batcheuphoria.execution.cluster.pbs.PBSResourceProcessingCommand;
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager;
+import de.dkfz.roddy.config.ResourceSet;
+import de.dkfz.roddy.config.ResourceSetSize;
+import de.dkfz.roddy.execution.cluster.pbs.PBSResourceProcessingCommand;
+import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager;
 import de.dkfz.roddy.config.*;
 import de.dkfz.roddy.tools.BufferUnit;
 import de.dkfz.roddy.tools.BufferValue;
@@ -28,7 +28,7 @@ public class SGEJobManagerTest {
 
         Configuration cfg = new Configuration(new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null));
 
-        JobManager cFactory = null; //new SGEJobManager(false);
+        BatchEuphoriaJobManager cFactory = null; //new SGEJobManager(false);
         PBSResourceProcessingCommand test = (PBSResourceProcessingCommand) cFactory.convertResourceSet(rset1);
         assert test.getProcessingString().trim().equals("-V -l s_data=1024M");
 

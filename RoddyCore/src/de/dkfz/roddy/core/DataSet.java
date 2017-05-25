@@ -244,11 +244,11 @@ public class DataSet extends InfoObject implements Serializable {
 //    }
 //
 //    @Override
-//    public void jobStateChangedEvent(Job job) {
+//    public void jobStateChangedEvent(BEJob job) {
 //    }
 //
 //    @Override
-//    public void jobAddedEvent(Job job) {
+//    public void jobAddedEvent(BEJob job) {
 //    }
 //
 //    @Override

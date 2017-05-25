@@ -6,8 +6,8 @@
 
 package de.dkfz.roddy.config.loader
 
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
+import de.dkfz.roddy.config.ResourceSet
+import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.FilenamePattern
 import de.dkfz.roddy.config.ToolEntry
