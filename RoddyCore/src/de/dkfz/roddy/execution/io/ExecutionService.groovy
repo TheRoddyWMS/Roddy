@@ -248,12 +248,12 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
      */
     boolean checkAccessRightsSettings(ExecutionContext context) {
         boolean valid = true
-        if(context.isAccessRightsModificationAllowed()) {
+        if (context.isAccessRightsModificationAllowed()) {
 //            context.getExecutingUser()
 
             def userGroup = context.getOutputGroupString()
             boolean isGroupAvailable = FileSystemAccessProvider.getInstance().isGroupAvailable(userGroup)
-            if(!isGroupAvailable) {
+            if (!isGroupAvailable) {
                 context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("The requested user group ${userGroup} is not available on the target system.\n\tDisable Roddys access rights managemd by setting outputAllowAccessRightsModification to true or\n\tSelect a proper group by setting outputFileGroup."))
                 valid = false;
             }
@@ -430,15 +430,15 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
      * Checks all the files created in writeFilesForExecution
      * If strict mode is enabled, all missing files will lead to false.
      * If strict mode is disabled, only neccessary files are checked.
-     * @return
+     * @return A descriptive list of missing files
      */
-    boolean checkFilesPreparedForExecution(ExecutionContext context) {
-        if (!context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) return true
+    List<String> checkForInaccessiblePreparedFiles(ExecutionContext context) {
+        if (!context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) return []
         boolean strict = Roddy.isStrictModeEnabled()
         def runtimeService = context.getRuntimeService()
 
-        boolean neccessaryFilesExist = true
-        boolean ignorableFilesExist = true
+        List<String> inaccessibleNecessaryFiles = []
+        List<String> inaccessibleIgnorableFiles = []
 
         // Use the context check methods, so we automatically get an error message
         [
@@ -449,21 +449,21 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
                 context.getLockFilesDirectory(),
                 context.getCommonExecutionDirectory(),
         ].each {
-            neccessaryFilesExist &= context.directoryIsAccessible(it)
+            if (!context.directoryIsAccessible(it)) inaccessibleNecessaryFiles << it.absolutePath
         }
 
-        neccessaryFilesExist &= context.fileIsAccessible(runtimeService.getNameOfJobStateLogFile(context))
-        neccessaryFilesExist &= context.fileIsAccessible(runtimeService.getNameOfXMLConfigurationFile(context))
-        neccessaryFilesExist &= context.fileIsAccessible(runtimeService.getNameOfConfigurationFile(context))
+        if(!context.fileIsAccessible(runtimeService.getNameOfJobStateLogFile(context))) inaccessibleNecessaryFiles << "JobState logfile"
+//        if(!context.fileIsAccessible(runtimeService.getNameOfXMLConfigurationFile(context))) neccessaryFilesExist << "XML configuration copy"
+        if(!context.fileIsAccessible(runtimeService.getNameOfConfigurationFile(context))) inaccessibleNecessaryFiles <<  "Runtime configuration file"
 
         // Check the ignorable files. It is still nice to see whether they are there
-        ignorableFilesExist &= context.fileIsAccessible(runtimeService.getNameOfExecCacheFile(context.getAnalysis()))
-        ignorableFilesExist &= context.fileIsAccessible(runtimeService.getNameOfRuntimeFile(context))
-        ignorableFilesExist &= context.fileIsAccessible(new File(context.getExecutionDirectory(), "applicationProperties.ini"))
-        ignorableFilesExist &= context.fileIsAccessible(runtimeService.getNameOfXMLConfigurationFile(context))
+        if(!context.fileIsAccessible(runtimeService.getNameOfExecCacheFile(context.getAnalysis()))) inaccessibleIgnorableFiles << "Execution cache file"
+        if(!context.fileIsAccessible(runtimeService.getNameOfRuntimeFile(context))) inaccessibleIgnorableFiles << "Runtime information file"
+        if(!context.fileIsAccessible(new File(context.getExecutionDirectory(), "applicationProperties.ini"))) inaccessibleIgnorableFiles << "Copy of application.ini file"
+        if(!context.fileIsAccessible(runtimeService.getNameOfXMLConfigurationFile(context))) inaccessibleIgnorableFiles << "XML configuration file"
 
         // Return true, if the neccessary files are there and if strict mode is enabled and in this case all ignorable files exist
-        return neccessaryFilesExist && (!strict || ignorableFilesExist)
+        return inaccessibleNecessaryFiles + (strict ? [] as List<String>: inaccessibleIgnorableFiles)
     }
 
     /**
@@ -570,7 +570,7 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
                 if (!subFolder.isDirectory()) return
                 PluginInfo pInfo = listOfFolders[subFolder]
 
-                if (!mapOfInlineScriptsBySubfolder.containsKey(subFolder.getName())){
+                if (!mapOfInlineScriptsBySubfolder.containsKey(subFolder.getName())) {
                     correctedListOfFolders[subFolder] = pInfo
                     return
                 }
