@@ -475,6 +475,14 @@ public class Roddy {
         return RoddyConversionHelperMethods.toBoolean(featureToggleConfig.getProperty(toggle.name(), null), toggle.defaultValue);
     }
 
+    public static boolean isOptionSet(RoddyStartupOptions opt) {
+        return getCommandLineCall().isOptionSet(opt);
+    }
+
+    public static boolean isStrictWithFeature(RoddyStartupOptions opt) {
+        return Roddy.isStrictModeEnabled() && Roddy.getCommandLineCall().isOptionSet(opt);
+    }
+
     /**
      * Initializes basic Roddy services
      * The execution service has two configuration settings, one for command line interface and one for the ui based instance.
@@ -928,5 +936,4 @@ public class Roddy {
             return new CommandLineCall(new LinkedList<>());
         return commandLineCall;
     }
-
 }
