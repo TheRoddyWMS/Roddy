@@ -148,6 +148,8 @@ class ConfigurationFactory {
                         availableConfigurations[iccSub.id] = iccSub
                     }
 
+                } catch (UnknownConfigurationFileTypeException ex) {
+                    logger.severe("The file ${it.absolutePath} does not appear to be a valid Bash configuration file:\n\t ${ex.message}")
                 } catch (Exception ex) {
                     logger.severe("File ${it.absolutePath} cannot be loaded! Error in config file! ${ex.toString()}")
                     logger.severe(RoddyIOHelperMethods.getStackTraceAsString(ex))
@@ -232,8 +234,12 @@ class ConfigurationFactory {
         if (file.name.endsWith(".xml")) // Default behaviour
             return file.text
 
-        if (file.name.endsWith(".sh")) // Easy Bash importer
-            return loadAndPreprocessBashFile(file.text)
+        try {
+            if (file.name.endsWith(".sh")) // Easy Bash importer
+                return loadAndPreprocessBashFile(file.text)
+        } catch (ConfigurationLoaderException ex) {
+            logger.severe("The file ${file.absolutePath} does not appear to be a valid Bash configuration file and will be ignored:\n\t" + ex.message)
+        }
 
 //        if (file.name.endsWith(".yml")) // YAML import
 //            return loadAndPreprocessYAMLFile(file.text)

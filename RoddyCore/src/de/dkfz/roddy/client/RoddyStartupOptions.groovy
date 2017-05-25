@@ -39,7 +39,7 @@ public enum RoddyStartupOptions {
     useiodir(true),
     usemetadatatable(true),
     /**
-     * Override project speicifc usedresourcessize
+     * Override project specific usedresourcessize
      */
     usedresourcessize(true),
     disabletrackonlyuserjobs,
@@ -51,6 +51,8 @@ public enum RoddyStartupOptions {
     cvalues(true),
     enabletoggles(true),
     disabletoggles(true),
+
+    disablestrictfilechecks(false),
 
     useRoddyVersion(true),
     useroddyversion(true),
