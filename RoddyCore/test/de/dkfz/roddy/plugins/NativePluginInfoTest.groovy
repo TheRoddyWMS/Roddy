@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.plugins
 
-import de.dkfz.eilslabs.batcheuphoria.AvailableClusterSystems
+import de.dkfz.roddy.AvailableClusterSystems
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import de.dkfz.roddy.core.RuntimeService

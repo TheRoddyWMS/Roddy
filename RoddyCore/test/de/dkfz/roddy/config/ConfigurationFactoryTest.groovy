@@ -6,8 +6,8 @@
 
 package de.dkfz.roddy.config
 
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
+import de.dkfz.roddy.config.ResourceSet
+import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.loader.ProcessingToolReader
@@ -27,7 +27,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder
-import static de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize.*;
+import static de.dkfz.roddy.config.ResourceSetSize.*;
 
 import java.lang.reflect.Method
 

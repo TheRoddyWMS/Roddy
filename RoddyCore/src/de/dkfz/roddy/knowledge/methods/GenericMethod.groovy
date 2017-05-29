@@ -6,10 +6,11 @@
 
 package de.dkfz.roddy.knowledge.methods
 
+import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobResult
 import de.dkfz.roddy.Roddy
 
-import static de.dkfz.eilslabs.batcheuphoria.jobs.JobConstants.*
+import static de.dkfz.roddy.execution.jobs.JobConstants.*
 import de.dkfz.roddy.config.ToolFileGroupParameter
 import de.dkfz.roddy.config.ToolFileParameter
 import de.dkfz.roddy.config.ToolFileParameterCheckCondition
@@ -20,7 +21,7 @@ import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
-import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.knowledge.files.FileObject

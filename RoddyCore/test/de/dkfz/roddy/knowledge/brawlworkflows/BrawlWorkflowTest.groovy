@@ -100,7 +100,7 @@ public class BrawlWorkflowTest {
         int indexOfCallee = 4;
 
         def expected = " = de.dkfz.roddy.knowledge.files.GenericFileGroup<de.dkfz.roddy.synthetic.files.TestFile> inputfiles =\n" +
-                       "       new de.dkfz.roddy.knowledge.files.GenericFileGroup<de.dkfz.roddy.synthetic.files.TestFile>(ExecutionService.getInstance().executeTool(context, ${LOAD_FASTQ_FILES}\n" +
+                       "       new de.dkfz.roddy.knowledge.files.GenericFileGroup<de.dkfz.roddy.synthetic.files.TestFile>(BEExecutionService.getInstance().executeTool(context, ${LOAD_FASTQ_FILES}\n" +
                        "           .replaceAll('\"', ''))\n" +
                        "           .collect { it -> new TestFile(it) });"
 

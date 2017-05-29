@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.plugins
 
-import de.dkfz.eilslabs.batcheuphoria.AvailableClusterSystems
+import de.dkfz.roddy.AvailableClusterSystems
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflowConverter

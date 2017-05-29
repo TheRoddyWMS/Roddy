@@ -6,9 +6,11 @@
 
 package de.dkfz.roddy.execution.io
 
-import de.dkfz.eilslabs.batcheuphoria.jobs.Command
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
-import de.dkfz.eilslabs.batcheuphoria.jobs.DummyCommand
+import de.dkfz.roddy.execution.BEExecutionService
+import de.dkfz.roddy.execution.jobs.Command
+import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.JobState
+import de.dkfz.roddy.execution.jobs.DummyCommand
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -24,7 +26,6 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobDependencyID
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
@@ -43,7 +44,7 @@ import static de.dkfz.roddy.config.ConfigurationConstants.*
  *
  */
 @CompileStatic
-public abstract class ExecutionService extends CacheProvider implements de.dkfz.eilslabs.batcheuphoria.execution.ExecutionService {
+public abstract class ExecutionService extends CacheProvider implements BEExecutionService {
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(ExecutionService.class.name);
     private static ExecutionService executionService;
 
@@ -107,7 +108,7 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
     }
 
     public ExecutionService() {
-        super("ExecutionService", true);
+        super("BEExecutionService", true);
     }
 
     public static ExecutionService getInstance() {
@@ -432,13 +433,13 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
      * If strict mode is disabled, only neccessary files are checked.
      * @return A descriptive list of missing files
      */
-    List<String> checkFilesPreparedForExecution(ExecutionContext context) {
+    List<String> checkForInaccessiblePreparedFiles(ExecutionContext context) {
         if (!context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) return []
         boolean strict = Roddy.isStrictModeEnabled()
         def runtimeService = context.getRuntimeService()
 
-        List<String> neccessaryFilesExist = []
-        List<String> ignorableFilesExist = []
+        List<String> inaccessibleNecessaryFiles = []
+        List<String> inaccessibleIgnorableFiles = []
 
         // Use the context check methods, so we automatically get an error message
         [
@@ -449,21 +450,21 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
                 context.getLockFilesDirectory(),
                 context.getCommonExecutionDirectory(),
         ].each {
-            if (!context.directoryIsAccessible(it)) neccessaryFilesExist << it.absolutePath
+            if (!context.directoryIsAccessible(it)) inaccessibleNecessaryFiles << it.absolutePath
         }
 
-        if(!context.fileIsAccessible(runtimeService.getNameOfJobStateLogFile(context))) neccessaryFilesExist << "JobState logfile"
+        if(!context.fileIsAccessible(runtimeService.getNameOfJobStateLogFile(context))) inaccessibleNecessaryFiles << "JobState logfile"
 //        if(!context.fileIsAccessible(runtimeService.getNameOfXMLConfigurationFile(context))) neccessaryFilesExist << "XML configuration copy"
-        if(!context.fileIsAccessible(runtimeService.getNameOfConfigurationFile(context))) neccessaryFilesExist <<  "Runtime configuration file"
+        if(!context.fileIsAccessible(runtimeService.getNameOfConfigurationFile(context))) inaccessibleNecessaryFiles <<  "Runtime configuration file"
 
         // Check the ignorable files. It is still nice to see whether they are there
-        if(!context.fileIsAccessible(runtimeService.getNameOfExecCacheFile(context.getAnalysis()))) ignorableFilesExist << "Execution cache file"
-        if(!context.fileIsAccessible(runtimeService.getNameOfRuntimeFile(context))) ignorableFilesExist << "Runtime information file"
-        if(!context.fileIsAccessible(new File(context.getExecutionDirectory(), "applicationProperties.ini"))) ignorableFilesExist << "Copy of application.ini file"
-        if(!context.fileIsAccessible(runtimeService.getNameOfXMLConfigurationFile(context))) ignorableFilesExist << "XML configuration file"
+        if(!context.fileIsAccessible(runtimeService.getNameOfExecCacheFile(context.getAnalysis()))) inaccessibleIgnorableFiles << "Execution cache file"
+        if(!context.fileIsAccessible(runtimeService.getNameOfRuntimeFile(context))) inaccessibleIgnorableFiles << "Runtime information file"
+        if(!context.fileIsAccessible(new File(context.getExecutionDirectory(), "applicationProperties.ini"))) inaccessibleIgnorableFiles << "Copy of application.ini file"
+        if(!context.fileIsAccessible(runtimeService.getNameOfXMLConfigurationFile(context))) inaccessibleIgnorableFiles << "XML configuration file"
 
         // Return true, if the neccessary files are there and if strict mode is enabled and in this case all ignorable files exist
-        return neccessaryFilesExist + (strict ? [] as List<String>: ignorableFilesExist)
+        return inaccessibleNecessaryFiles + (strict ? [] as List<String>: inaccessibleIgnorableFiles)
     }
 
     /**
@@ -481,7 +482,7 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
     }
 
     void markConfiguredToolsAsExecutable(ExecutionContext context) {
-        logger.severe("ExecutionService.markConfiguredToolsAsExecutable is not implemented yet! Only checks for executability are available.")
+        logger.severe("BEExecutionService.markConfiguredToolsAsExecutable is not implemented yet! Only checks for executability are available.")
 //        context.getConfiguration().getTools().each {
 //            ToolEntry tool ->
 //                File toolPath = context.configuration.getProcessingToolPath(context, tool.id)

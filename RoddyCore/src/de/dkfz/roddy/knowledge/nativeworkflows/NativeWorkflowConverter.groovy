@@ -6,7 +6,6 @@
 
 package de.dkfz.roddy.knowledge.nativeworkflows
 
-import de.dkfz.eilslabs.batcheuphoria.AvailableClusterSystems
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.config.converters.BashConverter

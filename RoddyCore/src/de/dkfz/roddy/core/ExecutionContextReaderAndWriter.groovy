@@ -6,13 +6,14 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
+import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.LoadedJob
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.LoadedFile
@@ -67,7 +68,7 @@ class ExecutionContextReaderAndWriter {
              * Use statusList to set all the jobs states.
              * If the state for a job is unknown
              */
-            for (Job job : jobsStartedInContext) {
+            for (BEJob job : jobsStartedInContext) {
                 if (job == null) continue
 
                 if (job.jobID == "Unknown")
@@ -84,11 +85,11 @@ class ExecutionContextReaderAndWriter {
                 }
             }
 
-            Map<String, Job> unknownJobs = new LinkedHashMap<>()
-            Map<String, Job> possiblyRunningJobs = new LinkedHashMap<>()
+            Map<String, BEJob> unknownJobs = new LinkedHashMap<>()
+            Map<String, BEJob> possiblyRunningJobs = new LinkedHashMap<>()
             List<String> queryList = new LinkedList<>()
             //For every job which is still unknown or possibly running get the actual jobState from the cluster
-            for (Job job : jobsStartedInContext) {
+            for (BEJob job : jobsStartedInContext) {
                 if (job.getJobState().isUnknown() || job.getJobState() == JobState.UNSTARTED) {
                     unknownJobs.put(job.getJobID(), job)
                 } else if (job.getJobState() == JobState.STARTED) {
@@ -96,14 +97,14 @@ class ExecutionContextReaderAndWriter {
                 }
             }
 
-            Map<de.dkfz.eilslabs.batcheuphoria.jobs.Job, JobState> map = Roddy.getJobManager().queryJobStatus(jobsStartedInContext as List<de.dkfz.eilslabs.batcheuphoria.jobs.Job>)
+            Map<BEJob, JobState> map = Roddy.getJobManager().queryJobStatus(jobsStartedInContext as List<BEJob>)
             for (String jobID : unknownJobs.keySet()) {
-                Job job = unknownJobs[jobID]
+                BEJob job = unknownJobs[jobID]
                 job.setJobState(map[job])
                 Roddy.getJobManager().addJobStatusChangeListener(job)
             }
             for (String jobID : possiblyRunningJobs.keySet()) {
-                Job job = possiblyRunningJobs[jobID]
+                BEJob job = possiblyRunningJobs[jobID]
                 if (map[job] == null) {
                     job.setJobState(JobState.FAILED)
                 } else {
@@ -223,14 +224,14 @@ class ExecutionContextReaderAndWriter {
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     String writeJobInfoFile(ExecutionContext context) {
         final File jobInfoFile = context.getRuntimeService().getNameOfJobInfoFile(context)
-        final List<Job> executedJobs = context.getExecutedJobs()
+        final List<BEJob> executedJobs = context.getExecutedJobs()
 
         def writer = new StringWriter()
         def xml = new MarkupBuilder(writer)
 
         xml.jobinfo {
             jobs {
-                for (Job ej in executedJobs) {
+                for (BEJob ej in executedJobs) {
                     if (ej.isFakeJob()) continue //Skip fake jobs.
                     job(id: ej.getJobID(), name: ej.jobName) {
                         String commandString = ej.getLastCommand() != null ? ej.getLastCommand().toString() : ""
@@ -295,7 +296,7 @@ class ExecutionContextReaderAndWriter {
             //TODO Load a list of the previously created jobs and query those using qstat!
             for (String call : jobCalls) {
                 //TODO. How can we recognize different command factories? i.e. for other cluster systems?
-                de.dkfz.eilslabs.batcheuphoria.jobs.Job beJob = Roddy.getJobManager().parseToJob(call)
+                BEJob beJob = Roddy.getJobManager().parseToJob(call)
 
                 // Try to find the tool id in the context. If it is not available, set "UNKNOWN"
                 String toolID = allToolsByResourcePath[beJob.tool.parentFile.name + "/" + beJob.tool.name] ?: Constants.UNKNOWN

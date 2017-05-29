@@ -6,11 +6,7 @@
 
 package de.dkfz.roddy.execution.jobs
 
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
-import de.dkfz.eilslabs.batcheuphoria.jobs.Command
-import de.dkfz.eilslabs.batcheuphoria.jobs.DummyCommand
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
+import de.dkfz.roddy.config.ResourceSet
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -35,9 +31,9 @@ import static de.dkfz.roddy.Constants.NO_VALUE
 import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 
 @groovy.transform.CompileStatic
-class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
+class Job extends BEJob<Job> {
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(Job.class.getSimpleName())
+    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(BEJob.class.getSimpleName())
 
     public static final String TOOLID_WRAPIN_SCRIPT = "wrapinScript"
     public static final String PARM_WRAPPED_SCRIPT = "WRAPPED_SCRIPT"
@@ -103,7 +99,7 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
 //    /**
 //     * This is for job implementations which do the writeConfigurationFile on their own.
 //     */
-//    protected Job(String jobName, ExecutionContext context, String toolID, Map<String, String> parameters, List<String> arrayIndices, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
+//    protected BEJob(String jobName, ExecutionContext context, String toolID, Map<String, String> parameters, List<String> arrayIndices, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
 //        super(jobName
 //                , context.getConfiguration().getProcessingToolPath(context, toolID)
 //                , toolID != null && toolID.trim().length() > 0 ? context.getConfiguration().getProcessingToolMD5(toolID): null
@@ -174,14 +170,13 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
         toolID != null && toolID.trim().length() > 0 ? context.getConfiguration().getProcessingToolMD5(toolID) : null
     }
 
-    static List<Job> collectParentJobsFromFiles(List<BaseFile> parentFiles) {
+    static List<BEJob> collectParentJobsFromFiles(List<BaseFile> parentFiles) {
         if (!parentFiles) return []
-
-        List<Job> parentJobs = parentFiles.collect {
+        List<BEJob> parentJobs = parentFiles.collect {
             BaseFile bf -> bf?.getCreatingJobsResult()?.job
         }.findAll {
-            de.dkfz.eilslabs.batcheuphoria.jobs.Job job -> job
-        } as List<Job>
+            BEJob job -> job
+        } as List<BEJob>
         return parentJobs
     }
 
@@ -327,7 +322,7 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
             if (name != null) {
                 String val = parameters[name.value]
                 if (val == null) {
-                    val = NO_VALUE
+                    val = Constants.NO_VALUE
                     bf.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("A value named " + name.value + " cannot be found in the jobs parameter list for a file of ${bf.class.name}. The value is set to <NO_VALUE>"))
                 }
                 absolutePath = absolutePath.replace(command.fullString, val)
@@ -387,7 +382,7 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
         } else {
             Command command = new DummyCommand(Roddy.getJobManager(), this, jobName, false)
             setJobState(JobState.DUMMY)
-            setRunResult(new de.dkfz.eilslabs.batcheuphoria.jobs.JobResult(command, command.getExecutionID(), false, false, this.tool, parameters, parentJobs as List<de.dkfz.eilslabs.batcheuphoria.jobs.Job>))
+            setRunResult(new JobResult(command, command.getExecutionID(), false, false, this.tool, parameters, parentJobs as List<BEJob>))
             this.setJobState(JobState.DUMMY)
         }
 
@@ -420,7 +415,7 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
         if (getListOfProcessingCommand().size() == 0) {
             File srcTool = configuration.getSourceToolPath(toolID)
 
-            logger.severe("Appending processing commands from config is currently not supported: Roddy/../Job.groovy appendProcessingCommands")
+            logger.severe("Appending processing commands from config is currently not supported: Roddy/../BEJob.groovy appendProcessingCommands")
 //            //Look in the configuration for resource options
 //            ProcessingCommands extractedPCommands = Roddy.getJobManager().getProcessingCommandsFromConfiguration(configuration, toolID);
 //
@@ -434,7 +429,7 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
     }
 
     private JobResult handleDifferentJobRun(StringBuilder dbgMessage) {
-//        logger.severe("Handling different job run is currently not supported: Roddy/../Job.groovy handleDifferentJobRun")
+//        logger.severe("Handling different job run is currently not supported: Roddy/../BEJob.groovy handleDifferentJobRun")
         dbgMessage << "\tdummy job created." + Constants.ENV_LINESEPARATOR
         File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
         runResult = new JobResult(context, (Command) null, JobDependencyID.getNotExecutedFakeJob(this), false, tool, parameters, parentFiles.collect { it.getCreatingJobsResult()?.getJob() }.findAll { it })
@@ -478,18 +473,18 @@ class Job extends de.dkfz.eilslabs.batcheuphoria.jobs.Job<Job> {
 
         boolean rerunIsNecessary = fileUnverified || parentFileIsDirty || parentJobIsDirty || knownFilesCountMismatch
 
-        if (isVerbosityHigh && rerunIsNecessary) dbgMessage << "\tJob will rerun" << sep
+        if (isVerbosityHigh && rerunIsNecessary) dbgMessage << "\tBEJob will rerun" << sep
 
         //If all files could be found rerun if necessary otherwise rerun it definitive.
         if (!rerunIsNecessary) {
-            if (isVerbosityHigh) dbgMessage << "\tJob was verified and will not be rerun" << sep
+            if (isVerbosityHigh) dbgMessage << "\tBEJob was verified and will not be rerun" << sep
             return false
         }
 
         //More detailed if then because of enhanced debug / breakpoint possibilities
         if (isVerbosityHigh) {
             if (parentJobIsDirty)
-                dbgMessage << "\t* Job is set to rerun because a parent job is marked dirty" << sep
+                dbgMessage << "\t* BEJob is set to rerun because a parent job is marked dirty" << sep
             if (knownFilesCountMismatch)
                 dbgMessage << "\t* The number of existing files does not match with the number of files which should be created" << sep
             if (fileUnverified)

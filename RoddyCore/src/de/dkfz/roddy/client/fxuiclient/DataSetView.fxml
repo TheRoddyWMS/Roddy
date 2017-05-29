@@ -167,7 +167,7 @@
                                 <!--<PropertyValueFactory property="isTemporaryFile"/>-->
                             <!--</cellValueFactory>-->
                         <!--</TableColumn>-->
-                        <!--<TableColumn text="Job">-->
+                        <!--<TableColumn teBEJob"Job">-->
                             <!--<cellValueFactory>-->
                                 <!--<PropertyValueFactory property="jobID"/>-->
                             <!--</cellValueFactory>-->

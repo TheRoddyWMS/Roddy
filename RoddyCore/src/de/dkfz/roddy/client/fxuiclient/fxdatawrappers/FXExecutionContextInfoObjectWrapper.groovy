@@ -6,22 +6,15 @@
 
 package de.dkfz.roddy.client.fxuiclient.fxdatawrappers;
 
-import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation;
-import de.dkfz.roddy.core.ExecutionContext;
-import de.dkfz.roddy.execution.jobs.Job;
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
+import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation
+import de.dkfz.roddy.execution.jobs.JobState;
 import de.dkfz.roddy.client.fxuiclient.RoddyUITask
 import groovy.transform.CompileStatic;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.beans.value.ObservableValue;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import javafx.beans.value.ObservableValue
 
 /**
  * Encapsulates execution context objects.

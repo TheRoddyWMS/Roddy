@@ -358,7 +358,7 @@ public class BrawlWorkflow extends Workflow {
         String classOfFileObject = getClassOfOutputParameters(toolEntry, configuration);
 
         def loadFilesCall = " = ${classOfFileObject} inputfiles =\n" +
-                            "       new ${classOfFileObject}(ExecutionService.getInstance().executeTool(context, ${toolID}\n" +
+                            "       new ${classOfFileObject}(BEExecutionService.getInstance().executeTool(context, ${toolID}\n" +
                             "           .replaceAll('\"', ''))\n" +
                             "           .collect { it -> new TestFile(it) });"
 

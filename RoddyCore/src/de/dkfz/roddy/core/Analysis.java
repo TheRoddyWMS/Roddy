@@ -6,14 +6,14 @@
 
 package de.dkfz.roddy.core;
 
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
+import de.dkfz.roddy.execution.jobs.Job;
+import de.dkfz.roddy.execution.jobs.JobState;
 import de.dkfz.roddy.AvailableFeatureToggles;
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.config.loader.ConfigurationLoadError;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
-import de.dkfz.roddy.execution.jobs.Job;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.config.*;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -375,13 +375,17 @@ public class Analysis {
                     ExecutionService.getInstance().writeFilesForExecution(context);
                     boolean execute = true;
                     if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) { // Only do these checks, if we are not in query mode!
-                        List<String> invalidPreparedFiles = ExecutionService.getInstance().checkFilesPreparedForExecution(context);
+                        List<String> invalidPreparedFiles = ExecutionService.getInstance().checkForInaccessiblePreparedFiles(context);
                         boolean copiedAnalysisToolsAreExecutable = ExecutionService.getInstance().checkCopiedAnalysisTools(context);
-                        execute &= invalidPreparedFiles.size() == 0 && copiedAnalysisToolsAreExecutable;
-                        if (!execute) {
+                        boolean ignoreFileChecks = Roddy.isStrictWithFeature(RoddyStartupOptions.disablestrictfilechecks);
+                        execute &= ignoreFileChecks || (invalidPreparedFiles.size() == 0 && copiedAnalysisToolsAreExecutable);
+                        if (!execute || ignoreFileChecks) {
                             StringBuilder message = new StringBuilder("There were errors after preparing the workflow run for dataset " + datasetID);
                             if (invalidPreparedFiles.size() > 0) message.append("\n\tSome files could not be written. Workflow will not execute.\n\t" + RoddyIOHelperMethods.joinArray(invalidPreparedFiles.toArray(), "\t\n"));
                             if (!copiedAnalysisToolsAreExecutable) message.append("\n\tSome declared tools are not executable. Workflow will not execute.");
+                            if (ignoreFileChecks) {
+                                message.append("\n  The errors were ignored because disablestrictfilechecks is set.");
+                            }
                             logger.severe(message.toString());
                         }
                     }

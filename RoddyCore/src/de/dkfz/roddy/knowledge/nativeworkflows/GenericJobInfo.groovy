@@ -6,20 +6,17 @@
 
 package de.dkfz.roddy.knowledge.nativeworkflows
 
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
+import de.dkfz.roddy.config.ResourceSet
+import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.tools.BufferUnit
 import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.eilslabs.batcheuphoria.jobs.GenericJobInfo as BEGenJI
+import de.dkfz.roddy.execution.jobs.GenericJobInfo as BEGenJI
 import de.dkfz.roddy.tools.BufferValue
 import de.dkfz.roddy.tools.TimeUnit
 import groovy.transform.CompileStatic
-
-import java.util.List
-import java.util.Map
 
 /**
  * Created by michael on 06.02.15.
