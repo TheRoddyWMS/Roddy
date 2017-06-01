@@ -21,6 +21,8 @@ set -xv
 
 export tmpFileCnt=$DIR_TEMP/counter
 export tmpFileCall=$DIR_TEMP/calls
+export scriptFileDir=$DIR_EXECUTION/analysisTools/inlineScripts
+export scriptFilePrefix=$scriptFileDir/inlineScript_
 export cur=0
 
 echo 0 > $tmpFileCnt

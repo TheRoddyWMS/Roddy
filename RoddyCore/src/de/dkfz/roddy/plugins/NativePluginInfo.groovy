@@ -40,6 +40,7 @@ class NativePluginInfo extends PluginInfo {
     @Override
     protected void fillListOfToolDirectories() {
         listOfToolDirectories[getConvertedToolsDirectory().name] = getConvertedToolsDirectory()
+        listOfToolDirectories["inlineScripts"] = getConvertedInlineScriptsDirectory()
     }
 
     @Override
@@ -84,6 +85,10 @@ class NativePluginInfo extends PluginInfo {
 
     File getConvertedToolsDirectory() {
         return new File(getToolsDirectory(), "${name}Tools");
+    }
+
+    File getConvertedInlineScriptsDirectory() {
+        return new File(getToolsDirectory(), "inlineScripts")
     }
 
     File getConvertedWorkflowScript() {

@@ -54,7 +54,7 @@ class Job extends BEJob<Job> {
     /**
      * Keeps a list of all unchanged, initial parameters, including default job parameters.
      */
-    private final Map<String, Object> allRawInputParameters
+    protected final Map<String, Object> allRawInputParameters
 
     /**
      * Provide a list of files if you want to generate job dependencies.
@@ -116,10 +116,14 @@ class Job extends BEJob<Job> {
 //    }
 
     Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices, Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
+        this(context, jobName, toolID, null, arrayIndices, inputParameters, parentFiles, filesToVerify)
+    }
+
+    Job(ExecutionContext context, String jobName, String toolID, String inlineScript, List<String> arrayIndices, Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
         super(jobName
                 , context.getConfiguration().getProcessingToolPath(context, TOOLID_WRAPIN_SCRIPT)
-                , null
-                , getToolMD5(TOOLID_WRAPIN_SCRIPT, context)
+                , inlineScript
+                , inlineScript ? null : getToolMD5(TOOLID_WRAPIN_SCRIPT, context)
                 , getResourceSetFromConfiguration(toolID, context)
                 , arrayIndices
                 , [:]

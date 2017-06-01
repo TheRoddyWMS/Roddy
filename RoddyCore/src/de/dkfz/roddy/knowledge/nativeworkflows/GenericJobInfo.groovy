@@ -38,8 +38,9 @@ class GenericJobInfo {
     final Integer nodes
     final String queue
     final String otherSettings
+    final String inlineScript
 
-    GenericJobInfo(ExecutionContext context, BEGenJI jInfo) {
+    GenericJobInfo(ExecutionContext context, BEGenJI jInfo, String inlineScript = null) {
         executionContext = context
         jobName = jInfo.jobName
         id = jInfo.id
@@ -53,11 +54,14 @@ class GenericJobInfo {
         queue = jInfo.queue
         otherSettings = jInfo.otherSettings
 
-        toolEntry = context.configuration.tools.allValuesAsList.find { ToolEntry te -> new File(te.localPath).name == jInfo.tool.name }
-        toolID = toolEntry.id
-
-        if(!toolEntry.resourceSets) {
-            toolEntry.resourceSets << new ResourceSet(ResourceSetSize.l, new BufferValue(memory, memoryBufferUnit), cpus, nodes, walltime, null, queue, otherSettings);
+        if (!inlineScript) {
+            toolEntry = context.configuration.tools.allValuesAsList.find { ToolEntry te -> new File(te.localPath).name == jInfo.tool.name }
+            toolID = toolEntry.id
+            if (!toolEntry.resourceSets) {
+                toolEntry.resourceSets << new ResourceSet(ResourceSetSize.l, new BufferValue(memory, memoryBufferUnit), cpus, nodes, walltime, null, queue, otherSettings);
+            }
+        } else {
+            this.inlineScript = inlineScript
         }
     }
 
@@ -76,7 +80,7 @@ class GenericJobInfo {
     }
 
     Job toJob() {
-        return new Job(executionContext, jobName, toolID, parameters as Map<String, Object>, null, new LinkedList<BaseFile>())
+        return new Job(executionContext, jobName, toolID, inlineScript, null, parameters as Map<String, Object>, null, new LinkedList<BaseFile>())
     }
 
     @Override

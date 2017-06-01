@@ -65,10 +65,12 @@ class ProcessingToolReader {
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     String readAttribute(NodeChild node, String id, String _default = null) {
         String text = node.@"$id".text()
-        if (!text && !_default)
-            addLoadErr("Could not get attribute value for '${id}'", null)
-        else
+        if (text)
+            return text
+        else if (_default)
             text = _default
+        else
+            addLoadErr("Could not get attribute value for '${id}'", null)
         return text
     }
 
@@ -100,7 +102,7 @@ class ProcessingToolReader {
             ToolEntry currentEntry = new ToolEntry(toolID, basePathId, path)
             if (overrideresourcesets)
                 currentEntry.setOverridesResourceSets()
-            if(useAutoCheckpoint)
+            if (useAutoCheckpoint)
                 currentEntry.setUseAutoCheckpoint()
             int noOfChildren = tool.children().size()
             if (noOfChildren > 0) {

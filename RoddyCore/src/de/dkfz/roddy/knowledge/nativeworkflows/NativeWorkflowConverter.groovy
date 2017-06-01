@@ -121,7 +121,7 @@ class NativeWorkflowConverter {
                     for (int i = 0; i < toolIDs.size(); i++) {
                         String id = toolIDs[i]
                         String file = toolFileNames[i]
-                        tool(name: "$id", value: "$file", basepath: nativePluginInfo.getConvertedToolsDirectory().name, use) {}
+                        tool(name: "$id", value: "$file", basepath: nativePluginInfo.getConvertedToolsDirectory().name) {}
                     }
 
                 }

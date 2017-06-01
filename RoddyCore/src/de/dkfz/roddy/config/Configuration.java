@@ -314,7 +314,6 @@ public class Configuration implements ContainerParent<Configuration> {
             availableBasePaths.putAll(pluginInfo.getToolsDirectories());
         }
 
-
         ToolEntry te = tools.getValue(tool);
         if (te.basePathId.length() > 0 && !availableBasePaths.containsKey(te.basePathId)) {
             throw new RuntimeException("Base path for tool " + tool + " is not configured");
