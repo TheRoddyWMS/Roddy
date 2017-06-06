@@ -102,6 +102,14 @@ public class LocalExecutionService extends ExecutionService {
     }
 
     @Override
+    /**
+     * Should be the current directory
+     */
+    File queryWorkingDirectory() {
+        return new File("")
+    }
+
+    @Override
     boolean isAvailable() {
         return true;
     }

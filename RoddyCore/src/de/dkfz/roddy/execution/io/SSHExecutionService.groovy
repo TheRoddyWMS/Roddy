@@ -333,7 +333,7 @@ class SSHExecutionService extends RemoteExecutionService {
         byte[] buffer = new byte[1024]
         int length
         while ((length = inputStream.read(buffer)) != -1)
-            result.write(buffer, 0 , length)
+            result.write(buffer, 0, length)
         return result.toString("UTF-8")
     }
 
@@ -360,7 +360,6 @@ class SSHExecutionService extends RemoteExecutionService {
             cmd.join();
             session.close();
 
-
             // Get the exit status of the process. In case of things like caught signals (SEGV-Segmentation fault), the value is null and will be set to 256.
             Integer exitStatus = cmd.getExitStatus();
             if (exitStatus == null) exitStatus = 256;
@@ -373,12 +372,13 @@ class SSHExecutionService extends RemoteExecutionService {
                     // In case the command is ignored, a warning is sent out instead of a severe error.
                     logger.warning("Command not executed correctly, return code: " + exitStatus + ", error was ignored on purpose.");
                     content.readLines().each { String line -> output << "" + line }
+                    readStream(cmd.errorStream).readLines().each { String line -> output << "" + line }
                 } else {
                     logger.severe("Command not executed correctly, return code: " + exitStatus +
-                                    (cmd.getExitSignal()
-                                            ? " Caught signal is " + cmd.getExitSignal().name()
-                                            : "\n\tCommand Str. " + RoddyIOHelperMethods.truncateCommand(command,
-                                                Roddy.getApplicationProperty("commandLogTruncate", '80').toInteger())));
+                            (cmd.getExitSignal()
+                                    ? " Caught signal is " + cmd.getExitSignal().name()
+                                    : "\n\tCommand Str. " + RoddyIOHelperMethods.truncateCommand(command,
+                                    Roddy.getApplicationProperty("commandLogTruncate", '80').toInteger())));
                 }
             } else {
                 content.readLines().each { String line -> output << "" + line }
@@ -412,7 +412,6 @@ class SSHExecutionService extends RemoteExecutionService {
         thread.start();
         return new ExecutionResult(true, 0, [], "");
     }
-
 
 //    @Override
 //    public ExecutionResult execute(String string, boolean waitFor = true) {
@@ -489,8 +488,8 @@ class SSHExecutionService extends RemoteExecutionService {
         boolean result = true;
         try {
             FileSystemAccessProvider fp = FileSystemAccessProvider.getInstance();
-            if(rightsStr) service.sftpClient.chmod(file.getAbsolutePath(), RoddyIOHelperMethods.symbolicToIntegerAccessRights(rightsStr, FileSystemAccessProvider.getInstance().getDefaultUserMask()));
-            if(groupID)   service.sftpClient.chgrp(file.getAbsolutePath(), fp.getGroupID(groupID));
+            if (rightsStr) service.sftpClient.chmod(file.getAbsolutePath(), RoddyIOHelperMethods.symbolicToIntegerAccessRights(rightsStr, FileSystemAccessProvider.getInstance().getDefaultUserMask()));
+            if (groupID) service.sftpClient.chgrp(file.getAbsolutePath(), fp.getGroupID(groupID));
         } catch (Exception ex) {
             logger.severe("Could not set access attributes for ${file.absolutePath}")
             result = false;
@@ -680,6 +679,13 @@ class SSHExecutionService extends RemoteExecutionService {
         return connectionPool.check();
     }
 
+    @Override
+    File queryWorkingDirectory() {
+        def rs = _execute("pwd")
+        if (rs.successful)
+            return new File(rs.resultLines[1])
+        return null
+    }
     private static Random random = new Random();
 
     @Override

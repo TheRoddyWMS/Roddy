@@ -288,6 +288,11 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
+            File getLoggingDirectoryForJob(BEJob job) {
+                return null
+            }
+
+            @Override
             Map<BEJob, JobState> queryJobStatus(List list, boolean forceUpdate) {
                 return null
             }
