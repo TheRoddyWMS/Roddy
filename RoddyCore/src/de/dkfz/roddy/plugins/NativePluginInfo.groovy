@@ -63,11 +63,11 @@ class NativePluginInfo extends PluginInfo {
     }
 
     File getSourceWorkflow() {
-        def listOfFiles = nativeSourceDirectory.listFiles(new WildcardFileFilter(NativeWorkflowConverter.NATIVE_WORKFLOW_SCRIPT_PREFIX + "*" + NativeWorkflowConverter.NATIVE_WORKFLOW_SCRIPT_SUFFIX))
+        File[] listOfFiles = nativeSourceDirectory.listFiles((FilenameFilter)new WildcardFileFilter(NativeWorkflowConverter.NATIVE_WORKFLOW_SCRIPT_PREFIX + "*" + NativeWorkflowConverter.NATIVE_WORKFLOW_SCRIPT_SUFFIX))
 
         if (!listOfFiles)
             throw new PluginLoaderException("There is no workflow run script in directory ${nativeSourceDirectory}")
-        if (listOfFiles.size() > 1)
+        if (listOfFiles.length > 1)
             throw new PluginLoaderException("There must only be one workflow run script in directory ${nativeSourceDirectory}")
         return listOfFiles[0]
     }
