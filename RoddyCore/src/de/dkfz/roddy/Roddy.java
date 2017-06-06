@@ -10,7 +10,7 @@ import com.btr.proxy.search.ProxySearch;
 import de.dkfz.roddy.config.ResourceSetSize;
 import de.dkfz.roddy.execution.BEExecutionService;
 import de.dkfz.roddy.execution.cluster.pbs.PBSJobManager;
-import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager;
+import de.dkfz.roddy.execution.jobs.*;
 import de.dkfz.roddy.client.RoddyStartupModes;
 import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
