@@ -377,9 +377,9 @@ public class Analysis {
                     if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) { // Only do these checks, if we are not in query mode!
                         List<String> invalidPreparedFiles = ExecutionService.getInstance().checkForInaccessiblePreparedFiles(context);
                         boolean copiedAnalysisToolsAreExecutable = ExecutionService.getInstance().checkCopiedAnalysisTools(context);
-                        boolean ignoreFileChecks = Roddy.isStrictWithFeature(RoddyStartupOptions.disablestrictfilechecks);
+                        boolean ignoreFileChecks = Roddy.isOptionSet(RoddyStartupOptions.disablestrictfilechecks);
                         execute &= ignoreFileChecks || (invalidPreparedFiles.size() == 0 && copiedAnalysisToolsAreExecutable);
-                        if (!execute || ignoreFileChecks) {
+                        if (!execute) {
                             StringBuilder message = new StringBuilder("There were errors after preparing the workflow run for dataset " + datasetID);
                             if (invalidPreparedFiles.size() > 0) message.append("\n\tSome files could not be written. Workflow will not execute.\n\t" + RoddyIOHelperMethods.joinArray(invalidPreparedFiles.toArray(), "\t\n"));
                             if (!copiedAnalysisToolsAreExecutable) message.append("\n\tSome declared tools are not executable. Workflow will not execute.");

@@ -219,6 +219,14 @@ public class LibrariesFactory extends Initializable {
         return loadRealOrSyntheticClass(classOfFileObject, constructorClass.name);
     }
 
+    public Class forceLoadSyntheticClassOrFail(String classOfFileObject, Class<FileObject> constructorClass = BaseFile.class) {
+        Class<BaseFile> _cls = searchForClass(classOfFileObject);
+        if (_cls && _cls.package.name.startsWith(SYNTHETIC_PACKAGE)) {
+            return _cls
+        }
+        throw new RuntimeException("The requested class ${classOfFileObject} already exists and is not synthetic. However, the workflow requests a synthetic class.")
+    }
+
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     public static Class generateSyntheticFileClassWithParentClass(String syntheticClassName, String constructorClassName, GroovyClassLoader classLoader = null) {
         String syntheticFileClass =

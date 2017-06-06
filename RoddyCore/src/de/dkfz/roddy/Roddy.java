@@ -8,6 +8,7 @@ package de.dkfz.roddy;
 
 import com.btr.proxy.search.ProxySearch;
 import de.dkfz.roddy.config.ResourceSetSize;
+import de.dkfz.roddy.execution.BEExecutionService;
 import de.dkfz.roddy.execution.cluster.pbs.PBSJobManager;
 import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager;
 import de.dkfz.roddy.client.RoddyStartupModes;
@@ -614,7 +615,7 @@ public class Roddy {
         }
 
         /** Get the constructor which comes with no parameters */
-        Constructor first = jobManagerClass.getDeclaredConstructor(de.dkfz.roddy.execution.ExecutionService.class, JobManagerCreationParameters.class);
+        Constructor first = jobManagerClass.getDeclaredConstructor(BEExecutionService.class, JobManagerCreationParameters.class);
         jobManager = (BatchEuphoriaJobManager) first.newInstance(ExecutionService.getInstance()
                 , new JobManagerCreationParametersBuilder()
                         .setCreateDaemon(true)

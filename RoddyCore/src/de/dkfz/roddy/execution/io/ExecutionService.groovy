@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.execution.io
 
+import de.dkfz.roddy.execution.BEExecutionService
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobState
@@ -43,7 +44,7 @@ import static de.dkfz.roddy.config.ConfigurationConstants.*
  *
  */
 @CompileStatic
-public abstract class ExecutionService extends CacheProvider implements de.dkfz.roddy.execution.ExecutionService {
+public abstract class ExecutionService extends CacheProvider implements BEExecutionService {
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(ExecutionService.class.name);
     private static ExecutionService executionService;
 
