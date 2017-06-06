@@ -14,6 +14,8 @@ import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
+import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
+import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.BaseMetadataTable
 import de.dkfz.roddy.execution.io.MetadataTableFactory
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -31,7 +33,7 @@ import org.apache.commons.io.filefilter.WildcardFileFilter
  * @author michael
  */
 @CompileStatic
-public abstract class RuntimeService extends CacheProvider {
+public class RuntimeService extends CacheProvider {
     private static LoggerWrapper logger = LoggerWrapper.getLogger(RuntimeService.class.getSimpleName());
     public static final String FILENAME_RUNTIME_INFO = "versionsInfo.txt"
     public static final String FILENAME_RUNTIME_CONFIGURATION = "runtimeConfig.sh"
@@ -379,7 +381,7 @@ public abstract class RuntimeService extends CacheProvider {
 
     public File getLogFileForJob(Job job) {
         //Returns the log files path of the job.
-        File f = new File(job.getExecutionContext().getExecutionDirectory(), Roddy.getJobManager().getLogFileName(job));
+        File f = new File(job.context.getExecutionDirectory(), Roddy.getJobManager().getLogFileName(job));
     }
 
     public File getLogFileForCommand(Command command) {
@@ -433,7 +435,18 @@ public abstract class RuntimeService extends CacheProvider {
         return analysisToolsDirectory;
     }
 
-    public abstract Map<String, Object> getDefaultJobParameters(ExecutionContext context, String TOOLID)
+    public Map<String, Object> getDefaultJobParameters(ExecutionContext context, String TOOLID) {
+        def fs = context.getRuntimeService();
+        //File cf = fs..createTemporaryConfigurationFile(executionContext);
+        String pid = context.getDataSet().toString()
+        Map<String, Object> parameters = [
+                pid         : (Object) pid,
+                PID         : pid,
+                CONFIG_FILE : fs.getNameOfConfigurationFile(context).getAbsolutePath(),
+                ANALYSIS_DIR: context.getOutputDirectory().getParentFile().getParent()
+        ]
+        return parameters;
+    }
 
     public String createJobName(ExecutionContext executionContext, BaseFile bf, String TOOLID, boolean reduceLevel) {
         return _createJobName(executionContext, bf, TOOLID, reduceLevel)
@@ -532,5 +545,9 @@ public abstract class RuntimeService extends CacheProvider {
 
     @Override
     public void destroy() {
+    }
+
+    String calculateAutoCheckpointFilename(ToolEntry toolEntry, List<Object> parameters) {
+        "AUTOCHECKPOINT_${toolEntry.id}_${(parameters.collect { it.toString().hashCode() }.join("") + "SAFEGUARDFOREMTPYLIST").hashCode()}"
     }
 }

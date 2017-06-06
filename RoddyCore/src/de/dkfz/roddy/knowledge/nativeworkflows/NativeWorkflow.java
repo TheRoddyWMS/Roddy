@@ -14,7 +14,7 @@
 //import de.dkfz.roddy.core.ExecutionContextLevel;
 //import de.dkfz.roddy.core.Workflow;
 //import de.dkfz.roddy.execution.io.ExecutionResult;
-//import de.dkfz.roddy.execution.io.ExecutionService;
+//import de.dkfz.roddy.execution.io.BEExecutionService;
 //import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 //import de.dkfz.roddy.execution.jobs.Command;
 //import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager;
@@ -92,7 +92,7 @@
 //        System.out.println(wrapinScript + " => " + nativeWorkflowScriptWrapper);
 //        System.out.println(finalCommand);
 //
-//        ExecutionResult execute = ExecutionService.getInstance().execute(finalCommand);
+//        ExecutionResult execute = BEExecutionService.getInstance().execute(finalCommand);
 //        //Get the calls file in the temp directory.
 //        String[] calls = FileSystemAccessProvider.getInstance().loadTextFile(new File(context.getTemporaryDirectory(), "calls"));
 //        Map<String, GenericJobInfo> callsByID = new LinkedHashMap<>();
@@ -115,7 +115,7 @@
 //            }
 //
 //            Command command = Roddy.getJobManager().createCommand(jInfo);
-//            ExecutionService.getInstance().execute(command);
+//            BEExecutionService.getInstance().execute(command);
 //            String id = null;
 //            try {
 //                id = command.getExecutionID().getShortID();

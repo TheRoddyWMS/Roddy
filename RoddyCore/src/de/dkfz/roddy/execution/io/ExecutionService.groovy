@@ -108,7 +108,7 @@ public abstract class ExecutionService extends CacheProvider implements BEExecut
     }
 
     public ExecutionService() {
-        super("ExecutionService", true);
+        super("BEExecutionService", true);
     }
 
     public static ExecutionService getInstance() {
@@ -482,7 +482,7 @@ public abstract class ExecutionService extends CacheProvider implements BEExecut
     }
 
     void markConfiguredToolsAsExecutable(ExecutionContext context) {
-        logger.severe("ExecutionService.markConfiguredToolsAsExecutable is not implemented yet! Only checks for executability are available.")
+        logger.severe("BEExecutionService.markConfiguredToolsAsExecutable is not implemented yet! Only checks for executability are available.")
 //        context.getConfiguration().getTools().each {
 //            ToolEntry tool ->
 //                File toolPath = context.configuration.getProcessingToolPath(context, tool.id)

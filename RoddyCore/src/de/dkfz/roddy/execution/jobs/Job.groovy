@@ -22,6 +22,7 @@ import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
+import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
@@ -53,7 +54,7 @@ class Job extends BEJob<Job> {
     /**
      * Keeps a list of all unchanged, initial parameters, including default job parameters.
      */
-    private final Map<String, Object> allRawInputParameters
+    protected final Map<String, Object> allRawInputParameters
 
     /**
      * Provide a list of files if you want to generate job dependencies.
@@ -115,10 +116,14 @@ class Job extends BEJob<Job> {
 //    }
 
     Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices, Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
+        this(context, jobName, toolID, null, arrayIndices, inputParameters, parentFiles, filesToVerify)
+    }
+
+    Job(ExecutionContext context, String jobName, String toolID, String inlineScript, List<String> arrayIndices, Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
         super(jobName
                 , context.getConfiguration().getProcessingToolPath(context, TOOLID_WRAPIN_SCRIPT)
-                , null
-                , getToolMD5(TOOLID_WRAPIN_SCRIPT, context)
+                , inlineScript
+                , inlineScript ? null : getToolMD5(TOOLID_WRAPIN_SCRIPT, context)
                 , getResourceSetFromConfiguration(toolID, context)
                 , arrayIndices
                 , [:]
@@ -170,6 +175,7 @@ class Job extends BEJob<Job> {
     }
 
     static List<BEJob> collectParentJobsFromFiles(List<BaseFile> parentFiles) {
+        if (!parentFiles) return []
         List<BEJob> parentJobs = parentFiles.collect {
             BaseFile bf -> bf?.getCreatingJobsResult()?.job
         }.findAll {
@@ -211,7 +217,7 @@ class Job extends BEJob<Job> {
             if (newPath == null) {
                 // Auto path!
                 int slotPosition = allRawInputParameters.keySet().asList().indexOf(k)
-                if(Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.FailOnAutoFilenames))
+                if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.FailOnAutoFilenames))
                     throw new RuntimeException("Auto filenames are forbidden when strict mode is active.")
                 else
                     context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("An auto filename will be used for ${jobName}:${slotPosition} / ${bf.class.name}"))

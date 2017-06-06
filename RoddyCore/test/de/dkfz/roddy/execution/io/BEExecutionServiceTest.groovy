@@ -31,7 +31,7 @@ import org.junit.Test
  * Created by heinold on 25.11.15.
  */
 @CompileStatic
-public class ExecutionServiceTest {
+public class BEExecutionServiceTest {
     public static ExecutionContext mockedContext;
 
     @BeforeClass
@@ -52,7 +52,7 @@ public class ExecutionServiceTest {
 
         mockupConfig.getConfigurationValues().add(new ConfigurationValue(RuntimeService.RODDY_CENTRAL_EXECUTION_DIRECTORY, "/tmp/roddyCentralDirectory"));
 
-        mockedContext = MockupExecutionContextBuilder.createSimpleContext(ExecutionServiceTest, mockupConfig);
+        mockedContext = MockupExecutionContextBuilder.createSimpleContext(BEExecutionServiceTest, mockupConfig);
     }
 
     @Test

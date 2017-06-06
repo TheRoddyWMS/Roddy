@@ -857,6 +857,13 @@ public class Roddy {
         return applicationBundleDirectory;
     }
 
+    public static File getFolderForConvertedNativePlugins() {
+        File newDir = new File(getSettingsDirectory(), "convertedNativePlugins");
+        if (!newDir.exists())
+            newDir.mkdirs();
+        return newDir;
+    }
+
     public static String getUsedRoddyVersion() {
         String result = "";
         CommandLineCall clc = getCommandLineCall();

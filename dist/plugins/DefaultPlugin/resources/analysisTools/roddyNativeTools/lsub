@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+# lsub replacement for lsf cluster systems
+
+source $(dirname $0)/submissionReplacement.sh

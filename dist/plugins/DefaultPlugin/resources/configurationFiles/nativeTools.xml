@@ -1,0 +1,12 @@
+<!--
+  ~ Copyright (c) 2017 eilslabs.
+  ~
+  ~ Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+  -->
+
+<configuration name='roddyNativeTools' description='This file contains all tools necessary '>
+    <processingTools>
+        <tool name='nativeWrapperForPBS' value='nativePBSWrapper.sh' basepath='roddyNativeTools'/>
+        <tool name='qsubReplacement' value='qsub' basepath='roddyNativeTools'/>
+    </processingTools>
+</configuration>

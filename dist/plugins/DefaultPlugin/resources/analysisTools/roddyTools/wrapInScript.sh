@@ -96,8 +96,6 @@ else
   sleep 2
 
   export WRAPPED_SCRIPT=${WRAPPED_SCRIPT} # Export script so it can identify itself
-  # TODO Integrate automated checkpoint file creation
-  #[[ -f ${FILENAME_CHECKPOINT} ]] && ${FILENAME_CHECKPOINT}
 
   # Create directories
   mkdir -p ${DIR_TEMP} 2 > /dev/null
@@ -112,6 +110,9 @@ else
   $jobProfilerBinary bash ${WRAPPED_SCRIPT}
   exitCode=$?
   echo "Exited script ${WRAPPED_SCRIPT} with value ${exitCode}"
+
+  # If the tool supports auto checkpoints and the exit code is 0, then go on and create it.
+  [[ ${AUTOCHECKPOINT-""} && exitCode == 0 ]] && touch ${AUTOCHECKPOINT}
 
   [[ ${debugWrapInScript-false} == true ]] && set -xuv
   [[ ${debugWrapInScript-false} == false ]] && set +xuv

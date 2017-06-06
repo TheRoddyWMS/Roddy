@@ -170,7 +170,7 @@ class RoddyTest {
 //
 //        assert FileSystemAccessProvider.getInstance() != null;
 //        assert Roddy.getJobManager() != null;
-//        assert ExecutionService.getInstance() != null;
+//        assert BEExecutionService.getInstance() != null;
     }
 
 
