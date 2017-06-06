@@ -56,7 +56,7 @@ public abstract class ConfigurationValidator {
 //        clone.execute();
 //        int contextErrorCountStart = context.getErrors().size();
 
-//        Collection<String> calledTools = clone.getExecutedJobs().collect { Job j -> j.getTool(); }.unique();
+//        Collection<String> calledTools = clone.getExecutedJobs().collect { BEJob j -> j.getTool(); }.unique();
 //        Collection<File> calledToolPaths = calledTools.collect { String toolID -> context.getConfiguration().getSourceToolPath(toolID) };
 //        Collection<File> calledToolPathsOriginalList = new LinkedList<>(calledToolPaths);
 //

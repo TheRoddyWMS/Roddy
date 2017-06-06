@@ -8,6 +8,8 @@ package de.dkfz.roddy.client.fxuiclient
 
 import FakeJob
 import Roddy;
+import de.dkfz.roddy.execution.jobs.FakeBEJob
+import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.client.fxuiclient.fxdatawrappers.*;
 import RoddyRMIClientConnection;
 import RoddyRMIInterfaceImplementation
@@ -25,6 +27,17 @@ import CustomControlOnBorderPane;
 import GenericListViewItemCellImplementation;
 import BaseFile
 import RoddyIOHelperMethods
+import de.dkfz.roddy.execution.io.ExecutionHelper;
+import de.dkfz.roddy.execution.jobs.BEJob
+import de.dkfz.roddy.execution.jobs.Job;
+import de.dkfz.roddy.execution.jobs.JobState
+import de.dkfz.roddy.execution.jobs.ReadOutJob;
+import de.dkfz.roddy.client.fxuiclient.fxcontrols.ExecutionContextOverviewControl;
+import de.dkfz.roddy.client.fxuiclient.fxcontrols.JobOverviewControl;
+import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.CustomControlOnBorderPane;
+import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.GenericListViewItemCellImplementation;
+import de.dkfz.roddy.knowledge.files.BaseFile
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
 import javafx.beans.value.ChangeListener
 import javafx.beans.value.ObservableValue
@@ -258,7 +271,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
 //                    e.printStackTrace();
 //                }
 //            }
-//        }, "Job added", false);
+//        }, "BEJob added", false);
 //    }
 //
 //    @Override
@@ -335,7 +348,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
         private HTMLEditor htmlTextArea;
         private File file;
         private File resultFile;
-        private Job job;
+        private BEJob job;
 
         public LoadFileToTextAreaTask(HTMLEditor textArea, File file) {
             super("load file to html editor");
@@ -349,7 +362,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
             this.file = file;
         }
 
-        public LoadFileToTextAreaTask(WebView textArea, Job job) {
+        public LoadFileToTextAreaTask(WebView textArea, BEJob job) {
             super("load job to text area.");
             this.textArea = textArea;
             if (job.hasLogFile()) {
@@ -458,7 +471,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
          * @param ta
          * @param job
          */
-        public static final void createAndExecute(WebView ta, Job job) {
+        public static final void createAndExecute(WebView ta, BEJob job) {
             (new Thread(new LoadFileToTextAreaTask(ta, job), "Load job to webview")).start();
         }
     }
@@ -474,8 +487,13 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
 //        loadFilesCreatedByWorkflow(ec);
 
         clearJobList();
+<<<<<<< HEAD:RoddyUI/src/de/dkfz/roddy/client/fxuiclient/DataSetView.groovy
         for (JobInfoObject job : api.getExecutedJobs()) {
             if (job instanceof FakeJob || job.isFakeJob())
+=======
+        for (RoddyRMIInterfaceImplementation.JobInfoObject job : api.getExecutedJobs()) {
+            if (job instanceof FakeBEJob || job.isFakeJob())
+>>>>>>> develop:RoddyCore/src/de/dkfz/roddy/client/fxuiclient/DataSetView.groovy
                 continue; //Ignore fake jobs.
             synchronized (allJobWrappersForEC) {
                 if (jobInfoWrappersByJobId[job.jobId] == null) {
@@ -496,9 +514,9 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
             logger.warning("No FXJobInfoObjectWrapper object for selectedJobChanged()");
             return;
         }
-        Job job = jobWrapper.getJob();
+        BEJob job = jobWrapper.getJob();
         if (job == null) {
-            logger.warning("No Job object for selectedJobChanged()");
+            logger.warning("No BEJob object for selectedJobChanged()");
             return;
         }
         for (Object _jobWrapper : lstJobsOfRun.getItems()) {
@@ -593,7 +611,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
             }
             JobInfoObject job = jobWrapper.getJob();
             if (job == null) {
-                logger.warning("No Job object for selectedJobChanged()");
+                logger.warning("No BEJob object for selectedJobChanged()");
                 return;
             }
             jobOverview.setJob(job, analysisLongId);

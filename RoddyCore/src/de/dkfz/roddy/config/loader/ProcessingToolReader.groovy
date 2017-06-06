@@ -6,8 +6,8 @@
 
 package de.dkfz.roddy.config.loader
 
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
+import de.dkfz.roddy.config.ResourceSet
+import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.FilenamePattern
 import de.dkfz.roddy.config.ToolEntry
@@ -63,26 +63,26 @@ class ProcessingToolReader {
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    String readTag(NodeChild node, String tag) {
-        String text = node.@"$tag".text()
-        if (!text)
-            addLoadErr("Could not get tag value for '${tag}'", null)
+    String readAttribute(NodeChild node, String id, String _default = null) {
+        String text = node.@"$id".text()
+        if (text)
+            return text
+        else if (_default)
+            text = _default
+        else
+            addLoadErr("Could not get attribute value for '${id}'", null)
         return text
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     Collection<NodeChild> readCollection(NodeChild node, String id) {
         def collection = node."$id" as Collection<NodeChild>
-//        if(!collection)
-//            loadErrors << "Could not load collection for '${id}"
         return collection
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     Collection<NodeChild> readCollection(NodeChildren node, String id) {
         def collection = node."$id" as Collection<NodeChild>
-//        if(!collection)
-//            loadErrors << "Could not load collection for '${id}"
         return collection
     }
 
@@ -93,14 +93,17 @@ class ProcessingToolReader {
     ToolEntry readProcessingTool() {
         String toolID
         try {
-            toolID = readTag(tool, "name") //tool.@name.text()
+            toolID = readAttribute(tool, "name") //tool.@name.text()
             this.toolID = toolID
-            String path = readTag(tool, "value")
-            String basePathId = readTag(tool, "basepath")
+            String path = readAttribute(tool, "value")
+            String basePathId = readAttribute(tool, "basepath")
             boolean overrideresourcesets = extractAttributeText(tool, "overrideresourcesets", "false").toBoolean()
+            boolean useAutoCheckpoint = readAttribute(tool, "useAutoCheckpoint", "false")
             ToolEntry currentEntry = new ToolEntry(toolID, basePathId, path)
             if (overrideresourcesets)
                 currentEntry.setOverridesResourceSets()
+            if (useAutoCheckpoint)
+                currentEntry.setUseAutoCheckpoint()
             int noOfChildren = tool.children().size()
             if (noOfChildren > 0) {
                 List<ToolEntry.ToolParameter> inputParameters = []
@@ -124,9 +127,9 @@ class ProcessingToolReader {
                         outputParameters << parseToolParameter(toolID, child)
                         noOfOutputParameters++
                     } else if (cName == "script") {
-                        if (readTag(child, "value") != "") {
+                        if (readAttribute(child, "value") != "") {
                             currentEntry.setInlineScript(child.text().trim().replaceAll('<!\\[CDATA\\[', "").replaceAll(']]>', ""))
-                            currentEntry.setInlineScriptName(readTag(child, "value"))
+                            currentEntry.setInlineScriptName(readAttribute(child, "value"))
                         }
                     }
                 }
@@ -179,7 +182,7 @@ class ProcessingToolReader {
     ResourceSet parseToolResourceSet(NodeChild rset, Configuration config) {
         ResourceSet tempSet = null
         try {
-            ResourceSetSize rsetSize = readTag(rset, "size")
+            ResourceSetSize rsetSize = readAttribute(rset, "size")
             //Is it short defined or long defined?
             String valueList = extractAttributeText(rset, "values", "")
             if (!valueList) { //Must be fully specified.
@@ -211,7 +214,7 @@ class ProcessingToolReader {
      * @return
      */
     ToolEntry.ToolParameter parseToolParameter(String toolID, NodeChild child) {
-        String type = readTag(child, "type")
+        String type = readAttribute(child, "type")
         if (type == "file") { //Load a file
             return parseFile(child, toolID)
         } else if (type == "tuple") {
@@ -220,7 +223,7 @@ class ProcessingToolReader {
             return parseFileGroup(child, toolID)
         } else if (type == "string") {
             ToolStringParameter.ParameterSetbyOptions setby = Enum.valueOf(ToolStringParameter.ParameterSetbyOptions.class, extractAttributeText(child, "setby", ToolStringParameter.ParameterSetbyOptions.callingCode.name()))
-            String pName = readTag(child, "scriptparameter")
+            String pName = readAttribute(child, "scriptparameter")
             ToolStringParameter tsp = null
             if (setby == ToolStringParameter.ParameterSetbyOptions.callingCode) {
                 tsp = new ToolStringParameter(pName)
@@ -233,18 +236,18 @@ class ProcessingToolReader {
     }
 
     ToolFileParameter parseFile(NodeChild child, String toolID) {
-        String cls = readTag(child, "typeof")
+        String cls = readAttribute(child, "typeof")
         Class _cls = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, BaseFile.class.name)
 
-        String pName = readTag(child, "scriptparameter")
+        String pName = readAttribute(child, "scriptparameter")
         String fnpSelTag = extractAttributeText(child, "selectiontag", extractAttributeText(child, "fnpatternselectiontag", FilenamePattern.DEFAULT_SELECTION_TAG))
         String parentFileVariable = extractAttributeText(child, "variable", null) //This is only the case for child files.
         ToolFileParameterCheckCondition check = new ToolFileParameterCheckCondition(extractAttributeText(child, "check", "true"))
 
         List<ToolEntry.ToolConstraint> constraints = new LinkedList<ToolEntry.ToolConstraint>()
         for (constraint in readCollection(child, "constraint")) {
-            String method = readTag(constraint, "method")
-            String methodonfail = readTag(constraint, "methodonfail")
+            String method = readAttribute(constraint, "method")
+            String methodonfail = readAttribute(constraint, "methodonfail")
             constraints << new ToolEntry.ToolConstraint(_cls.getMethod(methodonfail), _cls.getMethod(method))
         }
 
@@ -289,7 +292,7 @@ class ProcessingToolReader {
 
         if (fileclass) {
             // The parameter name is only used if no children are set.
-            String pName = readTag(groupNode, "scriptparameter")
+            String pName = readAttribute(groupNode, "scriptparameter")
             if (!pName) {
                 addLoadErr("You have to set both the parametername and the fileclass attribute for filegroup i/o parameter in ${toolID}")
             }
@@ -300,7 +303,7 @@ class ProcessingToolReader {
         } else if (childCount) {
             return parseChildFilesForFileGroup(groupNode, passas, toolID, null, filegroupClass, indexOptions)
         } else {
-            String pName = readTag(groupNode, "scriptparameter")
+            String pName = readAttribute(groupNode, "scriptparameter")
             if (!isInputFileGroup(groupNode)) { // TODO: Enforce fileclass attributes for output filegroup <https://eilslabs-phabricator.dkfz.de/T2015>
                 addLoadErr("Either the fileclass or a list of child files need to be set for a filegroup in ${toolID}")
                 return null

@@ -6,12 +6,12 @@
 
 package de.dkfz.roddy.execution.jobs.cluster.pbs;
 
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet;
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize;
-import de.dkfz.eilslabs.batcheuphoria.execution.cluster.pbs.PBSJobManager;
-import de.dkfz.eilslabs.batcheuphoria.execution.cluster.pbs.PBSResourceProcessingCommand;
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager;
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobManagerCreationParameters;
+import de.dkfz.roddy.config.ResourceSet;
+import de.dkfz.roddy.config.ResourceSetSize;
+import de.dkfz.roddy.execution.cluster.pbs.PBSJobManager;
+import de.dkfz.roddy.execution.cluster.pbs.PBSResourceProcessingCommand;
+import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager;
+import de.dkfz.roddy.execution.jobs.JobManagerCreationParameters;
 import de.dkfz.roddy.config.*;
 import de.dkfz.roddy.execution.io.NoNoExecutionService;
 import de.dkfz.roddy.tools.BufferUnit;
@@ -31,7 +31,7 @@ public class PBSJobManagerTest {
 
         Configuration cfg = new Configuration(new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null));
 
-        JobManager cFactory = new PBSJobManager(new NoNoExecutionService(), new JobManagerCreationParameters());
+        BatchEuphoriaJobManager cFactory = new PBSJobManager(new NoNoExecutionService(), new JobManagerCreationParameters());
         PBSResourceProcessingCommand test = (PBSResourceProcessingCommand) cFactory.convertResourceSet(rset1);
         assert test.getProcessingString().trim().equals("-l mem=1024M -l nodes=1:ppn=2 -l walltime=00:01:00:00");
 

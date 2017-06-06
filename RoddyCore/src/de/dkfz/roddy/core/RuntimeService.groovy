@@ -6,32 +6,24 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.eilslabs.batcheuphoria.jobs.Command
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
+import de.dkfz.roddy.execution.jobs.Command
+import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
+import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.BaseMetadataTable
 import de.dkfz.roddy.execution.io.MetadataTableFactory
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.LoadedJob
 import de.dkfz.roddy.knowledge.files.BaseFile
-import de.dkfz.roddy.knowledge.files.LoadedFile
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
-import groovy.util.slurpersupport.NodeChild
-import groovy.xml.MarkupBuilder
 import org.apache.commons.io.filefilter.WildcardFileFilter
-
-import static de.dkfz.roddy.StringConstants.EMPTY
-import static de.dkfz.roddy.StringConstants.SPLIT_COLON
-import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 
 /**
  * A RuntimeService provides path calculations for file access.
@@ -380,7 +372,7 @@ public abstract class RuntimeService {
 
     public File getLogFileForJob(Job job) {
         //Returns the log files path of the job.
-        File f = new File(job.getExecutionContext().getExecutionDirectory(), Roddy.getJobManager().getLogFileName(job));
+        File f = new File(job.context.getExecutionDirectory(), Roddy.getJobManager().getLogFileName(job));
     }
 
     public File getLogFileForCommand(Command command) {
@@ -434,7 +426,18 @@ public abstract class RuntimeService {
         return analysisToolsDirectory;
     }
 
-    public abstract Map<String, Object> getDefaultJobParameters(ExecutionContext context, String TOOLID)
+    public Map<String, Object> getDefaultJobParameters(ExecutionContext context, String TOOLID) {
+        def fs = context.getRuntimeService();
+        //File cf = fs..createTemporaryConfigurationFile(executionContext);
+        String pid = context.getDataSet().toString()
+        Map<String, Object> parameters = [
+                pid         : (Object) pid,
+                PID         : pid,
+                CONFIG_FILE : fs.getNameOfConfigurationFile(context).getAbsolutePath(),
+                ANALYSIS_DIR: context.getOutputDirectory().getParentFile().getParent()
+        ]
+        return parameters;
+    }
 
     public String createJobName(ExecutionContext executionContext, BaseFile bf, String TOOLID, boolean reduceLevel) {
         return _createJobName(executionContext, bf, TOOLID, reduceLevel)
@@ -525,5 +528,10 @@ public abstract class RuntimeService {
     boolean initialize() {}
 
     @Deprecated
-    void destroy() {}
+    public void destroy() {
+    }
+
+    String calculateAutoCheckpointFilename(ToolEntry toolEntry, List<Object> parameters) {
+        "AUTOCHECKPOINT_${toolEntry.id}_${(parameters.collect { it.toString().hashCode() }.join("") + "SAFEGUARDFOREMTPYLIST").hashCode()}"
+    }
 }

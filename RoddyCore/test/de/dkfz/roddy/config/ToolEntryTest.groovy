@@ -6,12 +6,12 @@
 
 package de.dkfz.roddy.config
 
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
+import de.dkfz.roddy.config.ResourceSet
+import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.tools.BufferValue
 import de.dkfz.roddy.tools.TimeUnit
 import groovy.transform.CompileStatic
-import static de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize.*
+import static de.dkfz.roddy.config.ResourceSetSize.*
 import java.lang.reflect.Method
 
 /**

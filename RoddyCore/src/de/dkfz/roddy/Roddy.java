@@ -7,10 +7,10 @@
 package de.dkfz.roddy;
 
 import com.btr.proxy.search.ProxySearch;
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize;
-import de.dkfz.eilslabs.batcheuphoria.execution.cluster.pbs.PBSJobManager;
-import de.dkfz.eilslabs.batcheuphoria.jobs.*;
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager;
+import de.dkfz.roddy.config.ResourceSetSize;
+import de.dkfz.roddy.execution.BEExecutionService;
+import de.dkfz.roddy.execution.cluster.pbs.PBSJobManager;
+import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager;
 import de.dkfz.roddy.client.RoddyStartupModes;
 import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
@@ -244,7 +244,7 @@ public class Roddy {
         List<String> list = Arrays.asList(args);
         CommandLineCall clc = new CommandLineCall(list);
         commandLineCall = clc;
-        if(clc.isMalformed())
+        if (clc.isMalformed())
             exit(1);
 
         // Initialize the logger with an initial setup. At this point we don't know about things like the logger settings
@@ -437,7 +437,7 @@ public class Roddy {
         if (!successful) {
             String toggleNames = RoddyIOHelperMethods.joinArray(AvailableFeatureToggles.values(), "\n\t");
             logger.severe("Available toggle values are:\n\t" + toggleNames);
-            if(isStrictModeEnabled())
+            if (isStrictModeEnabled())
                 exit(1);
         }
     }
@@ -471,6 +471,14 @@ public class Roddy {
         return RoddyConversionHelperMethods.toBoolean(featureToggleConfig.getProperty(toggle.name(), null), toggle.defaultValue);
     }
 
+    public static boolean isOptionSet(RoddyStartupOptions opt) {
+        return getCommandLineCall().isOptionSet(opt);
+    }
+
+    public static boolean isStrictWithFeature(RoddyStartupOptions opt) {
+        return Roddy.isStrictModeEnabled() && Roddy.getCommandLineCall().isOptionSet(opt);
+    }
+
     /**
      * Initializes basic Roddy services
      * The execution service has two configuration settings, one for command line interface and one for the ui based instance.
@@ -487,7 +495,7 @@ public class Roddy {
             FileSystemAccessProvider.initializeProvider(fullSetup);
             time("init fsap");
 
-            //Do not touch the calling order, execution service must be set before JobManager.
+            //Do not touch the calling order, execution service must be set before BatchEuphoriaJobManager.
             currentStep = "Initialize execution service";
             ExecutionService.initializeService(fullSetup);
             time("init execserv");
@@ -555,7 +563,7 @@ public class Roddy {
         if (applicationSpecificConfiguration == null) {
             applicationSpecificConfiguration = new Configuration(null);
             RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
-            JobManager jobManager = Roddy.getJobManager();
+            BatchEuphoriaJobManager jobManager = Roddy.getJobManager();
             Map<String, String> specificEnvironmentSettings = jobManager.getSpecificEnvironmentSettings();
             for (String k : specificEnvironmentSettings.keySet()) {
                 logger.postSometimesInfo("Add job manager value " + k + "=" + specificEnvironmentSettings.get(k) + " to context configuration");
@@ -587,16 +595,26 @@ public class Roddy {
             return;
 
         ClassLoader classLoader;
-        String jobManagerClassID;
-        Class jobManagerClass;
+        String jobManagerClassID = "";
+        Class jobManagerClass = null;
 
-        classLoader = LibrariesFactory.getGroovyClassLoader();
-        jobManagerClassID = Roddy.getApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS, PBSJobManager.class.getName());
-        jobManagerClass = classLoader.loadClass(jobManagerClassID);
+        try {
+            classLoader = LibrariesFactory.getGroovyClassLoader();
+            jobManagerClassID = Roddy.getApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS);
+            if(RoddyConversionHelperMethods.isNullOrEmpty(jobManagerClassID)) jobManagerClassID = "UNSET";
+            jobManagerClass = classLoader.loadClass(jobManagerClassID);
+        } catch (ClassNotFoundException e) {
+            StringBuilder available = new StringBuilder();
+            for (AvailableClusterSystems acs : AvailableClusterSystems.values()) {
+                available.append("\n\t" + acs.getClassName());
+            }
+            logger.severe("Could not find job manager class: " + jobManagerClassID + ", available are: " + available.toString() + "\nPlease set the jobManagerClass entry in your application ini file: " + getPropertiesFilePath().getAbsolutePath() + "");
+            exit(1);
+        }
 
         /** Get the constructor which comes with no parameters */
-        Constructor first = jobManagerClass.getDeclaredConstructor(de.dkfz.eilslabs.batcheuphoria.execution.ExecutionService.class, JobManagerCreationParameters.class);
-        jobManager = (JobManager) first.newInstance(ExecutionService.getInstance()
+        Constructor first = jobManagerClass.getDeclaredConstructor(BEExecutionService.class, JobManagerCreationParameters.class);
+        jobManager = (BatchEuphoriaJobManager) first.newInstance(ExecutionService.getInstance()
                 , new JobManagerCreationParametersBuilder()
                         .setCreateDaemon(true)
                         .setTrackUserJobsOnly(trackUserJobsOnly)
@@ -617,9 +635,9 @@ public class Roddy {
 //        new File(configuration.getProperty("loggingDirectory", "/"))
     }
 
-    private static JobManager jobManager;
+    private static BatchEuphoriaJobManager jobManager;
 
-    public static JobManager getJobManager() {
+    public static BatchEuphoriaJobManager getJobManager() {
         return jobManager;
     }
 
@@ -837,6 +855,13 @@ public class Roddy {
         return applicationBundleDirectory;
     }
 
+    public static File getFolderForConvertedNativePlugins() {
+        File newDir = new File(getSettingsDirectory(), "convertedNativePlugins");
+        if (!newDir.exists())
+            newDir.mkdirs();
+        return newDir;
+    }
+
     public static String getUsedRoddyVersion() {
         String result = "";
         CommandLineCall clc = getCommandLineCall();
@@ -914,5 +939,4 @@ public class Roddy {
             return new CommandLineCall(new LinkedList<>());
         return commandLineCall;
     }
-
 }

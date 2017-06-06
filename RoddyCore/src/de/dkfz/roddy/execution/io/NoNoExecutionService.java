@@ -105,4 +105,14 @@ public class NoNoExecutionService extends ExecutionService {
         return true;
     }
 
+    @Override
+    public File queryWorkingDirectory() {
+        return null;
+    }
+
+    @Override
+    public void releaseCache() {
+
+    }
+>>>>>>> develop
 }

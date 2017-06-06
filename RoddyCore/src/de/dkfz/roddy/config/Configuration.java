@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.config;
 
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize;
+import de.dkfz.roddy.config.ResourceSetSize;
 import de.dkfz.roddy.config.loader.ConfigurationFactory;
 import de.dkfz.roddy.config.loader.ConfigurationLoadError;
 import de.dkfz.roddy.core.RuntimeService;
@@ -313,7 +313,6 @@ public class Configuration implements ContainerParent<Configuration> {
         for (PluginInfo pluginInfo : pluginInfos) {
             availableBasePaths.putAll(pluginInfo.getToolsDirectories());
         }
-
 
         ToolEntry te = tools.getValue(tool);
         if (te.basePathId.length() > 0 && !availableBasePaths.containsKey(te.basePathId)) {

@@ -6,62 +6,39 @@
 
 package de.dkfz.roddy.config.loader
 
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
-import de.dkfz.roddy.config.AnalysisConfiguration
-import de.dkfz.roddy.config.AnalysisConfigurationProxy
-import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationValue
-import de.dkfz.roddy.config.ConfigurationValueBundle
-import de.dkfz.roddy.config.DerivedFromFilenamePattern
-import de.dkfz.roddy.config.Enumeration
-import de.dkfz.roddy.config.EnumerationValue
-import de.dkfz.roddy.config.FileStageFilenamePattern
-import de.dkfz.roddy.config.FilenamePattern
-import de.dkfz.roddy.config.InformationalConfigurationContent
-import de.dkfz.roddy.config.OnMethodFilenamePattern
-import de.dkfz.roddy.config.OnScriptParameterFilenamePattern
-import de.dkfz.roddy.config.OnToolFilenamePattern
-import de.dkfz.roddy.config.ProjectConfiguration
-import de.dkfz.roddy.config.ToolEntry
-import de.dkfz.roddy.config.ToolFileGroupParameter
-import de.dkfz.roddy.config.ToolFileParameter
-import de.dkfz.roddy.config.ToolFileParameterCheckCondition
-import de.dkfz.roddy.config.ToolStringParameter
-import de.dkfz.roddy.config.ToolTupleParameter
-import de.dkfz.roddy.config.UnknownConfigurationFileTypeException
-import de.dkfz.roddy.config.converters.BashConverter
-import de.dkfz.roddy.config.converters.YAMLConverter
-import de.dkfz.roddy.knowledge.brawlworkflows.BrawlWorkflow
-import de.dkfz.roddy.knowledge.files.BaseFile
-import de.dkfz.roddy.knowledge.files.FileGroup
-import de.dkfz.roddy.knowledge.files.FileObject
-import de.dkfz.roddy.knowledge.files.FileObjectTupleFactory
-import de.dkfz.roddy.knowledge.files.FileStage
-import de.dkfz.roddy.knowledge.files.GenericFileGroup
-
-//import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
-import de.dkfz.roddy.tools.*
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.client.RoddyStartupOptions
+import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.Configuration.ConfigurationType
-import de.dkfz.roddy.config.ToolFileGroupParameter.PassOptions
-import de.dkfz.roddy.config.ToolStringParameter.ParameterSetbyOptions
-import de.dkfz.roddy.core.*
+import de.dkfz.roddy.config.converters.BashConverter
+import de.dkfz.roddy.config.converters.YAMLConverter
+import de.dkfz.roddy.core.Project
+import de.dkfz.roddy.core.ProjectLoaderException
+import de.dkfz.roddy.core.Workflow
+import de.dkfz.roddy.knowledge.brawlworkflows.BrawlWorkflow
+import de.dkfz.roddy.knowledge.files.BaseFile
+import de.dkfz.roddy.knowledge.files.FileObject
+import de.dkfz.roddy.knowledge.files.FileStage
+import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
+import de.dkfz.roddy.plugins.LibrariesFactory
+import de.dkfz.roddy.plugins.PluginInfo
+import de.dkfz.roddy.plugins.SyntheticPluginInfo
 
-//import de.dkfz.roddy.knowledge.files.*
-import de.dkfz.roddy.plugins.*
-import de.dkfz.roddy.tools.BufferValue
-import de.dkfz.roddy.tools.TimeUnit
+import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
+import de.dkfz.roddy.tools.Tuple3
 import groovy.transform.TypeCheckingMode
-import groovy.util.slurpersupport.*
+import groovy.util.slurpersupport.NodeChild
+import groovy.util.slurpersupport.NodeChildren
 import groovy.xml.StreamingMarkupBuilder
 import groovy.xml.XmlUtil
 import org.apache.commons.io.filefilter.WildcardFileFilter
 
-import java.lang.reflect.*
-import java.util.logging.*
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+import java.lang.reflect.Modifier
+import java.util.logging.Level
 
 import static de.dkfz.roddy.StringConstants.*
 
@@ -148,6 +125,8 @@ class ConfigurationFactory {
                         availableConfigurations[iccSub.id] = iccSub
                     }
 
+                } catch (UnknownConfigurationFileTypeException ex) {
+                    logger.severe("The file ${it.absolutePath} does not appear to be a valid Bash configuration file:\n\t ${ex.message}")
                 } catch (Exception ex) {
                     logger.severe("File ${it.absolutePath} cannot be loaded! Error in config file! ${ex.toString()}")
                     logger.severe(RoddyIOHelperMethods.getStackTraceAsString(ex))
@@ -159,8 +138,7 @@ class ConfigurationFactory {
         List<File> allFiles = []
         Map<File, PluginInfo> pluginsByFile = [:]
         for (PluginInfo pi in LibrariesFactory.getInstance().getLoadedPlugins()) {
-            File configPath = pi.getConfigurationDirectory()
-            File[] configFiles = configPath.listFiles((FileFilter) new WildcardFileFilter("*.xml"))
+            List<File> configFiles = pi.getConfigurationFiles()
             for (File f in configFiles) {
                 allFiles.add(f)
                 pluginsByFile[f] = pi
@@ -233,19 +211,16 @@ class ConfigurationFactory {
             return file.text
 
         if (file.name.endsWith(".sh")) // Easy Bash importer
-            return loadAndPreprocessBashFile(file.text)
-
-//        if (file.name.endsWith(".yml")) // YAML import
-//            return loadAndPreprocessYAMLFile(file.text)
+            return loadAndPreprocessBashFile(file)
 
         throw new UnknownConfigurationFileTypeException("Unknown file type ${file.name} for a configuration file.")
     }
 
-    static String loadAndPreprocessYAMLFile(String s) {
+    static String loadAndPreprocessYAMLFile(File s) {
         return new YAMLConverter().convertToXML(s)
     }
 
-    static String loadAndPreprocessBashFile(String s) {
+    static String loadAndPreprocessBashFile(File s) {
         return new BashConverter().convertToXML(s)
     }
 
@@ -324,7 +299,9 @@ class ConfigurationFactory {
         InformationalConfigurationContent icc = availableConfigurations[usedConfiguration]
 
         if (icc == null) {
-            throw new RuntimeException("The configuration identified by \"${usedConfiguration}\" cannot be found, is the identifier correct? Is the configuration available?.")
+            throw new ProjectLoaderException("The configuration identified by \"${usedConfiguration}\" cannot be found, is the identifier correct? Is the configuration available? Possible are:\n\t"
+                    + availableAnalysisConfigurations.collect { it.id }.join("\n\t")
+            )
         }
 
         return loadConfiguration(icc)
@@ -437,7 +414,7 @@ class ConfigurationFactory {
             config = new AnalysisConfiguration(icc, workflowClass, runtimeServiceClass, parentConfig, listOfUsedTools, usedToolFolders, cleanupScript)
 
             if (workflowTool && jobManagerClass) {
-                ((AnalysisConfiguration) config).setNativeToolID(workflowTool)
+                ((AnalysisConfiguration) config).setNativeToolID(workflowTool.replace(".", "_"))
                 ((AnalysisConfiguration) config).setJobManagerFactory(jobManagerClass)
             }
             if (brawlWorkflow) {
@@ -519,8 +496,8 @@ class ConfigurationFactory {
     static Tuple3<Class, Boolean, Integer> loadPatternClass(String pkg, String className, Class constructorClass = null) {
 
         String cls
-        boolean packageIsSet = pkg && pkg != LibrariesFactory.SYNTHETIC_PACKAGE
-        Class foundClass = !packageIsSet ? LibrariesFactory.instance.searchForClass(className) : null
+        boolean packageIsSet = pkg && pkg != SyntheticPluginInfo.SYNTHETIC_PACKAGE;
+        Class foundClass = !packageIsSet ? LibrariesFactory.instance.searchForClass(className) : null;
         if (foundClass)
             cls = foundClass.name
         else
@@ -770,7 +747,7 @@ class ConfigurationFactory {
         for (NodeChild cvalueNode in configurationNode.configurationvalues.cvalue) {
             //TODO Code deduplication! Also in readCVBundle.
             ConfigurationValue cvalue = readConfigurationValue(cvalueNode, config)
-            if (configurationValues.containsKey(cvalue.id)) {
+            if (!Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.ignorecvalueduplicates) && configurationValues.containsKey(cvalue.id)) {
                 String cval0 = configurationValues[cvalue.id].value//?.length() > 20 ? configurationValues[cvalue.id].value[0 .. 20] : configurationValues[cvalue.id].value;
                 String cval1 = cvalue.value//?.length() ? cvalue.value[0..20] : cvalue.value;
                 config.addLoadError(new ConfigurationLoadError(config, "cValues", "Value ${cvalue.id} in config ${config.getID()} with value ${cval0} is not unique and will be overriden with value ${cval1}".toString(), null))

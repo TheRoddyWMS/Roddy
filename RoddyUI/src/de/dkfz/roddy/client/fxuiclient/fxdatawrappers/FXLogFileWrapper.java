@@ -7,8 +7,8 @@
 package de.dkfz.roddy.client.fxuiclient.fxdatawrappers;
 
 
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
-import de.dkfz.roddy.execution.jobs.Job;
+import de.dkfz.roddy.execution.jobs.BEJob;
+import de.dkfz.roddy.execution.jobs.JobState;
 import de.dkfz.roddy.execution.jobs.ReadOutJob;
 
 import java.io.File;
@@ -17,9 +17,9 @@ import java.io.File;
  */
 public class FXLogFileWrapper {
     private final File file;
-    private final Job job;
+    private final BEJob job;
 
-    public FXLogFileWrapper(Job job, File file) {
+    public FXLogFileWrapper(BEJob job, File file) {
         this.file = file;
         this.job = job;
     }
@@ -32,7 +32,7 @@ public class FXLogFileWrapper {
         return file.getName();
     }
 
-    public Job getJob() {
+    public BEJob getJob() {
         return job;
     }
 

@@ -16,7 +16,15 @@ import RoddyUIController;
 import RoddyUITask;
 import FXJobParameterWrapper;
 import CustomControlOnBorderPane;
-import BaseFile
+import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation
+import de.dkfz.roddy.execution.jobs.BEJob
+
+//import de.dkfz.roddy.execution.jobs.JobStatusListener;
+import de.dkfz.roddy.client.fxuiclient.ConfigurationViewer
+import de.dkfz.roddy.client.fxuiclient.RoddyUIController;
+import de.dkfz.roddy.client.fxuiclient.RoddyUITask;
+import de.dkfz.roddy.client.fxuiclient.fxdatawrappers.FXJobParameterWrapper;
+import de.dkfz.roddy.client.fxuiclient.fxwrappercontrols.CustomControlOnBorderPane
 import groovy.transform.CompileStatic;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -29,11 +37,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
-import javafx.scene.web.WebView;
-
-import java.io.File;
-import java.net.URL;
-import java.util.ResourceBundle;
+import javafx.scene.web.WebView
 
 /**
  */
@@ -112,7 +116,7 @@ public class JobOverviewControl extends CustomControlOnBorderPane implements Ini
 //                if (bf == null || bf.getCreatingJobsResult() == null || bf.getCreatingJobsResult().getJob() == null) {
 //                    logger.info("No log file info is available for basefile " + bf.getAbsolutePath());
 //                } else {
-//                    final Job jP = bf.getCreatingJobsResult().getJob();
+//                    final BEJob jP = bf.getCreatingJobsResult().getJob();
 //                    Hyperlink hl = new Hyperlink(jP.getJobID());//
 //                    hl.setOnAction(new EventHandler<ActionEvent>() {
 //                        @Override
@@ -147,7 +151,7 @@ public class JobOverviewControl extends CustomControlOnBorderPane implements Ini
         }, "Refresh logfile task", false);
     }
 
-    private void jobHyperlinkClicked(Job jP) {
+    private void jobHyperlinkClicked(BEJob jP) {
         onActionProperty().get().handle(new ActionEvent(jP, null));
     }
 

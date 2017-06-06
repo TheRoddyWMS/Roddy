@@ -84,7 +84,7 @@ class XMLConverter extends ConfigurationConverter {
     }
 
     @Override
-    String convertToXML(String text) {
-        return text;
+    String convertToXML(File file) {
+        return file.text;
     }
 }

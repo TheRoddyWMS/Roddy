@@ -15,6 +15,9 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
 import java.util.List;
+import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation
+import de.dkfz.roddy.execution.jobs.JobState;
+import groovy.transform.CompileStatic
 
 /**
  * Encapsulates DataSets (like i.e. PIDs)

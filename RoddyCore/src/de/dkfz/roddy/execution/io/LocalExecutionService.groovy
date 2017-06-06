@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.execution.io
 
-import de.dkfz.eilslabs.batcheuphoria.jobs.Command
+import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration
@@ -15,7 +15,6 @@ import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.tools.LoggerWrapper
 
 import java.lang.reflect.Field
@@ -100,6 +99,14 @@ public class LocalExecutionService extends ExecutionService {
             }
             return exID;
         }
+    }
+
+    @Override
+    /**
+     * Should be the current directory
+     */
+    File queryWorkingDirectory() {
+        return new File("")
     }
 
     @Override

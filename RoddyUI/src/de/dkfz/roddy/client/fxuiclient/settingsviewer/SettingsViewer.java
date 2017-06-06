@@ -141,7 +141,7 @@ public class SettingsViewer extends CustomControlOnGridPane {
             @Override
             protected Object _call() throws Exception {
 //                Reflections collect = Reflections.collect();
-//                Set<Class<? extends ExecutionService>> lstOfExecutionServices = collect.getSubTypesOf(ExecutionService.class);
+//                Set<Class<? extends BEExecutionService>> lstOfExecutionServices = collect.getSubTypesOf(BEExecutionService.class);
 //                Set<Class<? extends FileSystemAccessProvider>> lstOfFileSystemAccessManagers = collect.getSubTypesOf(FileSystemAccessProvider.class);
 //                Set<Class<? extends ShellCommandSet>> lstOfFileSystemCommandSets = collect.getSubTypesOf(ShellCommandSet.class);
 //                collect.getSubTypesOf(de.dkfz.roddy.execution.io.RuntimeService.class);
@@ -220,7 +220,7 @@ public class SettingsViewer extends CustomControlOnGridPane {
 //        try {
 //
 //            FileSystemAccessProvider.initializeProvider(true);
-//            ExecutionService.initializeService(true);
+//            BEExecutionService.initializeService(true);
 //        } catch (Exception ex) {
 //            logger.log(Level.SEVERE, null, ex);
 ////            throw new RuntimeException(ex);

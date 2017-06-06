@@ -6,8 +6,8 @@
 
 package de.dkfz.roddy
 
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
-import de.dkfz.eilslabs.batcheuphoria.execution.cluster.pbs.PBSJobManager
+import de.dkfz.roddy.config.ResourceSetSize
+import de.dkfz.roddy.execution.cluster.pbs.PBSJobManager
 import de.dkfz.roddy.client.cliclient.CommandLineCall
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import groovy.transform.CompileStatic
@@ -170,7 +170,7 @@ class RoddyTest {
 //
 //        assert FileSystemAccessProvider.getInstance() != null;
 //        assert Roddy.getJobManager() != null;
-//        assert ExecutionService.getInstance() != null;
+//        assert BEExecutionService.getInstance() != null;
     }
 
 

@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.execution.io
 
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
+import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.loader.ConfigurationFactory
@@ -23,7 +23,7 @@ import org.junit.Test
 /**
  * Created by kaercher on 05.07.16.
  */
-public class ExecutionServiceTestInlineScript {
+public class BEExecutionServiceTestInlineScript {
 
     public static ExecutionContext mockedContext;
     public static Map<File, PluginInfo> listOfFolders = [:]
@@ -36,7 +36,7 @@ public class ExecutionServiceTestInlineScript {
         ConfigurationFactory.initialize(LibrariesFactory.getInstance().getLoadedPlugins().collect { it -> it.getConfigurationDirectory() })
 
         final Configuration mockupConfig = new Configuration(new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null), ConfigurationFactory.getInstance().getConfiguration("default"))
-        mockedContext = MockupExecutionContextBuilder.createSimpleContext(ExecutionServiceTest, mockupConfig);
+        mockedContext = MockupExecutionContextBuilder.createSimpleContext(BEExecutionServiceTest, mockupConfig);
 
         ExecutionService.initializeService(LocalExecutionService.class, RunMode.CLI);
 

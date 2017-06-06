@@ -6,24 +6,21 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
-import de.dkfz.eilslabs.batcheuphoria.jobs.Command
-import de.dkfz.eilslabs.batcheuphoria.jobs.GenericJobInfo
-import de.dkfz.eilslabs.batcheuphoria.jobs.Job
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobDependencyID
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobManager
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobManagerCreationParametersBuilder
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
-import de.dkfz.eilslabs.batcheuphoria.jobs.ProcessingCommands
+import de.dkfz.roddy.config.ResourceSet
+import de.dkfz.roddy.execution.jobs.BEJob
+import de.dkfz.roddy.execution.jobs.Command
+import de.dkfz.roddy.execution.jobs.GenericJobInfo
+import de.dkfz.roddy.execution.jobs.JobDependencyID
+import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager
+import de.dkfz.roddy.execution.jobs.JobManagerCreationParametersBuilder
+import de.dkfz.roddy.execution.jobs.JobState
+import de.dkfz.roddy.execution.jobs.ProcessingCommands
 import de.dkfz.roddy.config.AnalysisConfiguration;
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ProjectConfiguration
 import de.dkfz.roddy.execution.io.NoNoExecutionService
 import de.dkfz.roddy.execution.jobs.JobResult
-import de.dkfz.roddy.knowledge.files.BaseFile;
-
-import java.io.File;
-import java.util.Map;
+import de.dkfz.roddy.knowledge.files.BaseFile
 
 /**
  * Created by heinold on 01.07.16.
@@ -143,20 +140,20 @@ public class MockupExecutionContextBuilder {
         };
     }
 
-    public static JobManager createMockupJobManager() {
-        new JobManager(new NoNoExecutionService(), new JobManagerCreationParametersBuilder().setCreateDaemon(false).build()) {
+    public static BatchEuphoriaJobManager createMockupJobManager() {
+        new BatchEuphoriaJobManager(new NoNoExecutionService(), new JobManagerCreationParametersBuilder().setCreateDaemon(false).build()) {
             @Override
             Command createCommand(GenericJobInfo genericJobInfo) {
                 return null
             }
 
             @Override
-            JobResult runJob(Job job) {
+            JobResult runJob(BEJob job) {
                 return null
             }
 
             @Override
-            JobDependencyID createJobDependencyID(Job job, String s) {
+            JobDependencyID createJobDependencyID(BEJob job, String s) {
                 return null
             }
 
@@ -176,7 +173,7 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            Job parseToJob(String s) {
+            BEJob parseToJob(String s) {
                 return null
             }
 
@@ -186,7 +183,7 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            JobResult convertToArrayResult(Job job, JobResult jobResult, int i) {
+            JobResult convertToArrayResult(BEJob job, JobResult jobResult, int i) {
                 return null
             }
 
@@ -196,17 +193,17 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            Map<Job, GenericJobInfo> queryExtendedJobState(List list, boolean forceUpdate) {
+            Map<BEJob, GenericJobInfo> queryExtendedJobState(List list, boolean forceUpdate) {
                 return null
             }
 
             @Override
-            void addJobStatusChangeListener(Job job) {
+            void addJobStatusChangeListener(BEJob job) {
 
             }
 
             @Override
-            String getLogFileWildcard(Job job) {
+            String getLogFileWildcard(BEJob job) {
                 return null
             }
 
@@ -256,12 +253,12 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            Command createCommand(Job job, String s, List list, File file, Map map, List list1, List list2) {
+            Command createCommand(BEJob job, String s, List list, File file, Map map, List list1, List list2) {
                 return null
             }
 
             @Override
-            String[] peekLogFile(Job job) {
+            String[] peekLogFile(BEJob job) {
                 return new String[0]
             }
 
@@ -276,7 +273,12 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            Map<Job, JobState> queryJobStatus(List list, boolean forceUpdate) {
+            File getLoggingDirectoryForJob(BEJob job) {
+                return null
+            }
+
+            @Override
+            Map<BEJob, JobState> queryJobStatus(List list, boolean forceUpdate) {
                 return null
             }
         }
