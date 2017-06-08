@@ -324,12 +324,12 @@ public class ProjectFactory {
     public static InformationalConfigurationContent loadAndValidateProjectICC(String projectID) {
         ConfigurationFactory fac = ConfigurationFactory.getInstance();
         InformationalConfigurationContent iccProject = fac.getAllAvailableConfigurations()[projectID];
-        logger.postRareInfo("Loading information configuration context for ${projectID} from ${iccProject.file}")
 
         if (iccProject == null) {
             logger.postAlwaysInfo("The project configuration \"${projectID}\" could not be found (call Roddy with listworkflows)")
             Roddy.exit(1)
         }
+        logger.postRareInfo("Loading information configuration context for ${projectID} from ${iccProject.file}")
 
         //Validate the project icc
         XSDValidator.validateTree(iccProject);
