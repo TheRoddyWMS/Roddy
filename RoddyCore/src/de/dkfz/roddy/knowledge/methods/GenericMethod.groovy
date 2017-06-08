@@ -6,10 +6,11 @@
 
 package de.dkfz.roddy.knowledge.methods
 
+import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobResult
 import de.dkfz.roddy.Roddy
 
-import static de.dkfz.eilslabs.batcheuphoria.jobs.JobConstants.*
+import static de.dkfz.roddy.execution.jobs.JobConstants.*
 import de.dkfz.roddy.config.ToolFileGroupParameter
 import de.dkfz.roddy.config.ToolFileParameter
 import de.dkfz.roddy.config.ToolFileParameterCheckCondition
@@ -20,7 +21,7 @@ import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
-import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.knowledge.files.FileObject
@@ -176,6 +177,16 @@ class GenericMethod {
         this.outputFileGroupIndices = outputFileGroupIndices
         if (outputFileGroupIndices != null && outputFileGroupIndices.size() == 0)
             throw new RuntimeException("It is not allowed to call GenericMethod with an empty non null list of file group indices.")
+
+        this.toolName = toolName
+        this.configuration = context.getConfiguration();
+        this.calledTool = configuration.getTools().getValue(toolName);
+        if(calledTool.usesAutoCheckpoint()) {
+            context.runtimeService.calculateAutoCheckpointFilename(calledTool, ([inputObject] as List<Object>) + additionalInput as List<Object>)
+
+            logger.info("Create an automatic checkpoint for tool ${toolName}")
+        }
+
         this.additionalInput = additionalInput
         this.inputObject = inputObject
         this.allInputValues << inputObject;
@@ -189,9 +200,6 @@ class GenericMethod {
         }
         this.context = inputObject.getExecutionContext();
         this.arrayIndices = arrayIndices
-        this.toolName = toolName
-        this.configuration = context.getConfiguration();
-        this.calledTool = configuration.getTools().getValue(toolName);
     }
 
     public <F extends FileObject> F _callGenericToolOrToolArray() {

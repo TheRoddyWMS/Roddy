@@ -6,9 +6,11 @@
 
 package de.dkfz.roddy.execution.io
 
-import de.dkfz.eilslabs.batcheuphoria.jobs.Command
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
-import de.dkfz.eilslabs.batcheuphoria.jobs.DummyCommand
+import de.dkfz.roddy.execution.BEExecutionService
+import de.dkfz.roddy.execution.jobs.Command
+import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.JobState
+import de.dkfz.roddy.execution.jobs.DummyCommand
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -17,14 +19,13 @@ import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
-import de.dkfz.roddy.config.ConfigurationFactory
+import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobDependencyID
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
@@ -43,7 +44,7 @@ import static de.dkfz.roddy.config.ConfigurationConstants.*
  *
  */
 @CompileStatic
-public abstract class ExecutionService extends CacheProvider implements de.dkfz.eilslabs.batcheuphoria.execution.ExecutionService {
+public abstract class ExecutionService extends CacheProvider implements BEExecutionService {
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(ExecutionService.class.name);
     private static ExecutionService executionService;
 
@@ -107,7 +108,7 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
     }
 
     public ExecutionService() {
-        super("ExecutionService", true);
+        super("BEExecutionService", true);
     }
 
     public static ExecutionService getInstance() {
@@ -248,12 +249,12 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
      */
     boolean checkAccessRightsSettings(ExecutionContext context) {
         boolean valid = true
-        if(context.isAccessRightsModificationAllowed()) {
+        if (context.isAccessRightsModificationAllowed()) {
 //            context.getExecutingUser()
 
             def userGroup = context.getOutputGroupString()
             boolean isGroupAvailable = FileSystemAccessProvider.getInstance().isGroupAvailable(userGroup)
-            if(!isGroupAvailable) {
+            if (!isGroupAvailable) {
                 context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("The requested user group ${userGroup} is not available on the target system.\n\tDisable Roddys access rights managemd by setting outputAllowAccessRightsModification to true or\n\tSelect a proper group by setting outputFileGroup."))
                 valid = false;
             }
@@ -430,15 +431,15 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
      * Checks all the files created in writeFilesForExecution
      * If strict mode is enabled, all missing files will lead to false.
      * If strict mode is disabled, only neccessary files are checked.
-     * @return
+     * @return A descriptive list of missing files
      */
-    boolean checkFilesPreparedForExecution(ExecutionContext context) {
-        if (!context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) return true
+    List<String> checkForInaccessiblePreparedFiles(ExecutionContext context) {
+        if (!context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) return []
         boolean strict = Roddy.isStrictModeEnabled()
         def runtimeService = context.getRuntimeService()
 
-        boolean neccessaryFilesExist = true
-        boolean ignorableFilesExist = true
+        List<String> inaccessibleNecessaryFiles = []
+        List<String> inaccessibleIgnorableFiles = []
 
         // Use the context check methods, so we automatically get an error message
         [
@@ -449,21 +450,21 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
                 context.getLockFilesDirectory(),
                 context.getCommonExecutionDirectory(),
         ].each {
-            neccessaryFilesExist &= context.directoryIsAccessible(it)
+            if (!context.directoryIsAccessible(it)) inaccessibleNecessaryFiles << it.absolutePath
         }
 
-        neccessaryFilesExist &= context.fileIsAccessible(runtimeService.getNameOfJobStateLogFile(context))
-        neccessaryFilesExist &= context.fileIsAccessible(runtimeService.getNameOfXMLConfigurationFile(context))
-        neccessaryFilesExist &= context.fileIsAccessible(runtimeService.getNameOfConfigurationFile(context))
+        if(!context.fileIsAccessible(runtimeService.getNameOfJobStateLogFile(context))) inaccessibleNecessaryFiles << "JobState logfile"
+//        if(!context.fileIsAccessible(runtimeService.getNameOfXMLConfigurationFile(context))) neccessaryFilesExist << "XML configuration copy"
+        if(!context.fileIsAccessible(runtimeService.getNameOfConfigurationFile(context))) inaccessibleNecessaryFiles <<  "Runtime configuration file"
 
         // Check the ignorable files. It is still nice to see whether they are there
-        ignorableFilesExist &= context.fileIsAccessible(runtimeService.getNameOfExecCacheFile(context.getAnalysis()))
-        ignorableFilesExist &= context.fileIsAccessible(runtimeService.getNameOfRuntimeFile(context))
-        ignorableFilesExist &= context.fileIsAccessible(new File(context.getExecutionDirectory(), "applicationProperties.ini"))
-        ignorableFilesExist &= context.fileIsAccessible(runtimeService.getNameOfXMLConfigurationFile(context))
+        if(!context.fileIsAccessible(runtimeService.getNameOfExecCacheFile(context.getAnalysis()))) inaccessibleIgnorableFiles << "Execution cache file"
+        if(!context.fileIsAccessible(runtimeService.getNameOfRuntimeFile(context))) inaccessibleIgnorableFiles << "Runtime information file"
+        if(!context.fileIsAccessible(new File(context.getExecutionDirectory(), "applicationProperties.ini"))) inaccessibleIgnorableFiles << "Copy of application.ini file"
+        if(!context.fileIsAccessible(runtimeService.getNameOfXMLConfigurationFile(context))) inaccessibleIgnorableFiles << "XML configuration file"
 
         // Return true, if the neccessary files are there and if strict mode is enabled and in this case all ignorable files exist
-        return neccessaryFilesExist && (!strict || ignorableFilesExist)
+        return inaccessibleNecessaryFiles + (strict ? [] as List<String>: inaccessibleIgnorableFiles)
     }
 
     /**
@@ -481,7 +482,7 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
     }
 
     void markConfiguredToolsAsExecutable(ExecutionContext context) {
-        logger.severe("ExecutionService.markConfiguredToolsAsExecutable is not implemented yet! Only checks for executability are available.")
+        logger.severe("BEExecutionService.markConfiguredToolsAsExecutable is not implemented yet! Only checks for executability are available.")
 //        context.getConfiguration().getTools().each {
 //            ToolEntry tool ->
 //                File toolPath = context.configuration.getProcessingToolPath(context, tool.id)
@@ -570,7 +571,7 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
                 if (!subFolder.isDirectory()) return
                 PluginInfo pInfo = listOfFolders[subFolder]
 
-                if (!mapOfInlineScriptsBySubfolder.containsKey(subFolder.getName())){
+                if (!mapOfInlineScriptsBySubfolder.containsKey(subFolder.getName())) {
                     correctedListOfFolders[subFolder] = pInfo
                     return
                 }
@@ -607,7 +608,7 @@ public abstract class ExecutionService extends CacheProvider implements de.dkfz.
 
                 PluginInfo pInfo = listOfFolders[subFolder]
                 // Md5sum from tempFolder
-                String md5sum = RoddyIOHelperMethods.getSingleMD5OfFilesInDirectory(subFolder);
+                String md5sum = RoddyIOHelperMethods.getSingleMD5OfFilesInDirectoryIncludingDirectoryNames(subFolder);
                 String zipFilename = "cTools_${pInfo.getName()}:${pInfo.getProdVersion()}_${subFolder.getName()}.zip";
                 String zipMD5Filename = zipFilename + "_contentmd5";
                 File tempFile = new File(Roddy.getCompressedAnalysisToolsDirectory(), zipFilename);

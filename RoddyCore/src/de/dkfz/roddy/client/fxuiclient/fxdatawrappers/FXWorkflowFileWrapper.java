@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.client.fxuiclient.fxdatawrappers;
 
-import de.dkfz.roddy.execution.jobs.Job;
+import de.dkfz.roddy.execution.jobs.BEJob;
 import de.dkfz.roddy.knowledge.files.BaseFile;
 import javafx.beans.property.*;
 
@@ -14,14 +14,14 @@ import javafx.beans.property.*;
  */
 public class FXWorkflowFileWrapper extends FXFileWrapper {
 
-    private Job job;
+    private BEJob job;
     private StringProperty _jobID = new SimpleStringProperty();
     private BooleanProperty _isFileMissing = new SimpleBooleanProperty();
     private BooleanProperty _isTemporaryFile = new SimpleBooleanProperty();
     private ObjectProperty<BaseFile> _baseFile= new SimpleObjectProperty<>();
     private BaseFile baseFile;
 
-    public FXWorkflowFileWrapper(BaseFile file, Job job) {
+    public FXWorkflowFileWrapper(BaseFile file, BEJob job) {
         super(file.getPath());
         this.job = job;
         this.baseFile = file;
@@ -31,7 +31,7 @@ public class FXWorkflowFileWrapper extends FXFileWrapper {
         this._isTemporaryFile.setValue(file.isTemporaryFile());
     }
 
-    public Job getJob() {
+    public BEJob getJob() {
         return job;
     }
 

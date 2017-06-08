@@ -112,7 +112,7 @@ public class CustomCellItemsHelper {
 
 //        String itemID = cellItem.getClass().getSimpleName() + ":" + cellItem.hashCode();
 
-//        long t = ExecutionService.measureStart();
+//        long t = BEExecutionService.measureStart();
         if (!contains) {
             Node node = null;
             Object controller = null;
@@ -155,7 +155,7 @@ public class CustomCellItemsHelper {
                 node = loader.load();
                 controller = loader.getController();
 
-//                ExecutionService.measureStop(t, "cellItem " + itemID + " uncached, create and put to cache");
+//                BEExecutionService.measureStop(t, "cellItem " + itemID + " uncached, create and put to cache");
             } catch (Exception e) {
                 VBox hbox = new VBox();
                 hbox.getChildren().add(new Label("Fallback: (" + cellItem.getClass().getSimpleName() + " / " + item.getClass().getSimpleName() + ")"));
@@ -169,7 +169,7 @@ public class CustomCellItemsHelper {
                 customCellItemsCachReads.put(cellItem, 0);
             }
         } else {
-//            ExecutionService.measureStop(t, "cellItem " + itemID + " cached, took from cache");
+//            BEExecutionService.measureStop(t, "cellItem " + itemID + " cached, took from cache");
         }
         Node node = null;
         Object controller = null;
@@ -178,7 +178,7 @@ public class CustomCellItemsHelper {
             controller = cellControllersByNodeCache.get(node);
             int noOfReads = customCellItemsCachReads.get(cellItem) + 1;
             customCellItemsCachReads.put(cellItem, noOfReads);
-//            ExecutionService.measureStop(t, "\titem " + itemID + " read count: " + noOfReads);
+//            BEExecutionService.measureStop(t, "\titem " + itemID + " read count: " + noOfReads);
         }
         return new LoaderResult(node, controller);
     }

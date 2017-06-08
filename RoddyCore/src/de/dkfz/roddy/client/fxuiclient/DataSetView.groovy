@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.client.fxuiclient
 
-import de.dkfz.eilslabs.batcheuphoria.jobs.FakeJob
+import de.dkfz.roddy.execution.jobs.FakeBEJob
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.client.fxuiclient.fxdatawrappers.*;
 import de.dkfz.roddy.client.rmiclient.RoddyRMIClientConnection;
@@ -15,9 +15,9 @@ import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation.ExecutionC
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.core.*;
 import de.dkfz.roddy.execution.io.ExecutionHelper;
+import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.Job;
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
-import de.dkfz.eilslabs.batcheuphoria.jobs.Job as BEJob;
+import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.execution.jobs.ReadOutJob;
 import de.dkfz.roddy.client.fxuiclient.fxcontrols.ExecutionContextOverviewControl;
 import de.dkfz.roddy.client.fxuiclient.fxcontrols.JobOverviewControl;
@@ -258,7 +258,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
 //                    e.printStackTrace();
 //                }
 //            }
-//        }, "Job added", false);
+//        }, "BEJob added", false);
 //    }
 //
 //    @Override
@@ -335,7 +335,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
         private HTMLEditor htmlTextArea;
         private File file;
         private File resultFile;
-        private Job job;
+        private BEJob job;
 
         public LoadFileToTextAreaTask(HTMLEditor textArea, File file) {
             super("load file to html editor");
@@ -349,7 +349,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
             this.file = file;
         }
 
-        public LoadFileToTextAreaTask(WebView textArea, Job job) {
+        public LoadFileToTextAreaTask(WebView textArea, BEJob job) {
             super("load job to text area.");
             this.textArea = textArea;
             if (job.hasLogFile()) {
@@ -458,7 +458,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
          * @param ta
          * @param job
          */
-        public static final void createAndExecute(WebView ta, Job job) {
+        public static final void createAndExecute(WebView ta, BEJob job) {
             (new Thread(new LoadFileToTextAreaTask(ta, job), "Load job to webview")).start();
         }
     }
@@ -475,7 +475,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
 
         clearJobList();
         for (RoddyRMIInterfaceImplementation.JobInfoObject job : api.getExecutedJobs()) {
-            if (job instanceof FakeJob || job.isFakeJob())
+            if (job instanceof FakeBEJob || job.isFakeJob())
                 continue; //Ignore fake jobs.
             synchronized (allJobWrappersForEC) {
                 if (jobInfoWrappersByJobId[job.jobId] == null) {
@@ -496,9 +496,9 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
             logger.warning("No FXJobInfoObjectWrapper object for selectedJobChanged()");
             return;
         }
-        Job job = jobWrapper.getJob();
+        BEJob job = jobWrapper.getJob();
         if (job == null) {
-            logger.warning("No Job object for selectedJobChanged()");
+            logger.warning("No BEJob object for selectedJobChanged()");
             return;
         }
         for (Object _jobWrapper : lstJobsOfRun.getItems()) {
@@ -593,7 +593,7 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
             }
             RoddyRMIInterfaceImplementation.JobInfoObject job = jobWrapper.getJob();
             if (job == null) {
-                logger.warning("No Job object for selectedJobChanged()");
+                logger.warning("No BEJob object for selectedJobChanged()");
                 return;
             }
             jobOverview.setJob(job, analysisLongId);

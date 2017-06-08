@@ -12,11 +12,12 @@ import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
-import de.dkfz.roddy.config.ConfigurationFactory
+import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.ConfigurationValueBundle
 import de.dkfz.roddy.config.InformationalConfigurationContent
 import de.dkfz.roddy.config.ToolEntry
+import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.fs.BashCommandSet
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -262,6 +263,10 @@ class BashConverter extends ConfigurationConverter {
         )
     }
 
+    public Configuration loadShellScript(File configurationFile) {
+        return loadShellScript(configurationFile.getAbsolutePath())
+    }
+
     public Configuration loadShellScript(String configurationFile) {
         if (!configurationFile) {
             throw new IOException("Configuration file must be specified.")
@@ -375,16 +380,27 @@ class BashConverter extends ConfigurationConverter {
      * UNZIPTOOL=gunzip
      * ZIPTOOL_OPTIONS="-c"
      * sampleDirectory=/data/michael/temp/roddyLocalTest/testproject/vbp/A100/${sample}/${SEQUENCER_PROTOCOL}*
-     * @param text
+     * @param file
      * @return
      */
-    String convertToXML(String text) {
+    String convertToXML(File file) {
         String previousLine = ""
-        List<String> allLines = text.readLines()
+        List<String> allLines = file.readLines()
         List<String> header = extractHeader(allLines)
 
         List<String> xmlLines = [];
-        xmlLines << "<configuration name='${getHeaderValue(header, "name", "")}'".toString()
+
+        String type = ""
+        String additionalEntries = ""
+        if (file.name.startsWith("projects")) {
+            type = 'configurationType="project"'
+        } else if (file.name.startsWith("analysis")) {
+            type = 'configurationType="analysis"'
+            additionalEntries="class='de.dkfz.roddy.core.Analysis' workflowClass='de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow' runtimeServiceClass=\"de.dkfz.roddy.knowledge.examples.SimpleRuntimeService\""
+        } else  {
+        }
+
+        xmlLines << "<configuration ${type} ${additionalEntries} name='${getHeaderValue(header, "name", file.parentFile.name + "Analysis")}'".toString()
 
         xmlLines += convertHeader(header)
 
@@ -405,8 +421,8 @@ class BashConverter extends ConfigurationConverter {
                 break;
         }
 
-        if (!header)
-            throw new IOException("Simple Bash configuration files need a valid header")
+//        if (!header)
+//            throw new IOException("Simple Bash configuration files need a valid header")
         header
     }
 
@@ -417,8 +433,10 @@ class BashConverter extends ConfigurationConverter {
         xmlLines << "description='" + getHeaderValue(header, "description", "") + "'"
         xmlLines << "usedresourcessize='" + getHeaderValue(header, "usedresourcessize", "l") + "' >"
 
+        def headerValues = getHeaderValues(header, "analysis", [])
         xmlLines << "  <availableAnalyses>"
-        getHeaderValues(header, "analysis", []).each {
+
+        headerValues.each {
             String analysis ->
                 String[] split = analysis.split(StringConstants.COMMA)
                 if (split.size() < 3) {
@@ -439,31 +457,32 @@ class BashConverter extends ConfigurationConverter {
         List<String> xmlLines = []
         xmlLines << "  <configurationvalues>"
 
-        allLines[header.size()..-1].each {
-            String[] s = it.split("[=]")
+        allLines[header.size()..-1].each { String line ->
+            String it = line.trim()
+            String[] s = it.trim().split("[=]")
             if (!it) return;
             if (!s) return;
 
             if (isBashPipe(it)) {
 
             } else if (isBashComment(it)) {
-                if (isBashComment(previousLine)) {
-                    xmlLines << ("""     ${it}""").toString()
-                } else {
-                    xmlLines << ("""<!-- ${it}""").toString()
-                }
+//                if (isBashComment(previousLine)) {
+//                    xmlLines << ("""     ${it}""").toString()
+//                } else {
+                    xmlLines << ("""<!-- ${it} -->""").toString()
+//                }
             } else {
 
-                if (isBashComment(previousLine)) {
-                    xmlLines[-1] += ("""-->""").toString()
-                }
+//                if (isBashComment(previousLine)) {
+//                    xmlLines[-1] += ("""-->""").toString()
+//                }
 
                 if (s.size() == 2)
-                    xmlLines << ("""    <cvalue name='${s[0]}' value='${s[1]}' type='string' />""").toString()
+                    xmlLines << ("""    <cvalue name='${s[0].trim()}' value='${s[1]}' type='string' />""").toString()
                 else if (s.size() == 1)
-                    xmlLines << ("""    <cvalue name='${s[0]}' value='' type='string' />""").toString()
+                    xmlLines << ("""    <cvalue name='${s[0].trim()}' value='' type='string' />""").toString()
                 else
-                    xmlLines << ("""    <cvalue name='${s[0]}' value='${s[1..-1].join("=")}' type='string' />""").toString()
+                    xmlLines << ("""    <cvalue name='${s[0].trim()}' value='${s[1..-1].join("=")}' type='string' />""").toString()
             }
             previousLine = it;
         }

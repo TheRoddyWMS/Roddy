@@ -7,8 +7,8 @@
 package de.dkfz.roddy.client.rmiclient;
 
 
-import de.dkfz.eilslabs.batcheuphoria.jobs.Job;
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
+import de.dkfz.roddy.execution.jobs.BEJob;
+import de.dkfz.roddy.execution.jobs.JobState;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -50,7 +50,7 @@ public interface RoddyRMIInterface extends Remote {
 
     List<RoddyRMIInterfaceImplementation.ExecutionContextInfoObject> testrerun(List<String> datasetIds, String analysisId) throws RemoteException;
 
-    Map<String, JobState> queryJobState(List<Job> jobIds) throws RemoteException;
+    Map<String, JobState> queryJobState(List<BEJob> jobIds) throws RemoteException;
 
     List<String> readLocalFile(String path) throws RemoteException;
 

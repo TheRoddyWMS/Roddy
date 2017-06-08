@@ -7,7 +7,6 @@
 package de.dkfz.roddy.config.validation
 import de.dkfz.roddy.config.AnalysisConfiguration
 import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationFactory
 import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.core.ExecutionContextError
 
@@ -78,7 +77,7 @@ public class ScriptValidator extends ConfigurationValidator {
         }
 
         //TODO Move script and tool extration to (Bash-)ScriptChecker
-//        Collection<String> calledTools =  clone.getExecutedJobs().collect { Job j -> j.getTool(); }.unique();
+//        Collection<String> calledTools =  clone.getExecutedJobs().collect { BEJob j -> j.getTool(); }.unique();
         listOfCalledScripts = scriptIDsToValidate.collect { String toolID -> File path = configuration.getSourceToolPath(toolID); toolIDsByScript[path] = toolID; return path; };
 
 //        Collection<File> calledToolPathsOriginalList = new LinkedList<>(calledToolPaths);

@@ -26,7 +26,7 @@ class YAMLConverter extends ConfigurationConverter {
     }
 
     @Override
-    String convertToXML(String text) {
+    String convertToXML(File file) {
         throw new NotImplementedException()
     }
 }

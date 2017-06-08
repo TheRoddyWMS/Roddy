@@ -6,12 +6,14 @@
 
 package de.dkfz.roddy.core;
 
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState;
+import de.dkfz.roddy.execution.jobs.Job;
+import de.dkfz.roddy.execution.jobs.JobState;
 import de.dkfz.roddy.AvailableFeatureToggles;
 import de.dkfz.roddy.Roddy;
+import de.dkfz.roddy.client.RoddyStartupOptions;
+import de.dkfz.roddy.config.loader.ConfigurationLoadError;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
-import de.dkfz.roddy.execution.jobs.Job;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.config.*;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -373,13 +375,17 @@ public class Analysis {
                     ExecutionService.getInstance().writeFilesForExecution(context);
                     boolean execute = true;
                     if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) { // Only do these checks, if we are not in query mode!
-                        boolean preparedFilesAreValid = ExecutionService.getInstance().checkFilesPreparedForExecution(context);
+                        List<String> invalidPreparedFiles = ExecutionService.getInstance().checkForInaccessiblePreparedFiles(context);
                         boolean copiedAnalysisToolsAreExecutable = ExecutionService.getInstance().checkCopiedAnalysisTools(context);
-                        execute &= preparedFilesAreValid && copiedAnalysisToolsAreExecutable;
+                        boolean ignoreFileChecks = Roddy.isOptionSet(RoddyStartupOptions.disablestrictfilechecks);
+                        execute &= ignoreFileChecks || (invalidPreparedFiles.size() == 0 && copiedAnalysisToolsAreExecutable);
                         if (!execute) {
                             StringBuilder message = new StringBuilder("There were errors after preparing the workflow run for dataset " + datasetID);
-                            if (!preparedFilesAreValid) message.append("\n\tSome files could not be written. Workflow will not execute.");
+                            if (invalidPreparedFiles.size() > 0) message.append("\n\tSome files could not be written. Workflow will not execute.\n\t" + RoddyIOHelperMethods.joinArray(invalidPreparedFiles.toArray(), "\t\n"));
                             if (!copiedAnalysisToolsAreExecutable) message.append("\n\tSome declared tools are not executable. Workflow will not execute.");
+                            if (ignoreFileChecks) {
+                                message.append("\n  The errors were ignored because disablestrictfilechecks is set.");
+                            }
                             logger.severe(message.toString());
                         }
                     }
@@ -389,25 +395,18 @@ public class Analysis {
                         context.execute();
                         finallyStartJobsOfContext(context);
                     }
+                } catch (Exception ex) {
+                    // (Maybe) abort jobs in strict mode
+                    logger.warning(ex.getMessage());
+                    maybeAbortStartedJobsOfContext(context);
+                    throw ex;
                 } finally {
-                    abortStartedJobsOfContext(context);
 
                     if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) { //Clean up
                         //Query file validity of all files
                         FileSystemAccessProvider.getInstance().validateAllFilesInContext(context);
                     } else {
-
-                        //First, check if there were any executed jobs. If not, we can safely delete the the context directory.
-                        if (context.getStartedJobs().size() == 0) {
-                            logger.postAlwaysInfo("There were no started jobs, the execution directory will be removed.");
-                            if (context.getExecutionDirectory().getName().contains(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX))
-                                FileSystemAccessProvider.getInstance().removeDirectory(context.getExecutionDirectory());
-                            else {
-                                throw new RuntimeException("A wrong path would be deleted: " + context.getExecutionDirectory().getAbsolutePath());
-                            }
-                        } else {
-                            ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context);
-                        }
+                        cleanUpAndFinishWorkflowRun(context);
                     }
                 }
             }
@@ -417,14 +416,9 @@ public class Analysis {
 
         } finally {
             if (eCopy != null) {
-                logger.always("An exception occurred: '" + eCopy.getLocalizedMessage() + "'");
+                logger.always("An unknown / unhandled exception occurred: '" + eCopy.getLocalizedMessage() + "'");
                 // This error should always be visible fully. We have a lot of known errors, which are properly catched. So unknown things should be visible.
                 logger.always(RoddyIOHelperMethods.getStackTraceAsString(eCopy));
-//                if (logger.isVerbosityMedium()) {
-//                    logger.log(Level.SEVERE, eCopy.toString());
-//                } else {
-//                    logger.always("Set verbosity option -v or --vv to see the stack trace. Or look in to the log files in ~/.roddy/logs.");
-//                }
             }
 
             // Look up errors when jobs are executed directly and when there were any started jobs.
@@ -435,7 +429,7 @@ public class Analysis {
                 }
             }
 
-            // It is very nice now, that a lot of error messages will be printen. But how about colours?
+            // It is very nice now, that a lot of error messages will be printed. But how about colours?
             // Normally the CLI client takes care of it.
 
             // Print out configuration errors (for context configuration! Not only for analysis)
@@ -482,20 +476,45 @@ public class Analysis {
     }
 
     /**
+     * Finally write last logfiles or remove (or keep) the execution directory.
+     * @param context
+     */
+    private void cleanUpAndFinishWorkflowRun(ExecutionContext context) {
+        //First, check if there were any executed jobs. If not, we can safely delete the the context directory.
+        if (context.getStartedJobs().size() == 0) {
+            if(Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.forcekeepexecutiondirectory)) {
+                logger.always("There were no started jobs, but Roddy will keep the execution directory as forcekeepexecutiondirectory was set.");
+            } else {
+                logger.always("There were no started jobs, the execution directory will be removed.");
+                if (context.getExecutionDirectory().getName().contains(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX))
+                    FileSystemAccessProvider.getInstance().removeDirectory(context.getExecutionDirectory());
+                else {
+                    throw new RuntimeException("A wrong path would be deleted: " + context.getExecutionDirectory().getAbsolutePath());
+                }
+            }
+        } else {
+            ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context);
+        }
+    }
+
+    /**
      * Checks, whether strict mode AND rollback toggles are enabled and
      * try to abort jobs by calling the job manager.
      * Occurring exceptions are catched so following code can be executed properly.
      *
      * @param context
      */
-    private void abortStartedJobsOfContext(ExecutionContext context) {
+    private void maybeAbortStartedJobsOfContext(ExecutionContext context) {
         if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.RollbackOnWorkflowError)) {
             try {
-                logger.severe("An workflow error occurred, try to rollback / abort submitted jobs.");
+                logger.severe("A workflow error occurred, try to rollback / abort submitted jobs.");
                 Roddy.getJobManager().queryJobAbortion(context.jobsForProcess);
             } catch (Exception ex) {
                 logger.severe("Could not successfully abort jobs.", ex);
             }
+        } else {
+            logger.severe("A workflow error occurred. However, strict mode is disabled and/or RollbackOnWorkflowError is disabled and therefore, all submitted jobs will be left running." +
+                    "\n\tYou might consider to enable Roddy strict mode by setting the feature toggles 'StrictMode' and 'RollbackOnWorkflowError'.");
         }
     }
 

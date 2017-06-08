@@ -80,5 +80,5 @@ public abstract class ConfigurationConverter {
      * @param text
      * @return
      */
-    public abstract String convertToXML(String text);
+    public abstract String convertToXML(File file);
 }

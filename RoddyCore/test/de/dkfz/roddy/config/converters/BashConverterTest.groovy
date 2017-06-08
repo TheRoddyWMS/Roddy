@@ -220,16 +220,17 @@ public class BashConverterTest {
     @Test
     public void testConvertToXML() {
 
-        def converted = new BashConverter().convertToXML(sampleBashCode)
-        boolean valid = converted == sampleXMLCode
-        def xmlLines = sampleXMLCode.readLines()
-        def convertedLines = converted.readLines()
-        assert convertedLines.size() == xmlLines.size()
-        for (int i = 0; i < convertedLines.size(); i++) {
-            def validated = convertedLines[i] == xmlLines[i]
-            if (!validated) println(convertedLines[i] + "\n" + xmlLines[i])
-            valid &= validated
-        }
-        assert valid
+//        def converted = new BashConverter().convertToXML(sampleBashCode)
+//        boolean valid = converted == sampleXMLCode
+//        def xmlLines = sampleXMLCode.readLines()
+//        def convertedLines = converted.readLines()
+//        assert convertedLines.size() == xmlLines.size()
+//        for (int i = 0; i < convertedLines.size(); i++) {
+//            def validated = convertedLines[i] == xmlLines[i]
+//            if (!validated) println(convertedLines[i] + "\n" + xmlLines[i])
+//            valid &= validated
+//        }
+//        assert valid
+        assert false
     }
 }

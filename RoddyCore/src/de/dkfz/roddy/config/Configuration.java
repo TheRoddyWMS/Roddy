@@ -6,7 +6,9 @@
 
 package de.dkfz.roddy.config;
 
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize;
+import de.dkfz.roddy.config.ResourceSetSize;
+import de.dkfz.roddy.config.loader.ConfigurationFactory;
+import de.dkfz.roddy.config.loader.ConfigurationLoadError;
 import de.dkfz.roddy.core.RuntimeService;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.config.validation.ConfigurationValidationError;
@@ -312,7 +314,6 @@ public class Configuration implements ContainerParent<Configuration> {
             availableBasePaths.putAll(pluginInfo.getToolsDirectories());
         }
 
-
         ToolEntry te = tools.getValue(tool);
         if (te.basePathId.length() > 0 && !availableBasePaths.containsKey(te.basePathId)) {
             throw new RuntimeException("Base path for tool " + tool + " is not configured");
@@ -380,6 +381,10 @@ public class Configuration implements ContainerParent<Configuration> {
 
     public void addLoadError(ConfigurationLoadError error) {
         this.listOfLoadErrors.add(error);
+    }
+
+    public void addLoadErrors(Collection<ConfigurationLoadError> errors) {
+        this.listOfLoadErrors.addAll(errors);
     }
 
     public List<ConfigurationLoadError> getListOfLoadErrors() {

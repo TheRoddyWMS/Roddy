@@ -106,6 +106,11 @@ public class NoNoExecutionService extends ExecutionService {
     }
 
     @Override
+    public File queryWorkingDirectory() {
+        return null;
+    }
+
+    @Override
     public void releaseCache() {
 
     }

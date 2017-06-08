@@ -7,7 +7,7 @@
 package de.dkfz.roddy.knowledge.files
 
 import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationFactory
+import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.DerivedFromFilenamePattern
 import de.dkfz.roddy.config.FileStageFilenamePattern
 import de.dkfz.roddy.config.FilenamePattern
@@ -17,7 +17,7 @@ import de.dkfz.roddy.config.OnMethodFilenamePattern
 import de.dkfz.roddy.config.OnScriptParameterFilenamePattern
 import de.dkfz.roddy.config.OnToolFilenamePattern
 import de.dkfz.roddy.config.RecursiveOverridableMapContainer
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSetSize
+import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.config.ToolFileParameter
 import de.dkfz.roddy.config.ToolFileParameterCheckCondition

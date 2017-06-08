@@ -6,10 +6,10 @@
 
 package de.dkfz.roddy.client.cliclient
 
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
-import de.dkfz.eilslabs.batcheuphoria.jobs.Job as BEJob
-import de.dkfz.eilslabs.batcheuphoria.jobs.ProcessingCommands
+import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.JobState
+import de.dkfz.roddy.execution.jobs.BEJob as BEJob
+import de.dkfz.roddy.execution.jobs.ProcessingCommands
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -20,12 +20,13 @@ import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.client.cliclient.clioutput.*
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.converters.ConfigurationConverter
+import de.dkfz.roddy.config.loader.ConfigurationFactory
+import de.dkfz.roddy.config.loader.ConfigurationLoadError
 import de.dkfz.roddy.config.validation.ValidationError
 import de.dkfz.roddy.config.validation.WholeConfigurationValidator
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.SSHExecutionService
-import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.ScannerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
@@ -595,9 +596,9 @@ public class RoddyCLIClient {
         String outputDirectory = analysis.getOutputBaseDirectory().getAbsolutePath()
 
         StringBuilder sb = new StringBuilder();
-        sb << "#FWHITE##BGBLUE#Listing datasets for analysis ${analysisID}:#CLEAR#" << NEWLINE;
+        sb << "#FWHITE##BGBLUE#Listing datasets for analysis ${analysisID}:#CLEAR#" << Constants.ENV_LINESEPARATOR;
         sb << "Note, that only 'valid' information is processed and display. Empty execution folders and ";
-        sb << "folders containing no job information will be skipped." << NEWLINE << NEWLINE << "[outDir]: " << outputDirectory << NEWLINE;
+        sb << "folders containing no job information will be skipped." << Constants.ENV_LINESEPARATOR << Constants.ENV_LINESEPARATOR << "[outDir]: " << outputDirectory << Constants.ENV_LINESEPARATOR;
 
         if (!dataSets)
             return;

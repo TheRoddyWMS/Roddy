@@ -7,6 +7,7 @@
 package de.dkfz.roddy.config;
 
 import de.dkfz.roddy.Roddy;
+import de.dkfz.roddy.config.loader.ConfigurationLoadError;
 import de.dkfz.roddy.core.Analysis;
 import de.dkfz.roddy.core.DataSet;
 import de.dkfz.roddy.core.ExecutionContext;

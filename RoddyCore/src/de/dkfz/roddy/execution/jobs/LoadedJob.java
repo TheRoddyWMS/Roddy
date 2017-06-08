@@ -19,7 +19,7 @@ public class LoadedJob extends ReadOutJob {
 
     private List<LoadedFile> loadedFiles = new LinkedList<>();
 
-    public LoadedJob(ExecutionContext context, String jobName, String jobID, String toolID, String toolMD5, Map<String, String> parameters, List<LoadedFile> loadedFiles, List<Job> parentJobIDs) {
+    public LoadedJob(ExecutionContext context, String jobName, String jobID, String toolID, String toolMD5, Map<String, String> parameters, List<LoadedFile> loadedFiles, List<BEJob> parentJobIDs) {
         super(context, jobName, toolID, jobID, parameters, parentJobIDs);
 //        this.toolID = toolID;
         //this.toolMD5 = toolMD5;

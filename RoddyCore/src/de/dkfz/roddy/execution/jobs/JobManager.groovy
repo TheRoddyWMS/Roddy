@@ -6,13 +6,7 @@
 
 package de.dkfz.roddy.execution.jobs
 
-import de.dkfz.eilslabs.batcheuphoria.config.ResourceSet
-import de.dkfz.eilslabs.batcheuphoria.execution.ExecutionService
-import de.dkfz.eilslabs.batcheuphoria.jobs.Command
-import de.dkfz.eilslabs.batcheuphoria.jobs.GenericJobInfo
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobManagerCreationParameters
-import de.dkfz.eilslabs.batcheuphoria.jobs.JobState
-import de.dkfz.eilslabs.batcheuphoria.jobs.ProcessingCommands
+import de.dkfz.roddy.config.ResourceSet
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.knowledge.files.BaseFile
@@ -25,13 +19,13 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException
 @Deprecated()
 class JobManager {
 
-    private de.dkfz.eilslabs.batcheuphoria.jobs.JobManager jobManager
+    private BatchEuphoriaJobManager jobManager
     
     static JobManager getInstance() {
         return new JobManager(Roddy.getJobManager())
     }
 
-    JobManager(de.dkfz.eilslabs.batcheuphoria.jobs.JobManager jobManager) {
+    JobManager(JobManager jobManager) {
         this.jobManager = jobManager
     }
 
@@ -48,11 +42,11 @@ class JobManager {
         jobManager.createCommand(jobInfo)
     }
 
-    de.dkfz.roddy.execution.jobs.JobResult runJob(de.dkfz.eilslabs.batcheuphoria.jobs.Job job, boolean runDummy) {
+    de.dkfz.roddy.execution.jobs.JobResult runJob(Job job, boolean runDummy) {
         jobManager.runJob(job, runDummy)
     }
 
-    de.dkfz.eilslabs.batcheuphoria.jobs.JobDependencyID createJobDependencyID(de.dkfz.eilslabs.batcheuphoria.jobs.Job job, String jobResult) {
+    JobDependencyID createJobDependencyID(Job job, String jobResult) {
         jobManager.createJobDependencyID(job, jobResult)
     }
 
@@ -68,7 +62,7 @@ class JobManager {
         jobManager.extractProcessingCommandsFromToolScript(file)
     }
 
-    de.dkfz.eilslabs.batcheuphoria.jobs.Job parseToJob(String commandString) {
+    Job parseToJob(String commandString) {
         jobManager.parseToJob(commandString)
     }
 
@@ -76,11 +70,11 @@ class JobManager {
         jobManager.parseGenericJobInfo(command)
     }
 
-    de.dkfz.roddy.execution.jobs.JobResult convertToArrayResult(de.dkfz.eilslabs.batcheuphoria.jobs.Job arrayChildJob, de.dkfz.roddy.execution.jobs.JobResult parentJobsResult, int arrayIndex) {
+    de.dkfz.roddy.execution.jobs.JobResult convertToArrayResult(Job arrayChildJob, de.dkfz.roddy.execution.jobs.JobResult parentJobsResult, int arrayIndex) {
         jobManager.convertToArrayResult(arrayChildJob, parentJobsResult, arrayIndex)
     }
 
-    void storeJobStateInfo(de.dkfz.eilslabs.batcheuphoria.jobs.Job job) {
+    void storeJobStateInfo(Job job) {
 //        jobManager.store
         throw new NotImplementedException()
     }
@@ -89,11 +83,11 @@ class JobManager {
         jobManager.updateJobStatus()
     }
 
-    void addJobStatusChangeListener(de.dkfz.eilslabs.batcheuphoria.jobs.Job job) {
+    void addJobStatusChangeListener(Job job) {
         jobManager.addJobStatusChangeListener(job)
     }
 
-    String getLogFileWildcard(de.dkfz.eilslabs.batcheuphoria.jobs.Job job) {
+    String getLogFileWildcard(Job job) {
         jobManager.getLogFileWildcard(job)
     }
 
@@ -125,7 +119,7 @@ class JobManager {
         jobManager.getSpecificJobScratchIdentifier()
     }
 
-    String[] peekLogFile(de.dkfz.eilslabs.batcheuphoria.jobs.Job job) {
+    String[] peekLogFile(Job job) {
         jobManager.peekLogFile(job)
     }
 
@@ -145,7 +139,7 @@ class JobManager {
         jobManager.queryJobStatus(jobIDs)
     }
 
-    Command createCommand(de.dkfz.eilslabs.batcheuphoria.jobs.Job job, String jobName, List processingCommands, File tool, Map parameters, List dependencies, List arraySettings) {
+    Command createCommand(Job job, String jobName, List processingCommands, File tool, Map parameters, List dependencies, List arraySettings) {
         jobManager.createCommand(job, jobName, processingCommands, tool, parameters, dependencies, arraySettings)
     }
 
