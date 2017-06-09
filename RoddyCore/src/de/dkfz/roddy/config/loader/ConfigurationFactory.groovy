@@ -447,7 +447,7 @@ class ConfigurationFactory {
         Map<String, FilenamePattern> filenamePatterns = [:]
 
         for (NodeChild filenames in configurationNode.filenames) {
-            String pkg = extractAttributeText(filenames, "package", LibrariesFactory.SYNTHETIC_PACKAGE)
+            String pkg = extractAttributeText(filenames, "package", SyntheticPluginInfo.SYNTHETIC_PACKAGE)
             String filestagesbase = extractAttributeText(filenames, "filestagesbase", null)
 
             for (NodeChild filename in filenames.filename) {
@@ -750,7 +750,7 @@ class ConfigurationFactory {
             if (!Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.ignorecvalueduplicates) && configurationValues.containsKey(cvalue.id)) {
                 String cval0 = configurationValues[cvalue.id].value//?.length() > 20 ? configurationValues[cvalue.id].value[0 .. 20] : configurationValues[cvalue.id].value;
                 String cval1 = cvalue.value//?.length() ? cvalue.value[0..20] : cvalue.value;
-                config.addLoadError(new ConfigurationLoadError(config, "cValues", "Value ${cvalue.id} in config ${config.getID()} with value ${cval0} is not unique and will be overriden with value ${cval1}".toString(), null))
+                config.addLoadError(new ConfigurationLoadError(config, "cValues", "Value ${cvalue.id} in the configurationvalues block in ${config.getID()} is defined more than once and might contain the wrong value.".toString(), null))
             }
             configurationValues[cvalue.id] = cvalue
         }
