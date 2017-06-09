@@ -33,7 +33,7 @@ import org.apache.commons.io.filefilter.WildcardFileFilter
  * @author michael
  */
 @CompileStatic
-public class RuntimeService extends CacheProvider {
+public abstract class RuntimeService {
     private static LoggerWrapper logger = LoggerWrapper.getLogger(RuntimeService.class.getSimpleName());
     public static final String FILENAME_RUNTIME_INFO = "versionsInfo.txt"
     public static final String FILENAME_RUNTIME_CONFIGURATION = "runtimeConfig.sh"
@@ -50,10 +50,7 @@ public class RuntimeService extends CacheProvider {
     public static final String RODDY_CENTRAL_EXECUTION_DIRECTORY = "RODDY_CENTRAL_EXECUTION_DIRECTORY"
 
     public RuntimeService() {
-        super("RuntimeService");
-
         logger.warning("Reading in jobs is not fully enabled! See RuntimeService readInExecutionContext(). The method does not reconstruct parent files and dependencies.")
-
     }
 
     /**
@@ -218,13 +215,7 @@ public class RuntimeService extends CacheProvider {
         Analysis analysis = run.getAnalysis();
         Configuration c = analysis.getConfiguration();
         File path = new File(c.getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY).toFile(run).toString() + File.separator + dirName);
-//        File path = new File(c.getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY).toFile(run).toString() + File.separator + run.getDataSet() + File.separator + dirName);
-//        if (Roddy.getInstance().checkDirectory(path, context.getExecutionContextLevel() == ExecutionContextLevel.RUN || context.getExecutionContextLevel() == ExecutionContextLevel.RERUN)) {
         return path;
-//        }
-//        logger.warning("Path ${path.absolutePath} cannot be accessed.")
-//        return null;
-//        throw new RuntimeException("Path " + path + " cannot be accessed.");
     }
 
     public File getBaseExecutionDirectory(ExecutionContext context) {
@@ -530,20 +521,13 @@ public class RuntimeService extends CacheProvider {
         return result;
     }
 
-    /**
-     * Releases the cache in this provider
-     */
-    @Override
-    public void releaseCache() {
+    @Deprecated
+    void releaseCache() {}
 
-    }
+    @Deprecated
+    boolean initialize() {}
 
-    @Override
-    public boolean initialize() {
-        return true;
-    }
-
-    @Override
+    @Deprecated
     public void destroy() {
     }
 

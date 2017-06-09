@@ -46,16 +46,6 @@ public class NoNoFileSystemAccessProvider extends FileSystemAccessProvider {
     }
 
     @Override
-    public boolean initialize() {
-        return true;
-    }
-
-    @Override
-    public void destroy() {
-        super.destroy();
-    }
-
-    @Override
     public boolean isReadable(BaseFile bf) {
         return super.isReadable(bf);
     }
@@ -152,10 +142,6 @@ public class NoNoFileSystemAccessProvider extends FileSystemAccessProvider {
     @Override
     public String getPathSeparator() {
         return "/";
-    }
-
-    @Override
-    public void releaseCache() {
     }
 
     @Override

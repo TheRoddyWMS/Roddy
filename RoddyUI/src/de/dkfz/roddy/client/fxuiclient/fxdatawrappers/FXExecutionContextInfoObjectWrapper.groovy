@@ -22,7 +22,7 @@ import javafx.beans.value.ObservableValue
 @CompileStatic
 public class FXExecutionContextInfoObjectWrapper {
 
-    RoddyRMIInterfaceImplementation.ExecutionContextInfoObject executionContextInfoObject;
+    ExecutionContextInfoObject executionContextInfoObject;
 
     private IntegerProperty noOfJobs = new SimpleIntegerProperty();
 
@@ -37,7 +37,7 @@ public class FXExecutionContextInfoObjectWrapper {
     Map<JobState, StringProperty> mappedProperties = new HashMap<>();
 
 
-    public FXExecutionContextInfoObjectWrapper(RoddyRMIInterfaceImplementation.ExecutionContextInfoObject executionContextInfoObject) {
+    public FXExecutionContextInfoObjectWrapper(ExecutionContextInfoObject executionContextInfoObject) {
         this.executionContextInfoObject = executionContextInfoObject;
         mappedProperties.put(JobState.FAILED, noOfFailedJobs);
         mappedProperties.put(JobState.RUNNING, noOfRunningJobs);
@@ -58,13 +58,13 @@ public class FXExecutionContextInfoObjectWrapper {
         return mappedProperties.get(jobState);
     }
 
-    public void jobStateChangedEvent(RoddyRMIInterfaceImplementation.JobInfoObject job) {
+    public void jobStateChangedEvent(JobInfoObject job) {
         final Map<JobState, Integer> mapIntegers = new LinkedHashMap<>();
 
         for (JobState js : JobState.values())
             mapIntegers.put(js, 0);
 
-        for (RoddyRMIInterfaceImplementation.JobInfoObject j : executionContextInfoObject.getExecutedJobs()) {
+        for (JobInfoObject j : executionContextInfoObject.getExecutedJobs()) {
             int c;
             JobState readoutJobState = JobState.FAILED;
             try {

@@ -114,8 +114,4 @@ public class LocalExecutionService extends ExecutionService {
         return true;
     }
 
-    @Override
-    void releaseCache() {
-
-    }
 }

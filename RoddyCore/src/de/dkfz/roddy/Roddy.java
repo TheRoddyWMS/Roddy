@@ -10,7 +10,7 @@ import com.btr.proxy.search.ProxySearch;
 import de.dkfz.roddy.config.ResourceSetSize;
 import de.dkfz.roddy.execution.BEExecutionService;
 import de.dkfz.roddy.execution.cluster.pbs.PBSJobManager;
-import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager;
+import de.dkfz.roddy.execution.jobs.*;
 import de.dkfz.roddy.client.RoddyStartupModes;
 import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
@@ -20,7 +20,6 @@ import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.config.ConfigurationConstants;
 import de.dkfz.roddy.config.ConfigurationValue;
 import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues;
-import de.dkfz.roddy.execution.jobs.*;
 import de.dkfz.roddy.execution.io.ExecutionHelper;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
@@ -30,7 +29,6 @@ import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.BashCommandSet;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.io.fs.ShellCommandSet;
-import de.dkfz.roddy.client.fxuiclient.RoddyUIController;
 import de.dkfz.roddy.plugins.LibrariesFactory;
 import de.dkfz.roddy.tools.LoggerWrapper;
 import groovy.transform.CompileStatic;
@@ -305,7 +303,7 @@ public class Roddy {
     public static void performInitialSetup(String[] args, RoddyStartupModes option) {
 
         runMode = CLI;
-        if (option == RoddyStartupModes.ui) runMode = RunMode.UI;
+//        if (option == RoddyStartupModes.ui) runMode = RunMode.UI;
         if (option == RoddyStartupModes.rmi) runMode = RunMode.RMI;
 
         trackUserJobsOnly = runMode == CLI ? true : false; //Auto enable or disable trackuserjobs
@@ -644,9 +642,9 @@ public class Roddy {
     }
 
     private static void parseRoddyStartupModeAndRun(CommandLineCall clc) {
-        if (clc.startupMode == RoddyStartupModes.ui)
-            RoddyUIController.App.main(clc.getArguments().toArray(new String[0]));
-        else if (clc.startupMode == RoddyStartupModes.rmi)
+//        if (clc.startupMode == RoddyStartupModes.ui)
+//            RoddyUIController.App.main(clc.getArguments().toArray(new String[0]));
+        if (clc.startupMode == RoddyStartupModes.rmi)
             RoddyRMIServer.startServer(clc);
         else
             RoddyCLIClient.parseStartupMode(clc);
@@ -660,8 +658,8 @@ public class Roddy {
         if (commandLineCall.getOptionList().contains(RoddyStartupOptions.disallowexit))
             return;
 
-        if (option == RoddyStartupModes.ui)
-            return;
+//        if (option == RoddyStartupModes.ui)
+//            return;
 
         if (!option.needsFullInit())
             return;

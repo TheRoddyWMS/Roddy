@@ -547,7 +547,7 @@ class Job extends BEJob<Job> {
         File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
         setJobState(JobState.UNSTARTED)
         Command cmd = Roddy.getJobManager().createCommand(this, tool, dependencies)
-        ExecutionService.getInstance().execute(cmd)
+        jobManager.executionService.execute(cmd)
         if (LoggerWrapper.isVerbosityMedium()) {
             dbgMessage << sep << "\tcommand was created and executed for job. ID is " + cmd.getExecutionID() << sep
         }
