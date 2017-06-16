@@ -16,11 +16,11 @@
 
 # Basic modules / environment support
 export MODULESCRIPT_WORKFLOW=${MODULESCRIPT_WORKFLOW-}
-export MODULESCRIPT_TOOL=$(eval echo "\$MODULESCRIPT_$TOOLID")
+export MODULESCRIPT_TOOL=$(eval echo "\$MODULESCRIPT_${TOOL_ID}")
 export MODULESCRIPT_TOOL=${MODULESCRIPT_TOOL-}
 
 if [[ -n ${MODULESCRIPT_TOOL} && ! -f ${MODULESCRIPT_TOOL} ]]; then
-  echo "You defined a module loader script for tool ${TOOLID} but the script is not available"
+  echo "You defined a module loader script for tool ${TOOL_ID} but the script is not available"
   exit 201
 elif [[ -n ${MODULESCRIPT_TOOL} ]]; then
   source $MODULESCRIPT_TOOL
