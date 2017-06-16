@@ -10,7 +10,7 @@ import de.dkfz.roddy.config.ResourceSet
 import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.GenericJobInfo
-import de.dkfz.roddy.execution.jobs.JobDependencyID
+import de.dkfz.roddy.execution.jobs.BEJobDependencyID
 import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager
 import de.dkfz.roddy.execution.jobs.JobManagerCreationParametersBuilder
 import de.dkfz.roddy.execution.jobs.JobState
@@ -153,7 +153,7 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            JobDependencyID createJobDependencyID(BEJob job, String s) {
+            BEJobDependencyID createJobDependencyID(BEJob job, String s) {
                 return null
             }
 

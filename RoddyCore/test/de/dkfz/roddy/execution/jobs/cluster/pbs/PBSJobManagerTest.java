@@ -8,8 +8,8 @@ package de.dkfz.roddy.execution.jobs.cluster.pbs;
 
 import de.dkfz.roddy.config.ResourceSet;
 import de.dkfz.roddy.config.ResourceSetSize;
-import de.dkfz.roddy.execution.cluster.pbs.PBSJobManager;
-import de.dkfz.roddy.execution.cluster.pbs.PBSResourceProcessingCommand;
+import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSJobManager;
+import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSResourceProcessingCommand;
 import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager;
 import de.dkfz.roddy.execution.jobs.JobManagerCreationParameters;
 import de.dkfz.roddy.config.*;

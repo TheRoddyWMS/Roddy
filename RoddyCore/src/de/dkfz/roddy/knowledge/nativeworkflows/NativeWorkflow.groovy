@@ -15,8 +15,8 @@ import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.Workflow
 import de.dkfz.roddy.execution.BEExecutionService
-import de.dkfz.roddy.execution.direct.synchronousexecution.DirectCommand
-import de.dkfz.roddy.execution.direct.synchronousexecution.DirectSynchronousExecutionJobManager
+import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
+import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
