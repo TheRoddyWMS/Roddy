@@ -178,6 +178,7 @@ class GenericMethod {
         if (outputFileGroupIndices != null && outputFileGroupIndices.size() == 0)
             throw new RuntimeException("It is not allowed to call GenericMethod with an empty non null list of file group indices.")
 
+        this.context = inputObject.getExecutionContext();
         this.toolName = toolName
         this.configuration = context.getConfiguration();
         this.calledTool = configuration.getTools().getValue(toolName);
@@ -198,7 +199,6 @@ class GenericMethod {
             // This is not supported yet! Throw an exception.
             throw new RuntimeException("It is not allowed to use GenericMethod objects without input objects.")
         }
-        this.context = inputObject.getExecutionContext();
         this.arrayIndices = arrayIndices
     }
 

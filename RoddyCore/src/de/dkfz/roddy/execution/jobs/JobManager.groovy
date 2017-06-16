@@ -46,7 +46,7 @@ class JobManager {
         jobManager.runJob(job, runDummy)
     }
 
-    JobDependencyID createJobDependencyID(Job job, String jobResult) {
+    BEJobDependencyID createJobDependencyID(Job job, String jobResult) {
         jobManager.createJobDependencyID(job, jobResult)
     }
 

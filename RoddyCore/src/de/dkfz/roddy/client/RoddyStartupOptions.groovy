@@ -42,6 +42,7 @@ public enum RoddyStartupOptions {
     forcenativepluginconversion(false),
     forcekeepexecutiondirectory(false),
     ignorecvalueduplicates(false),
+    ignoreconfigurationerrors(false),
 
     /**
      * Override project specific usedresourcessize
