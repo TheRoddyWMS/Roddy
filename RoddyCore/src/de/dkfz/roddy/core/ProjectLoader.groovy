@@ -320,10 +320,11 @@ class ProjectLoader {
     InformationalConfigurationContent loadAndValidateProjectICCOrFail(String projectID) {
         ConfigurationFactory fac = ConfigurationFactory.getInstance();
         InformationalConfigurationContent iccProject = fac.getAllAvailableConfigurations()[projectID];
-        logger.postRareInfo("Loading information configuration context for ${projectID} from ${iccProject.file}")
 
         if (!iccProject) {
             throw new ProjectLoaderException("The project configuration \"${projectID}\" could not be found (call Roddy with listworkflows)")
+        } else {
+            logger.postRareInfo("Loading information configuration context for ${projectID} from ${iccProject.file}")
         }
 
         //Validate the project icc
