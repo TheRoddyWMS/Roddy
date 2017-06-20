@@ -49,7 +49,7 @@ import java.util.*
  * @author michael
  */
 @groovy.transform.CompileStatic
-class ExecutionContext extends InfoObject {
+class ExecutionContext {
 
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(ExecutionContext.class.name)
 
@@ -524,7 +524,7 @@ class ExecutionContext extends InfoObject {
         //Query current jobs, i.e. on recheck
         List<String> jobIDsForQuery = new LinkedList<>()
         for (BEJob job : jobsForProcess) {
-            JobResult runResult = job.getRunResult()
+            JobResult runResult = new JobResult(job.getRunResult())
             if (runResult != null && runResult.getJobID().getId() != null) {
                 jobIDsForQuery.add(runResult.getJobID().getId())
             }

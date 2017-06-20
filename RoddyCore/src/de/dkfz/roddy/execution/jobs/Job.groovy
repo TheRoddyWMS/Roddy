@@ -29,7 +29,7 @@ import static de.dkfz.roddy.Constants.NO_VALUE
 import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 
 @groovy.transform.CompileStatic
-class Job extends BEJob<Job> {
+class Job extends BEJob<Job, JobResult> {
 
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(BEJob.class.getSimpleName())
 
@@ -371,7 +371,7 @@ class Job extends BEJob<Job> {
 
         //Execute the job or create a dummy command.
         if (runJob) {
-            runResult = Roddy.getJobManager().runJob(this)
+            runResult = new JobResult(Roddy.getJobManager().runJob(this))
             cmd = runResult.command
             jobDetailsLine << " => " + cmd.getExecutionID()
             System.out.println(jobDetailsLine.toString())
@@ -384,7 +384,7 @@ class Job extends BEJob<Job> {
         } else {
             Command command = new DummyCommand(Roddy.getJobManager(), this, jobName, false)
             setJobState(JobState.DUMMY)
-            setRunResult(new JobResult(command, command.getExecutionID(), false, false, this.tool, parameters, parentJobs as List<BEJob>))
+            setRunResult(new JobResult(new BEJobResult(command, command.getExecutionID(), false, false, this.tool, parameters, parentJobs as List<BEJob>)))
             this.setJobState(JobState.DUMMY)
         }
 
@@ -434,7 +434,7 @@ class Job extends BEJob<Job> {
 //        logger.severe("Handling different job run is currently not supported: Roddy/../BEJob.groovy handleDifferentJobRun")
         dbgMessage << "\tdummy job created." + Constants.ENV_LINESEPARATOR
         File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
-        runResult = new JobResult(context, (Command) null, BEJobDependencyID.getNotExecutedFakeJob(this), false, tool, parameters, parentFiles.collect { it.getCreatingJobsResult()?.getJob() }.findAll { it })
+        runResult = new JobResult(new BEJobResult(null, (Command) null, BEJobDependencyID.getNotExecutedFakeJob(this), false, tool, parameters, parentFiles.collect { it.getCreatingJobsResult()?.getJob() }.findAll { it }))
         this.setJobState(JobState.DUMMY)
         return runResult
     }
