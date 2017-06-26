@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.knowledge.methods
 
+import de.dkfz.roddy.execution.jobs.BEJobResult
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobResult
 import de.dkfz.roddy.Roddy
@@ -457,7 +458,7 @@ class GenericMethod {
     }
 
     private FileObject createAndRunArrayJob(List<BaseFile> filesToVerify) {
-        JobResult jobResult = new Job(context, context.createJobName(firstInputFile, toolName), toolName, arrayIndices, parameters, allInputFiles, filesToVerify).run();
+        BEJobResult jobResult = new Job(context, context.createJobName(firstInputFile, toolName), toolName, arrayIndices, parameters, allInputFiles, filesToVerify).run();
 
         Map<String, FileObject> outputObjectsByArrayIndex = [:];
         IndexedFileObjects indexedFileObjects = new IndexedFileObjects(arrayIndices, outputObjectsByArrayIndex, context);
@@ -466,7 +467,7 @@ class GenericMethod {
         for (String arrayIndex in arrayIndices) {
             List<FileObject> newObjects = [];
             outputObjectsByArrayIndex[arrayIndex] = createOutputObject(arrayIndex);
-            JobResult jr = Roddy.getJobManager().convertToArrayResult(jobResult.job, jobResult, i++);
+            JobResult jr = new JobResult(Roddy.getJobManager().convertToArrayResult(jobResult.job, jobResult, i++))
             for (FileObject fo : newObjects) {
                 fo.setCreatingJobsResult(jr);
             }
@@ -475,13 +476,13 @@ class GenericMethod {
     }
 
     private FileObject createAndRunSingleJob(List<BaseFile> filesToVerify, FileObject outputObject) {
-        JobResult jobResult = new Job(context, context.createJobName(firstInputFile, toolName), toolName, parameters, allInputFiles, filesToVerify).run();
+        BEJobResult jobResult = new Job(context, context.createJobName(firstInputFile, toolName), toolName, parameters, allInputFiles, filesToVerify).run();
 
         if (allCreatedObjects) {
             for (FileObject fo in allCreatedObjects) {
                 if (fo == null)
                     continue;
-                fo.setCreatingJobsResult(jobResult);
+                fo.setCreatingJobsResult(new JobResult(jobResult));
             }
         }
         return outputObject;

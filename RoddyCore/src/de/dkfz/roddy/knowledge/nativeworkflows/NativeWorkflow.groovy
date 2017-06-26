@@ -181,7 +181,7 @@ class NativeWorkflow extends Workflow {
         }
 
         for (Job job in convertedJobs) {
-            JobResult result = job.run()
+            BEJobResult result = job.run()
             Command command = result.command
             String id = null;
             try {

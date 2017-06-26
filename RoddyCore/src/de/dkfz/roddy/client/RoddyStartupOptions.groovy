@@ -60,6 +60,7 @@ public enum RoddyStartupOptions {
 
     disablestrictfilechecks(false),
 
+    @Deprecated
     useRoddyVersion(true),
     useroddyversion(true),
     rv(true),

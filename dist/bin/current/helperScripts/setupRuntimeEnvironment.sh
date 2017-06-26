@@ -21,8 +21,8 @@ tmp_GROOVY_HOME=$GROOVY_HOME && unset GROOVY_HOME
 #date +"%M %S %N"
 function checkAndSetJDKInFolder() {
   baseFolder=$1
-  export GROOVY_HOME=`ls -d $baseFolder/runtime*/groovy-$GROOVY_VERSION* 2> /dev/null | tail -n 1`
-  export JDK_HOME=`ls -d $baseFolder/runtime*/jdk${JDK_VERSION}* 2> /dev/null | tail -n 1`
+  export GROOVY_HOME=`ls -d $baseFolder/runtime*/groovy-$GROOVY_VERSION* 2> /dev/null | sort -V | tail -n 1`
+  export JDK_HOME=`ls -d $baseFolder/runtime*/jdk${JDK_VERSION}* 2> /dev/null | sort -V | tail -n 1`
   [[ -n $JDK_HOME ]] && export JAVA_HOME=`ls -d $JDK_HOME/jre`
   [[ -z $JAVA_HOME ]] && export JAVA_HOME=`ls -d $baseFolder/runtime*/jre${JDK_VERSION}* 2> /dev/null | tail -n 1`
 }

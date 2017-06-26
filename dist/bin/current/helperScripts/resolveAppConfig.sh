@@ -13,7 +13,7 @@ function grepFromConfigFile() {
   local stringToGrep=$1
                                   # Strip comments                    get the second field
                                   #              Grep all the strings                   strip comments from end and trim.
-  echo `cat ${customconfigfile} | grep -v "^#" | grep $stringToGrep | cut -d "=" -f 2 | cut -d "#" -f 1 | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | tail -n 1`
+  echo `cat ${customconfigfile} | grep -v "^#" | grep -v "^;" | grep $stringToGrep | cut -d "=" -f 2 | cut -d "#" -f 1 | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | tail -n 1`
 }
 
 function tryExtractRoddyVersionFromPlugin() {
@@ -95,8 +95,13 @@ overrideRoddyVersionParameter=""
 #Is the roddy binary or anything set via command line?
 for i in $*
 do
-    if [[ $i == --useRoddyVersion* ]]; then
-        setRoddyBinaryVariables ${i:18:40}
+    index=-1
+    [[ $i == --useRoddyVersion* ]] && index=18
+    [[ $i == --useroddyversion* ]] && index=18
+    [[ $i == --rv* ]] && index=5
+
+    if [[ $index -gt 0 ]]; then
+        setRoddyBinaryVariables ${i:${index}:40}
         if [[ ! -f $RODDY_BINARY  ]]; then
             echo "${RODDY_BINARY} not found, the following versions might be available:"
             for bin in `ls -d dist/bin`; do

@@ -8,6 +8,7 @@ package de.dkfz.roddy.core
 
 import de.dkfz.roddy.config.ResourceSet
 import de.dkfz.roddy.execution.jobs.BEJob
+import de.dkfz.roddy.execution.jobs.BEJobResult
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.GenericJobInfo
 import de.dkfz.roddy.execution.jobs.BEJobDependencyID
@@ -183,7 +184,7 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            JobResult convertToArrayResult(BEJob job, JobResult jobResult, int i) {
+            BEJobResult convertToArrayResult(BEJob arrayChildJob, BEJobResult parentJobsResult, int arrayIndex) {
                 return null
             }
 
