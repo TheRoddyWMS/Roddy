@@ -10,9 +10,16 @@
 # Cluster options (like i.e. PBS ) have to be parsed and set before job submission!
 # They will be ignored after the script is wrapped.
 
-[[ ${PARAMETER_FILE-false} != false ]] && source ${PARAMETER_FILE}
+if [[ ${PARAMETER_FILE-false} != false ]]; then
+  [[ ! -f ${PARAMETER_FILE} || ! -r ${PARAMETER_FILE} ]] && echo "Roddy is setup to use job parameter files but the file ${PARAMETER_FILE} does not exist" && exit 199
+  source ${PARAMETER_FILE}
+fi
 
-[[ ${CONFIG_FILE-false} != false ]] && source ${CONFIG_FILE}
+[[ ${CONFIG_FILE-false} == false ]] && echo "The parameter CONFIG_FILE is not set but the parameter is mandatory!" && exit 200
+
+[[ ! -f ${CONFIG_FILE} || ! -r ${CONFIG_FILE} ]] && echo "The configuration file ${CONFIG_FILE} does not exist or is not readable." && exit 200
+
+source ${CONFIG_FILE}
 
 # Basic modules / environment support
 export MODULESCRIPT_WORKFLOW=${MODULESCRIPT_WORKFLOW-}
