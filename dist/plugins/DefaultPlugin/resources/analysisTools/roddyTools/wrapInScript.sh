@@ -14,6 +14,25 @@
 
 [[ ${CONFIG_FILE-false} != false ]] && source ${CONFIG_FILE}
 
+# Basic modules / environment support
+export MODULESCRIPT_WORKFLOW=${MODULESCRIPT_WORKFLOW-}
+export MODULESCRIPT_TOOL=$(eval echo "\$MODULESCRIPT_${TOOL_ID}")
+export MODULESCRIPT_TOOL=${MODULESCRIPT_TOOL-}
+
+if [[ -n ${MODULESCRIPT_TOOL} && ! -f ${MODULESCRIPT_TOOL} ]]; then
+  echo "You defined a module loader script for tool ${TOOL_ID} but the script is not available"
+  exit 201
+elif [[ -n ${MODULESCRIPT_TOOL} ]]; then
+  source $MODULESCRIPT_TOOL
+elif [[ -n ${MODULESCRIPT_WORKFLOW} && ! -f ${MODULESCRIPT_WORKFLOW} ]]; then
+  echo "You defined a module loader script for the workflow but the script is not available"
+  exit 200
+elif [[ -n ${MODULESCRIPT_WORKFLOW} ]]; then
+  source $MODULESCRIPT_WORKFLOW
+fi
+
+echo "INFO: There is no module script for ${TOOLID}. Module loader code was not needed and therefore no modules were loaded."
+
 isOutputFileGroup=${outputFileGroup-false}
 
 if [[ $isOutputFileGroup != false && ${newGrpIsCalled-false} == false ]]; then
