@@ -18,11 +18,9 @@ import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
-import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
-import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
@@ -184,13 +182,13 @@ class Job extends BEJob<Job> {
         return parentJobs
     }
 
-    static List<JobDependencyID> collectDependencyIDsFromFiles(List<BaseFile> parentFiles) {
-        List<JobDependencyID> dIDs = []
+    static List<BEJobDependencyID> collectDependencyIDsFromFiles(List<BaseFile> parentFiles) {
+        List<BEJobDependencyID> dIDs = []
         if (parentFiles != null) {
             for (BaseFile bf : parentFiles) {
                 if (bf.isSourceFile() && bf.getCreatingJobsResult() == null) continue
                 try {
-                    JobDependencyID jobid = bf.getCreatingJobsResult()?.getJobID()
+                    BEJobDependencyID jobid = bf.getCreatingJobsResult()?.getJobID()
                     if (jobid?.isValidID()) {
                         dIDs << jobid
                     }
@@ -355,7 +353,7 @@ class Job extends BEJob<Job> {
 
         //Remove duplicate job ids as qsub cannot handle duplicate keys => job will hold forever as it releases the dependency queue linearly
         List<String> dependencies = dependencyIDsAsString.unique()
-        //.collect { JobDependencyID jobDependencyID -> return jobDependencyID.getId() }.unique() as List<String>
+        //.collect { BEJobDependencyID jobDependencyID -> return jobDependencyID.getId() }.unique() as List<String>
         this.parameters.putAll(convertParameterObject(Constants.RODDY_PARENT_JOBS, dependencies))
 
         appendProcessingCommands(configuration)
@@ -436,7 +434,7 @@ class Job extends BEJob<Job> {
 //        logger.severe("Handling different job run is currently not supported: Roddy/../BEJob.groovy handleDifferentJobRun")
         dbgMessage << "\tdummy job created." + Constants.ENV_LINESEPARATOR
         File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
-        runResult = new JobResult(context, (Command) null, JobDependencyID.getNotExecutedFakeJob(this), false, tool, parameters, parentFiles.collect { it.getCreatingJobsResult()?.getJob() }.findAll { it })
+        runResult = new JobResult(context, (Command) null, BEJobDependencyID.getNotExecutedFakeJob(this), false, tool, parameters, parentFiles.collect { it.getCreatingJobsResult()?.getJob() }.findAll { it })
         this.setJobState(JobState.DUMMY)
         return runResult
     }

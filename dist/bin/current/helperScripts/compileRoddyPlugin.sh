@@ -11,6 +11,7 @@ pluginDirectories=`grep pluginDirectories ${customconfigfile}`
 pluginID=$2
 srcDirectory=`groovy ${SCRIPTS_DIR}/findPluginFolders.groovy ${pluginDirectories} ${RODDY_DIRECTORY} ${pluginID}`
 [[ "$srcDirectory" == null ]] && echo "Compilation aborted: source directory for plugin not found. Is your app ini correct?" && exit 1
+echo $srcDirectory
 cd $srcDirectory
 requestedAPIVersion=`grep RoddyAPIVersion buildinfo.txt | cut -d "=" -f 2`
 [[ ! $RODDY_API == $requestedAPIVersion ]] && echo "Mismatch between used Roddy version ${RODDY_API} and requested version ${requestedAPIVersion}. Will not compile plugin." && exit 1
@@ -46,6 +47,13 @@ then
     then
         [[ $? == 0 ]] && pluginLibs=`groovy ${SCRIPTS_DIR}/findPluginLibraries.groovy ${pluginDirectories} ${RODDY_DIRECTORY} ${PWD}`
         [[ $? == 0 && $pluginLibs != "null" ]] && libraries=$libraries:$pluginLibs
+        echo "Used libraries: "
+        ofs=$IFS
+        IFS=":"
+        for lib in $pluginLibs; do
+          echo "  ${lib}"
+        done
+        IFS=$ofs
     fi
 
     echo "Working in:" $PWD

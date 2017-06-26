@@ -59,64 +59,65 @@ class ClassLoaderHelper {
         def groovyClassLoader = LibrariesFactory.instance.getGroovyClassLoader()
         if (name.contains(".")) {
             return groovyClassLoader.loadClass(name);
-        } else {
-            // Search synthetic classes first.
-            if (LibrariesFactory.instance.synthetic.map.containsKey(name))
-                return LibrariesFactory.instance.synthetic.map[name];
+        }
 
-            // Search core classes second. Find packages of Roddy first. Search for the class in every! package.
-            // This is some bad reflection, but I won't get the package information without it!
-            Class foundCoreClass = null;
-            for (Package p in getRoddyPackages()) {
-                String className = "${p.name}.${name}"
-                try {
-                    foundCoreClass = LibrariesFactory.instance.loadClass(className)
-                } catch (ClassNotFoundException ex) {
-                    // Silently ignored. The class may or may not be in core. If the class can not be found, it is fine here.
-                }
-                if (foundCoreClass) break
-                // Ignore if it is empty, we will fall back to the plugin strategy afterwards! Or search in the next package
+        // Search synthetic classes first.
+        if (LibrariesFactory.instance.synthetic.map.containsKey(name))
+            return LibrariesFactory.instance.synthetic.map[name];
+
+        // Search core classes second. Find packages of Roddy first. Search for the class in every! package.
+        // This is some bad reflection, but I won't get the package information without it!
+        Class foundCoreClass = null;
+        for (Package p in getRoddyPackages()) {
+            String className = "${p.name}.${name}"
+            try {
+                foundCoreClass = LibrariesFactory.instance.loadClass(className)
+            } catch (ClassNotFoundException ex) {
+                // Silently ignored. The class may or may not be in core. If the class can not be found, it is fine here.
             }
+            if (foundCoreClass) break
+            // Ignore if it is empty, we will fall back to the plugin strategy afterwards! Or search in the next package
+        }
 
-            // We found it in core, so return it.
-            if (foundCoreClass)
-                return foundCoreClass
+        // We found it in core, so return it.
+        if (foundCoreClass)
+            return foundCoreClass
 
-            // TODO This is a very quick hack and heavily depends on the existence of jar on the system!
-            // Java normally ships jar with it, so it might not be the SEVERE / SUPERBAD bad hack.
-            List<String> listOfClasses = []
-            synchronized (LibrariesFactory.instance.loadedPlugins) {
-                LibrariesFactory.instance..each {
-                    PluginInfo plugin ->
-                        if (!classListCacheByPlugin.containsKey(plugin)) {
-                            String text = ExecutionHelper.execute("jar tvf ${LibrariesFactory.instance.loadedJarsByPlugin[plugin]}")
-                            classListCacheByPlugin[plugin] = text.readLines();
+        // TODO This is a very quick hack and heavily depends on the existence of jar on the system!
+        // Java normally ships jar with it, so it might not be the SEVERE / SUPERBAD bad hack.
+        List<String> listOfClasses = []
+        synchronized (LibrariesFactory.instance.loadedPlugins) {
+            LibrariesFactory.instance.loadedPlugins.each {
+                PluginInfo plugin ->
+                    if (!classListCacheByPlugin.containsKey(plugin)) {
+                        String text = ExecutionHelper.execute("jar tvf ${LibrariesFactory.instance.loadedJarsByPlugin[plugin]}")
+                        classListCacheByPlugin[plugin] = text.readLines();
+                    }
+                    for (String line in classListCacheByPlugin[plugin]) {
+                        if (!line.endsWith(".class")) continue;
+                        String cls = line.split("[ ]")[-1][0..-7];
+                        if (cls.endsWith("/" + name)) {
+                            cls = cls.replace("/", ".");
+                            cls = cls.replace("\\", ".");
+                            synchronized (listOfClasses) {
+                                listOfClasses << cls;
+                            }
                         }
-                        classListCacheByPlugin[plugin].each {
-                            String line ->
-                                if (!line.endsWith(".class")) return;
-                                String cls = line.split("[ ]")[-1][0..-7];
-                                if (cls.endsWith("/" + name)) {
-                                    cls = cls.replace("/", ".");
-                                    cls = cls.replace("\\", ".");
-                                    synchronized (listOfClasses) {
-                                        listOfClasses << cls;
-                                    }
-                                }
-                        }
-                }
+                    }
             }
-            if (listOfClasses.size() > 1) {
-                logger.severe("Too many available classes, please specify fully, choosing one of the following: ")
-                listOfClasses.each { logger.severe("  " + it) }
-                return null;
-            }
-            if (listOfClasses.size() == 1) {
-                return groovyClassLoader.loadClass(listOfClasses[0]);
-            }
-            logger.postSometimesInfo("No class found for ${name}")
+        }
+
+        if (listOfClasses.size() > 1) {
+            logger.severe("Too many available classes, please specify fully, choosing one of the following: ")
+            listOfClasses.each { logger.severe("  " + it) }
             return null;
         }
+        if (listOfClasses.size() == 1) {
+            return groovyClassLoader.loadClass(listOfClasses[0]);
+        }
+        logger.postSometimesInfo("No class found for ${name}")
+
+        return null;
     }
 
 

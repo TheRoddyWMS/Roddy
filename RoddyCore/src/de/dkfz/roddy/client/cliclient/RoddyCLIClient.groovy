@@ -215,11 +215,17 @@ public class RoddyCLIClient {
 
         // This check only applies for analysis configuration files.
         if (analysis.getConfiguration().hasErrors()) {
-            logger.severe("There were configuration errors and Roddy will not start.")
             StringBuilder sb = new StringBuilder();
             printConfigurationLoadErrors(analysis.getConfiguration(), sb, 0, Constants.ENV_LINESEPARATOR)
-            System.out.println(ConsoleStringFormatter.getFormatter().formatAll(sb.toString()))
-            Roddy.exit(1)
+            String errorText = ConsoleStringFormatter.getFormatter().formatAll(sb.toString())
+            if (Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors)) {
+                logger.severe("There were configuration errors, but they will be ignored (--${RoddyStartupOptions.ignoreconfigurationerrors.name()} is set)")
+                System.out.println(errorText)
+            } else {
+                logger.severe("There were configuration errors and Roddy will not start. Consider using --${RoddyStartupOptions.ignoreconfigurationerrors.name()} to ignore errors.")
+                System.out.println(errorText)
+                Roddy.exit(1)
+            }
         }
         return analysis
     }
