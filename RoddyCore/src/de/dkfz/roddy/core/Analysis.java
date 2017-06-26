@@ -360,7 +360,7 @@ public class Analysis {
             boolean contextRightsSettings = ExecutionService.getInstance().checkAccessRightsSettings(context);
             boolean contextPermissions = ExecutionService.getInstance().checkContextDirectoriesAndFiles(context);
             boolean contextExecutability = context.checkExecutability();
-            boolean configurarionValidity = Roddy.isStrictModeEnabled() && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconnfigurationloadererrors) ? !getConfiguration().hasErrors() : true;
+            boolean configurarionValidity = Roddy.isStrictModeEnabled() && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors) ? !getConfiguration().hasErrors() : true;
             isExecutable = contextRightsSettings && contextPermissions && contextExecutability && configurarionValidity;
 
             if (!isExecutable) {
