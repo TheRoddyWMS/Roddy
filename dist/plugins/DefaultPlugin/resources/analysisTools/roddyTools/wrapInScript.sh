@@ -10,9 +10,36 @@
 # Cluster options (like i.e. PBS ) have to be parsed and set before job submission!
 # They will be ignored after the script is wrapped.
 
-[[ ${PARAMETER_FILE-false} != false ]] && source ${PARAMETER_FILE}
+# Perform some initial checks
+# Store the environment, store file locations in the env
+extendedLogs=`dirname $0`/extendedlogs
+extendedLogFile=${extendedLogs}/`basename ${0}`
+mkdir ${extendedLogs} &> /dev/null
 
-[[ ${CONFIG_FILE-false} != false ]] && source ${CONFIG_FILE}
+env > ${extendedLogFile}
+echo "" >> ${extendedLogFile}
+echo "Files in environment before source config" >> ${extendedLogFile}
+while IFS='=' read -r -d '' n v; do     [[ -r $v ]] && echo "$v -> "$(readlink -f "$v"); done < <(env -0)
+echo "" >> ${extendedLogFile}
+
+if [[ ${PARAMETER_FILE-false} != false ]]; then
+  while [[ ! -r ${PARAMETER_FILE} && ${waitCount-0} -lt 3 ]]; do sleep 5; waitCount=$((waitCount + 1)); done
+  [[ ! -r ${PARAMETER_FILE} && ${waitCount-0} -lt 3 ]] && echo "Roddy is setup to use job parameter files but the file ${PARAMETER_FILE} does not exist" && exit 199
+  source ${PARAMETER_FILE}
+fi
+
+[[ ${CONFIG_FILE-false} == false ]] && echo "The parameter CONFIG_FILE is not set but the parameter is mandatory!" && exit 200
+
+waitCount=0
+while [[ ! -r ${CONFIG_FILE} && ${waitCount-0} -lt 3 ]]; do sleep 5; waitCount=$((waitCount + 1)); done
+[[ ! -f ${CONFIG_FILE} || ! -r ${CONFIG_FILE} ]] && echo "The configuration file ${CONFIG_FILE} does not exist or is not readable." && exit 200
+
+source ${CONFIG_FILE}
+
+echo "Files in environment after source config" >> ${extendedLogFile}
+while IFS='=' read -r -d '' n v; do     [[ -r $v ]] && echo "$v -> "$(readlink -f "$v"); done < <(env -0)
+
+
 
 # Basic modules / environment support
 export MODULESCRIPT_WORKFLOW=${MODULESCRIPT_WORKFLOW-}
