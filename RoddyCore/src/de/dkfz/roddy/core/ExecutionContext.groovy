@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.core
 
+import de.dkfz.roddy.execution.jobs.BEJobResult
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobResult
@@ -524,7 +525,10 @@ class ExecutionContext {
         //Query current jobs, i.e. on recheck
         List<String> jobIDsForQuery = new LinkedList<>()
         for (BEJob job : jobsForProcess) {
-            JobResult runResult = new JobResult(job.getRunResult())
+            BEJobResult beJobResult = job.getRunResult()
+            if (beJobResult == null)
+                continue
+            JobResult runResult = new JobResult(beJobResult)
             if (runResult != null && runResult.getJobID().getId() != null) {
                 jobIDsForQuery.add(runResult.getJobID().getId())
             }
