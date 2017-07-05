@@ -84,7 +84,7 @@ else
 
   #set +xuv # Disable output again
   export RODDY_JOBID=${RODDY_JOBID-$$}
-  export RODDY_PARENT_JOBS=${RODDY_PARENT_JOBS-false}
+  declare -ax RODDY_PARENT_JOBS=${RODDY_PARENT_JOBS-()}
   echo "RODDY_JOBID is set to ${RODDY_JOBID}"
 
   # Replace #{RODDY_JOBID} in passed variables.
@@ -118,11 +118,9 @@ else
 
   # Check if the jobs parent jobs are stored and passed as a parameter. If so Roddy checks the job jobState logfile
   # if at least one of the parent jobs exited with a value different to 0.
-  if [[ ! ${RODDY_PARENT_JOBS} = false ]]
+  if [[ ${#RODDY_PARENT_JOBS} -gt 0 ]]
   then
     # Now check all lines in the file
-    strlen=`expr ${#RODDY_PARENT_JOBS} - 2`
-    RODDY_PARENT_JOBS=${RODDY_PARENT_JOBS:1:strlen}
     for parentJob in ${RODDY_PARENT_JOBS[@]}; do
       [[ ${exitCode-} == 250 ]] && continue;
       result=`cat ${jobStateLogFile} | grep -a "^${parentJob}:" | tail -n 1 | cut -d ":" -f 2`
