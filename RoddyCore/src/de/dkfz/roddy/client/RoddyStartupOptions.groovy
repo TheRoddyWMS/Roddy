@@ -73,6 +73,9 @@ public enum RoddyStartupOptions {
     executionServiceHost(true), 
     executionServiceUser(true),
 
+    // Only for configuration free mode! Tells Roddy which base configuration should be used for the internally created configuration.
+    baseconfig(true),
+
     userepository(true),
 
     detailed, disallowexit;

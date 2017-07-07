@@ -354,7 +354,7 @@ public class Roddy {
 
                         List<String> directories = clc.getOptionList(startupOption);
                         if (directories.size() == 0 || directories.size() > 2) {
-                            throw new RuntimeException("Arguments for useasiodir are wrong");
+                            throw new RuntimeException("Arguments for --useiodir are wrong");
                         }
 
                         useSingleIODirectory = directories.size() == 1;
@@ -600,7 +600,7 @@ public class Roddy {
         try {
             classLoader = LibrariesFactory.getGroovyClassLoader();
             jobManagerClassID = Roddy.getApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS);
-            if(RoddyConversionHelperMethods.isNullOrEmpty(jobManagerClassID)) jobManagerClassID = "UNSET";
+            if (RoddyConversionHelperMethods.isNullOrEmpty(jobManagerClassID)) jobManagerClassID = "UNSET";
             jobManagerClass = classLoader.loadClass(jobManagerClassID);
         } catch (ClassNotFoundException e) {
             StringBuilder available = new StringBuilder();
@@ -820,7 +820,9 @@ public class Roddy {
     }
 
     public static List<File> getConfigurationDirectories() {
-        return loadFolderListFromConfiguration(RoddyStartupOptions.configurationDirectories, Constants.APP_PROPERTY_CONFIGURATION_DIRECTORIES);
+        List<File> list = loadFolderListFromConfiguration(RoddyStartupOptions.configurationDirectories, Constants.APP_PROPERTY_CONFIGURATION_DIRECTORIES);
+        list.add(getFolderForConfigurationFreeMode());
+        return list;
     }
 
     public static List<File> getPluginDirectories() {
@@ -839,11 +841,7 @@ public class Roddy {
     }
 
     public static File getFileCacheDirectory() {
-        File dir = getSettingsDirectory();
-        File newDir = new File(dir.getAbsolutePath() + File.separator + "caches" + File.separator + "filecache");
-        if (!newDir.exists())
-            newDir.mkdirs();
-        return newDir;
+        return checkAndCreateFolder(getSettingsDirectory(), "caches" + File.separator + "filecache");
     }
 
     public static File getApplicationDirectory() {
@@ -855,7 +853,15 @@ public class Roddy {
     }
 
     public static File getFolderForConvertedNativePlugins() {
-        File newDir = new File(getSettingsDirectory(), "convertedNativePlugins");
+        return checkAndCreateFolder(getSettingsDirectory(), "convertedNativePlugins");
+    }
+
+    public static File getFolderForConfigurationFreeMode() {
+        return checkAndCreateFolder(getSettingsDirectory(), "configurationFreeModeFiles");
+    }
+
+    private static File checkAndCreateFolder(File baseFolder, String subFolder) {
+        File newDir = new File(baseFolder, subFolder);
         if (!newDir.exists())
             newDir.mkdirs();
         return newDir;
