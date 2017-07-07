@@ -10,16 +10,36 @@
 # Cluster options (like i.e. PBS ) have to be parsed and set before job submission!
 # They will be ignored after the script is wrapped.
 
+# Perform some initial checks
+# Store the environment, store file locations in the env
+extendedLogs=`dirname $0`/extendedlogs
+extendedLogFile=${extendedLogs}/`basename ${0}`
+mkdir ${extendedLogs} &> /dev/null
+
+env > ${extendedLogFile}
+echo "" >> ${extendedLogFile}
+echo "Files in environment before source config" >> ${extendedLogFile}
+while IFS='=' read -r -d '' n v; do     [[ -r $v ]] && echo "$v -> "$(readlink -f "$v"); done < <(env -0)
+echo "" >> ${extendedLogFile}
+
 if [[ ${PARAMETER_FILE-false} != false ]]; then
-  [[ ! -f ${PARAMETER_FILE} || ! -r ${PARAMETER_FILE} ]] && echo "Roddy is setup to use job parameter files but the file ${PARAMETER_FILE} does not exist" && exit 199
+  while [[ ! -r ${PARAMETER_FILE} && ${waitCount-0} -lt 3 ]]; do sleep 5; waitCount=$((waitCount + 1)); done
+  [[ ! -r ${PARAMETER_FILE} && ${waitCount-0} -lt 3 ]] && echo "Roddy is setup to use job parameter files but the file ${PARAMETER_FILE} does not exist" && exit 199
   source ${PARAMETER_FILE}
 fi
 
 [[ ${CONFIG_FILE-false} == false ]] && echo "The parameter CONFIG_FILE is not set but the parameter is mandatory!" && exit 200
 
+waitCount=0
+while [[ ! -r ${CONFIG_FILE} && ${waitCount-0} -lt 3 ]]; do sleep 5; waitCount=$((waitCount + 1)); done
 [[ ! -f ${CONFIG_FILE} || ! -r ${CONFIG_FILE} ]] && echo "The configuration file ${CONFIG_FILE} does not exist or is not readable." && exit 200
 
 source ${CONFIG_FILE}
+
+echo "Files in environment after source config" >> ${extendedLogFile}
+while IFS='=' read -r -d '' n v; do     [[ -r $v ]] && echo "$v -> "$(readlink -f "$v"); done < <(env -0)
+
+
 
 # Basic modules / environment support
 export MODULESCRIPT_WORKFLOW=${MODULESCRIPT_WORKFLOW-}
@@ -64,7 +84,7 @@ else
 
   #set +xuv # Disable output again
   export RODDY_JOBID=${RODDY_JOBID-$$}
-  export RODDY_PARENT_JOBS=${RODDY_PARENT_JOBS-false}
+  declare -ax RODDY_PARENT_JOBS=${RODDY_PARENT_JOBS-()}
   echo "RODDY_JOBID is set to ${RODDY_JOBID}"
 
   # Replace #{RODDY_JOBID} in passed variables.
@@ -98,11 +118,9 @@ else
 
   # Check if the jobs parent jobs are stored and passed as a parameter. If so Roddy checks the job jobState logfile
   # if at least one of the parent jobs exited with a value different to 0.
-  if [[ ! ${RODDY_PARENT_JOBS} = false ]]
+  if [[ ${#RODDY_PARENT_JOBS} -gt 0 ]]
   then
     # Now check all lines in the file
-    strlen=`expr ${#RODDY_PARENT_JOBS} - 2`
-    RODDY_PARENT_JOBS=${RODDY_PARENT_JOBS:1:strlen}
     for parentJob in ${RODDY_PARENT_JOBS[@]}; do
       [[ ${exitCode-} == 250 ]] && continue;
       result=`cat ${jobStateLogFile} | grep -a "^${parentJob}:" | tail -n 1 | cut -d ":" -f 2`

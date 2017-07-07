@@ -25,7 +25,7 @@ class JobManager {
         return new JobManager(Roddy.getJobManager())
     }
 
-    JobManager(JobManager jobManager) {
+    JobManager(BatchEuphoriaJobManager jobManager) {
         this.jobManager = jobManager
     }
 
