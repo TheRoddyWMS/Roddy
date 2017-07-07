@@ -291,7 +291,7 @@ public class RoddyCLIClient {
             sb << separator << "      FILE:        " << f ?: "#FBLUE#NO FILE#CLEAR#"
             sb << separator << "      ID:          " << error.id
             sb << separator << "      Description: " << error.description
-            if (RoddyIOHelperMethods.getStackTraceAsString(error.exception))
+            if (error.exception && RoddyIOHelperMethods.getStackTraceAsString(error.exception))
                 sb << separator << "      #FYELLOW#" << error.exception.toString() << "#CLEAR#"
             sb << separator
             i++;
@@ -539,14 +539,15 @@ public class RoddyCLIClient {
 
             for (Job job : collectedJobs) {
 
-                String resources = " Unknown resource entry ";
+                String resources = " Resources are either not specified, could not be found or could not be handled by the JobManager for this tool ";
 
                 try {
                     ToolEntry tool = configuration.getTools().getValue(job.getToolID());
                     ResourceSet resourceSet = tool.getResourceSet(configuration);
-                    if (!resourceSet instanceof EmptyResourceSet) {
+                    if (!(resourceSet instanceof EmptyResourceSet)) {
                         ProcessingCommands convertResourceSet = Roddy.getJobManager().convertResourceSet(resourceSet);
-                        resources = convertResourceSet.toString();
+                        if(convertResourceSet)
+                            resources = convertResourceSet.toString();
                     }
                 } catch (Exception ex) {
                 }
