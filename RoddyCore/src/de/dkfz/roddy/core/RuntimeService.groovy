@@ -14,7 +14,6 @@ import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
-import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.BaseMetadataTable
 import de.dkfz.roddy.execution.io.MetadataTableFactory
@@ -160,7 +159,27 @@ public abstract class RuntimeService {
         return _listOfPossibleDataSetsByAnalysis[analysis];
     }
 
-    public List<DataSet> loadDatasetsWithFilter(Analysis analysis, List<String> pidFilters, boolean suppressInfo = false) {
+
+    boolean validateDataSetLoadingString(String s) {
+        String PID = '[\\w*?_-]+'
+        // First part PID, followed by 0 to n ;PID
+        String COHORT = "c[:]${PID}(;${PID}){0,}"
+
+        // First part COHORT, followed by 0 to n |COHORT
+        def regex = "s\\[${COHORT}(\\|$COHORT){0,}\\]"
+
+        return s ==~ regex
+    }
+
+    List<DataSet> loadDatasetsWithFilter(Analysis analysis, List<String> pidFilters, boolean suppressInfo = false) {
+        if(analysis.configuration.configurationValues.get("loadCohortDatasets", "false").toBoolean()) {
+            return loadCohortDatasetsWithFilter(analysis, pidFilters, suppressInfo)
+        } else {
+            loadStandardDatasetsWithFilter(analysis, pidFilters, suppressInfo)
+        }
+    }
+
+    List<DataSet> loadStandardDatasetsWithFilter(Analysis analysis, List<String> pidFilters, boolean suppressInfo = false) {
         if (pidFilters == null || pidFilters.size() == 0 || pidFilters.size() == 1 && pidFilters.get(0).equals("[ALL]")) {
             pidFilters = Arrays.asList("*");
         }
@@ -168,7 +187,91 @@ public abstract class RuntimeService {
         return selectDatasetsFromPattern(analysis, pidFilters, listOfDataSets, suppressInfo);
     }
 
-    public List<DataSet> selectDatasetsFromPattern(Analysis analysis, List<String> pidFilters, List<DataSet> listOfDataSets, boolean suppressInfo) {
+    /**
+     * In difference to the normal behaviour, the method / workflow loads with supercohorts and cohorts thus using a different
+     * dataset id format on the command line:
+     * run p@a s:[c:DS0;DS1;...;DSn|c:DS2;...]
+     *
+     * comma separation stays
+     * a cohort must be marked with c: in front of it. That is just to make the call clear and has no actual use!
+     * entries in a cohort are separated by semicolon!
+     * Remark, that order matters! The first entry of a cohor is the major cohort dataset which will e.g. be used for file
+     * output, if applicable.
+     *
+     * TODO Identify cases, where the matching mechanism should fail! Like e.g. when a dataset is missing but requested.
+     * - Using wildcards? At least one dataset should be matched for each wildcard entry.
+     * - Using no wildcards? There must be one dataset match.
+     *
+     * @param analysis
+     * @param pidFilters
+     * @param suppressInfo
+     * @return
+     */
+    List<DataSet> loadCohortDatasetsWithFilter(Analysis analysis, List<String> pidFilters, boolean suppressInfo) {
+        List<DataSet> listOfDataSets = getListOfPossibleDataSets(analysis);
+        List<SuperCohortDataSet> datasets
+
+        boolean foundFaulty = false;
+        pidFilters.each {
+            boolean faulty = !validateDataSetLoadingString(it)
+            if (faulty)
+                logger.severe("The pid string ${it} is malformed.")
+            foundFaulty |= faulty
+        }
+        if (foundFaulty) {
+            logger.severe("The dataset list you provided contains errors, Roddy will not start jobs.")
+            return [];
+        }
+
+        boolean error = false
+
+        // Checks are all done, now get the datasets..
+        datasets = pidFilters.collect {
+            String superCohortDescription ->
+                // Remove leading s[ and trailing ], split by |
+                List<CohortDataSet> cohortDatasets = superCohortDescription[2..-2].split("[|]").collect {
+                    String cohortDescription ->
+                        // Remove leading c:, split by ;
+                        String[] datasetFilters = cohortDescription[2..-1].split(StringConstants.SPLIT_SEMICOLON);
+                        List<DataSet> dList = []
+
+                        datasetFilters.collect {
+                            String _filter ->
+                                if (!_filter)
+                                    return;
+                                List<DataSet> res = selectDatasetsFromPattern(analysis, [_filter], listOfDataSets, true);
+                                if (_filter.contains("*") || _filter.contains("?")) {
+                                    if (!res) {
+                                        logger.severe("Could not find a match for cohort part: ${_filter}")
+                                        error = true;
+                                    }
+                                } else if (res.size() != 1) {
+                                    logger.severe("Only one match is allowed for cohort part: ${_filter}")
+                                    error = true;
+                                }
+                                dList += res;
+                        }
+                        // Sort the list, but keep the primary set the primary set.
+                        DataSet primaryDataSet = dList[0];
+                        dList = dList.sort().unique()
+                        dList.remove(primaryDataSet)
+                        dList.add(0, primaryDataSet)
+                        if (primaryDataSet && dList)
+                            return new CohortDataSet(analysis, cohortDescription, primaryDataSet, dList)
+                        else
+                            return null;
+                }.findAll { it } as List<CohortDataSet>
+                if (cohortDatasets)
+                    return new SuperCohortDataSet(analysis, superCohortDescription, cohortDatasets)
+                else
+                    return (SuperCohortDataSet) null;
+        }.findAll { it }
+        if (error)
+            return []
+        return datasets as List<DataSet>;
+    }
+
+    List<DataSet> selectDatasetsFromPattern(Analysis analysis, List<String> pidFilters, List<DataSet> listOfDataSets, boolean suppressInfo) {
 
         List<DataSet> selectedDatasets = new LinkedList<>();
         WildcardFileFilter wff = new WildcardFileFilter(pidFilters);
