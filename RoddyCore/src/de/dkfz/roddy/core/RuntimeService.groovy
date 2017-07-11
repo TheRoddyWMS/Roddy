@@ -32,7 +32,7 @@ import org.apache.commons.io.filefilter.WildcardFileFilter
  * @author michael
  */
 @CompileStatic
-public abstract class RuntimeService {
+public class RuntimeService {
     private static LoggerWrapper logger = LoggerWrapper.getLogger(RuntimeService.class.getSimpleName());
     public static final String FILENAME_RUNTIME_INFO = "versionsInfo.txt"
     public static final String FILENAME_RUNTIME_CONFIGURATION = "runtimeConfig.sh"
@@ -160,7 +160,7 @@ public abstract class RuntimeService {
     }
 
 
-    boolean validateDataSetLoadingString(String s) {
+    boolean validateCohortDataSetLoadingString(String s) {
         String PID = '[\\w*?_-]+'
         // First part PID, followed by 0 to n ;PID
         String COHORT = "c[:]${PID}(;${PID}){0,}"
@@ -172,7 +172,7 @@ public abstract class RuntimeService {
     }
 
     List<DataSet> loadDatasetsWithFilter(Analysis analysis, List<String> pidFilters, boolean suppressInfo = false) {
-        if(analysis.configuration.configurationValues.get("loadCohortDatasets", "false").toBoolean()) {
+        if (analysis.configuration.configurationValues.get("loadCohortDatasets", "false").toBoolean()) {
             return loadCohortDatasetsWithFilter(analysis, pidFilters, suppressInfo)
         } else {
             loadStandardDatasetsWithFilter(analysis, pidFilters, suppressInfo)
@@ -211,64 +211,79 @@ public abstract class RuntimeService {
         List<DataSet> listOfDataSets = getListOfPossibleDataSets(analysis);
         List<SuperCohortDataSet> datasets
 
-        boolean foundFaulty = false;
-        pidFilters.each {
-            boolean faulty = !validateDataSetLoadingString(it)
-            if (faulty)
-                logger.severe("The pid string ${it} is malformed.")
-            foundFaulty |= faulty
-        }
-        if (foundFaulty) {
-            logger.severe("The dataset list you provided contains errors, Roddy will not start jobs.")
-            return [];
-        }
+        if (!checkCohortDataSetIdentifiers(pidFilters)) return []
 
         boolean error = false
 
         // Checks are all done, now get the datasets..
-        datasets = pidFilters.collect {
-            String superCohortDescription ->
-                // Remove leading s[ and trailing ], split by |
-                List<CohortDataSet> cohortDatasets = superCohortDescription[2..-2].split("[|]").collect {
-                    String cohortDescription ->
-                        // Remove leading c:, split by ;
-                        String[] datasetFilters = cohortDescription[2..-1].split(StringConstants.SPLIT_SEMICOLON);
-                        List<DataSet> dList = []
+        datasets = pidFilters.collect { String superCohortDescription ->
 
-                        datasetFilters.collect {
-                            String _filter ->
-                                if (!_filter)
-                                    return;
-                                List<DataSet> res = selectDatasetsFromPattern(analysis, [_filter], listOfDataSets, true);
-                                if (_filter.contains("*") || _filter.contains("?")) {
-                                    if (!res) {
-                                        logger.severe("Could not find a match for cohort part: ${_filter}")
-                                        error = true;
-                                    }
-                                } else if (res.size() != 1) {
-                                    logger.severe("Only one match is allowed for cohort part: ${_filter}")
-                                    error = true;
-                                }
-                                dList += res;
-                        }
-                        // Sort the list, but keep the primary set the primary set.
-                        DataSet primaryDataSet = dList[0];
-                        dList = dList.sort().unique()
-                        dList.remove(primaryDataSet)
-                        dList.add(0, primaryDataSet)
-                        if (primaryDataSet && dList)
-                            return new CohortDataSet(analysis, cohortDescription, primaryDataSet, dList)
-                        else
-                            return null;
-                }.findAll { it } as List<CohortDataSet>
-                if (cohortDatasets)
-                    return new SuperCohortDataSet(analysis, superCohortDescription, cohortDatasets)
+            // Remove leading s[ and trailing ], split by |
+            List<CohortDataSet> cohortDatasets = superCohortDescription[2..-2].split("[|]").collect { String cohortDescription ->
+
+                // Remove leading c:, split by ;
+                String[] datasetFilters = cohortDescription[2..-1].split(StringConstants.SPLIT_SEMICOLON);
+
+                ArrayList<DataSet> dList = collectDataSetsForCohort(datasetFilters, analysis, listOfDataSets)
+
+                // Sort the list, but keep the primary set the primary set.
+                DataSet primaryDataSet = dList[0];
+                dList = dList.sort().unique()
+                dList.remove(primaryDataSet)
+                dList.add(0, primaryDataSet)
+                if (primaryDataSet && dList)
+                    return new CohortDataSet(analysis, cohortDescription, primaryDataSet, dList)
                 else
-                    return (SuperCohortDataSet) null;
+                    return null;
+            }.findAll { it } as List<CohortDataSet>
+            if (cohortDatasets)
+                return new SuperCohortDataSet(analysis, superCohortDescription, cohortDatasets)
+            else
+                return (SuperCohortDataSet) null;
         }.findAll { it }
         if (error)
             return []
         return datasets as List<DataSet>;
+    }
+
+    private boolean checkCohortDataSetIdentifiers(List<String> pidFilters) {
+        // First some checks, if the cohort loading string was set properly.
+        boolean foundFaulty = false;
+        for (filter in pidFilters) {
+            boolean faulty = !validateCohortDataSetLoadingString(filter)
+            if (faulty) {
+                logger.severe("The pid string ${filter} is malformed.")
+                foundFaulty = true
+            }
+        }
+        if (foundFaulty) {
+            logger.severe("The dataset list you provided contains errors, Roddy will not start jobs.")
+            return false
+        }
+        return true
+    }
+
+    private ArrayList<DataSet> collectDataSetsForCohort(String[] datasetFilters, Analysis analysis, List<DataSet> listOfDataSets) {
+        boolean error = false
+        List<DataSet> dList = []
+
+        datasetFilters.collect { String _filter ->
+            if (!_filter)
+                return;
+            List<DataSet> res = selectDatasetsFromPattern(analysis, [_filter], listOfDataSets, true);
+            if (_filter.contains("*") || _filter.contains("?")) {
+                if (!res) {
+                    logger.severe("Could not find a match for cohort part: ${_filter}")
+                    error = true;
+                }
+            } else if (res.size() != 1) {
+                logger.severe("Only one match is allowed for cohort part: ${_filter}")
+                error = true;
+            }
+            return res;
+        }.flatten()
+        if (error) return null
+        return dList
     }
 
     List<DataSet> selectDatasetsFromPattern(Analysis analysis, List<String> pidFilters, List<DataSet> listOfDataSets, boolean suppressInfo) {
