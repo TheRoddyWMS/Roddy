@@ -31,14 +31,44 @@ checkAndSetJDKInFolder ${PWD}/dist
 
 [[ -z $JAVA_HOME ]] && checkAndSetJDKInFolder ~/.roddy
 
-[[ -z $JAVA_HOME ]] && echo "There was no java runtime environment or jdk setup. Roddy cannot be compiled." && exit 1
-[[ -z $GROOVY_HOME ]] && echo "Groovy SDK / Runtime not found, Roddy cannot be compiled or started." && exit 1
+if [[ ! -z $JAVA_HOME && ! -z $GROOVY_HOME ]]; then
+  PATH=$JDK_HOME/bin:$JAVA_HOME/bin:$GROOVY_HOME/bin:$PATH
+#  JFX_LIBINFO_FILE=~/.roddy/jfxlibInfo
+#  if [[ ! -f ${JFX_LIBINFO_FILE} ]] || [[ ! -f `cat ${JFX_LIBINFO_FILE}` ]]; then
+#    echo `find ${JAVA_HOME}/ -name "jfxrt.jar"` > ${JFX_LIBINFO_FILE}
+#  fi
+  [[ -z $JAVA_HOME ]] && echo "There was no java runtime environment or jdk setup. Roddy cannot be compiled." && exit 1
+  [[ -z $GROOVY_HOME ]] && echo "Groovy SDK / Runtime not found, Roddy cannot be compiled or started." && exit 1
+else
 
-PATH=$JDK_HOME/bin:$JAVA_HOME/bin:$GROOVY_HOME/bin:$PATH
-JFX_LIBINFO_FILE=~/.roddy/jfxlibInfo
-if [[ ! -f ${JFX_LIBINFO_FILE} ]] || [[ ! -f `cat ${JFX_LIBINFO_FILE}` ]]; then
-	echo `find ${JAVA_HOME}/ -name "jfxrt.jar"` > ${JFX_LIBINFO_FILE}
+  # Check, if Java can be called and extract the version
+  # OpenJDK and Sun JDK should both work from version 8 on.
+  javaBinary=`which java 2> /dev/null`
+  javaSearchError=$?
+  groovyBinary=`which groovy 2> /dev/null`
+  groovySearchError=$?
+
+  [[ $javaSearchError == 1 ]]   && echo "There was no java runtime environment or jdk setup. Roddy cannot be compiled." && exit 1
+  [[ $groovySearchError == 1 ]] && echo "Groovy SDK / Runtime not found, Roddy cannot be compiled or started." && exit 1
+
 fi
 
 >&2 echo `which java`
 >&2 echo `which groovy`
+
+function compareVersion {
+  local major=$(echo $2 | cut -d "." -f 1)
+  local minor=$(echo $2 | cut -d "." -f 2)
+
+  local majorRequired=$(echo $3 | cut -d "." -f 1)
+  local minorRequired=$(echo $3 | cut -d "." -f 2)
+
+  [[ $major -lt $majorRequired || $minor -lt $minorRequired ]] && echo "$1 version $2 is too low" && exit 1
+}
+set -x
+versions=`groovy -v`
+
+groovyVersion=$(echo $versions | cut -d ":" -f 2-3 | cut -d " " -f 2)
+javaVersion=$(echo $versions | cut -d ":" -f 2-3 | cut -d " " -f 4)
+compareVersion "Java" $javaVersion $JDK_VERSION
+compareVersion "Groovy" $groovyVersion $GROOVY_VERSION
