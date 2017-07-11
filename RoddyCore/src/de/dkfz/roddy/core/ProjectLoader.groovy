@@ -218,7 +218,7 @@ class ProjectLoader {
             return
         }
 
-        throw new ProjectLoaderException("The project identifier is wrong it must either be a configuration or a plugin. Properly set projectConfigurationSource in the ProjectLoader.")
+        throw new ProjectLoaderException("The project identifier is wrong it must either be a configuration identifier or a plugin name. Properly set projectConfigurationSource in the ProjectLoader.")
     }
 
     private void createAndWriteAutoConfigurationFile() {
@@ -245,7 +245,7 @@ class ProjectLoader {
 
         // Create a JVM wide file lock to allow only one process which writes to the target directory.
         RandomAccessFile directoryLockFile = new RandomAccessFile(new File(Roddy.getFolderForConfigurationFreeMode(), ".configLock"), "rw")
-        FileLock flock = directoryLockFile.channel.lock()
+        FileLock jvmWideDirectoryLockFile = directoryLockFile.channel.lock()
 
         try {
             String configurationText = lines.join("\n")
@@ -259,7 +259,7 @@ class ProjectLoader {
             }
         } finally {
             // Unlock and close the file
-            flock.release()
+            jvmWideDirectoryLockFile.release()
             directoryLockFile.close()
         }
     }
