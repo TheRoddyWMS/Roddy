@@ -18,10 +18,11 @@ import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.plugins.PluginInfoMap
 import de.dkfz.roddy.plugins.PluginLoaderException
-import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
 import java.lang.reflect.InvocationTargetException
+import java.nio.channels.FileChannel
+import java.nio.channels.FileLock
 
 /**
  * The project factory converts a configuration to a project/analysis. It stores a reference to already loaded projects and reuses them if possible.
@@ -37,9 +38,15 @@ class ProjectLoader {
      */
     private static Map<String, Analysis> _analysisCache = [:]
 
+    private enum ProjectConfigurationSource {
+        Unset,
+        Configuration,
+        Automatic
+    }
+
     private static final int PSRC_UNSET = 0
 
-    private static final int PSRC_CONFIGURATION = 1
+    private static final int PROJECT_SRC_CONFIGURATION = 1
 
     private static final int PSRC_PLUGIN = 2
 
@@ -55,7 +62,7 @@ class ProjectLoader {
 
     Analysis analysis
 
-    int projectSource
+    ProjectConfigurationSource projectConfigurationSource
 
     ProjectLoader() {
 
@@ -173,10 +180,10 @@ class ProjectLoader {
         String[] splitProjectAnalysis
         if (configurationIdentifier.findAll("[@]").size() == 1) {
             splitProjectAnalysis = configurationIdentifier.split(StringConstants.SPLIT_AT)
-            projectSource = PSRC_CONFIGURATION
+            projectConfigurationSource = ProjectConfigurationSource.Configuration
         } else if (configurationIdentifier.findAll("[:]").size() == 1) {
             splitProjectAnalysis = configurationIdentifier.split(StringConstants.SPLIT_COLON)
-            projectSource = PSRC_PLUGIN
+            projectConfigurationSource = ProjectConfigurationSource.Automatic
         } else {
             throw new ProjectLoaderException("The requested analysis identifier ${configurationIdentifier} is invalid. It must only contain one '@' or ':'")
         }
@@ -193,40 +200,54 @@ class ProjectLoader {
     }
 
     void checkAndPreparePremisesOrFail() {
-        if (projectSource == PSRC_UNSET)
-            throw new ProjectLoaderException("There is no project identifier set. It is not possible to run without setting projectSource in the ProjectLoader.")
+        if (projectConfigurationSource == ProjectConfigurationSource.Unset)
+            throw new ProjectLoaderException("There is no project identifier set. It is not possible to run without setting projectConfigurationSource in the ProjectLoader.")
 
-        if (projectSource == PSRC_CONFIGURATION)
+        if (projectConfigurationSource == ProjectConfigurationSource.Configuration)
             return
 
-        if (projectSource == PSRC_PLUGIN) {
+        if (projectConfigurationSource == ProjectConfigurationSource.Automatic) {
             // Create a project configuration, if all premises are valid.
 
             // Check, if the i/o directory is set on the command line
             if (!Roddy.useCustomIODirectories())
                 throw new ProjectLoaderException("It is not possible to use the project configuration free mode without the --${RoddyStartupOptions.useiodir.name()} option.")
 
-            // Create a temporary project configuration in ~/.roddy/configurationFreeMode
-            String configurationFileName = "projects" + projectID + "_" + analysisID + "_" + Integer.toHexString(Roddy.commandLineCall.getOptionValue(RoddyStartupOptions.useiodir).hashCode()) + ".sh"
+            createAndWriteAutoConfigurationFile()
 
-            String newProjectID = "CFreeMode_" + Integer.toHexString(configurationFileName.hashCode())
-            String pluginID = projectID.replaceFirst(StringConstants.SPLIT_UNDERSCORE, StringConstants.COLON)
-            String analysisImport = analysisID + "," + (analysisID.endsWith("Analysis") ? analysisID : analysisID + "Analysis") + "," + pluginID
-            List<String> lines = []
-            lines << "#name " + newProjectID
-            lines << "#analysis " + analysisImport
-            if (Roddy.isOptionSet(RoddyStartupOptions.baseconfig)) lines << "#imports " + Roddy.commandLineCall.getOptionValue(RoddyStartupOptions.baseconfig)
+            return
+        }
 
-            lines << "inputBaseDirectory=" + Roddy.customBaseInputDirectory
-            lines << "outputBaseDirectory=" + Roddy.customBaseOutputDirectory
-            lines << 'outputAnalysisBaseDirectory=${outputBaseDirectory}/${pid}'
+        throw new ProjectLoaderException("The project identifier is wrong it must either be a configuration or a plugin. Properly set projectConfigurationSource in the ProjectLoader.")
+    }
 
-            projectID = "CFreeMode_" + Integer.toHexString(configurationFileName.hashCode())
+    private void createAndWriteAutoConfigurationFile() {
+        // Create a temporary project configuration in ~/.roddy/configurationFreeMode
+        String configurationFileName = "projects" + projectID + "_" + analysisID + "_" + Integer.toHexString(Roddy.commandLineCall.getOptionValue(RoddyStartupOptions.useiodir).hashCode()) + ".sh"
 
-            File configurationFile = new File(Roddy.getFolderForConfigurationFreeMode(), configurationFileName)
+        String newProjectID = "CFreeMode_" + Integer.toHexString(configurationFileName.hashCode())
+        String pluginID = projectID.replaceFirst(StringConstants.SPLIT_UNDERSCORE, StringConstants.COLON)
+        String analysisImport = analysisID + "," + (analysisID.endsWith("Analysis") ? analysisID : analysisID + "Analysis") + "," + pluginID
+        List<String> lines = []
+        lines << "#name " + newProjectID
+        lines << "#analysis " + analysisImport
+        if (Roddy.isOptionSet(RoddyStartupOptions.baseconfig)) lines << "#imports " + Roddy.commandLineCall.getOptionValue(RoddyStartupOptions.baseconfig)
 
-            logger.always("Will use automatically generated configuration file: ${configurationFileName}")
+        lines << "inputBaseDirectory=" + Roddy.customBaseInputDirectory
+        lines << "outputBaseDirectory=" + Roddy.customBaseOutputDirectory
+        lines << 'outputAnalysisBaseDirectory=${outputBaseDirectory}/${pid}'
 
+        projectID = "CFreeMode_" + Integer.toHexString(configurationFileName.hashCode())
+
+        File configurationFile = new File(Roddy.getFolderForConfigurationFreeMode(), configurationFileName)
+
+        logger.always("Will use automatically generated configuration file: ${configurationFileName}")
+
+        // Create a JVM wide file lock to allow only one process which writes to the target directory.
+        RandomAccessFile directoryLockFile = new RandomAccessFile(new File(Roddy.getFolderForConfigurationFreeMode(), ".configLock"), "rw")
+        FileLock flock = directoryLockFile.channel.lock()
+
+        try {
             String configurationText = lines.join("\n")
             if (configurationFile.exists()) {
                 if (RoddyIOHelperMethods.getMD5OfText(configurationText) != RoddyIOHelperMethods.getMD5OfFile(configurationFile)) {
@@ -236,10 +257,11 @@ class ProjectLoader {
             } else {
                 configurationFile << configurationText
             }
-            return
+        } finally {
+            // Unlock and close the file
+            flock.release()
+            directoryLockFile.close()
         }
-
-        throw new ProjectLoaderException("The project identifier is wrong it must either be a configuration or a plugin. Properly set projectSource in the ProjectLoader.")
     }
 
     void loadPluginsOrFail(String projectID, String analysisID) {
@@ -384,16 +406,10 @@ class ProjectLoader {
     }
 
     String getFullAnalysisID(String projectID, String analysisID) {
-//        if (projectSource == PSRC_PLUGIN) {
-//
-//        }
-//
-//        if (projectSource == PSRC_CONFIGURATION) {
         InformationalConfigurationContent iccProject = loadAndValidateProjectICCOrFail(projectID);
 
         String fullAnalysisID = loadFullAnalysisIDOrFail(iccProject, analysisID);
         fullAnalysisID
-//        }
     }
 
     InformationalConfigurationContent loadAndValidateProjectICCOrFail(String projectID) {
