@@ -243,7 +243,11 @@ class ProjectLoader {
 
         logger.always("Will use automatically generated configuration file: ${configurationFileName}")
 
-        // Create a JVM wide file lock to allow only one process which writes to the target directory.
+        // The idea behind channel locks is, that the lock is JVM wide and therefore shared across all JVM instances on a single machine.
+        // Not more not less. It will just prevent the current user from mutual file access / file overrides and will not work for multiple users
+        // in the same directory. However, the directory here exists in the user directory and will only be accessed by a single user.
+        // The method is platform dependent.
+        // See the many comments on stack overflow
         RandomAccessFile directoryLockFile = new RandomAccessFile(new File(Roddy.getFolderForConfigurationFreeMode(), ".configLock"), "rw")
         FileLock jvmWideDirectoryLockFile = directoryLockFile.channel.lock()
 
