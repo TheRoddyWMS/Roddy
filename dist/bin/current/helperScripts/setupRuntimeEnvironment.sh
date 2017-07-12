@@ -33,12 +33,6 @@ checkAndSetJDKInFolder ${PWD}/dist
 
 if [[ ! -z $JAVA_HOME && ! -z $GROOVY_HOME ]]; then
   PATH=$JDK_HOME/bin:$JAVA_HOME/bin:$GROOVY_HOME/bin:$PATH
-#  JFX_LIBINFO_FILE=~/.roddy/jfxlibInfo
-#  if [[ ! -f ${JFX_LIBINFO_FILE} ]] || [[ ! -f `cat ${JFX_LIBINFO_FILE}` ]]; then
-#    echo `find ${JAVA_HOME}/ -name "jfxrt.jar"` > ${JFX_LIBINFO_FILE}
-#  fi
-  [[ -z $JAVA_HOME ]] && echo "There was no java runtime environment or jdk setup. Roddy cannot be compiled." && exit 1
-  [[ -z $GROOVY_HOME ]] && echo "Groovy SDK / Runtime not found, Roddy cannot be compiled or started." && exit 1
 else
 
   # Check, if Java can be called and extract the version
@@ -48,14 +42,33 @@ else
   groovyBinary=`which groovy 2> /dev/null`
   groovySearchError=$?
 
+  # Check, if java and groovy could be found
   [[ $javaSearchError == 1 ]]   && echo "There was no java runtime environment or jdk setup. Roddy cannot be compiled." && exit 1
   [[ $groovySearchError == 1 ]] && echo "Groovy SDK / Runtime not found, Roddy cannot be compiled or started." && exit 1
 
+  # Check, if JAVA_HOME and GROOVY_HOME are set. If not, set them.
+  if [[ -z $JAVA_HOME ]]; then
+    export JAVA_HOME=$(dirname $(dirname $(readlink -f $javaBinary)))
+    export JDK_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
+    export PATH=$JDK_HOME/bin:$JAVA_HOME/bin:$PATH
+  fi
+  if [[ -z $GROOVY_HOME ]]; then
+    export GROOVY_HOME=$(dirname $(dirname $(readlink -f $groovyBinary)))
+    export PATH=$GROOVY_HOME/bin$PATH
+  fi
 fi
 
->&2 echo `which java`
->&2 echo `which groovy`
+>&2 echo $(readlink -f which java)
+>&2 echo $(readlink -f which javac)
+>&2 echo $(readlink -f which groovy)
 
+# The method compares two version numbers in the format:
+# Major.Minor.*
+# Only the first two numbers are compared.
+# Parameters:
+#   $1 - String which identifies the software
+#   $2 - Actual version
+#   $3 - Requested version
 function compareVersion {
   local major=$(echo $2 | cut -d "." -f 1)
   local minor=$(echo $2 | cut -d "." -f 2)
@@ -65,10 +78,14 @@ function compareVersion {
 
   [[ $major -lt $majorRequired || $minor -lt $minorRequired ]] && echo "$1 version $2 is too low" && exit 1
 }
-set -x
+
+# Groovy knows about both versions. This way we can just query Groovy.
 versions=`groovy -v`
 
-groovyVersion=$(echo $versions | cut -d ":" -f 2-3 | cut -d " " -f 2)
+# Get the groovy and java versions ...
 javaVersion=$(echo $versions | cut -d ":" -f 2-3 | cut -d " " -f 4)
+groovyVersion=$(echo $versions | cut -d ":" -f 2-3 | cut -d " " -f 2)
+
+# ... and compare them.
 compareVersion "Java" $javaVersion $JDK_VERSION
 compareVersion "Groovy" $groovyVersion $GROOVY_VERSION
