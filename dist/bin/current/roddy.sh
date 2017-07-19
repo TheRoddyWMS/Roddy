@@ -12,14 +12,14 @@ if [[ "$parm1" == "prepareprojectconfig" ]]; then
 fi
 
 PATH=$JDK_HOME/bin:$JAVA_HOME/bin:$GROOVY_HOME/bin:$PATH
-JFX_LIBINFO_FILE=~/.roddy/jfxlibInfo
-if [[ ! -f ${JFX_LIBINFO_FILE} ]] || [[ ! -f `cat ${JFX_LIBINFO_FILE}` ]]; then
-	echo `find ${JAVA_HOME}/ -name "jfxrt.jar"` > ${JFX_LIBINFO_FILE}
-fi
+#JFX_LIBINFO_FILE=~/.roddy/jfxlibInfo
+#if [[ ! -f ${JFX_LIBINFO_FILE} ]] || [[ ! -f `cat ${JFX_LIBINFO_FILE}` ]]; then
+#	echo `find ${JAVA_HOME}/ -name "jfxrt.jar"` > ${JFX_LIBINFO_FILE}
+#fi
 
 #TODO Resolve the PluginBase.jar This might be set in the ini file.
 pluginbaseLib=${RODDY_DIRECTORY}/dist/plugins/PluginBase/PluginBase.jar
-jfxlibInfo=`cat ${JFX_LIBINFO_FILE}`
+#jfxlibInfo=`cat ${JFX_LIBINFO_FILE}`
 libraries=`ls -d1 ${RODDY_BINARY_DIR}/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
 libraries=$libraries:$jfxlibInfo
 
