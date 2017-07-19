@@ -3,21 +3,42 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Roddy documentation
-===============================================
-
+.. The toctree defines all documents in our site
 .. toctree::
+   :hidden:
    :maxdepth: 2
    :caption: Contents:
 
+   installationGuide
+   exampleWorkflow
+   configurationFiles
+   usersGuide
+   developersGuide
+   pluginDevelopersGuide
 
-What is Roddy
+.. Here are the used hyperlinks in this document.
+   They are mostly relative links
+.. _`GitHub project site`: https://github.com/eilslabs/Roddy
+.. _`F.A.Q.`: https://github.com/eilslabs/Roddy/wiki/FAQ
+.. _`Example workflow`: exampleWorkflow
+.. _`Users Guide`: usersGuide
+.. _`Plugin developers guide`: pluginDevelopersGuide
+.. _`Developers guide`: developersGuide
+.. _`RoddyToolLib`: https://github.com/eilslabs/RoddyToolLib
+.. _`BatchEuphoria`: https://github.com/eilslabs/BatchEuphoria
+
+
+The Roddy WMS
 =============
 
-Roddy is a framework for rapid development and management of script
-based workflows on a batch processing cluster. This page focuses on a
-quick introduction of the framework, detailed descriptions will be
-handled in their own pages.
+What is Roddy
+-------------
+
+Roddy is a framework for development and management of script
+based workflows on a batch processing cluster.
+
+You can find the Roddy source code and its releases on our `GitHub project site`_
+
 
 Key Features
 ------------
@@ -41,27 +62,32 @@ The multi-layer configuration system and the handling of plugin versions
 make Roddy particularly well suited for multi-user, multi-project
 environments.
 
-How to start?
--------------
+Where to start?
+---------------
 
-Take a look at the example workflow package: [[ Example workflow \|
-Example-workflow ]]
+Take a look at the example workflow package: :doc:`exampleWorkflow`
 
-Do you want to use it to run existing workflows? Then head over to the
-[[ Users guide \| User-Guide]]
+Do you want to use it to run existing workflows? Then head over to the :doc:`usersGuide`
 
-Do you want to develop it? See the [[ Developers guide \|
-Developer-Guide ]]
+Do you want to develop it? See the :doc:`developersGuide`
 
-Do you want to develop workflows with it? Open up the [[ Plugin
-developers guide \| Plugin-developers-guide ]]
+Do you want to develop workflows with it? Open up the :doc:`pluginDevelopersGuide`
 
-Do you have questions? Please visit the [[ F.A.Q. \| FAQ ]] section
+Do you have questions? Please visit the `F.A.Q.`_ section in our GitHub Wiki
 
+License and associated projects
+-------------------------------
 
-Indices and tables
-==================
+Roddy is offered under and MIT based license.
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+We extracted two possibly helpful open source libraries, again under MIT license:
+
+- `RoddyToolLib`_ is a Java / Groovy library which provides several tools used in BatchEuphoria and Roddy. See the project description for more information.
+
+- `BatchEuphoria`_ is a Java / Groovy library designed to offer easy access to cluster systems. Currently supported are PBS, SGE and LSF Rest
+
+.. Indices and tables
+.. /==================
+.. /* ref:`genindex`
+.. /* ref:`modindex`
+.. /* ref:`search`
