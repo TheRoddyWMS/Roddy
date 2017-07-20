@@ -15,7 +15,7 @@ Select the workflow type
 Before you create a new workflow, you have to decide, which type of
 workflow you want to create:
 
-1.  Java / Groovy
+1.  Java / Groovy or other JVM based plugins. We will call them JVM plugins.
 
 2.  Brawl
 
@@ -23,6 +23,8 @@ workflow you want to create:
 
 and if you want to create a new plugin or extend an existing plugin.
 Of course, you can have a mix of workflows in a plugin at a later stage.
+
+We are discussing, if we will support CWL based workflows.
 
 Common plugin setup
 -------------------
@@ -35,7 +37,11 @@ to the default structure, finally all plugins are organized this way.
 
 The plugins folder name is built up in the following way:
 ::
+
   PluginName_1.0.111-1
+
+.. Note:: The standard Roddy versioning scheme also applies to the plugin versioning scheme which is
+   [major].[minor].[build] and extends it by the revision to [major].[minor].[build]-[revision].
 
 where:
 
@@ -107,6 +113,20 @@ There are some main components for any plugin and files for the contained workfl
 
 5. The jar file, which is named after the plugin name. The jar file is only needed, if you create Java based workflows.
 
+.. Important::
+   The build* files and the analysisTools and configurationFiles folders are mandatory! If you do not create them, the plugin will not be loaded by Roddy.
+
+Populating your plugin
+----------------------
+
+Now it is time to populate your plugin with files, configuration files and resources.
+The common settings are explained in this document, plugin specific settings are explained separetely.
+
+As noted before, you need to create at least a plugin folder with a valid name, the buildinfo and the buildversion text files and both subfolders in resources.
+
+.. IMPORTANT::
+   JVM workflows offer the highest amount of access to the Roddy API. Roddys API concepts will be explained in the description of JVM workflows. However you are allowed to mix workflow types in a plugin.
+
 Let Roddy help you
 ~~~~~~~~~~~~~~~~~~
 
@@ -114,10 +134,10 @@ Call Roddy like this:
 ::
     bash roddy.sh createnewworkflow PluginID[:dependencyPlugin] [native|brawl:]WorkflowID
 
--  Set //PluginID// to either an existing or a new Plugin.
--  Set //dependenyPlugin// to a parent plugin
+-  Set *PluginID* to either an existing or a new Plugin.
+-  Set *dependencyPlugin* to a parent plugin
 -  Select if you want a Java, a native (Bash) or a Brawl workflow
--  Finally, set the workflows name with at //WorkflowID//
+-  Finally, set the workflows name with at *WorkflowID*
 
 So e.g. create a Java workflow called FirstWorkflow in a plugin called
 NewPlugin:

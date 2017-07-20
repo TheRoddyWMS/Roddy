@@ -6,15 +6,22 @@
 .. The toctree defines all documents in our site
 .. toctree::
    :hidden:
-   :maxdepth: 2
+   :glob:
+   :maxdepth: 3
    :caption: Contents:
 
    installationGuide
    exampleWorkflow
    configurationFiles
+   config/bashConfigurationFiles
+   config/xmlConfigurationFiles
+   config/configFilenamesAndToolEntries
    usersGuide
    developersGuide
    pluginDevelopersGuide
+   jvmPlugins
+   brawlPlugins
+   nativePlugins
 
 .. Here are the used hyperlinks in this document.
    They are mostly relative links

@@ -1,15 +1,3 @@
-.. toctree::
-     :hidden:
-     :maxdepth: 2
-     :caption: Contents:
-
-     bashConfigurationFiles
-     xmlConfigurationFiles
-
-..  _`XML configuration files`:
-..  _`Bash configuration files`:
-
-
 Configuration files
 ===================
 
@@ -26,12 +14,18 @@ possible.
 Types of files
 --------------
 
-Roddy configuration files exist in three flavours: Project configuration
-files, workflow or analysis configuration files and generic
-configuration files. All file types may contain the same content type
+Roddy configuration files exist in three flavours:
+
+- Project configuration files
+
+- Workflow or analysis configuration files
+
+- Generic configuration files.
+
+All file types may contain the same content type
 though analysis configuration files will normally look different than
-e.g. workflow configuration files. The main difference between the
-different types is their place in the configuration inheritance tree,
+e.g. project configuration files. The main difference between the
+different types is their position in the configuration inheritance tree,
 their filename and their header.
 
 Filenames
@@ -40,12 +34,14 @@ Filenames
 Roddy imposes some filename conventions to identify XML files when they
 are loaded from disk:
 
--  Project configuration files look like projects//[yourfilename]//.xml
+-  Project configuration files look like projects*[yourfilename]*.xml
 -  Workflow configuration files use the pattern
-   analysis//[yourfilename]//.xml
+   analysis*[yourfilename]*.xml
 
 Common configuration files do not use any pattern. You can name them
 like you want, except for the above patterns.
+
+.. Note: 
 
 Inheritance structure
 ---------------------

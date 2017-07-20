@@ -8,21 +8,25 @@ Here, we try to collect topics and settings, where we think that they might be i
 
 Code Format
 ~~~~~~~~~~~
-We use the default IntelliJ IDEA settings for code formatting.
+We are mainly using IntelliJ IDEA and use the default settings for code formatting.
 
 Collections as return types
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default, we do not return a copy (neither shallow, nor deep) of the Collection object. Be careful, not to modify the collection, if you do not change the contents of the object.
 
-Keep methods clean and simple
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Keep it clean and simple
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+We do not really enforce rules, but we try to keep things simple and readable.
 
 - If a code block is not readable, try to make a method out of it.
 
-- Reduce size and complexity of methods,
+- Reduce size and complexity of methods.
 
-We know, that we have a lot of issues in our codebase, but we listen to every improvement suggestion
+- Your code should be self explanatory. If it is not, try to make it that way.
+
+We know, that we have a lot of issues in our codebase, but we listen to every improvement suggestion and constantly try to improve things.
 
 Development model
 -----------------
@@ -31,6 +35,11 @@ For development we follow the standard git flow with feature branches
 getting merged into the develop branch and merge into master branch upon
 release. Currently we are discussing if we remove the development branch.
 Roddys versioning system makes it easy to go back to previous versions.
+
+Settings for Groovy classes
+---------------------------
+
+We will not accept Groovy classes without the @CompileStatic annotation.
 
 
 Roddy versioning scheme
@@ -74,6 +83,7 @@ Repository Structure
 ~~~~~~~~~~~~~~~~~~~~
 
 ::
+
     /
     roddy.sh                                          Top-level script
     ./RoddyCore                                       The core project
@@ -100,6 +110,7 @@ probably implement a Gradle-based re-implementation of the workflow.
 Compiling Roddy is easy:
 
 ::
+
     bash roddy.sh compile
 
 Will compile a new “current” version.
@@ -111,6 +122,7 @@ Packing Roddy
 Similar to compile, Roddy has a pack option:
 
 ::
+
     bash roddy.sh pack
 
 Will pack current to a directory called $major.$minor.$build.
