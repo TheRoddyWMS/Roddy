@@ -4,27 +4,18 @@
    contain the root `toctree` directive.
 
 .. The toctree defines all documents in our site
-.. toctree::
-   :hidden:
-   :glob:
-   :maxdepth: 3
-   :caption: Contents:
+..  toctree::
+    :maxdepth: 3
 
-   installationGuide
-   exampleWorkflow
-   configurationFiles
-   config/bashConfigurationFiles
-   config/xmlConfigurationFiles
-   config/configFilenamesAndToolEntries
-   usersGuide
-   developersGuide
-   pluginDevelopersGuide
-   jvmPlugins
-   brawlPlugins
-   nativePlugins
+    configuration
+    pluginDevelopment
 
 .. Here are the used hyperlinks in this document.
    They are mostly relative links
+    installationGuide
+    exampleWorkflow
+    usersGuide
+    developersGuide
 .. _`GitHub project site`: https://github.com/eilslabs/Roddy
 .. _`F.A.Q.`: https://github.com/eilslabs/Roddy/wiki/FAQ
 .. _`Example workflow`: exampleWorkflow
@@ -78,7 +69,7 @@ Do you want to use it to run existing workflows? Then head over to the :doc:`use
 
 Do you want to develop it? See the :doc:`developersGuide`
 
-Do you want to develop workflows with it? Open up the :doc:`pluginDevelopersGuide`
+Do you want to develop workflows with it? Open up the :doc:`pluginDevelopment/pluginDevelopersGuide`
 
 Do you have questions? Please visit the `F.A.Q.`_ section in our GitHub Wiki
 

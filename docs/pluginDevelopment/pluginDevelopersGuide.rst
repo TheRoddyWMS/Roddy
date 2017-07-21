@@ -62,11 +62,13 @@ There are some main components for any plugin and files for the contained workfl
 1. The buildversion.txt file contains the build number of the plugin. This number will get increased, if you pack or compile the plugin.
    The file contains exactly two lines:
    ::
+
       Major.Minor
       Build
 
    e.g.
    ::
+
       1.0
       182
 
@@ -82,6 +84,7 @@ There are some main components for any plugin and files for the contained workfl
 
   One example:
   ::
+
       dependson=PluginBase:1.0.29
       dependson=COWorkflows:1.1.20-1
       dependson=DefaultPlugin:1.0.34

@@ -13,11 +13,14 @@ So how do you tie things up?
 
 Filename patterns are used to define a single or a range of names for a file class.
 
-File classes are used as input and output parameters for tool entries.
+File classes are used as input and output parameters for tool entries. **Filename patterns
+are automatically applied to output files!**
 
 Tool entries tell Roddy how a script or a binary is called. Which files and
 parameters go in and which files come out and which resources will be used by
 jobs running this tool.
+
+A complex tool entry will be shown at the end of this document.
 
 .. Note::
     In our experience, it is a good way to create tools on a step by step base so that:
@@ -27,6 +30,16 @@ jobs running this tool.
     2. Integrate the call into your workflow.
 
     3. Setup filename patterns for the tools output files.
+
+    4. Test the new tool with *testrun* and *testrerun*.
+
+    5. Repeat the steps for the next tool.
+
+    Occasionally it might still be wise to remove the output data and test the whole workflow again.
+
+.. Important::
+    Remember, that Roddy does not feature job monitoring. The job structure, file names
+    and patterns must be well known before the workflow starts!
 
 Tool entries
 ------------
@@ -48,10 +61,24 @@ Each tool entry has a header:
     <tool name='testScript' value='testScriptSleep.sh' basepath='roddyTests'>
 
 * The value of the *name* attribute is used to call or manage the tool in a workflow.
+  Before a workflow starts, the names of all tools are converted to configuration values so that
+  you will have easy access to them from your scripts. As explained in the configuration section,
+  a job name will be converted from camel case notation to All caps notation using underscore
+  as the word separator. In addition *TOOL_* will be used as a prefix. So the tool name *testScript*
+  would be named *TOOL_TEST_SCRIPT* in your job.
+
 
 * The value of the *value* attribute holds the script or binary name of the executed file.
 
 * The value of the *basepath* attribute points to the tools folder in the plugins analyisTools folder.
+
+.. Important::
+  You can, but you don't have to add resource sets and input and ouput parameters to a job.
+  If you omit resource sets, the job will run with default resource settings. They are explained below.
+  If you omit input and output parameters, you need to take care of the job call by yourself. Normally, Roddy will
+  take care of this for you. If you create a native workflow, you will lose the rerun feature, if you omit the output parameters!
+  Omitting all these parameters might sometimes make sense, when you just want to get easy access to a tool
+  in your analysisTools folder.
 
 Resource sets
 ~~~~~~~~~~~~~
@@ -95,8 +122,151 @@ Each tool can have several resource sets.
 Input types
 ~~~~~~~~~~~
 
+A tool can have different input objects:
+
+- Values, like strings or numbers:
+
+    .. code-block:: Xml
+
+        <input type="string" setby="callingCode" scriptparameter="SAMPLE"/>
+
+    * The *type* attribute tells Roddy, that a string is expected.
+
+    * The *setby* attribute tells Roddy, that the parameter will be set by the developer
+      in the call of the job. Currently only *callingCode* is valid.
+
+    * The *scriptparameter* value tells Roddy that a parameter with this name is
+      passed to the job.
+
+- Single file objects like:
+
+    .. code-block:: Xml
+
+        <input type="file" typeof="de.dkfz.b080.co.files.LaneFile" scriptparameter="RAW_SEQUENCE_FILE" />
+        <input type="file" typeof="BasicBamFile" scriptparameter="RAW_SEQUENCE_FILE" />
+
+    * The type attribute tells Roddy that a file object is expected as input.
+
+    * The typeof value tells Roddy the expected type of an input value. This check is
+      done within the job call. If the type of the input object does not match, Roddy
+      will fail. You're allowed to omit the package structure. Roddy will try to find
+      the class in its core code and in the plugin classes. If more than two classes
+      match, Roddy will fail and tell you, that this happened.
+
+    .. Important:: You are allowed to put in a non-existent class! If Roddy cannot find
+        the class, it will create a synthetic class during runtime. This way, you can
+        skip code creation and keep your code lean. You are allowed to use this class
+        like any other class. However, you are not able to use the class directly in your
+        Java code.
+
+    * Like above, the scriptparameter value tells Roddy that a parameter with this name is
+      passed to the job.
+
+
+- File groups:
+
+    File groups are collections of file objects. By default, file groups are designed to
+    store files of the same type.
+
+    .. code-block:: Xml
+
+        <input type="filegroup" typeof="de.dkfz.b080.co.files.BamFileGroup" scriptparameter="INPUT_FILES" passas="array"/>
+        <input type="filegroup" typeof="GenericFileGroup" scriptparameter="INPUT_FILES2" passas="array"/>
+
+    * Set the *type* to filegroup if you want to use it.
+
+    * *typeof* behaves nearly the same as for file input definitions. However, here you need to put in
+      a file group class. If you do not need a specialized or named file group, you can use the GenericFileGroup class.
+
+    * TODO: *classOfContainedFiles*
+
+    * The *passas* attribute defines, how the files in the file group are passed to your job. Allowed values are:
+
+      * *parameters* which will tell Roddy to create a parameter for each file in the group.
+
+      * *array* which will tell Roddy to pass the files as an array in a single string.
+
+    * The *scriptparameter* behaves nearly like the one for files. If you set *array*, the parameter name will be
+      used like it is. If you set *parameters* it will be used as a prefix and the .
+
+.. Important::
+    The order of the input parameters matters, when you pass parameters to a job.
+    Roddy will check this and fail, if:
+
+    * the number of input parameters does not match
+
+    * the type of input parameters does not match
+
 Output types
 ~~~~~~~~~~~~
+
+The output of a Roddy job is always a file or a group of files. Moreover, you are only allowed to have one top-level output
+object in the XML description, but this object might be one which holds other objects like the mentionend file groups.
+
+If your tool does not create output files you can omit those entries. However, it might still be wise to create some sort of checkpoint
+for the tool so that Roddys rerun feature will work properly. The syntax for output objects is quite similar to the
+syntax for input objects, so we'll skip explanations for known attributes. Valid output objects are:
+
+- Single file objects:
+
+  The single output file syntax is the same like for input files. Just change the tag name to output.
+
+  .. code-block:: Xml
+
+      <output type="file" typeof="de.dkfz.b080.co.files.BamFile" scriptparameter="FILENAME" />
+
+- Files with children:
+
+  Files with children are a bit special. They are necessary, if you want to create a file which has some children.
+  The main difference to single files is, that you need to create a class file! Then, for each file you want as a
+  child, you need to create the field and the set / get accessors. We use this feature only in a handful of cases.
+
+  .. code-block:: Xml
+
+      <output type="file" typeof="BasicBamFile" scriptparameter="FILENAME">
+        <output type="file" variable="indexFile" typeof="BamIndexFile" scriptparameter="FILENAME_INDEX"/>
+      </output>
+
+  The example shows an output entry with one child. You can add more children, if you need.
+
+  The *variable* attribute tells Roddy which field in the parent class is used to store the created child.
+
+- Tuples of files:
+
+  Tuples of files are the easiest way to create collections of file objects. It does not matter which types
+  the files have.
+
+  .. code-block:: Xml
+
+      <output type="tuple">
+        <output type="file" typeof="BasicBamFile" scriptparameter="FILENAME_BAM"/>
+        <output type="file" typeof="BamIndexFile" scriptparameter="FILENAME_INDEX"/>
+      </output>
+
+  Call in Java code
+
+  .. code-bloc:: Java
+
+      // Call with output tuple
+      Tuple2 fileTuple = (Tuple2) call("testScriptWithMultiOut", someFile)
+
+      // Access output tuple children
+      fileTuple.value0
+      fileTuple.value1
+
+- File groups:
+
+  Output file groups offer a lot more options than input file groups. This
+
+  .. code-block:: Xml
+
+      <output type="filegroup" typeof="GenericFileGroup">
+        <output type="file" typeof="" scriptparameter="BAM1"/>
+        <output type="file" typeof="" scriptparameter="BAM2"/>
+        <output type="file" typeof="" scriptparameter="BAM3"/>
+      </output>
+
+
 
 Filename patterns
 -----------------
@@ -106,3 +276,20 @@ Automatic filenames
 
 Synthetic classes
 -----------------
+
+Example tool entry and filename patterns
+----------------------------------------
+
+.. code-block:: Xml
+
+    <a/>
+
+Overriding tool entries
+-----------------------
+
+Sometimes, the initial specification might not be right for you. In this case, you are always allowed to override
+the existing tool entry. There are basically two ways: Override the resource sets only or redefine the whole tool.
+
+- Override resource sets:
+
+- Override the full tool entry.
