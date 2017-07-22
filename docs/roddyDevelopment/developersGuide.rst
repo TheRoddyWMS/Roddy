@@ -1,22 +1,22 @@
 Developers guide
-================
+----------------
 
 Code guidelines
----------------
+~~~~~~~~~~~~~~~
 Roddy has no specific development or code style.
 Here, we try to collect topics and settings, where we think that they might be important.
 
 Code Format
-~~~~~~~~~~~
+^^^^^^^^^^~
 We are mainly using IntelliJ IDEA and use the default settings for code formatting.
 
 Collections as return types
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 By default, we do not return a copy (neither shallow, nor deep) of the Collection object. Be careful, not to modify the collection, if you do not change the contents of the object.
 
 Keep it clean and simple
-~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 We do not really enforce rules, but we try to keep things simple and readable.
 
@@ -29,7 +29,7 @@ We do not really enforce rules, but we try to keep things simple and readable.
 We know, that we have a lot of issues in our codebase, but we listen to every improvement suggestion and constantly try to improve things.
 
 Development model
------------------
+~~~~~~~~~~~~~~~~~
 
 For development we follow the standard git flow with feature branches
 getting merged into the develop branch and merge into master branch upon
@@ -37,13 +37,13 @@ release. Currently we are discussing if we remove the development branch.
 Roddys versioning system makes it easy to go back to previous versions.
 
 Settings for Groovy classes
----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 We will not accept Groovy classes without the @CompileStatic annotation.
 
 
 Roddy versioning scheme
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Roddy version numbers consist of three entries: [major].[minor].[build].
 These are added to the repository for releases.
@@ -73,14 +73,14 @@ Below, you’ll find, how things are (or are supposed to be) handled in
 git.
 
 How to get started
-------------------
+~~~~~~~~~~~~~~~~~~
 
-Have you already checked out the :doc:`installationGuide`?
+Have you already checked out the :doc:`../installationGuide`?
 If not, please do so and do not forget to use the developer
 settings instead of the user settings.
 
 Repository Structure
-~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^
 
 ::
 
@@ -100,7 +100,7 @@ Repository Structure
             jdk, jre, jdk_$major.$minor._$revision
 
 Compiling Roddy
----------------
+~~~~~~~~~~~~~~~
 
 Currently, the compilation & packaging is implemented in the top-level
 roddy.sh script that itself calls a number of scripts in the
@@ -117,7 +117,7 @@ Will compile a new “current” version.
 
 
 Packing Roddy
--------------
+~~~~~~~~~~~~~
 
 Similar to compile, Roddy has a pack option:
 

@@ -104,10 +104,10 @@ Configuration values
 Configuration values are the thing you might change most of the times. When Roddy executes a workflow, a shell script will be created where all the configuration values are stored. This script can then be imported by workflow scripts.
 
 Types of values
-^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~
 
 Special values
-^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~
 
 For future releases of Roddy and also for better readability of XML files, Roddy offers "special" variables like:
 
@@ -123,7 +123,7 @@ Tool entries and filename patterns
 ----------------------------------
 
 .. Links for this section
-.._Filenames and tool entries`: config/configFilenamesAndToolEntries
+.. _Filenames and tool entries`: config/configFilenamesAndToolEntries
 
 .. NOTE::
   Because of the importance and complexity of both entry types, they are covered in their own section :doc:`configFilenamesAndToolEntries`.

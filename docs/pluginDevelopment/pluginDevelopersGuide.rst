@@ -100,6 +100,7 @@ There are some main components for any plugin and files for the contained workfl
 
   * The analysisTools directory, which is populated with several tool folders, e.g.
     ::
+
       13:45 $ ll analysisTools/
       insgesamt 8
       ... 4096 26. Jun 13:47 roddyNativeTools
@@ -135,6 +136,7 @@ Let Roddy help you
 
 Call Roddy like this:
 ::
+
     bash roddy.sh createnewworkflow PluginID[:dependencyPlugin] [native|brawl:]WorkflowID
 
 -  Set *PluginID* to either an existing or a new Plugin.
@@ -145,11 +147,13 @@ Call Roddy like this:
 So e.g. create a Java workflow called FirstWorkflow in a plugin called
 NewPlugin:
 ::
+
     bash roddy.sh createnewworkflow NewPlugin FirstWorkflow
 
 or e.g. create a Brawl workflow called SecondWorkflow in another plugin
 and set it to depend on NewPlugin:
 ::
+
     bash roddy.sh createnewworkflow AnotherPlugin:NewPlugin SecondWorkflow
 
 ***Oh I have something new now… but where is it?***

@@ -245,7 +245,7 @@ syntax for input objects, so we'll skip explanations for known attributes. Valid
 
   Call in Java code
 
-  .. code-bloc:: Java
+  .. code-block:: Java
 
       // Call with output tuple
       Tuple2 fileTuple = (Tuple2) call("testScriptWithMultiOut", someFile)

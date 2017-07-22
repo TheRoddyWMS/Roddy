@@ -7,14 +7,15 @@
 ..  toctree::
     :maxdepth: 3
 
+    installationGuide
+    exampleWorkflow
     configuration
+    roddyDevelopment
+    usersGuide
     pluginDevelopment
 
 .. Here are the used hyperlinks in this document.
    They are mostly relative links
-    installationGuide
-    exampleWorkflow
-    usersGuide
     developersGuide
 .. _`GitHub project site`: https://github.com/eilslabs/Roddy
 .. _`F.A.Q.`: https://github.com/eilslabs/Roddy/wiki/FAQ
@@ -67,7 +68,7 @@ Take a look at the example workflow package: :doc:`exampleWorkflow`
 
 Do you want to use it to run existing workflows? Then head over to the :doc:`usersGuide`
 
-Do you want to develop it? See the :doc:`developersGuide`
+Do you want to develop it? See the :doc:`roddyDevelopment/developersGuide`
 
 Do you want to develop workflows with it? Open up the :doc:`pluginDevelopment/pluginDevelopersGuide`
 
