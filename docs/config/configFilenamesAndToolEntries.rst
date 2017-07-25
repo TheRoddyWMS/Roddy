@@ -251,8 +251,8 @@ syntax for input objects, so we'll skip explanations for known attributes. Valid
       Tuple2 fileTuple = (Tuple2) call("testScriptWithMultiOut", someFile)
 
       // Access output tuple children
-      fileTuple.value0
-      fileTuple.value1
+      (BasicBamFile)fileTuple.value0
+      (BamIndexFile)fileTuple.value1
 
 - File groups:
 
@@ -271,11 +271,91 @@ syntax for input objects, so we'll skip explanations for known attributes. Valid
 Filename patterns
 -----------------
 
+Filenames in Roddy are rule based. They are defined in the filenames section in your xml file.
+
+.. code-block:: Xml
+
+    <filenames package='de.dkfz.roddy.knowledge.examples' filestagesbase='de.dkfz.roddy.knowledge.examples.SimpleFileStage'>
+      <filename class='SimpleTestTextFile' onTool='testScript' pattern='${testOutputDirectory}/test_onScript_1.txt'/>
+      <filename class='SimpleMultiOutFile' onTool="testScriptWithMultiOut" selectiontag="mout1" pattern="${testOutputDirectory}/test_mout_a.txt" />
+      <filename class='SimpleMultiOutFile' onTool="testScriptWithMultiOut" selectiontag="mout2" pattern="${testOutputDirectory}/test_mout_b.txt" />
+      <filename class='SimpleMultiOutFile' onTool="testScriptWithMultiOut" selectiontag="mout3" pattern="${testOutputDirectory}/test_mout_c.txt" />
+      <filename class='SimpleMultiOutFile' onTool="testScriptWithMultiOut" selectiontag="mout4" pattern="${testOutputDirectory}/test_mout_d.txt" />
+    </filenames>
+
+There are several types of patterns available:
+
+- onScript
+
+  ..
+
+- onMethod
+
+- onToolID
+
+- derivedfrom
+
+- generic
+
+
+.. Important:: Filename patterns are evaluated in a specific order!
+
+    1. First by the type
+
+      - onScript -> onMethod -> onToolID -> derivedFrom -> generic
+
+    2. By the order in the configuration. First come first serve!
+
+
+
+.. code-block:: Java
+
+    "<filename class='TestFileWithParent' derivedFrom='TestParentFile' pattern='/tmp/onderivedFile'/>"
+    RN_WITH_INLINESCRIPT = "<filename class='TestFileWithParent' derivedFrom='TestParentFile' pattern='/tmp/onderivedFile'/>"
+    RN_WITH_ARR = "<filename class='TestFileWithParentArr' derivedFrom='TestParentFile[2]' pattern='/tmp/onderivedFile'/>"
+    FQN = "<filename class='TestFileOnMethod' onMethod='de.dkfz.roddy.knowledge.files.BaseFile.getFilename' pattern='/tmp/onMethod'/>"
+    WITH_CLASSNAME = "<filename class='TestFileOnMethod' onMethod='BaseFile.getFilename' pattern='/tmp/onMethodwithClassName'/>"
+    WITH_METHODNAME = "<filename class='TestFileOnMethod' onMethod='getFilename' pattern='/tmp/onMethod'/>"
+    "<filename class='TestFileOnTool' onTool='testScript' pattern='/tmp/onTool'/>"
+     = "<filename class='FileWithFileStage' fileStage=\"GENERIC\" pattern='/tmp/filestage'/>"
+    _WITH_TOOL_AND_PARAMNAME = "<filename class='TestOnScriptParameter' onScriptParameter='testScript:BAM_INDEX_FILE' pattern='/tmp/onScript' />"
+    _ONLY_PARAMNAME = "<filename class='TestOnScriptParameter' onScriptParameter='BAM_INDEX_FILE2' pattern='/tmp/onScript' />"
+    _ONLY_COLON_AND_PARAMNAME = "<filename class='TestOnScriptParameter' onScriptParameter=':BAM_INDEX_FILE3' pattern='/tmp/onScript' />"
+    _WITH_ANY_AND_PARAMNAME = "<filename class='TestOnScriptParameter' onScriptParameter='[ANY]:BAM_INDEX_FILE4' pattern='/tmp/onScript' />"
+    _FAILED = "<filename class='TestOnScriptParameter' onScriptParameter='[AffY]:BAM_INDEX_FILE5' pattern='/tmp/onScript' />" // Error!!
+    _WITHOUT_CLASS = "<filename onScriptParameter='testScript:BAM_INDEX_FILE6' pattern='/tmp/onScript' />"
+
+
+
 Automatic filenames
 -------------------
 
 Synthetic classes
 -----------------
+
+Synthetic classes are a mechanism which allows you to use Roddys built-in type checking system without the need to create class files. Synthetic classes are automatically
+created during runtime in the following cases:
+
+- A filename pattern requires a specific non-existent class.
+
+- A tool i/o parameter needs a specific non-existent class.
+
+- Programmatically, if you request Roddy to load a non-existent class with the LibrariesFactory:
+
+  .. code-block:: Java
+
+      LibrariesFactory.getInstance().loadRealOrSyntheticClass(String classOfFileObject, String baseClassOfFileObject)
+      LibrariesFactory.getInstance().loadRealOrSyntheticClass(String classOfFileObject, Class<FileObject> constructorClass)
+      LibrariesFactory.getInstance().forceLoadSyntheticClassOrFail(String classOfFileObject, Class<FileObject> constructorClass = BaseFile.class)
+      LibrariesFactory.getInstance().generateSyntheticFileClassWithParentClass(String syntheticClassName, String constructorClassName, GroovyClassLoader classLoader = null)
+
+  or via the ClassLoaderHelper
+
+  .. code-block:: Java
+
+      LibrariesFactory.getInstance().getClassLoaderHelper().loadRealOrSyntheticClass(String classOfFileObject, String baseClassOfFileObject)
+      LibrariesFactory.getInstance().getClassLoaderHelper().loadRealOrSyntheticClass(String classOfFileObject, Class<FileObject> constructorClass)
+      LibrariesFactory.getInstance().getClassLoaderHelper().generateSyntheticFileClassWithParentClass(String syntheticClassName, String constructorClassName, GroovyClassLoader classLoader = null)
 
 Example tool entry and filename patterns
 ----------------------------------------

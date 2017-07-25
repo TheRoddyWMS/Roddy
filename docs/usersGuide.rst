@@ -1,4 +1,12 @@
-Users guide
-===========
+.. _usersGuide:
 
-Some Text
+***********
+Users guide
+***********
+
+.. toctree::
+
+    usersGuide/walkthrough
+    usersGuide/cheatSheet
+
+
