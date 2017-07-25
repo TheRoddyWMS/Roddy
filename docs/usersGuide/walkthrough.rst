@@ -1,4 +1,4 @@
-Users guide
+Walkthrough
 ===========
 
 This guide will show you how to setup Roddy, so that it is starting and
@@ -72,57 +72,33 @@ file:
 
 .. code-block:: ini
 
-    # Default / empty Roddy application configuration file
-    # The hash character is only allowed for comments!
-
     [COMMON]
     useRoddyVersion=current                     # Use the most current version for tests
-    usePluginVersion=                           # Fill in the plugins you need or use your project xml file for that.
 
     [DIRECTORIES]
-    configurationDirectories=
-    pluginDirectories=
+    configurationDirectories=[FOLDER_WITH_CONFIGURATION_FILES]
+    pluginDirectories=[FOLDER_WITH_PLUGINS]
 
     [COMMANDS]
-    commandLogTruncate=80                       # Truncate logged commands to this length. If <= 0, then no truncation.
-    #jobManagerClass=de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutedCommandFactory   # Local, direct execution
-    #jobManagerClass=de.dkfz.roddy.execution.jobs.cluster.slurm.SlurmCommandFactory     # Use squeue for Slurm
-    #jobManagerClass=de.dkfz.roddy.execution.jobs.cluster.pbs.SGECommandFactory     # Use qsub for Grid Engine
-    jobManagerClass=de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommandFactory      # Use qsub for PBS / Torque
+    jobManagerClass=de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
+    #jobManagerClass=de.dkfz.roddy.execution.jobs.cluster.pbs.PBSJobManager
+    #jobManagerClass=de.dkfz.roddy.execution.jobs.cluster.sge.SGEJobManager
+    #jobManagerClass=de.dkfz.roddy.execution.jobs.cluster.slurm.SlurmJobManager
+    #jobManagerClass=de.dkfz.roddy.execution.jobs.cluster.lsf.rest.LSFRestJobManager
     commandFactoryUpdateInterval=300
+    commandLogTruncate=80                       # Truncate logged commands to this length. If <= 0, then no truncation.
 
     [COMMANDLINE]
-    #CLI.executionServiceAuth=password
+    CLI.executionServiceUser=USERNAME
+    CLI.executionServiceClass=de.dkfz.roddy.execution.io.LocalExecutionService
+    #CLI.executionServiceClass=de.dkfz.roddy.execution.io.SSHExecutionService
+    CLI.executionServiceHost=[YOURHOST]
     CLI.executionServiceAuth=keyfile
-    #CLI.executionServiceClass=de.dkfz.roddy.execution.io.LocalExecutionService
-    CLI.executionServiceClass=de.dkfz.roddy.execution.io.SSHExecutionService
-    CLI.executionServiceHost=tbi-pbs2
+    #CLI.executionServiceAuth=password
     CLI.executionServicePasswd=
     CLI.executionServiceStorePassword=false
     CLI.executionServiceUseCompression=false
-    CLI.executionServiceUser=USERNAME
-    #CLI.fileSystemInfoProviderClass=de.dkfz.roddy.execution.io.fs.CachedFileSystemInfoProvider
     CLI.fileSystemInfoProviderClass=de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
-
-    [GRAPHICAL]
-    UI.configurationViewGraphOpened=false
-    #UI.executionServiceAuth=password
-    UI.executionServiceAuth=keyfile
-    #UI.executionServiceClass=de.dkfz.roddy.execution.io.LocalExecutionService
-    UI.executionServiceClass=de.dkfz.roddy.execution.io.SSHExecutionService
-    UI.executionServiceHost=tbi-pbs2
-    UI.executionServicePasswd=
-    UI.executionServiceStorePassword=false
-    UI.executionServiceUser=USERNAME
-    #UI.fileSystemInfoProviderClass=de.dkfz.roddy.execution.io.fs.CachedFileSystemInfoProvider
-    UI.fileSystemInfoProviderClass=de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
-    UI.lastOpenProjectPath=
-    UI.projectFilterAnalysisID=
-    UI.projectFilterHideUnprocessable=false
-    UI.projectFilterProjectID=
-    UI.titlePaneProjectDataSetFilterOpened=true
-    UI.titlePaneProjectFilterSettingsOpened=true
-    UI.titlePaneProjectSettingsOpened=true
 
 The file is divided into several sections, but this is mainly to keep a
 better order:
@@ -197,10 +173,11 @@ file like the one above. Roddy also offers a command for you to help you
 to set this one up.
 
 Configuration files contain several sections where Roddy lets you define
-things like tools, configurations or even filenames. But, you probably
+things like configuration values, tools and even filenames. But, you probably
 won't need that now and we'll concentrate on a very basic project
 configuration like the one above. You can find an in-detail guide here
-[[ Project XMLs \| GuideToProjectXML ]]
+:doc:`../config/xmlConfigurationFiles`. You might concentrate on the configuration
+values part as this will be the part which you probably need most.
 
 **//Uhhh, ok, so what is in the above example?//**
 
@@ -221,7 +198,7 @@ not be recognized as a project configuration by Roddy.
 
 The header of the configuration must contain the following: - The
 configurationType (in this case "project") - A name which must not
-containt "." and " "
+contain "." and " "
 
 It may contain:
 
@@ -275,7 +252,7 @@ In most cases, you should be done right now.
 Analysis-specific configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Occasionally, you may want to set specific parameters only for specific
+Occasionally, you may want to set specific parameters only for selected
 analyses. In this case you can add subconfigurations:
 
 .. code-block:: xml
@@ -288,6 +265,9 @@ Subconfigurations are exactly defined like the main configuration. They
 can contain the same sections. Each value, which is defined by you,
 overrides a value of the parent configuration. Subconfigurations can be
 nested and affect all ** tags that are nested within.
+
+Built-in configuration creation / updates
+-----------------------------------------
 
 Use Roddy to create an initial project configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -349,7 +329,7 @@ You can call Roddy afterwards with the new ini file.
     to manually adapt the configuration directories in the ini file!
 
 Check if things are set up properly
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------
 
 With configurations of complex workflows, it may become very tedious and
 error prone to ensure that everything is configured correctly. If you
@@ -372,7 +352,7 @@ paths and if all your files are available:
 
     bash roddy.sh listdatasets [project]@[analysis] --useconfig=[pathOfIniFile]
 
-    NOTE: Roddy supports parsing metadata such as dataset identifiers
+.. NOTE:: Roddy supports parsing metadata such as dataset identifiers
     from paths but additionally has a MetadataTable facility that
     simplifies metadata input via a table. Some workflows may also be
     implemented to get the metadata from dedicated configuration values.
@@ -400,7 +380,7 @@ Good, then you can go on and start a process. If not, you need to check
 your configuration files.
 
 Run a project
-~~~~~~~~~~~~~
+-------------
 
 There is one more thing you can do before starting a process: You can
 call Roddy with testrun:
@@ -478,7 +458,7 @@ your process finishes. Roddy will again offer you several commands to
 help you keep track of your progress.
 
 Process tracking, Debugging and Rerunning a process
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------------------------
 
 Sometimes, it can be nice to know if a process is still running or if
 there were faulty jobs and sometimes you just want to restart a process.
@@ -532,8 +512,8 @@ Import list for different workflows:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Please consider using only one analysis import per project xml file, if
-you set configuration variables, as configuration values for different
-workflows might have the same name. This could then lead to
+you set configuration variables. Configuration values for different
+workflows might have the same name, which could lead to
 misconfigured workflows. If you do not want to create a new file, you
 can still use subconfigurations for the different workflows.
 

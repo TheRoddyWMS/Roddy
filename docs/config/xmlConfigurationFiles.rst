@@ -17,10 +17,6 @@ Each configuration file is built up after the following pattern
         <subconfigurations />
   </configuration>
 
-
-
-
-
 However, keep in mind, that not every section makes sense for every type
 of XML file. E.g. *availableAnalyses* only makes sense in project XML
 files, whereas filenames and processing tools will moste likely only be

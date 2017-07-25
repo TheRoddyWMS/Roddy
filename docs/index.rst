@@ -9,9 +9,9 @@
 
     installationGuide
     exampleWorkflow
+    usersGuide
     configuration
     roddyDevelopment
-    usersGuide
     pluginDevelopment
 
 .. Here are the used hyperlinks in this document.

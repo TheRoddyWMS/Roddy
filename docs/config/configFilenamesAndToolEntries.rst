@@ -23,7 +23,7 @@ jobs running this tool.
 A complex tool entry will be shown at the end of this document.
 
 .. Note::
-    In our experience, it is a good way to create tools on a step by step base so that:
+    In our experience, it is a good way to create a workflow and its tools on a step by step base so that:
 
     1. You create a tool entry, define an initial resource set and i/o parameters.
 
@@ -283,15 +283,41 @@ Filenames in Roddy are rule based. They are defined in the filenames section in 
       <filename class='SimpleMultiOutFile' onTool="testScriptWithMultiOut" selectiontag="mout4" pattern="${testOutputDirectory}/test_mout_d.txt" />
     </filenames>
 
-There are several types of patterns available:
+There are several types of triggers for patterns available. Patterns are always linked to a particular *class*. By applying the *selectiontag* attribute to some
+of the trigger types, you gain a more fine grained control over pattern selection, if you define output objects of the same class multiple times in a tool.
 
-- onScript
+- onScriptParameter
 
-  ..
+  This trigger type links the pattern to the scriptparameter attribute of an output object. Valid trigger values are:
+
+    * [parameter name] - where *parameter name* is linked to the scriptparameter attribute. The trigger is valid for all tools.
+
+    * :[parameter name] - behaves like above.
+
+    * [ANY]:[parameter name] - behaves like above. This is the long form and *[ANY]* is meant to make the syntax more readable.
+
+    * [tool id]:[parameter name] - behaves like above, except that *tool id* restricts the trigger to exactly one tool.
+
+  This trigger type will NOT accept the *selectiontag* attribute.
 
 - onMethod
 
+  This trigger links the pattern to a method name or a class and a method name. Roddy will search all called methods using the current
+  Threads stack trace. The search will stop, as soon as the execute method is reached. Valid values are:
+
+    * [methodName] - by specifying only a method name, the pattern will be used for any called method with this name.
+
+    * [simple class name].[methodName] - this will accept all methods in classes with the given class name. The class package will be ignored.
+
+    * [full class name].[methodName] - by setting the class and the package, this pattern will only be applied with a full match.
+
+  This trigger type will accept the *selectiontag* attribute.
+
 - onToolID
+
+  This trigger will link the pattern to a tool call.
+
+  This trigger type will accept the *selectiontag* attribute.
 
 - derivedfrom
 
@@ -302,7 +328,7 @@ There are several types of patterns available:
 
     1. First by the type
 
-      - onScript -> onMethod -> onToolID -> derivedFrom -> generic
+      - onScriptParameter -> onMethod -> onToolID -> derivedFrom -> generic
 
     2. By the order in the configuration. First come first serve!
 
@@ -311,19 +337,19 @@ There are several types of patterns available:
 .. code-block:: Java
 
     "<filename class='TestFileWithParent' derivedFrom='TestParentFile' pattern='/tmp/onderivedFile'/>"
-    RN_WITH_INLINESCRIPT = "<filename class='TestFileWithParent' derivedFrom='TestParentFile' pattern='/tmp/onderivedFile'/>"
-    RN_WITH_ARR = "<filename class='TestFileWithParentArr' derivedFrom='TestParentFile[2]' pattern='/tmp/onderivedFile'/>"
-    FQN = "<filename class='TestFileOnMethod' onMethod='de.dkfz.roddy.knowledge.files.BaseFile.getFilename' pattern='/tmp/onMethod'/>"
-    WITH_CLASSNAME = "<filename class='TestFileOnMethod' onMethod='BaseFile.getFilename' pattern='/tmp/onMethodwithClassName'/>"
-    WITH_METHODNAME = "<filename class='TestFileOnMethod' onMethod='getFilename' pattern='/tmp/onMethod'/>"
+    "<filename class='TestFileWithParent' derivedFrom='TestParentFile' pattern='/tmp/onderivedFile'/>"
+    "<filename class='TestFileWithParentArr' derivedFrom='TestParentFile[2]' pattern='/tmp/onderivedFile'/>"
+    "<filename class='TestFileOnMethod' onMethod='de.dkfz.roddy.knowledge.files.BaseFile.getFilename' pattern='/tmp/onMethod'/>"
+    "<filename class='TestFileOnMethod' onMethod='BaseFile.getFilename' pattern='/tmp/onMethodwithClassName'/>"
+    "<filename class='TestFileOnMethod' onMethod='getFilename' pattern='/tmp/onMethod'/>"
     "<filename class='TestFileOnTool' onTool='testScript' pattern='/tmp/onTool'/>"
-     = "<filename class='FileWithFileStage' fileStage=\"GENERIC\" pattern='/tmp/filestage'/>"
-    _WITH_TOOL_AND_PARAMNAME = "<filename class='TestOnScriptParameter' onScriptParameter='testScript:BAM_INDEX_FILE' pattern='/tmp/onScript' />"
-    _ONLY_PARAMNAME = "<filename class='TestOnScriptParameter' onScriptParameter='BAM_INDEX_FILE2' pattern='/tmp/onScript' />"
-    _ONLY_COLON_AND_PARAMNAME = "<filename class='TestOnScriptParameter' onScriptParameter=':BAM_INDEX_FILE3' pattern='/tmp/onScript' />"
-    _WITH_ANY_AND_PARAMNAME = "<filename class='TestOnScriptParameter' onScriptParameter='[ANY]:BAM_INDEX_FILE4' pattern='/tmp/onScript' />"
-    _FAILED = "<filename class='TestOnScriptParameter' onScriptParameter='[AffY]:BAM_INDEX_FILE5' pattern='/tmp/onScript' />" // Error!!
-    _WITHOUT_CLASS = "<filename onScriptParameter='testScript:BAM_INDEX_FILE6' pattern='/tmp/onScript' />"
+    "<filename class='FileWithFileStage' fileStage=\"GENERIC\" pattern='/tmp/filestage'/>"
+    "<filename class='TestOnScriptParameter' onScriptParameter='testScript:BAM_INDEX_FILE' pattern='/tmp/onScript' />"
+    "<filename class='TestOnScriptParameter' onScriptParameter='BAM_INDEX_FILE2' pattern='/tmp/onScript' />"
+    "<filename class='TestOnScriptParameter' onScriptParameter=':BAM_INDEX_FILE3' pattern='/tmp/onScript' />"
+    "<filename class='TestOnScriptParameter' onScriptParameter='[ANY]:BAM_INDEX_FILE4' pattern='/tmp/onScript' />"
+    "<filename class='TestOnScriptParameter' onScriptParameter='[AffY]:BAM_INDEX_FILE5' pattern='/tmp/onScript' />" // Error!!
+    "<filename onScriptParameter='testScript:BAM_INDEX_FILE6' pattern='/tmp/onScript' />"
 
 
 
