@@ -723,7 +723,7 @@ public class Roddy {
     }
 
     public static String getApplicationProperty(RunMode runMode, String pName, String defaultValue) {
-        return getApplicationProperty(runMode.name() + "." + pName, defaultValue);
+        return getApplicationProperty(runMode.name() + "." + pName, getApplicationProperty(pName, defaultValue));
     }
 
     public static String getApplicationProperty(String pName, String defaultValue) {

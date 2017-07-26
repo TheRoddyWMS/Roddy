@@ -67,8 +67,7 @@ By default, Roddy will use the ini file located at
 *$HOME/.roddy/applicationProperties.ini*, but you can select any other
 file with the \_--useconfig\_\_ command-line option.
 
-Please have a look at the following default application properties ini
-file:
+The ini files are explained in detail in :doc:`../config/applicationProperties`. Here you'll see a brief overview:
 
 .. code-block:: ini
 
@@ -89,16 +88,16 @@ file:
     commandLogTruncate=80                       # Truncate logged commands to this length. If <= 0, then no truncation.
 
     [COMMANDLINE]
-    CLI.executionServiceUser=USERNAME
-    CLI.executionServiceClass=de.dkfz.roddy.execution.io.LocalExecutionService
-    #CLI.executionServiceClass=de.dkfz.roddy.execution.io.SSHExecutionService
-    CLI.executionServiceHost=[YOURHOST]
-    CLI.executionServiceAuth=keyfile
-    #CLI.executionServiceAuth=password
-    CLI.executionServicePasswd=
-    CLI.executionServiceStorePassword=false
-    CLI.executionServiceUseCompression=false
-    CLI.fileSystemInfoProviderClass=de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
+    executionServiceUser=USERNAME
+    executionServiceClass=de.dkfz.roddy.execution.io.LocalExecutionService
+    #executionServiceClass=de.dkfz.roddy.execution.io.SSHExecutionService
+    executionServiceHost=[YOURHOST]
+    executionServiceAuth=keyfile
+    #executionServiceAuth=password
+    executionServicePasswd=
+    executionServiceStorePassword=false
+    executionServiceUseCompression=false
+    fileSystemInfoProviderClass=de.dkfz.roddy.execution.io.fs.FileSystemInfoProvider
 
 The file is divided into several sections, but this is mainly to keep a
 better order:
@@ -124,12 +123,12 @@ Usually, you just need to change the following settings:
 -  CLI.executionServiceStorePassword - If you want to store the
    password, put in true, however, the password is stored in plain-text!
 
-You might just remember or store away the above options for the future
-as they most likely won't change too often. For you the more important
+You might remember or store away the above options for future usage
+as its likely, that they won't change too often. For you the more important
 settings might be:
 
 -  configurationDirectories - Put in a comma separated list of
-   directories, where you keep your project xml files
+   directories, where you keep your project XML files
 -  pluginDirectories - Put in a comma separated list of the directories,
    where your plugins are stored. Note, that the folder dist/plugins in
    the Roddy base directory, which contains the PluginBase and
@@ -148,7 +147,7 @@ The configuration files are multi-level, which means, you can - Import
 configuration files into other configuration files - Define several
 level of configurations and subconfigurations in one file
 
-.. code-block:: xml
+.. code-block:: XML
 
     <configuration configurationType='project'
              name='TestProject'
@@ -181,14 +180,14 @@ values part as this will be the part which you probably need most.
 
 **//Uhhh, ok, so what is in the above example?//**
 
-Good that you ask! First you'll find a standard xml format containing
+Good that you ask! First you'll find a standard XML format containing
 the configuration header. If it is a project configuration file (you
 could e.g. create a file which contains basic settings for your working
 environment like e.g. commonly used binaries and reference files) then
 your file must be named with the prefix "projects". Otherwise it will
 not be recognized as a project configuration by Roddy.
 
-.. code-block:: xml
+.. code-block:: XML
 
     <configuration configurationType='project'
                          name='TestProject'
@@ -215,7 +214,7 @@ It may contain:
 Directly after the header, you will find a list of the imported
 workflows for your project.
 
-.. code-block:: xml
+.. code-block:: XML
 
         <availableAnalyses>
             <analysis id='testWorkflow' configuration='TestAnalysis' useplugin="DefaultPlugin:current"/>
@@ -240,7 +239,7 @@ set in you application ini file.
 
 Next comes the part where you set the projects input and output folder.
 
-.. code-block:: xml
+.. code-block:: XML
 
         <configurationvalues>
             <cvalue name='inputBaseDirectory' value='$USERHOME/roddyTests/${projectName}/data' type='path'/>
@@ -255,7 +254,7 @@ Analysis-specific configuration
 Occasionally, you may want to set specific parameters only for selected
 analyses. In this case you can add subconfigurations:
 
-.. code-block:: xml
+.. code-block:: XML
 
         <subconfigurations>
             <configuration name="verysmall" usedresourcessize="xs" inheritAnalyses="true" />
@@ -286,10 +285,10 @@ The command will:
    date]\_[current time]
 2. Copy a default ini file to the target folder
    [targetprojectfolder]/applicationProperties.ini
-3. Copy a default project xml to the target folder
+3. Copy a default project XML to the target folder
    [targetprojectfolder]/project.xml
 
-You can now update both the ini file and the xml file to your needs. Do
+You can now update both the ini file and the XML file to your needs. Do
 not forget to place the freshly create folder as a configuration folder
 to the ini file! Please see the explanation above to decide which
 settings are appropriate for your system.
@@ -511,13 +510,13 @@ start to process data. However, only necessary jobs will be started.
 Import list for different workflows:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Please consider using only one analysis import per project xml file, if
+Please consider using only one analysis import per project XML file, if
 you set configuration variables. Configuration values for different
 workflows might have the same name, which could lead to
 misconfigured workflows. If you do not want to create a new file, you
 can still use subconfigurations for the different workflows.
 
-.. code-block:: xml
+.. code-block:: XML
 
     <!-- Roddy 2.2.x -->
     <analysis id='snvCalling' configuration='snvCallingAnalysis' useplugin="COWorkflows:1.0.132-4" />

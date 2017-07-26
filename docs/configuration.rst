@@ -7,6 +7,7 @@ Configuration topics
 ..  toctree::
     :maxdepth: 2
 
+    config/applicationProperties
     config/configurationFiles
     config/bashConfigurationFiles
     config/xmlConfigurationFiles

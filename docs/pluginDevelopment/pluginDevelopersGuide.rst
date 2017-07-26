@@ -9,6 +9,8 @@ Afterwards you can decide if you either want:
 
 Please read the `installationGuide` if you do not have a readily installed version.
 
+If you just need a quickstart or a short repetition, you can read :doc:`10MinutesWalkthrough`
+
 Select the workflow type
 ------------------------
 

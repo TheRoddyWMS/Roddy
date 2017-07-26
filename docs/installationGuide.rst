@@ -4,6 +4,7 @@
 .. _`JDK v1.8.*`: http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
 .. _`Groovy 2.4.*`: http://groovy-lang.org/download.html
 .. _`Maven Groovy repository`: http://repo1.maven.org/maven2/org/codehaus/groovy/groovy-binary/
+.. _`GroovyServ` : https://kobo.github.io/groovyserv/
 
 .. Document
 
@@ -13,6 +14,10 @@ Installation guide
 There are several minor versions of Roddy. They can be downloaded and installed in the same directory.
 Minor versions mark changes in the Roddy API. This may or may not lead to incompatibilies of Roddy and Roddy plugins.
 Installations for the different versions differ a bit, so we list all versions here.
+
+Roddy uses Groovy, however, Groovy is a bit slow to start. So Roddy 2.4+ supports GroovyServ, which can be used by you to speed things up.
+Roddy will try to install `GroovyServ`_ on its own. However, if that fails, you can still try to set it up on your own.
+If it still does not work, you can also disable it.
 
 Premises
 --------
@@ -68,7 +73,7 @@ Roddy version 2.4 is installed in the same way as 2.3. In addition, there will b
 If you want to use this, you can skip the download steps.
 
 
-.. [1] If you cannot find the necessary Groovy version, you can also download it from the _`Maven Groovy repository`
+.. [1] If you cannot find the necessary Groovy version, you can also download it from the `Maven Groovy repository`_
 
 Roddy version mix
 -----------------
@@ -90,7 +95,40 @@ Currently we do not offer prepackaged zip files, but you can easily assemble the
 
 If you take a look into your dist folder now, you'll see a new zip file and a folder with the proper version numbers.
 
+Setup GroovyServ
+----------------
 
+As explained above, GroovyServ tremendously decreases the startup time of Groovy applications and Roddy will
+try to download and set it up automatically. If that fails or if you want to set it up by yourself, do the following in your
+Roddy directory:
+
+.. code-block:: Bash
+
+    mkdir -p dist/runtime
+    cd dist/runtime
+
+    # Download the GroovyServ binary zip archive from the `GroovyServ`_ download site,
+    # unzip it and delete the archive afterwards.
+
+    unzip groovyserv*.zip
+    rm groovyserv*.zip
+
+    # Last step, put Groovy and the Java binary folders to your PATH environment variable. This
+    # is e.g. set in your ~/.bashrc file.
+
+Now that's it. If you want to disable GroovyServ, you also do this.
+
+.. code-block:: Bash
+
+    mkdir -p dist/runtime
+    cd dist/runtime
+    touch gservforbidden
+
+If you create the file, Roddy will not use GroovyServ.
+
+.. Note::
+
+    This setup was tested using GroovyServ 1.1.0!
 
 Test your installation
 ----------------------

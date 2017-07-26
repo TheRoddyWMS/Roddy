@@ -8,5 +8,6 @@ Users guide
 
     usersGuide/walkthrough
     usersGuide/cheatSheet
+    usersGuide/commandLineOptions
 
 
