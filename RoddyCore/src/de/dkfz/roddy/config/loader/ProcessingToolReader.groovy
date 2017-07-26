@@ -23,6 +23,7 @@ import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.BufferValue
 import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.TimeUnit
 import groovy.transform.CompileStatic
@@ -111,6 +112,7 @@ class ProcessingToolReader {
                 List<ResourceSet> resourceSets = new LinkedList<>()
                 int noOfInputParameters = 0
                 int noOfOutputParameters = 0
+                boolean allParametersValid = true
                 for (NodeChild child in (tool.children() as List<NodeChild>)) {
                     String cName = child.name()
 
@@ -123,9 +125,11 @@ class ProcessingToolReader {
                     } else if (cName == "input") {
                         inputParameters << parseToolParameter(toolID, child)
                         noOfInputParameters++
+                        allParametersValid &= inputParameters.last() != null
                     } else if (cName == "output") {
                         outputParameters << parseToolParameter(toolID, child)
                         noOfOutputParameters++
+                        allParametersValid &= outputParameters.last() != null
                     } else if (cName == "script") {
                         if (readAttribute(child, "value") != "") {
                             currentEntry.setInlineScript(child.text().trim().replaceAll('<!\\[CDATA\\[', "").replaceAll(']]>', ""))
@@ -133,6 +137,10 @@ class ProcessingToolReader {
                         }
                     }
                 }
+
+//                if (!allParametersValid) {
+//
+//                }
 
                 if (noOfInputParameters != inputParameters.size())
                     addLoadErr("The number of read input parameters does not match to the input parameters in the configuration.", null)
@@ -147,6 +155,8 @@ class ProcessingToolReader {
                 }
 
                 def allparameters = (inputParameters + outputParameters).collect {
+                    if (!it) // Error is already catched in parseToolParameter, just skip it here.
+                        return
                     if (it instanceof ToolTupleParameter) {
                         ((ToolTupleParameter) it).allFiles.collect { it.scriptParameterName }
                     } else if (it instanceof ToolFileGroupParameter) {
@@ -232,6 +242,9 @@ class ProcessingToolReader {
                 //TODO Validate if cValueID == null!
             }
             return tsp
+        } else {
+            addLoadErr("The type attribute of a parameter was invalid (${type}) for tool ${toolID}\n" + ConfigurationFactory.ERROR_PRINTOUT_XML_LINEPREFIX + RoddyConversionHelperMethods.toFormattedXML(child, "\n" + ConfigurationFactory.ERROR_PRINTOUT_XML_LINEPREFIX))
+            return null
         }
     }
 
