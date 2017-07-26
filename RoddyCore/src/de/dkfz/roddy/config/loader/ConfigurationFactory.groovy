@@ -342,12 +342,7 @@ class ConfigurationFactory {
         configurationWasLoadedProperly &= withErrorEntryOnException(config, "Could not read configuration value bundles for configuration ${icc.id}", { readValueBundles(configurationNode, config) })
         configurationWasLoadedProperly &= withErrorEntryOnException(config, "Could not read filename patterns for configuration ${icc.id}", { config.filenamePatterns.map.putAll(readFilenamePatterns(configurationNode)) })
         configurationWasLoadedProperly &= withErrorEntryOnException(config, "Could not read enumerations for configuration ${icc.id}", { readEnums(config, configurationNode) })
-
-        try {
-            configurationWasLoadedProperly &= readProcessingTools(configurationNode, config)
-        } catch (Exception ex) {
-
-        }
+        configurationWasLoadedProperly &= withErrorEntryOnException(config, "Could not read processing tools for configuration ${icc.id}", {readProcessingTools(configurationNode, config)})
 
         return config
         /**
