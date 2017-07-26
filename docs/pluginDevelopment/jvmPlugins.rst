@@ -33,7 +33,7 @@ There are other methods which you can override or use:
 
 - checkExecutability - which returns a boolean value and
 
-And here is the initial xml file:
+And here is the initial XML file:
 
 .. code-block:: XML
 

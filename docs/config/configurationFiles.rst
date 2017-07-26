@@ -1,6 +1,3 @@
-
-
-
 Configuration files
 ===================
 
@@ -8,7 +5,8 @@ Roddy currently supports two different types of configuration files:
 - XML based which allows to use all configuration features
 - Bash based which only allows a reduced set of configuration features
 
-Normally, Roddy workflows and projects are configured with XML files. This document will give you all the details you need to know about those
+Normally, Roddy workflows and projects are configured with XML files.
+This document will give you all the details you need to know about those
 special files. Don’t be afraid of messing up things in configuration
 files. Roddy checks at least a part (not everything) of the files, when
 they get loaded and will inform you about structural errors as good as

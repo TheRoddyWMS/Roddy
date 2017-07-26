@@ -44,7 +44,7 @@ A complex tool entry will be shown at the end of this document.
 Tool entries
 ------------
 
-.. code-block:: Xml
+.. code-block:: XML
 
     <tool name='testScript' value='testScriptSleep.sh' basepath='roddyTests'>
       <resourcesets>
@@ -56,7 +56,7 @@ Tool entries
 
 Each tool entry has a header:
 
-.. code-block:: Xml
+.. code-block:: XML
 
     <tool name='testScript' value='testScriptSleep.sh' basepath='roddyTests'>
 
@@ -85,7 +85,7 @@ Resource sets
 
 Each tool can have several resource sets.
 
-.. code-block:: Xml
+.. code-block:: XML
 
     <rset size="l" memory="1" cores="1" nodes="1" walltime="5"/>
 
@@ -126,7 +126,7 @@ A tool can have different input objects:
 
 - Values, like strings or numbers:
 
-    .. code-block:: Xml
+    .. code-block:: XML
 
         <input type="string" setby="callingCode" scriptparameter="SAMPLE"/>
 
@@ -140,7 +140,7 @@ A tool can have different input objects:
 
 - Single file objects like:
 
-    .. code-block:: Xml
+    .. code-block:: XML
 
         <input type="file" typeof="de.dkfz.b080.co.files.LaneFile" scriptparameter="RAW_SEQUENCE_FILE" />
         <input type="file" typeof="BasicBamFile" scriptparameter="RAW_SEQUENCE_FILE" />
@@ -168,7 +168,7 @@ A tool can have different input objects:
     File groups are collections of file objects. By default, file groups are designed to
     store files of the same type.
 
-    .. code-block:: Xml
+    .. code-block:: XML
 
         <input type="filegroup" typeof="de.dkfz.b080.co.files.BamFileGroup" scriptparameter="INPUT_FILES" passas="array"/>
         <input type="filegroup" typeof="GenericFileGroup" scriptparameter="INPUT_FILES2" passas="array"/>
@@ -211,7 +211,7 @@ syntax for input objects, so we'll skip explanations for known attributes. Valid
 
   The single output file syntax is the same like for input files. Just change the tag name to output.
 
-  .. code-block:: Xml
+  .. code-block:: XML
 
       <output type="file" typeof="de.dkfz.b080.co.files.BamFile" scriptparameter="FILENAME" />
 
@@ -221,7 +221,7 @@ syntax for input objects, so we'll skip explanations for known attributes. Valid
   The main difference to single files is, that you need to create a class file! Then, for each file you want as a
   child, you need to create the field and the set / get accessors. We use this feature only in a handful of cases.
 
-  .. code-block:: Xml
+  .. code-block:: XML
 
       <output type="file" typeof="BasicBamFile" scriptparameter="FILENAME">
         <output type="file" variable="indexFile" typeof="BamIndexFile" scriptparameter="FILENAME_INDEX"/>
@@ -236,7 +236,7 @@ syntax for input objects, so we'll skip explanations for known attributes. Valid
   Tuples of files are the easiest way to create collections of file objects. It does not matter which types
   the files have.
 
-  .. code-block:: Xml
+  .. code-block:: XML
 
       <output type="tuple">
         <output type="file" typeof="BasicBamFile" scriptparameter="FILENAME_BAM"/>
@@ -258,7 +258,7 @@ syntax for input objects, so we'll skip explanations for known attributes. Valid
 
   Output file groups offer a lot more options than input file groups. This
 
-  .. code-block:: Xml
+  .. code-block:: XML
 
       <output type="filegroup" typeof="GenericFileGroup">
         <output type="file" typeof="" scriptparameter="BAM1"/>
@@ -271,9 +271,9 @@ syntax for input objects, so we'll skip explanations for known attributes. Valid
 Filename patterns
 -----------------
 
-Filenames in Roddy are rule based. They are defined in the filenames section in your xml file.
+Filenames in Roddy are rule based. They are defined in the filenames section in your XML file.
 
-.. code-block:: Xml
+.. code-block:: XML
 
     <filenames package='de.dkfz.roddy.knowledge.examples' filestagesbase='de.dkfz.roddy.knowledge.examples.SimpleFileStage'>
       <filename class='SimpleTestTextFile' onTool='testScript' pattern='${testOutputDirectory}/test_onScript_1.txt'/>
@@ -286,7 +286,8 @@ Filenames in Roddy are rule based. They are defined in the filenames section in 
 There are several types of triggers for patterns available. Patterns are always linked to a particular *class*. By applying the *selectiontag* attribute to some
 of the trigger types, you gain a more fine grained control over pattern selection, if you define output objects of the same class multiple times in a tool.
 
-- onScriptParameter
+onScriptParameter trigger
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
   This trigger type links the pattern to the scriptparameter attribute of an output object. Valid trigger values are:
 
@@ -300,7 +301,8 @@ of the trigger types, you gain a more fine grained control over pattern selectio
 
   This trigger type will NOT accept the *selectiontag* attribute.
 
-- onMethod
+onMethod trigger
+~~~~~~~~~~~~~~~~
 
   This trigger links the pattern to a method name or a class and a method name. Roddy will search all called methods using the current
   Threads stack trace. The search will stop, as soon as the execute method is reached. Valid values are:
@@ -313,16 +315,25 @@ of the trigger types, you gain a more fine grained control over pattern selectio
 
   This trigger type will accept the *selectiontag* attribute.
 
-- onToolID
+onToolID trigger
+~~~~~~~~~~~~~~~~
 
-  This trigger will link the pattern to a tool call.
+  This trigger will link the pattern to a tool call. If this tool is called and outputs a file of the given class then this pattern might be used.
 
   This trigger type will accept the *selectiontag* attribute.
 
-- derivedfrom
+derivedfrom trigger
+~~~~~~~~~~~~~~~~~~~
 
-- generic
+  In some cases the name of a new file depends on the name of a parent file, e.g. a Bam Index file depends on a Bam file like
+  DATASET_TIMESTAMP.merged.bam -> DATASET_TIMESTAMP.merged.bam.bai.
 
+  This trigger type will accept the *selectiontag* attribute.
+
+generic
+~~~~~~~
+
+  To be done... we hardly use it.
 
 .. Important:: Filename patterns are evaluated in a specific order!
 
@@ -386,7 +397,7 @@ created during runtime in the following cases:
 Example tool entry and filename patterns
 ----------------------------------------
 
-.. code-block:: Xml
+.. code-block:: XML
 
     <a/>
 

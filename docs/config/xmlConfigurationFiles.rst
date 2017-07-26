@@ -6,7 +6,7 @@ Structure / Sections
 
 Each configuration file is built up after the following pattern
 
-.. code-block:: Xml
+.. code-block:: XML
 
   <configuration name='test' description='Example.' >
         <availableAnalyses />
@@ -36,7 +36,7 @@ Brawl based workflows
 Script based workflows
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: Xml
+.. code-block:: XML
 
   <configuration configurationType='analysis'
                name='dellyAnalysisBrawl' description='An example Brawl analysis.'
@@ -46,7 +46,7 @@ Script based workflows
                usedToolFolders='scripts,tools'>
 
 
-.. code-block:: Xml
+.. code-block:: XML
 
   <configuration configurationType='analysis'
                name='testAnalysisNative' 
@@ -62,7 +62,7 @@ Script based workflows
 Java based workflows
 ~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: Xml
+.. code-block:: XML
 
   <configuration configurationType='analysis' 
                name='testAnalysis' description='A test analysis for local and remote roddy workflow tests.'
@@ -76,7 +76,7 @@ Java based workflows
 Project configurations
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: Xml
+.. code-block:: XML
 
   <configuration configurationType='project' name='coWorkflowsTestProject'
                description='A test project for the purity estimation analysis.' imports="coBaseProject"
@@ -89,7 +89,7 @@ Generic / common configurations
 Generic configuration files keep a minimal header, which might even just contain the name.  That's it.
 
 
-.. code-block:: Xml
+.. code-block:: XML
 
   <configuration name='cofilenames' description='This file contains patterns for filename generation and default configured paths for our computational oncology file structure.' >
 
@@ -127,7 +127,7 @@ Tool entries and filename patterns
 These sections are started like this:
 
 
-.. code-block:: Xml
+.. code-block:: XML
 
     <processingTools>
         <tool name='compressionDetection' value='determineFileCompressor.sh' basepath='roddyTools'/>
@@ -154,7 +154,7 @@ Tool entry names are automatically converted to configuration variables. For thi
 
 Here comes a list of stuff taken from an old config file. It's just taken over and not reworked. However, a lot of the possibilities for filename patterns is listed here:
 
-.. code-block:: Xml
+.. code-block:: XML
 
   <!-- Filenames are always stored in the pid's output folder -->
         <!-- Different variables can be used:
@@ -197,7 +197,7 @@ Enumerations
 Enumerations are there to specify data types and validators for configuration values. 
 
 
-.. code-block:: Xml
+.. code-block:: XML
 
   <enumeration name='cvalueType' description='various types of configuration values' extends="">
     <value id='path' valueTag="de.dkfz.roddy.config.validation.FileSystemValidator" description="Value type is a file system path (fully or with wildcards like ~, *"/>

@@ -26,7 +26,7 @@ Create a new project
     - The cluster settings
     - Add the COProjectConfigurations path which you need.
 
-# Open the xml file. Change:
+# Open the XML file. Change:
 
 ::
 
