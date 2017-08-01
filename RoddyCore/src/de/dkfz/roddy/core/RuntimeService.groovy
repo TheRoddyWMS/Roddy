@@ -224,7 +224,7 @@ public class RuntimeService {
                 // Remove leading c:, split by ;
                 String[] datasetFilters = cohortDescription[2..-1].split(StringConstants.SPLIT_SEMICOLON);
 
-                ArrayList<DataSet> dList = collectDataSetsForCohort(datasetFilters, analysis, listOfDataSets)
+                List<DataSet> dList = collectDataSetsForCohort(datasetFilters, analysis, listOfDataSets)
 
                 // Sort the list, but keep the primary set the primary set.
                 DataSet primaryDataSet = dList[0];
@@ -263,7 +263,7 @@ public class RuntimeService {
         return true
     }
 
-    private ArrayList<DataSet> collectDataSetsForCohort(String[] datasetFilters, Analysis analysis, List<DataSet> listOfDataSets) {
+    private List<DataSet> collectDataSetsForCohort(String[] datasetFilters, Analysis analysis, List<DataSet> listOfDataSets) {
         boolean error = false
         List<DataSet> dList = []
 
