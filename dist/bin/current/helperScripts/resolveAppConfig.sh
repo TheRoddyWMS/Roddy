@@ -10,10 +10,24 @@ autoSelectRoddy=false
 foundPluginID=none
 
 function grepFromConfigFile() {
-  local stringToGrep=$1
-                                  # Strip comments                    get the second field
-                                  #              Grep all the strings                   strip comments from end and trim.
-  echo `cat ${customconfigfile} | grep -v "^#" | grep -v "^;" | grep $stringToGrep | cut -d "=" -f 2 | cut -d "#" -f 1 | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | tail -n 1`
+  local stringToGrep="${1:-Missing string to grep}"
+  local configFile="${2:-Missing config file argument}"
+  # Strip comments.
+  # Grep all the strings.
+  # Get the second field.
+  # Strip comments from end and trim.
+  cat "$configFile" \
+    | grep -v "^#" \
+    | grep -v "^;" \
+    | grep "$stringToGrep" \
+    | cut -d "=" -f 2 \
+    | cut -d "#" -f 1 \
+    | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
+    | tail -n 1
+  if [[ $? -ne 0 ]]; then
+    echo "Could not grep from '$configFile'" > /dev/stderr
+    exit $?
+  fi
 }
 
 function tryExtractRoddyVersionFromPlugin() {
@@ -56,7 +70,7 @@ function getValueFromConfigOrCommandLine() {
     fi
   done
   if [[ ${var-none} == none ]]; then
-    var=$(grepFromConfigFile $valueNameInCfg)
+    var=$(grepFromConfigFile $valueNameInCfg $customconfigfile)
   fi
   IFS=$OFS
   echo $var
@@ -64,8 +78,8 @@ function getValueFromConfigOrCommandLine() {
 
 for option in $@
 do
-    [[ $option == --useconfig* ]] && customconfigfile=${option:12:800}
-    [[ $option == --c* ]]         && customconfigfile=${option:4:800}
+    [[ "$option" == --useconfig=* ]] && customconfigfile=${option:12:800}
+    [[ "$option" == --c=* ]]         && customconfigfile=${option:4:800}
 done
 
 if [[ ${customconfigfile-false} != false ]]
@@ -81,7 +95,7 @@ then
         customconfigfile=`dirname $0`/${customconfigfile}
     fi
 
-    _temp=`cat ${customconfigfile} | grep useRoddyVersion || echo 0`
+    _temp=`(cat ${customconfigfile} 2> /dev/null) | grep useRoddyVersion || echo 0`
     if [[ $_temp != 0 ]] && [[ $_temp != "useRoddyVersion=" ]]
     then
         setRoddyBinaryVariables $(tryExtractRoddyVersionFromPlugin)
@@ -96,9 +110,9 @@ overrideRoddyVersionParameter=""
 for i in $*
 do
     index=-1
-    [[ $i == --useRoddyVersion* ]] && index=18
-    [[ $i == --useroddyversion* ]] && index=18
-    [[ $i == --rv* ]] && index=5
+    [[ $i == --useRoddyVersion=* ]] && index=18
+    [[ $i == --useroddyversion=* ]] && index=18
+    [[ $i == --rv=* ]] && index=5
 
     if [[ $index -gt 0 ]]; then
         setRoddyBinaryVariables ${i:${index}:40}
@@ -111,7 +125,7 @@ do
         fi
     fi
 
-    if [[ $i == --usePluginVersion* ]]; then
+    if [[ $i == "--usePluginVersion="* ]]; then
         foundPluginID=${i:19:140}
     fi
 done
@@ -155,7 +169,7 @@ if [[ $autoSelectRoddy == true && ! $parm1 == autoselect ]]; then
     #   a=( a b c d ) would become a=( a b c f b c d )
 
     export fullParameterListFinal=""
-    if [[ ${fullParameterList[@]} == *useRoddyVersion=auto* ]]; then
+    if [[ ${fullParameterList[@]} == --useRoddyVersion=auto ]]; then
       # Replace what is set as a parameter
       fullParameterListFinal=$(echo ${fullParameterList[@]} | sed "s/useRoddyVersion=auto/useRoddyVersion=${activeRoddyVersion}/g")
     else # It is not set or in the ini. So set it now and override everything else.
