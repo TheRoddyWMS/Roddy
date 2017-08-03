@@ -129,7 +129,23 @@ elif [[ "$parm1" == "createworkflow" ]]; then
 fi
 
 IFS=""
-#[[ $RMIPORT != "" ]] && export DBG_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005" && echo "Opened up rmi debugger port"
-java $DBG_OPTS -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
-# -verbose:class
+export RGROOVY_LIB=`readlink -f ${RODDY_BINARY_DIR}/lib/groovy*.jar`
+
+# Check for groovyserv. If it does not exist, try to download it. If it still fails, start Roddy without it.
+caller=java
+if [[ ! -d dist/runtime/groovyserv* && ! -f dist/runtime/gservforbidden ]]; then
+	mkdir -p dist/runtime/ 2>/dev/null
+	(cd dist/runtime && wget -S $(curl -s https://kobo.github.io/groovyserv/download.html | grep groovyserv | grep bin.zip | sed 's/href=/\n/g' | sed 's/>/\n/g' | sed 's/</\n/g' | sed 's/"//g'  | grep .zip))
+	[[ $? -ne 0 ]] && touch dist/runtime/gservforbidden
+	(cd dist/runtime/ && unzip groovyser*.zip && rm groovyser*.zip)
+fi
+
+gservClientRuntime=`readlink -f dist/runtime/groovyserv*/bin/groovyclient`
+if [[ -f $gservClientRuntime ]]; then
+	caller=$gservClientRuntime
+	$caller -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -cp .:$libraries:${RODDY_BINARY} GServCaller.groovy $*
+else
+	touch dist/runtime/gservforbidden
+	java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
+fi
 IFS=$OFS

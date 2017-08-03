@@ -217,7 +217,11 @@ public class Roddy {
             mainStarted = true;
             startup(args);
         } catch (Exception e) {
-            e.printStackTrace();
+            // I did not want to put in a dependency to another library. This special type of
+            // exception is thrown by groovyclient (groovyserver project). As it is not known
+            // to the JVM in this case, we'll filter it by its name.
+            if (!e.getClass().getName().endsWith("SystemExitException"))
+                e.printStackTrace();
             exit(1);
         }
     }

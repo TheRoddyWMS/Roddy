@@ -51,6 +51,11 @@ public final class RuntimeTools {
     }
 
     public static File getGroovyLibrary() {
-        return new File(System.getProperty("java.class.path").split("[:]").find { new File(it).name.startsWith("groovy") })
+        // Try to get Groovy from the environment. This is needed for groovyserv.
+        // If it is not working get it from the classpath.
+        if (System.getenv().containsKey("RGOOVY_LIB"))
+            return new File(System.getenv("RGROOVY_LIB"))
+        else
+            return new File(System.getProperty("java.class.path").split("[:]").find { new File(it).name.startsWith("groovy") })
     }
 }

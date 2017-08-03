@@ -58,9 +58,9 @@ else
   fi
 fi
 
->&2 echo $(readlink -f which java)
->&2 echo $(readlink -f which javac)
->&2 echo $(readlink -f which groovy)
+>&2 echo $(readlink -f $(which java))
+>&2 echo $(readlink -f $(which javac))
+>&2 echo $(readlink -f $(which groovy))
 
 # The method compares two version numbers in the format:
 # Major.Minor.*
