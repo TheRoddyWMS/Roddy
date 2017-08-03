@@ -37,22 +37,31 @@ class BashConverter extends ConfigurationConverter {
 
     //TODO Use a pipeline converter interface with methods like "convertCValues, convertCValueBundles, convertTools"
     @Override
-    String convert(ExecutionContext context, Configuration cfg) {
+    String convert(ExecutionContext context, Configuration _cfg) {
+        Configuration cfg = new Configuration(null, _cfg)
+
+        cfg.configurationValues.addAll(cfg.tools.allValuesAsList.collect {
+            ToolEntry te ->
+                new ConfigurationValue(createVariableName("TOOL_", te.getID()),
+                        cfg.getProcessingToolPath(context, te.getID()).absolutePath)
+        })
+
         StringBuilder text = createNewDocumentStringBuilder(context, cfg)
 
         text << appendConfigurationValues(context, cfg)
 
         text << appendConfigurationValueBundles(context, cfg)
 
-        text << appendToolEntries(context, cfg)
+        // text << appendToolEntries(context, cfg)
 
         text << appendDebugVariables(cfg)
 
         text << appendPathVariables()
 
-        text << separator << "";
+        text << separator << ""
 
-        return text.toString();
+        return text.toString()
+
     }
 
     StringBuilder createNewDocumentStringBuilder(ExecutionContext context, Configuration cfg) {
