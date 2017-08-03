@@ -4,7 +4,7 @@
   ~ Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
   -->
 
-<configuration name='testAnalysisFaultyTools' description='A test analysis for local and remote roddy workflow tests.'
+<configuration name='testAnalysisFaultyPatterns' description='A test analysis for local and remote roddy workflow tests.'
                configurationType='analysis' class='de.dkfz.roddy.core.Analysis' workflowClass='de.dkfz.roddy.knowledge.examples.SimpleWorkflow'
                runtimeServiceClass="de.dkfz.roddy.knowledge.examples.SimpleRuntimeService"
                listOfUsedTools="testScript,testScriptExitBad,testFileWithChildren" usedToolFolders="devel"
@@ -35,7 +35,7 @@
             <output type="file" typeof="SimpleTestTextFile" scriptparameter="FILENAME_OUT"/>
         </tool>
         <tool name='testScriptExitBad' value='testScriptSleepExitBad.sh' basepath='roddyTests'>
-            <input type="filestuff" typeof="SimpleTestTextFile" scriptparameter="FILENAME_IN"/>
+            <input type="file" typeof="SimpleTestTextFile" scriptparameter="FILENAME_IN"/>
             <output type="file" typeof="SimpleTestTextFile" scriptparameter="FILENAME_OUT"/>
         </tool>
         <tool name="testFileWithChildren" value="testScriptSleep.sh" basepath="roddyTests">
@@ -57,7 +57,7 @@
         <tool name="testScriptWithMultiOut2" value="testScriptSleep.sh" basepath="roddyTests" >
             <input type="file" typeof="SimpleTestTextFile" scriptparameter="FILENAME_IN"/>
             <output type="tuple">
-                <output type="file" typeof="SimpleMultiOutFile" scriptparameter="MOUT0"/>
+                <output type="file" typeof="SimpleMultiOutFile" scriptparameter="MOUT1"/>
                 <output type="file" typeof="SimpleMultiOutFile" scriptparameter="MOUT2"/>
                 <output type="file" typeof="SimpleMultiOutFile" scriptparameter="MOUT3"/>
                 <output type="file" typeof="SimpleMultiOutFile" scriptparameter="MOUT4"/>
