@@ -3,6 +3,8 @@
 cd `dirname $0`
 parm1=${1-}
 
+source dist/bin/current/helperScripts/downloadFunctions.sh
+
 JAVA_OPTS=${JAVA_OPTS:-"-Xms64m -Xmx500m"}
 
 # Call some scripts before other steps start.
@@ -12,14 +14,9 @@ if [[ "$parm1" == "prepareprojectconfig" ]]; then
 fi
 
 PATH=$JDK_HOME/bin:$JAVA_HOME/bin:$GROOVY_HOME/bin:$PATH
-#JFX_LIBINFO_FILE=~/.roddy/jfxlibInfo
-#if [[ ! -f ${JFX_LIBINFO_FILE} ]] || [[ ! -f `cat ${JFX_LIBINFO_FILE}` ]]; then
-#	echo `find ${JAVA_HOME}/ -name "jfxrt.jar"` > ${JFX_LIBINFO_FILE}
-#fi
 
 #TODO Resolve the PluginBase.jar This might be set in the ini file.
 pluginbaseLib=${RODDY_DIRECTORY}/dist/plugins/PluginBase/PluginBase.jar
-#jfxlibInfo=`cat ${JFX_LIBINFO_FILE}`
 libraries=`ls -d1 ${RODDY_BINARY_DIR}/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
 libraries=$libraries:$jfxlibInfo
 
@@ -131,21 +128,21 @@ fi
 IFS=""
 export RGROOVY_LIB=`readlink -f ${RODDY_BINARY_DIR}/lib/groovy*.jar`
 
-# Check for groovyserv. If it does not exist, try to download it. If it still fails, start Roddy without it.
-caller=java
-if [[ ! -d dist/runtime/groovyserv* && ! -f dist/runtime/gservforbidden ]]; then
-	mkdir -p dist/runtime/ 2>/dev/null
-	(cd dist/runtime && wget -S $(curl -s https://kobo.github.io/groovyserv/download.html | grep groovyserv | grep bin.zip | sed 's/href=/\n/g' | sed 's/>/\n/g' | sed 's/</\n/g' | sed 's/"//g'  | grep .zip))
-	[[ $? -ne 0 ]] && touch dist/runtime/gservforbidden
-	(cd dist/runtime/ && unzip groovyser*.zip && rm groovyser*.zip)
+debuggerSettings=""
+[[ -n ${DEBUG_ROODY} ]] && debuggerSettings=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+
+caller=$(checkAndDownloadGroovyServ "${RODDY_DIRECTORY}")
+
+echo "RGL: "$RGROOVY_LIB
+
+if [[ ${caller} == java ]]; then
+  echo "Using Java to start Roddy"
+	${caller} ${debuggerSettings} -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
+elif [[ $(basename ${caller}) == groovyclient && -f ${caller} && -x ${caller} ]]; then
+  echo "Using GroovyServ to start Roddy"
+	${caller} -Cenv-all ${debuggerSettings} -cp .:$libraries:${RODDY_BINARY} GServCaller.groovy $*
+else
+  echo "Cannot start Roddy, neither Java nor GroovyServ was recognized" && exit 5
 fi
 
-gservClientRuntime=`readlink -f dist/runtime/groovyserv*/bin/groovyclient`
-if [[ -f $gservClientRuntime ]]; then
-	caller=$gservClientRuntime
-	$caller -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -cp .:$libraries:${RODDY_BINARY} GServCaller.groovy $*
-else
-	touch dist/runtime/gservforbidden
-	java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
-fi
 IFS=$OFS

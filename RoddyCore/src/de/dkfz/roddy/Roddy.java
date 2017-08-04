@@ -8,6 +8,7 @@ package de.dkfz.roddy;
 
 import com.btr.proxy.search.ProxySearch;
 import de.dkfz.roddy.config.ResourceSetSize;
+import de.dkfz.roddy.config.loader.ConfigurationLoaderException;
 import de.dkfz.roddy.execution.BEExecutionService;
 import de.dkfz.roddy.execution.jobs.*;
 import de.dkfz.roddy.client.RoddyStartupModes;
@@ -667,12 +668,14 @@ public class Roddy {
         if (!option.needsFullInit())
             return;
 
-        if (jobManager.executesWithoutJobSystem() && waitForJobsToFinish) {
-            exitCode = performWaitforJobs();
-        } else {
-            List<Command> listOfCreatedCommands = jobManager.getListOfCreatedCommands();
-            for (Command command : listOfCreatedCommands) {
-                if (command.getJob().getJobState() == JobState.FAILED) exitCode++;
+        if (jobManager != null) {
+            if (jobManager.executesWithoutJobSystem() && waitForJobsToFinish) {
+                exitCode = performWaitforJobs();
+            } else {
+                List<Command> listOfCreatedCommands = jobManager.getListOfCreatedCommands();
+                for (Command command : listOfCreatedCommands) {
+                    if (command.getJob().getJobState() == JobState.FAILED) exitCode++;
+                }
             }
         }
         exit(exitCode);

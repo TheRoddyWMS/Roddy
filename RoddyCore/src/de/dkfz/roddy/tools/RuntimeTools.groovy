@@ -19,9 +19,13 @@ import java.lang.reflect.Field;
 public final class RuntimeTools {
     private RuntimeTools() {}
 
+    private static final LoggerWrapper logger = LoggerWrapper.getLogger(RuntimeTools)
+
     public static String getRoddyRuntimeVersion() {
         // Get from buildinfo file. If this is not available... don't know... take 2.2. then.
-        def lines = getBuildinfoFile().readLines()
+        def buildinfoFile = getBuildinfoFile()
+        logger.always(buildinfoFile.getAbsolutePath())
+        def lines = buildinfoFile.readLines()
         if (lines) return lines.find { String line -> line.startsWith("Roddy") }.split(StringConstants.SPLIT_EQUALS)[1]
         return "2.2";
     }
@@ -53,9 +57,15 @@ public final class RuntimeTools {
     public static File getGroovyLibrary() {
         // Try to get Groovy from the environment. This is needed for groovyserv.
         // If it is not working get it from the classpath.
-        if (System.getenv().containsKey("RGOOVY_LIB"))
-            return new File(System.getenv("RGROOVY_LIB"))
-        else
-            return new File(System.getProperty("java.class.path").split("[:]").find { new File(it).name.startsWith("groovy") })
+        logger.rare(([""] + System.getenv().collect { String k, String v -> "${k}=${v}" }.join("\n") + [""]).flatten().join("\n"))
+        if (System.getenv().containsKey("RGROOVY_LIB")) {
+            def file = new File(System.getenv("RGROOVY_LIB"))
+            logger.info("Loading groovy library from GroovyServ environment " + file)
+            return file
+        } else {
+            def file = new File(System.getProperty("java.class.path").split("[:]").find { new File(it).name.startsWith("groovy") })
+            logger.info("Loading groovy library from local environment" + file)
+            return file
+        }
     }
 }
