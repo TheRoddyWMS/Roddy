@@ -7,6 +7,7 @@
 package de.dkfz.roddy.tools;
 
 import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.plugins.LibrariesFactory
 import org.apache.commons.io.filefilter.WildcardFileFilter
 
 import java.lang.reflect.Field;
@@ -46,7 +47,7 @@ public final class RuntimeTools {
     }
 
     public static File getBuildinfoFile() {
-        return new File(getCurrentDistFolder(), "buildinfo.txt");
+        return new File(getCurrentDistFolder(), LibrariesFactory.BUILDINFO_TEXTFILE);
     }
 
     public static File getCurrentDistFolder() {
@@ -58,8 +59,8 @@ public final class RuntimeTools {
         // Try to get Groovy from the environment. This is needed for groovyserv.
         // If it is not working get it from the classpath.
         logger.rare(([""] + System.getenv().collect { String k, String v -> "${k}=${v}" }.join("\n") + [""]).flatten().join("\n"))
-        if (System.getenv().containsKey("RGROOVY_LIB")) {
-            def file = new File(System.getenv("RGROOVY_LIB"))
+        if (System.getenv().containsKey("RODDIES_GROOVYLIB_PATH")) {
+            def file = new File(System.getenv("RODDIES_GROOVYLIB_PATH"))
             logger.info("Loading groovy library from GroovyServ environment " + file)
             return file
         } else {

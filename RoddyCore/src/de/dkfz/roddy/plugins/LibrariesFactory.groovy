@@ -309,7 +309,7 @@ public class LibrariesFactory extends Initializable {
         } else {
 
             // If not, check for regular workflows.
-            if (!checkFile(new File(directory, "buildinfo.txt")))
+            if (!checkFile(new File(directory, BUILDINFO_TEXTFILE)))
                 errors << "The buildinfo.txt file is missing"
             if (!checkFile(new File(directory, "buildversion.txt")))
                 errors << "The buildversion.txt file is missing"

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -o pipefail
+
 cd `dirname $0`
 parm1=${1-}
 
@@ -126,20 +128,22 @@ elif [[ "$parm1" == "createworkflow" ]]; then
 fi
 
 IFS=""
-export RGROOVY_LIB=`readlink -f ${RODDY_BINARY_DIR}/lib/groovy*.jar`
+export RODDIES_GROOVYLIB_PATH=`readlink -f ${RODDY_BINARY_DIR}/lib/groovy*.jar`
 
 debuggerSettings=""
 [[ -n ${DEBUG_ROODY} ]] && debuggerSettings=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
 
 caller=$(checkAndDownloadGroovyServ "${RODDY_DIRECTORY}")
 
-echo "RGL: "$RGROOVY_LIB
+echo "RGL: "$RODDIES_GROOVYLIB_PATH
 
 if [[ ${caller} == java ]]; then
   echo "Using Java to start Roddy"
-	${caller} ${debuggerSettings} -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
+	${caller} ${debuggerSettings} ${JAVA_OPTS} -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
 elif [[ $(basename ${caller}) == groovyclient && -f ${caller} && -x ${caller} ]]; then
   echo "Using GroovyServ to start Roddy"
+
+  # JAVA_OPTS are automatically used by groovyserver (see the .go files in the sources)
 	${caller} -Cenv-all ${debuggerSettings} -cp .:$libraries:${RODDY_BINARY} GServCaller.groovy $*
 else
   echo "Cannot start Roddy, neither Java nor GroovyServ was recognized" && exit 5

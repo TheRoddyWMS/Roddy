@@ -218,9 +218,13 @@ public class Roddy {
             mainStarted = true;
             startup(args);
         } catch (Exception e) {
-            // I did not want to put in a dependency to another library. This special type of
-            // exception is thrown by groovyclient (groovyserver project). As it is not known
-            // to the JVM in this case, we'll filter it by its name.
+
+            // When Roddy is getting closed due to an exception, it will output this exception
+            // on the command line. However, when you use GroovyServ to start Roddy, GroovyServ
+            // always throws its own SystemExitException. As we know this, we will explicitely
+            // prevent Roddy from printing this! However, we also do not want to build in a new
+            // dependency to GroovyServ (it might not be downloadable or availbable). Therefore
+            // we check for this particular exception by using its simple class name!
             if (!e.getClass().getName().endsWith("SystemExitException"))
                 e.printStackTrace();
             exit(1);
