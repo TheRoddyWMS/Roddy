@@ -45,6 +45,8 @@ public class LibrariesFactory extends Initializable {
     public static final String BUILDINFO_RUNTIME_JDKVERSION = "JDKVersion"
     public static final String BUILDINFO_RUNTIME_GROOVYVERSION = "GroovyVersion"
     public static final String BUILDINFO_RUNTIME_APIVERSION = "RoddyAPIVersion"
+    public static final String PRIMARY_ERRORS = "PRIMARY_ERRORS"  // Primary errors are "important"
+    public static final String SECONDARY_ERRORS = "SECONDARY_ERRORS" // Secondary errors could be "important" but are not checked in all cases.
 
     private List<String> loadedLibrariesInfo = [];
 
@@ -83,7 +85,7 @@ public class LibrariesFactory extends Initializable {
     }
 
     static List<String> getErrorsForPlugin(String plugin) {
-        return mapOfErrorsForPluginEntries.find {plugin}.value
+        return mapOfErrorsForPluginEntries.find { plugin }.value
     }
 
     public SyntheticPluginInfo getSynthetic() {
@@ -177,21 +179,9 @@ public class LibrariesFactory extends Initializable {
                     mapOfErrorsForPluginFolders
                             .findAll { File key, List<String> values -> values.size() > 0 && key.isDirectory() }
                             .collect { File folder, List<String> errorsForFolder ->
-                        String errorMessage = "Folder ${folder}" + errorsForFolder ? " with ${errorsForFolder.size()}" : ""
+                        "Folder ${folder}" + errorsForFolder ? " with ${errorsForFolder.size()}" : ""
                     }.collect {}.join("\n\t")
             )
-
-//                            String errorMessage = "Folder ${folder}" + errorsForFolder ? "\n\t\t-" + errorsForFolder.join("\n\t\t-") : "\n\t"
-//                            mapOfErrorsForPluginEntries.findAll {
-//                                String id, List<String> errors ->
-//
-//            String errorMessage = "Folder ${folder}" + errorsForFolder ? "\n\t\t-" + errorsForFolder.join("\n\t\t-") : "\n\t"
-//            mapOfErrorsForPluginEntries.findAll {
-//                String id, List<String> errors ->
-//
-//            }
-//                            }
-
 
             return false
         }
@@ -229,23 +219,10 @@ public class LibrariesFactory extends Initializable {
             def directories = Roddy.getPluginDirectories()
             List<PluginDirectoryInfo> mapOfIdentifiedPlugins = loadMapOfAvailablePlugins(directories)
             mapOfPlugins = loadPluginsFromDirectories(mapOfIdentifiedPlugins)
-        };
+        }
 
         return mapOfPlugins
     }
-//
-//    static List<PluginDirectoryInfo> convertNativePluginsIfNecessary(List<PluginDirectoryInfo> pluginDirectories) {
-//        List<PluginDirectoryInfo> correctedList = pluginDirectories.collect() {
-//            PluginDirectoryInfo pdi ->
-//                if (pdi.type == PluginType.NATIVE) {
-//                    def converter = new NativeWorkflowConverter(pdi)
-//                    converter.convert()
-//                }
-//
-//                return pdi
-//        }
-//        return correctedList
-//    }
 
     /**
      * This method returns a list of all plugins found in plugin directories.
@@ -281,9 +258,12 @@ public class LibrariesFactory extends Initializable {
             File[] directoryList = pBaseDirectory.listFiles().sort() as File[];
             for (File pEntry in directoryList) {
 
-                Map<Integer, List<String>> errors = [:]
+                Map<String, List<String>> errors = [
+                        PRIMARY_ERRORS  : [],
+                        SECONDARY_ERRORS: []
+                ]
                 def workflowType = determinePluginType(pEntry, errors)
-                mapOfErrorsForPluginEntries[pEntry.path] = (errors[1] + errors[2])
+                mapOfErrorsForPluginEntries[pEntry.path] = (errors[PRIMARY_ERRORS] + errors[SECONDARY_ERRORS])
 
                 if (workflowType == PluginType.INVALID)
                     continue
@@ -313,11 +293,11 @@ public class LibrariesFactory extends Initializable {
         return file.exists() && file.isDirectory() && file.canRead() && file.canExecute()
     }
 
-    static PluginType determinePluginType(File directory, Map<Integer, List<String>> mapOfErrors = [:]) {
+    static PluginType determinePluginType(File directory, Map<String, List<String>> mapOfErrors = [:]) {
         logger.postRareInfo("  Parsing plugin folder: ${directory}");
 
-        List<String> errors = mapOfErrors.get(1, [])
-        List<String> errorsUnimportant = mapOfErrors.get(2, [])
+        List<String> errors = mapOfErrors.get(PRIMARY_ERRORS, [])
+        List<String> errorsUnimportant = mapOfErrors.get(SECONDARY_ERRORS, [])
 
         if (!directory.isDirectory()) {
             // Just return silently here.

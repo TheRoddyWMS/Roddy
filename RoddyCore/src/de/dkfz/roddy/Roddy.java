@@ -832,9 +832,6 @@ public class Roddy {
         for (File folder : Arrays.asList(
                 RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "plugins"),
                 RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins"),
-//                RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins_2.49plus"),
-//                RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins_R2.2")
-//                RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins_R2.3")
                 RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins_R" + getShortVersionString())
         )) {
             if (folder.exists() && !folders.contains(folder)) folders.add(folder);

@@ -138,10 +138,6 @@ class ProcessingToolReader {
                     }
                 }
 
-//                if (!allParametersValid) {
-//
-//                }
-
                 if (noOfInputParameters != inputParameters.size())
                     addLoadErr("The number of read input parameters does not match to the input parameters in the configuration.", null)
                 if (noOfOutputParameters != outputParameters.size())
@@ -178,8 +174,9 @@ class ProcessingToolReader {
                 throw new ConfigurationLoaderException("There were ${loadErrors.size()} errors")
             return currentEntry
         } catch (ConfigurationLoaderException ex) {
-            // In this case we actually do not need a message. ConfigurationLoaderErrors are somewhat well known
-            //addLoadErr("ToolEntry ${toolID} could not be read:\n        " + loadErrors.join("\n        "))
+
+            // In this case we actually do not need a message. ConfigurationLoaderErrors are properly handled
+            // exceptions.
             return null
         } catch (Exception ex) {
             addLoadErr("ToolEntry ${toolID} could not be read with an unexpected error:\n        " +
@@ -234,12 +231,11 @@ class ProcessingToolReader {
         } else if (type == "string") {
             ToolStringParameter.ParameterSetbyOptions setby = Enum.valueOf(ToolStringParameter.ParameterSetbyOptions.class, extractAttributeText(child, "setby", ToolStringParameter.ParameterSetbyOptions.callingCode.name()))
             String pName = readAttribute(child, "scriptparameter")
-            ToolStringParameter tsp = null
+            ToolStringParameter tsp
             if (setby == ToolStringParameter.ParameterSetbyOptions.callingCode) {
                 tsp = new ToolStringParameter(pName)
             } else {
                 tsp = new ToolStringParameter(pName, extractAttributeText(child, "cValueID"))
-                //TODO Validate if cValueID == null!
             }
             return tsp
         } else {

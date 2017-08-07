@@ -5,10 +5,10 @@ RODDY_DIRECTORY=`readlink -f .`
 parm1=${1-}
 projectAnalysisParameter=$2
 
-#/data/michael/bin/groovyserv-1.1.0/bin/groovyserver -p 20000 & serverpid=$!
 export GROOVY_BINARY=groovy
-export GROOVY_BINARY="/data/michael/bin/groovyserv-1.1.0/bin/groovyclient -p 20000"
-#
+export GROOVY_BINARY="/data/michael/bin/groovyserv-1.1.0/bin/groovyclient"
+
+# Default Roddy Java options
 JAVA_OPTS=${JAVA_OPTS:-"-Xms64m -Xmx500m"}
 
 # OFS is the original field separator

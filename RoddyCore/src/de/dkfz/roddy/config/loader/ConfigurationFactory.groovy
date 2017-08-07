@@ -347,7 +347,7 @@ class ConfigurationFactory {
         configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "ptools", "Could not read processing tools for configuration ${icc.id}", {readProcessingTools(configurationNode, config)})
 
         if(!configurationWasLoadedProperly) {
-            logger.severe("There were errors in the configuration file ${icc.file}, detailed errors messages should follow.")
+            logger.severe("There were errors in the configuration file ${icc.file}.")
         }
 
         return config
@@ -362,7 +362,6 @@ class ConfigurationFactory {
             blk.call()
         } catch (Exception ex) {
             addFormattedErrorToConfig(msg, id, null, config)
-//            config.addLoadError(new ConfigurationLoadError(config, "cValues", msg, ex))
             return false
         }
         return true
