@@ -146,10 +146,10 @@ public class RoddyRMIInterfaceImplementationTest {
         assert info.list.size() == 1
         def list = info.list;
 
-        assert list[0].executedJobs[0].jobState == JobState.OK
+        assert list[0].executedJobs[0].jobState == JobState.COMPLETED_SUCCESSFUL
         assert list[0].executedJobs[0].jobId == "14011"
         assert list[0].executedJobs[0].toolId == "testScript"
-        assert list[0].executedJobs[1].jobState == JobState.OK
+        assert list[0].executedJobs[1].jobState == JobState.COMPLETED_SUCCESSFUL
         assert list[0].executedJobs[2].jobState == JobState.FAILED
     }
 

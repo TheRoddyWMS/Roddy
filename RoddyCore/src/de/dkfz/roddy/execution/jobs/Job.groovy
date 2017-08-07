@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.execution.jobs
 
+import de.dkfz.roddy.config.EmptyResourceSet
 import de.dkfz.roddy.config.ResourceSet
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
@@ -163,7 +164,7 @@ class Job extends BEJob<BEJob, JobResult> {
 
     static ResourceSet getResourceSetFromConfiguration(String toolID, ExecutionContext context) {
         ToolEntry te = context.getConfiguration().getTools().getValue(toolID)
-        return te.getResourceSet(context.configuration) ?: new ResourceSet(null, null, null, null, null, null, null, null);
+        return te.getResourceSet(context.configuration) ?: new EmptyResourceSet();
     }
 
     static String getToolMD5(String toolID, ExecutionContext context) {

@@ -282,6 +282,26 @@ public class MockupExecutionContextBuilder {
             Map<BEJob, JobState> queryJobStatus(List list, boolean forceUpdate) {
                 return null
             }
+
+            @Override
+            JobState parseJobState(String stateString) {
+                return null
+            }
+
+            @Override
+            Map<String, GenericJobInfo> queryExtendedJobStateById(List<String> jobIds, boolean forceUpdate) {
+                return null
+            }
+
+            @Override
+            Map<String, JobState> queryJobStatusAll(boolean forceUpdate = false) {
+                return null
+            }
+
+            @Override
+            Map<String, JobState> queryJobStatusById(List<String> jobIds, boolean forceUpdate = false) {
+                return null
+            }
         }
     }
 }

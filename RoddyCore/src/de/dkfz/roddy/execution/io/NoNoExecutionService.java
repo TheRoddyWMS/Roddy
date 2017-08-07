@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.execution.io;
 
+import de.dkfz.roddy.execution.jobs.Command;
+
 import java.io.File;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -107,6 +109,11 @@ public class NoNoExecutionService extends ExecutionService {
 
     @Override
     public File queryWorkingDirectory() {
+        return null;
+    }
+
+    @Override
+    public String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, OutputStream outputStream) {
         return null;
     }
 

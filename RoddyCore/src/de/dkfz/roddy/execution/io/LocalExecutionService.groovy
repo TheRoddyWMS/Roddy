@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.execution.io
 
+import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -15,6 +16,7 @@ import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.tools.LoggerWrapper
 
 import java.lang.reflect.Field
@@ -72,6 +74,31 @@ public class LocalExecutionService extends ExecutionService {
         return outputStream;
     }
 
+    /**
+     * Stores a new job jobState info to an execution contexts job jobState log file.
+     *
+     * @param job
+     */
+    static String getJobStateInfoLine(BEJob job) {
+        String millis = "" + System.currentTimeMillis()
+        millis = millis.substring(0, millis.length() - 3)
+        String code = "255"
+        if (job.getJobState() == JobState.UNSTARTED)
+            code = "UNSTARTED" // N
+        else if (job.getJobState() == JobState.ABORTED)
+            code = "ABORTED" // A
+        else if (job.getJobState() == JobState.COMPLETED_SUCCESSFUL)
+            code = "OK"  // C
+        else if (job.getJobState() == JobState.FAILED)
+            code = "FAILED" // E
+        if (null != job.getJobID())
+            return String.format("%s:%s:%s", job.getJobID(), code, millis)
+
+        logger.postSometimesInfo("Did not store info for job " + job.getJobName() + ", job id was null.")
+        return null
+    }
+
+
     @Override
     String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, OutputStream outputStream) {
         if (command.isBlockingCommand()) {
@@ -94,7 +121,7 @@ public class LocalExecutionService extends ExecutionService {
                 exID = jobManager.parseJobID(res.resultLines[0]);
                 command.setExecutionID(jobManager.createJobDependencyID(command.getJob(), exID));
                 ExecutionContext currentContext = (command.job as Job).getExecutionContext()
-                String jobInfo = jobManager.getJobStateInfoLine(command.job)
+                String jobInfo = getJobStateInfoLine(command.job)
                 FileSystemAccessProvider.getInstance().appendLineToFile(true, currentContext.getRuntimeService().getNameOfJobStateLogFile(currentContext), jobInfo, false)
             }
             return exID;

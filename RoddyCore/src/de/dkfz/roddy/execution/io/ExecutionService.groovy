@@ -7,6 +7,7 @@
 package de.dkfz.roddy.execution.io
 
 import de.dkfz.roddy.execution.BEExecutionService
+import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobState
@@ -186,7 +187,7 @@ public abstract class ExecutionService implements BEExecutionService {
                 } else {
                     res = execute(cmdString, waitFor, outputStream);
                 }
-                command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.OK);
+                command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.COMPLETED_SUCCESSFUL);
 
                 context.addCalledCommand(command);
             } catch (Exception ex) {
@@ -204,20 +205,6 @@ public abstract class ExecutionService implements BEExecutionService {
     }
 
     protected FileOutputStream createServiceBasedOutputStream(Command command, boolean waitFor) { return null; }
-
-    @Override
-    String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, OutputStream outputStream) {
-        def jobManager = Roddy.getJobManager()
-//        jobManager.extractAndSetJobResultFromExecutionResult(command, res)
-        String exID = "none";
-        if (res.successful) {
-            def job = command.getJob()
-            ExecutionContext currentContext = (job as Job).getExecutionContext()
-            String jobInfo = jobManager.getJobStateInfoLine(job)
-            FileSystemAccessProvider.getInstance().appendLineToFile(true, currentContext.getRuntimeService().getNameOfJobStateLogFile(currentContext), jobInfo, false)
-        }
-        return exID
-    }
 
     public static void storeParameterFile(Command command) {
         command.job.parameters
