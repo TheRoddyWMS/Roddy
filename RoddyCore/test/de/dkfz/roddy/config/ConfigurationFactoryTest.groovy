@@ -153,7 +153,7 @@ public class ConfigurationFactoryTest {
                             <rset size="l" memory="1" cores="1" nodes="1" walltime="5"/>
                         </resourcesets>
                         <input type="file" typeof="de.dkfz.roddy.knowledge.files.GenericFileGroup" scriptparameter='FILENAME'/>
-                        <output type="file" typeof="de.dkfz.roddy.knowledge.files.GenericFileGroup"/>
+                        <output type="file" typeof="de.dkfz.roddy.knowledge.files.GenericFileGroup" scriptparameter='OUTFILENAME'/>
                         <script value='testscript.sh'>
                         <![CDATA[
                           echo 'test'
