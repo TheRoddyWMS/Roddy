@@ -4,13 +4,13 @@ set -e
 increasebuildonly=${increasebuildonly-false}
 
 # Check for configured plugin directories. Set empty if no dirs are configured.
-pluginDirectories=`grep pluginDirectories ${customconfigfile}`
-[[ -z "$pluginDirectories" ]] && pluginDirectories="pluginDirectories="
+pluginDirectories=`grepFromConfigFile pluginDirectories $customconfigfile`
+pluginDirectories="pluginDirectories=$pluginDirectories"
 
 #TODO Find other plugin directories as well
 pluginID=$2
 srcDirectory=`groovy ${SCRIPTS_DIR}/findPluginFolders.groovy ${pluginDirectories} ${RODDY_DIRECTORY} ${pluginID}`
-[[ "$srcDirectory" == null ]] && echo "Compilation aborted: source directory for plugin not found. Is your app ini correct?" && exit 1
+[[ "$srcDirectory" == null ]] && echo "Compilation aborted: source directory for plugin not found. Is your app ini correct? pluginDirectories=$pluginDirectories" && exit 1
 echo $srcDirectory
 cd $srcDirectory
 requestedAPIVersion=`grep RoddyAPIVersion buildinfo.txt | cut -d "=" -f 2`

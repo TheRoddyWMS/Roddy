@@ -57,7 +57,7 @@ public class BuildInfoFileHelper {
         hasBuildInfoEntries = true
 
         if (invalid)
-            logger.postAlwaysInfo("There are invalid entries in file buildinfo.txt for plugin ${pluginName}:\n  " + invalid.join("\n "));
+            logger.postAlwaysInfo("There are invalid entries in file buildinfo.txt for plugin ${pluginName}:${pluginVersion}:\n  " + invalid.join("\n "));
     }
 
     /** This constructor is the "real" constructor **/

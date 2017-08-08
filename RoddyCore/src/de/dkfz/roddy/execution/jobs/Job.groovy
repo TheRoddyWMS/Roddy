@@ -29,7 +29,7 @@ import static de.dkfz.roddy.Constants.NO_VALUE
 import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 
 @groovy.transform.CompileStatic
-class Job extends BEJob<Job, JobResult> {
+class Job extends BEJob<BEJob, JobResult> {
 
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(BEJob.class.getSimpleName())
 
@@ -46,8 +46,6 @@ class Job extends BEJob<Job, JobResult> {
      * The tool you want to call.
      */
     private final String toolID
-
-    private boolean isDirty
 
     /**
      * Keeps a list of all unchanged, initial parameters, including default job parameters.
@@ -371,7 +369,8 @@ class Job extends BEJob<Job, JobResult> {
 
         //Execute the job or create a dummy command.
         if (runJob) {
-            runResult = new JobResult(Roddy.getJobManager().runJob(this))
+            def _rr = Roddy.getJobManager().runJob(this)
+            runResult = new JobResult(_rr)
             cmd = runResult.command
             jobDetailsLine << " => " + cmd.getExecutionID()
             System.out.println(jobDetailsLine.toString())
@@ -469,7 +468,7 @@ class Job extends BEJob<Job, JobResult> {
             knownFilesCnt = (Integer) res[1]
         }
 
-        boolean parentJobIsDirty = getParentJobs().collect { Job job -> job.isDirty }.any { boolean dirty -> dirty }
+        boolean parentJobIsDirty = getParentJobs().collect { BEJob job -> job.isDirty }.any { boolean dirty -> dirty }
 
         boolean knownFilesCountMismatch = knownFilesCnt != filesToVerify.size()
 

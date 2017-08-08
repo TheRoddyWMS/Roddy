@@ -143,6 +143,10 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
         return _getValueUnchecked(id);
     }
 
+    /**
+     * @throws RuntimeException if a value is requested that does not exist.
+     * @param id    Configuration value to return.
+     */
     public V getValue(String id) {
         if (!hasValue(id))
             throw new RuntimeException("Value " + id + " could not be found in containers with id " + id);

@@ -64,13 +64,11 @@ elif [[ "$parm1" == "compileplugin" ]]; then
 elif [[ "$parm1" == "packplugin" || "$parm1" == "testpackplugin" ]]; then
     [[ "$parm1" == "testpackplugin" ]] && set -xuv
     increasebuildonly=true
-#    set -xuv
     source ${SCRIPTS_DIR}/compileRoddyPlugin.sh
 
     # Test pack does not put things to svn so it is safe to use. Test will not change the zip file but will increase the buildnumber.
-    source ${SCRIPTS_DIR}/resolveAppConfig.sh
     pluginID=$2
-    pluginDirectories=`grep pluginDirectories ${customconfigfile}`
+    pluginDirectories=`grepFromConfigFile pluginDirectories $customconfigfile`
     pluginDirectory=`$GROOVY_BINARY ${SCRIPTS_DIR}/findPluginFolders.groovy ${pluginDirectories} ${RODDY_DIRECTORY} ${pluginID}`
     for i in `ls ${pluginDirectory}/README*.txt 2> /dev/null`; do
         $GROOVY_BINARY ${SCRIPTS_DIR}/addChangelistVersionTag.groovy $i ${pluginDirectory}/buildversion.txt
@@ -118,7 +116,6 @@ elif [[ "$parm1" == "packplugin" || "$parm1" == "testpackplugin" ]]; then
     exit 0
     # Only unzip if necessary!
 elif [[ "$parm1" == "createworkflow" ]]; then
-    source ${SCRIPTS_DIR}/resolveAppConfig.sh
     pluginID=$2
     workflowID=$3
     source ${SCRIPTS_DIR}/createNewWorkflow.sh ${customconfigfile} ${pluginID} ${3-}
