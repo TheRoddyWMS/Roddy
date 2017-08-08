@@ -25,3 +25,23 @@ function checkAndDownloadGroovyServ() {
   [[ ! -f ${forbiddenFile} ]] && callerBinary=$(readlink -f $( ls ${runtimeFolder}/groovyserv*/bin/groovyclient 2> /dev/null ) 2> /dev/null) || touch ${forbiddenFile}
   echo $callerBinary
 }
+
+function getExistingOrNewGroovyServPort() {
+  # Check first, if GroovyServ is running for the local user!
+  local runningGServInstance=$(ps -ef | grep GroovyServ | grep -v grep | grep `whoami`)
+
+  if [[ -n ${runningGServInstance-} ]]; then
+    # Use the existing port, it is passed as an argument to GroovyServ, so we can just get it from that.
+
+    # Chaining things together above would be nice, but it fails. If we assign the output above
+    # to a variable first, the whitespaces will be reduced to a single character thuse making it
+    # easy to use cut and rev
+    echo ${runningGServInstance}  | rev | cut -d " " -f 2 | rev
+
+  else
+    # Find a port and return that.
+    # Hopefully java is already available
+
+    echo $(java FindPort)
+  fi
+}
