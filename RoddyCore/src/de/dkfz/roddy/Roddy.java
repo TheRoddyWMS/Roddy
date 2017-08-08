@@ -832,12 +832,16 @@ public class Roddy {
         for (File folder : Arrays.asList(
                 RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "plugins"),
                 RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins"),
-                RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins_2.49plus"),
-                RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins_R2.3")
+                RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins_R" + getShortVersionString())
         )) {
             if (folder.exists() && !folders.contains(folder)) folders.add(folder);
         }
         return folders;
+    }
+
+    public static String getShortVersionString() {
+        String[] complete = Constants.APP_CURRENT_VERSION_STRING.split("[.]");
+        return complete[0] + "." + complete[1];
     }
 
     public static File getFileCacheDirectory() {

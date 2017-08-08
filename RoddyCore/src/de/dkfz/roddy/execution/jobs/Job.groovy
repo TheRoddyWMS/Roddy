@@ -369,7 +369,8 @@ class Job extends BEJob<BEJob, JobResult> {
 
         //Execute the job or create a dummy command.
         if (runJob) {
-            runResult = new JobResult(Roddy.getJobManager().runJob(this))
+            def _rr = Roddy.getJobManager().runJob(this)
+            runResult = new JobResult(_rr)
             cmd = runResult.command
             jobDetailsLine << " => " + cmd.getExecutionID()
             System.out.println(jobDetailsLine.toString())
