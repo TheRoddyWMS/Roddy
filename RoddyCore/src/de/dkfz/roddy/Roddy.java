@@ -8,6 +8,7 @@ package de.dkfz.roddy;
 
 import com.btr.proxy.search.ProxySearch;
 import de.dkfz.roddy.config.ResourceSetSize;
+import de.dkfz.roddy.config.loader.ConfigurationLoaderException;
 import de.dkfz.roddy.execution.BEExecutionService;
 import de.dkfz.roddy.execution.jobs.*;
 import de.dkfz.roddy.client.RoddyStartupModes;
@@ -217,7 +218,15 @@ public class Roddy {
             mainStarted = true;
             startup(args);
         } catch (Exception e) {
-            e.printStackTrace();
+
+            // When Roddy is getting closed due to an exception, it will output this exception
+            // on the command line. However, when you use GroovyServ to start Roddy, GroovyServ
+            // always throws its own SystemExitException. As we know this, we will explicitely
+            // prevent Roddy from printing this! However, we also do not want to build in a new
+            // dependency to GroovyServ (it might not be downloadable or availbable). Therefore
+            // we check for this particular exception by using its simple class name!
+            if (!e.getClass().getName().endsWith("SystemExitException"))
+                e.printStackTrace();
             exit(1);
         }
     }
@@ -663,12 +672,14 @@ public class Roddy {
         if (!option.needsFullInit())
             return;
 
-        if (jobManager.executesWithoutJobSystem() && waitForJobsToFinish) {
-            exitCode = performWaitforJobs();
-        } else {
-            List<Command> listOfCreatedCommands = jobManager.getListOfCreatedCommands();
-            for (Command command : listOfCreatedCommands) {
-                if (command.getJob().getJobState() == JobState.FAILED) exitCode++;
+        if (jobManager != null) {
+            if (jobManager.executesWithoutJobSystem() && waitForJobsToFinish) {
+                exitCode = performWaitforJobs();
+            } else {
+                List<Command> listOfCreatedCommands = jobManager.getListOfCreatedCommands();
+                for (Command command : listOfCreatedCommands) {
+                    if (command.getJob().getJobState() == JobState.FAILED) exitCode++;
+                }
             }
         }
         exit(exitCode);
