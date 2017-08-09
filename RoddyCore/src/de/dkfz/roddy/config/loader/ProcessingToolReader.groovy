@@ -131,6 +131,8 @@ class ProcessingToolReader {
                             currentEntry.setInlineScript(child.text().trim().replaceAll('<!\\[CDATA\\[', "").replaceAll(']]>', ""))
                             currentEntry.setInlineScriptName(readAttribute(child, "value"))
                         }
+                    } else {
+                        addLoadErr("Invalid child name '${cName}'")
                     }
                 }
 
@@ -232,6 +234,9 @@ class ProcessingToolReader {
                 //TODO Validate if cValueID == null!
             }
             return tsp
+        } else {
+            addLoadErr("Invalid input/output type attribute value: '${type}'")
+            return null
         }
     }
 
