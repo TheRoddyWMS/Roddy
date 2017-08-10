@@ -26,6 +26,7 @@ import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.plugins.SyntheticPluginInfo
 
 import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.Tuple3
 import groovy.transform.TypeCheckingMode
@@ -55,6 +56,7 @@ class ConfigurationFactory {
 
     public static final String XMLTAG_ATTRIBUTE_INHERITANALYSES = "inheritAnalyses"
 
+    public static final String ERROR_PRINTOUT_XML_LINEPREFIX = "          "
 
     public static final LoggerWrapper logger = LoggerWrapper.getLogger(ConfigurationFactory.class.getSimpleName())
 
@@ -338,15 +340,14 @@ class ConfigurationFactory {
 
         // Errors are always caught and a message is appended. We want to see everything, if possible.
 
-        configurationWasLoadedProperly &= withErrorEntryOnException(config, "Could not read configuration values for configuration ${icc.id}", { readConfigurationValues(configurationNode, config) })
-        configurationWasLoadedProperly &= withErrorEntryOnException(config, "Could not read configuration value bundles for configuration ${icc.id}", { readValueBundles(configurationNode, config) })
-        configurationWasLoadedProperly &= withErrorEntryOnException(config, "Could not read filename patterns for configuration ${icc.id}", { config.filenamePatterns.map.putAll(readFilenamePatterns(configurationNode)) })
-        configurationWasLoadedProperly &= withErrorEntryOnException(config, "Could not read enumerations for configuration ${icc.id}", { readEnums(config, configurationNode) })
+        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "cvalues", "Could not read configuration values for configuration ${icc.id}", { readConfigurationValues(configurationNode, config) })
+        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "cvbundles", "Could not read configuration value bundles for configuration ${icc.id}", { readValueBundles(configurationNode, config) })
+        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "fnpatterns", "Could not read filename patterns for configuration ${icc.id}", { config.filenamePatterns.map.putAll(readFilenamePatterns(configurationNode)) })
+        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "enums", "Could not read enumerations for configuration ${icc.id}", { readEnums(config, configurationNode) })
+        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "ptools", "Could not read processing tools for configuration ${icc.id}", {readProcessingTools(configurationNode, config)})
 
-        try {
-            configurationWasLoadedProperly &= readProcessingTools(configurationNode, config)
-        } catch (Exception ex) {
-
+        if(!configurationWasLoadedProperly) {
+            logger.severe("There were errors in the configuration file ${icc.file}.")
         }
 
         return config
@@ -356,11 +357,11 @@ class ConfigurationFactory {
          */
     }
 
-    private boolean withErrorEntryOnException(Configuration config, String msg, Closure blk) {
+    private boolean withErrorEntryOnUnknownException(Configuration config, String id, String msg, Closure blk) {
         try {
             blk.call()
         } catch (Exception ex) {
-            config.addLoadError(new ConfigurationLoadError(config, "cValues", msg, ex))
+            addFormattedErrorToConfig(msg, id, null, config)
             return false
         }
         return true
@@ -658,12 +659,12 @@ class ConfigurationFactory {
             if (toolReader.hasErrors()) {
                 String xml
                 try {
-                    xml = "          " + XmlUtil.serialize(new StreamingMarkupBuilder().bind { it -> it.faulty tool }.toString()).readLines()[1 .. -2].join("\n          ")
+                    xml = ERROR_PRINTOUT_XML_LINEPREFIX + XmlUtil.serialize(new StreamingMarkupBuilder().bind { it -> it.faulty tool }.toString()).readLines()[1 .. -2].join("\n" + ERROR_PRINTOUT_XML_LINEPREFIX)
 
                 } catch (Exception ex) {
                     xml = "Cannot display xml code for tool node."
                 }
-                config.addLoadError(new ConfigurationLoadError(config, "ConfigurationFactory - " + (toolID ?: "Tool id was not properly set"), "Tool ${toolID} could not be read. Please check the tool syntax:\n" + xml, null ))
+                config.addLoadError(new ConfigurationLoadError(config, "ConfigurationFactory - " + (toolID ?: "Tool id was not properly set"), "Tool ${toolID} could not be read. Please check the tool syntax and following errors:\n" + xml, null ))
                 config.addLoadErrors(toolReader.loadErrors)
                 hasErrors = true
             } else
@@ -750,10 +751,14 @@ class ConfigurationFactory {
             if (!Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.ignorecvalueduplicates) && configurationValues.containsKey(cvalue.id)) {
                 String cval0 = configurationValues[cvalue.id].value//?.length() > 20 ? configurationValues[cvalue.id].value[0 .. 20] : configurationValues[cvalue.id].value;
                 String cval1 = cvalue.value//?.length() ? cvalue.value[0..20] : cvalue.value;
-                config.addLoadError(new ConfigurationLoadError(config, "cValues", "Value ${cvalue.id} in the configurationvalues block in ${config.getID()} is defined more than once and might contain the wrong value.".toString(), null))
+                addFormattedErrorToConfig("Value ${cvalue.id} in the configurationvalues block in ${config.getID()} is defined more than once and might contain the wrong value.".toString(), "cvalue", cvalueNode, config)
             }
             configurationValues[cvalue.id] = cvalue
         }
+    }
+
+    static void addFormattedErrorToConfig(String message, String id, NodeChild child, Configuration config) {
+        config.addLoadError(new ConfigurationLoadError(config, id, message + ([ "" ] + RoddyConversionHelperMethods.toFormattedXML(child)).join("\n" + ERROR_PRINTOUT_XML_LINEPREFIX), null))
     }
 
     /**
@@ -767,6 +772,11 @@ class ConfigurationFactory {
         String value = cvalueNode.@value.text()
         String type = extractAttributeText(cvalueNode, "type", "string")
         List<String> tags = extractAttributeText(cvalueNode, "tags", null)?.split(StringConstants.COMMA)
+
+        if(!cvalueNode.attributes().containsKey("name"))
+            addFormattedErrorToConfig("The key attribute must be set for a cvalue entry.", "cvalues", cvalueNode, config)
+        if(!cvalueNode.attributes().containsKey("value"))
+            addFormattedErrorToConfig("The value attribute must be set for a cvalue entry.", "cvalues", cvalueNode, config)
 
         //OK, here comes some sort of valuable hack. In the past it was so, that sometimes people forgot to set
         //any directory to "path". In case of the output directories, this was a bad thing! So we know about

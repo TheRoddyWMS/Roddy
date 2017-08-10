@@ -23,6 +23,7 @@ import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.BufferValue
 import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.TimeUnit
 import groovy.transform.CompileStatic
@@ -111,6 +112,7 @@ class ProcessingToolReader {
                 List<ResourceSet> resourceSets = new LinkedList<>()
                 int noOfInputParameters = 0
                 int noOfOutputParameters = 0
+                boolean allParametersValid = true
                 for (NodeChild child in (tool.children() as List<NodeChild>)) {
                     String cName = child.name()
 
@@ -123,9 +125,11 @@ class ProcessingToolReader {
                     } else if (cName == "input") {
                         inputParameters << parseToolParameter(toolID, child)
                         noOfInputParameters++
+                        allParametersValid &= inputParameters.last() != null
                     } else if (cName == "output") {
                         outputParameters << parseToolParameter(toolID, child)
                         noOfOutputParameters++
+                        allParametersValid &= outputParameters.last() != null
                     } else if (cName == "script") {
                         if (readAttribute(child, "value") != "") {
                             currentEntry.setInlineScript(child.text().trim().replaceAll('<!\\[CDATA\\[', "").replaceAll(']]>', ""))
@@ -149,6 +153,8 @@ class ProcessingToolReader {
                 }
 
                 def allparameters = (inputParameters + outputParameters).collect {
+                    if (!it) // Error is already catched in parseToolParameter, just skip it here.
+                        return
                     if (it instanceof ToolTupleParameter) {
                         ((ToolTupleParameter) it).allFiles.collect { it.scriptParameterName }
                     } else if (it instanceof ToolFileGroupParameter) {
@@ -170,8 +176,9 @@ class ProcessingToolReader {
                 throw new ConfigurationLoaderException("There were ${loadErrors.size()} errors")
             return currentEntry
         } catch (ConfigurationLoaderException ex) {
-            // In this case we actually do not need a message. ConfigurationLoaderErrors are somewhat well known
-            //addLoadErr("ToolEntry ${toolID} could not be read:\n        " + loadErrors.join("\n        "))
+
+            // In this case we actually do not need a message. ConfigurationLoaderErrors are properly handled
+            // exceptions.
             return null
         } catch (Exception ex) {
             addLoadErr("ToolEntry ${toolID} could not be read with an unexpected error:\n        " +
@@ -226,16 +233,15 @@ class ProcessingToolReader {
         } else if (type == "string") {
             ToolStringParameter.ParameterSetbyOptions setby = Enum.valueOf(ToolStringParameter.ParameterSetbyOptions.class, extractAttributeText(child, "setby", ToolStringParameter.ParameterSetbyOptions.callingCode.name()))
             String pName = readAttribute(child, "scriptparameter")
-            ToolStringParameter tsp = null
+            ToolStringParameter tsp
             if (setby == ToolStringParameter.ParameterSetbyOptions.callingCode) {
                 tsp = new ToolStringParameter(pName)
             } else {
                 tsp = new ToolStringParameter(pName, extractAttributeText(child, "cValueID"))
-                //TODO Validate if cValueID == null!
             }
             return tsp
         } else {
-            addLoadErr("Invalid input/output type attribute value: '${type}'")
+            addLoadErr("The type attribute of a parameter was invalid (${type}) for tool ${toolID}\n" + ConfigurationFactory.ERROR_PRINTOUT_XML_LINEPREFIX + RoddyConversionHelperMethods.toFormattedXML(child, "\n" + ConfigurationFactory.ERROR_PRINTOUT_XML_LINEPREFIX))
             return null
         }
     }
