@@ -112,9 +112,4 @@ public class NoNoExecutionService extends ExecutionService {
         return null;
     }
 
-    @Override
-    public String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, OutputStream outputStream) {
-        return null;
-    }
-
 }
