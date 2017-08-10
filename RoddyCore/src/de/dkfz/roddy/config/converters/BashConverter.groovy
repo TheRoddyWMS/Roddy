@@ -52,8 +52,6 @@ class BashConverter extends ConfigurationConverter {
 
         text << appendConfigurationValueBundles(context, cfg)
 
-        // text << appendToolEntries(context, cfg)
-
         text << appendDebugVariables(cfg)
 
         text << appendPathVariables()
