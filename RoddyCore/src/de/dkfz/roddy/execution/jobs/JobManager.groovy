@@ -47,7 +47,7 @@ class JobManager {
     }
 
     BEJobID createJobDependencyID(Job job, String jobResult) {
-        jobManager.createID(job, jobResult)
+        jobManager.createJobID(job, jobResult)
     }
 
     ProcessingCommands convertResourceSet(ResourceSet resourceSet) {

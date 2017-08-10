@@ -120,6 +120,34 @@ class Job extends BEJob<BEJob, JobResult> {
         this(context, jobName, toolID, null, arrayIndices, inputParameters, parentFiles, filesToVerify)
     }
 
+    private static List<BEJobID> jobs2jobIDs(List<BEJob> jobs) {
+        if (null == jobs) {
+            return new LinkedList<BEJobID>()
+        } else {
+            return jobs.collect { it.runResult.jobID }
+        }
+    }
+
+    private List<BEJobID> reconcileParentJobInformation(List<BEJobID> parentJobIDs, List<BEJob> parentJobs) {
+        List<BEJobID> pJids
+        if ((null != parentJobIDs && !parentJobIDs.isEmpty()) &&
+                (null != parentJobs && !parentJobs.isEmpty())) {
+            def a = BEJob.findValidJobIDs(parentJobIDs).collect{ it.toString() }
+            def b = jobs2jobIDs(BEJob.findJobsWithValidJobId(parentJobs)).collect { it.toString() }
+            if (a != b) {
+                throw new RuntimeException("parentJobBEJob needs to be called with one of parentJobs, parentJobIDs, or parentJobsIDs and *corresponding* parentJobs.")
+            }
+            pJids = BEJob.findValidJobIDs(parentJobIDs)
+        } else if (null == parentJobIDs && null == parentJobs) {
+            pJids = new LinkedList<BEJobID>()
+        } else if (null != parentJobs) {
+            pJids = jobs2jobIDs(BEJob.findJobsWithValidJobId(parentJobs))
+        } else {
+            pJids = BEJob.findValidJobIDs(parentJobIDs)
+        }
+        return pJids
+    }
+
     Job(ExecutionContext context, String jobName, String toolID, String inlineScript, List<String> arrayIndices, Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
         super(jobName
                 , context.getConfiguration().getProcessingToolPath(context, TOOLID_WRAPIN_SCRIPT)
@@ -128,8 +156,7 @@ class Job extends BEJob<BEJob, JobResult> {
                 , getResourceSetFromConfiguration(toolID, context)
                 , arrayIndices
                 , [:]
-                , collectParentJobsFromFiles(parentFiles)
-                , collectDependencyIDsFromFiles(parentFiles)
+                , reconcileParentJobInformation(collectDependencyIDsFromFiles(parentFiles), collectParentJobsFromFiles(parentFiles))
                 , Roddy.getJobManager())
         this.context = context
         this.toolID = toolID
@@ -362,13 +389,13 @@ class Job extends BEJob<BEJob, JobResult> {
     void appendToJobStateLogfileForCluster(ExecutionContext executionContext, BEJobResult res) {
         if (res.wasExecuted) {
             def job = res.command.getJob()
-            String jobInfoLine = getJobStateInfoLineForClusterJob(job)
+            String jobInfoLine = assembleJobStateInfoLineForClusterJob(job)
             if (jobInfoLine != null)
                 FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getNameOfJobStateLogFile(executionContext), jobInfoLine, false)
         }
     }
 
-    static String getJobStateInfoLineForClusterJob(BEJob job) {
+    static String assembleJobStateInfoLineForClusterJob(BEJob job) {
         String millis = "" + System.currentTimeMillis()
         millis = millis.substring(0, millis.length() - 3)
         String jobId = job.getJobID()
@@ -405,13 +432,13 @@ class Job extends BEJob<BEJob, JobResult> {
             FileSystemAccessProvider.getInstance().moveFile(tmpFile2, logFile)
         } else {
             if (res.wasExecuted) {
-                String jobInfo = getJobStateInfoLineLocal(res.job)
+                String jobInfo = assembleJobStateInfoLineLocal(res.job)
                 FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getNameOfJobStateLogFile(executionContext), jobInfo, false)
             }
         }
     }
 
-    static String getJobStateInfoLineLocal(BEJob job) {
+    static String assembleJobStateInfoLineLocal(BEJob job) {
         String millis = "" + System.currentTimeMillis()
         millis = millis.substring(0, millis.length() - 3)
         String code = "255"
