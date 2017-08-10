@@ -7,7 +7,6 @@
 package de.dkfz.roddy.execution.io
 
 import de.dkfz.roddy.execution.BEExecutionService
-import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobState
@@ -27,7 +26,7 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.BEJobDependencyID
+import de.dkfz.roddy.execution.jobs.BEJobID
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -725,13 +724,13 @@ public abstract class ExecutionService implements BEExecutionService {
 
         List<Command> commandCalls = context.getCommandCalls();
         StringBuilder realCalls = new StringBuilder();
-        List<BEJobDependencyID> jobIDs = new LinkedList<>();
+        List<BEJobID> jobIDs = new LinkedList<>();
         int cnt = 0;
         Map<String, String> jobIDReplacement = new HashMap<String, String>();
         StringBuilder repeatCalls = new StringBuilder();
 
         for (Command c : commandCalls) {
-            BEJobDependencyID eID = c.getExecutionID();
+            BEJobID eID = c.getExecutionID();
             if (eID != null) {
                 jobIDs.add(eID);
                 if (eID.getShortID() != null) {
@@ -740,7 +739,7 @@ public abstract class ExecutionService implements BEExecutionService {
             }
         }
         for (Command c : commandCalls) {
-            BEJobDependencyID eID = c.getExecutionID();
+            BEJobID eID = c.getExecutionID();
             String cmdStr = c.toString();
             realCalls.append(eID).append(", ").append(cmdStr).append(separator);
 

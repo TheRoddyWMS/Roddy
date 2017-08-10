@@ -12,14 +12,10 @@ package de.dkfz.roddy.execution.io
 
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.execution.jobs.BEJob
-import de.dkfz.roddy.execution.jobs.Command
-import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.JobState
+import de.dkfz.roddy.execution.io.FileAttributes
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.common.IOUtils
@@ -870,44 +866,5 @@ class SSHExecutionService extends RemoteExecutionService {
 
     @Override
     boolean canQueryFileAttributes() { return true; }
-
-    /**
-     * Stores a new job jobState info to an execution contexts job jobState log file.
-     *
-     * @param job
-     */
-    private static String jobStateInfoLine(String jobId, String code, String millis) {
-        return String.format("%s:%s:%s", jobId, code, millis)
-    }
-    private static String getJobStateInfoLineForJob(BEJob job) {
-        String millis = "" + System.currentTimeMillis()
-        millis = millis.substring(0, millis.length() - 3)
-        String jobId = job.getJobID()
-        if (jobId != null) {
-            if (job.getJobState() == JobState.UNSTARTED)
-                return jobStateInfoLine(jobId, "UNSTARTED", millis)
-            else if (job.getJobState() == JobState.ABORTED)
-                return jobStateInfoLine(jobId, "ABORTED", millis)
-            else
-                return null
-        } else {
-            logger.postSometimesInfo("Did not store info for job " + job.getJobName() + ", job id was null.")
-            return null
-        }
-    }
-
-
-    @Override
-    String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, OutputStream outputStream) {
-        String exID = "none";
-        if (res.successful) {
-            def job = command.getJob()
-            ExecutionContext currentContext = (job as Job).getExecutionContext()
-            String jobInfoLine = getJobStateInfoLineForJob(job)
-            if (jobInfoLine != null)
-                FileSystemAccessProvider.getInstance().appendLineToFile(true, currentContext.getRuntimeService().getNameOfJobStateLogFile(currentContext), jobInfoLine, false)
-        }
-        return exID
-    }
 
 }
