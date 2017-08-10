@@ -10,6 +10,7 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.client.RoddyStartupOptions
+import de.dkfz.roddy.client.cliclient.RoddyCLIClient
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.validation.XSDValidator
@@ -301,6 +302,12 @@ class ProjectLoader {
         fac.loadAvailableAnalysisConfigurationFiles();
 
         projectConfiguration = fac.getProjectConfiguration(projectID);
+
+        if (projectConfiguration.hasErrors()) {
+
+            RoddyCLIClient.checkConfigurationErrorsAndMaybePrintAndFail(projectConfiguration)
+        }
+
         InformationalConfigurationContent iccAnalysis = ((AnalysisConfigurationProxy) projectConfiguration.getAnalysis(analysisID)).informationalConfigurationContent;
         if (!XSDValidator.validateTree(iccAnalysis) && Roddy.isStrictModeEnabled()) {
             throw new ProjectLoaderException("Validation of project configuration failed.")

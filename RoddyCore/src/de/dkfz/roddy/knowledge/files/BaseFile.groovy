@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.knowledge.files
 
+import de.dkfz.roddy.Roddy
+
 //import de.dkfz.roddy.execution.jobs.JobResult;
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.DerivedFromFilenamePattern
@@ -534,21 +536,22 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
                                             findFilenameFromGenericPatterns(baseFile, availablePatterns[FilenamePatternDependency.FileStage], selectionTag);
 
             // Do some further checks for selection tags.
-            if (selectionTag.equals("default")) {
-                if (!patternResult || patternResult.x == null) {
-                    throw new RuntimeException("There is no valid filename pattern for this file: " + baseFile);
-                } else {
-                    //Check if the path exists and create it if necessary.
-                    if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs && !FileSystemAccessProvider.getInstance().checkDirectory(patternResult.x.getParentFile(), context, true)) {
-                        throw new IOException("Output path could not be created for file: " + baseFile);
-                    }
-                }
+            // Two cases. If the selectiontag is default and if it is not. If the selectiontag is not null
+            if ((selectionTag.equals("default") && (!patternResult || patternResult.x == null)) || patternResult.x == null) {
+
+                StringBuilder sb = new StringBuilder("Could not find any filename pattern for a file object of class ${baseFile.class.simpleName}\n")
+
+                sb << ["The following patterns are available for this file class:\n"]
+                sb << availablePatterns.findAll { it }.collect {
+                    FilenamePatternDependency k, List v ->
+                        v.collect {
+                            FilenamePattern value ->
+                                "${k.name()} : ${value}"
+                        }
+                }.flatten().join("\n\t")
+                Roddy.getJobManager().executesWithoutJobSystem()
+                throw new RuntimeException(sb.toString());
             } else {
-
-                if (patternResult.x == null) {
-                    throw new RuntimeException("There is no valid filename pattern for this file: " + baseFile);
-                }
-
                 //Check if the path exists and create it if necessary.
                 if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs && !FileSystemAccessProvider.getInstance().checkDirectory(patternResult.x.getParentFile(), context, true)) {
                     throw new IOException("Output path could not be created for file: " + baseFile);
