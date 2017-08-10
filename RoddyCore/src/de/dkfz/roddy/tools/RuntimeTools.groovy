@@ -7,6 +7,7 @@
 package de.dkfz.roddy.tools;
 
 import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.plugins.LibrariesFactory
 import org.apache.commons.io.filefilter.WildcardFileFilter
 
 import java.lang.reflect.Field;
@@ -19,9 +20,12 @@ import java.lang.reflect.Field;
 public final class RuntimeTools {
     private RuntimeTools() {}
 
+    private static final LoggerWrapper logger = LoggerWrapper.getLogger(RuntimeTools)
+
     public static String getRoddyRuntimeVersion() {
         // Get from buildinfo file. If this is not available... don't know... take 2.2. then.
-        def lines = getBuildinfoFile().readLines()
+        def buildinfoFile = getBuildinfoFile()
+        def lines = buildinfoFile.readLines()
         if (lines) return lines.find { String line -> line.startsWith("Roddy") }.split(StringConstants.SPLIT_EQUALS)[1]
         return "2.2";
     }
@@ -42,7 +46,7 @@ public final class RuntimeTools {
     }
 
     public static File getBuildinfoFile() {
-        return new File(getCurrentDistFolder(), "buildinfo.txt");
+        return new File(getCurrentDistFolder(), LibrariesFactory.BUILDINFO_TEXTFILE);
     }
 
     public static File getCurrentDistFolder() {
@@ -51,6 +55,17 @@ public final class RuntimeTools {
     }
 
     public static File getGroovyLibrary() {
-        return new File(System.getProperty("java.class.path").split("[:]").find { new File(it).name.startsWith("groovy") })
+        // Try to get Groovy from the environment. This is needed for groovyserv.
+        // If it is not working get it from the classpath.
+        logger.rare(([""] + System.getenv().collect { String k, String v -> "${k}=${v}" }.join("\n") + [""]).flatten().join("\n"))
+        if (System.getenv().containsKey("RODDIES_GROOVYLIB_PATH")) {
+            def file = new File(System.getenv("RODDIES_GROOVYLIB_PATH"))
+            logger.info("Loading groovy library from GroovyServ environment " + file)
+            return file
+        } else {
+            def file = new File(System.getProperty("java.class.path").split("[:]").find { new File(it).name.startsWith("groovy") })
+            logger.info("Loading groovy library from local environment" + file)
+            return file
+        }
     }
 }

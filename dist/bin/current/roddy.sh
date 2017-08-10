@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -o pipefail
+
 cd `dirname $0`
 parm1=${1-}
 
@@ -12,14 +14,9 @@ if [[ "$parm1" == "prepareprojectconfig" ]]; then
 fi
 
 PATH=$JDK_HOME/bin:$JAVA_HOME/bin:$GROOVY_HOME/bin:$PATH
-#JFX_LIBINFO_FILE=~/.roddy/jfxlibInfo
-#if [[ ! -f ${JFX_LIBINFO_FILE} ]] || [[ ! -f `cat ${JFX_LIBINFO_FILE}` ]]; then
-#	echo `find ${JAVA_HOME}/ -name "jfxrt.jar"` > ${JFX_LIBINFO_FILE}
-#fi
 
 #TODO Resolve the PluginBase.jar This might be set in the ini file.
 pluginbaseLib=${RODDY_DIRECTORY}/dist/plugins/PluginBase/PluginBase.jar
-#jfxlibInfo=`cat ${JFX_LIBINFO_FILE}`
 libraries=`ls -d1 ${RODDY_BINARY_DIR}/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
 libraries=$libraries:$jfxlibInfo
 
@@ -126,7 +123,35 @@ elif [[ "$parm1" == "createworkflow" ]]; then
 fi
 
 IFS=""
-#[[ $RMIPORT != "" ]] && export DBG_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005" && echo "Opened up rmi debugger port"
-java $DBG_OPTS -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
-# -verbose:class
+
+export RODDY_HELPERSCRIPTS_FOLDER=`readlink -f dist/bin/current/helperScripts`
+export RODDIES_GROOVYLIB_PATH=`readlink -f ${RODDY_BINARY_DIR}/lib/groovy*.jar`
+
+source ${RODDY_HELPERSCRIPTS_FOLDER}/networkFunctions.sh
+
+debuggerSettings=""
+[[ -n ${DEBUG_ROODY} ]] && debuggerSettings=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+
+caller=$(checkAndDownloadGroovyServ "${RODDY_DIRECTORY}")
+
+if [[ ${caller} == java ]]; then
+
+  echo "Using Java to start Roddy"
+	${caller} ${debuggerSettings} ${JAVA_OPTS} -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
+
+elif [[ $(basename ${caller}) == groovyclient && -f ${caller} && -x ${caller} ]]; then
+
+  echo "Using GroovyServ to start Roddy"
+  # Get the port of an existing instance of GroovyServ or start a new instance with a free port.
+  portForGroovyServ=$(cd ${RODDY_HELPERSCRIPTS_FOLDER}; getExistingOrNewGroovyServPort)
+
+  [[ -z ${portForGroovyServ-} ]] && echo "Could not get a free port for GroovyServ. GroovyServ will be disabled. Delete the file dist/runtime/gservforbidden to reenable it. Please restart Roddy." && exit 5
+
+  # JAVA_OPTS are automatically used by groovyserver (see the .go files in the sources)
+	${caller} -Cenv-all ${debuggerSettings} -cp .:$libraries:${RODDY_BINARY} GServCaller.groovy $*
+
+else
+  echo "Cannot start Roddy, neither Java nor GroovyServ was recognized" && exit 5
+fi
+
 IFS=$OFS

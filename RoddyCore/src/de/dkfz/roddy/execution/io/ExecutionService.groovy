@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.execution.io
 
+import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.execution.BEExecutionService
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.Job
@@ -103,8 +104,12 @@ public abstract class ExecutionService implements BEExecutionService {
 
         RunMode runMode = Roddy.getRunMode();
         String executionServiceClassID = Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, SSHExecutionService.class.getName());
-        Class executionServiceClass = classLoader.loadClass(executionServiceClassID);
-        initializeService(executionServiceClass, runMode);
+        try {
+            Class executionServiceClass = classLoader.loadClass(executionServiceClassID);
+            initializeService(executionServiceClass, runMode);
+        } catch (ClassNotFoundException) {
+            throw new ConfigurationLoaderException("Could not load JobManager class ${executionServiceClassID}")
+        }
     }
 
     public ExecutionService() {
@@ -436,18 +441,18 @@ public abstract class ExecutionService implements BEExecutionService {
             if (!context.directoryIsAccessible(it)) inaccessibleNecessaryFiles << it.absolutePath
         }
 
-        if(!context.fileIsAccessible(runtimeService.getNameOfJobStateLogFile(context))) inaccessibleNecessaryFiles << "JobState logfile"
+        if (!context.fileIsAccessible(runtimeService.getNameOfJobStateLogFile(context))) inaccessibleNecessaryFiles << "JobState logfile"
 //        if(!context.fileIsAccessible(runtimeService.getNameOfXMLConfigurationFile(context))) neccessaryFilesExist << "XML configuration copy"
-        if(!context.fileIsAccessible(runtimeService.getNameOfConfigurationFile(context))) inaccessibleNecessaryFiles <<  "Runtime configuration file"
+        if (!context.fileIsAccessible(runtimeService.getNameOfConfigurationFile(context))) inaccessibleNecessaryFiles << "Runtime configuration file"
 
         // Check the ignorable files. It is still nice to see whether they are there
-        if(!context.fileIsAccessible(runtimeService.getNameOfExecCacheFile(context.getAnalysis()))) inaccessibleIgnorableFiles << "Execution cache file"
-        if(!context.fileIsAccessible(runtimeService.getNameOfRuntimeFile(context))) inaccessibleIgnorableFiles << "Runtime information file"
-        if(!context.fileIsAccessible(new File(context.getExecutionDirectory(), "applicationProperties.ini"))) inaccessibleIgnorableFiles << "Copy of application.ini file"
-        if(!context.fileIsAccessible(runtimeService.getNameOfXMLConfigurationFile(context))) inaccessibleIgnorableFiles << "XML configuration file"
+        if (!context.fileIsAccessible(runtimeService.getNameOfExecCacheFile(context.getAnalysis()))) inaccessibleIgnorableFiles << "Execution cache file"
+        if (!context.fileIsAccessible(runtimeService.getNameOfRuntimeFile(context))) inaccessibleIgnorableFiles << "Runtime information file"
+        if (!context.fileIsAccessible(new File(context.getExecutionDirectory(), "applicationProperties.ini"))) inaccessibleIgnorableFiles << "Copy of application.ini file"
+        if (!context.fileIsAccessible(runtimeService.getNameOfXMLConfigurationFile(context))) inaccessibleIgnorableFiles << "XML configuration file"
 
         // Return true, if the neccessary files are there and if strict mode is enabled and in this case all ignorable files exist
-        return inaccessibleNecessaryFiles + (strict ? [] as List<String>: inaccessibleIgnorableFiles)
+        return inaccessibleNecessaryFiles + (strict ? [] as List<String> : inaccessibleIgnorableFiles)
     }
 
     /**

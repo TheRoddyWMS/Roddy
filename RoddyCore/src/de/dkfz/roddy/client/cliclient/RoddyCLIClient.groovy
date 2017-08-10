@@ -214,9 +214,14 @@ public class RoddyCLIClient {
         }
 
         // This check only applies for analysis configuration files.
-        if (analysis.getConfiguration().hasErrors()) {
+        checkConfigurationErrorsAndMaybePrintAndFail(analysis.configuration)
+        return analysis
+    }
+
+    public static void checkConfigurationErrorsAndMaybePrintAndFail(Configuration configuration) {
+        if (configuration.hasErrors()) {
             StringBuilder sb = new StringBuilder();
-            printConfigurationLoadErrors(analysis.getConfiguration(), sb, 0, Constants.ENV_LINESEPARATOR)
+            printConfigurationLoadErrors(configuration, sb, 0, Constants.ENV_LINESEPARATOR)
             String errorText = ConsoleStringFormatter.getFormatter().formatAll(sb.toString())
             if (Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors)) {
                 logger.severe("There were configuration errors, but they will be ignored (--${RoddyStartupOptions.ignoreconfigurationerrors.name()} is set)")
@@ -227,7 +232,6 @@ public class RoddyCLIClient {
                 Roddy.exit(1)
             }
         }
-        return analysis
     }
 
     public static void printPluginReadme(CommandLineCall commandLineCall) {
@@ -284,7 +288,7 @@ public class RoddyCLIClient {
         System.out.println(ConsoleStringFormatter.getFormatter().formatAll(sb.toString()));
     }
 
-    private static int printConfigurationLoadErrors(Configuration configuration, StringBuilder sb, int i, String separator) {
+    public static int printConfigurationLoadErrors(Configuration configuration, StringBuilder sb, int i, String separator) {
         for (ConfigurationLoadError error : configuration.getListOfLoadErrors()) {
             String f = error.configuration?.informationalConfigurationContent?.file?.absolutePath
             sb << "#FRED#" << "${i}: ".padLeft(6) << "Load error #CLEAR#"
