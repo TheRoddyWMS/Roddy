@@ -79,7 +79,7 @@ class ExecutionContextReaderAndWriter {
                 for (String id : statusList.keySet()) {
                     JobState status = statusList[id]
 
-                    if (!Roddy.getJobManager().compareJobIDs(job.getJobID(), (id)))
+                    if (!Roddy.getJobManager().compareJobIDs(job.getJobID().toString(), (id)))
                         continue
                     job.setJobState(status)
                 }
@@ -91,9 +91,9 @@ class ExecutionContextReaderAndWriter {
             //For every job which is still unknown or possibly running get the actual jobState from the cluster
             for (BEJob job : jobsStartedInContext) {
                 if (job.getJobState().isUnknown() || job.getJobState() == JobState.UNSTARTED) {
-                    unknownJobs.put(job.getJobID(), job)
+                    unknownJobs.put(job.getJobID().toString(), job)
                 } else if (job.getJobState() == JobState.STARTED) {
-                    possiblyRunningJobs.put(job.getJobID(), job)
+                    possiblyRunningJobs.put(job.getJobID().toString(), job)
                 }
             }
 

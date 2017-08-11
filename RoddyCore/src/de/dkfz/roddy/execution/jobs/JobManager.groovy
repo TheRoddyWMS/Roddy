@@ -139,8 +139,8 @@ class JobManager {
         jobManager.queryJobStatus(jobIDs)
     }
 
-    Command createCommand(Job job, String jobName, List processingCommands, File tool, Map parameters, List dependencies, List arraySettings) {
-        jobManager.createCommand(job, jobName, processingCommands, tool, parameters, dependencies, arraySettings)
+    Command createCommand(Job job, String jobName, List processingCommands, File tool, Map parameters, List dependencies) {
+        jobManager.createCommand(job, jobName, processingCommands, tool, parameters, dependencies)
     }
 
     boolean executesWithoutJobSystem() {

@@ -6,16 +6,11 @@
 
 package de.dkfz.roddy.execution.jobs
 
-import de.dkfz.roddy.config.EmptyResourceSet
-import de.dkfz.roddy.config.ResourceSet
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
-import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationValue
-import de.dkfz.roddy.config.FilenamePatternHelper
-import de.dkfz.roddy.config.ToolEntry
+import de.dkfz.roddy.config.*
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
@@ -26,6 +21,7 @@ import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
+import groovy.transform.CompileDynamic
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 import java.lang.reflect.Field
@@ -128,24 +124,25 @@ class Job extends BEJob<BEJob, JobResult> {
         }
     }
 
-    private List<BEJobID> reconcileParentJobInformation(List<BEJobID> parentJobIDs, List<BEJob> parentJobs) {
-        List<BEJobID> pJids
+    private static List<BEJob> reconcileParentJobInformation(List<BEJob> parentJobs, List<BEJobID> parentJobIDs, BatchEuphoriaJobManager jobManager) {
+        List<BEJob> pJobs
         if ((null != parentJobIDs && !parentJobIDs.isEmpty()) &&
                 (null != parentJobs && !parentJobs.isEmpty())) {
-            def a = BEJob.findValidJobIDs(parentJobIDs).collect{ it.toString() }
-            def b = jobs2jobIDs(BEJob.findJobsWithValidJobId(parentJobs)).collect { it.toString() }
-            if (a != b) {
+            def validJobs = findJobsWithValidJobId(parentJobs)
+            def validIds = findValidJobIDs(parentJobIDs).collect{ it.toString() }
+            def idsOfValidJobs = jobs2jobIDs(validJobs).collect { it.toString() }
+            if (validIds != idsOfValidJobs) {
                 throw new RuntimeException("parentJobBEJob needs to be called with one of parentJobs, parentJobIDs, or parentJobsIDs and *corresponding* parentJobs.")
             }
-            pJids = BEJob.findValidJobIDs(parentJobIDs)
+            pJobs = validJobs
         } else if (null == parentJobIDs && null == parentJobs) {
-            pJids = new LinkedList<BEJobID>()
+            pJobs = new LinkedList<BEJob>()
         } else if (null != parentJobs) {
-            pJids = jobs2jobIDs(BEJob.findJobsWithValidJobId(parentJobs))
+            pJobs = findJobsWithValidJobId(parentJobs)
         } else {
-            pJids = BEJob.findValidJobIDs(parentJobIDs)
+            pJobs = findValidJobIDs(parentJobIDs).collect { fromJobID(it, jobManager) }
         }
-        return pJids
+        return pJobs
     }
 
     Job(ExecutionContext context, String jobName, String toolID, String inlineScript, List<String> arrayIndices, Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
@@ -154,10 +151,9 @@ class Job extends BEJob<BEJob, JobResult> {
                 , inlineScript
                 , inlineScript ? null : getToolMD5(TOOLID_WRAPIN_SCRIPT, context)
                 , getResourceSetFromConfiguration(toolID, context)
-                , arrayIndices
                 , [:]
-                , reconcileParentJobInformation(collectDependencyIDsFromFiles(parentFiles), collectParentJobsFromFiles(parentFiles))
                 , Roddy.getJobManager())
+        this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectDependencyIDsFromFiles(parentFiles), jobManager))
         this.context = context
         this.toolID = toolID
 
@@ -365,60 +361,46 @@ class Job extends BEJob<BEJob, JobResult> {
         path
     }
 
+    private static String jobStateInfoLine(String jobId, String code, String millis) {
+        return String.format("%s:%s:%s", jobId, code, millis)
+    }
 
     /**
      * Stores a new job jobState info to an execution contexts job jobState log file.
      *
      * @param job
      */
-    void appendToJobStateLogfile(BatchEuphoriaJobManager jobManager, ExecutionContext executionContext, BEJobResult res, OutputStream out = null) {
-        // Ugly, but works. Java/Groovy's missing runtime dispatch on method arguments sucks.
-        if (jobManager instanceof ClusterJobManager) {
-            appendToJobStateLogfileForCluster(executionContext, res)
-        } else if (jobManager instanceof DirectSynchronousExecutionJobManager) {
-            appendToJobStateLogfileLocal(executionContext, res, out)
-        } else {
-            throw new NotImplementedException()
-        }
-    }
-    private static String jobStateInfoLine(String jobId, String code, String millis) {
-        return String.format("%s:%s:%s", jobId, code, millis)
-    }
-
-
-    void appendToJobStateLogfileForCluster(ExecutionContext executionContext, BEJobResult res) {
+    @CompileDynamic
+    void appendToJobStateLogfile(ClusterJobManager jobManager, ExecutionContext executionContext, BEJobResult res, OutputStream out = null) {
         if (res.wasExecuted) {
             def job = res.command.getJob()
-            String jobInfoLine = assembleJobStateInfoLineForClusterJob(job)
+            String jobInfoLine
+            String millis = "" + System.currentTimeMillis()
+            millis = millis.substring(0, millis.length() - 3)
+            String jobId = job.getJobID()
+            if (jobId != null) {
+                if (job.getJobState() == JobState.UNSTARTED)
+                    jobInfoLine = jobStateInfoLine(jobId, "UNSTARTED", millis)
+                else if (job.getJobState() == JobState.ABORTED)
+                    jobInfoLine = jobStateInfoLine(jobId, "ABORTED", millis)
+                else
+                    jobInfoLine = null
+            } else {
+                logger.postSometimesInfo("Did not store info for job " + job.getJobName() + ", job id was null.")
+                jobInfoLine = null
+            }
             if (jobInfoLine != null)
                 FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getNameOfJobStateLogFile(executionContext), jobInfoLine, false)
         }
     }
 
-    static String assembleJobStateInfoLineForClusterJob(BEJob job) {
-        String millis = "" + System.currentTimeMillis()
-        millis = millis.substring(0, millis.length() - 3)
-        String jobId = job.getJobID()
-        if (jobId != null) {
-            if (job.getJobState() == JobState.UNSTARTED)
-                return jobStateInfoLine(jobId, "UNSTARTED", millis)
-            else if (job.getJobState() == JobState.ABORTED)
-                return jobStateInfoLine(jobId, "ABORTED", millis)
-            else
-                return null
-        } else {
-            logger.postSometimesInfo("Did not store info for job " + job.getJobName() + ", job id was null.")
-            return null
-        }
-    }
-
     /**
      * Stores a new job jobState info to an execution contexts job jobState log file.
      *
      * @param job
      */
-
-    void appendToJobStateLogfileLocal(ExecutionContext executionContext, BEJobResult res, OutputStream outputStream) {
+    @CompileDynamic
+    void appendToJobStateLogfile(DirectSynchronousExecutionJobManager jobManager, ExecutionContext executionContext, BEJobResult res, OutputStream outputStream = null) {
         if (res.command.isBlockingCommand()) {
             assert (null != outputStream)
             File logFile = (res.command.getTag(Constants.COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext).getRuntimeService().getLogFileForCommand(res.command)
@@ -432,35 +414,33 @@ class Job extends BEJob<BEJob, JobResult> {
             FileSystemAccessProvider.getInstance().moveFile(tmpFile2, logFile)
         } else {
             if (res.wasExecuted) {
-                String jobInfo = assembleJobStateInfoLineLocal(res.job)
-                FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getNameOfJobStateLogFile(executionContext), jobInfo, false)
+                String millis = "" + System.currentTimeMillis()
+                millis = millis.substring(0, millis.length() - 3)
+                String code = "255"
+                if (res.job.getJobState() == JobState.UNSTARTED)
+                    code = "UNSTARTED" // N
+                else if (res.job.getJobState() == JobState.ABORTED)
+                    code = "ABORTED" // A
+                else if (res.job.getJobState() == JobState.COMPLETED_SUCCESSFUL)
+                    code = "SUCCESSFUL"  // C
+                else if (res.job.getJobState() == JobState.FAILED)
+                    code = "FAILED" // E
+
+                if (null != res.job.getJobID()) {
+                    String jobInfoLine = jobStateInfoLine(res.job.getJobID(), code, millis)
+                    FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getNameOfJobStateLogFile(executionContext), jobInfoLine, false)
+                } else {
+                    logger.postSometimesInfo("Did not store info for job " + res.job.getJobName() + ", job id was null.")
+                }
+
             }
         }
     }
 
-    static String assembleJobStateInfoLineLocal(BEJob job) {
-        String millis = "" + System.currentTimeMillis()
-        millis = millis.substring(0, millis.length() - 3)
-        String code = "255"
-        if (job.getJobState() == JobState.UNSTARTED)
-            code = "UNSTARTED" // N
-        else if (job.getJobState() == JobState.ABORTED)
-            code = "ABORTED" // A
-        else if (job.getJobState() == JobState.COMPLETED_SUCCESSFUL)
-            code = "SUCCESSFUL"  // C
-        else if (job.getJobState() == JobState.FAILED)
-            code = "FAILED" // E
-        if (null != job.getJobID())
-            return jobStateInfoLine(job.getJobID(), code, millis)
-
-        logger.postSometimesInfo("Did not store info for job " + job.getJobName() + ", job id was null.")
-        return null
-    }
-
-
 
     //TODO Create a runArray method which returns several job results with proper array ids.
     @Override
+    @CompileDynamic
     JobResult run() {
         if (runResult != null)
             throw new RuntimeException(Constants.ERR_MSG_ONLY_ONE_JOB_ALLOWED)
@@ -472,7 +452,6 @@ class Job extends BEJob<BEJob, JobResult> {
         StringBuilder dbgMessage = new StringBuilder()
         StringBuilder jobDetailsLine = new StringBuilder()
         Command cmd
-        boolean isArrayJob = arrayIndices// (arrayIndices != null && arrayIndices.size() > 0);
         boolean runJob
 
         //Remove duplicate job ids as qsub cannot handle duplicate keys => job will hold forever as it releases the dependency queue linearly
@@ -495,8 +474,8 @@ class Job extends BEJob<BEJob, JobResult> {
 
         //Execute the job or create a dummy command.
         if (runJob) {
-            runResult = new JobResult(Roddy.getJobManager().runJob(this))
-            appendToJobStateLogfile(Roddy.jobManager, executionContext, runResult)
+            runResult = new JobResult(jobManager.runJob(this))
+            appendToJobStateLogfile(jobManager, executionContext, runResult, null)
             cmd = runResult.command
             jobDetailsLine << " => " + cmd.getExecutionID()
             System.out.println(jobDetailsLine.toString())
@@ -507,7 +486,7 @@ class Job extends BEJob<BEJob, JobResult> {
                 }
             }
         } else {
-            Command command = new DummyCommand(Roddy.getJobManager(), this, jobName, false)
+            Command command = new DummyCommand(jobManager, this, jobName, false)
             setJobState(JobState.DUMMY)
             setRunResult(new JobResult(new BEJobResult(command, command.getExecutionID(), false, false, this.tool, parameters, parentJobs as List<BEJob>)))
             this.setJobState(JobState.DUMMY)
@@ -527,12 +506,7 @@ class Job extends BEJob<BEJob, JobResult> {
             }
         }
 
-        if (isArrayJob) {
-//            postProcessArrayJob(runResult)
-            throw new NotImplementedException()
-        } else {
-            Roddy.getJobManager().addJobStatusChangeListener(this)
-        }
+        jobManager.addJobStatusChangeListener(this)
         lastCommand = cmd
         return runResult
     }
@@ -594,7 +568,7 @@ class Job extends BEJob<BEJob, JobResult> {
             knownFilesCnt = (Integer) res[1]
         }
 
-        boolean parentJobIsDirty = getParentJobs().collect { BEJob job -> job.isDirty }.any { boolean dirty -> dirty }
+        boolean parentJobIsDirty = parentJobs.collect { BEJob job -> job.isDirty }.any { boolean dirty -> dirty }
 
         boolean knownFilesCountMismatch = knownFilesCnt != filesToVerify.size()
 

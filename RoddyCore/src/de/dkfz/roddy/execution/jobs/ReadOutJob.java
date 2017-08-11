@@ -48,8 +48,8 @@ public class ReadOutJob extends Job {
      * @return
      */
     @Override
-    public String getJobID() {
-        return jobID;
+    public BEJobID getJobID() {
+        return new BEJobID(jobID, this);
     }
 
     @Override
