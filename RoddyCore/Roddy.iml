@@ -15,4 +15,10 @@
     <orderEntry type="module" module-name="RoddyToolLib" />
     <orderEntry type="module" module-name="BatchEuphoria_main" />
   </component>
+  <component name="PackageRequirementsSettings">
+    <option name="requirementsPath" value="" />
+  </component>
+  <component name="TestRunnerService">
+    <option name="PROJECT_TEST_RUNNER" value="Unittests" />
+  </component>
 </module>

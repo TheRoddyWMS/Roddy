@@ -154,7 +154,7 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            BEJobID createID(BEJob job, String s) {
+            BEJobID createJobID(BEJob job, String s) {
                 return null
             }
 
@@ -254,7 +254,7 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            Command createCommand(BEJob job, String s, List list, File file, Map map, List list1, List list2) {
+            Command createCommand(BEJob job, String s, List list, File file, Map map, List list1) {
                 return null
             }
 
