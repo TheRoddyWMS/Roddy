@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.execution.io;
 
+import de.dkfz.roddy.execution.jobs.Command;
+
 import java.io.File;
 import java.io.OutputStream;
 import java.io.Serializable;

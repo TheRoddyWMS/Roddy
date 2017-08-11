@@ -228,7 +228,7 @@ public class RuntimeService {
 
                 // Sort the list, but keep the primary set the primary set.
                 DataSet primaryDataSet = dList[0];
-                dList = dList.sort().unique()
+                dList = dList.sort().unique() as ArrayList<DataSet>
                 dList.remove(primaryDataSet)
                 dList.add(0, primaryDataSet)
                 if (primaryDataSet && dList)
@@ -283,7 +283,7 @@ public class RuntimeService {
             return res;
         }.flatten()
         if (error) return null
-        return dList
+        return dList as ArrayList<DataSet>
     }
 
     List<DataSet> selectDatasetsFromPattern(Analysis analysis, List<String> pidFilters, List<DataSet> listOfDataSets, boolean suppressInfo) {

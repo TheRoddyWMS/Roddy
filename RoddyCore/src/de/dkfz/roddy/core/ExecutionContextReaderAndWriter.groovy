@@ -333,7 +333,7 @@ class ExecutionContextReaderAndWriter {
                 if (split.length < 2) continue
 
                 String id = split[0]
-                JobState status = JobState.parseJobState(split[1])
+                JobState status = Roddy.getJobManager().parseJobState(split[1])
                 long timestamp = 0
                 if (split.length == 3)
                     timestamp = Long.parseLong(split[2])

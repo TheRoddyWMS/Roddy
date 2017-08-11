@@ -12,9 +12,10 @@ package de.dkfz.roddy.execution.io
 
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.execution.io.FileAttributes
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.common.IOUtils

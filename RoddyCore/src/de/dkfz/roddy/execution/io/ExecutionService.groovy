@@ -27,7 +27,7 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.BEJobDependencyID
+import de.dkfz.roddy.execution.jobs.BEJobID
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -191,7 +191,7 @@ public abstract class ExecutionService implements BEExecutionService {
                 } else {
                     res = execute(cmdString, waitFor, outputStream);
                 }
-                command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.OK);
+                command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.COMPLETED_SUCCESSFUL);
 
                 context.addCalledCommand(command);
             } catch (Exception ex) {
@@ -209,20 +209,6 @@ public abstract class ExecutionService implements BEExecutionService {
     }
 
     protected FileOutputStream createServiceBasedOutputStream(Command command, boolean waitFor) { return null; }
-
-    @Override
-    String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, OutputStream outputStream) {
-        def jobManager = Roddy.getJobManager()
-//        jobManager.extractAndSetJobResultFromExecutionResult(command, res)
-        String exID = "none";
-        if (res.successful) {
-            def job = command.getJob()
-            ExecutionContext currentContext = (job as Job).getExecutionContext()
-            String jobInfo = jobManager.getJobStateInfoLine(job)
-            FileSystemAccessProvider.getInstance().appendLineToFile(true, currentContext.getRuntimeService().getNameOfJobStateLogFile(currentContext), jobInfo, false)
-        }
-        return exID
-    }
 
     public static void storeParameterFile(Command command) {
         command.job.parameters
@@ -743,13 +729,13 @@ public abstract class ExecutionService implements BEExecutionService {
 
         List<Command> commandCalls = context.getCommandCalls();
         StringBuilder realCalls = new StringBuilder();
-        List<BEJobDependencyID> jobIDs = new LinkedList<>();
+        List<BEJobID> jobIDs = new LinkedList<>();
         int cnt = 0;
         Map<String, String> jobIDReplacement = new HashMap<String, String>();
         StringBuilder repeatCalls = new StringBuilder();
 
         for (Command c : commandCalls) {
-            BEJobDependencyID eID = c.getExecutionID();
+            BEJobID eID = c.getExecutionID();
             if (eID != null) {
                 jobIDs.add(eID);
                 if (eID.getShortID() != null) {
@@ -758,7 +744,7 @@ public abstract class ExecutionService implements BEExecutionService {
             }
         }
         for (Command c : commandCalls) {
-            BEJobDependencyID eID = c.getExecutionID();
+            BEJobID eID = c.getExecutionID();
             String cmdStr = c.toString();
             realCalls.append(eID).append(", ").append(cmdStr).append(separator);
 

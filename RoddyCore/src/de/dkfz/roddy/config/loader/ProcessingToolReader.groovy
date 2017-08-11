@@ -135,6 +135,8 @@ class ProcessingToolReader {
                             currentEntry.setInlineScript(child.text().trim().replaceAll('<!\\[CDATA\\[', "").replaceAll(']]>', ""))
                             currentEntry.setInlineScriptName(readAttribute(child, "value"))
                         }
+                    } else {
+                        addLoadErr("Invalid child name '${cName}'")
                     }
                 }
 

@@ -137,6 +137,7 @@ public class Analysis {
     public File getInputBaseDirectory() {
         if (inputBaseDirectory == null)
             inputBaseDirectory = getRuntimeService().getInputFolderForAnalysis(this);
+        assert(inputBaseDirectory != null);
         return inputBaseDirectory;
     }
 
@@ -146,7 +147,9 @@ public class Analysis {
      * @return
      */
     public File getOutputBaseDirectory() {
-        return getRuntimeService().getOutputFolderForAnalysis(this);
+        File outputBaseDirectory = getRuntimeService().getOutputFolderForAnalysis(this);
+        assert(outputBaseDirectory != null);
+        return outputBaseDirectory;
     }
 
     /**
