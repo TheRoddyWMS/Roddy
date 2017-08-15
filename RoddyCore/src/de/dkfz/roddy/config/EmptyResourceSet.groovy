@@ -20,6 +20,6 @@ import java.time.Duration
 @CompileStatic
 class EmptyResourceSet extends ResourceSet{
     EmptyResourceSet() {
-        super(null, null, null, null, null as Duration, null, null, null)
+        super(null, null, null, null, null as TimeUnit, null, null, null)
     }
 }
