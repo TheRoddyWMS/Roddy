@@ -16,6 +16,8 @@
     <orderEntry type="library" name="roddyBundledLibraries" level="project" />
     <orderEntry type="module" module-name="RoddyToolLib" />
     <orderEntry type="module" module-name="BatchEuphoria_main" />
+    <orderEntry type="library" name="R User Library" level="project" />
+    <orderEntry type="library" name="R Skeletons" level="application" />
   </component>
   <component name="PackageRequirementsSettings">
     <option name="requirementsPath" value="" />

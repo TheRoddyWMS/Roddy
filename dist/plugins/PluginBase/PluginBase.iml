@@ -11,6 +11,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="roddyBundledLibraries" level="project" />
     <orderEntry type="module" module-name="Roddy" />
+    <orderEntry type="library" name="R User Library" level="project" />
+    <orderEntry type="library" name="R Skeletons" level="application" />
   </component>
   <component name="PackageRequirementsSettings">
     <option name="requirementsPath" value="" />

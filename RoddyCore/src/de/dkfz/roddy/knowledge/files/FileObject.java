@@ -22,6 +22,7 @@ public abstract class FileObject implements Serializable {
     private JobResult creatingJobsResult;
 
     public FileObject(ExecutionContext executionContext) {
+        assert(null != executionContext);
         this.executionContext = executionContext;
     }
 
