@@ -12,6 +12,7 @@ import de.dkfz.roddy.core.Initializable
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflowConverter
+import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RuntimeTools
 import de.dkfz.roddy.tools.Tuple2
 import de.dkfz.roddy.tools.Tuple5
