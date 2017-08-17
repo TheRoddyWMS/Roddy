@@ -5,7 +5,7 @@ set -o pipefail
 cd `dirname $0`
 parm1=${1-}
 
-JAVA_OPTS=${JAVA_OPTS:-"-Xms64m -Xmx500m"}
+JAVA_OPTS=${JAVA_OPTS:--Xms64m -Xmx500m}
 
 # Call some scripts before other steps start.
 if [[ "$parm1" == "prepareprojectconfig" ]]; then
@@ -13,7 +13,7 @@ if [[ "$parm1" == "prepareprojectconfig" ]]; then
     exit 0
 fi
 
-PATH=$JDK_HOME/bin:$JAVA_HOME/bin:$GROOVY_HOME/bin:$PATH
+PATH="${JDK_HOME:?Please set JDK_HOME}/bin:${JAVA_HOME:?Please set JAVA_HOME}/bin:${GROOVY_HOME:?Please set GROOVY_HOME}/bin:$PATH"
 
 #TODO Resolve the PluginBase.jar This might be set in the ini file.
 pluginbaseLib=${RODDY_DIRECTORY}/dist/plugins/PluginBase/PluginBase.jar
@@ -125,7 +125,7 @@ fi
 IFS=""
 
 export RODDY_HELPERSCRIPTS_FOLDER=`readlink -f dist/bin/current/helperScripts`
-export RODDIES_GROOVYLIB_PATH=`readlink -f ${RODDY_BINARY_DIR}/lib/groovy*.jar`
+export RODDY_GROOVYLIB_PATH=`readlink -f ${RODDY_BINARY_DIR}/lib/groovy*.jar`
 
 source ${RODDY_HELPERSCRIPTS_FOLDER}/networkFunctions.sh
 
