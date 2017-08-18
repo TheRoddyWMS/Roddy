@@ -11,10 +11,12 @@ import de.dkfz.roddy.StringConstants;
 import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.core.Analysis
+import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import groovy.transform.CompileStatic
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
+import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 /**
  * A factory to construct Roddys metadata table instance.
@@ -26,6 +28,8 @@ import org.apache.commons.csv.CSVParser
  */
 @CompileStatic
 public final class MetadataTableFactory {
+
+    private static final LoggerWrapper logger = LoggerWrapper.getLogger(LocalExecutionService.class.name)
 
     private static BaseMetadataTable _cachedTable;
 
@@ -40,45 +44,41 @@ public final class MetadataTableFactory {
         if (Roddy.isMetadataCLOptionSet()) {
 
             // Create a metadata table from a file
+            if (!_cachedTable) {
+                String[] split = Roddy.getCommandLineCall().getOptionValue(RoddyStartupOptions.usemetadatatable).split(StringConstants.SPLIT_COMMA);
+                String file = split[0];
+                String format = split.length == 2 && !RoddyConversionHelperMethods.isNullOrEmpty(split[1]) ? split[1] : null;
 
-            if (Roddy.isMetadataCLOptionSet()) {
-                if (!_cachedTable) {
-                    String[] split = Roddy.getCommandLineCall().getOptionValue(RoddyStartupOptions.usemetadatatable).split(StringConstants.SPLIT_COMMA);
-                    String file = split[0];
-                    String format = split.length == 2 && !RoddyConversionHelperMethods.isNullOrEmpty(split[1]) ? split[1] : null;
+                def missingColValues = []
+                def mandatoryColumns = []
+                def cvalues = analysis.getConfiguration().getConfigurationValues()
+                Map<String, String> columnIDMap = cvalues.get("metadataTableColumnIDs").getValue()
+                        .split(StringConstants.COMMA)
+                        .collectEntries {
+                    String colVar ->
+                        ConfigurationValue colVal = cvalues.get(colVar);
+                        if (!colVal) {
+                            missingColValues << colVar;
+                        }
 
-                    def missingColValues = []
-                    def mandatoryColumns = []
-                    def cvalues = analysis.getConfiguration().getConfigurationValues()
-                    Map<String, String> columnIDMap = cvalues.get("metadataTableColumnIDs").getValue()
-                            .split(StringConstants.COMMA)
-                            .collectEntries {
-                        String colVar ->
-                            ConfigurationValue colVal = cvalues.get(colVar);
-                            if (!colVal) {
-                                missingColValues << colVar;
-                            }
-
-                            if (colVal.hasTag("mandatory")) mandatoryColumns << colVal.id;
-                            return ["${colVar}": colVal?.toString()]
-                    }
-
-                    _cachedTable = readTable(new File(file), format, columnIDMap, mandatoryColumns);
+                        if (colVal.hasTag("mandatory")) mandatoryColumns << colVal.id;
+                        return ["${colVar}": colVal?.toString()]
                 }
-                return _cachedTable;
+
+                _cachedTable = readTable(new File(file), format, columnIDMap, mandatoryColumns);
             }
+            return _cachedTable;
 
 /**         Leave it for later?
  // Search for Metadata implementations in any plugin
  // If too many were found, select via analysis xml file.
  // If none possible, select metadata table?
  **/
-
-
         } else {
-            // Create the file based input table
+            // Creating the file based input table is not implemented.
+            logger.rare("de.dkfz.roddy.execution.io.MetadataTableFactory.getTable: Building metadata table from filesystem input is not implemented.")
+            return null
         }
-        return null;
     }
 
     public static BaseMetadataTable readTable(Reader instream, String format, Map<String, String> internalToCustomIDMap, List<String> mandatoryColumns) {

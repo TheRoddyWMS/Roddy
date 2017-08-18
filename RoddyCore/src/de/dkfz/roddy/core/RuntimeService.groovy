@@ -172,13 +172,14 @@ public class RuntimeService {
     }
 
     List<DataSet> loadDatasetsWithFilter(Analysis analysis, List<String> pidFilters, boolean suppressInfo = false) {
-        if (analysis.configuration.configurationValues.get("loadCohortDatasets", "false").toBoolean()) {
+        if (analysis.configuration.configurationValues.getBoolean("loadCohortDatasets", false)) {
             return loadCohortDatasetsWithFilter(analysis, pidFilters, suppressInfo)
         } else {
             loadStandardDatasetsWithFilter(analysis, pidFilters, suppressInfo)
         }
     }
 
+    /** There are non-cohort (=standard) datasets and cohort datasets */
     List<DataSet> loadStandardDatasetsWithFilter(Analysis analysis, List<String> pidFilters, boolean suppressInfo = false) {
         if (pidFilters == null || pidFilters.size() == 0 || pidFilters.size() == 1 && pidFilters.get(0).equals("[ALL]")) {
             pidFilters = Arrays.asList("*");
