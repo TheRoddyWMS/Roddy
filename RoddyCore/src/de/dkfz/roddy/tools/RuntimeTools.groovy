@@ -58,13 +58,13 @@ public final class RuntimeTools {
         // Try to get Groovy from the environment. This is needed for groovyserv.
         // If it is not working get it from the classpath.
         logger.rare(([""] + System.getenv().collect { String k, String v -> "${k}=${v}" }.join("\n") + [""]).flatten().join("\n"))
-        if (System.getenv().containsKey("RODDIES_GROOVYLIB_PATH")) {
-            def file = new File(System.getenv("RODDIES_GROOVYLIB_PATH"))
+        if (System.getenv().containsKey("RODDY_GROOVYLIB_PATH")) {
+            def file = new File(System.getenv("RODDY_GROOVYLIB_PATH"))
             logger.info("Loading groovy library from GroovyServ environment " + file)
             return file
         } else {
             def file = new File(System.getProperty("java.class.path").split("[:]").find { new File(it).name.startsWith("groovy") })
-            logger.info("Loading groovy library from local environment" + file)
+            logger.info("Loading groovy library from local environment " + file)
             return file
         }
     }

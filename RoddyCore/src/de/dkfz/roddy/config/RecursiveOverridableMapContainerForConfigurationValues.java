@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.config;
 
+import de.dkfz.roddy.config.loader.ConfigurationError;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -50,6 +52,11 @@ public class RecursiveOverridableMapContainerForConfigurationValues extends Recu
 
     public ConfigurationValue get(String id) {
         return get(id, "");
+    }
+
+    /** Get value or throw a RuntimeException, if the value does not exist. */
+    public ConfigurationValue getOrThrow(String id) {
+        return getValue(id);
     }
 
     public ConfigurationValue getAt(String id) {

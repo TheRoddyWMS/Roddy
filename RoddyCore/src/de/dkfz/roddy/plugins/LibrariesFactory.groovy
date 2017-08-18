@@ -7,18 +7,18 @@
 package de.dkfz.roddy.plugins
 
 import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.execution.io.ExecutionHelper
+import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.core.Initializable
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflowConverter
-import de.dkfz.roddy.tools.*
+import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RuntimeTools
 import de.dkfz.roddy.tools.Tuple2
-import de.dkfz.roddy.StringConstants
-import de.dkfz.roddy.core.Initializable
+import de.dkfz.roddy.tools.Tuple5
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 
-import java.lang.reflect.Method
 import java.util.regex.Pattern
 
 /**
@@ -427,7 +427,10 @@ public class LibrariesFactory extends Initializable {
             String pluginFullVersion = pluginVersion + "-" + pluginRevision;
             if (pluginVersion == PLUGIN_VERSION_CURRENT) pluginFullVersion = PLUGIN_VERSION_CURRENT;
 
-            int revisionNumber = pluginRevision as Integer;
+            if (!pluginRevision.isInteger()) {
+                throw new PluginLoaderException("Could not parse revision number from plugin-directory '${directory.absolutePath}'")
+            }
+            int revisionNumber = pluginRevision.toInteger();
 
             def pluginMap = _mapOfPlugins.get(pluginName, new LinkedHashMap<String, PluginInfo>())
 
@@ -504,7 +507,7 @@ public class LibrariesFactory extends Initializable {
 
             final String id = pluginsToCheck[0].x;
             String version = pluginsToCheck[0].y;
-            //There are now some  as String conversions which are just there for the Idea code view... They'll be shown as faulty otherwise.
+            //There are now some  "as String" conversions which are just there for the Idea code view... They'll be shown as faulty otherwise.
             if (version != PLUGIN_VERSION_CURRENT && !(version as String).contains("-")) version += "-0";
 
             if (!mapOfPlugins.checkExistence(id as String, version as String)) {

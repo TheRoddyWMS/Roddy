@@ -79,7 +79,7 @@ class PluginInfoMap {
             throw new PluginLoaderException("Plugin ${pluginID} is not available, available are:\n\t" + mapOfPlugins.keySet().join("\n\t") + additionalMessage)
         if (!mapOfPlugins[pluginID][version]){
             additionalMessage += "There were errors for the plugin:\n\t" + LibrariesFactory.getErrorsForPlugin(pluginID + ":" + version).join("\n\t")
-            throw new PluginLoaderException("Version ${version} of plugin ${pluginID} is not available, know versions are:\n\t" + mapOfPlugins[pluginID].keySet().join("\n\t") + additionalMessage)
+            throw new PluginLoaderException("Version ${version} of plugin ${pluginID} is not available. Known versions are:\n\t" + mapOfPlugins[pluginID].keySet().join("\n\t") + additionalMessage)
         }
         return mapOfPlugins[pluginID][version]
     }

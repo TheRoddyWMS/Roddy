@@ -23,6 +23,7 @@ public class IndexedFileObjects<F extends FileObject> extends FileObject {
 
     public IndexedFileObjects(List<String> indices, Map<String, F> indexedFileObjects, ExecutionContext executionContext) {
         super(executionContext);
+        assert(null != indices && indices.size() > 0);
         this.indexedFileObjects = indexedFileObjects;
         this.indices = indices;
     }

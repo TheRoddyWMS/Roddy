@@ -487,13 +487,8 @@ public class DataSetView extends CustomControlOnBorderPane implements Initializa
 //        loadFilesCreatedByWorkflow(ec);
 
         clearJobList();
-<<<<<<< HEAD:RoddyUI/src/de/dkfz/roddy/client/fxuiclient/DataSetView.groovy
-        for (JobInfoObject job : api.getExecutedJobs()) {
-            if (job instanceof FakeJob || job.isFakeJob())
-=======
         for (RoddyRMIInterfaceImplementation.JobInfoObject job : api.getExecutedJobs()) {
             if (job instanceof FakeBEJob || job.isFakeJob())
->>>>>>> develop:RoddyCore/src/de/dkfz/roddy/client/fxuiclient/DataSetView.groovy
                 continue; //Ignore fake jobs.
             synchronized (allJobWrappersForEC) {
                 if (jobInfoWrappersByJobId[job.jobId] == null) {

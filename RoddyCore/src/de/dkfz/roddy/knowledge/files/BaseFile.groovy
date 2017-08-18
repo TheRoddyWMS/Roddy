@@ -95,7 +95,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         }
 
         ConstructionHelperForGenericCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, String indexInFileGroup, FileStageSettings fileStageSettings, JobResult jobResult) {
-            super(parentObject?.getExecutionContext(), fileStageSettings, selectionTag, indexInFileGroup, jobResult)
+            super(parentObject.getExecutionContext(), fileStageSettings, selectionTag, indexInFileGroup, jobResult)
             this.parentFiles = parentFiles
             this.slotID = slotID
             this.toolID = toolID

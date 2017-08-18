@@ -6,10 +6,9 @@ parm1=${1-}
 projectAnalysisParameter=$2
 
 export GROOVY_BINARY=groovy
-export GROOVY_BINARY="/data/michael/bin/groovyserv-1.1.0/bin/groovyclient"
 
 # Default Roddy Java options
-JAVA_OPTS=${JAVA_OPTS:-"-Xms64m -Xmx500m"}
+JAVA_OPTS=${JAVA_OPTS:--Xms64m -Xmx500m}
 
 # OFS is the original field separator
 export OFS=$IFS
