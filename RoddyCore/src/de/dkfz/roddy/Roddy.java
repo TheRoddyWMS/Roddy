@@ -708,7 +708,7 @@ public class Roddy {
         File file = getPropertiesFilePath();
         if (file == null || !file.exists()) {
             // Skip and exit!
-            logger.postAlwaysInfo("Could not load the application properties file. Roddy will exit.");
+            logger.postAlwaysInfo("Could not load the application properties file " + file.getAbsolutePath() + ". Roddy will exit.");
             exit(1);
         }
         logger.postSometimesInfo("Loading properties file: " + file.getAbsolutePath());

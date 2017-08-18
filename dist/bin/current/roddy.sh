@@ -122,8 +122,6 @@ elif [[ "$parm1" == "createworkflow" ]]; then
     exit 0
 fi
 
-IFS=""
-
 export RODDY_HELPERSCRIPTS_FOLDER=`readlink -f dist/bin/current/helperScripts`
 export RODDY_GROOVYLIB_PATH=`readlink -f ${RODDY_BINARY_DIR}/lib/groovy*.jar`
 
@@ -137,7 +135,7 @@ caller=$(checkAndDownloadGroovyServ "${RODDY_DIRECTORY}")
 if [[ ${caller} == java ]]; then
 
   echo "Using Java to start Roddy"
-	${caller} ${debuggerSettings} ${JAVA_OPTS} -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
+  ${caller} ${debuggerSettings} $JAVA_OPTS -enableassertions -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
 
 elif [[ $(basename ${caller}) == groovyclient && -f ${caller} && -x ${caller} ]]; then
 
@@ -148,7 +146,7 @@ elif [[ $(basename ${caller}) == groovyclient && -f ${caller} && -x ${caller} ]]
   [[ -z ${portForGroovyServ-} ]] && echo "Could not get a free port for GroovyServ. GroovyServ will be disabled. Delete the file dist/runtime/gservforbidden to reenable it. Please restart Roddy." && exit 5
 
   # JAVA_OPTS are automatically used by groovyserver (see the .go files in the sources)
-	${caller} -Cenv-all ${debuggerSettings} -cp .:$libraries:${RODDY_BINARY} GServCaller.groovy $*
+  ${caller} -Cenv-all ${debuggerSettings} -cp .:$libraries:${RODDY_BINARY} GServCaller.groovy $*
 
 else
   echo "Cannot start Roddy, neither Java nor GroovyServ was recognized" && exit 5

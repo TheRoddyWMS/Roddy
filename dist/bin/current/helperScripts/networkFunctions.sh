@@ -39,7 +39,7 @@ function checkAndDownloadGroovyServ() {
     fi
   fi
 
-  [[ ! -f ${forbiddenFile} ]] && callerBinary=$(readlink -f $( ls ${runtimeFolder}/groovyserv*/bin/groovyclient) 2> /dev/null) || touch ${forbiddenFile}
+  [[ ! -f ${forbiddenFile} ]] && callerBinary=$(readlink -f $(ls ${runtimeFolder}/groovyserv*/bin/groovyclient) 2> /dev/null) || touch ${forbiddenFile}
   echo $callerBinary
 }
 

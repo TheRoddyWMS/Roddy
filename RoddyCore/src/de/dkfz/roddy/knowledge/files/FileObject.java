@@ -22,7 +22,7 @@ public abstract class FileObject implements Serializable {
     private JobResult creatingJobsResult;
 
     public FileObject(ExecutionContext executionContext) {
-        assert(null != executionContext);
+        // Note: ExecutionContext can be null!
         this.executionContext = executionContext;
     }
 
