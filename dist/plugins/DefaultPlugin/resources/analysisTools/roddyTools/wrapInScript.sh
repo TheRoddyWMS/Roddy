@@ -1,5 +1,15 @@
 #!/bin/bash
 
+[[ ${debugWrapInScript-false} == true ]] && set -xv
+[[ ${debugWrapInScript-false} == false ]] && set +xv
+
+waitForFile() {
+    local file="${1:?No file to wait for}"
+    local waitCount=0
+    while [[ ! -r ${file} && ${waitCount-0} -lt 3 ]]; do sleep 5; waitCount=$((waitCount + 1)); done
+    [[ ! -f ${file} || ! -r ${file} ]] && echo "The file '${file}' does not exist or is not readable." && exit 200
+}
+
 # This script wraps in another script.
 # The configuration file is sourced and has to be sourced again in the wrapped script.
 # A job error entry is created in the results list along with a timestamp
@@ -10,55 +20,63 @@
 # Cluster options (like i.e. PBS ) have to be parsed and set before job submission!
 # They will be ignored after the script is wrapped.
 
-# Perform some initial checks
-# Store the environment, store file locations in the env
-extendedLogs=`dirname $0`/extendedlogs
-extendedLogFile=${extendedLogs}/`basename ${0}`
-mkdir ${extendedLogs} &> /dev/null
+dumpEnvironment() {
+    local message="${1:?No log message given}"
+    echo "$message"
+    while IFS='=' read -r -d '' n v; do     [[ -r $v ]] && echo "$v -> "$(readlink -f "$v"); done < <(env -0)
+    echo ""
+}
 
-env > ${extendedLogFile}
-echo "" >> ${extendedLogFile}
-echo "Files in environment before source config" >> ${extendedLogFile}
-while IFS='=' read -r -d '' n v; do     [[ -r $v ]] && echo "$v -> "$(readlink -f "$v"); done < <(env -0)
-echo "" >> ${extendedLogFile}
+createToolVariableName() {
+    local varName="${1:?No variable name given}"
+    echo "$varName" | perl -ne 's/([A-Z])/_$1/g; print uc($_)'
+}
 
-if [[ ${PARAMETER_FILE-false} != false ]]; then
-  while [[ ! -r ${PARAMETER_FILE} && ${waitCount-0} -lt 3 ]]; do sleep 5; waitCount=$((waitCount + 1)); done
-  [[ ! -r ${PARAMETER_FILE} && ${waitCount-0} -lt 3 ]] && echo "Roddy is setup to use job parameter files but the file ${PARAMETER_FILE} does not exist" && exit 199
-  source ${PARAMETER_FILE}
-fi
+# Basic modules / environment support
+# Load the environment script (source), if it is defined. If the file is defined but the file not accessible exit with
+# code 200. Additionally, expose the used environment script path as ENVIRONMENT_SCRIPT variable to the wrapped script.
+runEnvironmentSetupScript() {
+    local envScriptVar="${TOOL_ID}EnvironmentScript"
+    if [[ -n "${!envScriptVar}" ]]; then
+        declare -gx ENVIRONMENT_SCRIPT="${!envScriptVar}"
+    elif [[ -n "$workflowEnvironmentScript" ]]; then
+        if [[ -n "$ENVIRONMENT_SCRIPT" ]]; then
+            echo "ENVIRONMENT_SCRIPT variable is set externally (e.g. in the XML) to '$TOOL_ENVIRONMENT'. It will be reset." > /dev/stderr
+        fi
+        declare -gx ENVIRONMENT_SCRIPT="$workflowEnvironmentScript"
+    fi
+
+    if [[ -n "$ENVIRONMENT_SCRIPT" ]]; then
+        if [[ ! -f "$ENVIRONMENT_SCRIPT" ]]; then
+            echo "ERROR: You defined an environment loader script for the workflow but the script is not available: '$ENVIRONMENT_SCRIPT'" > /dev/stderr
+            exit 200
+        fi
+        echo "Sourcing environment setup script from '$ENVIRONMENT_SCRIPT'" > /dev/stderr
+        source "$ENVIRONMENT_SCRIPT"
+    fi
+}
+
+###### Main ############################################################################################################
 
 [[ ${CONFIG_FILE-false} == false ]] && echo "The parameter CONFIG_FILE is not set but the parameter is mandatory!" && exit 200
 
-waitCount=0
-while [[ ! -r ${CONFIG_FILE} && ${waitCount-0} -lt 3 ]]; do sleep 5; waitCount=$((waitCount + 1)); done
-[[ ! -f ${CONFIG_FILE} || ! -r ${CONFIG_FILE} ]] && echo "The configuration file ${CONFIG_FILE} does not exist or is not readable." && exit 200
+# Perform some initial checks
+# Store the environment, store file locations in the env
+extendedLogsDir=$(dirname "$CONFIG_FILE")/extendedLogs
+extendedLogFile=${extendedLogsDir}/$(basename "$PARAMETER_FILE" .parameters)
+mkdir ${extendedLogsDir}
 
+dumpEnvironment "Files in environment before source configs" >> ${extendedLogFile}
+
+waitForFile "$PARAMETER_FILE"
+source ${PARAMETER_FILE}
+
+waitForFile "$CONFIG_FILE"
 source ${CONFIG_FILE}
+dumpEnvironment "Files in environment after source configs" >> ${extendedLogFile}
 
-echo "Files in environment after source config" >> ${extendedLogFile}
-while IFS='=' read -r -d '' n v; do     [[ -r $v ]] && echo "$v -> "$(readlink -f "$v"); done < <(env -0)
-
-
-
-# Basic modules / environment support
-export MODULESCRIPT_WORKFLOW=${MODULESCRIPT_WORKFLOW-}
-export MODULESCRIPT_TOOL=$(eval echo "\$MODULESCRIPT_${TOOL_ID}")
-export MODULESCRIPT_TOOL=${MODULESCRIPT_TOOL-}
-
-if [[ -n ${MODULESCRIPT_TOOL} && ! -f ${MODULESCRIPT_TOOL} ]]; then
-  echo "You defined a module loader script for tool ${TOOL_ID} but the script is not available"
-  exit 201
-elif [[ -n ${MODULESCRIPT_TOOL} ]]; then
-  source $MODULESCRIPT_TOOL
-elif [[ -n ${MODULESCRIPT_WORKFLOW} && ! -f ${MODULESCRIPT_WORKFLOW} ]]; then
-  echo "You defined a module loader script for the workflow but the script is not available"
-  exit 200
-elif [[ -n ${MODULESCRIPT_WORKFLOW} ]]; then
-  source $MODULESCRIPT_WORKFLOW
-fi
-
-echo "INFO: There is no module script for ${TOOLID}. Module loader code was not needed and therefore no modules were loaded."
+runEnvironmentSetupScript
+dumpEnvironment "Files in environment after sourcing the environment script" >> ${extendedLogFile}
 
 isOutputFileGroup=${outputFileGroup-false}
 
@@ -67,7 +85,7 @@ if [[ $isOutputFileGroup != false && ${newGrpIsCalled-false} == false ]]; then
   export LD_LIB_PATH=$LD_LIBRARY_PATH
   # OK so something to note for you. newgrp has an undocumented feature (at least in the manpages)
   # and resets the LD_LIBRARY_PATH to "" if you do -c. -l would work, but is not feasible, as you
-  # cannot call a script with it. Also I do not know whether it is possible to use it in a non
+  # cannot call a script with it. Also I do not know whether it is possible to use it in a non-
   # interactive session (like qsub). So we just export the variable and import it later on, if it
   # was set earlier.
   # Funny things can happen... instead of newgrp we now use sg.
@@ -79,10 +97,7 @@ else
 
   # Set LD_LIBRARY_PATH to LD_LIB_PATH, if the script was called recursively.
   [[ ${LD_LIB_PATH-false} != false ]] && export LD_LIBRARY_PATH=$LD_LIB_PATH
-  [[ ${debugWrapInScript-false} == true ]] && set -xv
-  [[ ${debugWrapInScript-false} == false ]] && set +xv
 
-  #set +xuv # Disable output again
   export RODDY_JOBID=${RODDY_JOBID-$$}
   declare -ax RODDY_PARENT_JOBS=${RODDY_PARENT_JOBS-()}
   echo "RODDY_JOBID is set to ${RODDY_JOBID}"
@@ -131,11 +146,10 @@ else
   # Check the wrapped script for existence
   [[ ${WRAPPED_SCRIPT-false} == false || ! -f ${WRAPPED_SCRIPT} ]] && startCode=ABORTED && echo "The wrapped script is not defined or not existing."
 
-  # Put in start in Leetcode
   ${lockCommand} $_lock;
   echo "${RODDY_JOBID}:${startCode}:"`date +"%s"`":${TOOL_ID}" >> ${jobStateLogFile};
   ${unlockCommand} $_lock
-  [[ ${startCode} == 60000 || ${startCode} == "ABORTED" ]] && echo "Exitting because a former job died." && exit 250
+  [[ ${startCode} == "ABORTED" ]] && echo "Exiting because a former job died." && exit 250
   # Sleep a second before and after executing the wrapped script. Allow the system to get different timestamps.
   sleep 2
 
@@ -157,9 +171,6 @@ else
 
   # If the tool supports auto checkpoints and the exit code is 0, then go on and create it.
   [[ ${AUTOCHECKPOINT-""} && exitCode == 0 ]] && touch ${AUTOCHECKPOINT}
-
-  [[ ${debugWrapInScript-false} == true ]] && set -xuv
-  [[ ${debugWrapInScript-false} == false ]] && set +xuv
 
   sleep 2
 

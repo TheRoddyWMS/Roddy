@@ -571,7 +571,6 @@ public class Roddy {
         if (applicationSpecificConfiguration == null) {
             applicationSpecificConfiguration = new Configuration(null);
             RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
-            BatchEuphoriaJobManager jobManager = Roddy.getJobManager();
             Map<String, String> specificEnvironmentSettings = jobManager.getSpecificEnvironmentSettings();
             for (String k : specificEnvironmentSettings.keySet()) {
                 logger.postSometimesInfo("Add job manager value " + k + "=" + specificEnvironmentSettings.get(k) + " to context configuration");
@@ -708,11 +707,11 @@ public class Roddy {
         File file = getPropertiesFilePath();
         if (file == null || !file.exists()) {
             // Skip and exit!
-            logger.postAlwaysInfo("Could not load the application properties file. Roddy will exit.");
+            logger.postAlwaysInfo("Could not load the application properties file " + file.getAbsolutePath() + ". Roddy will exit.");
             exit(1);
+        } else {
+            logger.postAlwaysInfo("Loading properties file " + file.getAbsolutePath() + ".");
         }
-        logger.postSometimesInfo("Loading properties file: " + file.getAbsolutePath());
-
         applicationProperties = new AppConfig(file);
 
         getApplicationProperty("useRoddyVersion", LibrariesFactory.PLUGIN_VERSION_CURRENT); // Load some default properties
