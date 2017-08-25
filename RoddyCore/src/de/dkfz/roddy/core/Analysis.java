@@ -233,9 +233,7 @@ public class Analysis {
 
     private boolean checkJobStartability(DataSet ds) {
         String datasetID = ds.getId();
-        if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning)) {
-            boolean running = checkStatusForDataset(ds);
-
+        if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning) && checkStatusForDataset(ds)) {
             logger.postAlwaysInfo("The pid " + datasetID + " is still running and will be skipped for the process.");
             return false;
         }
