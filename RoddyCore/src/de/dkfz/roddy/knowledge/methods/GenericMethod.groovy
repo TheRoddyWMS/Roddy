@@ -6,33 +6,22 @@
 
 package de.dkfz.roddy.knowledge.methods
 
+import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.config.*
+import de.dkfz.roddy.core.ExecutionContext
+import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.execution.jobs.BEJobResult
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobResult
-import de.dkfz.roddy.Roddy
-
-import static de.dkfz.roddy.execution.jobs.JobConstants.*
-import de.dkfz.roddy.config.ToolFileGroupParameter
-import de.dkfz.roddy.config.ToolFileParameter
-import de.dkfz.roddy.config.ToolFileParameterCheckCondition
-import de.dkfz.roddy.config.ToolTupleParameter
-import de.dkfz.roddy.tools.*
-import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationConstants
-import de.dkfz.roddy.config.ToolEntry
-import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.core.ExecutionContextError
-import de.dkfz.roddy.execution.jobs.BEJob
-import de.dkfz.roddy.knowledge.files.BaseFile
-import de.dkfz.roddy.knowledge.files.FileGroup
-import de.dkfz.roddy.knowledge.files.FileObject
-import de.dkfz.roddy.knowledge.files.IndexedFileObjects
-import de.dkfz.roddy.knowledge.files.FileObjectTupleFactory
+import de.dkfz.roddy.knowledge.files.*
+import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
 import java.lang.reflect.Method
+
+import static de.dkfz.roddy.execution.jobs.JobConstants.*
 
 /**
  * Class for generic, configurable methods
@@ -248,6 +237,8 @@ class GenericMethod {
             parameters[PRM_TOOLS_DIR] = configuration.getProcessingToolPath(context, toolName).getParent();
             parameters[PRM_TOOL_ID] = toolName;
         }
+
+        parameters[PRM_WORKFLOW_ID] = context.analysis.configuration.getName()
 
         // Assemble additional parameters
         for (Object entry in additionalInput) {
