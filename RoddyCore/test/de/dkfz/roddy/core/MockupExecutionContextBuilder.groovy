@@ -239,11 +239,6 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            String getSpecificJobScratchIdentifier() {
-                return null
-            }
-
-            @Override
             void queryJobAbortion(List list) {
 
             }
