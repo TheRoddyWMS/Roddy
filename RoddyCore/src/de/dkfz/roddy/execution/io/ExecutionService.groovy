@@ -193,6 +193,9 @@ public abstract class ExecutionService implements BEExecutionService {
                 }
                 command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.COMPLETED_SUCCESSFUL);
 
+                if (outputStream)
+                    finalizeServiceBasedOutputStream(command, outputStream)
+
                 context.addCalledCommand(command);
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, ex.toString());
@@ -209,6 +212,8 @@ public abstract class ExecutionService implements BEExecutionService {
     }
 
     protected FileOutputStream createServiceBasedOutputStream(Command command, boolean waitFor) { return null; }
+
+    protected void finalizeServiceBasedOutputStream(Command command, OutputStream outputStream) {}
 
     public static void storeParameterFile(Command command) {
         command.job.parameters
@@ -727,7 +732,7 @@ public abstract class ExecutionService implements BEExecutionService {
         final FileSystemAccessProvider provider = FileSystemAccessProvider.getInstance();
         final String separator = Constants.ENV_LINESEPARATOR;
 
-        List<Command> commandCalls = context.getCommandCalls();
+        List<Command> commandCalls = context.getCommandCalls() ?: new LinkedList<Command>()
         StringBuilder realCalls = new StringBuilder();
         List<BEJobID> jobIDs = new LinkedList<>();
         int cnt = 0;
