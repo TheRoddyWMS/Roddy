@@ -16,10 +16,6 @@ import de.dkfz.roddy.core.InfoObject
 @Deprecated
 abstract class JobDependencyID {
 
-    static FakeJobID getFileExistedFakeJob(ExecutionContext context) {
-        return new FakeJobID(new FakeBEJob(context), BEFakeJobID.FakeJobReason.FILE_EXISTED, false)
-    }
-
     @Deprecated
     static class FakeJobID extends BEFakeJobID {
         FakeJobID(BEJob job, BEFakeJobID.FakeJobReason fakeJobReason, boolean isArray) {

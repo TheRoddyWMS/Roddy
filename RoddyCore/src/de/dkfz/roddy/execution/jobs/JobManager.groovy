@@ -50,10 +50,6 @@ class JobManager {
         jobManager.runJob(job, runDummy)
     }
 
-    BEJobID createJobDependencyID(Job job, String jobResult) {
-        jobManager.createJobID(job, jobResult)
-    }
-
     ProcessingCommands convertResourceSet(ResourceSet resourceSet) {
         jobManager.convertResourceSet(resourceSet)
     }

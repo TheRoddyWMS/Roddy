@@ -14,15 +14,16 @@ import de.dkfz.roddy.config.*
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
+import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.cluster.ClusterJobManager
+import de.dkfz.roddy.execution.jobs.cluster.lsf.rest.RestResult
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileDynamic
-import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 import java.lang.reflect.Field
 
@@ -140,17 +141,19 @@ class Job extends BEJob<BEJob, JobResult> {
         } else if (null != parentJobs) {
             pJobs = findJobsWithValidJobId(parentJobs)
         } else {
-            pJobs = findValidJobIDs(parentJobIDs).collect { fromJobID(it, jobManager) }
+            pJobs = findValidJobIDs(parentJobIDs).collect { new BEJob(it, jobManager) }
         }
         return pJobs
     }
 
     Job(ExecutionContext context, String jobName, String toolID, String inlineScript, List<String> arrayIndices, Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
-        super(jobName
+        super(new BEJobID()
+                , jobName
                 , context.getConfiguration().getProcessingToolPath(context, TOOLID_WRAPIN_SCRIPT)
                 , inlineScript
                 , inlineScript ? null : getToolMD5(TOOLID_WRAPIN_SCRIPT, context)
                 , getResourceSetFromConfiguration(toolID, context)
+                , []
                 , [:]
                 , Roddy.getJobManager())
         this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectDependencyIDsFromFiles(parentFiles), jobManager))
@@ -437,7 +440,6 @@ class Job extends BEJob<BEJob, JobResult> {
         }
     }
 
-
     //TODO Create a runArray method which returns several job results with proper array ids.
     @Override
     @CompileDynamic
@@ -455,7 +457,7 @@ class Job extends BEJob<BEJob, JobResult> {
         boolean runJob
 
         //Remove duplicate job ids as qsub cannot handle duplicate keys => job will hold forever as it releases the dependency queue linearly
-        List<String> dependencies = dependencyIDsAsString.unique()
+        List<String> dependencies = parentJobIDsAsString.unique()
         //.collect { BEJobID jobDependencyID -> return jobDependencyID.getId() }.unique() as List<String>
         this.parameters.putAll(convertParameterObject(Constants.RODDY_PARENT_JOBS, dependencies))
 
@@ -481,6 +483,7 @@ class Job extends BEJob<BEJob, JobResult> {
             System.out.println(jobDetailsLine.toString())
             if (cmd.getExecutionID() == null) {
                 context.addErrorEntry(ExecutionContextError.EXECUTION_SUBMISSION_FAILURE.expand("Please check your submission command manually.\n\t  Is your access group set properly? [${context.getAnalysis().getUsergroup()}]\n\t  Can the submission binary handle your binary?\n\t  Is your submission system offline?"))
+                logger.postSometimesInfo("Status Code: ${runResult.executionResult.exitCode}, Output:\n${runResult.executionResult.resultLines.join("\n")}")
                 if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.BreakSubmissionOnError)) {
                     context.abortJobSubmission()
                 }
@@ -488,7 +491,7 @@ class Job extends BEJob<BEJob, JobResult> {
         } else {
             Command command = new DummyCommand(jobManager, this, jobName, false)
             setJobState(JobState.DUMMY)
-            setRunResult(new JobResult(new BEJobResult(command, command.getExecutionID(), false, false, this.tool, parameters, parentJobs as List<BEJob>)))
+            setRunResult(new JobResult(new BEJobResult(command, new BEJob(command.getExecutionID(), jobManager), null, this.tool, parameters, parentJobs as List<BEJob>)))
             this.setJobState(JobState.DUMMY)
         }
 
@@ -533,7 +536,8 @@ class Job extends BEJob<BEJob, JobResult> {
 //        logger.severe("Handling different job run is currently not supported: Roddy/../BEJob.groovy handleDifferentJobRun")
         dbgMessage << "\tdummy job created." + Constants.ENV_LINESEPARATOR
         File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
-        runResult = new JobResult(new BEJobResult(null, (Command) null, BEJobID.getNotExecutedFakeJob(this), false, tool, parameters, parentFiles.collect { it.getCreatingJobsResult()?.getJob() }.findAll { it }))
+        this.resetJobID(new BEFakeJobID(BEFakeJobID.FakeJobReason.NOT_EXECUTED))
+        runResult = new JobResult(new BEJobResult(null, (Command) null, this, null, tool, parameters, parentFiles.collect { it.getCreatingJobsResult()?.getJob() }.findAll { it }))
         this.setJobState(JobState.DUMMY)
         return runResult
     }

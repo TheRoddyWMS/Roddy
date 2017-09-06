@@ -154,11 +154,6 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            BEJobID createJobID(BEJob job, String s) {
-                return null
-            }
-
-            @Override
             ProcessingCommands convertResourceSet(ResourceSet resourceSet) {
                 return null
             }
