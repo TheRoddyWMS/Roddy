@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.core
 
+import de.dkfz.roddy.Constants
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.ResourceSetSize
@@ -113,7 +114,7 @@ class RuntimeServiceTest {
         def result = new RuntimeService().getDefaultJobParameters(context, "aTool")
         assert result["pid"] == context.getDataSet().getId()
         assert result["PID"] == context.getDataSet().getId()
-        assert result["CONFIG_FILE"]
+        assert result[Constants.CONFIG_FILE]
         assert result["ANALYSIS_DIR"]
     }
 

@@ -58,13 +58,14 @@ runEnvironmentSetupScript() {
 
 ###### Main ############################################################################################################
 
-[[ ${CONFIG_FILE-false} == false ]] && echo "The parameter CONFIG_FILE is not set but the parameter is mandatory!" && exit 200
+[[ ${CONFIG_FILE-false} == false ]] && echo "The parameter CONFIG_FILE is not set but is mandatory!" && exit 200
 
 # Perform some initial checks
 # Store the environment, store file locations in the env
 extendedLogsDir=$(dirname "$CONFIG_FILE")/extendedLogs
+
 extendedLogFile=${extendedLogsDir}/$(basename "$PARAMETER_FILE" .parameters)
-mkdir ${extendedLogsDir}
+mkdir -p ${extendedLogsDir}
 
 dumpEnvironment "Files in environment before source configs" >> ${extendedLogFile}
 

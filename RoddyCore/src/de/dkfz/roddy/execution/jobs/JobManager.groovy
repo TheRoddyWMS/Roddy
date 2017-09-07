@@ -127,6 +127,7 @@ class JobManager {
 
     @CompileDynamic
     String getSpecificJobScratchIdentifier(LSFJobManager jobManager) {
+        logger.severe("LSF Scratch will be /local/$USER/ -- but needs to be configurable!")
         return '${PBS_SCRATCH_DIR}/${PBS_JOBID}'
     }
 

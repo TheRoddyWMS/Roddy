@@ -156,6 +156,7 @@ class Job extends BEJob<BEJob, JobResult> {
                 , []
                 , [:]
                 , Roddy.getJobManager())
+        this.setLoggingDirectory(context.loggingDirectory)
         this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectDependencyIDsFromFiles(parentFiles), jobManager))
         this.context = context
         this.toolID = toolID
@@ -456,10 +457,9 @@ class Job extends BEJob<BEJob, JobResult> {
         Command cmd
         boolean runJob
 
-        //Remove duplicate job ids as qsub cannot handle duplicate keys => job will hold forever as it releases the dependency queue linearly
-        List<String> dependencies = parentJobIDsAsString.unique()
-        //.collect { BEJobID jobDependencyID -> return jobDependencyID.getId() }.unique() as List<String>
-        this.parameters.putAll(convertParameterObject(Constants.RODDY_PARENT_JOBS, dependencies))
+        //Remove duplicate job ids as PBS qsub cannot handle duplicate keys => job will hold forever as it releases the dependency queue linearly.
+        this.parameters.putAll(convertParameterObject(Constants.RODDY_PARENT_JOBS, parentJobIDsAsString.unique()))
+        this.parameters.putAll(convertParameterObject(Constants.PARAMETER_FILE, parameterFile))
 
         appendProcessingCommands(configuration)
 
@@ -483,7 +483,7 @@ class Job extends BEJob<BEJob, JobResult> {
             System.out.println(jobDetailsLine.toString())
             if (cmd.getExecutionID() == null) {
                 context.addErrorEntry(ExecutionContextError.EXECUTION_SUBMISSION_FAILURE.expand("Please check your submission command manually.\n\t  Is your access group set properly? [${context.getAnalysis().getUsergroup()}]\n\t  Can the submission binary handle your binary?\n\t  Is your submission system offline?"))
-                logger.postSometimesInfo("Status Code: ${runResult.executionResult.exitCode}, Output:\n${runResult.executionResult.resultLines.join("\n")}")
+                logger.postSometimesInfo("Command: ${runResult.command}\nStatus Code: ${runResult.executionResult.exitCode}, Output:\n${runResult.executionResult.resultLines.join("\n")}")
                 if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.BreakSubmissionOnError)) {
                     context.abortJobSubmission()
                 }
@@ -693,7 +693,6 @@ class Job extends BEJob<BEJob, JobResult> {
         return true;
     }
 
-    @Override
     List<String> finalParameters() {
         List<String> allParametersForFile = new LinkedList<>();
         if (parameters.size() > 0) {

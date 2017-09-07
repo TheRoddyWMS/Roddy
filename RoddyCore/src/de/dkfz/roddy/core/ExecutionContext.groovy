@@ -427,8 +427,10 @@ class ExecutionContext {
     }
 
     synchronized File getLoggingDirectory() {
-        if (loggingDirectory == null)
+        if (loggingDirectory == null) {
             loggingDirectory = analysis.getRuntimeService().getLoggingDirectory(this)
+            assert (null != loggingDirectory)
+        }
         return loggingDirectory
     }
 

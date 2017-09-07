@@ -72,6 +72,8 @@ public class Constants {
     public static final String NO_VALUE = "<NO_VALUE>";
 
     public static final String RODDY_PARENT_JOBS = "RODDY_PARENT_JOBS";
+    public static final String CONFIG_FILE = "CONFIG_FILE";
+    public static final String PARAMETER_FILE = "PARAMETER_FILE";
 
     public static final String COMMAND_TAG_EXECUTION_CONTEXT = "ExecutionContext";
 }
