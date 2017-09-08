@@ -301,10 +301,13 @@ public class Roddy {
             errors.add("\tTool zip not found.");
         if (!ExecutionHelper.executeCommandWithExtendedResult("which unzip").isSuccessful())
             errors.add("\tTool unzip not found.");
+        if (!ExecutionHelper.executeCommandWithExtendedResult("which lockfile").isSuccessful())
+            errors.add("\tTool lockfile not found. lockfile can be found e.g. in the package procmail.");
 
         if (errors.size() == 1) return true;
 
         logger.severe(RoddyIOHelperMethods.joinArray(errors.toArray(new String[0]), "\n"));
+        logger.severe("Please make sure that the dependencies are installed on the submission host and also on the execution hosts.");
         return false;
     }
 
