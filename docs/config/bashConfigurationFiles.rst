@@ -37,7 +37,7 @@ the *usedresourcessize* attribute and several *analysis* tags. The *analysis* ta
 like [id],[analysis config id],[plugin name]:[plugin version]. Please see :doc:`xmlConfigurationFiles` for a
 detailed description of the tags and attributes.
 
-After the header come the configuration values.
+After the header comes the configuration values section.
 
 .. code-block:: Bash
 

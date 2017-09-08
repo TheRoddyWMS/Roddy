@@ -29,6 +29,8 @@ To install and run Roddy the following programs need to be installed on your com
 
 - bash
 
+- lockfile (part of procmail mail-processing-package (v3.22))
+
 As Roddy is Linux based, you will be able to find them in your package manager.
 
 Roddy 2.2
