@@ -12,9 +12,10 @@ package de.dkfz.roddy.execution.io
 
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.execution.io.FileAttributes
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.common.IOUtils
@@ -132,7 +133,8 @@ class SSHExecutionService extends RemoteExecutionService {
                 t2 = System.nanoTime();
                 logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("start ssh client session", t1, t2));
             } catch (Exception ex) {
-                println(ex);
+                logger.severe("Fatal error during initialization of SSHExecutionService. Password-based or password-less key-based authentication supported. No ssh-agent support.")
+                Roddy.exit(1)
             }
             client = c;
             sftpClient = client.newSFTPClient();

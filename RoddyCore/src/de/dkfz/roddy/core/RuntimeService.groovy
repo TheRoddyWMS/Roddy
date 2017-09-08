@@ -172,13 +172,14 @@ public class RuntimeService {
     }
 
     List<DataSet> loadDatasetsWithFilter(Analysis analysis, List<String> pidFilters, boolean suppressInfo = false) {
-        if (analysis.configuration.configurationValues.get("loadCohortDatasets", "false").toBoolean()) {
+        if (analysis.configuration.configurationValues.getBoolean("loadCohortDatasets", false)) {
             return loadCohortDatasetsWithFilter(analysis, pidFilters, suppressInfo)
         } else {
             loadStandardDatasetsWithFilter(analysis, pidFilters, suppressInfo)
         }
     }
 
+    /** There are non-cohort (=standard) datasets and cohort datasets */
     List<DataSet> loadStandardDatasetsWithFilter(Analysis analysis, List<String> pidFilters, boolean suppressInfo = false) {
         if (pidFilters == null || pidFilters.size() == 0 || pidFilters.size() == 1 && pidFilters.get(0).equals("[ALL]")) {
             pidFilters = Arrays.asList("*");
@@ -224,11 +225,11 @@ public class RuntimeService {
                 // Remove leading c:, split by ;
                 String[] datasetFilters = cohortDescription[2..-1].split(StringConstants.SPLIT_SEMICOLON);
 
-                ArrayList<DataSet> dList = collectDataSetsForCohort(datasetFilters, analysis, listOfDataSets)
+                List<DataSet> dList = collectDataSetsForCohort(datasetFilters, analysis, listOfDataSets)
 
                 // Sort the list, but keep the primary set the primary set.
                 DataSet primaryDataSet = dList[0];
-                dList = dList.sort().unique()
+                dList = dList.sort().unique() as ArrayList<DataSet>
                 dList.remove(primaryDataSet)
                 dList.add(0, primaryDataSet)
                 if (primaryDataSet && dList)
@@ -263,7 +264,7 @@ public class RuntimeService {
         return true
     }
 
-    private ArrayList<DataSet> collectDataSetsForCohort(String[] datasetFilters, Analysis analysis, List<DataSet> listOfDataSets) {
+    private List<DataSet> collectDataSetsForCohort(String[] datasetFilters, Analysis analysis, List<DataSet> listOfDataSets) {
         boolean error = false
         List<DataSet> dList = []
 
@@ -283,7 +284,7 @@ public class RuntimeService {
             return res;
         }.flatten()
         if (error) return null
-        return dList
+        return dList as ArrayList<DataSet>
     }
 
     List<DataSet> selectDatasetsFromPattern(Analysis analysis, List<String> pidFilters, List<DataSet> listOfDataSets, boolean suppressInfo) {

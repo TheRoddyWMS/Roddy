@@ -6,18 +6,11 @@
 
 package de.dkfz.roddy.execution.io
 
-import de.dkfz.roddy.execution.jobs.Command
-import de.dkfz.roddy.Constants
-import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationValue
-import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.tools.LoggerWrapper
-
-import java.lang.reflect.Field
 
 /**
  * The local execution service executes commands on the local machine. For this groovy's execute() method is used.
@@ -70,35 +63,6 @@ public class LocalExecutionService extends ExecutionService {
             outputStream = new FileOutputStream(tmpFile)
         }
         return outputStream;
-    }
-
-    @Override
-    String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, OutputStream outputStream) {
-        if (command.isBlockingCommand()) {
-            command.setExecutionID(Roddy.getJobManager().createJobDependencyID(command.getJob(), res.processID));
-
-            File logFile = (command.getTag(Constants.COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext).getRuntimeService().getLogFileForCommand(command)
-
-            // Use reflection to get access to the hidden path field :p The stream object does not natively give
-            // access to it and I do not want to create a new class just for this.
-            Field fieldOfFile = FileOutputStream.class.getDeclaredField("path");
-            fieldOfFile.setAccessible(true);
-            File tmpFile2 = new File((String) fieldOfFile.get(outputStream));
-
-            FileSystemAccessProvider.getInstance().moveFile(tmpFile2, logFile);
-            return "none";
-        } else {
-            String exID = "none";
-            if (res.successful) {
-                def jobManager = Roddy.getJobManager()
-                exID = jobManager.parseJobID(res.resultLines[0]);
-                command.setExecutionID(jobManager.createJobDependencyID(command.getJob(), exID));
-                ExecutionContext currentContext = (command.job as Job).getExecutionContext()
-                String jobInfo = jobManager.getJobStateInfoLine(command.job)
-                FileSystemAccessProvider.getInstance().appendLineToFile(true, currentContext.getRuntimeService().getNameOfJobStateLogFile(currentContext), jobInfo, false)
-            }
-            return exID;
-        }
     }
 
     @Override

@@ -148,31 +148,26 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
     }
 
     public File toFile(Analysis analysis) {
-        try {
-            if (analysis == null) return toFile();
+        if (analysis == null) return toFile();
 
-            String temp = toFile().getAbsolutePath();
-            temp = replaceConfigurationBasedValues(temp, analysis.getConfiguration());
-            temp = replaceString(temp, "${projectName}", analysis.getProject().getName());
-            temp = checkAndCorrectPath(temp);
+        String temp = toFile().getAbsolutePath();
+        temp = replaceConfigurationBasedValues(temp, analysis.getConfiguration());
+        temp = replaceString(temp, "${projectName}", analysis.getProject().getName());
+        temp = checkAndCorrectPath(temp);
 
-            String userID = analysis.getUsername();
-            String groupID = analysis.getUsergroup();
+        String userID = analysis.getUsername();
+        String groupID = analysis.getUsergroup();
 
-            if (userID != null)
-                temp = replaceString(temp, "$USERNAME", userID);
-            if (groupID != null)
-                temp = replaceString(temp, "$USERGROUP", groupID);
+        if (userID != null)
+            temp = replaceString(temp, "$USERNAME", userID);
+        if (groupID != null)
+            temp = replaceString(temp, "$USERGROUP", groupID);
 
-            String ud = FileSystemAccessProvider.getInstance().getUserDirectory().getAbsolutePath();
-            temp = replaceString(temp, "$USERHOME", ud);
-            temp = checkAndCorrectPath(temp);
+        String ud = FileSystemAccessProvider.getInstance().getUserDirectory().getAbsolutePath();
+        temp = replaceString(temp, "$USERHOME", ud);
+        temp = checkAndCorrectPath(temp);
 
-            return new File(temp);
-
-        } catch (Exception e) {
-            return null;
-        }
+        return new File(temp);
     }
 
     public File toFile(ExecutionContext context) {

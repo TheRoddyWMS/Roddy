@@ -11,7 +11,7 @@ import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.BEJobResult
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.GenericJobInfo
-import de.dkfz.roddy.execution.jobs.BEJobDependencyID
+import de.dkfz.roddy.execution.jobs.BEJobID
 import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager
 import de.dkfz.roddy.execution.jobs.JobManagerCreationParametersBuilder
 import de.dkfz.roddy.execution.jobs.JobState
@@ -154,7 +154,7 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            BEJobDependencyID createJobDependencyID(BEJob job, String s) {
+            BEJobID createJobID(BEJob job, String s) {
                 return null
             }
 
@@ -254,7 +254,7 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            Command createCommand(BEJob job, String s, List list, File file, Map map, List list1, List list2) {
+            Command createCommand(BEJob job, String s, List list, File file, Map map, List list1) {
                 return null
             }
 
@@ -280,6 +280,26 @@ public class MockupExecutionContextBuilder {
 
             @Override
             Map<BEJob, JobState> queryJobStatus(List list, boolean forceUpdate) {
+                return null
+            }
+
+            @Override
+            JobState parseJobState(String stateString) {
+                return null
+            }
+
+            @Override
+            Map<String, GenericJobInfo> queryExtendedJobStateById(List<String> jobIds, boolean forceUpdate) {
+                return null
+            }
+
+            @Override
+            Map<String, JobState> queryJobStatusAll(boolean forceUpdate = false) {
+                return null
+            }
+
+            @Override
+            Map<String, JobState> queryJobStatusById(List<String> jobIds, boolean forceUpdate = false) {
                 return null
             }
         }

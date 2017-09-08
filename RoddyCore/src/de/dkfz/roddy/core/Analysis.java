@@ -137,6 +137,7 @@ public class Analysis {
     public File getInputBaseDirectory() {
         if (inputBaseDirectory == null)
             inputBaseDirectory = getRuntimeService().getInputFolderForAnalysis(this);
+        assert (inputBaseDirectory != null);
         return inputBaseDirectory;
     }
 
@@ -146,7 +147,9 @@ public class Analysis {
      * @return
      */
     public File getOutputBaseDirectory() {
-        return getRuntimeService().getOutputFolderForAnalysis(this);
+        File outputBaseDirectory = getRuntimeService().getOutputFolderForAnalysis(this);
+        assert (outputBaseDirectory != null);
+        return outputBaseDirectory;
     }
 
     /**
@@ -230,9 +233,7 @@ public class Analysis {
 
     private boolean checkJobStartability(DataSet ds) {
         String datasetID = ds.getId();
-        boolean running = checkStatusForDataset(ds);
-
-        if (running && Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning)) {
+        if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning) && checkStatusForDataset(ds)) {
             logger.postAlwaysInfo("The pid " + datasetID + " is still running and will be skipped for the process.");
             return false;
         }
@@ -477,12 +478,13 @@ public class Analysis {
 
     /**
      * Finally write last logfiles or remove (or keep) the execution directory.
+     *
      * @param context
      */
     private void cleanUpAndFinishWorkflowRun(ExecutionContext context) {
         //First, check if there were any executed jobs. If not, we can safely delete the the context directory.
         if (context.getStartedJobs().size() == 0) {
-            if(Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.forcekeepexecutiondirectory)) {
+            if (Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.forcekeepexecutiondirectory)) {
                 logger.always("There were no started jobs, but Roddy will keep the execution directory as forcekeepexecutiondirectory was set.");
             } else {
                 logger.always("There were no started jobs, the execution directory will be removed.");
@@ -513,7 +515,7 @@ public class Analysis {
                 logger.severe("Could not successfully abort jobs.", ex);
             }
         } else {
-            logger.severe("A workflow error occurred. However, strict mode is disabled and/or RollbackOnWorkflowError is disabled and therefore, all submitted jobs will be left running." +
+            logger.severe("A workflow error occurred. However, strict mode is disabled and/or RollbackOnWorkflowError is disabled and therefore all submitted jobs will be left running." +
                     "\n\tYou might consider to enable Roddy strict mode by setting the feature toggles 'StrictMode' and 'RollbackOnWorkflowError'.");
         }
     }

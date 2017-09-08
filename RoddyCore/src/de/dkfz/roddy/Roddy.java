@@ -8,6 +8,7 @@ package de.dkfz.roddy;
 
 import com.btr.proxy.search.ProxySearch;
 import de.dkfz.roddy.config.ResourceSetSize;
+import de.dkfz.roddy.config.loader.ConfigurationLoaderException;
 import de.dkfz.roddy.execution.BEExecutionService;
 import de.dkfz.roddy.execution.jobs.*;
 import de.dkfz.roddy.client.RoddyStartupModes;
@@ -217,7 +218,15 @@ public class Roddy {
             mainStarted = true;
             startup(args);
         } catch (Exception e) {
-            e.printStackTrace();
+
+            // When Roddy is getting closed due to an exception, it will output this exception
+            // on the command line. However, when you use GroovyServ to start Roddy, GroovyServ
+            // always throws its own SystemExitException. As we know this, we will explicitely
+            // prevent Roddy from printing this! However, we also do not want to build in a new
+            // dependency to GroovyServ (it might not be downloadable or availbable). Therefore
+            // we check for this particular exception by using its simple class name!
+            if (!e.getClass().getName().endsWith("SystemExitException"))
+                e.printStackTrace();
             exit(1);
         }
     }
@@ -562,7 +571,6 @@ public class Roddy {
         if (applicationSpecificConfiguration == null) {
             applicationSpecificConfiguration = new Configuration(null);
             RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
-            BatchEuphoriaJobManager jobManager = Roddy.getJobManager();
             Map<String, String> specificEnvironmentSettings = jobManager.getSpecificEnvironmentSettings();
             for (String k : specificEnvironmentSettings.keySet()) {
                 logger.postSometimesInfo("Add job manager value " + k + "=" + specificEnvironmentSettings.get(k) + " to context configuration");
@@ -663,12 +671,14 @@ public class Roddy {
         if (!option.needsFullInit())
             return;
 
-        if (jobManager.executesWithoutJobSystem() && waitForJobsToFinish) {
-            exitCode = performWaitforJobs();
-        } else {
-            List<Command> listOfCreatedCommands = jobManager.getListOfCreatedCommands();
-            for (Command command : listOfCreatedCommands) {
-                if (command.getJob().getJobState() == JobState.FAILED) exitCode++;
+        if (jobManager != null) {
+            if (jobManager.executesWithoutJobSystem() && waitForJobsToFinish) {
+                exitCode = performWaitforJobs();
+            } else {
+                List<Command> listOfCreatedCommands = jobManager.getListOfCreatedCommands();
+                for (Command command : listOfCreatedCommands) {
+                    if (command.getJob().getJobState() == JobState.FAILED) exitCode++;
+                }
             }
         }
         exit(exitCode);
@@ -697,11 +707,11 @@ public class Roddy {
         File file = getPropertiesFilePath();
         if (file == null || !file.exists()) {
             // Skip and exit!
-            logger.postAlwaysInfo("Could not load the application properties file. Roddy will exit.");
+            logger.postAlwaysInfo("Could not load the application properties file " + file.getAbsolutePath() + ". Roddy will exit.");
             exit(1);
+        } else {
+            logger.postAlwaysInfo("Loading properties file " + file.getAbsolutePath() + ".");
         }
-        logger.postSometimesInfo("Loading properties file: " + file.getAbsolutePath());
-
         applicationProperties = new AppConfig(file);
 
         getApplicationProperty("useRoddyVersion", LibrariesFactory.PLUGIN_VERSION_CURRENT); // Load some default properties
@@ -832,12 +842,16 @@ public class Roddy {
         for (File folder : Arrays.asList(
                 RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "plugins"),
                 RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins"),
-                RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins_2.49plus"),
-                RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins_R2.3")
+                RoddyIOHelperMethods.assembleLocalPath(getApplicationDirectory(), "dist", "plugins_R" + getShortVersionString())
         )) {
             if (folder.exists() && !folders.contains(folder)) folders.add(folder);
         }
         return folders;
+    }
+
+    public static String getShortVersionString() {
+        String[] complete = Constants.APP_CURRENT_VERSION_STRING.split("[.]");
+        return complete[0] + "." + complete[1];
     }
 
     public static File getFileCacheDirectory() {
