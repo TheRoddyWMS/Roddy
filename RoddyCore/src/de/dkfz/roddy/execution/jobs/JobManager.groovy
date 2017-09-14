@@ -37,13 +37,9 @@ class JobManager {
         return RuntimeService._createJobName(baseFile.executionContext, baseFile, toolID, reduceLevel)
     }
 
-    // Backward compatibility issue. Should be static
-//    String createJobName(BaseFile baseFile, String toolID, boolean reduceLevel) {
-//        return RuntimeService._createJobName(baseFile.executionContext, baseFile, toolID, reduceLevel)
-//    }
-
     Command createCommand(GenericJobInfo jobInfo) {
-        jobManager.createCommand(jobInfo)
+        BEJob job = new Job(jobInfo)
+        jobManager.createCommand(job, jobInfo.tool, jobInfo.parentJobIDs)
     }
 
     de.dkfz.roddy.execution.jobs.JobResult runJob(Job job, boolean runDummy) {
@@ -127,7 +123,7 @@ class JobManager {
 
     @CompileDynamic
     String getSpecificJobScratchIdentifier(LSFJobManager jobManager) {
-        logger.severe("LSF Scratch will be /local/$USER/ -- but needs to be configurable!")
+        logger.severe("LSF scratch directory not configurable!")
         return '${PBS_SCRATCH_DIR}/${PBS_JOBID}'
     }
 
@@ -161,8 +157,8 @@ class JobManager {
         jobManager.queryJobStatus(jobIDs)
     }
 
-    Command createCommand(Job job, String jobName, List processingCommands, File tool, Map parameters, List dependencies) {
-        jobManager.createCommand(job, jobName, processingCommands, tool, parameters, dependencies)
+    Command createCommand(Job job, String jobName, List processingCommands, File tool, Map jobParameters, List parentJobs) {
+        jobManager.createCommand(job, jobName, processingCommands, tool, jobParameters, parentJobs)
     }
 
     boolean executesWithoutJobSystem() {

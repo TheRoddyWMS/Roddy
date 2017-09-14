@@ -14,10 +14,8 @@ import de.dkfz.roddy.config.*
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
-import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.cluster.ClusterJobManager
-import de.dkfz.roddy.execution.jobs.cluster.lsf.rest.RestResult
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
@@ -232,6 +230,20 @@ class Job extends BEJob<BEJob, JobResult> {
         return dIDs
     }
 
+    private List<String> finalParameters() {
+        List<String> allParametersForFile = new LinkedList<>();
+        if (parameters.size() > 0) {
+            for (String parm : parameters.keySet()) {
+                String val = parameters.get(parm);
+                if (val.contains(StringConstants.DOLLAR_LEFTBRACE) && val.contains(StringConstants.BRACE_RIGHT)) {
+                    val = val.replace(StringConstants.DOLLAR_LEFTBRACE, "#{"); // Replace variable names so they can be passed to qsub.
+                }
+                String key = parm;
+                allParametersForFile << FileSystemAccessProvider.getInstance().getConfigurationConverter().convertConfigurationValue(new ConfigurationValue(key, val), this.executionContext).toString();
+            }
+        }
+        return allParametersForFile;
+    }
     private Map<String, String> convertParameterObject(String k, Object _v) {
         Map<String, String> newParameters = new LinkedHashMap<>()
 //            String v = "";
@@ -647,7 +659,7 @@ class Job extends BEJob<BEJob, JobResult> {
         String sep = Constants.ENV_LINESEPARATOR
         File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
         setJobState(JobState.UNSTARTED)
-        Command cmd = Roddy.getJobManager().createCommand(this, tool, dependencies)
+        Command cmd = Roddy.getJobManager().createCommand(this, tool, dependencies, parameters)
         jobManager.executionService.execute(cmd)
         if (LoggerWrapper.isVerbosityMedium()) {
             dbgMessage << sep << "\tcommand was created and executed for job. ID is " + cmd.getExecutionID() << sep
@@ -693,22 +705,6 @@ class Job extends BEJob<BEJob, JobResult> {
         return true;
     }
 
-    List<String> finalParameters() {
-        List<String> allParametersForFile = new LinkedList<>();
-        if (parameters.size() > 0) {
-            for (String parm : parameters.keySet()) {
-                String val = parameters.get(parm);
-                if (val.contains(StringConstants.DOLLAR_LEFTBRACE) && val.contains(StringConstants.BRACE_RIGHT)) {
-                    val = val.replace(StringConstants.DOLLAR_LEFTBRACE, "#{"); // Replace variable names so they can be passed to qsub.
-                }
-                String key = parm;
-                allParametersForFile << FileSystemAccessProvider.getInstance().getConfigurationConverter().convertConfigurationValue(new ConfigurationValue(key, val), this.executionContext).toString();
-            }
-        }
-        return allParametersForFile;
-    }
-
-    @Override
     File getParameterFile() {
         return this.context.getParameterFilename(this)
     }

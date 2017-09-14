@@ -143,10 +143,6 @@ public class MockupExecutionContextBuilder {
 
     public static BatchEuphoriaJobManager createMockupJobManager() {
         new BatchEuphoriaJobManager(new NoNoExecutionService(), new JobManagerCreationParametersBuilder().setCreateDaemon(false).build()) {
-            @Override
-            Command createCommand(GenericJobInfo genericJobInfo) {
-                return null
-            }
 
             @Override
             JobResult runJob(BEJob job) {
@@ -244,7 +240,7 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            Command createCommand(BEJob job, String s, List list, File file, Map map, List list1) {
+            Command createCommand(BEJob job, String s, List list, File file, Map map, List parentJobs) {
                 return null
             }
 

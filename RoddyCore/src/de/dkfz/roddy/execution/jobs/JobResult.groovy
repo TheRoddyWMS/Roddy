@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.execution.jobs
 
+import de.dkfz.roddy.core.ExecutionContext
 import groovy.transform.CompileStatic
 
 /**
@@ -20,6 +21,10 @@ class JobResult extends BEJobResult {
     JobResult(BEJobResult jr) {
         // Some sort of deprecated copy constructor.
         super(null, jr.command, jr.job, jr.executionResult, jr.toolID, jr.jobParameters, jr.parentJobs)
+    }
+
+    static JobResult getFileExistedFakeJobResult(ExecutionContext context) {
+        return new JobResult(new BEJobResult(context, null, new FakeBEJob(new BEFakeJobID(BEFakeJobID.FakeJobReason.FILE_EXISTED)), null, null, null, null))
     }
 
 }
