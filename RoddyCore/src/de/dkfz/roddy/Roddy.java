@@ -630,6 +630,7 @@ public class Roddy {
                         .setJobIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW)
                         .setJobArrayIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBARRAYINDEX_RAW)
                         .setJobScratchIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW).build());
+        // TODO: Refactor: Either set JobScratchIdentifier here and actually use it in BE, or don't set it here and don't use it there. Currently, this value is *not* used!
 
 
 // There are many values which need to be extracted from the xml (context, project?)

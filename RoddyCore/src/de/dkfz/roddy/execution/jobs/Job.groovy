@@ -515,8 +515,8 @@ class Job extends BEJob<BEJob, JobResult> {
                 if (!bf) return
 
                 String absolutePath = bf.getPath().getAbsolutePath()
-                if (absolutePath.contains('${RODDY_JOBID}')) {
-                    bf.setPath(new File(absolutePath.replace('${RODDY_JOBID}', runResult.jobID.shortID)))
+                if (absolutePath.contains(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID)) {
+                    bf.setPath(new File(absolutePath.replace(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID, runResult.jobID.shortID)))
                 }
             }
         }

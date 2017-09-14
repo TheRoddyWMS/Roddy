@@ -363,6 +363,11 @@ public abstract class ExecutionService implements BEExecutionService {
         def configurationValues = cfg.getConfigurationValues()
 
         Roddy.getJobManager().getSpecificEnvironmentSettings().each { String k, String v -> cfg.getConfigurationValues().put(k, v, "string") }
+        cfg.configurationValues.put(CVALUE_PLACEHOLDER_RODDY_JOBID_RAW, Roddy.jobManager.specificJobIDIdentifier)
+        context.specificJobScratch.map {
+            cfg.configurationValues.put(CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW, it)
+        }
+
         getInstance().addSpecificSettingsToConfiguration(cfg)
 
         //Add feature toggles to configuration

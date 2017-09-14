@@ -18,9 +18,13 @@ import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.BaseMetadataTable
 import de.dkfz.roddy.execution.io.MetadataTableFactory
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.execution.jobs.cluster.lsf.LSFJobManager
+import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSJobManager
+import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.commons.io.filefilter.WildcardFileFilter
 
@@ -253,7 +257,7 @@ public class RuntimeService {
         for (filter in pidFilters) {
             boolean faulty = !validateCohortDataSetLoadingString(filter)
             if (faulty) {
-                logger.severe("The pid string ${filter} is malformed.")
+                logger.severe("The ${Constants.PID} string ${filter} is malformed.")
                 foundFaulty = true
             }
         }
@@ -442,7 +446,7 @@ public class RuntimeService {
     public String extractDataSetIDFromPath(File path, Analysis analysis) {
         String pattern = analysis.getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY).toFile(analysis).getAbsolutePath()
         RoddyIOHelperMethods.getPatternVariableFromPath(pattern, "dataSet", path.getAbsolutePath()).
-                orElse(RoddyIOHelperMethods.getPatternVariableFromPath(pattern, "pid", path.getAbsolutePath()).
+                orElse(RoddyIOHelperMethods.getPatternVariableFromPath(pattern, Constants.PID, path.getAbsolutePath()).
                         orElse(Constants.UNKNOWN))
     }
 
@@ -548,12 +552,12 @@ public class RuntimeService {
     public Map<String, Object> getDefaultJobParameters(ExecutionContext context, String TOOLID) {
         def fs = context.getRuntimeService();
         //File cf = fs..createTemporaryConfigurationFile(executionContext);
-        String pid = context.getDataSet().toString()
+        String dataset = context.getDataSet().toString()
         Map<String, Object> parameters = [
-                pid         : (Object) pid,
-                PID         : pid,
-                CONFIG_FILE : fs.getNameOfConfigurationFile(context).getAbsolutePath(),
-                ANALYSIS_DIR: context.getOutputDirectory().getParentFile().getParent()
+                (Constants.PID)          : (Object) dataset,
+                (Constants.PID_CAP)      : dataset,
+                (Constants.CONFIG_FILE)  : fs.getNameOfConfigurationFile(context).getAbsolutePath(),
+                (Constants.ANALYSIS_DIR) : context.getOutputDirectory().getParentFile().getParent()
         ]
         return parameters;
     }
@@ -653,4 +657,5 @@ public class RuntimeService {
     String calculateAutoCheckpointFilename(ToolEntry toolEntry, List<Object> parameters) {
         "AUTOCHECKPOINT_${toolEntry.id}_${(parameters.collect { it.toString().hashCode() }.join("") + "SAFEGUARDFOREMTPYLIST").hashCode()}"
     }
+
 }
