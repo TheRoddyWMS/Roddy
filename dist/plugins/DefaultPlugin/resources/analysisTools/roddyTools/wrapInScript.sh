@@ -59,6 +59,7 @@ runEnvironmentSetupScript() {
 ###### Main ############################################################################################################
 
 [[ ${CONFIG_FILE-false} == false ]] && echo "The parameter CONFIG_FILE is not set but is mandatory!" && exit 200
+[[ ${PARAMETER_FILE-false} == false ]] && echo "The parameter PARAMETER_FILE is not set but is mandatory!" && exit 200
 
 # Perform some initial checks
 # Store the environment, store file locations in the env
@@ -166,7 +167,7 @@ else
   myGroup=`groups  | cut -d " " -f 1`
   outputFileGroup=${outputFileGroup-$myGroup}
 
-  $jobProfilerBinary bash ${WRAPPED_SCRIPT}
+  $jobProfilerBinary bash -x ${WRAPPED_SCRIPT}
   exitCode=$?
   echo "Exited script ${WRAPPED_SCRIPT} with value ${exitCode}"
 

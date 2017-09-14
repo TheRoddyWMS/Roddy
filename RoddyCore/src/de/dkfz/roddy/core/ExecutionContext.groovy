@@ -441,7 +441,7 @@ class ExecutionContext {
     }
 
     File getParameterFilename(Job job) {
-        new File(getExecutionDirectory(), "${job.getJobName()}_${job.jobCreationCounter}.parameters")
+        new File(getExecutionDirectory(), "${job.getJobName()}_${job.jobCreationCounter}${Constants.PARAMETER_FILE_SUFFIX}")
     }
 
 

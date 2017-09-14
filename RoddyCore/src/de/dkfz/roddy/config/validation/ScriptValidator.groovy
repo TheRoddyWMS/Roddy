@@ -32,7 +32,7 @@ public class ScriptValidator extends ConfigurationValidator {
     // Create a list of special characters which can occur in the complex variable syntax. The name is always in front of one of those.
     // TODO This list has to be configurable, some can also be coming from the command factory.
     // Keep a list of blacklistet variables, those are not checked.
-    public static final List<String> blacklist = Arrays.asList("WRAPPED_SCRIPT", Constants.CONFIG_FILE, "PID", "PBS_*", "RODDY_*");
+    public static final List<String> blacklist = Arrays.asList(Constants.WRAPPED_SCRIPT, Constants.CONFIG_FILE, "PID", "PBS_*", "RODDY_*");
 
     public ScriptValidator(Configuration cfg) {
         super(cfg);

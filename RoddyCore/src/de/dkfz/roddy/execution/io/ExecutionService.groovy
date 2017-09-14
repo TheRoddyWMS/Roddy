@@ -210,14 +210,12 @@ public abstract class ExecutionService implements BEExecutionService {
 
     protected FileOutputStream createServiceBasedOutputStream(Command command, boolean waitFor) { return null; }
 
-    public static void storeParameterFile(Command command) {
+    static void storeParameterFile(Command command) {
         command.job.parameters
         ExecutionContext context = ((Job) command.job).executionContext
-//        throw new NotImplementedException()
-        String convertedParameters = command.job.finalParameters().join("\n")
+        String convertedParameters = command.parameters.collect { String k, String v -> return "${k}=${v}".toString() }.join("\n")
         if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
-            FileSystemAccessProvider.getInstance().writeTextFile(command.job.getParameterFile(), convertedParameters, context);
-//        logger.severe("Storing parameter files is currently not supported.")
+            FileSystemAccessProvider.getInstance().writeTextFile((command.job as Job).getParameterFile(), convertedParameters, context);
     }
 
     public static long measureStart() { return System.nanoTime(); }
