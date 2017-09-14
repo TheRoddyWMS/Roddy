@@ -134,6 +134,7 @@ class SSHExecutionService extends RemoteExecutionService {
                 logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("start ssh client session", t1, t2));
             } catch (Exception ex) {
                 logger.severe("Fatal error during initialization of SSHExecutionService. Password-based or password-less key-based authentication supported. No ssh-agent support.")
+                logger.postSometimesInfo(ex.message)
                 Roddy.exit(1)
             }
             client = c;
@@ -141,7 +142,7 @@ class SSHExecutionService extends RemoteExecutionService {
             scpFileTransfer = client.newSCPFileTransfer();
             scpDownloadClient = scpFileTransfer.newSCPDownloadClient();
             t1 = System.nanoTime();
-            logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("create additionial ssh services", t2, t1));
+            logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("create additional ssh services", t2, t1));
 
         }
 
