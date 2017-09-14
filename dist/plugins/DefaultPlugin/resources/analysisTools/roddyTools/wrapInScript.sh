@@ -70,14 +70,18 @@ mkdir -p ${extendedLogsDir}
 
 dumpEnvironment "Files in environment before source configs" >> ${extendedLogFile}
 
+## First source the CONFIG_FILE (runtimeConfig.sh) with all the global variables
+waitForFile "$CONFIG_FILE"
+source ${CONFIG_FILE}
+
+## Then source the PARAMETER_FILE with all the job-specific settings.
 waitForFile "$PARAMETER_FILE"
 source ${PARAMETER_FILE}
 
-waitForFile "$CONFIG_FILE"
-source ${CONFIG_FILE}
 dumpEnvironment "Files in environment after source configs" >> ${extendedLogFile}
 
 runEnvironmentSetupScript
+
 dumpEnvironment "Files in environment after sourcing the environment script" >> ${extendedLogFile}
 
 isOutputFileGroup=${outputFileGroup-false}
