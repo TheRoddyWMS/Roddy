@@ -8,7 +8,6 @@ package de.dkfz.roddy;
 
 import com.btr.proxy.search.ProxySearch;
 import de.dkfz.roddy.config.ResourceSetSize;
-import de.dkfz.roddy.config.loader.ConfigurationLoaderException;
 import de.dkfz.roddy.execution.BEExecutionService;
 import de.dkfz.roddy.execution.jobs.*;
 import de.dkfz.roddy.client.RoddyStartupModes;
@@ -40,13 +39,13 @@ import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static de.dkfz.roddy.RunMode.CLI;
 import static de.dkfz.roddy.StringConstants.FALSE;
-import static de.dkfz.roddy.config.ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY;
-import static de.dkfz.roddy.config.ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY;
-import static de.dkfz.roddy.config.ConfigurationConstants.CFG_USED_RESOURCES_SIZE;
+import static de.dkfz.roddy.config.ConfigurationConstants.*;
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW;
 
 /**
  * This is the main class for the Roddy command line application.
@@ -571,10 +570,13 @@ public class Roddy {
         if (applicationSpecificConfiguration == null) {
             applicationSpecificConfiguration = new Configuration(null);
             RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
-            Map<String, String> specificEnvironmentSettings = jobManager.getSpecificEnvironmentSettings();
-            for (String k : specificEnvironmentSettings.keySet()) {
-                logger.postSometimesInfo("Add job manager value " + k + "=" + specificEnvironmentSettings.get(k) + " to context configuration");
-                configurationValues.add(new ConfigurationValue(k, specificEnvironmentSettings.get(k)));
+
+            // Add RODDY_SCRATCH and RODDY_JOBID with JobManager-specific values.
+            configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_JOBID_RAW, "$" + Roddy.jobManager.getJobIdVariable()));
+            String scratchBase = configurationValues.getString(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW);
+            if (null != scratchBase) {
+                configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW,
+                        Paths.get(scratchBase, "$" + Roddy.jobManager.getJobIdVariable()).toAbsolutePath().toString()));
             }
 
             // Add custom command line values to the project configuration.
@@ -626,12 +628,7 @@ public class Roddy {
                         .setCreateDaemon(true)
                         .setTrackUserJobsOnly(trackUserJobsOnly)
                         .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
-                        .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI())
-                        .setJobIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW)
-                        .setJobArrayIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBARRAYINDEX_RAW)
-                        .setJobScratchIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW).build());
-        // TODO: Refactor: Either set JobScratchIdentifier here and actually use it in BE, or don't set it here and don't use it there. Currently, this value is *not* used!
-
+                        .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI()).build());
 
 // There are many values which need to be extracted from the xml (context, project?)
 //        configuration.getProperty("PBS_AccountName", "")

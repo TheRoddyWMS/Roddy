@@ -9,11 +9,7 @@ package de.dkfz.roddy.execution.jobs
 import de.dkfz.roddy.config.ResourceSet
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.core.RuntimeService
-import de.dkfz.roddy.execution.jobs.cluster.lsf.LSFJobManager
-import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSJobManager
-import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.knowledge.files.BaseFile
-import groovy.transform.CompileDynamic
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 /**
@@ -104,37 +100,11 @@ class JobManager {
     }
 
     String getSpecificJobIDIdentifier() {
-        jobManager.getSpecificJobIDIdentifier()
+        jobManager.getJobIdVariable()
     }
 
     String getSpecificJobArrayIndexIdentifier() {
-        jobManager.getSpecificJobArrayIndexIdentifier()
-    }
-
-    @CompileDynamic
-    String getSpecificJobScratchIdentifier(DirectSynchronousExecutionJobManager jobManager) {
-        return '/data/roddyScratch/$$'
-    }
-
-    @CompileDynamic
-    String getSpecificJobScratchIdentifier(PBSJobManager jobManager) {
-        return '${PBS_SCRATCH_DIR}/${PBS_JOBID}'
-    }
-
-    @CompileDynamic
-    String getSpecificJobScratchIdentifier(LSFJobManager jobManager) {
-        logger.severe("LSF scratch directory not configurable!")
-        return '${PBS_SCRATCH_DIR}/${PBS_JOBID}'
-    }
-
-    @CompileDynamic
-    String getSpecificJobScratchIdentifier(BatchEuphoriaJobManager jobManager) {
-        return '${PBS_SCRATCH_DIR}/${PBS_JOBID}'
-    }
-
-    String getSpecificJobScratchIdentifier() {
-        logger.severe("Scratch directory is cluster-specific and should be configurable!")
-        getSpecificJobScratchIdentifier(jobManager)
+        throw new NotImplementedException()
     }
 
     String[] peekLogFile(Job job) {

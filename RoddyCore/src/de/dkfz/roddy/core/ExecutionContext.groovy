@@ -6,11 +6,6 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.execution.jobs.BEJobResult
-import de.dkfz.roddy.execution.jobs.Command
-import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.JobResult
-import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -19,12 +14,11 @@ import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.BEJob
-import de.dkfz.roddy.execution.jobs.ReadOutJob
-import de.dkfz.roddy.knowledge.files.*
+import de.dkfz.roddy.execution.jobs.*
+import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.tools.LoggerWrapper
 
-import java.util.*
+import java.nio.file.Paths
 
 /**
  * An ExecutionContect is the runtime context for an analysis and a DataSet.<br />

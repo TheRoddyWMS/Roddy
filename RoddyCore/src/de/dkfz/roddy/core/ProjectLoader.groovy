@@ -236,7 +236,7 @@ class ProjectLoader {
 
         lines << "inputBaseDirectory=" + Roddy.customBaseInputDirectory
         lines << "outputBaseDirectory=" + Roddy.customBaseOutputDirectory
-        lines << "outputAnalysisBaseDirectory=\${outputBaseDirectory}/\${${Constants.PID}}"
+        lines << "outputAnalysisBaseDirectory=\${outputBaseDirectory}/\${${Constants.PID}}".toString()
 
         projectID = "CFreeMode_" + Integer.toHexString(configurationFileName.hashCode())
 

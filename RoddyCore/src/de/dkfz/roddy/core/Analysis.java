@@ -333,7 +333,7 @@ public class Analysis {
         Thread t = new Thread(() -> {
             executeRun(ec);
         });
-        t.setName(String.format("Deferred execution context execution for " + Constants.PID " %s", ec.getDataSet().getId()));
+        t.setName(String.format("Deferred execution context execution for " + Constants.PID + " %s", ec.getDataSet().getId()));
         t.start();
     }
 

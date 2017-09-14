@@ -29,7 +29,7 @@ import de.dkfz.roddy.knowledge.files.BaseFile
 @groovy.transform.CompileStatic
 public class MockupExecutionContextBuilder {
 
-    public static final String DIR_PREFIX = "RoddyTests_";
+    public static final String DIR_PREFIX = "RoddyTests_"
 
     public static File getTestBaseDirectory(String testID) {
         final File testBaseDirectory = File.createTempDir(DIR_PREFIX, "_" + testID)
@@ -220,12 +220,27 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            String getSpecificJobIDIdentifier() {
+            String getJobIdVariable() {
                 return null
             }
 
             @Override
-            String getSpecificJobArrayIndexIdentifier() {
+            String getJobArrayIndexVariable() {
+                return null
+            }
+
+            @Override
+            String getNodeFileVariable() {
+                return null
+            }
+
+            @Override
+            String getSubmitHostVariable() {
+                return null
+            }
+
+            @Override
+            String getSubmitDirectoryVariable() {
                 return null
             }
 
