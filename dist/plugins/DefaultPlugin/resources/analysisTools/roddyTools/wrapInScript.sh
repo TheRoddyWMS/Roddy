@@ -3,13 +3,6 @@
 [[ ${debugWrapInScript-false} == true ]] && set -xv
 [[ ${debugWrapInScript-false} == false ]] && set +xv
 
-waitForFile() {
-    local file="${1:?No file to wait for}"
-    local waitCount=0
-    while [[ ! -r ${file} && ${waitCount-0} -lt 3 ]]; do sleep 5; waitCount=$((waitCount + 1)); done
-    [[ ! -f ${file} || ! -r ${file} ]] && echo "The file '${file}' does not exist or is not readable." && exit 200
-}
-
 # This script wraps in another script.
 # The configuration file is sourced and has to be sourced again in the wrapped script.
 # A job error entry is created in the results list along with a timestamp
@@ -19,6 +12,13 @@ waitForFile() {
 #
 # Cluster options (like i.e. PBS ) have to be parsed and set before job submission!
 # They will be ignored after the script is wrapped.
+
+waitForFile() {
+    local file="${1:?No file to wait for}"
+    local waitCount=0
+    while [[ ! -r ${file} && ${waitCount-0} -lt 3 ]]; do sleep 5; waitCount=$((waitCount + 1)); done
+    [[ ! -f ${file} || ! -r ${file} ]] && echo "The file '${file}' does not exist or is not readable." && exit 200
+}
 
 dumpEnvironment() {
     local message="${1:?No log message given}"

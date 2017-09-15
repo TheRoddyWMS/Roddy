@@ -133,8 +133,7 @@ class SSHExecutionService extends RemoteExecutionService {
                 t2 = System.nanoTime();
                 logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("start ssh client session", t1, t2));
             } catch (Exception ex) {
-                logger.severe("Fatal error during initialization of SSHExecutionService. Password-based or password-less key-based authentication supported. No ssh-agent support.")
-                logger.postSometimesInfo(ex.message)
+                logger.severe("Fatal error during initialization of SSHExecutionService. Message: \"${ex.message}\". Check password-based or password-less key-based authentication to all your head nodes.")
                 Roddy.exit(1)
             }
             client = c;
