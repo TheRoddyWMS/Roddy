@@ -127,8 +127,8 @@ class Job extends BEJob<BEJob, JobResult> {
         List<BEJob> pJobs
         if ((null != parentJobIDs && !parentJobIDs.isEmpty()) &&
                 (null != parentJobs && !parentJobs.isEmpty())) {
-            def validJobs = findJobsWithValidJobId(parentJobs)
-            def validIds = findValidJobIDs(parentJobIDs).collect{ it.toString() }
+            def validJobs = jobsWithUniqueValidJobId(parentJobs)
+            def validIds = uniqueValidJobIDs(parentJobIDs).collect{ it.toString() }
             def idsOfValidJobs = jobs2jobIDs(validJobs).collect { it.toString() }
             if (validIds != idsOfValidJobs) {
                 throw new RuntimeException("parentJobBEJob needs to be called with one of parentJobs, parentJobIDs, or parentJobsIDs and *corresponding* parentJobs.")
@@ -137,9 +137,9 @@ class Job extends BEJob<BEJob, JobResult> {
         } else if (null == parentJobIDs && null == parentJobs) {
             pJobs = new LinkedList<BEJob>()
         } else if (null != parentJobs) {
-            pJobs = findJobsWithValidJobId(parentJobs)
+            pJobs = jobsWithUniqueValidJobId(parentJobs)
         } else {
-            pJobs = findValidJobIDs(parentJobIDs).collect { new BEJob(it, jobManager) }
+            pJobs = uniqueValidJobIDs(parentJobIDs).collect { new BEJob(it, jobManager) }
         }
         return pJobs
     }
@@ -472,6 +472,11 @@ class Job extends BEJob<BEJob, JobResult> {
         //Remove duplicate job ids as PBS qsub cannot handle duplicate keys => job will hold forever as it releases the dependency queue linearly.
         this.parameters.putAll(convertParameterObject(Constants.RODDY_PARENT_JOBS, parentJobIDsAsString.unique()))
         this.parameters.putAll(convertParameterObject(Constants.PARAMETER_FILE, parameterFile))
+        boolean debugWrapInScript = true
+        if (configuration.configurationValues.hasValue(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)) {
+            debugWrapInScript = configuration.configurationValues.getBoolean(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)
+        }
+        this.parameters.putAll(convertParameterObject(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT, debugWrapInScript))
 
         appendProcessingCommands(configuration)
 

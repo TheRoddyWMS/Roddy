@@ -32,18 +32,27 @@ createToolVariableName() {
     echo "$varName" | perl -ne 's/([A-Z])/_$1/g; print uc($_)'
 }
 
+# Bash < 4.2 portability version of `declare -xg`.
+declare_xg() {
+    local varName="${1:?No variable name given}"
+    local value="$2"
+    eval "export $varName=\"$value\""
+}
+
 # Basic modules / environment support
 # Load the environment script (source), if it is defined. If the file is defined but the file not accessible exit with
 # code 200. Additionally, expose the used environment script path as ENVIRONMENT_SCRIPT variable to the wrapped script.
 runEnvironmentSetupScript() {
     local envScriptVar="${TOOL_ID}EnvironmentScript"
     if [[ -n "${!envScriptVar}" ]]; then
-        declare -gx ENVIRONMENT_SCRIPT="${!envScriptVar}"
+        # declare -gx ENVIRONMENT_SCRIPT="${!envScriptVar}"
+        declare_xg ENVIRONMENT_SCRIPT "${!envScriptVar}"
     elif [[ -n "$workflowEnvironmentScript" ]]; then
         if [[ -n "$ENVIRONMENT_SCRIPT" ]]; then
             echo "ENVIRONMENT_SCRIPT variable is set externally (e.g. in the XML) to '$TOOL_ENVIRONMENT'. It will be reset." > /dev/stderr
         fi
-        declare -gx ENVIRONMENT_SCRIPT="$workflowEnvironmentScript"
+        # declare -gx ENVIRONMENT_SCRIPT="$workflowEnvironmentScript"
+        declare_xg ENVIRONMENT_SCRIPT "$workflowEnvironmentScript"
     fi
 
     if [[ -n "$ENVIRONMENT_SCRIPT" ]]; then
@@ -61,12 +70,10 @@ runEnvironmentSetupScript() {
 [[ ${CONFIG_FILE-false} == false ]] && echo "The parameter CONFIG_FILE is not set but is mandatory!" && exit 200
 [[ ${PARAMETER_FILE-false} == false ]] && echo "The parameter PARAMETER_FILE is not set but is mandatory!" && exit 200
 
-# Perform some initial checks
 # Store the environment, store file locations in the env
 extendedLogsDir=$(dirname "$CONFIG_FILE")/extendedLogs
-
-extendedLogFile=${extendedLogsDir}/$(basename "$PARAMETER_FILE" .parameters)
 mkdir -p ${extendedLogsDir}
+extendedLogFile=${extendedLogsDir}/$(basename "$PARAMETER_FILE" .parameters)
 
 dumpEnvironment "Files in environment before source configs" >> ${extendedLogFile}
 
@@ -84,9 +91,7 @@ runEnvironmentSetupScript
 
 dumpEnvironment "Files in environment after sourcing the environment script" >> ${extendedLogFile}
 
-isOutputFileGroup=${outputFileGroup-false}
-
-if [[ $isOutputFileGroup != false && ${newGrpIsCalled-false} == false ]]; then
+if [[ ${outputFileGroup-false} != false && ${newGrpIsCalled-false} == false ]]; then
   export newGrpIsCalled=true
   export LD_LIB_PATH=$LD_LIBRARY_PATH
   # OK so something to note for you. newgrp has an undocumented feature (at least in the manpages)

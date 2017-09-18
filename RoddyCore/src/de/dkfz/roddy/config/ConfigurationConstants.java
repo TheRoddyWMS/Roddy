@@ -21,6 +21,7 @@ public class ConfigurationConstants {
     public static final String DEBUG_OPTIONS_USE_UNDEFINED_VARIABLE_BREAK = "debugOptionsUseUndefinedVariableBreak";
     public static final String DEBUG_OPTIONS_USE_EXIT_ON_ERROR = "debugOptionsUseExitOnError";
     public static final String DEBUG_OPTIONS_PARSE_SCRIPTS = "debugOptionsParseScripts";
+    public static final String DEBUG_WRAP_IN_SCRIPT = "debugWrapInScript";
 
     public static final String CVALUE_PLACEHOLDER_EXECUTION_DIRECTORY = "$PWD";
     public static final String CVALUE_PLACEHOLDER_RODDY_JOBID = "${RODDY_JOBID}";
