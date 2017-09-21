@@ -417,40 +417,40 @@ class Job extends BEJob<BEJob, JobResult> {
      */
     @CompileDynamic
     void appendToJobStateLogfile(DirectSynchronousExecutionJobManager jobManager, ExecutionContext executionContext, BEJobResult res, OutputStream outputStream = null) {
-        if (res.command.isBlockingCommand()) {
-            assert (null != outputStream)
-            File logFile = (res.command.getTag(Constants.COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext).getRuntimeService().getLogFileForCommand(res.command)
+//        if (res.command.isBlockingCommand()) {
+//            assert (null != outputStream)
+//            File logFile = (res.command.getTag(Constants.COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext).getRuntimeService().getLogFileForCommand(res.command)
+//
+//            // Use reflection to get access to the hidden path field :p The stream object does not natively give
+//            // access to it and I do not want to create a new class just for this.
+//            Field fieldOfFile = FileOutputStream.class.getDeclaredField("path")
+//            fieldOfFile.setAccessible(true);
+//            File tmpFile2 = new File((String) fieldOfFile.get(outputStream))
+//
+//            FileSystemAccessProvider.getInstance().moveFile(tmpFile2, logFile)
+//        } else {
+        if (res.wasExecuted) {
+            String millis = "" + System.currentTimeMillis()
+            millis = millis.substring(0, millis.length() - 3)
+            String code = "255"
+            if (res.job.getJobState() == JobState.UNSTARTED)
+                code = "UNSTARTED" // N
+            else if (res.job.getJobState() == JobState.ABORTED)
+                code = "ABORTED" // A
+            else if (res.job.getJobState() == JobState.COMPLETED_SUCCESSFUL)
+                code = "SUCCESSFUL"  // C
+            else if (res.job.getJobState() == JobState.FAILED)
+                code = "FAILED" // E
 
-            // Use reflection to get access to the hidden path field :p The stream object does not natively give
-            // access to it and I do not want to create a new class just for this.
-            Field fieldOfFile = FileOutputStream.class.getDeclaredField("path")
-            fieldOfFile.setAccessible(true);
-            File tmpFile2 = new File((String) fieldOfFile.get(outputStream))
-
-            FileSystemAccessProvider.getInstance().moveFile(tmpFile2, logFile)
-        } else {
-            if (res.wasExecuted) {
-                String millis = "" + System.currentTimeMillis()
-                millis = millis.substring(0, millis.length() - 3)
-                String code = "255"
-                if (res.job.getJobState() == JobState.UNSTARTED)
-                    code = "UNSTARTED" // N
-                else if (res.job.getJobState() == JobState.ABORTED)
-                    code = "ABORTED" // A
-                else if (res.job.getJobState() == JobState.COMPLETED_SUCCESSFUL)
-                    code = "SUCCESSFUL"  // C
-                else if (res.job.getJobState() == JobState.FAILED)
-                    code = "FAILED" // E
-
-                if (null != res.job.getJobID()) {
-                    String jobInfoLine = jobStateInfoLine(res.job.getJobID(), code, millis)
-                    FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getNameOfJobStateLogFile(executionContext), jobInfoLine, false)
-                } else {
-                    logger.postSometimesInfo("Did not store info for job " + res.job.getJobName() + ", job id was null.")
-                }
-
+            if (null != res.job.getJobID()) {
+                String jobInfoLine = jobStateInfoLine(res.job.getJobID(), code, millis)
+                FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getNameOfJobStateLogFile(executionContext), jobInfoLine, false)
+            } else {
+                logger.postSometimesInfo("Did not store info for job " + res.job.getJobName() + ", job id was null.")
             }
+
         }
+//        }
     }
 
     //TODO Create a runArray method which returns several job results with proper array ids.

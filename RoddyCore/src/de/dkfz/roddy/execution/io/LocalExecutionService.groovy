@@ -9,8 +9,12 @@ package de.dkfz.roddy.execution.io
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationValue
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.Command
+import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.tools.LoggerWrapper
+
+import java.lang.reflect.Field
 
 /**
  * The local execution service executes commands on the local machine. For this groovy's execute() method is used.
@@ -63,6 +67,21 @@ public class LocalExecutionService extends ExecutionService {
             outputStream = new FileOutputStream(tmpFile)
         }
         return outputStream;
+    }
+
+    @Override
+    protected void finalizeServiceBasedOutputStream(Command command, OutputStream outputStream) {
+        if (!outputStream) return
+
+        File logFile = new File(((Job)command.job).context.getExecutionDirectory(), "${command.job.getJobName()}_${command.job.jobCreationCounter}.logfile")
+
+        // Use reflection to get access to the hidden path field :p The stream object does not natively give
+        // access to it and I do not want to create a new class just for this.
+        Field fieldOfFile = FileOutputStream.class.getDeclaredField("path")
+        fieldOfFile.setAccessible(true);
+        File tmpFile2 = new File((String) fieldOfFile.get(outputStream))
+
+        FileSystemAccessProvider.getInstance().moveFile(tmpFile2, logFile)
     }
 
     @Override

@@ -232,38 +232,42 @@ class ExecutionContextReaderAndWriter {
         xml.jobinfo {
             jobs {
                 for (BEJob ej in executedJobs) {
-                    if (ej.isFakeJob()) continue //Skip fake jobs.
-                    job(id: ej.getJobID(), name: ej.jobName) {
-                        String commandString = ej.getLastCommand() != null ? ej.getLastCommand().toString() : ""
-                        calledcommand(command: commandString)
-                        tool(id: ej.getToolID(), md5: ej.getToolMD5())
-                        parameters {
-                            ej.getParameters().each {
-                                String k, String v ->
-                                    parameter(name: k, value: v)
-                            }
-                        }
-                        filesbyjob {
-                            for (BaseFile bf in ej.getFilesToVerify()) {
-                                String pfiles = bf.getParentFiles().collect({ BaseFile baseFile -> baseFile.absolutePath.hashCode() }).join(",")
-                                file(class: bf.class.name, id: bf.absolutePath.hashCode(), path: bf.absolutePath, parentfiles: pfiles)
-                            }
-                        }
-                        dependendies {
-                            for (BaseFile bf in ej.getParentFiles()) {
-                                if (bf.isSourceFile())
-                                    continue
-                                if (bf.creatingJobsResult == null)
-                                    continue
-                                String depJobID
-                                try {
-                                    depJobID = bf.getCreatingJobsResult().getJob().getJobID()
-                                } catch (Exception ex) {
-                                    depJobID = "Error"
+                    try {
+                        if (ej.isFakeJob()) continue //Skip fake jobs.
+                        job(id: ej.getJobID(), name: ej.jobName) {
+                            String commandString = ej.getLastCommand() != null ? ej.getLastCommand().toString() : ""
+                            calledcommand(command: commandString)
+                            tool(id: ej.getToolID(), md5: ej.getToolMD5())
+                            parameters {
+                                ej.getParameters().each {
+                                    String k, String v ->
+                                        parameter(name: k, value: v)
                                 }
-                                job(id: depJobID, fileid: bf.absolutePath.hashCode(), filepath: bf.absolutePath)
+                            }
+                            filesbyjob {
+                                for (BaseFile bf in ej.getFilesToVerify()) {
+                                    String pfiles = bf.getParentFiles().collect({ BaseFile baseFile -> baseFile.absolutePath.hashCode() }).join(",")
+                                    file(class: bf.class.name, id: bf.absolutePath.hashCode(), path: bf.absolutePath, parentfiles: pfiles)
+                                }
+                            }
+                            dependendies {
+                                for (BaseFile bf in ej.getParentFiles()) {
+                                    if (bf.isSourceFile())
+                                        continue
+                                    if (bf.creatingJobsResult == null)
+                                        continue
+                                    String depJobID
+                                    try {
+                                        depJobID = bf.getCreatingJobsResult().getJob().getJobID()
+                                    } catch (Exception ex) {
+                                        depJobID = "Error"
+                                    }
+                                    job(id: depJobID, fileid: bf.absolutePath.hashCode(), filepath: bf.absolutePath)
+                                }
                             }
                         }
+                    } catch (Exception ex) {
+                        logger.severe("An error occured, when the job info xml file was written. These errors are not vital but should be handled properly", ex)
                     }
                 }
             }
@@ -297,7 +301,10 @@ class ExecutionContextReaderAndWriter {
             for (String call : jobCalls) {
                 //TODO. How can we recognize different command factories? i.e. for other cluster systems?
                 BEJob beJob = Roddy.getJobManager().parseToJob(call)
-
+                if(beJob == null){
+                    logger.severe("Skipped read in of job call: ${call}")
+                    continue;
+                }
                 // Try to find the tool id in the context. If it is not available, set "UNKNOWN"
                 String toolID = allToolsByResourcePath[beJob.tool.parentFile.name + "/" + beJob.tool.name] ?: Constants.UNKNOWN
 
