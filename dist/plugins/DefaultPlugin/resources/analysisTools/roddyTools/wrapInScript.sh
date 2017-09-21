@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 [[ ${debugWrapInScript-false} == true ]] && set -xv
 [[ ${debugWrapInScript-false} == false ]] && set +xv
 
@@ -16,8 +18,13 @@
 waitForFile() {
     local file="${1:?No file to wait for}"
     local waitCount=0
-    while [[ ! -r ${file} && ${waitCount-0} -lt 3 ]]; do sleep 5; waitCount=$((waitCount + 1)); done
-    [[ ! -f ${file} || ! -r ${file} ]] && echo "The file '${file}' does not exist or is not readable." && exit 200
+    while [[ ${waitCount} -lt 3 && ! (-r "$file") ]]; do sleep 5; waitCount=$((waitCount + 1)); echo $waitCount; done
+    if [[ ! -r "$file" ]]; then
+        echo "The file '$file' does not exist or is not readable."
+        exit 200
+    else
+        return 0
+    fi
 }
 
 dumpEnvironment() {
@@ -176,8 +183,8 @@ else
   myGroup=`groups  | cut -d " " -f 1`
   outputFileGroup=${outputFileGroup-$myGroup}
 
-  $jobProfilerBinary bash -x ${WRAPPED_SCRIPT}
-  exitCode=$?
+  exitCode=0
+  $jobProfilerBinary bash -x ${WRAPPED_SCRIPT} || exitCode=$?
   echo "Exited script ${WRAPPED_SCRIPT} with value ${exitCode}"
 
   # If the tool supports auto checkpoints and the exit code is 0, then go on and create it.
