@@ -12,7 +12,7 @@ import groovy.transform.CompileStatic
 /**
  */
 @CompileStatic
-class ConfigurationError {
+class ConfigurationError extends Exception {
 
     Configuration configuration
     String id
@@ -20,9 +20,14 @@ class ConfigurationError {
     Exception exception
 
     ConfigurationError(String description, Configuration configuration, String id, Exception exception) {
+        super(description, exception)
         this.description = description
         this.configuration = configuration
         this.id = id
         this.exception = exception
+    }
+
+    ConfigurationError(String description, Configuration configuration) {
+        this(description, configuration, null, null)
     }
 }

@@ -372,6 +372,7 @@ class SSHExecutionService extends RemoteExecutionService {
                 if (ignoreError) {
                     // In case the command is ignored, a warning is sent out instead of a severe error.
                     logger.warning("Command not executed correctly, return code: " + exitStatus + ", error was ignored on purpose.");
+                    logger.postRareInfo("Ignored failed command was: '${command}'")
                     content.readLines().each { String line -> output << "" + line }
                     readStream(cmd.errorStream).readLines().each { String line -> output << "" + line }
                 } else {

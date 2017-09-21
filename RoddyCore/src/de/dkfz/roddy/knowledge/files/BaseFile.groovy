@@ -19,6 +19,7 @@ import de.dkfz.roddy.config.OnScriptParameterFilenamePattern
 import de.dkfz.roddy.config.OnToolFilenamePattern
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.core.ExecutionContext
+import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel;
 import de.dkfz.roddy.core.Workflow;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -27,6 +28,7 @@ import de.dkfz.roddy.execution.jobs.JobResult;
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.Tuple2
+import de.dkfz.roddy.config.loader.ConfigurationError
 
 import java.util.*;
 
@@ -549,15 +551,18 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
                                 "${k.name()} : ${value}"
                         }
                 }.flatten().join("\n\t")
-                Roddy.getJobManager().executesWithoutJobSystem()
-                throw new RuntimeException(sb.toString());
+
+                throw new ConfigurationError(sb.toString(), baseFile.executionContext.configuration);
             } else {
                 //Check if the path exists and create it if necessary.
                 if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs && !FileSystemAccessProvider.getInstance().checkDirectory(patternResult.x.getParentFile(), context, true)) {
                     throw new IOException("Output path could not be created for file: " + baseFile);
                 }
             }
-        } catch (RuntimeException ex) {
+        } catch (IOException ex) {
+            baseFile.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_PATH_INACCESSIBLE.expand(baseFile.absolutePath))
+            return patternResult
+        // } catch (RuntimeException ex) {
         } finally {
             return patternResult;
         }

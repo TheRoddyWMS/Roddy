@@ -213,7 +213,7 @@ public abstract class ExecutionService implements BEExecutionService {
     static void storeParameterFile(Command command) {
         command.job.parameters
         ExecutionContext context = ((Job) command.job).executionContext
-        String convertedParameters = command.parameters.collect { String k, String v -> return "export ${k}=${v}\n".toString() }
+        String convertedParameters = command.parameters.collect { String k, String v -> return "export ${k}=${v}\n".toString() }.join("")
         if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
             FileSystemAccessProvider.getInstance().writeTextFile((command.job as Job).getParameterFile(), convertedParameters, context);
     }
