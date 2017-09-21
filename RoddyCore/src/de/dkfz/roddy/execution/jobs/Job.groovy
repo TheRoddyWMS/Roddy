@@ -169,7 +169,7 @@ class Job extends BEJob<BEJob, JobResult> {
             if (this.parameters.containsKey(k)) continue
             Object _v = defaultParameters[k]
             if (_v == null) {
-                context.addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("The parameter " + k + " has no valid value and will be set to <NO_VALUE>."))
+                context.addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("The parameter " + k + " has no valid value and will be set to ${NO_VALUE}."))
                 this.parameters[k] = NO_VALUE
             } else {
                 Map<String, String> newParameters = convertParameterObject(k, _v)
@@ -462,7 +462,6 @@ class Job extends BEJob<BEJob, JobResult> {
 
         ExecutionContextLevel contextLevel = context.getExecutionContextLevel()
         Configuration configuration = context.getConfiguration()
-        File tool = configuration.getProcessingToolPath(context, toolID)
 
         StringBuilder dbgMessage = new StringBuilder()
         StringBuilder jobDetailsLine = new StringBuilder()
@@ -506,10 +505,11 @@ class Job extends BEJob<BEJob, JobResult> {
                 }
             }
         } else {
+            // The Job is not actually executed. Therefore, create a DummyCommand that creates a dummy JobID which in turn is used to create a dummy JobResult.
             Command command = new DummyCommand(jobManager, this, jobName, false)
             setJobState(JobState.DUMMY)
-            setRunResult(new JobResult(new BEJobResult(command, new BEJob(command.getExecutionID(), jobManager), null, this.tool, parameters, parentJobs as List<BEJob>)))
-            this.setJobState(JobState.DUMMY)
+            resetJobID(command.executionID)
+            setRunResult(new JobResult(new BEJobResult(command, new BEJob(command.executionID, jobManager), null, this.tool, parameters, parentJobs as List<BEJob>)))
         }
 
         //For auto filenames. Get the job id and push propagate it to all filenames.

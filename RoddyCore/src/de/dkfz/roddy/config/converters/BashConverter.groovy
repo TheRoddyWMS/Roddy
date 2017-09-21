@@ -10,14 +10,8 @@ import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
-import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationConstants
+import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.loader.ConfigurationFactory
-import de.dkfz.roddy.config.ConfigurationValue
-import de.dkfz.roddy.config.ConfigurationValueBundle
-import de.dkfz.roddy.config.InformationalConfigurationContent
-import de.dkfz.roddy.config.ToolEntry
-import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.fs.BashCommandSet
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -149,6 +143,11 @@ class BashConverter extends ConfigurationConverter {
         return text;
     }
 
+    /**
+     *
+     * @param cfg    Configuration object. Basically a tree of configuration values that may additionally contain cross-references in the values.
+     * @return
+     */
     Map<String, ConfigurationValue> getConfigurationValuesSortedByDependencies(Configuration cfg) {
         def values = cfg.getConfigurationValues().getAllValuesAsList();
         Map<String, ConfigurationValue> listOfUnsortedValues = [:]
@@ -169,7 +168,8 @@ class BashConverter extends ConfigurationConverter {
 
             //TODO Add command manager specific arguments to the command manager class, leave central things here.
             //TODO How to figure out, where to put things like pid sample...
-            List<String> valueBlacklist = ["PBS_JOBID", "PBS_ARRAYID", 'PWD', "PID", "pid", "sample", "run", "projectName", "testDataOptionID", "analysisMethodNameOnInput", "analysisMethodNameOnOutput"
+            List<String> valueBlacklist = [ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW, 'PWD', Constants.PID_CAP, Constants.PID
+                                           , "sample", "run", "projectName", "testDataOptionID", "analysisMethodNameOnInput", "analysisMethodNameOnOutput"
                                            , "outputAnalysisBaseDirectory", "inputAnalysisBaseDirectory", "executionTimeString"]
             for (ConfigurationValue cv in listOfUnsortedValues.values()) {
                 boolean isValidationRule = cv.id.contains("cfgValidationRule");
