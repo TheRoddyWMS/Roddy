@@ -208,11 +208,13 @@ class GenericMethod {
 
         applyParameterConstraints()
 
-        F outputObject = createOutputObject();
+        updateContextJobConfigurationWithJobParameters()
+
+        F outputObject = createOutputObject()
 
         List<BaseFile> filesToVerify = fillListOfCreatedObjects(outputObject)
 
-        F result;
+        F result
 
         // Call the job as either an array or a single job.
         if (arrayIndices != null) {
@@ -231,14 +233,22 @@ class GenericMethod {
         return result;
     }
 
+    private void updateContextJobConfigurationWithJobParameters() {
+        Configuration jobConfig = new Configuration(null)
+        RecursiveOverridableMapContainer configurationValues = jobConfig.configurationValues
+        configurationValues.putAll(parameters.collect { k, v ->
+            new MapEntry(k, new ConfigurationValue(k, v as String))
+        } as Map<String, ConfigurationValue>)
+        context.currentJobConfiguration = new Configuration(null, [context.configuration, jobConfig])
+    }
+
     private void assembleJobParameters() {
         // Assemble initial parameters
-        if (toolName) {
-            parameters[PRM_TOOLS_DIR] = configuration.getProcessingToolPath(context, toolName).getParent();
-            parameters[PRM_TOOL_ID] = toolName;
-        }
-
         parameters[PRM_WORKFLOW_ID] = context.analysis.configuration.getName()
+        if (toolName) {
+            parameters[PRM_TOOL_ID] = toolName;
+            parameters[PRM_TOOLS_DIR] = configuration.getProcessingToolPath(context, toolName).getParent();
+        }
 
         // Assemble additional parameters
         for (Object entry in additionalInput) {
@@ -247,8 +257,11 @@ class GenericMethod {
             else if (entry instanceof FileGroup) {
                 //Take a group and store all files in that group.
                 allInputValues << (FileGroup) entry;
-
-            } else {
+            } else if (entry instanceof Map<String, String>) {
+                (entry as Map<String, String>).forEach { String k, String v ->
+                    parameters[k] = v
+                }
+            } else {               // Yet a catch-all. Better would be an exe
                 String[] split = entry.toString().split("=");
                 if (split.length != 2)
                     throw new RuntimeException("Not able to convert entry ${entry.toString()} to parameter.")
