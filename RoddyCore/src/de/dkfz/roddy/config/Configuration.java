@@ -6,15 +6,14 @@
 
 package de.dkfz.roddy.config;
 
-import de.dkfz.roddy.config.ResourceSetSize;
 import de.dkfz.roddy.config.loader.ConfigurationFactory;
 import de.dkfz.roddy.config.loader.ConfigurationLoadError;
-import de.dkfz.roddy.core.RuntimeService;
-import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.config.validation.ConfigurationValidationError;
 import de.dkfz.roddy.core.ExecutionContext;
+import de.dkfz.roddy.core.RuntimeService;
 import de.dkfz.roddy.plugins.LibrariesFactory;
 import de.dkfz.roddy.plugins.PluginInfo;
+import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import java.io.File;
@@ -80,23 +79,28 @@ public class Configuration implements ContainerParent<Configuration> {
     private List<ConfigurationValidationError> listOfValidationErrors = new LinkedList<>();
     private List<ConfigurationLoadError> listOfLoadErrors = new LinkedList<>();
 
-    private final RecursiveOverridableMapContainerForConfigurationValues configurationValues = new RecursiveOverridableMapContainerForConfigurationValues(this, "configurationValues");
+    private final RecursiveOverridableMapContainerForConfigurationValues configurationValues =
+            new RecursiveOverridableMapContainerForConfigurationValues(this, "configurationValues");
 
     /**
      * Bundles store values with the same name for the same configuration.
      * This can sometimes be necessary. So you do not need a sub configuration for each different set of
      * values.
      */
-    private final RecursiveOverridableMapContainer<String, ConfigurationValueBundle, Configuration> configurationValueBundles = new RecursiveOverridableMapContainer<>(this, "configurationValueBundles");
+    private final RecursiveOverridableMapContainer<String, ConfigurationValueBundle, Configuration> configurationValueBundles =
+            new RecursiveOverridableMapContainer<>(this, "configurationValueBundles");
 
-    private final RecursiveOverridableMapContainer<String, ToolEntry, Configuration> tools = new RecursiveOverridableMapContainer<>(this, "tools");
+    private final RecursiveOverridableMapContainer<String, ToolEntry, Configuration> tools =
+            new RecursiveOverridableMapContainer<>(this, "tools");
 
-    private final RecursiveOverridableMapContainer<String, Enumeration, Configuration> enumerations = new RecursiveOverridableMapContainer<>(this, "enumerations");
+    private final RecursiveOverridableMapContainer<String, Enumeration, Configuration> enumerations =
+            new RecursiveOverridableMapContainer<>(this, "enumerations");
 
-    private RecursiveOverridableMapContainer<String, FilenamePattern, Configuration> filenamePatterns = new RecursiveOverridableMapContainer<>(this, "filenamePatterns");
+    private RecursiveOverridableMapContainer<String, FilenamePattern, Configuration> filenamePatterns =
+            new RecursiveOverridableMapContainer<>(this, "filenamePatterns");
 
     /**
-     * Creates a new configuration which can be filled by filling the containers.
+     * Creates a new configuration that can be filled by filling the containers.
      */
     public Configuration(InformationalConfigurationContent icc) {
         this.informationalConfigurationContent = icc;
@@ -104,7 +108,7 @@ public class Configuration implements ContainerParent<Configuration> {
 
     /**
      * For main configurations
-     * Read reversly
+     * Read reversely
      * Remember to set the parent config afterwards.
      * With this configuration no dependency tree is created!
      */

@@ -6,45 +6,50 @@
 
 package de.dkfz.roddy.config
 
-import de.dkfz.roddy.config.ResourceSetSize
 import groovy.util.slurpersupport.NodeChild
 
 /**
+ *
  */
 @groovy.transform.CompileStatic
 class InformationalConfigurationContent {
-    public final InformationalConfigurationContent parent;
-    public final Configuration.ConfigurationType type;
-    public final String name;
-    public final String description;
-    public final String className;
-    public final NodeChild configurationNode;
-    public final String imports;
-    public final File file;
-    public final String text;
-    public final String id;
+    public final InformationalConfigurationContent parent
+    public final Configuration.ConfigurationType type
+    public final String name
+    public final String description
+    public final String className
+    public final NodeChild configurationNode
+    public final String imports
+    public final File file
+    public final String text
+    public final String id
 
-    private File readmeFile;
+    private File readmeFile
 
-    private final List<InformationalConfigurationContent> subConf;
-    private final List<String> analyses;
-    public final ResourceSetSize usedresourcessize;
+    private final List<InformationalConfigurationContent> subConf
+    private final List<String> analyses
+    public final ResourceSetSize usedresourcessize
 
-    InformationalConfigurationContent(InformationalConfigurationContent parent, Configuration.ConfigurationType type, String name, String description, String className, NodeChild configurationNode, String imports, ResourceSetSize usedresourcessize, List<String> analyses, List<InformationalConfigurationContent> subContent, File file, String text) {
-        this(parent, type, name, description, className, configurationNode, imports, subContent, file, text, usedresourcessize);
+    InformationalConfigurationContent(InformationalConfigurationContent parent, Configuration.ConfigurationType type, String name, String description,
+                                      String className, NodeChild configurationNode, String imports, ResourceSetSize usedresourcessize,
+                                      List<String> analyses, List<InformationalConfigurationContent> subContent, File file, String text) {
+        this(parent, type, name, description, className, configurationNode, imports, subContent, file, text, usedresourcessize)
         if (analyses != null)
-            this.analyses = analyses;
+            this.analyses = analyses
         else
-            this.analyses = [];
+            this.analyses = []
     }
 
-    InformationalConfigurationContent(InformationalConfigurationContent parent, Configuration.ConfigurationType type, String name, String description, String className, NodeChild configurationNode, String imports, List<InformationalConfigurationContent> subContent, File file, String text, ResourceSetSize usedresourcessize = null) {
+    InformationalConfigurationContent(InformationalConfigurationContent parent, Configuration.ConfigurationType type, String name, String description,
+                                      String className, NodeChild configurationNode, String imports,
+                                      List<InformationalConfigurationContent> subContent, File file, String text,
+                                      ResourceSetSize usedresourcessize = null) {
         this.type = type
         this.name = name
         this.className = className
         this.configurationNode = configurationNode
         this.description = description
-        this.usedresourcessize = usedresourcessize;
+        this.usedresourcessize = usedresourcessize
         if (parent == null && type == Configuration.ConfigurationType.PROJECT) {
             if (imports) {
                 this.imports = "default,${imports}"
@@ -52,19 +57,19 @@ class InformationalConfigurationContent {
                 this.imports = "default"
             }
         } else {
-            this.imports = imports;
+            this.imports = imports
         }
         this.file = file
         this.parent = parent
         if (parent != null)
-            id = "${parent.id}.${name}";
+            id = "${parent.id}.${name}"
         else
-            id = name;
+            id = name
         if (subContent != null)
-            this.subConf = subContent;
+            this.subConf = subContent
         else
-            this.subConf = new LinkedList<InformationalConfigurationContent>();
-        this.text = text;
+            this.subConf = new LinkedList<InformationalConfigurationContent>()
+        this.text = text
     }
 
     /**
@@ -74,7 +79,7 @@ class InformationalConfigurationContent {
      * @return
      */
     List<String> getListOfAnalyses() {
-        return new LinkedList<String>(analyses);
+        return new LinkedList<String>(analyses)
     }
 
     InformationalConfigurationContent getParent() {
@@ -82,26 +87,26 @@ class InformationalConfigurationContent {
     }
 
     List<InformationalConfigurationContent> getSubContent() {
-        return new LinkedList<InformationalConfigurationContent>(subConf);
+        return new LinkedList<InformationalConfigurationContent>(subConf)
     }
 
     List<InformationalConfigurationContent> getAllSubContent() {
-        List<InformationalConfigurationContent> sc = [];
-        sc.addAll(subConf);
-        subConf.each { InformationalConfigurationContent it -> sc.addAll(it.getAllSubContent()); }
-        return sc;
+        List<InformationalConfigurationContent> sc = []
+        sc.addAll(subConf)
+        subConf.each { InformationalConfigurationContent it -> sc.addAll(it.getAllSubContent()) }
+        return sc
     }
 
     @Override
-    public String toString() {
-        return "Config: ${name} of type ${type} in file ${file.absolutePath}";
+    String toString() {
+        return "Config: ${name} of type ${type} in file ${file.absolutePath}"
     }
 
-    public void setReadmeFile(File file) {
-        this.readmeFile = file;
+    void setReadmeFile(File file) {
+        this.readmeFile = file
     }
 
-    public File getReadmeFile() {
-        return readmeFile;
+    File getReadmeFile() {
+        return readmeFile
     }
 }

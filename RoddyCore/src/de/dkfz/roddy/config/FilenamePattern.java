@@ -183,12 +183,9 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
      * @return
      */
     String fillConfigurationVariables(String src, ExecutionContext context) {
-        Configuration cfg = context.getConfiguration();
-        boolean somethingChanged = true;
+        Configuration cfg = context.getCurrentJobConfiguration();
         RecursiveOverridableMapContainerForConfigurationValues configurationValues = cfg.getConfigurationValues();
-        while (src.contains(PLACEHOLDER_CVALUE) && somethingChanged) {
-            somethingChanged = true;
-            String oldValue = src;
+        while (src.contains(PLACEHOLDER_CVALUE)) {
             Command command = FilenamePatternHelper.extractCommand(context, PLACEHOLDER_CVALUE, src);
             CommandAttribute name = command.attributes.get("name");
             CommandAttribute defaultValue = command.attributes.get("default");
@@ -216,11 +213,10 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
                     src = src.replace(command.fullString, "${" + command.rawName + "}");
                 }
             }
-            somethingChanged = !oldValue.equals(src);
         }
 
         /** Try and resolve the leftofer ${someKindOfValue}, stop, when nothing changed. **/
-        somethingChanged = true;
+        boolean somethingChanged = true;
         Map<String, String> blacklist = new LinkedHashMap<>();
         int blacklistID = 1000;
         while (src.contains("${") && somethingChanged) {
