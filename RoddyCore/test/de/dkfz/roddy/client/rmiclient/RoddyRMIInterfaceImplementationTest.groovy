@@ -9,7 +9,7 @@ package de.dkfz.roddy.client.rmiclient;
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.RoddyTest
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
-import de.dkfz.roddy.execution.io.ExecutionHelper
+import de.dkfz.roddy.execution.io.LocalExecutionHelper
 import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
@@ -68,7 +68,7 @@ public class RoddyRMIInterfaceImplementationTest {
         testSource = new File(LibrariesFactory.groovyClassLoader.getResource("exampleProject").file)
         testBase = MockupExecutionContextBuilder.getDirectory(RoddyRMIInterfaceImplementationTest.name, "exampleProject");
 
-        ExecutionHelper.executeSingleCommand("mkdir -p ${testBase.parent}; cp -r ${testSource}/* ${testBase}");
+        LocalExecutionHelper.executeSingleCommand("mkdir -p ${testBase.parent}; cp -r ${testSource}/* ${testBase}");
 
         testproject = new File(testBase, "project");
 

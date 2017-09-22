@@ -19,7 +19,7 @@ import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.config.ConfigurationConstants;
 import de.dkfz.roddy.config.ConfigurationValue;
 import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues;
-import de.dkfz.roddy.execution.io.ExecutionHelper;
+import de.dkfz.roddy.execution.io.LocalExecutionHelper;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.tools.AppConfig;
@@ -261,7 +261,7 @@ public class Roddy {
         logger.postAlwaysInfo("Roddy version " + Constants.APP_CURRENT_VERSION_STRING);
 
         time("initial checks");
-        if (!performInitialCheck())
+        if (!roddyExecutionRequirementsFulfilled())
             exit(1);
 
         time("ftoggleini");
@@ -280,6 +280,8 @@ public class Roddy {
         LoggerWrapper.setCentralLogFile(clf);
 
         if (initializeServices(clc.startupMode.needsFullInit())) {
+            if (!jobExecutionRequirementsFulfilled())
+                exit(1);
             time("initserv");
             parseRoddyStartupModeAndRun(clc);
             time("parsemode");
@@ -291,17 +293,34 @@ public class Roddy {
         time("exit");
     }
 
-    public static boolean performInitialCheck() {
+    public static boolean jobExecutionRequirementsFulfilled() {
+        List<String> errors = new LinkedList<>();
+        errors.add("Requirements for job execution are not fulfilled:");
+        ExecutionService jobSubmissionExecutionService = ExecutionService.getInstance();
+
+        if (!jobSubmissionExecutionService.execute("which unzip").isSuccessful())
+            errors.add("\tTool unzip not found.");
+
+        if (!jobSubmissionExecutionService.execute("which lockfile").isSuccessful())
+            errors.add("\tTool lockfile not found. lockfile can be found e.g. in the package procmail.");
+
+        if (errors.size() == 1) return true;
+
+        logger.severe(RoddyIOHelperMethods.joinArray(errors.toArray(new String[0]), "\n"));
+        logger.severe("Please make sure that the dependencies are installed on the submission and execution hosts.");
+        return false;
+    }
+
+
+    public static boolean roddyExecutionRequirementsFulfilled() {
         List<String> errors = new LinkedList<>();
         errors.add("Roddy cannot run:");
-        if (!ExecutionHelper.executeCommandWithExtendedResult("which jar").isSuccessful())
+        if (!LocalExecutionHelper.executeCommandWithExtendedResult("which jar").isSuccessful())
             errors.add("\tTool jar not found.");
-        if (!ExecutionHelper.executeCommandWithExtendedResult("which zip").isSuccessful())
+        if (!LocalExecutionHelper.executeCommandWithExtendedResult("which zip").isSuccessful())
             errors.add("\tTool zip not found.");
-        if (!ExecutionHelper.executeCommandWithExtendedResult("which unzip").isSuccessful())
+        if (!LocalExecutionHelper.executeCommandWithExtendedResult("which unzip").isSuccessful())
             errors.add("\tTool unzip not found.");
-        if (!ExecutionHelper.executeCommandWithExtendedResult("which lockfile").isSuccessful())
-            errors.add("\tTool lockfile not found. lockfile can be found e.g. in the package procmail.");
 
         if (errors.size() == 1) return true;
 
@@ -923,7 +942,7 @@ public class Roddy {
         return LibrariesFactory.PLUGIN_VERSION_CURRENT;
     }
 
-    public static FileSystemAccessProvider getLocalFileSystemInfoProvider() {
+    public static FileSystemAccessProvider getLocalFileSystemAccessProvider() {
         return new FileSystemAccessProvider();
     }
 
