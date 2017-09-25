@@ -6,7 +6,6 @@
 
 package de.dkfz.roddy.config
 
-import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
@@ -39,7 +38,7 @@ class FilenamePatternTest {
         LibrariesFactory.getInstance().loadLibraries(LibrariesFactory.buildupPluginQueue(LibrariesFactoryTest.callLoadMapOfAvailablePlugins(), "DefaultPlugin").values() as List)
         ConfigurationFactory.initialize(LibrariesFactory.getInstance().getLoadedPlugins().collect { it -> it.getConfigurationDirectory() })
 
-        final Configuration mockupConfig = new Configuration(new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "default", "", "", null, "", ResourceSetSize.l, null, null, null, null), ConfigurationFactory.getInstance().getConfiguration("default")) {
+        final Configuration mockupConfig = new Configuration(new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "default", "", "", null, "", ResourceSetSize.l, null, null, null, null), ConfigurationFactory.getInstance().getConfiguration("default")) {
             @Override
             File getSourceToolPath(String tool) {
                 if (tool == "wrapinScript")
@@ -144,7 +143,7 @@ class FilenamePatternTest {
         String srcFull = 'something_${avalue}_${cvalue,name="anothervalue"}_${cvalue,name="unknown",default="bebe"}'
         ExecutionContext context = createMockupContext()
         FilenamePattern fpattern = createFilenamePattern()
-        assert fpattern.fillConfigurationVariables(srcFull, context) == 'something_abc_abc_bebe'
+        assert fpattern.fillConfigurationVariables(srcFull, context.configuration) == 'something_abc_abc_bebe'
     }
 
     @Test
@@ -152,7 +151,7 @@ class FilenamePatternTest {
         String srcFull = 'something_${avalue}_${cvalue,name="anothervalue"}_${cvalue,name="unknown"}'
         ExecutionContext context = createMockupContext()
         FilenamePattern fpattern = createFilenamePattern()
-        assert fpattern.fillConfigurationVariables(srcFull, context) == 'something_abc_abc_${cvalue}'
+        assert fpattern.fillConfigurationVariables(srcFull, context.configuration) == 'something_abc_abc_${cvalue}'
     }
 
     @Test
@@ -160,7 +159,7 @@ class FilenamePatternTest {
         String srcFull = 'something_${avalue}_${cvalue,name="unknown"}_${pid}_${fileStageID[0]}'
         ExecutionContext context = createMockupContext()
         FilenamePattern fpattern = createFilenamePattern()
-        assert fpattern.fillConfigurationVariables(srcFull, context) == 'something_abc_${cvalue}_${pid}_${fileStageID[0]}'
+        assert fpattern.fillConfigurationVariables(srcFull, context.configuration) == 'something_abc_${cvalue}_${pid}_${fileStageID[0]}'
     }
 
     private FilenamePattern createFilenamePattern() {

@@ -472,7 +472,7 @@ public abstract class ExecutionService implements BEExecutionService {
     }
 
     void markConfiguredToolsAsExecutable(ExecutionContext context) {
-        logger.severe("BEExecutionService.markConfiguredToolsAsExecutable is not implemented yet! Only checks for executability are available.")
+        logger.postSometimesInfo("BEExecutionService.markConfiguredToolsAsExecutable is not implemented yet! Only checks for executability are available.")
 //        context.getConfiguration().getTools().each {
 //            ToolEntry tool ->
 //                File toolPath = context.configuration.getProcessingToolPath(context, tool.id)

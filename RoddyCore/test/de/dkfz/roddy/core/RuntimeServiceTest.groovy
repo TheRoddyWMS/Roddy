@@ -20,8 +20,6 @@ import groovy.transform.CompileStatic
 import org.junit.BeforeClass
 import org.junit.Test
 
-import java.util.Map
-
 /**
  * Created by heinold on 09.11.15.
  */
@@ -56,7 +54,7 @@ class RuntimeServiceTest {
 
         }
 
-        final Configuration mockupConfig = new Configuration(new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null))
+        final Configuration mockupConfig = new Configuration(new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null))
 
         mockupConfig.getConfigurationValues().add(new ConfigurationValue(RuntimeService.RODDY_CENTRAL_EXECUTION_DIRECTORY, "/tmp/roddyCentralDirectory"))
 

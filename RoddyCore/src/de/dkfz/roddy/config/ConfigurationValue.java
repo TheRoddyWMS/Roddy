@@ -274,7 +274,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         if (configuration != null) {
             List<String> valueIDs = getIDsForParentValues();
             if (CollectionHelperMethods.intersects(blackList, valueIDs)) {
-                RuntimeException exc = new RuntimeException("Cyclic dependency found for cvalue '" + this.id + "' in file " + (configuration.informationalConfigurationContent != null ? configuration.informationalConfigurationContent.file : configuration.getID()));
+                RuntimeException exc = new RuntimeException("Cyclic dependency found for cvalue '" + this.id + "' in file " + (configuration.preloadedConfiguration != null ? configuration.preloadedConfiguration.file : configuration.getID()));
                 configuration.addLoadError(new ConfigurationLoadError(configuration, "cValues", exc.getMessage(), exc));
                 throw exc;
             }

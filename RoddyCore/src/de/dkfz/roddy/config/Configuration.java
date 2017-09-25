@@ -66,7 +66,7 @@ public class Configuration implements ContainerParent<Configuration> {
     /**
      * The prototype with basic information about this configuration
      */
-    protected final InformationalConfigurationContent informationalConfigurationContent;
+    protected final PreloadedConfiguration preloadedConfiguration;
 
     /**
      * A list of parent configuration objects. Order matters! Configurations are stored with
@@ -102,8 +102,8 @@ public class Configuration implements ContainerParent<Configuration> {
     /**
      * Creates a new configuration that can be filled by filling the containers.
      */
-    public Configuration(InformationalConfigurationContent icc) {
-        this.informationalConfigurationContent = icc;
+    public Configuration(PreloadedConfiguration icc) {
+        this.preloadedConfiguration = icc;
     }
 
     /**
@@ -112,20 +112,20 @@ public class Configuration implements ContainerParent<Configuration> {
      * Remember to set the parent config afterwards.
      * With this configuration no dependency tree is created!
      */
-    public Configuration(InformationalConfigurationContent informationalConfigurationContent, Configuration parentConfig) {
-        this.informationalConfigurationContent = informationalConfigurationContent;
+    public Configuration(PreloadedConfiguration preloadedConfiguration, Configuration parentConfig) {
+        this.preloadedConfiguration = preloadedConfiguration;
         this.addParent(parentConfig);
     }
 
     /**
-     * @param informationalConfigurationContent
+     * @param preloadedConfiguration
      * @param parentConfigurations A list of parent configuration objects.
      *                             Order matters! Configurations are stored with
      *                             increasing priority, so pcs[0] has the lowest
      *                             and pcs[n -1] has the highest priority
      */
-    public Configuration(InformationalConfigurationContent informationalConfigurationContent, List<Configuration> parentConfigurations) {
-        this.informationalConfigurationContent = informationalConfigurationContent;
+    public Configuration(PreloadedConfiguration preloadedConfiguration, List<Configuration> parentConfigurations) {
+        this.preloadedConfiguration = preloadedConfiguration;
         for (Configuration parentConfiguration : parentConfigurations) {
             addParent(parentConfiguration);
         }
@@ -134,24 +134,24 @@ public class Configuration implements ContainerParent<Configuration> {
     /**
      * For main configurations
      */
-    public Configuration(InformationalConfigurationContent informationalConfigurationContent, Map<String, Configuration> subConfigurations) {
-        this.informationalConfigurationContent = informationalConfigurationContent;
+    public Configuration(PreloadedConfiguration preloadedConfiguration, Map<String, Configuration> subConfigurations) {
+        this.preloadedConfiguration = preloadedConfiguration;
         if (subConfigurations != null) {
             this.subConfigurations.putAll(subConfigurations);
         }
     }
 
-    public InformationalConfigurationContent getInformationalConfigurationContent() {
-        return informationalConfigurationContent;
+    public PreloadedConfiguration getPreloadedConfiguration() {
+        return preloadedConfiguration;
     }
 
     public List<String> getImportConfigurations() {
-        if (informationalConfigurationContent.imports.trim().length() == 0) return new LinkedList<String>();
-        return Arrays.asList(informationalConfigurationContent.imports.trim().split(SPLIT_COMMA));
+        if (preloadedConfiguration.imports.trim().length() == 0) return new LinkedList<String>();
+        return Arrays.asList(preloadedConfiguration.imports.trim().split(SPLIT_COMMA));
     }
 
     public ConfigurationType getConfigurationLevel() {
-        return informationalConfigurationContent.type;
+        return preloadedConfiguration.type;
     }
 
     public void removeFilenamePatternsRecursively() {
@@ -187,7 +187,7 @@ public class Configuration implements ContainerParent<Configuration> {
      * @return
      */
     public String getName() {
-        return informationalConfigurationContent.name;
+        return preloadedConfiguration.name;
     }
 
     /**
@@ -197,22 +197,22 @@ public class Configuration implements ContainerParent<Configuration> {
      */
     @Override
     public String getID() {
-        return informationalConfigurationContent.id;
+        return preloadedConfiguration.id;
     }
 
     public String getDescription() {
-        return informationalConfigurationContent.description;
+        return preloadedConfiguration.description;
     }
 
     public String getConfiguredClass() {
-        return informationalConfigurationContent.className;
+        return preloadedConfiguration.className;
     }
 
     public ResourceSetSize getResourcesSize() {
         if(configurationValues.hasValue(ConfigurationConstants.CFG_USED_RESOURCES_SIZE)) {
             return ResourceSetSize.valueOf(configurationValues.getValue(ConfigurationConstants.CFG_USED_RESOURCES_SIZE).toString());
         }
-        return informationalConfigurationContent.usedresourcessize;
+        return preloadedConfiguration.usedresourcessize;
     }
 
     /**
@@ -228,9 +228,9 @@ public class Configuration implements ContainerParent<Configuration> {
         String projectName = null;
         if (this.getConfigurationLevel() == ConfigurationType.PROJECT) {
             projectName = configurationValues.get("projectName", getName()).toString();
-        } else if (this.informationalConfigurationContent.type.ordinal() < ConfigurationType.PROJECT.ordinal()) {
+        } else if (this.preloadedConfiguration.type.ordinal() < ConfigurationType.PROJECT.ordinal()) {
             //This is not a project configuration and not a variant.
-        } else if (this.informationalConfigurationContent.type.ordinal() > ConfigurationType.PROJECT.ordinal()) {
+        } else if (this.preloadedConfiguration.type.ordinal() > ConfigurationType.PROJECT.ordinal()) {
             //Return the parents getProjectName(). This is recursive and should lead to the project configuration.
             String tempName = null;
             for (Configuration parent : parents) {

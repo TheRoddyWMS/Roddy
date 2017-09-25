@@ -318,7 +318,7 @@ class BashConverter extends ConfigurationConverter {
         }
 
         Map<String, Integer> doubletteCounter = new HashMap<String, Integer>();
-        InformationalConfigurationContent userConfig = new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "userconfig_INVALIDNAME", "An imported configuration, please change the name and this description. Also set the classname and type as necessary.", null, null, "", null, null, "");
+        PreloadedConfiguration userConfig = new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "userconfig_INVALIDNAME", "An imported configuration, please change the name and this description. Also set the classname and type as necessary.", null, null, "", null, null, "");
         Configuration newCfg = new Configuration(userConfig, (Map<String, Configuration>) null);
         Map<String, ConfigurationValue> cValues = newCfg.configurationValues.getMap();
         Map<String, ConfigurationValueBundle> cValueBundles = newCfg.configurationValueBundles.getMap();

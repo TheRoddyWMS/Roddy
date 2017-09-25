@@ -65,11 +65,11 @@ class ConfigurationFactory {
 
     private List<File> configurationDirectories = []
 
-    private Map<String, InformationalConfigurationContent> availableConfigurations = [:]
+    private Map<String, PreloadedConfiguration> availableConfigurations = [:]
 
-    private Map<ConfigurationType, List<InformationalConfigurationContent>> availableConfigurationsByType = [:]
+    private Map<ConfigurationType, List<PreloadedConfiguration>> availableConfigurationsByType = [:]
 
-    private Map<ConfigurationType, Map<String, InformationalConfigurationContent>> availableConfigurationsByTypeAndID = [:]
+    private Map<ConfigurationType, Map<String, PreloadedConfiguration>> availableConfigurationsByTypeAndID = [:]
 
 
     static void initialize(List<File> configurationDirectories = null) {
@@ -123,7 +123,7 @@ class ConfigurationFactory {
                     availableConfigurations[icc.id] = icc
                     availableConfigurationsByType.get(icc.type, []) << icc
                     availableConfigurationsByTypeAndID.get(icc.type, [:])[icc.id] = icc
-                    for (InformationalConfigurationContent iccSub in icc.getAllSubContent()) {
+                    for (PreloadedConfiguration iccSub in icc.getAllSubContent()) {
                         availableConfigurations[iccSub.id] = iccSub
                     }
 
@@ -159,7 +159,7 @@ class ConfigurationFactory {
                     availableConfigurations[icc.id] = icc
                     availableConfigurationsByType.get(icc.type, []) << icc
                     availableConfigurationsByTypeAndID.get(icc.type, [:])[icc.id] = icc
-                    for (InformationalConfigurationContent iccSub in icc.getAllSubContent()) {
+                    for (PreloadedConfiguration iccSub in icc.getAllSubContent()) {
                         availableConfigurations[iccSub.id] = iccSub
                     }
 
@@ -177,7 +177,7 @@ class ConfigurationFactory {
         }
     }
 
-    Map<String, InformationalConfigurationContent> getAllAvailableConfigurations() {
+    Map<String, PreloadedConfiguration> getAllAvailableConfigurations() {
         return availableConfigurations
     }
 
@@ -186,7 +186,7 @@ class ConfigurationFactory {
      * Returns an empty list if no configurations is known.
      * @return
      */
-    List<InformationalConfigurationContent> getAvailableAnalysisConfigurations() {
+    List<PreloadedConfiguration> getAvailableAnalysisConfigurations() {
         return getAvailableConfigurationsOfType(ConfigurationType.ANALYSIS)
     }
 
@@ -195,7 +195,7 @@ class ConfigurationFactory {
      * Returns an empty list if no configurations is known.
      * @return
      */
-    List<InformationalConfigurationContent> getAvailableProjectConfigurations() {
+    List<PreloadedConfiguration> getAvailableProjectConfigurations() {
         return getAvailableConfigurationsOfType(ConfigurationType.PROJECT)
     }
 
@@ -204,7 +204,7 @@ class ConfigurationFactory {
      * Returns an empty list if no configurations is known.
      * @return
      */
-    List<InformationalConfigurationContent> getAvailableConfigurationsOfType(ConfigurationType type) {
+    List<PreloadedConfiguration> getAvailableConfigurationsOfType(ConfigurationType type) {
         return availableConfigurationsByType.get(type, [])
     }
 
@@ -230,12 +230,12 @@ class ConfigurationFactory {
      * Loads basic info about a configuration file.
      *
      * Basic info contains i.e. the name, description, subconfigs and the type of a configuration.
-     * @see InformationalConfigurationContent
+     * @see PreloadedConfiguration
      *
      * @param file The config file.
      * @return An object containing basic information about a configuration.
      */
-    InformationalConfigurationContent loadInformationalConfigurationContent(File file) {
+    PreloadedConfiguration loadInformationalConfigurationContent(File file) {
         String text = loadAndPreprocessTextFromFile(file)
         NodeChild xml = (NodeChild) new XmlSlurper().parseText(text)
         return _loadInformationalConfigurationContent(file, text, xml, null)
@@ -248,11 +248,11 @@ class ConfigurationFactory {
      * @return
      */
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private InformationalConfigurationContent _loadInformationalConfigurationContent(File file, String text, NodeChild configurationNode, InformationalConfigurationContent parent) {
+    private PreloadedConfiguration _loadInformationalConfigurationContent(File file, String text, NodeChild configurationNode, PreloadedConfiguration parent) {
         NodeChild.metaClass.extract = { String id, String defaultValue -> return extractAttributeText((NodeChild) delegate, id, defaultValue) }
         Map<String, Configuration> subConfigurations = [:]
-        List<InformationalConfigurationContent> subConf = new LinkedList<InformationalConfigurationContent>()
-        InformationalConfigurationContent icc = null
+        List<PreloadedConfiguration> subConf = new LinkedList<PreloadedConfiguration>()
+        PreloadedConfiguration icc = null
 
         Configuration.ConfigurationType type = extractAttributeText(configurationNode, "configurationType", parent != null ? parent.type.name().toUpperCase() : Configuration.ConfigurationType.OTHER.name()).toUpperCase()
         String cls = extractAttributeText(configurationNode, "class", Project.class.name)
@@ -270,9 +270,9 @@ class ConfigurationFactory {
                 analyses = parent.getListOfAnalyses()
             }
             ResourceSetSize setSize = ResourceSetSize.valueOf(extractAttributeText(configurationNode, "usedresourcessize", "l"))
-            icc = new InformationalConfigurationContent(parent, type, name, description, cls, configurationNode, imports, setSize, analyses, subConf, file, text)
+            icc = new PreloadedConfiguration(parent, type, name, description, cls, configurationNode, imports, setSize, analyses, subConf, file, text)
         } else {
-            icc = new InformationalConfigurationContent(parent, type, name, description, cls, configurationNode, imports, subConf, file, text)
+            icc = new PreloadedConfiguration(parent, type, name, description, cls, configurationNode, imports, subConf, file, text)
         }
 
         for (subConfiguration in configurationNode.subconfigurations.configuration) {
@@ -298,7 +298,7 @@ class ConfigurationFactory {
     }
 
     Configuration getConfiguration(String usedConfiguration) {
-        InformationalConfigurationContent icc = availableConfigurations[usedConfiguration]
+        PreloadedConfiguration icc = availableConfigurations[usedConfiguration]
 
         if (icc == null) {
             throw new ProjectLoaderException("The configuration identified by \"${usedConfiguration}\" cannot be found, is the identifier correct? Is the configuration available? Possible are:\n\t"
@@ -309,7 +309,7 @@ class ConfigurationFactory {
         return loadConfiguration(icc)
     }
 
-    Configuration loadConfiguration(InformationalConfigurationContent icc) {
+    Configuration loadConfiguration(PreloadedConfiguration icc) {
         Configuration config = _loadConfiguration(icc)
 
         for (String ic in config.getImportConfigurations()) {
@@ -326,9 +326,9 @@ class ConfigurationFactory {
 
     /**
      * Reverse - recursively load a configuration. Start with the deepest configuration object and move to the front.
-     * The reverse walk ist possible as the information about dependencies is stored in the InformationalConfigurationContent objects which are created on startup.
+     * The reverse walk ist possible as the information about dependencies is stored in the PreloadedConfiguration objects which are created on startup.
      */
-    private Configuration _loadConfiguration(InformationalConfigurationContent icc) {
+    private Configuration _loadConfiguration(PreloadedConfiguration icc) {
         Configuration parentConfig = icc.parent != null ? loadConfiguration(icc.parent) : null
         NodeChild configurationNode = icc.configurationNode
         Configuration config = null
@@ -376,7 +376,7 @@ class ConfigurationFactory {
      * @return A new configuration object
      */
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private Configuration createConfigurationObject(InformationalConfigurationContent icc, NodeChild configurationNode, Configuration parentConfig) {
+    private Configuration createConfigurationObject(PreloadedConfiguration icc, NodeChild configurationNode, Configuration parentConfig) {
         Configuration config
         if (icc.type >= ConfigurationType.PROJECT) {
             Map<String, AnalysisConfiguration> availableAnalyses = [:]

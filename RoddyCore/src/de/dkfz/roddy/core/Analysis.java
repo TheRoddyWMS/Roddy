@@ -557,6 +557,6 @@ public class Analysis {
     }
 
     public File getReadmeFile() {
-        return getConfiguration().getInformationalConfigurationContent().getReadmeFile();
+        return getConfiguration().getPreloadedConfiguration().getReadmeFile();
     }
 }

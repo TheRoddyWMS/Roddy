@@ -11,6 +11,7 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
+import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -127,7 +128,7 @@ class ExecutionContext {
     /**
      * Job-specific configuration object used to evaluate variables in global configuration and job parameters.
      */
-    private Configuration currentJobConfiguration = null
+    private Map<Integer, Configuration> currentJobConfiguration = null
     /**
      * The user who created the context (if known)
      */
@@ -293,12 +294,8 @@ class ExecutionContext {
         return analysis.getConfiguration()
     }
 
-    Configuration getCurrentJobConfiguration() {
-        return currentJobConfiguration
-    }
-
-    void setCurrentJobConfiguration(Configuration configuration) {
-        this.currentJobConfiguration = configuration
+    Configuration createJobConfiguration() {
+        return new Configuration(null, getConfiguration())
     }
 
     boolean getFeatureToggleStatus(AvailableFeatureToggles toggle) {

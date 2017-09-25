@@ -22,7 +22,6 @@ import de.dkfz.roddy.plugins.PluginLoaderException
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
 import java.lang.reflect.InvocationTargetException
-import java.nio.channels.FileChannel
 import java.nio.channels.FileLock
 
 /**
@@ -308,7 +307,7 @@ class ProjectLoader {
             RoddyCLIClient.checkConfigurationErrorsAndMaybePrintAndFail(projectConfiguration)
         }
 
-        InformationalConfigurationContent iccAnalysis = ((AnalysisConfigurationProxy) projectConfiguration.getAnalysis(analysisID)).informationalConfigurationContent;
+        PreloadedConfiguration iccAnalysis = ((AnalysisConfigurationProxy) projectConfiguration.getAnalysis(analysisID)).preloadedConfiguration;
         if (!XSDValidator.validateTree(iccAnalysis) && Roddy.isStrictModeEnabled()) {
             throw new ProjectLoaderException("Validation of project configuration failed.")
         }
@@ -417,15 +416,15 @@ class ProjectLoader {
     }
 
     String getFullAnalysisID(String projectID, String analysisID) {
-        InformationalConfigurationContent iccProject = loadAndValidateProjectICCOrFail(projectID);
+        PreloadedConfiguration iccProject = loadAndValidateProjectICCOrFail(projectID);
 
         String fullAnalysisID = loadFullAnalysisIDOrFail(iccProject, analysisID);
         fullAnalysisID
     }
 
-    InformationalConfigurationContent loadAndValidateProjectICCOrFail(String projectID) {
+    PreloadedConfiguration loadAndValidateProjectICCOrFail(String projectID) {
         ConfigurationFactory fac = ConfigurationFactory.getInstance();
-        InformationalConfigurationContent iccProject = fac.getAllAvailableConfigurations()[projectID];
+        PreloadedConfiguration iccProject = fac.getAllAvailableConfigurations()[projectID];
 
         if (!iccProject) {
             throw new ProjectLoaderException("The project configuration \"${projectID}\" could not be found (call Roddy with listworkflows)")
@@ -438,7 +437,7 @@ class ProjectLoader {
         return iccProject;
     }
 
-    String loadFullAnalysisIDOrFail(InformationalConfigurationContent iccProject, String analysisID) {
+    String loadFullAnalysisIDOrFail(PreloadedConfiguration iccProject, String analysisID) {
         String fullAnalysisID = iccProject.getListOfAnalyses().find { String aID -> aID.split("[:][:]")[0] == analysisID; }
 
         if (!fullAnalysisID) {
