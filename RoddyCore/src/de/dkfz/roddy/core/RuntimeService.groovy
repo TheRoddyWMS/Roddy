@@ -470,7 +470,7 @@ public class RuntimeService {
                 try {
                     dataSetID = analysis.getRuntimeService().extractDataSetIDFromPath(path, analysis);
                 } catch (RuntimeException e) {
-                    throw new RuntimeException(e.message + ". If you moved the .roddyExecCache.txt, please delete it and restart Roddy.")
+                    throw new RuntimeException(e.message + ". Please delete/backup '${cacheFile}' and restart Roddy.")
                 }
                 Analysis dataSetAnalysis = analysis.getProject().getAnalysis(info[1])
                 DataSet ds = analysis.getDataSet(dataSetID);

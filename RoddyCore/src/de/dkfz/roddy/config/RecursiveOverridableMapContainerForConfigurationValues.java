@@ -38,8 +38,7 @@ public class RecursiveOverridableMapContainerForConfigurationValues
      * expected C.b = 'klm'
      * expected B.b = 'hij'
      *
-     * If you do not elevate the value, B.b would resolve to B.b = 'abc', because the configuration value does only know about its parent and
-     * predecessors
+     * If you do not elevate the value, B.b would resolve to B.b = 'abc', because the configuration value does only know about its parent and predecessors.
      *
      * @param src
      * @return
