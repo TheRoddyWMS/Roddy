@@ -8,7 +8,6 @@ package de.dkfz.roddy;
 
 import com.btr.proxy.search.ProxySearch;
 import de.dkfz.roddy.config.ResourceSetSize;
-import de.dkfz.roddy.config.loader.ConfigurationLoaderException;
 import de.dkfz.roddy.execution.BEExecutionService;
 import de.dkfz.roddy.execution.jobs.*;
 import de.dkfz.roddy.client.RoddyStartupModes;
@@ -20,7 +19,7 @@ import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.config.ConfigurationConstants;
 import de.dkfz.roddy.config.ConfigurationValue;
 import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues;
-import de.dkfz.roddy.execution.io.ExecutionHelper;
+import de.dkfz.roddy.execution.io.LocalExecutionHelper;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.tools.AppConfig;
@@ -40,13 +39,13 @@ import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static de.dkfz.roddy.RunMode.CLI;
 import static de.dkfz.roddy.StringConstants.FALSE;
-import static de.dkfz.roddy.config.ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY;
-import static de.dkfz.roddy.config.ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY;
-import static de.dkfz.roddy.config.ConfigurationConstants.CFG_USED_RESOURCES_SIZE;
+import static de.dkfz.roddy.config.ConfigurationConstants.*;
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW;
 
 /**
  * This is the main class for the Roddy command line application.
@@ -262,7 +261,7 @@ public class Roddy {
         logger.postAlwaysInfo("Roddy version " + Constants.APP_CURRENT_VERSION_STRING);
 
         time("initial checks");
-        if (!performInitialCheck())
+        if (!roddyExecutionRequirementsFulfilled())
             exit(1);
 
         time("ftoggleini");
@@ -281,6 +280,8 @@ public class Roddy {
         LoggerWrapper.setCentralLogFile(clf);
 
         if (initializeServices(clc.startupMode.needsFullInit())) {
+            if (!jobExecutionRequirementsFulfilled())
+                exit(1);
             time("initserv");
             parseRoddyStartupModeAndRun(clc);
             time("parsemode");
@@ -292,17 +293,34 @@ public class Roddy {
         time("exit");
     }
 
-    public static boolean performInitialCheck() {
+    public static boolean jobExecutionRequirementsFulfilled() {
+        List<String> errors = new LinkedList<>();
+        errors.add("Requirements for job execution are not fulfilled:");
+        ExecutionService jobSubmissionExecutionService = ExecutionService.getInstance();
+
+        if (!jobSubmissionExecutionService.execute("which unzip").isSuccessful())
+            errors.add("\tTool unzip not found.");
+
+        if (!jobSubmissionExecutionService.execute("which lockfile").isSuccessful())
+            errors.add("\tTool lockfile not found. lockfile can be found e.g. in the package procmail.");
+
+        if (errors.size() == 1) return true;
+
+        logger.severe(RoddyIOHelperMethods.joinArray(errors.toArray(new String[0]), "\n"));
+        logger.severe("Please make sure that the dependencies are installed on the submission and execution hosts.");
+        return false;
+    }
+
+
+    public static boolean roddyExecutionRequirementsFulfilled() {
         List<String> errors = new LinkedList<>();
         errors.add("Roddy cannot run:");
-        if (!ExecutionHelper.executeCommandWithExtendedResult("which jar").isSuccessful())
+        if (!LocalExecutionHelper.executeCommandWithExtendedResult("which jar").isSuccessful())
             errors.add("\tTool jar not found.");
-        if (!ExecutionHelper.executeCommandWithExtendedResult("which zip").isSuccessful())
+        if (!LocalExecutionHelper.executeCommandWithExtendedResult("which zip").isSuccessful())
             errors.add("\tTool zip not found.");
-        if (!ExecutionHelper.executeCommandWithExtendedResult("which unzip").isSuccessful())
+        if (!LocalExecutionHelper.executeCommandWithExtendedResult("which unzip").isSuccessful())
             errors.add("\tTool unzip not found.");
-        if (!ExecutionHelper.executeCommandWithExtendedResult("which lockfile").isSuccessful())
-            errors.add("\tTool lockfile not found. lockfile can be found e.g. in the package procmail.");
 
         if (errors.size() == 1) return true;
 
@@ -574,10 +592,13 @@ public class Roddy {
         if (applicationSpecificConfiguration == null) {
             applicationSpecificConfiguration = new Configuration(null);
             RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
-            Map<String, String> specificEnvironmentSettings = jobManager.getSpecificEnvironmentSettings();
-            for (String k : specificEnvironmentSettings.keySet()) {
-                logger.postSometimesInfo("Add job manager value " + k + "=" + specificEnvironmentSettings.get(k) + " to context configuration");
-                configurationValues.add(new ConfigurationValue(k, specificEnvironmentSettings.get(k)));
+
+            // Add RODDY_SCRATCH and RODDY_JOBID with JobManager-specific values.
+            configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_JOBID_RAW, "$" + Roddy.jobManager.getJobIdVariable()));
+            String scratchBase = configurationValues.getString(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW);
+            if (null != scratchBase) {
+                configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW,
+                        Paths.get(scratchBase, "$" + Roddy.jobManager.getJobIdVariable()).toAbsolutePath().toString()));
             }
 
             // Add custom command line values to the project configuration.
@@ -629,11 +650,7 @@ public class Roddy {
                         .setCreateDaemon(true)
                         .setTrackUserJobsOnly(trackUserJobsOnly)
                         .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
-                        .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI())
-                        .setJobIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW)
-                        .setJobArrayIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBARRAYINDEX_RAW)
-                        .setJobScratchIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW).build());
-
+                        .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI()).build());
 
 // There are many values which need to be extracted from the xml (context, project?)
 //        configuration.getProperty("PBS_AccountName", "")
@@ -925,7 +942,7 @@ public class Roddy {
         return LibrariesFactory.PLUGIN_VERSION_CURRENT;
     }
 
-    public static FileSystemAccessProvider getLocalFileSystemInfoProvider() {
+    public static FileSystemAccessProvider getLocalFileSystemAccessProvider() {
         return new FileSystemAccessProvider();
     }
 

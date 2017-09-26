@@ -215,14 +215,12 @@ public abstract class ExecutionService implements BEExecutionService {
 
     protected void finalizeServiceBasedOutputStream(Command command, OutputStream outputStream) {}
 
-    public static void storeParameterFile(Command command) {
+    static void storeParameterFile(Command command) {
         command.job.parameters
         ExecutionContext context = ((Job) command.job).executionContext
-//        throw new NotImplementedException()
-        String convertedParameters = command.job.finalParameters().join("\n")
+        String convertedParameters = command.parameters.collect { String k, String v -> return "export ${k}=${v}\n".toString() }.join("")
         if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
-            FileSystemAccessProvider.getInstance().writeTextFile(command.job.getParameterFile(), convertedParameters, context);
-//        logger.severe("Storing parameter files is currently not supported.")
+            FileSystemAccessProvider.getInstance().writeTextFile((command.job as Job).getParameterFile(), convertedParameters, context);
     }
 
     public static long measureStart() { return System.nanoTime(); }
@@ -369,7 +367,6 @@ public abstract class ExecutionService implements BEExecutionService {
         Configuration cfg = context.getConfiguration();
         def configurationValues = cfg.getConfigurationValues()
 
-        Roddy.getJobManager().getSpecificEnvironmentSettings().each { String k, String v -> cfg.getConfigurationValues().put(k, v, "string") }
         getInstance().addSpecificSettingsToConfiguration(cfg)
 
         //Add feature toggles to configuration
@@ -475,7 +472,7 @@ public abstract class ExecutionService implements BEExecutionService {
     }
 
     void markConfiguredToolsAsExecutable(ExecutionContext context) {
-        logger.severe("BEExecutionService.markConfiguredToolsAsExecutable is not implemented yet! Only checks for executability are available.")
+        logger.postSometimesInfo("BEExecutionService.markConfiguredToolsAsExecutable is not implemented yet! Only checks for executability are available.")
 //        context.getConfiguration().getTools().each {
 //            ToolEntry tool ->
 //                File toolPath = context.configuration.getProcessingToolPath(context, tool.id)

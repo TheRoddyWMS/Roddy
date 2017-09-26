@@ -12,7 +12,7 @@ import de.dkfz.roddy.config.DerivedFromFilenamePattern
 import de.dkfz.roddy.config.FileStageFilenamePattern
 import de.dkfz.roddy.config.FilenamePattern
 import de.dkfz.roddy.config.FilenamePatternDependency
-import de.dkfz.roddy.config.InformationalConfigurationContent
+import de.dkfz.roddy.config.PreloadedConfiguration
 import de.dkfz.roddy.config.OnMethodFilenamePattern
 import de.dkfz.roddy.config.OnScriptParameterFilenamePattern
 import de.dkfz.roddy.config.OnToolFilenamePattern
@@ -71,7 +71,7 @@ public class BaseFileTest {
         LibrariesFactory.getInstance().loadLibraries(LibrariesFactory.buildupPluginQueue(LibrariesFactoryTest.callLoadMapOfAvailablePlugins(), "DefaultPlugin").values() as List);
         ConfigurationFactory.initialize(LibrariesFactory.getInstance().getLoadedPlugins().collect { it -> it.getConfigurationDirectory() })
 
-        final Configuration mockupConfig = new Configuration(new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "default", "", "", null, "", ResourceSetSize.l, null, null, null, null), ConfigurationFactory.getInstance().getConfiguration("default")) {
+        final Configuration mockupConfig = new Configuration(new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "default", "", "", null, "", ResourceSetSize.l, null, null, null, null), ConfigurationFactory.getInstance().getConfiguration("default")) {
             @Override
             File getSourceToolPath(String tool) {
                 if (tool == "wrapinScript")

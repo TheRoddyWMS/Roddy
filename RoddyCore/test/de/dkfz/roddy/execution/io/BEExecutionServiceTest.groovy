@@ -11,7 +11,7 @@ import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.ConfigurationValue
-import de.dkfz.roddy.config.InformationalConfigurationContent
+import de.dkfz.roddy.config.PreloadedConfiguration
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.config.ToolFileGroupParameter
 import de.dkfz.roddy.core.ExecutionContext
@@ -41,7 +41,7 @@ public class BEExecutionServiceTest {
         LibrariesFactory.getInstance().loadLibraries(LibrariesFactory.buildupPluginQueue(LibrariesFactoryTest.callLoadMapOfAvailablePlugins(), "DefaultPlugin").values() as List);
         ConfigurationFactory.initialize(LibrariesFactory.getInstance().getLoadedPlugins().collect { it -> it.getConfigurationDirectory() })
 
-        final Configuration mockupConfig = new Configuration(new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null), ConfigurationFactory.getInstance().getConfiguration("default")) {
+        final Configuration mockupConfig = new Configuration(new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null), ConfigurationFactory.getInstance().getConfiguration("default")) {
             @Override
             File getSourceToolPath(String tool) {
                 if (tool == "wrapinScript")

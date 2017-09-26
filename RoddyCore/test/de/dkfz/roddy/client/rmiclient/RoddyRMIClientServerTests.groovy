@@ -8,7 +8,7 @@ package de.dkfz.roddy.client.rmiclient
 
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.RoddyTest
-import de.dkfz.roddy.execution.io.ExecutionHelper
+import de.dkfz.roddy.execution.io.LocalExecutionHelper
 import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.junit.Test
@@ -61,7 +61,7 @@ public class RoddyRMIClientServerTests extends GroovyTestCase {
      */
     public static List<String> getRunningProcesses() {
         synchronized (lock) {
-            def list = ExecutionHelper.execute("ps -e").readLines();
+            def list = LocalExecutionHelper.execute("ps -e").readLines();
             return list;
         }
     }

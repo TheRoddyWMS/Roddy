@@ -48,7 +48,7 @@ public class LocalExecutionService extends ExecutionService {
 //     @Override
     protected ExecutionResult _execute(String command, boolean waitFor, boolean ignoreErrors, OutputStream outputStream = null) {
         if (waitFor) {
-            return ExecutionHelper.executeCommandWithExtendedResult(command, outputStream);
+            return LocalExecutionHelper.executeCommandWithExtendedResult(command, outputStream);
         } else {
             Thread.start {
                 command.execute();

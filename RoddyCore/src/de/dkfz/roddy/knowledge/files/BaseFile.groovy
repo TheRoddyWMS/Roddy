@@ -19,6 +19,7 @@ import de.dkfz.roddy.config.OnScriptParameterFilenamePattern
 import de.dkfz.roddy.config.OnToolFilenamePattern
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.core.ExecutionContext
+import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel;
 import de.dkfz.roddy.core.Workflow;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -27,6 +28,7 @@ import de.dkfz.roddy.execution.jobs.JobResult;
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.Tuple2
+import de.dkfz.roddy.config.loader.ConfigurationError
 
 import java.util.*;
 
@@ -48,12 +50,13 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
 
     private static LoggerWrapper logger = LoggerWrapper.getLogger(BaseFile)
 
-    static abstract class ConstructionHelperForBaseFiles {
+    static abstract class ConstructionHelperForBaseFiles<T extends ConstructionHelperForBaseFiles> {
         public final ExecutionContext context;
         public final FileStageSettings fileStageSettings;
         public final String selectionTag
         public final JobResult jobResult
         public final String indexInFileGroup
+        private Configuration jobConfiguration
 
         protected ConstructionHelperForBaseFiles(ExecutionContext context, FileStageSettings fileStageSettings, String selectionTag, String indexInFileGroup, JobResult jobResult) {
             this.context = context
@@ -62,9 +65,18 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
             this.jobResult = jobResult
             this.indexInFileGroup = indexInFileGroup
         }
+
+        T setJobConfiguration(Configuration configuration) {
+            this.jobConfiguration = configuration
+            return (T)this
+        }
+
+        Configuration getJobConfiguration() {
+            return jobConfiguration
+        }
     }
 
-    static class ConstructionHelperForSourceFiles extends ConstructionHelperForBaseFiles {
+    static class ConstructionHelperForSourceFiles extends ConstructionHelperForBaseFiles<ConstructionHelperForSourceFiles> {
 
         public final File path
 
@@ -81,7 +93,8 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
     /**
      * A helper class specifically for GenericMethod based file creation
      */
-    static class ConstructionHelperForGenericCreation<T extends ConstructionHelperForGenericCreation> extends ConstructionHelperForBaseFiles {
+    static class ConstructionHelperForGenericCreation<T extends ConstructionHelperForGenericCreation>
+            extends ConstructionHelperForBaseFiles<ConstructionHelperForGenericCreation<T>> {
 
         public final FileObject parentObject
         public final ToolEntry creatingTool
@@ -111,7 +124,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         }
     }
 
-    static class ConstructionHelperForManualCreation extends ConstructionHelperForGenericCreation {
+    static class ConstructionHelperForManualCreation extends ConstructionHelperForGenericCreation<ConstructionHelperForManualCreation> {
         ConstructionHelperForManualCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, String indexInFileGroup, FileStageSettings fileStageSettings, JobResult jobResult) {
             super(parentObject, parentFiles, creatingTool, toolID, slotID, selectionTag, indexInFileGroup, fileStageSettings, jobResult);
         }
@@ -270,6 +283,11 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
                 valid = true;
                 break;
         }
+    }
+
+    final Configuration getConfiguration() {
+        if (helperObject.jobConfiguration) return helperObject.jobConfiguration
+        return executionContext.getConfiguration()
     }
 
     final void addFileGroup(FileGroup fg) {
@@ -549,15 +567,17 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
                                 "${k.name()} : ${value}"
                         }
                 }.flatten().join("\n\t")
-                Roddy.getJobManager().executesWithoutJobSystem()
-                throw new RuntimeException(sb.toString());
+
+                throw new ConfigurationError(sb.toString(), baseFile.executionContext.configuration);
             } else {
                 //Check if the path exists and create it if necessary.
                 if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs && !FileSystemAccessProvider.getInstance().checkDirectory(patternResult.x.getParentFile(), context, true)) {
                     throw new IOException("Output path could not be created for file: " + baseFile);
                 }
             }
-        } catch (RuntimeException ex) {
+        } catch (IOException ex) {
+            // baseFile.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_PATH_INACCESSIBLE.expand(baseFile.absolutePath))
+        // } catch (RuntimeException ex) {
         } finally {
             return patternResult;
         }

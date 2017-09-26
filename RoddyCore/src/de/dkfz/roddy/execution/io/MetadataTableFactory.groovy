@@ -27,7 +27,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException
  * Created by heinold on 14.04.16.
  */
 @CompileStatic
-public final class MetadataTableFactory {
+final class MetadataTableFactory {
 
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(LocalExecutionService.class.name)
 
@@ -40,9 +40,11 @@ public final class MetadataTableFactory {
      * This method constructs the Metadata table valid for the current Roddy execution!
      * It will lookup implementataion
      */
-    public static BaseMetadataTable getTable(Analysis analysis) {
-        if (Roddy.isMetadataCLOptionSet()) {
-
+    static BaseMetadataTable getTable(Analysis analysis) {
+        if (!Roddy.isMetadataCLOptionSet()) {
+            logger.rare("de.dkfz.roddy.execution.io.MetadataTableFactory.getTable: Building metadata table from filesystem input is not implemented.")
+            return null
+        } else {
             // Create a metadata table from a file
             if (!_cachedTable) {
                 String[] split = Roddy.getCommandLineCall().getOptionValue(RoddyStartupOptions.usemetadatatable).split(StringConstants.SPLIT_COMMA);
@@ -62,23 +64,18 @@ public final class MetadataTableFactory {
                         }
 
                         if (colVal.hasTag("mandatory")) mandatoryColumns << colVal.id;
-                        return ["${colVar}": colVal?.toString()]
+                        return [(colVar.toString()): colVal?.toString()]
                 }
 
                 _cachedTable = readTable(new File(file), format, columnIDMap, mandatoryColumns);
             }
             return _cachedTable;
-
+        }
 /**         Leave it for later?
  // Search for Metadata implementations in any plugin
  // If too many were found, select via analysis xml file.
  // If none possible, select metadata table?
  **/
-        } else {
-            // Creating the file based input table is not implemented.
-            logger.rare("de.dkfz.roddy.execution.io.MetadataTableFactory.getTable: Building metadata table from filesystem input is not implemented.")
-            return null
-        }
     }
 
     public static BaseMetadataTable readTable(Reader instream, String format, Map<String, String> internalToCustomIDMap, List<String> mandatoryColumns) {

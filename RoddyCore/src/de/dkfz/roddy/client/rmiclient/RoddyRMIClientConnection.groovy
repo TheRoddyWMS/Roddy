@@ -8,7 +8,7 @@ package de.dkfz.roddy.client.rmiclient
 
 import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.execution.io.ExecutionHelper
+import de.dkfz.roddy.execution.io.LocalExecutionHelper
 import de.dkfz.roddy.execution.jobs.JobState;
 import groovy.transform.CompileStatic
 
@@ -44,7 +44,7 @@ public class RoddyRMIClientConnection {
         }
 
         public String getProcessID() {
-            return ExecutionHelper.getProcessID(process);
+            return LocalExecutionHelper.getProcessID(process);
         }
 
         public synchronized List<String> updateOutput() {
@@ -97,7 +97,7 @@ public class RoddyRMIClientConnection {
     private RoddyRMIInstanceInfo startRMIInfo(String startString) {
         rmiregistryStart++;
         startString = "RMIPORT=${rmiregistryStart} ${startString}".replace("#PORTNUMBER#", "" + rmiregistryStart)
-        instanceInfo = new RoddyRMIInstanceInfo(ExecutionHelper.executeNonBlocking(startString));
+        instanceInfo = new RoddyRMIInstanceInfo(LocalExecutionHelper.executeNonBlocking(startString));
 
         // The method needs an instanceinfo
         checkAndStartCheckConsumptionThread(this);

@@ -7,37 +7,24 @@
 package de.dkfz.roddy.execution.jobs
 
 import de.dkfz.roddy.core.ExecutionContext
+import groovy.transform.CompileStatic
 
 /**
  * Created by heinold on 19.06.17.
  */
 @Deprecated
+@CompileStatic
 class JobResult extends BEJobResult {
     JobResult() {
     }
 
     JobResult(BEJobResult jr) {
         // Some sort of deprecated copy constructor.
-        super(null, jr.command, jr.jobID, jr.wasExecuted, jr.toolID, jr.jobParameters, jr.parentJobs)
+        super(null, jr.command, jr.job, jr.executionResult, jr.toolID, jr.jobParameters, jr.parentJobs)
     }
 
-    JobResult(ExecutionContext context, de.dkfz.roddy.execution.jobs.Command command, de.dkfz.roddy.execution.jobs.JobDependencyID.FakeJobID jobID, java.io.File toolID, java.util.Map jobParameters, java.util.List parentJobs) {
-        super(context, command, jobID, false, toolID, jobParameters, parentJobs)
-    }
-    
-    JobResult(ExecutionContext context, Command command, JobDependencyID.FakeJobID jobID, boolean wasExecuted, File toolID, Map<String, String> jobParameters, List<BEJob> parentJobs) {
-        super(context, command, jobID, wasExecuted, toolID, jobParameters, parentJobs)
+    static JobResult getFileExistedFakeJobResult(ExecutionContext context) {
+        return new JobResult(new BEJobResult(context, null, new FakeBEJob(new BEFakeJobID(BEFakeJobID.FakeJobReason.FILE_EXISTED)), null, null, null, null))
     }
 
-    JobResult(ExecutionContext context, Command command, JobDependencyID jobID, boolean wasExecuted, File toolID, Map<String, String> jobParameters, List<BEJob> parentJobs) {
-        super(context, command, jobID, wasExecuted, toolID, jobParameters, parentJobs)
-    }
-
-    JobResult(Command command, JobDependencyID jobID, boolean wasExecuted, File toolID, Map<String, String> jobParameters, List<BEJob> parentJobs) {
-        super(command, jobID, wasExecuted, toolID, jobParameters, parentJobs)
-    }
-
-    JobResult(Command command, JobDependencyID jobID, boolean wasExecuted, boolean wasArray, File toolID, Map<String, String> jobParameters, List<BEJob> parentJobs) {
-        super(command, jobID, wasExecuted, wasArray, toolID, jobParameters, parentJobs)
-    }
 }

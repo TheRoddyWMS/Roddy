@@ -6,25 +6,18 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.execution.jobs.BEJobResult
-import de.dkfz.roddy.execution.jobs.Command
-import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.JobResult
-import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
+import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.BEJob
-import de.dkfz.roddy.execution.jobs.ReadOutJob
-import de.dkfz.roddy.knowledge.files.*
+import de.dkfz.roddy.execution.jobs.*
+import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.tools.LoggerWrapper
-
-import java.util.*
 
 /**
  * An ExecutionContect is the runtime context for an analysis and a DataSet.<br />
@@ -132,6 +125,10 @@ class ExecutionContext {
     private ExecutionContextSubLevel executionContextSubLevel = ExecutionContextSubLevel.RUN_UNINITIALIZED
     private ToolEntry currentExecutedTool
     private ProcessingFlag processingFlag = ProcessingFlag.STORE_EVERYTHING
+    /**
+     * Job-specific configuration object used to evaluate variables in global configuration and job parameters.
+     */
+    private Map<Integer, Configuration> currentJobConfiguration = null
     /**
      * The user who created the context (if known)
      */
@@ -297,12 +294,8 @@ class ExecutionContext {
         return analysis.getConfiguration()
     }
 
-    Configuration getJobConfiguration(Job job) {
-
-    }
-
-    Configuration getFileConfiguration(BaseFile baseFile) {
-
+    Configuration createJobConfiguration() {
+        return new Configuration(null, getConfiguration())
     }
 
     boolean getFeatureToggleStatus(AvailableFeatureToggles toggle) {
@@ -427,8 +420,10 @@ class ExecutionContext {
     }
 
     synchronized File getLoggingDirectory() {
-        if (loggingDirectory == null)
+        if (loggingDirectory == null) {
             loggingDirectory = analysis.getRuntimeService().getLoggingDirectory(this)
+            assert (null != loggingDirectory)
+        }
         return loggingDirectory
     }
 
@@ -439,7 +434,7 @@ class ExecutionContext {
     }
 
     File getParameterFilename(Job job) {
-        new File(getExecutionDirectory(), "${job.getJobName()}_${job.jobCreationCounter}.parameters")
+        new File(getExecutionDirectory(), "${job.getJobName()}_${job.jobCreationCounter}${Constants.PARAMETER_FILE_SUFFIX}")
     }
 
 
@@ -599,7 +594,6 @@ class ExecutionContext {
         }
         return false
     }
-
     boolean fileIsAccessible(File file, String variableName = null) {
         if (valueIsEmpty(file, variableName) || !FileSystemAccessProvider.getInstance().checkFile(file, false, this)) {
             addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("File '${file}' not accessible${variableName ? ": " + variableName : "."}"))

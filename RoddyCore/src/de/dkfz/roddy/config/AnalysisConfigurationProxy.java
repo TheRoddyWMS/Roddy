@@ -6,7 +6,6 @@
 
 package de.dkfz.roddy.config;
 
-import de.dkfz.roddy.config.ResourceSetSize;
 import de.dkfz.roddy.config.loader.ConfigurationFactory;
 import de.dkfz.roddy.config.loader.ConfigurationLoadError;
 import de.dkfz.roddy.config.validation.ConfigurationValidationError;
@@ -35,9 +34,9 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
         super(null, null, null, null, null, null, null);
         this.analysisNode = analysisNode;
 
-//        InformationalConfigurationContent informationalConfigurationContent, String
+//        PreloadedConfiguration preloadedConfiguration, String
 //    } workflowClass, Map<String, TestDataOption> testdataOptions, Configuration parentConfiguration, List<String> listOfUsedTools, List<String> usedToolFolders, String cleanupScript) {
-//        super(informationalConfigurationContent, workflowClass, testdataOptions, parentConfiguration, listOfUsedTools, usedToolFolders, cleanupScript);
+//        super(preloadedConfiguration, workflowClass, testdataOptions, parentConfiguration, listOfUsedTools, usedToolFolders, cleanupScript);
         analysisConfiguration = null;
         this.parentConfiguration = parentConfiguration;
         this.analysisID = analysisID;
@@ -156,8 +155,8 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
-    public InformationalConfigurationContent getInformationalConfigurationContent() {
-        return checkAnalysisConfig().getInformationalConfigurationContent();
+    public PreloadedConfiguration getPreloadedConfiguration() {
+        return checkAnalysisConfig().getPreloadedConfiguration();
     }
 
     @Override

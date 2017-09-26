@@ -49,7 +49,7 @@ public class ReadOutJob extends Job {
      */
     @Override
     public BEJobID getJobID() {
-        return new BEJobID(jobID, this);
+        return new BEJobID(jobID);
     }
 
     @Override

@@ -25,8 +25,8 @@ public class ProjectConfiguration extends Configuration {
     /**
      * For main configurations
      */
-    public ProjectConfiguration(InformationalConfigurationContent informationalConfigurationContent, String runtimeServiceClass, Map<String, AnalysisConfiguration> availableAnalysis, Configuration parentConfig) {
-        super(informationalConfigurationContent, parentConfig);
+    public ProjectConfiguration(PreloadedConfiguration preloadedConfiguration, String runtimeServiceClass, Map<String, AnalysisConfiguration> availableAnalysis, Configuration parentConfig) {
+        super(preloadedConfiguration, parentConfig);
         if (availableAnalysis != null)
             this.availableAnalysis = availableAnalysis;
         else
@@ -37,8 +37,8 @@ public class ProjectConfiguration extends Configuration {
 //    /**
 //     * For main configurations
 //     */
-//    public ProjectConfiguration(InformationalConfigurationContent informationalConfigurationContent, String runtimeServiceClass, Map<String, AnalysisConfiguration> availableAnalysis, Map<String, ConfigurationValue> configurationValues, Map<String, Map<String, ConfigurationValue>> configurationValueBundles, Map<String, ConfigurationValue> basePaths, Map<String, ToolEntry> tools, Map<String, Configuration> subConfigurations, boolean dontOverrideParentSettings) {
-//        super(informationalConfigurationContent, configurationValues, configurationValueBundles, basePaths, tools, subConfigurations, dontOverrideParentSettings);
+//    public ProjectConfiguration(PreloadedConfiguration preloadedConfiguration, String runtimeServiceClass, Map<String, AnalysisConfiguration> availableAnalysis, Map<String, ConfigurationValue> configurationValues, Map<String, Map<String, ConfigurationValue>> configurationValueBundles, Map<String, ConfigurationValue> basePaths, Map<String, ToolEntry> tools, Map<String, Configuration> subConfigurations, boolean dontOverrideParentSettings) {
+//        super(preloadedConfiguration, configurationValues, configurationValueBundles, basePaths, tools, subConfigurations, dontOverrideParentSettings);
 //        if (availableAnalysis != null)
 //            this.availableAnalysis = availableAnalysis;
 //        else
@@ -69,7 +69,7 @@ public class ProjectConfiguration extends Configuration {
                     return projectClass;
             }
 
-        throw new RuntimeException("No project class is defined for configuration " + informationalConfigurationContent.id);
+        throw new RuntimeException("No project class is defined for configuration " + preloadedConfiguration.id);
     }
 
     /**
@@ -78,7 +78,7 @@ public class ProjectConfiguration extends Configuration {
      * @return
      */
     public boolean isMasterConfiguration() {
-        return informationalConfigurationContent.parent == null;
+        return preloadedConfiguration.parent == null;
     }
 
     /**
