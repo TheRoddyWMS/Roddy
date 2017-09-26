@@ -11,6 +11,7 @@ import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.execution.io.NoNoExecutionService
 import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager
 import de.dkfz.roddy.execution.jobs.JobManagerCreationParameters
+import de.dkfz.roddy.execution.jobs.ProcessingParameters
 import de.dkfz.roddy.tools.BufferUnit
 import de.dkfz.roddy.tools.BufferValue
 import de.dkfz.roddy.tools.TimeUnit
@@ -22,7 +23,7 @@ import static org.junit.Assert.assertEquals
 /**
  */
 @CompileStatic
-public class PBSJobManagerTest {
+class PBSJobManagerTest {
 
     @Test
     void testConvertToolEntryToPBSCommandParameters() {
@@ -31,13 +32,13 @@ public class PBSJobManagerTest {
         ResourceSet rset3 = new ResourceSet(ResourceSetSize.l, new BufferValue(1, BufferUnit.G), 2, null, null as TimeUnit, null, null, null)
 
         BatchEuphoriaJobManager cFactory = new PBSJobManager(new NoNoExecutionService(), new JobManagerCreationParameters())
-        PBSResourceProcessingCommand test = (PBSResourceProcessingCommand) cFactory.convertResourceSet(rset1)
-        assertEquals("-l mem=1024M -l walltime=00:01:00:00 -l nodes=1:ppn=2", test.getProcessingString().trim())
+        ProcessingParameters test = (ProcessingParameters) cFactory.convertResourceSet(null, rset1)
+        assertEquals("-l mem=1024M -l walltime=00:01:00:00 -l nodes=1:ppn=2", test.getProcessingCommandString().trim())
 
-        test = (PBSResourceProcessingCommand) cFactory.convertResourceSet(rset2)
-        assertEquals(" -l walltime=00:01:00:00 -l nodes=1:ppn=1", test.getProcessingString())
+        test = (ProcessingParameters) cFactory.convertResourceSet(null, rset2)
+        assertEquals(" -l walltime=00:01:00:00 -l nodes=1:ppn=1", test.getProcessingCommandString())
 
-        test = (PBSResourceProcessingCommand) cFactory.convertResourceSet(rset3)
-        assertEquals(" -l mem=1024M -l nodes=1:ppn=2", test.getProcessingString())
+        test = (ProcessingParameters) cFactory.convertResourceSet(null, rset3)
+        assertEquals(" -l mem=1024M -l nodes=1:ppn=2", test.getProcessingCommandString())
     }
 }

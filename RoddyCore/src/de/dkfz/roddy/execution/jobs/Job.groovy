@@ -531,7 +531,7 @@ class Job extends BEJob<BEJob, JobResult> {
 
     private void appendProcessingCommands(Configuration configuration) {
 // Only extract commands from file if none are set
-        if (getListOfProcessingCommand().size() == 0) {
+        if (getListOfProcessingParameters().size() == 0) {
             File srcTool = configuration.getSourceToolPath(toolID)
 
             logger.severe("Appending processing commands from config is currently not supported: Roddy/../BEJob.groovy appendProcessingCommands")
