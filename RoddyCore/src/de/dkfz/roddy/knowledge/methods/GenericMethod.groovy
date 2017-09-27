@@ -12,7 +12,6 @@ import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.execution.jobs.BEJobResult
 import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.JobResult
 import de.dkfz.roddy.knowledge.files.*
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
@@ -494,7 +493,7 @@ class GenericMethod {
         for (String arrayIndex in arrayIndices) {
             List<FileObject> newObjects = [];
             outputObjectsByArrayIndex[arrayIndex] = createOutputObject(arrayIndex);
-            JobResult jr = new JobResult(Roddy.getJobManager().convertToArrayResult(jobResult.job, jobResult, i++))
+            BEJobResult jr = Roddy.getJobManager().convertToArrayResult(jobResult.job, jobResult, i++)
             for (FileObject fo : newObjects) {
                 fo.setCreatingJobsResult(jr);
             }
@@ -510,7 +509,7 @@ class GenericMethod {
             for (FileObject fo in allCreatedObjects) {
                 if (fo == null)
                     continue;
-                fo.setCreatingJobsResult(new JobResult(jobResult));
+                fo.setCreatingJobsResult(jobResult)
             }
         }
         return outputObject;

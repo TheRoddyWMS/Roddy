@@ -27,7 +27,7 @@ import static de.dkfz.roddy.Constants.NO_VALUE
 import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 
 @groovy.transform.CompileStatic
-class Job extends BEJob<BEJob, JobResult> {
+class Job extends BEJob<BEJob, BEJobResult> {
 
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(BEJob.class.getSimpleName())
 
@@ -454,7 +454,7 @@ class Job extends BEJob<BEJob, JobResult> {
     //TODO Create a runArray method which returns several job results with proper array ids.
     @Override
     @CompileDynamic
-    JobResult run() {
+    BEJobResult run() {
         if (runResult != null)
             throw new RuntimeException(Constants.ERR_MSG_ONLY_ONE_JOB_ALLOWED)
 
@@ -490,7 +490,7 @@ class Job extends BEJob<BEJob, JobResult> {
 
         //Execute the job or create a dummy command.
         if (runJob) {
-            runResult = new JobResult(jobManager.runJob(this))
+            runResult = jobManager.runJob(this)
             appendToJobStateLogfile(jobManager, executionContext, runResult, null)
             cmd = runResult.command
             jobDetailsLine << " => " + cmd.getExecutionID()
@@ -505,9 +505,9 @@ class Job extends BEJob<BEJob, JobResult> {
         } else {
             // The Job is not actually executed. Therefore, create a DummyCommand that creates a dummy JobID which in turn is used to create a dummy JobResult.
             Command command = new DummyCommand(jobManager, this, jobName, false)
-            setJobState(JobState.DUMMY)
+            jobState = JobState.DUMMY
             resetJobID(command.executionID)
-            setRunResult(new JobResult(new BEJobResult(command, new BEJob(command.executionID, jobManager), null, this.tool, parameters, parentJobs as List<BEJob>)))
+            runResult = new BEJobResult(command, new BEJob(command.executionID, jobManager), null, this.tool, parameters, parentJobs as List<BEJob>)
         }
 
         //For auto filenames. Get the job id and push propagate it to all filenames.
@@ -547,12 +547,12 @@ class Job extends BEJob<BEJob, JobResult> {
         }
     }
 
-    private JobResult handleDifferentJobRun(StringBuilder dbgMessage) {
+    private BEJobResult handleDifferentJobRun(StringBuilder dbgMessage) {
 //        logger.severe("Handling different job run is currently not supported: Roddy/../BEJob.groovy handleDifferentJobRun")
         dbgMessage << "\tdummy job created." + Constants.ENV_LINESEPARATOR
         File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
         this.resetJobID(new BEFakeJobID(BEFakeJobID.FakeJobReason.NOT_EXECUTED))
-        runResult = new JobResult(new BEJobResult((Command) null, this, null, tool, parameters, parentFiles.collect { it.getCreatingJobsResult()?.getJob() }.findAll { it }))
+        runResult = new BEJobResult((Command) null, this, null, tool, parameters, parentFiles.collect { it.getCreatingJobsResult()?.getJob() }.findAll { it })
         this.setJobState(JobState.DUMMY)
         return runResult
     }

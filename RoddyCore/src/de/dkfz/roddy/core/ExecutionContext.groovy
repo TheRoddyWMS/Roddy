@@ -520,10 +520,7 @@ class ExecutionContext {
         //Query current jobs, i.e. on recheck
         List<String> jobIDsForQuery = new LinkedList<>()
         for (BEJob job : jobsForProcess) {
-            BEJobResult beJobResult = job.getRunResult()
-            if (beJobResult == null)
-                continue
-            JobResult runResult = new JobResult(beJobResult)
+            BEJobResult runResult = job.getRunResult()
             if (runResult != null && runResult.getJobID().getId() != null) {
                 jobIDsForQuery.add(runResult.getJobID().getId())
             }

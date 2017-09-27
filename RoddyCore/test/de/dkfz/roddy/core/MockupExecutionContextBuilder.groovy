@@ -136,7 +136,7 @@ public class MockupExecutionContextBuilder {
         new BatchEuphoriaJobManager(new NoNoExecutionService(), new JobManagerCreationParametersBuilder().setCreateDaemon(false).build()) {
 
             @Override
-            JobResult runJob(BEJob job) {
+            BEJobResult runJob(BEJob job) {
                 return null
             }
 
