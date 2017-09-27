@@ -6,21 +6,12 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.config.ResourceSet
-import de.dkfz.roddy.execution.jobs.BEJob
-import de.dkfz.roddy.execution.jobs.BEJobResult
-import de.dkfz.roddy.execution.jobs.Command
-import de.dkfz.roddy.execution.jobs.GenericJobInfo
-import de.dkfz.roddy.execution.jobs.BEJobID
-import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager
-import de.dkfz.roddy.execution.jobs.JobManagerCreationParametersBuilder
-import de.dkfz.roddy.execution.jobs.JobState
-import de.dkfz.roddy.execution.jobs.ProcessingCommands
-import de.dkfz.roddy.config.AnalysisConfiguration;
+import de.dkfz.roddy.config.AnalysisConfiguration
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ProjectConfiguration
+import de.dkfz.roddy.config.ResourceSet
 import de.dkfz.roddy.execution.io.NoNoExecutionService
-import de.dkfz.roddy.execution.jobs.JobResult
+import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
 
 /**
@@ -150,17 +141,12 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            ProcessingCommands convertResourceSet(ResourceSet resourceSet) {
+            ProcessingParameters convertResourceSet(BEJob job, ResourceSet resourceSet) {
                 return null
             }
 
             @Override
-            ProcessingCommands parseProcessingCommands(String s) {
-                return null
-            }
-
-            @Override
-            ProcessingCommands extractProcessingCommandsFromToolScript(File file) {
+            ProcessingParameters extractProcessingParametersFromToolScript(File file) {
                 return null
             }
 

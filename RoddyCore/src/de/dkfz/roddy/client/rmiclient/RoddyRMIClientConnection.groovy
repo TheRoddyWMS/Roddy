@@ -201,9 +201,9 @@ public class RoddyRMIClientConnection {
     }
 
 
-    public Map<String, JobState> queryJobState(List<BEJob> jobIds) {
+    public Map<String, JobState> queryJobState(List<BEJob> jobs) {
         try {
-            return connection.queryJobState(jobIds);
+            return connection.queryJobState(jobs);
         } catch (Exception ex) {
 
         }

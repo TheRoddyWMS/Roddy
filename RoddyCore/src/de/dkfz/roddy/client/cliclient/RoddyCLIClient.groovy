@@ -6,18 +6,10 @@
 
 package de.dkfz.roddy.client.cliclient
 
-import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.JobState
-import de.dkfz.roddy.execution.jobs.BEJob as BEJob
-import de.dkfz.roddy.execution.jobs.ProcessingCommands
-import de.dkfz.roddy.AvailableFeatureToggles
-import de.dkfz.roddy.Constants
-import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.RunMode
-import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.*
 import de.dkfz.roddy.client.RoddyStartupModes
 import de.dkfz.roddy.client.RoddyStartupOptions
-import de.dkfz.roddy.client.cliclient.clioutput.*
+import de.dkfz.roddy.client.cliclient.clioutput.ConsoleStringFormatter
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.loader.ConfigurationFactory
@@ -27,12 +19,16 @@ import de.dkfz.roddy.config.validation.WholeConfigurationValidator
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.SSHExecutionService
+import de.dkfz.roddy.execution.jobs.BEJob as BEJob
+import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.JobState
+import de.dkfz.roddy.execution.jobs.ProcessingParameters
 import de.dkfz.roddy.tools.LoggerWrapper
-import de.dkfz.roddy.tools.ScannerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
+import de.dkfz.roddy.tools.ScannerWrapper
 
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
-import static de.dkfz.roddy.client.RoddyStartupModes.*;
+import static de.dkfz.roddy.client.RoddyStartupModes.*
 
 /**
  * Command line client for roddy.
@@ -548,7 +544,7 @@ public class RoddyCLIClient {
                     ToolEntry tool = configuration.getTools().getValue(job.getToolID());
                     ResourceSet resourceSet = tool.getResourceSet(configuration);
                     if (!(resourceSet instanceof EmptyResourceSet)) {
-                        ProcessingCommands convertResourceSet = Roddy.getJobManager().convertResourceSet(resourceSet);
+                        ProcessingParameters convertResourceSet = Roddy.getJobManager().convertResourceSet(job, resourceSet)
                         if(convertResourceSet)
                             resources = convertResourceSet.toString();
                     }
