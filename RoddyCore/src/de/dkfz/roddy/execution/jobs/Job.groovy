@@ -552,7 +552,7 @@ class Job extends BEJob<BEJob, JobResult> {
         dbgMessage << "\tdummy job created." + Constants.ENV_LINESEPARATOR
         File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
         this.resetJobID(new BEFakeJobID(BEFakeJobID.FakeJobReason.NOT_EXECUTED))
-        runResult = new JobResult(new BEJobResult(null, (Command) null, this, null, tool, parameters, parentFiles.collect { it.getCreatingJobsResult()?.getJob() }.findAll { it }))
+        runResult = new JobResult(new BEJobResult((Command) null, this, null, tool, parameters, parentFiles.collect { it.getCreatingJobsResult()?.getJob() }.findAll { it }))
         this.setJobState(JobState.DUMMY)
         return runResult
     }
