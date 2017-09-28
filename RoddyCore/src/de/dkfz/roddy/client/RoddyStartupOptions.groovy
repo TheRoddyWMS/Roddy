@@ -65,12 +65,15 @@ public enum RoddyStartupOptions {
     useroddyversion(true),
     rv(true),
     usePluginVersion(true),
-    pluginDirectories(true), 
+    pluginDirectories(true),
     configurationDirectories(true),
+    additionalImports(true),
+    additionalimports(true),
+
     jobManagerClass(true),
-    executionServiceClass(true), 
-    executionServiceAuth(true), 
-    executionServiceHost(true), 
+    executionServiceClass(true),
+    executionServiceAuth(true),
+    executionServiceHost(true),
     executionServiceUser(true),
 
     // Only for configuration free mode! Tells Roddy which base configuration should be used for the internally created configuration.

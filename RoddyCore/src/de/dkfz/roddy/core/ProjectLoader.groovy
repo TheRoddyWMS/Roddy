@@ -154,6 +154,8 @@ class ProjectLoader {
 
             loadProjectConfigurationOrFail(projectID, analysisID)
 
+            attachAdditionallyPassedConfigurationsOrFail()
+
             createProjectFromConfigurationOrFail()
 
             loadAnalysisOrFail()
@@ -303,13 +305,25 @@ class ProjectLoader {
         projectConfiguration = fac.getProjectConfiguration(projectID);
 
         if (projectConfiguration.hasErrors()) {
-
             RoddyCLIClient.checkConfigurationErrorsAndMaybePrintAndFail(projectConfiguration)
         }
 
         PreloadedConfiguration iccAnalysis = ((AnalysisConfigurationProxy) projectConfiguration.getAnalysis(analysisID)).preloadedConfiguration;
         if (!XSDValidator.validateTree(iccAnalysis) && Roddy.isStrictModeEnabled()) {
             throw new ProjectLoaderException("Validation of project configuration failed.")
+        }
+    }
+
+    /**
+     * If --additionalImports is used, try to attach all configuration objects to the currently loaded
+     * project configuration
+     */
+    void attachAdditionallyPassedConfigurationsOrFail() {
+        if (Roddy.isOptionSet(RoddyStartupOptions.additionalImports)) {
+            Roddy.commandLineCall.getOptionList(RoddyStartupOptions.additionalImports).each {
+                String cfg ->
+                    projectConfiguration.addParent(ConfigurationFactory.instance.getConfiguration(cfg))
+            }
         }
     }
 
