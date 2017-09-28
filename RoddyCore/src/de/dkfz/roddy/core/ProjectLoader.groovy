@@ -154,7 +154,7 @@ class ProjectLoader {
 
             loadProjectConfigurationOrFail(projectID, analysisID)
 
-            attachAdditionallyPassedConfigurationsOrFail()
+            attachAdditionallyPassedConfigurations()
 
             createProjectFromConfigurationOrFail()
 
@@ -315,10 +315,10 @@ class ProjectLoader {
     }
 
     /**
-     * If --additionalImports is used, try to attach all configuration objects to the currently loaded
-     * project configuration
+     * If --additionalImports is passed on the command line, try to add all set configuration objects
+     * as a parent to the loaded project configuration.
      */
-    void attachAdditionallyPassedConfigurationsOrFail() {
+    void attachAdditionallyPassedConfigurations() {
         if (Roddy.isOptionSet(RoddyStartupOptions.additionalImports)) {
             Roddy.commandLineCall.getOptionList(RoddyStartupOptions.additionalImports).each {
                 String cfg ->
