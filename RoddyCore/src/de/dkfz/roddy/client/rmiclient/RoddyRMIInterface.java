@@ -50,7 +50,7 @@ public interface RoddyRMIInterface extends Remote {
 
     List<RoddyRMIInterfaceImplementation.ExecutionContextInfoObject> testrerun(List<String> datasetIds, String analysisId) throws RemoteException;
 
-    Map<String, JobState> queryJobState(List<BEJob> jobIds) throws RemoteException;
+    Map<String, JobState> queryJobState(List<BEJob> jobs) throws RemoteException;
 
     List<String> readLocalFile(String path) throws RemoteException;
 

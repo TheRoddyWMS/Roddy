@@ -40,6 +40,7 @@ public class LibrariesFactory extends Initializable {
     public static final String BUILDINFO_DEPENDENCY = "dependson";
     public static final String BUILDINFO_COMPATIBILITY = "compatibleto";
     public static final String BUILDINFO_TEXTFILE = "buildinfo.txt";
+    public static final String BUILDVERSION_TEXTFILE = "buildversion.txt";
     public static final String BUILDINFO_STATUS = "status"
     public static final String BUILDINFO_STATUS_BETA = "beta"
     public static final String BUILDINFO_RUNTIME_JDKVERSION = "JDKVersion"
@@ -330,7 +331,7 @@ public class LibrariesFactory extends Initializable {
             // If not, check for regular workflows.
             if (!checkFile(new File(directory, BUILDINFO_TEXTFILE)))
                 errors << "The buildinfo.txt file is missing"
-            if (!checkFile(new File(directory, "buildversion.txt")))
+            if (!checkFile(new File(directory, BUILDVERSION_TEXTFILE)))
                 errors << "The buildversion.txt file is missing"
             if (!checkDirectory(new File(directory, "resources/analysisTools")))
                 errors << "The analysisTools resource directory is missing"

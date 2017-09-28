@@ -19,7 +19,7 @@ public class ContextConfiguration extends AnalysisConfiguration {
     private final Configuration applicationSpecificConfiguration;
 
     public ContextConfiguration(AnalysisConfiguration configuration, ProjectConfiguration projectConfiguration) {
-        super(configuration.getInformationalConfigurationContent(), configuration.getWorkflowClass(), configuration.getRuntimeServiceClass(), configuration, configuration.getListOfUsedTools(), configuration.getUsedToolFolders(), configuration.getCleanupScript());
+        super(configuration.getPreloadedConfiguration(), configuration.getWorkflowClass(), configuration.getRuntimeServiceClass(), configuration, configuration.getListOfUsedTools(), configuration.getUsedToolFolders(), configuration.getCleanupScript());
         this.applicationSpecificConfiguration = Roddy.getApplicationSpecificConfiguration();
         this.analysisConfiguration = configuration;
         this.projectConfiguration = projectConfiguration;

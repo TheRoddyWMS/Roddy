@@ -6,21 +6,12 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.config.ResourceSet
-import de.dkfz.roddy.execution.jobs.BEJob
-import de.dkfz.roddy.execution.jobs.BEJobResult
-import de.dkfz.roddy.execution.jobs.Command
-import de.dkfz.roddy.execution.jobs.GenericJobInfo
-import de.dkfz.roddy.execution.jobs.BEJobID
-import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager
-import de.dkfz.roddy.execution.jobs.JobManagerCreationParametersBuilder
-import de.dkfz.roddy.execution.jobs.JobState
-import de.dkfz.roddy.execution.jobs.ProcessingCommands
-import de.dkfz.roddy.config.AnalysisConfiguration;
+import de.dkfz.roddy.config.AnalysisConfiguration
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ProjectConfiguration
+import de.dkfz.roddy.config.ResourceSet
 import de.dkfz.roddy.execution.io.NoNoExecutionService
-import de.dkfz.roddy.execution.jobs.JobResult
+import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
 
 /**
@@ -29,7 +20,7 @@ import de.dkfz.roddy.knowledge.files.BaseFile
 @groovy.transform.CompileStatic
 public class MockupExecutionContextBuilder {
 
-    public static final String DIR_PREFIX = "RoddyTests_";
+    public static final String DIR_PREFIX = "RoddyTests_"
 
     public static File getTestBaseDirectory(String testID) {
         final File testBaseDirectory = File.createTempDir(DIR_PREFIX, "_" + testID)
@@ -143,33 +134,19 @@ public class MockupExecutionContextBuilder {
 
     public static BatchEuphoriaJobManager createMockupJobManager() {
         new BatchEuphoriaJobManager(new NoNoExecutionService(), new JobManagerCreationParametersBuilder().setCreateDaemon(false).build()) {
+
             @Override
-            Command createCommand(GenericJobInfo genericJobInfo) {
+            BEJobResult runJob(BEJob job) {
                 return null
             }
 
             @Override
-            JobResult runJob(BEJob job) {
+            ProcessingParameters convertResourceSet(BEJob job, ResourceSet resourceSet) {
                 return null
             }
 
             @Override
-            BEJobID createJobID(BEJob job, String s) {
-                return null
-            }
-
-            @Override
-            ProcessingCommands convertResourceSet(ResourceSet resourceSet) {
-                return null
-            }
-
-            @Override
-            ProcessingCommands parseProcessingCommands(String s) {
-                return null
-            }
-
-            @Override
-            ProcessingCommands extractProcessingCommandsFromToolScript(File file) {
+            ProcessingParameters extractProcessingParametersFromToolScript(File file) {
                 return null
             }
 
@@ -229,17 +206,27 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            String getSpecificJobIDIdentifier() {
+            String getJobIdVariable() {
                 return null
             }
 
             @Override
-            String getSpecificJobArrayIndexIdentifier() {
+            String getJobArrayIndexVariable() {
                 return null
             }
 
             @Override
-            String getSpecificJobScratchIdentifier() {
+            String getNodeFileVariable() {
+                return null
+            }
+
+            @Override
+            String getSubmitHostVariable() {
+                return null
+            }
+
+            @Override
+            String getSubmitDirectoryVariable() {
                 return null
             }
 
@@ -254,7 +241,7 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            Command createCommand(BEJob job, String s, List list, File file, Map map, List list1) {
+            Command createCommand(BEJob job, String s, List list, File file, Map map, List parentJobs) {
                 return null
             }
 
@@ -270,11 +257,6 @@ public class MockupExecutionContextBuilder {
 
             @Override
             String getSubmissionCommand() {
-                return null
-            }
-
-            @Override
-            File getLoggingDirectoryForJob(BEJob job) {
                 return null
             }
 

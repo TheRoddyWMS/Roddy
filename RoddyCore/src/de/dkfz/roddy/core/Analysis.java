@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.core;
 
+import de.dkfz.roddy.Constants;
 import de.dkfz.roddy.execution.jobs.Job;
 import de.dkfz.roddy.execution.jobs.JobState;
 import de.dkfz.roddy.AvailableFeatureToggles;
@@ -234,7 +235,7 @@ public class Analysis {
     private boolean checkJobStartability(DataSet ds) {
         String datasetID = ds.getId();
         if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning) && checkStatusForDataset(ds)) {
-            logger.postAlwaysInfo("The pid " + datasetID + " is still running and will be skipped for the process.");
+            logger.postAlwaysInfo("The " + Constants.PID + " " + datasetID + " is still running and will be skipped for the process.");
             return false;
         }
         return true;
@@ -332,7 +333,7 @@ public class Analysis {
         Thread t = new Thread(() -> {
             executeRun(ec);
         });
-        t.setName(String.format("Deferred execution context execution for pid %s", ec.getDataSet().getId()));
+        t.setName(String.format("Deferred execution context execution for " + Constants.PID + " %s", ec.getDataSet().getId()));
         t.start();
     }
 
@@ -559,6 +560,6 @@ public class Analysis {
     }
 
     public File getReadmeFile() {
-        return getConfiguration().getInformationalConfigurationContent().getReadmeFile();
+        return getConfiguration().getPreloadedConfiguration().getReadmeFile();
     }
 }

@@ -40,18 +40,19 @@ class GenericJobInfo {
     final String otherSettings
     final String inlineScript
 
-    GenericJobInfo(ExecutionContext context, BEGenJI jInfo, String inlineScript = null) {
+    GenericJobInfo(ExecutionContext context, BEGenJI jInfo, String inlineScript = null, BufferUnit bufferUnit = BufferUnit.G) {
         executionContext = context
         jobName = jInfo.jobName
         id = jInfo.id
         parameters = jInfo.parameters
         parentJobIDs = jInfo.parentJobIDs
-        walltime = jInfo.walltime
-        memory = jInfo.maxMemory
-        memoryBufferUnit = jInfo.memoryBufferUnit
-        cpus = jInfo.maxCpus
-        nodes = jInfo.maxNodes
-        queue = jInfo.queue
+        walltime = jInfo.usedResources.walltime
+        assert(jInfo.usedResources.mem.toLong(bufferUnit) <= Integer.MAX_VALUE)
+        memory = jInfo.usedResources.mem.toLong(bufferUnit) as Integer
+        memoryBufferUnit = bufferUnit
+        cpus = jInfo.usedResources.cores
+        nodes = jInfo.usedResources.nodes
+        queue = jInfo.usedResources.queue
         otherSettings = jInfo.otherSettings
 
         if (!inlineScript) {

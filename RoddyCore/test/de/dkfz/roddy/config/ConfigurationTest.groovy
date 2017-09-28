@@ -6,7 +6,6 @@
 
 package de.dkfz.roddy.config
 
-import de.dkfz.roddy.config.ResourceSetSize
 import groovy.transform.CompileStatic
 
 /**
@@ -15,8 +14,8 @@ import groovy.transform.CompileStatic
 @CompileStatic
 class ConfigurationTest extends GroovyTestCase {
 
-    public InformationalConfigurationContent mockContent(String name, InformationalConfigurationContent parent) {
-        return new InformationalConfigurationContent(parent, Configuration.ConfigurationType.OTHER, name, "", "", null, "", ResourceSetSize.s, [], [], null, "");
+    public PreloadedConfiguration mockContent(String name, PreloadedConfiguration parent) {
+        return new PreloadedConfiguration(parent, Configuration.ConfigurationType.OTHER, name, "", "", null, "", ResourceSetSize.s, [], [], null, "");
     }
 
     void testGetResourcesSize() {

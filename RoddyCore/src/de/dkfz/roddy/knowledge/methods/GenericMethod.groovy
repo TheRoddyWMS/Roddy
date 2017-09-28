@@ -6,33 +6,21 @@
 
 package de.dkfz.roddy.knowledge.methods
 
-import de.dkfz.roddy.execution.jobs.BEJobResult
-import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.JobResult
 import de.dkfz.roddy.Roddy
-
-import static de.dkfz.roddy.execution.jobs.JobConstants.*
-import de.dkfz.roddy.config.ToolFileGroupParameter
-import de.dkfz.roddy.config.ToolFileParameter
-import de.dkfz.roddy.config.ToolFileParameterCheckCondition
-import de.dkfz.roddy.config.ToolTupleParameter
-import de.dkfz.roddy.tools.*
-import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationConstants
-import de.dkfz.roddy.config.ToolEntry
+import de.dkfz.roddy.config.*
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
-import de.dkfz.roddy.execution.jobs.BEJob
-import de.dkfz.roddy.knowledge.files.BaseFile
-import de.dkfz.roddy.knowledge.files.FileGroup
-import de.dkfz.roddy.knowledge.files.FileObject
-import de.dkfz.roddy.knowledge.files.IndexedFileObjects
-import de.dkfz.roddy.knowledge.files.FileObjectTupleFactory
+import de.dkfz.roddy.execution.jobs.BEJobResult
+import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.knowledge.files.*
+import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
 import java.lang.reflect.Method
+
+import static de.dkfz.roddy.execution.jobs.JobConstants.*
 
 /**
  * Class for generic, configurable methods
@@ -168,6 +156,11 @@ class GenericMethod {
      */
     private final List<FileObject> allCreatedObjects = [];
 
+    /**
+     *
+     */
+    private Configuration jobConfiguration
+
     GenericMethod(String toolName, List<String> arrayIndices, FileObject inputObject, int numericCount, Object... additionalInput) {
         this(toolName, arrayIndices, inputObject, (0..numericCount - 1) as List<String>, additionalInput)
         if (numericCount <= 0)
@@ -203,6 +196,30 @@ class GenericMethod {
         this.arrayIndices = arrayIndices
     }
 
+    private void createJobConfigurationFromParameterMap() {
+        jobConfiguration = context.createJobConfiguration()
+        RecursiveOverridableMapContainer configurationValues = jobConfiguration.configurationValues
+        configurationValues.putAll(parameters.findAll { k, v ->
+            // If FileObjects would go into ConfigurationValue (as String) they would no get their variables evaluated.
+            // Furthermore input files do not need dependency on job-specific parameters, because they were created by
+            // earlier jobs.
+            ! (v instanceof FileObject)
+        }.collectEntries { k, v ->
+                [(k), new ConfigurationValue(k, v as String)]
+        } as Map<String, ConfigurationValue>)
+    }
+
+    private updateParameters() {
+        parameters.putAll(parameters.findAll { k, v ->
+            // If FileObjects would go into ConfigurationValue (as String) they would no get their variables evaluated.
+            // Furthermore input files do not need dependency on job-specific parameters, because they were created by
+            // earlier jobs.
+            ! (v instanceof FileObject)
+        }.keySet().collectEntries { k ->
+            [k, jobConfiguration.configurationValues.getString(k)]
+        } as Map<String, String>)
+    }
+
     public <F extends FileObject> F _callGenericToolOrToolArray() {
 
         context.setCurrentExecutedTool(calledTool);
@@ -219,11 +236,15 @@ class GenericMethod {
 
         applyParameterConstraints()
 
-        F outputObject = createOutputObject();
+        createJobConfigurationFromParameterMap()
+
+        updateParameters()
+
+        F outputObject = createOutputObject()
 
         List<BaseFile> filesToVerify = fillListOfCreatedObjects(outputObject)
 
-        F result;
+        F result
 
         // Call the job as either an array or a single job.
         if (arrayIndices != null) {
@@ -244,20 +265,25 @@ class GenericMethod {
 
     private void assembleJobParameters() {
         // Assemble initial parameters
+        parameters[PRM_WORKFLOW_ID] = context.analysis.configuration.getName()
         if (toolName) {
-            parameters[PRM_TOOLS_DIR] = configuration.getProcessingToolPath(context, toolName).getParent();
             parameters[PRM_TOOL_ID] = toolName;
+            parameters[PRM_TOOLS_DIR] = configuration.getProcessingToolPath(context, toolName).getParent();
         }
 
         // Assemble additional parameters
         for (Object entry in additionalInput) {
             if (entry instanceof BaseFile)
+                // assert(((BaseFile) entry).isEvaluated)
                 allInputValues << (BaseFile) entry;
             else if (entry instanceof FileGroup) {
                 //Take a group and store all files in that group.
                 allInputValues << (FileGroup) entry;
-
-            } else {
+            } else if (entry instanceof Map<String, String>) {
+                (entry as Map<String, String>).forEach { String k, String v ->
+                    parameters[k] = v
+                }
+            } else {               // Catch-all, in case one still wants to use a string with '=' to define a parameter (deprecated).
                 String[] split = entry.toString().split("=");
                 if (split.length != 2)
                     throw new RuntimeException("Not able to convert entry ${entry.toString()} to parameter.")
@@ -300,11 +326,11 @@ class GenericMethod {
                 }
             } else if (toolParameter instanceof ToolTupleParameter) {
                 ToolTupleParameter _tp = (ToolTupleParameter) toolParameter;
-                logger.severe("Tuples must not be used as an input parameter for tool ${toolName}.l");
+                logger.severe("Tuples must not be used as an input parameter for tool ${toolName}.");
             } else if (toolParameter instanceof ToolFileGroupParameter) {
                 ToolFileGroupParameter _tp = toolParameter as ToolFileGroupParameter;
                 if (!allInputValues[i].class == _tp.groupClass)
-                    logger.severe("Class mismatch for ${allInputValues[i]} should be of class ${_tp.groupClass}");
+                    logger.severe("Class mismatch for ${allInputValues[i]} should be of class ${_tp.groupClass}.");
                 if (_tp.passOptions == ToolFileGroupParameter.PassOptions.parameters) {
                     int cnt = 0;
                     for (BaseFile bf in (List<BaseFile>) ((FileGroup) allInputValues[i]).getFilesInGroup()) {
@@ -392,7 +418,7 @@ class GenericMethod {
                 else
                     _method.invoke(bf, childFile);
             } catch (Exception ex) {
-                println ex;
+                logger.warning(ex as String)
             }
         }
         return fileParameter.fileClass.cast(bf) as FileObject;
@@ -467,7 +493,7 @@ class GenericMethod {
         for (String arrayIndex in arrayIndices) {
             List<FileObject> newObjects = [];
             outputObjectsByArrayIndex[arrayIndex] = createOutputObject(arrayIndex);
-            JobResult jr = new JobResult(Roddy.getJobManager().convertToArrayResult(jobResult.job, jobResult, i++))
+            BEJobResult jr = Roddy.getJobManager().convertToArrayResult(jobResult.job, jobResult, i++)
             for (FileObject fo : newObjects) {
                 fo.setCreatingJobsResult(jr);
             }
@@ -476,13 +502,14 @@ class GenericMethod {
     }
 
     private FileObject createAndRunSingleJob(List<BaseFile> filesToVerify, FileObject outputObject) {
-        BEJobResult jobResult = new Job(context, context.createJobName(firstInputFile, toolName), toolName, parameters, allInputFiles, filesToVerify).run();
+        BEJobResult jobResult = new Job(context, context.createJobName(firstInputFile, toolName), toolName, parameters, allInputFiles, filesToVerify)
+                .run();
 
         if (allCreatedObjects) {
             for (FileObject fo in allCreatedObjects) {
                 if (fo == null)
                     continue;
-                fo.setCreatingJobsResult(new JobResult(jobResult));
+                fo.setCreatingJobsResult(jobResult)
             }
         }
         return outputObject;
@@ -519,6 +546,7 @@ class GenericMethod {
                 throw new RuntimeException("Could not find valid constructor for type  ${fileParameter?.fileClass} with input ${firstInputFile?.class}.");
             } else {
                 BaseFile.ConstructionHelperForGenericCreation helper = new BaseFile.ConstructionHelperForGenericCreation(firstInputFile, allInputFiles as List<FileObject>, calledTool, toolName, fileParameter.scriptParameterName, fileParameter.filenamePatternSelectionTag, fileGroupIndexValue, firstInputFile.fileStage, null);
+                if(jobConfiguration) helper.setJobConfiguration(jobConfiguration)
                 bf = c.newInstance(helper);
             }
         } catch (Exception ex) {

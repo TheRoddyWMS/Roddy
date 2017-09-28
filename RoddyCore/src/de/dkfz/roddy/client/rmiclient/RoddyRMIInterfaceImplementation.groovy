@@ -306,8 +306,8 @@ public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
     }
 
     @Override
-    Map<String, JobState> queryJobState(List<BEJob> jobIds) throws RemoteException {
-        return withServer([:], { Roddy.getJobManager().queryJobStatus(jobIds); }) as Map<String, JobState>
+    Map<String, JobState> queryJobState(List<BEJob> jobs) throws RemoteException {
+        return withServer([:], { Roddy.getJobManager().queryJobStatus(jobs); }) as Map<String, JobState>
     }
 
     @Override

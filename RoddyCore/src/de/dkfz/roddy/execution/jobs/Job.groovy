@@ -22,15 +22,12 @@ import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileDynamic
-import sun.reflect.generics.reflectiveObjects.NotImplementedException
-
-import java.lang.reflect.Field
 
 import static de.dkfz.roddy.Constants.NO_VALUE
 import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 
 @groovy.transform.CompileStatic
-class Job extends BEJob<BEJob, JobResult> {
+class Job extends BEJob<BEJob, BEJobResult> {
 
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(BEJob.class.getSimpleName())
 
@@ -128,8 +125,8 @@ class Job extends BEJob<BEJob, JobResult> {
         List<BEJob> pJobs
         if ((null != parentJobIDs && !parentJobIDs.isEmpty()) &&
                 (null != parentJobs && !parentJobs.isEmpty())) {
-            def validJobs = findJobsWithValidJobId(parentJobs)
-            def validIds = findValidJobIDs(parentJobIDs).collect { it.toString() }
+            def validJobs = jobsWithUniqueValidJobId(parentJobs)
+            def validIds = uniqueValidJobIDs(parentJobIDs).collect{ it.toString() }
             def idsOfValidJobs = jobs2jobIDs(validJobs).collect { it.toString() }
             if (validIds != idsOfValidJobs) {
                 throw new RuntimeException("parentJobBEJob needs to be called with one of parentJobs, parentJobIDs, or parentJobsIDs and *corresponding* parentJobs.")
@@ -138,21 +135,24 @@ class Job extends BEJob<BEJob, JobResult> {
         } else if (null == parentJobIDs && null == parentJobs) {
             pJobs = new LinkedList<BEJob>()
         } else if (null != parentJobs) {
-            pJobs = findJobsWithValidJobId(parentJobs)
+            pJobs = jobsWithUniqueValidJobId(parentJobs)
         } else {
-            pJobs = findValidJobIDs(parentJobIDs).collect { fromJobID(it, jobManager) }
+            pJobs = uniqueValidJobIDs(parentJobIDs).collect { new BEJob(it, jobManager) }
         }
         return pJobs
     }
 
     Job(ExecutionContext context, String jobName, String toolID, String inlineScript, List<String> arrayIndices, Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
-        super(jobName
+        super(new BEJobID()
+                , jobName
                 , context.getConfiguration().getProcessingToolPath(context, TOOLID_WRAPIN_SCRIPT)
                 , inlineScript
                 , inlineScript ? null : getToolMD5(TOOLID_WRAPIN_SCRIPT, context)
                 , getResourceSetFromConfiguration(toolID, context)
+                , []
                 , [:]
                 , Roddy.getJobManager())
+        this.setLoggingDirectory(context.loggingDirectory)
         this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectDependencyIDsFromFiles(parentFiles), jobManager))
         this.context = context
         this.toolID = toolID
@@ -167,7 +167,7 @@ class Job extends BEJob<BEJob, JobResult> {
             if (this.parameters.containsKey(k)) continue
             Object _v = defaultParameters[k]
             if (_v == null) {
-                context.addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("The parameter " + k + " has no valid value and will be set to <NO_VALUE>."))
+                context.addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("The parameter " + k + " has no valid value and will be set to ${NO_VALUE}."))
                 this.parameters[k] = NO_VALUE
             } else {
                 Map<String, String> newParameters = convertParameterObject(k, _v)
@@ -228,6 +228,20 @@ class Job extends BEJob<BEJob, JobResult> {
         return dIDs
     }
 
+    private List<String> finalParameters() {
+        List<String> allParametersForFile = new LinkedList<>();
+        if (parameters.size() > 0) {
+            for (String parm : parameters.keySet()) {
+                String val = parameters.get(parm);
+                if (val.contains(StringConstants.DOLLAR_LEFTBRACE) && val.contains(StringConstants.BRACE_RIGHT)) {
+                    val = val.replace(StringConstants.DOLLAR_LEFTBRACE, "#{"); // Replace variable names so they can be passed to qsub.
+                }
+                String key = parm;
+                allParametersForFile << FileSystemAccessProvider.getInstance().getConfigurationConverter().convertConfigurationValue(new ConfigurationValue(key, val), this.executionContext).toString();
+            }
+        }
+        return allParametersForFile;
+    }
     private Map<String, String> convertParameterObject(String k, Object _v) {
         Map<String, String> newParameters = new LinkedHashMap<>()
 //            String v = "";
@@ -442,23 +456,26 @@ class Job extends BEJob<BEJob, JobResult> {
     //TODO Create a runArray method which returns several job results with proper array ids.
     @Override
     @CompileDynamic
-    JobResult run() {
+    BEJobResult run() {
         if (runResult != null)
             throw new RuntimeException(Constants.ERR_MSG_ONLY_ONE_JOB_ALLOWED)
 
         ExecutionContextLevel contextLevel = context.getExecutionContextLevel()
         Configuration configuration = context.getConfiguration()
-        File tool = configuration.getProcessingToolPath(context, toolID)
 
         StringBuilder dbgMessage = new StringBuilder()
         StringBuilder jobDetailsLine = new StringBuilder()
         Command cmd
         boolean runJob
 
-        //Remove duplicate job ids as qsub cannot handle duplicate keys => job will hold forever as it releases the dependency queue linearly
-        List<String> dependencies = dependencyIDsAsString.unique()
-        //.collect { BEJobID jobDependencyID -> return jobDependencyID.getId() }.unique() as List<String>
-        this.parameters.putAll(convertParameterObject(Constants.RODDY_PARENT_JOBS, dependencies))
+        //Remove duplicate job ids as PBS qsub cannot handle duplicate keys => job will hold forever as it releases the dependency queue linearly.
+        this.parameters.putAll(convertParameterObject(Constants.RODDY_PARENT_JOBS, parentJobIDsAsString.unique()))
+        this.parameters.putAll(convertParameterObject(Constants.PARAMETER_FILE, parameterFile))
+        boolean debugWrapInScript = true
+        if (configuration.configurationValues.hasValue(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)) {
+            debugWrapInScript = configuration.configurationValues.getBoolean(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)
+        }
+        this.parameters.putAll(convertParameterObject(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT, debugWrapInScript))
 
         appendProcessingCommands(configuration)
 
@@ -475,22 +492,24 @@ class Job extends BEJob<BEJob, JobResult> {
 
         //Execute the job or create a dummy command.
         if (runJob) {
-            runResult = new JobResult(jobManager.runJob(this))
+            runResult = jobManager.runJob(this)
             appendToJobStateLogfile(jobManager, executionContext, runResult, null)
             cmd = runResult.command
             jobDetailsLine << " => " + cmd.getExecutionID()
             System.out.println(jobDetailsLine.toString())
             if (cmd.getExecutionID() == null) {
                 context.addErrorEntry(ExecutionContextError.EXECUTION_SUBMISSION_FAILURE.expand("Please check your submission command manually.\n\t  Is your access group set properly? [${context.getAnalysis().getUsergroup()}]\n\t  Can the submission binary handle your binary?\n\t  Is your submission system offline?"))
+                logger.postSometimesInfo("Command: ${runResult.command}\nStatus Code: ${runResult.executionResult.exitCode}, Output:\n${runResult.executionResult.resultLines.join("\n")}")
                 if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.BreakSubmissionOnError)) {
                     context.abortJobSubmission()
                 }
             }
         } else {
+            // The Job is not actually executed. Therefore, create a DummyCommand that creates a dummy JobID which in turn is used to create a dummy JobResult.
             Command command = new DummyCommand(jobManager, this, jobName, false)
-            setJobState(JobState.DUMMY)
-            setRunResult(new JobResult(new BEJobResult(command, command.getExecutionID(), false, false, this.tool, parameters, parentJobs as List<BEJob>)))
-            this.setJobState(JobState.DUMMY)
+            jobState = JobState.DUMMY
+            resetJobID(command.executionID)
+            runResult = new BEJobResult(command, new BEJob(command.executionID, jobManager), null, this.tool, parameters, parentJobs as List<BEJob>)
         }
 
         //For auto filenames. Get the job id and push propagate it to all filenames.
@@ -501,8 +520,8 @@ class Job extends BEJob<BEJob, JobResult> {
                 if (!bf) return
 
                 String absolutePath = bf.getPath().getAbsolutePath()
-                if (absolutePath.contains('${RODDY_JOBID}')) {
-                    bf.setPath(new File(absolutePath.replace('${RODDY_JOBID}', runResult.jobID.shortID)))
+                if (absolutePath.contains(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID)) {
+                    bf.setPath(new File(absolutePath.replace(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID, runResult.jobID.shortID)))
                 }
             }
         }
@@ -514,7 +533,7 @@ class Job extends BEJob<BEJob, JobResult> {
 
     private void appendProcessingCommands(Configuration configuration) {
 // Only extract commands from file if none are set
-        if (getListOfProcessingCommand().size() == 0) {
+        if (getListOfProcessingParameters().size() == 0) {
             File srcTool = configuration.getSourceToolPath(toolID)
 
             logger.severe("Appending processing commands from config is currently not supported: Roddy/../BEJob.groovy appendProcessingCommands")
@@ -530,11 +549,12 @@ class Job extends BEJob<BEJob, JobResult> {
         }
     }
 
-    private JobResult handleDifferentJobRun(StringBuilder dbgMessage) {
+    private BEJobResult handleDifferentJobRun(StringBuilder dbgMessage) {
 //        logger.severe("Handling different job run is currently not supported: Roddy/../BEJob.groovy handleDifferentJobRun")
         dbgMessage << "\tdummy job created." + Constants.ENV_LINESEPARATOR
         File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
-        runResult = new JobResult(new BEJobResult(null, (Command) null, BEJobID.getNotExecutedFakeJob(this), false, tool, parameters, parentFiles.collect { it.getCreatingJobsResult()?.getJob() }.findAll { it }))
+        this.resetJobID(new BEFakeJobID(BEFakeJobID.FakeJobReason.NOT_EXECUTED))
+        runResult = new BEJobResult((Command) null, this, null, tool, parameters, parentFiles.collect { it.getCreatingJobsResult()?.getJob() }.findAll { it })
         this.setJobState(JobState.DUMMY)
         return runResult
     }
@@ -644,7 +664,7 @@ class Job extends BEJob<BEJob, JobResult> {
         String sep = Constants.ENV_LINESEPARATOR
         File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
         setJobState(JobState.UNSTARTED)
-        Command cmd = Roddy.getJobManager().createCommand(this, tool, dependencies)
+        Command cmd = Roddy.getJobManager().createCommand(this, tool, dependencies, parameters)
         jobManager.executionService.execute(cmd)
         if (LoggerWrapper.isVerbosityMedium()) {
             dbgMessage << sep << "\tcommand was created and executed for job. ID is " + cmd.getExecutionID() << sep
@@ -690,23 +710,6 @@ class Job extends BEJob<BEJob, JobResult> {
         return true;
     }
 
-    @Override
-    List<String> finalParameters() {
-        List<String> allParametersForFile = new LinkedList<>();
-        if (parameters.size() > 0) {
-            for (String parm : parameters.keySet()) {
-                String val = parameters.get(parm);
-                if (val.contains(StringConstants.DOLLAR_LEFTBRACE) && val.contains(StringConstants.BRACE_RIGHT)) {
-                    val = val.replace(StringConstants.DOLLAR_LEFTBRACE, "#{"); // Replace variable names so they can be passed to qsub.
-                }
-                String key = parm;
-                allParametersForFile << FileSystemAccessProvider.getInstance().getConfigurationConverter().convertConfigurationValue(new ConfigurationValue(key, val), this.executionContext).toString();
-            }
-        }
-        return allParametersForFile;
-    }
-
-    @Override
     File getParameterFile() {
         return this.context.getParameterFilename(this)
     }

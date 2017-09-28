@@ -104,7 +104,7 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
             temp = temp.replace("${sourcefile}", sourcepath.getAbsolutePath());
             temp = temp.replace("${sourcefileAtomic}", sourcepath.getName());
             if (temp.contains(PLACEHOLDER_SOURCEFILE_PROPERTY)) { //Replace the string with a property value
-                Command command = FilenamePatternHelper.extractCommand(baseFile.getExecutionContext(), PLACEHOLDER_SOURCEFILE_PROPERTY, temp);
+                Command command = FilenamePatternHelper.extractCommand( PLACEHOLDER_SOURCEFILE_PROPERTY, temp);
                 String pName = command.attributes.keySet().toArray()[0].toString();
 
                 String accessorName = "get" + pName.substring(0, 1).toUpperCase() + pName.substring(1);
@@ -114,7 +114,7 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
             }
 
             if (temp.contains(PLACEHOLDER_SOURCEFILE_ATOMIC_PREFIX)) {
-                Command command = FilenamePatternHelper.extractCommand(baseFile.getExecutionContext(), PLACEHOLDER_SOURCEFILE_ATOMIC_PREFIX, temp);
+                Command command = FilenamePatternHelper.extractCommand( PLACEHOLDER_SOURCEFILE_ATOMIC_PREFIX, temp);
                 CommandAttribute att = command.attributes.get("delimiter");
                 if (att != null) {
                     String sourcename = sourcepath.getName();
@@ -179,17 +179,12 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
      * Effectively try to resolve all the unresolved variables and ${cvalue,} marked variables
      *
      * @param src
-     * @param context
      * @return
      */
-    String fillConfigurationVariables(String src, ExecutionContext context) {
-        Configuration cfg = context.getConfiguration();
-        boolean somethingChanged = true;
+    String fillConfigurationVariables(String src, Configuration cfg) {
         RecursiveOverridableMapContainerForConfigurationValues configurationValues = cfg.getConfigurationValues();
-        while (src.contains(PLACEHOLDER_CVALUE) && somethingChanged) {
-            somethingChanged = true;
-            String oldValue = src;
-            Command command = FilenamePatternHelper.extractCommand(context, PLACEHOLDER_CVALUE, src);
+        while (src.contains(PLACEHOLDER_CVALUE)) {
+            Command command = FilenamePatternHelper.extractCommand(PLACEHOLDER_CVALUE, src);
             CommandAttribute name = command.attributes.get("name");
             CommandAttribute defaultValue = command.attributes.get("default");
             if (name != null) {
@@ -216,16 +211,15 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
                     src = src.replace(command.fullString, "${" + command.rawName + "}");
                 }
             }
-            somethingChanged = !oldValue.equals(src);
         }
 
         /** Try and resolve the leftofer ${someKindOfValue}, stop, when nothing changed. **/
-        somethingChanged = true;
+        boolean somethingChanged = true;
         Map<String, String> blacklist = new LinkedHashMap<>();
         int blacklistID = 1000;
         while (src.contains("${") && somethingChanged) {
             somethingChanged = false; //Reset
-            Command command = FilenamePatternHelper.extractCommand(context, EMPTY, src);
+            Command command = FilenamePatternHelper.extractCommand(EMPTY, src);
 
             // The simple form for cvalue substitution does not allow name, default or other tags.
             String oldValue = src;
@@ -310,10 +304,9 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
             temp = fillValuesFromSourceFile(temp, baseFiles);
             temp = fillFileGroupIndex(temp, baseFile);
             temp = fillDirectories(temp, baseFile.getExecutionContext());
-            temp = fillConfigurationVariables(temp, baseFile.getExecutionContext());
+            temp = fillConfigurationVariables(temp, baseFile.getConfiguration());
             temp = fillVariablesFromSourceFileValues(baseFile, temp);
             temp = fillVariablesFromSourceFileArrayValues(baseFiles, temp);
-
         } catch (Exception e) {
             logger.severe("Could not apply filename pattern " + pattern + " for file " + baseFiles[0]);
             e.printStackTrace();
