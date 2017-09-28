@@ -14,7 +14,9 @@ import de.dkfz.roddy.client.cliclient.RoddyCLIClient
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.validation.XSDValidator
+import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.MetadataTableFactory
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.plugins.PluginInfoMap
@@ -457,8 +459,26 @@ class ProjectLoader {
                 sb << "  " << projectID << "@" << aID << Constants.ENV_LINESEPARATOR;
             }
             throw new ProjectLoaderException(sb.toString());
-        } else if (analysis.getRuntimeService() == null) {
+        }
+
+        if (analysis.getRuntimeService() == null) {
             throw new ProjectLoaderException("There is no runtime service class set for the selected analysis. This has to be set in either the project configuration or the analysis configuration.");
         }
+
+        // Earliest check for valid input and output directories. If they are not accessible or writeable.
+        // Start with the input directory
+        for (File _dir = analysis.getInputBaseDirectory(); _dir; _dir = _dir.parentFile) {
+            if (!FileSystemAccessProvider.instance.isReadable(_dir))
+                throw new ProjectLoaderException("The input directory was not readable at path ${_dir}.")
+        }
+
+        for (File _dir = analysis.getOutputBaseDirectory(); _dir; _dir = _dir.parentFile) {
+            if (!FileSystemAccessProvider.instance.isReadable(_dir))
+                throw new ProjectLoaderException("The input directory was not readable at path ${_dir}.")
+        }
+
+        if (!FileSystemAccessProvider.instance.isWritable(analysis.getOutputBaseDirectory()))
+            throw new ProjectLoaderException("The input output was not writeable at path ${analysis.getOutputBaseDirectory()}.")
+
     }
 }
