@@ -6,29 +6,16 @@
 
 package de.dkfz.roddy.knowledge.files
 
-import de.dkfz.roddy.config.Configuration
+import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.loader.ConfigurationFactory
-import de.dkfz.roddy.config.DerivedFromFilenamePattern
-import de.dkfz.roddy.config.FileStageFilenamePattern
-import de.dkfz.roddy.config.FilenamePattern
-import de.dkfz.roddy.config.FilenamePatternDependency
-import de.dkfz.roddy.config.PreloadedConfiguration
-import de.dkfz.roddy.config.OnMethodFilenamePattern
-import de.dkfz.roddy.config.OnScriptParameterFilenamePattern
-import de.dkfz.roddy.config.OnToolFilenamePattern
-import de.dkfz.roddy.config.RecursiveOverridableMapContainer
-import de.dkfz.roddy.config.ResourceSetSize
-import de.dkfz.roddy.config.ToolEntry
-import de.dkfz.roddy.config.ToolFileParameter
-import de.dkfz.roddy.config.ToolFileParameterCheckCondition
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
-import de.dkfz.roddy.execution.jobs.JobResult
+import de.dkfz.roddy.execution.jobs.BEJobResult
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.LibrariesFactoryTest
+import de.dkfz.roddy.tools.Tuple2
 import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.NodeChild
-import de.dkfz.roddy.tools.Tuple2
 import org.junit.Before
 import org.junit.Test
 
@@ -118,7 +105,7 @@ public class BaseFileTest {
         String slotID = null;
         String selectionTag = null;
         FileStageSettings fileStageSettings = null;
-        JobResult jobResult = null;
+        BEJobResult jobResult = null;
         BaseFile instance = BaseFile.constructGeneric(syntheticTestFileClass, parentObject, null, toolEntry, methodID, slotID, selectionTag, fileStageSettings, jobResult);
         assert instance && instance.class == syntheticTestFileClass;
         assert instance.executionContext == mockedContext;
@@ -138,7 +125,7 @@ public class BaseFileTest {
         String slotID = null;
         String selectionTag = null;
         FileStageSettings fileStageSettings = null;
-        JobResult jobResult = null;
+        BEJobResult jobResult = null;
         BaseFile instance = BaseFile.constructManual(syntheticTestFileClass, parentObject, null, toolEntry, methodID, slotID, selectionTag, fileStageSettings, jobResult);
         assert instance && instance.class == syntheticTestFileClass;
         assert instance.executionContext == mockedContext;
