@@ -310,6 +310,8 @@ class ConfigurationFactory {
     }
 
     Configuration loadConfiguration(PreloadedConfiguration icc) {
+        logger.always("  Fully load configurationFile ${icc.file}")
+
         Configuration config = _loadConfiguration(icc)
 
         for (String ic in config.getImportConfigurations()) {
