@@ -610,7 +610,7 @@ public class LibrariesFactory extends Initializable {
 
     public static LibrariesFactory getInstance() {
         if (librariesFactory == null) {
-            logger.postAlwaysInfo("The libraries factory for plugin management was not initialized! Creating a new, empty object.")
+            logger.postSometimesInfo("The libraries factory for plugin management was not initialized! Creating a new, empty object.")
             librariesFactory = new LibrariesFactory();
         }
 

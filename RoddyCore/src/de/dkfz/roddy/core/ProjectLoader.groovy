@@ -455,7 +455,7 @@ class ProjectLoader {
         String fullAnalysisID = iccProject.getListOfAnalyses().find { String aID -> aID.split("[:][:]")[0] == analysisID; }
 
         if (!fullAnalysisID) {
-            throw new ProjectLoaderException("The analysis \"${analysisID}\" could not be found in (call Roddy with listworkflows)")
+            throw new ProjectLoaderException("The analysis \"${analysisID}\" could not be found (call Roddy with listworkflows)")
         }
         return fullAnalysisID
     }
