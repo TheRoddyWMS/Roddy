@@ -441,7 +441,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 code = "FAILED" // E
 
             if (null != res.job.getJobID()) {
-                String jobInfoLine = jobStateInfoLine(res.job.getJobID(), code, millis)
+                // That is indeed funny here: on our cluster, the following line did not work without the forced toString(), however
+                // on our local machine it always worked! Don't know why it worked for PBS... Now we force-convert the parameters.
+                String jobInfoLine = jobStateInfoLine("" + res.job.getJobID(), code, millis)
                 FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getNameOfJobStateLogFile(executionContext), jobInfoLine, false)
             } else {
                 logger.postSometimesInfo("Did not store info for job " + res.job.getJobName() + ", job id was null.")

@@ -425,10 +425,13 @@ public class Analysis {
 
             // Look up errors when jobs are executed directly and when there were any started jobs.
             if (context.getStartedJobs().size() > 0) {
+                String failedJobs = "";
                 for (Job job : context.getExecutedJobs()) {
                     if (job.getJobState() == JobState.FAILED)
-                        context.addErrorEntry(ExecutionContextError.EXECUTION_JOBFAILED.expand("A job execution failed "));
+                        failedJobs += "\n\t" + job.getJobID() + ",\t" + job.getJobName();
                 }
+                if (failedJobs.length() > 0)
+                    context.addErrorEntry(ExecutionContextError.EXECUTION_JOBFAILED.expand("One or more jobs failed to execute:" + failedJobs + "\n\tPlease check extended logs in ~/.roddy/logs to see more details."));
             }
 
             // It is very nice now, that a lot of error messages will be printed. But how about colours?
