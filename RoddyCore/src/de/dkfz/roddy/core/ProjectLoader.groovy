@@ -13,6 +13,7 @@ import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.loader.ConfigurationFactory
+import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.config.validation.XSDValidator
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.MetadataTableFactory
@@ -171,6 +172,9 @@ class ProjectLoader {
             // Try to build up the metadata table from here on. Project and analysis are ready.
             MetadataTableFactory.getTable(analysis);
             return analysis;
+        } catch (ConfigurationLoaderException ex) {
+            logger.severe(ex.message)
+            return null
         } catch (ProjectLoaderException ex) {
             logger.severe(ex.message)
             return null;
@@ -488,12 +492,12 @@ class ProjectLoader {
 
         // Out dir needs to be writable
         if (!FileSystemAccessProvider.instance.isWritable(analysis.getOutputBaseDirectory()))
-            errors << "The output was not writeable at path ${analysis.getOutputBaseDirectory()}."
+            errors << (String) "The output was not writeable at path ${analysis.getOutputBaseDirectory()}."
 
         if (!errors)
             return
 
-        throw new ProjectLoaderException((["There were errors in directory access checks:"] + errors).join("\t\n"))
+        throw new ProjectLoaderException((["There were errors in directory access checks:"] + errors).join("\n\t"))
     }
 
     List<String> checkDirForReadabilityAndExecutability(File dirToCheck, String dirtype) {
@@ -503,11 +507,11 @@ class ProjectLoader {
             boolean executable = FileSystemAccessProvider.instance.isExecutable(_dir)
             if (!readable || !executable) {
                 if (!readable && !executable)
-                    errors << "The ${dirtype} directory was neither readable nor executable at path ${_dir}."
+                    errors << (String) "The ${dirtype} directory was neither readable nor executable at path ${_dir}."
                 else if (!readable)
-                    errors << "The ${dirtype} directory was not readable at path ${_dir}."
+                    errors << (String) "The ${dirtype} directory was not readable at path ${_dir}."
                 else if (!executable)
-                    errors << "The ${dirtype} directory was not executable at path ${_dir}."
+                    errors << (String) "The ${dirtype} directory was not executable at path ${_dir}."
                 break
             }
         }
