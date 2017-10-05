@@ -465,20 +465,30 @@ class ProjectLoader {
             throw new ProjectLoaderException("There is no runtime service class set for the selected analysis. This has to be set in either the project configuration or the analysis configuration.");
         }
 
+        List<String> errors = []
+
         // Earliest check for valid input and output directories. If they are not accessible or writeable.
         // Start with the input directory
         for (File _dir = analysis.getInputBaseDirectory(); _dir; _dir = _dir.parentFile) {
-            if (!FileSystemAccessProvider.instance.isReadable(_dir))
-                throw new ProjectLoaderException("The input directory was not readable at path ${_dir}.")
+            if (!FileSystemAccessProvider.instance.isReadable(_dir) || !FileSystemAccessProvider.instance.isExecutable(_dir)) {
+                errors << "The input directory was not readable at path ${_dir}."
+                break
+            }
         }
 
         for (File _dir = analysis.getOutputBaseDirectory(); _dir; _dir = _dir.parentFile) {
-            if (!FileSystemAccessProvider.instance.isReadable(_dir))
-                throw new ProjectLoaderException("The input directory was not readable at path ${_dir}.")
+            if (!FileSystemAccessProvider.instance.isReadable(_dir) || !FileSystemAccessProvider.instance.isExecutable(_dir))
+                if (!FileSystemAccessProvider.instance.isReadable(_dir)) {
+                    errors << "The output directory was not readable at path ${_dir}."
+                    break
+                }
         }
 
         if (!FileSystemAccessProvider.instance.isWritable(analysis.getOutputBaseDirectory()))
-            throw new ProjectLoaderException("The input output was not writeable at path ${analysis.getOutputBaseDirectory()}.")
+            errors << "The output was not writeable at path ${analysis.getOutputBaseDirectory()}."
 
+        if (errors) {
+            throw new ProjectLoaderException((["There were errors in directory access checks:"] + errors).join("\t\n"))
+        }
     }
 }
