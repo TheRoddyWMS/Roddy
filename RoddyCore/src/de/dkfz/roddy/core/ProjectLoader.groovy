@@ -14,7 +14,9 @@ import de.dkfz.roddy.client.cliclient.RoddyCLIClient
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.validation.XSDValidator
+import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.MetadataTableFactory
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.plugins.PluginInfoMap
@@ -471,8 +473,44 @@ class ProjectLoader {
                 sb << "  " << projectID << "@" << aID << Constants.ENV_LINESEPARATOR;
             }
             throw new ProjectLoaderException(sb.toString());
-        } else if (analysis.getRuntimeService() == null) {
+        }
+
+        if (analysis.getRuntimeService() == null) {
             throw new ProjectLoaderException("There is no runtime service class set for the selected analysis. This has to be set in either the project configuration or the analysis configuration.");
         }
+
+        List<String> errors = []
+
+        // Earliest check for valid input and output directories. If they are not accessible or writeable.
+        // Start with the input directory
+        errors += checkDirForReadabilityAndExecutability(analysis.getInputBaseDirectory(), "input")
+        errors += checkDirForReadabilityAndExecutability(analysis.getOutputBaseDirectory(), "output")
+
+        // Out dir needs to be writable
+        if (!FileSystemAccessProvider.instance.isWritable(analysis.getOutputBaseDirectory()))
+            errors << "The output was not writeable at path ${analysis.getOutputBaseDirectory()}."
+
+        if (!errors)
+            return
+
+        throw new ProjectLoaderException((["There were errors in directory access checks:"] + errors).join("\t\n"))
+    }
+
+    List<String> checkDirForReadabilityAndExecutability(File dirToCheck, String dirtype) {
+        List<String> errors = []
+        for (File _dir = dirToCheck; _dir; _dir = _dir.parentFile) {
+            boolean readable = FileSystemAccessProvider.instance.isReadable(_dir)
+            boolean executable = FileSystemAccessProvider.instance.isExecutable(_dir)
+            if (!readable || !executable) {
+                if (!readable && !executable)
+                    errors << "The ${dirtype} directory was neither readable nor executable at path ${_dir}."
+                else if (!readable)
+                    errors << "The ${dirtype} directory was not readable at path ${_dir}."
+                else if (!executable)
+                    errors << "The ${dirtype} directory was not executable at path ${_dir}."
+                break
+            }
+        }
+        return errors
     }
 }
