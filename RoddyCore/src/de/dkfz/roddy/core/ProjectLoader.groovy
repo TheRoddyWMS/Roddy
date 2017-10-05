@@ -469,26 +469,34 @@ class ProjectLoader {
 
         // Earliest check for valid input and output directories. If they are not accessible or writeable.
         // Start with the input directory
-        for (File _dir = analysis.getInputBaseDirectory(); _dir; _dir = _dir.parentFile) {
-            if (!FileSystemAccessProvider.instance.isReadable(_dir) || !FileSystemAccessProvider.instance.isExecutable(_dir)) {
-                errors << "The input directory was not readable at path ${_dir}."
-                break
-            }
-        }
+        errors += checkDirForReadabilityAndExecutability(analysis.getInputBaseDirectory())
+        errors += checkDirForReadabilityAndExecutability(analysis.getOutputBaseDirectory())
 
-        for (File _dir = analysis.getOutputBaseDirectory(); _dir; _dir = _dir.parentFile) {
-            if (!FileSystemAccessProvider.instance.isReadable(_dir) || !FileSystemAccessProvider.instance.isExecutable(_dir))
-                if (!FileSystemAccessProvider.instance.isReadable(_dir)) {
-                    errors << "The output directory was not readable at path ${_dir}."
-                    break
-                }
-        }
-
+        // Out dir needs to be writable
         if (!FileSystemAccessProvider.instance.isWritable(analysis.getOutputBaseDirectory()))
             errors << "The output was not writeable at path ${analysis.getOutputBaseDirectory()}."
 
-        if (errors) {
-            throw new ProjectLoaderException((["There were errors in directory access checks:"] + errors).join("\t\n"))
+        if (!errors)
+            return
+
+        throw new ProjectLoaderException((["There were errors in directory access checks:"] + errors).join("\t\n"))
+    }
+
+    List<String> checkDirForReadabilityAndExecutability(File dirToCheck) {
+        List<String> errors = []
+        for (File _dir = dirToCheck; _dir; _dir = _dir.parentFile) {
+            boolean readable = FileSystemAccessProvider.instance.isReadable(_dir)
+            boolean executable = FileSystemAccessProvider.instance.isExecutable(_dir)
+            if (!readable || !executable) {
+                if (!readable && !executable)
+                    errors << "The output directory was neither readable nor executable at path ${_dir}."
+                else if (!readable)
+                    errors << "The output directory was not readable at path ${_dir}."
+                else if (!executable)
+                    errors << "The output directory was not executable at path ${_dir}."
+                break
+            }
         }
+        return errors
     }
 }
