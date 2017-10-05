@@ -469,8 +469,8 @@ class ProjectLoader {
 
         // Earliest check for valid input and output directories. If they are not accessible or writeable.
         // Start with the input directory
-        errors += checkDirForReadabilityAndExecutability(analysis.getInputBaseDirectory())
-        errors += checkDirForReadabilityAndExecutability(analysis.getOutputBaseDirectory())
+        errors += checkDirForReadabilityAndExecutability(analysis.getInputBaseDirectory(), "input")
+        errors += checkDirForReadabilityAndExecutability(analysis.getOutputBaseDirectory(), "output")
 
         // Out dir needs to be writable
         if (!FileSystemAccessProvider.instance.isWritable(analysis.getOutputBaseDirectory()))
@@ -482,18 +482,18 @@ class ProjectLoader {
         throw new ProjectLoaderException((["There were errors in directory access checks:"] + errors).join("\t\n"))
     }
 
-    List<String> checkDirForReadabilityAndExecutability(File dirToCheck) {
+    List<String> checkDirForReadabilityAndExecutability(File dirToCheck, String dirtype) {
         List<String> errors = []
         for (File _dir = dirToCheck; _dir; _dir = _dir.parentFile) {
             boolean readable = FileSystemAccessProvider.instance.isReadable(_dir)
             boolean executable = FileSystemAccessProvider.instance.isExecutable(_dir)
             if (!readable || !executable) {
                 if (!readable && !executable)
-                    errors << "The output directory was neither readable nor executable at path ${_dir}."
+                    errors << "The ${dirtype} directory was neither readable nor executable at path ${_dir}."
                 else if (!readable)
-                    errors << "The output directory was not readable at path ${_dir}."
+                    errors << "The ${dirtype} directory was not readable at path ${_dir}."
                 else if (!executable)
-                    errors << "The output directory was not executable at path ${_dir}."
+                    errors << "The ${dirtype} directory was not executable at path ${_dir}."
                 break
             }
         }
