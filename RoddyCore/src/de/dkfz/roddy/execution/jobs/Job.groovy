@@ -242,66 +242,94 @@ class Job extends BEJob<BEJob, BEJobResult> {
         }
         return allParametersForFile;
     }
-    private Map<String, String> convertParameterObject(String k, Object _v) {
+
+
+    private String convertFile(File file) {
+        return file.getAbsolutePath()
+    }
+
+    /** The auto filename is generated from the raw job parameters as background information.
+     *  If feature toggle FailOnAutoFilename is set, this method will fail with a RuntimeException.
+     *
+     * @param k
+     * @param baseFile
+     * @return
+     */
+    private String generateAutoFilename(String k, BaseFile baseFile) {
+        int slotPosition = allRawInputParameters.keySet().asList().indexOf(k)
+
+        if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.FailOnAutoFilenames))
+            throw new RuntimeException("Auto filenames are forbidden when strict mode is active.")
+        else
+            context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("An auto filename will be used for ${jobName}:${slotPosition} / ${baseFile.class.name}"))
+
+        String completeString = jobName + k + slotPosition
+        if (parentFiles)
+            parentFiles.each {
+                BaseFile p ->
+                    if (!p instanceof BaseFile) return
+
+                    BaseFile _bf = (BaseFile) p
+                    completeString += ("" + _bf.getAbsolutePath())
+
+            }
+
+        File autoPath = new File(context.getOutputDirectory(), [jobName, k, Math.abs(completeString.hashCode()) as int, slotPosition].join("_") + ".auto")
+        baseFile.setPath(autoPath)
+        baseFile.setAsTemporaryFile()
+        return autoPath.absolutePath
+    }
+
+    /** Convert a BaseFile object into a path string. First try to replace all variables using the raw job input parameters as background variables.
+     *  If that fails, generate an auto file name.
+     *
+     * @param k
+     * @param baseFile
+     * @return path to basefile
+     */
+    private String convertBaseFile(String k, BaseFile baseFile) {
+        String newPath = replaceParametersInFilePath(baseFile, allRawInputParameters)
+        //Explicitly query newPath for a proper value!
+        if (newPath == null) {
+            newPath = generateAutoFilename(k, baseFile)
+        }
+        return newPath
+
+        //            newParameters[k + "_path"] = newPath;
+        //TODO Create a toStringList method for filestages. The method should then be very generic.
+        //                this.parameters.put(k + "_fileStage_numericIndex", "" + bf.getFileStage().getNumericIndex());
+        //                this.parameters.put(k + "_fileStage_index", bf.getFileStage().getIndex());
+        //                this.parameters.put(k + "_fileStage_laneID", bf.getFileStage().getLaneId());
+        //                this.parameters.put(k + "_fileStage_runID", bf.getFileStage().getRunID());
+
+    }
+
+
+    private String convertCollection(Collection collection) {
+        //TODO This is not the best way to do this, think of a better one which is more generic.
+        List<Object> convertedParameters = new LinkedList<>()
+        for (Object o : collection) {
+            if (o instanceof BaseFile) {
+                if (((BaseFile) o).getPath() != null)
+                    convertedParameters.add(((BaseFile) o).getAbsolutePath())
+            } else
+                convertedParameters.add(o.toString())
+        }
+        return "(${RoddyIOHelperMethods.joinArray(convertedParameters.toArray(), " ")})" as String
+    }
+
+
+    private Map<String, String> convertParameterObject(String key, Object value) {
         Map<String, String> newParameters = new LinkedHashMap<>()
-//            String v = "";
-        if (_v instanceof File) {
-            newParameters.put(k, ((File) _v).getAbsolutePath())
-        } else if (_v instanceof BaseFile) {
-            BaseFile bf = (BaseFile) _v
-            String newPath = replaceParametersInFilePath(bf, allRawInputParameters)
-
-            //Explicitely query newPath for a proper value!
-            if (newPath == null) {
-                // Auto path!
-                int slotPosition = allRawInputParameters.keySet().asList().indexOf(k)
-                if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.FailOnAutoFilenames))
-                    throw new RuntimeException("Auto filenames are forbidden when strict mode is active.")
-                else
-                    context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("An auto filename will be used for ${jobName}:${slotPosition} / ${bf.class.name}"))
-                String completeString = jobName + k + slotPosition
-                if (parentFiles)
-                    parentFiles.each {
-                        BaseFile p ->
-                            if (!p instanceof BaseFile) return
-
-                            BaseFile _bf = (BaseFile) p
-                            completeString += ("" + _bf.getAbsolutePath())
-
-                    }
-
-                File autoPath = new File(context.getOutputDirectory(), [jobName, k, Math.abs(completeString.hashCode()) as int, slotPosition].join("_") + ".auto")
-//                File autoPath = new File(context.getOutputDirectory(), [jobName, k, '${RODDY_JOBID}', slotPosition].join("_") + ".auto")
-                bf.setPath(autoPath)
-                bf.setAsTemporaryFile()
-                newPath = autoPath.absolutePath
-            }
-
-            newParameters.put(k, newPath)
-//            newParameters.put(k + "_path", newPath);
-            //TODO Create a toStringList method for filestages. The method should then be very generic.
-//                this.parameters.put(k + "_fileStage_numericIndex", "" + bf.getFileStage().getNumericIndex());
-//                this.parameters.put(k + "_fileStage_index", bf.getFileStage().getIndex());
-//                this.parameters.put(k + "_fileStage_laneID", bf.getFileStage().getLaneId());
-//                this.parameters.put(k + "_fileStage_runID", bf.getFileStage().getRunID());
-        } else if (_v instanceof Collection) {
-            //TODO This is not the best way to do this, think of a better one which is more generic.
-
-            List<Object> convertedParameters = new LinkedList<>()
-            for (Object o : _v as Collection) {
-                if (o instanceof BaseFile) {
-                    if (((BaseFile) o).getPath() != null)
-                        convertedParameters.add(((BaseFile) o).getAbsolutePath())
-                } else
-                    convertedParameters.add(o.toString())
-            }
-            this.parameters[k] = "(${RoddyIOHelperMethods.joinArray(convertedParameters.toArray(), " ")})".toString()
-
-//        } else if(_v.getClass().isArray()) {
-//            newParameters.put(k, "parameterArray=(" + RoddyIOHelperMethods.joinArray((Object[]) _v, " ") + ")"); //TODO Put conversion to roddy helper methods?
+        if (value instanceof File) {
+            newParameters.put(key, convertFile(value as File))
+        } else if (value instanceof BaseFile) {
+            newParameters[key] = convertBaseFile(key, value as BaseFile)
+        } else if (value instanceof Collection) {
+            newParameters[key] = convertCollection(value as Collection)
         } else {
             try {
-                newParameters[k] = _v.toString()
+                newParameters[key] = value.toString()
             } catch (Exception e) {
                 e.printStackTrace()
             }
