@@ -191,8 +191,12 @@ public class LibrariesFactory extends Initializable {
         Map<String, List<String>> errors = mapOfErrorsForPluginEntries.findAll { String k, List v -> v }
         if (errors) {
             StringBuilder builder = new StringBuilder("There were several plugin directories which were rejected:\n")
-            builder << errors.collect { String k, List<String> v -> (["\t" + k] + v).join("\n\t\t") }.join("\n")
-            builder << "\nRoddy needs you to keep your plugin directories clean, to prevent wrong plugin version selection!"
+            builder << [
+                    errors.collect { String k, List<String> v -> (["\t" + k] + v).join("\n\t\t") }.join("\n"),
+                    "To prevent wrong plugin selection, Roddy needs you to keep your plugin directories clean. A plugin directory is dirty if:",
+                    '\t- A contained directory does not follow the plugin name convention: "PluginName_\$major.\$minor.\$patch[-\$revision]"',
+                    "\t- A plugin directory does not contain all necessary files and directories or other errors"
+            ].join("\n")
             logger.severe(builder.toString())
             return false
         }
