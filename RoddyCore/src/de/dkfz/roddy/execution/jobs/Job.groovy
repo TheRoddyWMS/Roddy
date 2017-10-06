@@ -11,6 +11,7 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.*
+import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
@@ -170,8 +171,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 context.addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("The parameter " + k + " has no valid value and will be set to ${NO_VALUE}."))
                 this.parameters[k] = NO_VALUE
             } else {
-                Map<String, String> newParameters = convertParameterObject(k, _v)
-                this.parameters.putAll(newParameters)
+                String newParameters = parameterObjectToString(k, _v)
+                this.parameters.put(k, newParameters)
             }
         }
 
@@ -244,37 +245,44 @@ class Job extends BEJob<BEJob, BEJobResult> {
     }
 
 
-    private String convertFile(File file) {
+    private static String fileToParameterString(File file) {
         return file.getAbsolutePath()
+    }
+
+    private static Integer generateHashCode(String template, List<BaseFile> parentFiles) {
+        parentFiles.each {
+            BaseFile p ->
+                if (!p instanceof BaseFile) return
+
+                BaseFile _bf = (BaseFile) p
+                template += ("" + _bf.getAbsolutePath())
+
+        }
+        return Math.abs(template.hashCode()) as Integer
     }
 
     /** The auto filename is generated from the raw job parameters as background information.
      *  If feature toggle FailOnAutoFilename is set, this method will fail with a RuntimeException.
      *
-     * @param k
+     *  The auto file name will be composed from the jobName, the key value, a hash code generated
+     *  from these information and the list of parent files and the .auto suffix.
+     *
+     * @param key
      * @param baseFile
-     * @return
+     * @return auto filename as path string
      */
-    private String generateAutoFilename(String k, BaseFile baseFile) {
-        int slotPosition = allRawInputParameters.keySet().asList().indexOf(k)
+    private String generateAutoFilename(String key, BaseFile baseFile) {
+        int slotPosition = allRawInputParameters.keySet().asList().indexOf(key)
 
         if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.FailOnAutoFilenames))
             throw new RuntimeException("Auto filenames are forbidden when strict mode is active.")
         else
-            context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("An auto filename will be used for ${jobName}:${slotPosition} / ${baseFile.class.name}"))
+            context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.
+                    expand("An auto filename will be used for ${jobName}:${slotPosition} / ${baseFile.class.name}"))
 
-        String completeString = jobName + k + slotPosition
-        if (parentFiles)
-            parentFiles.each {
-                BaseFile p ->
-                    if (!p instanceof BaseFile) return
+        Integer hashCode = generateHashCode(jobName + key + slotPosition, parentFiles)
 
-                    BaseFile _bf = (BaseFile) p
-                    completeString += ("" + _bf.getAbsolutePath())
-
-            }
-
-        File autoPath = new File(context.getOutputDirectory(), [jobName, k, Math.abs(completeString.hashCode()) as int, slotPosition].join("_") + ".auto")
+        File autoPath = new File(context.getOutputDirectory(), [jobName, key, hashCode, slotPosition].join("_") + ".auto")
         baseFile.setPath(autoPath)
         baseFile.setAsTemporaryFile()
         return autoPath.absolutePath
@@ -283,58 +291,54 @@ class Job extends BEJob<BEJob, BEJobResult> {
     /** Convert a BaseFile object into a path string. First try to replace all variables using the raw job input parameters as background variables.
      *  If that fails, generate an auto file name.
      *
-     * @param k
+     * @param key
      * @param baseFile
      * @return path to basefile
      */
-    private String convertBaseFile(String k, BaseFile baseFile) {
+    private String baseFileToParameterString(String key, BaseFile baseFile) {
         String newPath = replaceParametersInFilePath(baseFile, allRawInputParameters)
         //Explicitly query newPath for a proper value!
         if (newPath == null) {
-            newPath = generateAutoFilename(k, baseFile)
+            newPath = generateAutoFilename(key, baseFile)
         }
         return newPath
-
         //            newParameters[k + "_path"] = newPath;
         //TODO Create a toStringList method for filestages. The method should then be very generic.
         //                this.parameters.put(k + "_fileStage_numericIndex", "" + bf.getFileStage().getNumericIndex());
         //                this.parameters.put(k + "_fileStage_index", bf.getFileStage().getIndex());
         //                this.parameters.put(k + "_fileStage_laneID", bf.getFileStage().getLaneId());
         //                this.parameters.put(k + "_fileStage_runID", bf.getFileStage().getRunID());
-
     }
 
 
-    private String convertCollection(Collection collection) {
+    private String collectionToParameterString(String key, Collection collection) {
         //TODO This is not the best way to do this, think of a better one which is more generic.
         List<Object> convertedParameters = new LinkedList<>()
         for (Object o : collection) {
             if (o instanceof BaseFile) {
                 if (((BaseFile) o).getPath() != null)
-                    convertedParameters.add(((BaseFile) o).getAbsolutePath())
+                    convertedParameters.add(baseFileToParameterString(key, o as BaseFile))
             } else
                 convertedParameters.add(o.toString())
         }
-        return "(${RoddyIOHelperMethods.joinArray(convertedParameters.toArray(), " ")})" as String
+        return BashConverter.convertListToBashArray(convertedParameters)
     }
 
 
-    private Map<String, String> convertParameterObject(String key, Object value) {
-        Map<String, String> newParameters = new LinkedHashMap<>()
+    private String parameterObjectToString(String key, Object value) {
         if (value instanceof File) {
-            newParameters.put(key, convertFile(value as File))
+            return fileToParameterString(value as File)
         } else if (value instanceof BaseFile) {
-            newParameters[key] = convertBaseFile(key, value as BaseFile)
+            return baseFileToParameterString(key, value as BaseFile)
         } else if (value instanceof Collection) {
-            newParameters[key] = convertCollection(value as Collection)
+            return collectionToParameterString(key, value as Collection)
         } else {
             try {
-                newParameters[key] = value.toString()
+                return value.toString()
             } catch (Exception e) {
                 e.printStackTrace()
             }
         }
-        return newParameters
     }
 
     Map<String, String> convertResourceSetToParameters() {
@@ -497,13 +501,13 @@ class Job extends BEJob<BEJob, BEJobResult> {
         boolean runJob
 
         //Remove duplicate job ids as PBS qsub cannot handle duplicate keys => job will hold forever as it releases the dependency queue linearly.
-        this.parameters.putAll(convertParameterObject(Constants.RODDY_PARENT_JOBS, parentJobIDsAsString.unique()))
-        this.parameters.putAll(convertParameterObject(Constants.PARAMETER_FILE, parameterFile))
+        this.parameters.put(Constants.RODDY_PARENT_JOBS, parameterObjectToString(Constants.RODDY_PARENT_JOBS, parentJobIDsAsString.unique()))
+        this.parameters.put(Constants.PARAMETER_FILE, parameterObjectToString(Constants.PARAMETER_FILE, parameterFile))
         boolean debugWrapInScript = true
         if (configuration.configurationValues.hasValue(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)) {
             debugWrapInScript = configuration.configurationValues.getBoolean(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)
         }
-        this.parameters.putAll(convertParameterObject(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT, debugWrapInScript))
+        this.parameters.put(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT, parameterObjectToString(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT, debugWrapInScript))
 
         appendProcessingCommands(configuration)
 
