@@ -250,13 +250,15 @@ class Job extends BEJob<BEJob, BEJobResult> {
     }
 
     private static Integer generateHashCode(String template, List<BaseFile> parentFiles) {
-        parentFiles.each {
-            BaseFile p ->
-                if (!p instanceof BaseFile) return
+        if (parentFiles) {
+            parentFiles.each {
+                BaseFile p ->
+                    if (!p instanceof BaseFile) return
 
-                BaseFile _bf = (BaseFile) p
-                template += ("" + _bf.getAbsolutePath())
+                    BaseFile _bf = (BaseFile) p
+                    template += ("" + _bf.getAbsolutePath())
 
+            }
         }
         return Math.abs(template.hashCode()) as Integer
     }
