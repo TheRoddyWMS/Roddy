@@ -112,27 +112,40 @@ class ConfigurationFactory {
                 }
         }
 
-        allFiles.parallelStream().each {
-            File it ->
-                try {
-                    def icc = loadInformationalConfigurationContent(it)
-                    if (availableConfigurations.containsKey(icc.name)) {
-                        throw new RuntimeException("Configuration with name ${icc.name} already exists! Names must be unique.")
-                    }
-
-                    availableConfigurations[icc.id] = icc
-                    availableConfigurationsByType.get(icc.type, []) << icc
-                    availableConfigurationsByTypeAndID.get(icc.type, [:])[icc.id] = icc
-                    for (PreloadedConfiguration iccSub in icc.getAllSubContent()) {
-                        availableConfigurations[iccSub.id] = iccSub
-                    }
-
-                } catch (UnknownConfigurationFileTypeException ex) {
-                    logger.severe("The file ${it.absolutePath} does not appear to be a valid Bash configuration file:\n\t ${ex.message}")
-                } catch (Exception ex) {
-                    logger.severe("File ${it.absolutePath} cannot be loaded! Error in config file! ${ex.toString()}")
-                    logger.severe(RoddyIOHelperMethods.getStackTraceAsString(ex))
+        Map<String, List<String>> pathsForCfgs = [:]
+        List<String> duplicateConfigurationIDs = []
+        for (File file in allFiles) {
+            try {
+                def icc = loadInformationalConfigurationContent(file)
+                pathsForCfgs.get(icc.name, []) << icc.file.absolutePath
+                if (availableConfigurations.containsKey(icc.name)) {
+                    duplicateConfigurationIDs << icc.name
+                    continue
                 }
+
+                availableConfigurations[icc.id] = icc
+                availableConfigurationsByType.get(icc.type, []) << icc
+                availableConfigurationsByTypeAndID.get(icc.type, [:])[icc.id] = icc
+                for (PreloadedConfiguration iccSub in icc.getAllSubContent()) {
+                    availableConfigurations[iccSub.id] = iccSub
+                }
+
+            } catch (UnknownConfigurationFileTypeException ex) {
+                logger.severe("The file ${file.absolutePath} does not appear to be a valid Bash configuration file:\n\t ${ex.message}")
+            } catch (Exception ex) {
+                logger.severe("File ${file.absolutePath} cannot be loaded! Error in config file! ${ex.toString()}")
+                logger.severe(RoddyIOHelperMethods.getStackTraceAsString(ex))
+            }
+        }
+        if (duplicateConfigurationIDs) {
+
+            StringBuilder messageForDuplicates = new StringBuilder("Configuration files using the same id were found:\n")
+            for (String id in duplicateConfigurationIDs.sort().unique()) {
+                messageForDuplicates << "\t" << id << ([" found in:"] + pathsForCfgs[id]).join("\n\t\t")
+            }
+            messageForDuplicates << "\n" << (["This is not allowed! Check your configuration directories for files containing using same ids:"] + configurationDirectories.collect { it.absolutePath }).join("\n\t")
+
+            throw new ConfigurationLoaderException(messageForDuplicates.toString())
         }
     }
 
@@ -344,11 +357,13 @@ class ConfigurationFactory {
 
         configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "cvalues", "Could not read configuration values for configuration ${icc.id}", { readConfigurationValues(configurationNode, config) })
         configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "cvbundles", "Could not read configuration value bundles for configuration ${icc.id}", { readValueBundles(configurationNode, config) })
-        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "fnpatterns", "Could not read filename patterns for configuration ${icc.id}", { config.filenamePatterns.map.putAll(readFilenamePatterns(configurationNode)) })
+        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "fnpatterns", "Could not read filename patterns for configuration ${icc.id}", {
+            config.filenamePatterns.map.putAll(readFilenamePatterns(configurationNode))
+        })
         configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "enums", "Could not read enumerations for configuration ${icc.id}", { readEnums(config, configurationNode) })
-        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "ptools", "Could not read processing tools for configuration ${icc.id}", {readProcessingTools(configurationNode, config)})
+        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "ptools", "Could not read processing tools for configuration ${icc.id}", { readProcessingTools(configurationNode, config) })
 
-        if(!configurationWasLoadedProperly) {
+        if (!configurationWasLoadedProperly) {
             logger.severe("There were errors in the configuration file ${icc.file}.")
         }
 
@@ -661,12 +676,12 @@ class ConfigurationFactory {
             if (toolReader.hasErrors()) {
                 String xml
                 try {
-                    xml = ERROR_PRINTOUT_XML_LINEPREFIX + XmlUtil.serialize(new StreamingMarkupBuilder().bind { it -> it.faulty tool }.toString()).readLines()[1 .. -2].join("\n" + ERROR_PRINTOUT_XML_LINEPREFIX)
+                    xml = ERROR_PRINTOUT_XML_LINEPREFIX + XmlUtil.serialize(new StreamingMarkupBuilder().bind { it -> it.faulty tool }.toString()).readLines()[1..-2].join("\n" + ERROR_PRINTOUT_XML_LINEPREFIX)
 
                 } catch (Exception ex) {
                     xml = "Cannot display xml code for tool node."
                 }
-                config.addLoadError(new ConfigurationLoadError(config, "ConfigurationFactory - " + (toolID ?: "Tool id was not properly set"), "Tool ${toolID} could not be read. Please check the tool syntax and following errors:\n" + xml, null ))
+                config.addLoadError(new ConfigurationLoadError(config, "ConfigurationFactory - " + (toolID ?: "Tool id was not properly set"), "Tool ${toolID} could not be read. Please check the tool syntax and following errors:\n" + xml, null))
                 config.addLoadErrors(toolReader.loadErrors)
                 hasErrors = true
             } else
@@ -760,7 +775,7 @@ class ConfigurationFactory {
     }
 
     static void addFormattedErrorToConfig(String message, String id, NodeChild child, Configuration config) {
-        config.addLoadError(new ConfigurationLoadError(config, id, message + ([ "" ] + RoddyConversionHelperMethods.toFormattedXML(child)).join("\n" + ERROR_PRINTOUT_XML_LINEPREFIX), null))
+        config.addLoadError(new ConfigurationLoadError(config, id, message + ([""] + RoddyConversionHelperMethods.toFormattedXML(child)).join("\n" + ERROR_PRINTOUT_XML_LINEPREFIX), null))
     }
 
     /**
@@ -775,9 +790,9 @@ class ConfigurationFactory {
         String type = extractAttributeText(cvalueNode, "type", "string")
         List<String> tags = extractAttributeText(cvalueNode, "tags", null)?.split(StringConstants.COMMA)
 
-        if(!cvalueNode.attributes().containsKey("name"))
+        if (!cvalueNode.attributes().containsKey("name"))
             addFormattedErrorToConfig("The key attribute must be set for a cvalue entry.", "cvalues", cvalueNode, config)
-        if(!cvalueNode.attributes().containsKey("value"))
+        if (!cvalueNode.attributes().containsKey("value"))
             addFormattedErrorToConfig("The value attribute must be set for a cvalue entry.", "cvalues", cvalueNode, config)
 
         //OK, here comes some sort of valuable hack. In the past it was so, that sometimes people forgot to set

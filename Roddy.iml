@@ -11,8 +11,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="BatchEuphoria_main" />
-    <orderEntry type="module" module-name="RoddyToolLib_main" />
     <orderEntry type="library" name="roddyBundledLibraries" level="project" />
+    <orderEntry type="module" module-name="BatchEuphoria" />
+    <orderEntry type="module" module-name="RoddyToolLib" />
   </component>
 </module>
