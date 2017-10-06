@@ -213,7 +213,7 @@ class GenericMethod {
 
     private updateParameters() {
         parameters.putAll(parameters.findAll { k, v ->
-            // If FileObjects would go into ConfigurationValue (as String) they would no get their variables evaluated.
+            // If FileObjects would go into ConfigurationValue (as String) they would not get their variables evaluated.
             // Furthermore input files do not need dependency on job-specific parameters, because they were created by
             // earlier jobs.
             ! (v instanceof FileObject)
@@ -340,7 +340,7 @@ class GenericMethod {
                         cnt++;
                     }
                 } else { //Arrays
-                    parameters[_tp.scriptParameterName] = ((FileGroup) allInputValues[i]).getFilesInGroup()
+                    parameters[_tp.scriptParameterName] = (FileGroup) allInputValues[i]
                 }
             }
         }

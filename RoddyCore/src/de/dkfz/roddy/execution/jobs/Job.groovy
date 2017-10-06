@@ -332,6 +332,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
             return fileToParameterString(value as File)
         } else if (value instanceof BaseFile) {
             return baseFileToParameterString(key, value as BaseFile)
+        } else if (value instanceof FileGroup) {
+            return collectionToParameterString(key, (value as FileGroup).getFilesInGroup())
         } else if (value instanceof Collection) {
             return collectionToParameterString(key, value as Collection)
         } else {
