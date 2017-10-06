@@ -192,7 +192,7 @@ public class LibrariesFactory extends Initializable {
         if (errors) {
             StringBuilder builder = new StringBuilder("There were several plugin directories which were rejected:\n")
             builder << errors.collect { String k, List<String> v -> (["\t" + k] + v).join("\n\t\t") }.join("\n")
-            builder << "Roddy needs clean plugin directories, to prevent wrong plugin version selection!"
+            builder << "\nRoddy needs you to keep your plugin directories clean, to prevent wrong plugin version selection!"
             logger.severe(builder.toString())
             return false
         }
