@@ -13,6 +13,7 @@ import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflowConverter
 import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RuntimeTools
 import de.dkfz.roddy.tools.Tuple2
 import de.dkfz.roddy.tools.Tuple5
@@ -184,6 +185,15 @@ public class LibrariesFactory extends Initializable {
                     }.collect {}.join("\n\t")
             )
 
+            return false
+        }
+
+        Map<String, List<String>> errors = mapOfErrorsForPluginEntries.findAll { String k, List v -> v }
+        if (errors) {
+            StringBuilder builder = new StringBuilder("There were several plugin directories which were rejected:\n")
+            builder << errors.collect { String k, List<String> v -> (["\t" + k] + v).join("\n\t\t") }.join("\n")
+            builder << "Roddy needs clean plugin directories, to prevent wrong plugin version selection!"
+            logger.severe(builder.toString())
             return false
         }
         // Prepare plugins in queue
@@ -358,7 +368,7 @@ public class LibrariesFactory extends Initializable {
             }
             if (rev) rev = rev.split("[.]")[0]; // Filter out .zip
             if (rev?.isNumber() || !rev) collectedTemporary << pdi
-            else logger.severe("Filtered out plugin ${name}, as the revision id is not numeric.")
+            else mapOfErrorsForPluginFolders.get(pdi.directory, []) << "Filtered out plugin ${name}, as the revision id is not numeric.".toString()
         }
         return collectedTemporary
     }
@@ -469,6 +479,10 @@ public class LibrariesFactory extends Initializable {
 
             if (isBetaPlugin)
                 newPluginInfo.isBetaPlugin = true;
+
+
+            if (newPluginInfo.errors)
+                mapOfErrorsForPluginEntries.get(newPluginInfo.directory.path, []).addAll(newPluginInfo.getErrors())
         }
         return new PluginInfoMap(_mapOfPlugins)
     }
