@@ -6,8 +6,10 @@
 
 package de.dkfz.roddy.knowledge.methods
 
+import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.*
+import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.execution.jobs.BEJobResult
@@ -149,7 +151,7 @@ class GenericMethod {
     /**
      * The final map of parameters which will be passed to the job.
      */
-    private final Map<String, Object> parameters = [:]
+    private final LinkedHashMap<String, Object> parameters = [:]
 
     /**
      * A list of all created file objects, also the files from file groups.
@@ -211,7 +213,7 @@ class GenericMethod {
 
     private updateParameters() {
         parameters.putAll(parameters.findAll { k, v ->
-            // If FileObjects would go into ConfigurationValue (as String) they would no get their variables evaluated.
+            // If FileObjects would go into ConfigurationValue (as String) they would not get their variables evaluated.
             // Furthermore input files do not need dependency on job-specific parameters, because they were created by
             // earlier jobs.
             ! (v instanceof FileObject)
@@ -338,7 +340,7 @@ class GenericMethod {
                         cnt++;
                     }
                 } else { //Arrays
-                    parameters[_tp.scriptParameterName] = ((FileGroup) allInputValues[i]).getFilesInGroup()
+                    parameters[_tp.scriptParameterName] = (FileGroup) allInputValues[i]
                 }
             }
         }
@@ -502,13 +504,12 @@ class GenericMethod {
     }
 
     private FileObject createAndRunSingleJob(List<BaseFile> filesToVerify, FileObject outputObject) {
-        BEJobResult jobResult = new Job(context, context.createJobName(firstInputFile, toolName), toolName, parameters, allInputFiles, filesToVerify)
-                .run();
+        BEJobResult jobResult = new Job(context, context.createJobName(firstInputFile, toolName), toolName, parameters, allInputFiles, filesToVerify).run()
 
         if (allCreatedObjects) {
             for (FileObject fo in allCreatedObjects) {
                 if (fo == null)
-                    continue;
+                    continue
                 fo.setCreatingJobsResult(jobResult)
             }
         }

@@ -16,6 +16,7 @@ import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.fs.BashCommandSet
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
 
 import java.util.logging.Level
@@ -210,8 +211,13 @@ class BashConverter extends ConfigurationConverter {
         return listOfSortedValues
     }
 
-    private boolean isQuoted(String string) {
+    private static boolean isQuoted(String string) {
         (string.startsWith("'") && string.endsWith("'")) || (string.startsWith('"') && string.endsWith('"'))
+    }
+
+
+    static String convertListToBashArray(List list) {
+        "(${RoddyIOHelperMethods.joinArray(list.toArray(), " ")})" as String
     }
 
     StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context, Boolean quoteSomeScalarConfigValues, Boolean autoQuoteArrays) {

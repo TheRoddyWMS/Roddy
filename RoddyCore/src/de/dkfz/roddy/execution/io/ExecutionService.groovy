@@ -216,7 +216,6 @@ public abstract class ExecutionService implements BEExecutionService {
     protected void finalizeServiceBasedOutputStream(Command command, OutputStream outputStream) {}
 
     static void storeParameterFile(Command command) {
-        command.job.parameters
         ExecutionContext context = ((Job) command.job).executionContext
         String convertedParameters = command.parameters.collect { String k, String v -> return "export ${k}=${v}\n".toString() }.join("")
         if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs)

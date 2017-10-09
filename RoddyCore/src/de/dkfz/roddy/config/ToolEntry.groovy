@@ -6,16 +6,12 @@
 
 package de.dkfz.roddy.config
 
-import de.dkfz.roddy.config.ResourceSet;
-import de.dkfz.roddy.config.ResourceSetSize;
-import de.dkfz.roddy.core.ExecutionContext;
+import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.knowledge.files.BaseFile
-import groovy.transform.CompileStatic;
+import groovy.transform.CompileStatic
 
-import java.lang.reflect.Method;
-import java.util.stream.Collectors;
-
-import static de.dkfz.roddy.Constants.NO_VALUE;
+import java.lang.reflect.Method
+import java.util.stream.Collectors
 
 /**
  * @author michael
