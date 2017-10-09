@@ -30,6 +30,8 @@ public class ConfigurationConstants {
     public static final String CVALUE_PLACEHOLDER_RODDY_JOBID_RAW = "RODDY_JOBID";
     public static final String CVALUE_PLACEHOLDER_RODDY_JOBARRAYINDEX_RAW = "RODDY_JOBARRAYINDEX";
     public static final String CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW = "RODDY_SCRATCH";
+    public static final String CVALUE_DEFAULT_SCRATCH_DIR = "defaultRoddyScratch";
+    public static final String DEFAULT_SCRATCH_DIR = "/data/roddyScratch";
     public static final String CVALUE_TYPE_BASH_ARRAY = "bashArray";
     public static final String CVALUE_TYPE_PATH = "path";
     public static final String CVALUE_TYPE_STRING = "string";

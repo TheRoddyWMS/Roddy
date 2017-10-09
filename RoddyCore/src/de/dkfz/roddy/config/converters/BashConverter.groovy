@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.config.converters
 
+import com.sun.org.apache.xerces.internal.impl.xpath.regex.RegularExpression
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -211,16 +212,60 @@ class BashConverter extends ConfigurationConverter {
         return listOfSortedValues
     }
 
-    private static boolean isQuoted(String string) {
+    static boolean isQuoted(String string) {
         (string.startsWith("'") && string.endsWith("'")) || (string.startsWith('"') && string.endsWith('"'))
     }
 
 
     static String convertListToBashArray(List list) {
-        "(${RoddyIOHelperMethods.joinArray(list.toArray(), " ")})" as String
+        "(${list.collect { it.toString() }.join(" ")})" as String
     }
 
-    StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context, Boolean quoteSomeScalarConfigValues, Boolean autoQuoteArrays) {
+    /** Dependent on the settings and whether the string is quoted, return the quoted string. */
+    static String addQuotesIfRequested(String value, Boolean doQuote = true) {
+        if (isQuoted(value) || !doQuote)
+            return value
+        else
+            return '"' + value + '"'
+    }
+
+    /** To convert a simple Map of String keys to String values (possibly pre-converted!), this method should be used.
+     *
+     * @param map
+     * @param doDeclare
+     * @param quoteSomeScalarConfigValues
+     * @param doQuote
+     * @return
+     */
+    static String convertStringMap(LinkedHashMap<String, String> map, Boolean doDeclare = true,
+                                   Boolean quoteSomeScalarConfigValues = true, Boolean doQuote = true) {
+        String declareString = ""
+        if (doDeclare) {
+            declareString = "declare -x   "
+        }
+        return map.collect { String k, String v ->
+            String tmp
+            if (v.startsWith("-") || v.startsWith("*")) {
+                tmp = '"' + v + '"'
+            } else if (quoteSomeScalarConfigValues && !isQuoted(v) && v =~ /[\s\t\n;]/) {
+                tmp = '"' + v + '"'
+            } else {
+                tmp = addQuotesIfRequested(v, doQuote)
+            }
+            "${declareString} ${k}=${tmp}\n".toString()
+        }.join("")
+    }
+
+    /** ConfigurationValue provides meta-data about types for the values. To exploit this specialized conversion function exists.
+     *
+     * @param cv
+     * @param context
+     * @param quoteSomeScalarConfigValues
+     * @param autoQuoteArrays
+     * @return
+     */
+    StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context,
+                                            Boolean quoteSomeScalarConfigValues, Boolean autoQuoteArrays) {
         StringBuilder text = new StringBuilder();
         String declareVar = ""
         String declareInt = ""
@@ -234,12 +279,7 @@ class BashConverter extends ConfigurationConverter {
             String tmp
 
             if (cv.type && cv.type.toLowerCase() == "basharray") {
-                // Check, if it is already quoted OR auto quote is disabled
-                // If so, take the existing quotes, if not auto-quote
-                if (isQuoted(cv.value) || !autoQuoteArrays)
-                    return new StringBuilder("${declareVar} ${cv.id}=${cv.toString()}".toString())
-                else
-                    return new StringBuilder("${declareVar} ${cv.id}=\"${cv.toString()}\"".toString());
+                return new StringBuilder("${declareVar} ${cv.id}=${addQuotesIfRequested(cv.toString(), autoQuoteArrays)}".toString())
             } else if (cv.type && cv.type.toLowerCase() == "integer") {
                 return new StringBuilder("${declareInt} ${cv.id}=${cv.toString()}".toString());
             } else if (cv.type && ["double", "float"].contains(cv.type.toLowerCase())) {
