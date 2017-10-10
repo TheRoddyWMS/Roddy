@@ -308,48 +308,47 @@ public class LibrariesFactory extends Initializable {
         return file.exists() && file.isDirectory() && file.canRead() && file.canExecute()
     }
 
-    static PluginType determinePluginType(File directory, Map<String, List<String>> mapOfErrors = [:]) {
-        logger.postRareInfo("  Parsing plugin folder: ${directory}");
+    static PluginType determinePluginType(File file, Map<String, List<String>> mapOfErrors = [:]) {
+        logger.postRareInfo("  Parsing plugin folder: ${file}");
 
         List<String> errors = mapOfErrors.get(PRIMARY_ERRORS, [])
         List<String> errorsUnimportant = mapOfErrors.get(SECONDARY_ERRORS, [])
 
-        if (!directory.isDirectory()) {
+        if (!file.isDirectory()) {
             // Just return silently here.
-//            errors << "File is not a directory"
-            PluginType.INVALID
+            return PluginType.INVALID
         }
-        if (directory.isHidden())
+        if (file.isHidden())
             errors << "Directory is hidden"
-        if (!directory.canRead())
+        if (!file.canRead())
             errors << "Directory cannot be read"
 
         if (errors) {
             logger.postRareInfo((["A directory was rejected as a plugin directory because:"] + errors).join("\n\t"))
-            PluginType.INVALID
+            return PluginType.INVALID
         }
 
-        String dirName = directory.getName();
+        String dirName = file.getName();
         if (!isPluginDirectoryNameValid(dirName)) {
             logger.postRareInfo("A directory was rejected as a plugin directory because its name did not match the naming rules.")
             errorsUnimportant << "A directory was rejected as a plugin directory because its name did not match the naming rules."
-            PluginType.INVALID
+            return PluginType.INVALID
         }
 
         // Check if it is a native workflow
         // Search for a runWorkflow_[scheduler].sh
-        if (NativeWorkflowConverter.isNativePlugin(directory)) {
+        if (NativeWorkflowConverter.isNativePlugin(file)) {
             return PluginType.NATIVE
         } else {
 
             // If not, check for regular workflows.
-            if (!checkFile(new File(directory, BUILDINFO_TEXTFILE)))
+            if (!checkFile(new File(file, BUILDINFO_TEXTFILE)))
                 errors << "The buildinfo.txt file is missing"
-            if (!checkFile(new File(directory, BUILDVERSION_TEXTFILE)))
+            if (!checkFile(new File(file, BUILDVERSION_TEXTFILE)))
                 errors << "The buildversion.txt file is missing"
-            if (!checkDirectory(new File(directory, "resources/analysisTools")))
+            if (!checkDirectory(new File(file, "resources/analysisTools")))
                 errors << "The analysisTools resource directory is missing"
-            if (!checkDirectory(new File(directory, "resources/configurationFiles")))
+            if (!checkDirectory(new File(file, "resources/configurationFiles")))
                 errors << "The configurationFiles resource directory is missing"
         }
 

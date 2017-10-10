@@ -17,6 +17,9 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributes;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -79,12 +82,14 @@ public class PluginInfo {
 
     private final List<String> errors = new LinkedList<>();
 
-    public PluginInfo(String name, File directory, String version, String roddyAPIVersion, String jdkVersion, String groovyVersion, Map<String, String> dependencies) {
+    public PluginInfo(String name, File directory, String version, String roddyAPIVersion,
+                      String jdkVersion, String groovyVersion, Map<String, String> dependencies) {
         this(name, null, directory, null, version, roddyAPIVersion, jdkVersion, groovyVersion, dependencies);
     }
 
     @Deprecated
-    public PluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, String roddyAPIVersion, String jdkVersion, String groovyVersion, Map<String, String> dependencies) {
+    public PluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, String roddyAPIVersion,
+                      String jdkVersion, String groovyVersion, Map<String, String> dependencies) {
         this.name = name;
         this.directory = directory;
         this.developmentDirectory = developmentDirectory;
@@ -99,21 +104,25 @@ public class PluginInfo {
 
     protected void fillListOfToolDirectories() {
         File toolsBaseDir = null;
-        try {
-            toolsBaseDir = getToolsDirectory();
+        toolsBaseDir = getToolsDirectory();
 
-            if (toolsBaseDir != null && toolsBaseDir.exists() && toolsBaseDir.isDirectory()) { //Search through the default folders, if possible.
+        if (toolsBaseDir != null && toolsBaseDir.exists() && toolsBaseDir.isDirectory()) { //Search through the default folders, if possible.
                 for (File file : toolsBaseDir.listFiles()) {
-                    if (!file.isDirectory() || file.isHidden()) {
-                        errors.add("Ignore directory " + file.getAbsolutePath() + "; It is not a valid tools directory.");
+                    PosixFileAttributes attr;
+                    try {
+                        attr = Files.readAttributes(file.toPath(), PosixFileAttributes.class);
+                    } catch (IOException ex) {
+                        errors.add("An IOException occurred while accessing '" + file.getAbsolutePath() + "': " + ex.getMessage());
+                        continue;
+                    }
+
+                    if (attr.isRegularFile() || file.isHidden()) {
                         continue;
                     }
 
                     String toolsDir = file.getName();
                     listOfToolDirectories.put(toolsDir, file);
                 }
-            }
-        } catch (Exception ex) {
         }
     }
 
