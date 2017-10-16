@@ -7,45 +7,39 @@
 package de.dkfz.roddy;
 
 import com.btr.proxy.search.ProxySearch;
-import de.dkfz.roddy.config.ResourceSetSize;
-import de.dkfz.roddy.execution.BEExecutionService;
-import de.dkfz.roddy.execution.jobs.*;
 import de.dkfz.roddy.client.RoddyStartupModes;
 import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
 import de.dkfz.roddy.client.rmiclient.RoddyRMIServer;
-import de.dkfz.roddy.config.Configuration;
-import de.dkfz.roddy.config.ConfigurationConstants;
-import de.dkfz.roddy.config.ConfigurationValue;
-import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues;
-import de.dkfz.roddy.execution.io.LocalExecutionHelper;
-import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
-import de.dkfz.roddy.tools.RoddyIOHelperMethods;
-import de.dkfz.roddy.tools.AppConfig;
+import de.dkfz.roddy.config.*;
 import de.dkfz.roddy.core.Initializable;
+import de.dkfz.roddy.execution.BEExecutionService;
 import de.dkfz.roddy.execution.io.ExecutionService;
+import de.dkfz.roddy.execution.io.LocalExecutionHelper;
 import de.dkfz.roddy.execution.io.fs.BashCommandSet;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.io.fs.ShellCommandSet;
+import de.dkfz.roddy.execution.jobs.*;
 import de.dkfz.roddy.plugins.LibrariesFactory;
+import de.dkfz.roddy.tools.AppConfig;
 import de.dkfz.roddy.tools.LoggerWrapper;
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
+import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import groovy.transform.CompileStatic;
 
-import java.io.*;
+import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Paths;
 import java.util.*;
 
 import static de.dkfz.roddy.RunMode.CLI;
 import static de.dkfz.roddy.StringConstants.FALSE;
 import static de.dkfz.roddy.config.ConfigurationConstants.*;
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW;
 
 /**
  * This is the main class for the Roddy command line application.
@@ -588,18 +582,26 @@ public class Roddy {
 
     private static Configuration applicationSpecificConfiguration = null;
 
+    private static void setDefaultRoddyJobIdVariable(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
+        configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_JOBID_RAW, "$" + Roddy.jobManager.getJobIdVariable()));
+    }
+
+    /** Take RODDY_SCRATCH, or if this is empty "defaultScratchDir" as scratch base directory. The job-manager specific _JOBID variable (e.g.
+     *  PBS_JOBID) is then appended as "/${PBS_JOBID}", to ensure that every job gets its own scratch directory.
+     * @return
+     */
+    private static void setDefaultRoddyScratchVariable(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
+        String scratchDir = new File(ConfigurationConstants.DEFAULT_SCRATCH_DIR, "$" + Roddy.jobManager.getJobIdVariable()).getAbsolutePath();
+        configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW, scratchDir));
+    }
+
     public static Configuration getApplicationSpecificConfiguration() {
         if (applicationSpecificConfiguration == null) {
             applicationSpecificConfiguration = new Configuration(null);
             RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
 
-            // Add RODDY_SCRATCH and RODDY_JOBID with JobManager-specific values.
-            configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_JOBID_RAW, "$" + Roddy.jobManager.getJobIdVariable()));
-            String scratchBase = configurationValues.getString(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW);
-            if (null != scratchBase) {
-                configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW,
-                        Paths.get(scratchBase, "$" + Roddy.jobManager.getJobIdVariable()).toAbsolutePath().toString()));
-            }
+            setDefaultRoddyJobIdVariable(configurationValues);
+            setDefaultRoddyScratchVariable(configurationValues);
 
             // Add custom command line values to the project configuration.
             List<ConfigurationValue> externalConfigurationValues = getCommandLineCall().getSetConfigurationValues();
@@ -631,7 +633,7 @@ public class Roddy {
 
         try {
             classLoader = LibrariesFactory.getGroovyClassLoader();
-            jobManagerClassID = Roddy.getApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS);
+            jobManagerClassID = Roddy.getApplicationProperty(Constants.APP_PROPERTY_JOB_MANAGER_CLASS);
             if (RoddyConversionHelperMethods.isNullOrEmpty(jobManagerClassID)) jobManagerClassID = "UNSET";
             jobManagerClass = classLoader.loadClass(jobManagerClassID);
         } catch (ClassNotFoundException e) {
