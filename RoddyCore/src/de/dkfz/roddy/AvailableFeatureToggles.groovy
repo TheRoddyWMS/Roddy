@@ -53,7 +53,10 @@ enum AvailableFeatureToggles {
 
     /**
      * Enable this, to have Bash arrays in the runtime config auto quoted to something like
+     *
      * declare -x BASH_ARRAY="value"
+     *
+     * unless they are already quoted.
      */
     AutoQuoteBashArrayVariables(true),
 

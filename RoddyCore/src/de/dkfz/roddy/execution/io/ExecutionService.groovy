@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.execution.io
 
+import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.execution.BEExecutionService
 import de.dkfz.roddy.execution.jobs.Command
@@ -217,9 +218,12 @@ public abstract class ExecutionService implements BEExecutionService {
 
     static void storeParameterFile(Command command) {
         ExecutionContext context = ((Job) command.job).executionContext
-        String convertedParameters = command.parameters.collect { String k, String v -> return "export ${k}=${v}\n".toString() }.join("")
+        String convertedParameters = BashConverter.convertStringMap(command.parameters,
+                context.getFeatureToggleStatus(AvailableFeatureToggles.UseDeclareFunctionalityForBashConverter),
+                context.getFeatureToggleStatus(AvailableFeatureToggles.QuoteSomeScalarConfigValues),
+                context.getFeatureToggleStatus(AvailableFeatureToggles.AutoQuoteBashArrayVariables))
         if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
-            FileSystemAccessProvider.getInstance().writeTextFile((command.job as Job).getParameterFile(), convertedParameters, context);
+            FileSystemAccessProvider.getInstance().writeTextFile((command.job as Job).getParameterFile(), convertedParameters, context)
     }
 
     public static long measureStart() { return System.nanoTime(); }

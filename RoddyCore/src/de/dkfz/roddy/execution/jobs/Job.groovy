@@ -505,8 +505,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
         boolean runJob
 
         //Remove duplicate job ids as PBS qsub cannot handle duplicate keys => job will hold forever as it releases the dependency queue linearly.
-        this.parameters.put(Constants.RODDY_PARENT_JOBS, parameterObjectToString(Constants.RODDY_PARENT_JOBS, parentJobIDsAsString.unique()))
-        this.parameters.put(Constants.PARAMETER_FILE, parameterObjectToString(Constants.PARAMETER_FILE, parameterFile))
+        this.parameters[Constants.RODDY_PARENT_JOBS] = parameterObjectToString(Constants.RODDY_PARENT_JOBS, parentJobIDsAsString.unique())
+        this.parameters[Constants.PARAMETER_FILE] = parameterObjectToString(Constants.PARAMETER_FILE, parameterFile)
         boolean debugWrapInScript = true
         if (configuration.configurationValues.hasValue(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)) {
             debugWrapInScript = configuration.configurationValues.getBoolean(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)
