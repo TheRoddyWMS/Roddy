@@ -316,8 +316,7 @@ public class LibrariesFactory extends Initializable {
 
         if (!directory.isDirectory()) {
             // Just return silently here.
-//            errors << "File is not a directory"
-            PluginType.INVALID
+            return PluginType.INVALID
         }
         if (directory.isHidden())
             errors << "Directory is hidden"
@@ -326,14 +325,14 @@ public class LibrariesFactory extends Initializable {
 
         if (errors) {
             logger.postRareInfo((["A directory was rejected as a plugin directory because:"] + errors).join("\n\t"))
-            PluginType.INVALID
+            return PluginType.INVALID
         }
 
         String dirName = directory.getName();
         if (!isPluginDirectoryNameValid(dirName)) {
             logger.postRareInfo("A directory was rejected as a plugin directory because its name did not match the naming rules.")
             errorsUnimportant << "A directory was rejected as a plugin directory because its name did not match the naming rules."
-            PluginType.INVALID
+            return PluginType.INVALID
         }
 
         // Check if it is a native workflow
