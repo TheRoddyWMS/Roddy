@@ -308,19 +308,19 @@ public class LibrariesFactory extends Initializable {
         return file.exists() && file.isDirectory() && file.canRead() && file.canExecute()
     }
 
-    static PluginType determinePluginType(File file, Map<String, List<String>> mapOfErrors = [:]) {
-        logger.postRareInfo("  Parsing plugin folder: ${file}");
+    static PluginType determinePluginType(File directory, Map<String, List<String>> mapOfErrors = [:]) {
+        logger.postRareInfo("  Parsing plugin folder: ${directory}");
 
         List<String> errors = mapOfErrors.get(PRIMARY_ERRORS, [])
         List<String> errorsUnimportant = mapOfErrors.get(SECONDARY_ERRORS, [])
 
-        if (!file.isDirectory()) {
+        if (!directory.isDirectory()) {
             // Just return silently here.
             return PluginType.INVALID
         }
-        if (file.isHidden())
+        if (directory.isHidden())
             errors << "Directory is hidden"
-        if (!file.canRead())
+        if (!directory.canRead())
             errors << "Directory cannot be read"
 
         if (errors) {
@@ -328,7 +328,7 @@ public class LibrariesFactory extends Initializable {
             return PluginType.INVALID
         }
 
-        String dirName = file.getName();
+        String dirName = directory.getName();
         if (!isPluginDirectoryNameValid(dirName)) {
             logger.postRareInfo("A directory was rejected as a plugin directory because its name did not match the naming rules.")
             errorsUnimportant << "A directory was rejected as a plugin directory because its name did not match the naming rules."
@@ -337,18 +337,18 @@ public class LibrariesFactory extends Initializable {
 
         // Check if it is a native workflow
         // Search for a runWorkflow_[scheduler].sh
-        if (NativeWorkflowConverter.isNativePlugin(file)) {
+        if (NativeWorkflowConverter.isNativePlugin(directory)) {
             return PluginType.NATIVE
         } else {
 
             // If not, check for regular workflows.
-            if (!checkFile(new File(file, BUILDINFO_TEXTFILE)))
+            if (!checkFile(new File(directory, BUILDINFO_TEXTFILE)))
                 errors << "The buildinfo.txt file is missing"
-            if (!checkFile(new File(file, BUILDVERSION_TEXTFILE)))
+            if (!checkFile(new File(directory, BUILDVERSION_TEXTFILE)))
                 errors << "The buildversion.txt file is missing"
-            if (!checkDirectory(new File(file, "resources/analysisTools")))
+            if (!checkDirectory(new File(directory, "resources/analysisTools")))
                 errors << "The analysisTools resource directory is missing"
-            if (!checkDirectory(new File(file, "resources/configurationFiles")))
+            if (!checkDirectory(new File(directory, "resources/configurationFiles")))
                 errors << "The configurationFiles resource directory is missing"
         }
 

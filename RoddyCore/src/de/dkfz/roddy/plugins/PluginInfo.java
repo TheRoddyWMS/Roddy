@@ -116,7 +116,7 @@ public class PluginInfo {
                         continue;
                     }
 
-                    if (attr.isRegularFile() || file.isHidden()) {
+                    if (!attr.isDirectory() || file.isHidden()) {
                         continue;
                     }
 
