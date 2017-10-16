@@ -586,6 +586,10 @@ public class Roddy {
         configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_JOBID_RAW, "$" + Roddy.jobManager.getJobIdVariable()));
     }
 
+    private static void setDefaultRoddyQueueVariable(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
+        configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_QUEUE_RAW, "$" + Roddy.jobManager.getJobIdVariable()));
+    }
+
     /** Take RODDY_SCRATCH, or if this is empty "defaultScratchDir" as scratch base directory. The job-manager specific _JOBID variable (e.g.
      *  PBS_JOBID) is then appended as "/${PBS_JOBID}", to ensure that every job gets its own scratch directory.
      * @return
@@ -601,6 +605,7 @@ public class Roddy {
             RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
 
             setDefaultRoddyJobIdVariable(configurationValues);
+            setDefaultRoddyQueueVariable(configurationValues);
             setDefaultRoddyScratchVariable(configurationValues);
 
             // Add custom command line values to the project configuration.

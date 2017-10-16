@@ -211,6 +211,11 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
+            String getQueueVariable() {
+                return null
+            }
+
+            @Override
             String getJobArrayIndexVariable() {
                 return null
             }
