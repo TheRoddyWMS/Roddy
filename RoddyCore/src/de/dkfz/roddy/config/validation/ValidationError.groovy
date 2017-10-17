@@ -7,7 +7,7 @@
 package de.dkfz.roddy.config.validation
 
 import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.loader.ConfigurationError
+import de.dkfz.roddy.config.ConfigurationError
 
 /**
  * Errors thrown during validation

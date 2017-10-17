@@ -4,7 +4,7 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.config.loader
+package de.dkfz.roddy.config
 
 import de.dkfz.roddy.config.Configuration
 import groovy.transform.CompileStatic
@@ -27,7 +27,11 @@ class ConfigurationError extends Exception {
         this.exception = exception
     }
 
-    ConfigurationError(String description, Configuration configuration) {
-        this(description, configuration, null, null)
+    ConfigurationError(String description, Configuration configuration, Exception ex = null) {
+        this(description, configuration, null, ex)
+    }
+
+    ConfigurationError(String description, String id, Exception ex = null) {
+        this(description, null, id, ex)
     }
 }

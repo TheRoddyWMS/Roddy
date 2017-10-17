@@ -8,7 +8,7 @@ package de.dkfz.roddy.knowledge.files
 
 import de.dkfz.roddy.config.*
 
-import de.dkfz.roddy.config.loader.ConfigurationError
+import de.dkfz.roddy.config.ConfigurationError
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.Workflow

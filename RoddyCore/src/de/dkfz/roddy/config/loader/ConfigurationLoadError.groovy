@@ -7,6 +7,7 @@
 package de.dkfz.roddy.config.loader
 
 import de.dkfz.roddy.config.Configuration
+import de.dkfz.roddy.config.ConfigurationError
 import groovy.transform.CompileStatic
 
 /**

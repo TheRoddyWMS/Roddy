@@ -18,10 +18,10 @@ public class RecursiveOverridableMapContainerForConfigurationValues
     }
 
     public ConfigurationValue get(String id, String defaultValue) {
-        if (!hasValue(id)) {
-            return new ConfigurationValue(getContainerParent(), id, defaultValue);
-        } else {
+        try {
             return getValue(id);
+        } catch (ConfigurationError ex) {
+            return new ConfigurationValue(getContainerParent(), id, defaultValue);
         }
     }
 
@@ -54,7 +54,7 @@ public class RecursiveOverridableMapContainerForConfigurationValues
     }
 
     /** Get value or throw a RuntimeException, if the value does not exist. */
-    public ConfigurationValue getOrThrow(String id) {
+    public ConfigurationValue getOrThrow(String id) throws ConfigurationError {
         return getValue(id);
     }
 
@@ -67,7 +67,11 @@ public class RecursiveOverridableMapContainerForConfigurationValues
     }
 
     public boolean getBoolean(String id, boolean b) {
-        return hasValue(id) ? getValue(id).toBoolean() : b;
+        try {
+            return getValue(id).toBoolean();
+        } catch (ConfigurationError e) {
+            return b;
+        }
     }
 
     /**
@@ -81,7 +85,11 @@ public class RecursiveOverridableMapContainerForConfigurationValues
     }
 
     public String getString(String id, String s) {
-        return hasValue(id) ? getValue(id).toString() : s;
+        try {
+            return getValue(id).toString();
+        } catch (ConfigurationError e) {
+            return s;
+        }
     }
 
     /**

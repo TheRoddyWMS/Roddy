@@ -210,7 +210,11 @@ public class Configuration implements ContainerParent<Configuration> {
 
     public ResourceSetSize getResourcesSize() {
         if(configurationValues.hasValue(ConfigurationConstants.CFG_USED_RESOURCES_SIZE)) {
-            return ResourceSetSize.valueOf(configurationValues.getValue(ConfigurationConstants.CFG_USED_RESOURCES_SIZE).toString());
+            try {
+                return ResourceSetSize.valueOf(configurationValues.getValue(ConfigurationConstants.CFG_USED_RESOURCES_SIZE).toString());
+            } catch (ConfigurationError e) {
+                throw new RuntimeException("Unrecoverable error", e);
+            }
         }
         return preloadedConfiguration.usedresourcessize;
     }
@@ -311,16 +315,21 @@ public class Configuration implements ContainerParent<Configuration> {
         return null;
     }
 
-    public File getSourceToolPath(String tool) {
+    public File getSourceToolPath(String tool) throws ConfigurationError {
         List<PluginInfo> pluginInfos = LibrariesFactory.getInstance().getLoadedPlugins();
         Map<String, File> availableBasePaths = new LinkedHashMap<>();
         for (PluginInfo pluginInfo : pluginInfos) {
             availableBasePaths.putAll(pluginInfo.getToolsDirectories());
         }
 
-        ToolEntry te = tools.getValue(tool);
+        ToolEntry te = null;
+        try {
+            te = tools.getValue(tool);
+        } catch (ConfigurationError e) {
+            throw new ConfigurationError("Unknown tool ID", tool, e);
+        }
         if (te.basePathId.length() > 0 && !availableBasePaths.containsKey(te.basePathId)) {
-            throw new RuntimeException("Base path for tool " + tool + " is not configured");
+            throw new ConfigurationError("Base path for tool is not configured", tool);
         }
         File bPath = availableBasePaths.get(te.basePathId);
 
@@ -330,16 +339,21 @@ public class Configuration implements ContainerParent<Configuration> {
         return toolPath;
     }
 
-    public File getProcessingToolPath(ExecutionContext context, String tool) {
-        ToolEntry te = tools.getValue(tool);
+    public File getProcessingToolPath(ExecutionContext context, String tool) throws ConfigurationError {
+        ToolEntry te = null;
+        try {
+            te = tools.getValue(tool);
+        } catch (ConfigurationError e) {
+            throw new ConfigurationError("Unknown tool ID", tool, e);
+        }
         File toolPath = new File(new File(new File(context.getExecutionDirectory(), RuntimeService.DIRNAME_ANALYSIS_TOOLS), te.basePathId), te.path);
         return toolPath;
     }
 
-    public String getProcessingToolMD5(String tool) {
+    public String getProcessingToolMD5(String tool) throws ConfigurationError {
         if (tool == null || tool == "") {
             logger.warning("Tool id not correctly specified for md5 query.");
-            return "";
+            throw new ConfigurationError("Tool ID not correctly specified for md5 query", tool);
         }
         File sourceToolPath = getSourceToolPath(tool);
         return RoddyIOHelperMethods.getMD5OfFile(sourceToolPath);

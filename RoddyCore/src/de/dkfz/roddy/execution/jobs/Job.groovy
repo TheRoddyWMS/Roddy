@@ -42,6 +42,11 @@ class Job extends BEJob<BEJob, BEJobResult> {
     public final ExecutionContext context
 
     /**
+     * The local tool path
+     */
+    private final File localToolPath
+
+    /**
      * The tool you want to call.
      */
     private final String toolID
@@ -143,7 +148,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return pJobs
     }
 
-    Job(ExecutionContext context, String jobName, String toolID, String inlineScript, List<String> arrayIndices, Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
+    Job(ExecutionContext context, String jobName, String toolID, String inlineScript, List<String> arrayIndices, Map<String, Object> inputParameters,
+        List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
         super(new BEJobID()
                 , jobName
                 , context.getConfiguration().getProcessingToolPath(context, TOOLID_WRAPIN_SCRIPT)
@@ -153,6 +159,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 , []
                 , [:]
                 , Roddy.getJobManager())
+        this.localToolPath = context.getConfiguration().getSourceToolPath(toolID)
         this.setLoggingDirectory(context.loggingDirectory)
         this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectDependencyIDsFromFiles(parentFiles), jobManager))
         this.context = context
@@ -195,7 +202,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return te.getResourceSet(context.configuration) ?: new EmptyResourceSet();
     }
 
-    static String getToolMD5(String toolID, ExecutionContext context) {
+    static String getToolMD5(String toolID, ExecutionContext context) throws ConfigurationError {
         toolID != null && toolID.trim().length() > 0 ? context.getConfiguration().getProcessingToolMD5(toolID) : null
     }
 
@@ -766,15 +773,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return toolID
     }
 
-    File getToolPath() {
-        return getExecutionContext().getConfiguration().getProcessingToolPath(getExecutionContext(), toolID)
-    }
-
     File getLocalToolPath() {
-        return getExecutionContext().getConfiguration().getSourceToolPath(toolID)
+        return localToolPath
     }
 
-    String getToolMD5() {
-        return toolID == null ? "-" : getExecutionContext().getConfiguration().getProcessingToolMD5(toolID)
-    }
 }

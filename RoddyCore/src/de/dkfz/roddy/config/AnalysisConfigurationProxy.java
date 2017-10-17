@@ -259,17 +259,17 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
-    public File getSourceToolPath(String tool) {
+    public File getSourceToolPath(String tool) throws ConfigurationError {
         return checkAnalysisConfig().getSourceToolPath(tool);
     }
 
     @Override
-    public File getProcessingToolPath(ExecutionContext context, String tool) {
+    public File getProcessingToolPath(ExecutionContext context, String tool) throws ConfigurationError {
         return checkAnalysisConfig().getProcessingToolPath(context, tool);
     }
 
     @Override
-    public String getProcessingToolMD5(String tool) {
+    public String getProcessingToolMD5(String tool) throws ConfigurationError {
         return checkAnalysisConfig().getProcessingToolMD5(tool);
     }
 
