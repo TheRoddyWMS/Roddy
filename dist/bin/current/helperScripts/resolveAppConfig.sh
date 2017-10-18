@@ -60,7 +60,7 @@ function getValueFromConfigOrCommandLine() {
   local startIndex
 
   IFS=""
-  for i in ${fullParameterList[@]}; do
+  for i in "${fullParameterList[@]}"; do
     if [[ $i == --${valueNameOnCLI}*  ]]; then
       startIndex=$(expr 2 + ${#valueNameOnCLI} + 1)
       var=${i:$startIndex:800}

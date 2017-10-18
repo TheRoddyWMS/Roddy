@@ -270,7 +270,7 @@ public class Roddy {
         loadPropertiesFile();
         time("loadprop");
 
-        // Reset the logger with the new setings but keep the old logfile
+        // Reset the logger with the new settings but keep the old logfile.
         File clf = LoggerWrapper.getCentralLogFile();
         LoggerWrapper.setup(applicationProperties);
         LoggerWrapper.setCentralLogFile(clf);
