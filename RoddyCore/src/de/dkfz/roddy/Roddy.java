@@ -27,8 +27,10 @@ import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import groovy.transform.CompileStatic;
+import org.apache.commons.io.FileExistsException;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
@@ -627,7 +629,9 @@ public class Roddy {
     }
 
     @CompileStatic
-    public static void initializeJobManager(boolean fullSetup) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
+    public static void initializeJobManager(boolean fullSetup)
+            throws ClassNotFoundException, IllegalAccessException, InvocationTargetException,
+            InstantiationException, NoSuchMethodException, FileNotFoundException {
         logger.postSometimesInfo("public static void initializeFactory(boolean fullSetup)");
         if (!fullSetup)
             return;
@@ -731,14 +735,15 @@ public class Roddy {
     }
 
     public static void loadPropertiesFile() {
-        File file = getPropertiesFilePath();
-        if (file == null || !file.exists()) {
-            // Skip and exit!
-            logger.postAlwaysInfo("Could not load the application properties file " + file.getAbsolutePath() + ". Roddy will exit.");
+        File file = null;
+        try {
+            file = getPropertiesFilePath();
+        } catch (FileNotFoundException e) {
+            logger.postAlwaysInfo("Could not load the application properties file: " + e.getMessage() + ". Roddy will exit.");
             exit(1);
-        } else {
-            logger.postAlwaysInfo("Loading properties file " + file.getAbsolutePath() + ".");
         }
+        logger.postAlwaysInfo("Loading properties file " + file.getAbsolutePath() + ".");
+
         applicationProperties = new AppConfig(file);
 
         getApplicationProperty("useRoddyVersion", LibrariesFactory.PLUGIN_VERSION_CURRENT); // Load some default properties
@@ -815,17 +820,34 @@ public class Roddy {
         return logDir;
     }
 
-    public static File getPropertiesFilePath() {
+    /**
+     * If the filename is a path, e.g. a filename in the local directory (starting with ./), return exactly this file. If the file does not exist,
+     * throw an exception.
+     * If just a filename is given, return the first existing file in the current directory, the settingsDirectory or the applicationDirectory.
+     * If none of these files exists, throw an exception.
+     * @return
+     */
+    public static File getPropertiesFilePath() throws FileNotFoundException {
         if (customPropertiesFile == null) customPropertiesFile = Constants.APP_PROPERTIES_FILENAME;
-        File _customPropertiesFile = new File("" + customPropertiesFile);
-        String customPropertiesFileName = _customPropertiesFile.getName();
 
-        List<File> files = Arrays.asList(_customPropertiesFile, new File(getSettingsDirectory(), customPropertiesFileName), new File(getApplicationDirectory(), customPropertiesFileName));
-        for (File cpf : files)
-            if (cpf.exists())
-                return cpf;
+        File propertiesFile = new File("" + customPropertiesFile);
 
-        return null;
+        if (propertiesFile.getName() == propertiesFile.toString()) {
+            if (!propertiesFile.exists()) {
+                throw new FileNotFoundException(propertiesFile.toString());
+            }
+            return propertiesFile;
+        } else {
+            File settingsDirPropertiesFile = new File(getSettingsDirectory(), propertiesFile.toString());
+            File applicationDirPropertiesFile = new File(getApplicationDirectory(), propertiesFile.toString());
+
+            List<File> files = Arrays.asList(propertiesFile, settingsDirPropertiesFile, applicationDirPropertiesFile);
+            for (File cpf : files)
+                if (cpf.exists())
+                    return cpf;
+
+            throw new FileNotFoundException("Searched: " + RoddyIOHelperMethods.joinArray(files.toArray(), ", "));
+        }
     }
 
     public static File getCompressedAnalysisToolsDirectory() {
