@@ -134,7 +134,7 @@ caller=$(checkAndDownloadGroovyServ "${RODDY_DIRECTORY}")
 
 if [[ ${caller} == java ]]; then
 
-  echo "Using Java to start Roddy"
+  echo "Using Java to start Roddy" >> /dev/stderr
   ${caller} ${debuggerSettings} $JAVA_OPTS -enableassertions -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
 
 elif [[ $(basename ${caller}) == groovyclient && -f ${caller} && -x ${caller} ]]; then

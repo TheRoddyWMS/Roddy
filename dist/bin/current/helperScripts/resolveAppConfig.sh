@@ -25,7 +25,7 @@ function grepFromConfigFile() {
     | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
     | tail -n 1
   if [[ $? -ne 0 ]]; then
-    echo "Could not grep from '$configFile'" > /dev/stderr
+    echo "Could not grep from '$configFile'" >> /dev/stderr
     exit $?
   fi
 }
