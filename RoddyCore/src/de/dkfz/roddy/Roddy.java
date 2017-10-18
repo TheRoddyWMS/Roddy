@@ -830,9 +830,9 @@ public class Roddy {
     public static File getPropertiesFilePath() throws FileNotFoundException {
         if (customPropertiesFile == null) customPropertiesFile = Constants.APP_PROPERTIES_FILENAME;
 
-        File propertiesFile = new File("" + customPropertiesFile);
+        File propertiesFile = new File(customPropertiesFile);
 
-        if (propertiesFile.getName() == propertiesFile.toString()) {
+        if (propertiesFile.getName() != propertiesFile.toString()) {
             if (!propertiesFile.exists()) {
                 throw new FileNotFoundException(propertiesFile.toString());
             }
@@ -846,7 +846,7 @@ public class Roddy {
                 if (cpf.exists())
                     return cpf;
 
-            throw new FileNotFoundException("Searched: " + RoddyIOHelperMethods.joinArray(files.toArray(), ", "));
+            throw new FileNotFoundException(RoddyIOHelperMethods.joinArray(files.toArray(), ", "));
         }
     }
 
