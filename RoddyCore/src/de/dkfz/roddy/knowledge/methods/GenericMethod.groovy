@@ -228,7 +228,7 @@ class GenericMethod {
 
         // Check if method may be executed
         if (!calledTool.isToolGeneric()) {
-            logger.severe("Tried to call a non generic tool via the generic call method");
+            logger.severe("Tried to call a non generic tool via the generic call method: " + toolName);
             throw new RuntimeException("Not able to context tool " + toolName);
         }
 
