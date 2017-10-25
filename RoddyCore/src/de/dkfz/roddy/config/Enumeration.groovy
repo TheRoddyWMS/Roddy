@@ -43,8 +43,8 @@ public class Enumeration implements RecursiveOverridableMapContainer.Identifiabl
 
     EnumerationValue getValue(String ev) {
         if (values.containsKey(ev))
-            return values[ev];
-        throw new RuntimeException("Type ${ev} is not known in enumeration ${name}");
+            return values[ev]
+        throw new NoSuchElementException("Type ${ev} is not known in enumeration ${name}")
     }
 
     @Override

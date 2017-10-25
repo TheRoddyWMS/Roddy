@@ -316,16 +316,21 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
     }
 
     public EnumerationValue getEnumerationValueType() {
-        Enumeration enumeration = null;
-        if (getConfiguration().getEnumerations().hasValue("cvalueType"))
+        return getEnumerationValueType(null);
+    }
+
+    public EnumerationValue getEnumerationValueType(EnumerationValue defaultType) {
+        Enumeration enumeration;
+        try {
             enumeration = getConfiguration().getEnumerations().getValue("cvalueType");
-        String _ev = getType();
-        if (_ev == null || _ev.trim().equals(""))
-            _ev = "string";
-        if (enumeration == null)
-            return null;
-        EnumerationValue ev = enumeration.getValue(_ev);
-        return ev;
+            String _ev = getType();
+            if (_ev == null || _ev.trim().equals(""))
+                _ev = "string";
+            EnumerationValue ev = enumeration.getValue(_ev);
+            return ev;
+        } catch (ConfigurationError e) {
+            return defaultType;
+        }
     }
 
     public boolean isInvalid() {
