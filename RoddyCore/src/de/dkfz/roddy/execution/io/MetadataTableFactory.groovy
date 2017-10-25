@@ -44,33 +44,34 @@ final class MetadataTableFactory {
         if (!Roddy.isMetadataCLOptionSet()) {
             logger.rare("de.dkfz.roddy.execution.io.MetadataTableFactory.getTable: Building metadata table from filesystem input is not implemented.")
             return null
-        } else {
-            // Create a metadata table from a file
-            if (!_cachedTable) {
-                String[] split = Roddy.getCommandLineCall().getOptionValue(RoddyStartupOptions.usemetadatatable).split(StringConstants.SPLIT_COMMA);
-                String file = split[0];
-                String format = split.length == 2 && !RoddyConversionHelperMethods.isNullOrEmpty(split[1]) ? split[1] : null;
-
-                def missingColValues = []
-                def mandatoryColumns = []
-                def cvalues = analysis.getConfiguration().getConfigurationValues()
-                Map<String, String> columnIDMap = cvalues.get("metadataTableColumnIDs").getValue()
-                        .split(StringConstants.COMMA)
-                        .collectEntries {
-                    String colVar ->
-                        ConfigurationValue colVal = cvalues.get(colVar);
-                        if (!colVal) {
-                            missingColValues << colVar;
-                        }
-
-                        if (colVal.hasTag("mandatory")) mandatoryColumns << colVal.id;
-                        return [(colVar.toString()): colVal?.toString()]
-                }
-
-                _cachedTable = readTable(new File(file), format, columnIDMap, mandatoryColumns);
-            }
-            return _cachedTable;
         }
+
+        // Create a metadata table from a file
+        if (!_cachedTable) {
+            String[] split = Roddy.getCommandLineCall().getOptionValue(RoddyStartupOptions.usemetadatatable).split(StringConstants.SPLIT_COMMA);
+            String file = split[0];
+            String format = split.length == 2 && !RoddyConversionHelperMethods.isNullOrEmpty(split[1]) ? split[1] : null;
+
+            def missingColValues = []
+            def mandatoryColumns = []
+            def cvalues = analysis.getConfiguration().getConfigurationValues()
+            Map<String, String> columnIDMap = cvalues.get("metadataTableColumnIDs").getValue()
+                    .split(StringConstants.COMMA)
+                    .collectEntries {
+                String colVar ->
+                    ConfigurationValue colVal = cvalues.get(colVar);
+                    if (!colVal) {
+                        missingColValues << colVar;
+                    }
+
+                    if (colVal.hasTag("mandatory")) mandatoryColumns << colVal.id;
+                    return [(colVar.toString()): colVal?.toString()]
+            }
+
+            _cachedTable = readTable(new File(file), format, columnIDMap, mandatoryColumns);
+        }
+        return _cachedTable;
+
 /**         Leave it for later?
  // Search for Metadata implementations in any plugin
  // If too many were found, select via analysis xml file.
