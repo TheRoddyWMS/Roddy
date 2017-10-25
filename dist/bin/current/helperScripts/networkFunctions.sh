@@ -23,17 +23,17 @@ function checkAndDownloadGroovyServ() {
         | grep .zip)) &> /dev/null
 
     if [[ $? -ne 0 ]]; then
-        echo "Error downloading groovyserv. Skipping groovyserv setup. Remove ${forbiddenFile} before trying again." > /dev/stderr
+        echo "Error downloading groovyserv. Skipping groovyserv setup. Remove ${forbiddenFile} before trying again." >> /dev/stderr
         touch ${forbiddenFile}
     else
       (cd ${runtimeFolder} && unzip groovyser*.zip && rm groovyser*.zip*) &> /dev/null
       if [[ $? -ne 0 ]]; then
-        echo "Error unzipping groovyserv. Skipping groovyserv setup. Remove ${forbiddenFile} before trying again." > /dev/stderr
+        echo "Error unzipping groovyserv. Skipping groovyserv setup. Remove ${forbiddenFile} before trying again." >> /dev/stderr
         touch ${forbiddenFile}
       fi
       ${runtimeFolder}/groovys*/bin/groovyclient &> /dev/null
       if [[ $? -ne 0 ]]; then
-        echo "Error starting groovyserv. Skipping groovyserv setup. Remove ${forbiddenFile} before trying again." > /dev/stderr
+        echo "Error starting groovyserv. Skipping groovyserv setup. Remove ${forbiddenFile} before trying again." >> /dev/stderr
         touch ${forbiddenFile}
       fi
     fi

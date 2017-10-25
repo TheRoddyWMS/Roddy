@@ -86,8 +86,8 @@ public class BashCommandSet extends ShellCommandSet {
     String getCheckForInteractiveConsoleCommand() {
         String separator = "\n"
         StringBuilder builder = new StringBuilder();
-        builder << 'if [[ -z "${PS1-}" ]]; then' << separator << '\t echo "non interactive process!" > /dev/stderr' << separator << 'else' <<
-                separator << '\t echo "interactive process" > /dev/stderr'
+        builder << 'if [[ -z "${PS1-}" ]]; then' << separator << '\t echo "non interactive process!" >> /dev/stderr' << separator << 'else' <<
+                separator << '\t echo "interactive process" >> /dev/stderr'
         return builder.toString();
     }
 

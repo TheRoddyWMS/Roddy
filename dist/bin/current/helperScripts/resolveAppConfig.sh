@@ -25,7 +25,7 @@ function grepFromConfigFile() {
     | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
     | tail -n 1
   if [[ $? -ne 0 ]]; then
-    echo "Could not grep from '$configFile'" > /dev/stderr
+    echo "Could not grep from '$configFile'" >> /dev/stderr
     exit $?
   fi
 }
@@ -60,7 +60,7 @@ function getValueFromConfigOrCommandLine() {
   local startIndex
 
   IFS=""
-  for i in ${fullParameterList[@]}; do
+  for i in "${fullParameterList[@]}"; do
     if [[ $i == --${valueNameOnCLI}*  ]]; then
       startIndex=$(expr 2 + ${#valueNameOnCLI} + 1)
       var=${i:$startIndex:800}
