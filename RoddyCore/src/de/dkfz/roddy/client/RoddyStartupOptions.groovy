@@ -38,8 +38,14 @@ public enum RoddyStartupOptions {
     test,
     useiodir(true),
     usemetadatatable(true),
+
+    forcenativepluginconversion(false),
+    forcekeepexecutiondirectory(false),
+    ignorecvalueduplicates(false),
+    ignoreconfigurationerrors(false),
+
     /**
-     * Override project speicifc usedresourcessize
+     * Override project specific usedresourcessize
      */
     usedresourcessize(true),
     disabletrackonlyuserjobs,
@@ -52,17 +58,26 @@ public enum RoddyStartupOptions {
     enabletoggles(true),
     disabletoggles(true),
 
+    disablestrictfilechecks(false),
+
+    @Deprecated
     useRoddyVersion(true),
     useroddyversion(true),
     rv(true),
     usePluginVersion(true),
-    pluginDirectories(true), 
+    pluginDirectories(true),
     configurationDirectories(true),
+    additionalImports(true),
+    additionalimports(true),
+
     jobManagerClass(true),
-    executionServiceClass(true), 
-    executionServiceAuth(true), 
-    executionServiceHost(true), 
+    executionServiceClass(true),
+    executionServiceAuth(true),
+    executionServiceHost(true),
     executionServiceUser(true),
+
+    // Only for configuration free mode! Tells Roddy which base configuration should be used for the internally created configuration.
+    baseconfig(true),
 
     userepository(true),
 

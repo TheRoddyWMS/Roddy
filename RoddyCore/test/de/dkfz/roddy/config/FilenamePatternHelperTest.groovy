@@ -34,7 +34,7 @@ class FilenamePatternHelperTest {
     void extractEmptyCommand() {
         // Extract empty command means to detect something unknown inside ${ .. }
         def val = 'abc${value}def'
-        def result = FilenamePatternHelper.extractCommand(mockupContext, "", val)
+        def result = FilenamePatternHelper.extractCommand( "", val)
         assert result.rawName == "value"
     }
 
@@ -42,7 +42,7 @@ class FilenamePatternHelperTest {
     void extractRegularCommand() {
         // Extract empty command means to detect something unknown inside ${ .. }
         def val = 'abc${cvalue,name="value"}def'
-        def result = FilenamePatternHelper.extractCommand(mockupContext, '\${cvalue', val)
+        def result = FilenamePatternHelper.extractCommand( '\${cvalue', val)
         assert result.rawName == "cvalue"
         assert result.fullString == '${cvalue,name="value"}'
         assert result.attributes.size() == 1

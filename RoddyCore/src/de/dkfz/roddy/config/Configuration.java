@@ -6,11 +6,14 @@
 
 package de.dkfz.roddy.config;
 
-import de.dkfz.roddy.tools.RoddyIOHelperMethods;
+import de.dkfz.roddy.config.loader.ConfigurationFactory;
+import de.dkfz.roddy.config.loader.ConfigurationLoadError;
 import de.dkfz.roddy.config.validation.ConfigurationValidationError;
 import de.dkfz.roddy.core.ExecutionContext;
+import de.dkfz.roddy.core.RuntimeService;
 import de.dkfz.roddy.plugins.LibrariesFactory;
 import de.dkfz.roddy.plugins.PluginInfo;
+import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import java.io.File;
@@ -63,7 +66,7 @@ public class Configuration implements ContainerParent<Configuration> {
     /**
      * The prototype with basic information about this configuration
      */
-    protected final InformationalConfigurationContent informationalConfigurationContent;
+    protected final PreloadedConfiguration preloadedConfiguration;
 
     /**
      * A list of parent configuration objects. Order matters! Configurations are stored with
@@ -76,48 +79,53 @@ public class Configuration implements ContainerParent<Configuration> {
     private List<ConfigurationValidationError> listOfValidationErrors = new LinkedList<>();
     private List<ConfigurationLoadError> listOfLoadErrors = new LinkedList<>();
 
-    private final RecursiveOverridableMapContainerForConfigurationValues configurationValues = new RecursiveOverridableMapContainerForConfigurationValues(this, "configurationValues");
+    private final RecursiveOverridableMapContainerForConfigurationValues configurationValues =
+            new RecursiveOverridableMapContainerForConfigurationValues(this, "configurationValues");
 
     /**
      * Bundles store values with the same name for the same configuration.
      * This can sometimes be necessary. So you do not need a sub configuration for each different set of
      * values.
      */
-    private final RecursiveOverridableMapContainer<String, ConfigurationValueBundle, Configuration> configurationValueBundles = new RecursiveOverridableMapContainer<>(this, "configurationValueBundles");
+    private final RecursiveOverridableMapContainer<String, ConfigurationValueBundle, Configuration> configurationValueBundles =
+            new RecursiveOverridableMapContainer<>(this, "configurationValueBundles");
 
-    private final RecursiveOverridableMapContainer<String, ToolEntry, Configuration> tools = new RecursiveOverridableMapContainer<>(this, "tools");
+    private final RecursiveOverridableMapContainer<String, ToolEntry, Configuration> tools =
+            new RecursiveOverridableMapContainer<>(this, "tools");
 
-    private final RecursiveOverridableMapContainer<String, Enumeration, Configuration> enumerations = new RecursiveOverridableMapContainer<>(this, "enumerations");
+    private final RecursiveOverridableMapContainer<String, Enumeration, Configuration> enumerations =
+            new RecursiveOverridableMapContainer<>(this, "enumerations");
 
-    private RecursiveOverridableMapContainer<String, FilenamePattern, Configuration> filenamePatterns = new RecursiveOverridableMapContainer<>(this, "filenamePatterns");
+    private RecursiveOverridableMapContainer<String, FilenamePattern, Configuration> filenamePatterns =
+            new RecursiveOverridableMapContainer<>(this, "filenamePatterns");
 
     /**
-     * Creates a new configuration which can be filled by filling the containers.
+     * Creates a new configuration that can be filled by filling the containers.
      */
-    public Configuration(InformationalConfigurationContent icc) {
-        this.informationalConfigurationContent = icc;
+    public Configuration(PreloadedConfiguration icc) {
+        this.preloadedConfiguration = icc;
     }
 
     /**
      * For main configurations
-     * Read reversly
+     * Read reversely
      * Remember to set the parent config afterwards.
      * With this configuration no dependency tree is created!
      */
-    public Configuration(InformationalConfigurationContent informationalConfigurationContent, Configuration parentConfig) {
-        this.informationalConfigurationContent = informationalConfigurationContent;
+    public Configuration(PreloadedConfiguration preloadedConfiguration, Configuration parentConfig) {
+        this.preloadedConfiguration = preloadedConfiguration;
         this.addParent(parentConfig);
     }
 
     /**
-     * @param informationalConfigurationContent
+     * @param preloadedConfiguration
      * @param parentConfigurations A list of parent configuration objects.
      *                             Order matters! Configurations are stored with
      *                             increasing priority, so pcs[0] has the lowest
      *                             and pcs[n -1] has the highest priority
      */
-    public Configuration(InformationalConfigurationContent informationalConfigurationContent, List<Configuration> parentConfigurations) {
-        this.informationalConfigurationContent = informationalConfigurationContent;
+    public Configuration(PreloadedConfiguration preloadedConfiguration, List<Configuration> parentConfigurations) {
+        this.preloadedConfiguration = preloadedConfiguration;
         for (Configuration parentConfiguration : parentConfigurations) {
             addParent(parentConfiguration);
         }
@@ -126,24 +134,24 @@ public class Configuration implements ContainerParent<Configuration> {
     /**
      * For main configurations
      */
-    public Configuration(InformationalConfigurationContent informationalConfigurationContent, Map<String, Configuration> subConfigurations) {
-        this.informationalConfigurationContent = informationalConfigurationContent;
+    public Configuration(PreloadedConfiguration preloadedConfiguration, Map<String, Configuration> subConfigurations) {
+        this.preloadedConfiguration = preloadedConfiguration;
         if (subConfigurations != null) {
             this.subConfigurations.putAll(subConfigurations);
         }
     }
 
-    public InformationalConfigurationContent getInformationalConfigurationContent() {
-        return informationalConfigurationContent;
+    public PreloadedConfiguration getPreloadedConfiguration() {
+        return preloadedConfiguration;
     }
 
     public List<String> getImportConfigurations() {
-        if (informationalConfigurationContent.imports.trim().length() == 0) return new LinkedList<String>();
-        return Arrays.asList(informationalConfigurationContent.imports.trim().split(SPLIT_COMMA));
+        if (preloadedConfiguration.imports.trim().length() == 0) return new LinkedList<String>();
+        return Arrays.asList(preloadedConfiguration.imports.trim().split(SPLIT_COMMA));
     }
 
     public ConfigurationType getConfigurationLevel() {
-        return informationalConfigurationContent.type;
+        return preloadedConfiguration.type;
     }
 
     public void removeFilenamePatternsRecursively() {
@@ -179,7 +187,7 @@ public class Configuration implements ContainerParent<Configuration> {
      * @return
      */
     public String getName() {
-        return informationalConfigurationContent.name;
+        return preloadedConfiguration.name;
     }
 
     /**
@@ -189,22 +197,26 @@ public class Configuration implements ContainerParent<Configuration> {
      */
     @Override
     public String getID() {
-        return informationalConfigurationContent.id;
+        return preloadedConfiguration.id;
     }
 
     public String getDescription() {
-        return informationalConfigurationContent.description;
+        return preloadedConfiguration.description;
     }
 
     public String getConfiguredClass() {
-        return informationalConfigurationContent.className;
+        return preloadedConfiguration.className;
     }
 
     public ResourceSetSize getResourcesSize() {
         if(configurationValues.hasValue(ConfigurationConstants.CFG_USED_RESOURCES_SIZE)) {
-            return ResourceSetSize.valueOf(configurationValues.getValue(ConfigurationConstants.CFG_USED_RESOURCES_SIZE).toString());
+            try {
+                return ResourceSetSize.valueOf(configurationValues.getValue(ConfigurationConstants.CFG_USED_RESOURCES_SIZE).toString());
+            } catch (ConfigurationError e) {
+                throw new RuntimeException("Unrecoverable error", e);
+            }
         }
-        return informationalConfigurationContent.usedresourcessize;
+        return preloadedConfiguration.usedresourcessize;
     }
 
     /**
@@ -220,9 +232,9 @@ public class Configuration implements ContainerParent<Configuration> {
         String projectName = null;
         if (this.getConfigurationLevel() == ConfigurationType.PROJECT) {
             projectName = configurationValues.get("projectName", getName()).toString();
-        } else if (this.informationalConfigurationContent.type.ordinal() < ConfigurationType.PROJECT.ordinal()) {
+        } else if (this.preloadedConfiguration.type.ordinal() < ConfigurationType.PROJECT.ordinal()) {
             //This is not a project configuration and not a variant.
-        } else if (this.informationalConfigurationContent.type.ordinal() > ConfigurationType.PROJECT.ordinal()) {
+        } else if (this.preloadedConfiguration.type.ordinal() > ConfigurationType.PROJECT.ordinal()) {
             //Return the parents getProjectName(). This is recursive and should lead to the project configuration.
             String tempName = null;
             for (Configuration parent : parents) {
@@ -303,17 +315,21 @@ public class Configuration implements ContainerParent<Configuration> {
         return null;
     }
 
-    public File getSourceToolPath(String tool) {
+    public File getSourceToolPath(String tool) throws ConfigurationError {
         List<PluginInfo> pluginInfos = LibrariesFactory.getInstance().getLoadedPlugins();
         Map<String, File> availableBasePaths = new LinkedHashMap<>();
         for (PluginInfo pluginInfo : pluginInfos) {
             availableBasePaths.putAll(pluginInfo.getToolsDirectories());
         }
 
-
-        ToolEntry te = tools.getValue(tool);
+        ToolEntry te = null;
+        try {
+            te = tools.getValue(tool);
+        } catch (ConfigurationError e) {
+            throw new ConfigurationError("Unknown tool ID", tool, e);
+        }
         if (te.basePathId.length() > 0 && !availableBasePaths.containsKey(te.basePathId)) {
-            throw new RuntimeException("Base path for tool " + tool + " is not configured");
+            throw new ConfigurationError("Base path for tool is not configured", tool);
         }
         File bPath = availableBasePaths.get(te.basePathId);
 
@@ -323,16 +339,21 @@ public class Configuration implements ContainerParent<Configuration> {
         return toolPath;
     }
 
-    public File getProcessingToolPath(ExecutionContext context, String tool) {
-        ToolEntry te = tools.getValue(tool);
-        File toolPath = new File(new File(new File(context.getExecutionDirectory(), "analysisTools"), te.basePathId), te.path);
+    public File getProcessingToolPath(ExecutionContext context, String tool) throws ConfigurationError {
+        ToolEntry te = null;
+        try {
+            te = tools.getValue(tool);
+        } catch (ConfigurationError e) {
+            throw new ConfigurationError("Unknown tool ID", tool, e);
+        }
+        File toolPath = new File(new File(new File(context.getExecutionDirectory(), RuntimeService.DIRNAME_ANALYSIS_TOOLS), te.basePathId), te.path);
         return toolPath;
     }
 
-    public String getProcessingToolMD5(String tool) {
+    public String getProcessingToolMD5(String tool) throws ConfigurationError {
         if (tool == null || tool == "") {
             logger.warning("Tool id not correctly specified for md5 query.");
-            return "";
+            throw new ConfigurationError("Tool ID not correctly specified for md5 query", tool);
         }
         File sourceToolPath = getSourceToolPath(tool);
         return RoddyIOHelperMethods.getMD5OfFile(sourceToolPath);
@@ -344,10 +365,6 @@ public class Configuration implements ContainerParent<Configuration> {
 
     public void disableJobExecution() {
         configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_PREVENT_JOB_EXECUTION, "true"));
-    }
-
-    public boolean getUseCentralAnalysisArchive() {
-        return configurationValues.getBoolean(ConfigurationConstants.CFG_USE_CENTRAL_ANALYSIS_ARCHIVE, true);
     }
 
     public String getSSHExecutionUser() {
@@ -384,6 +401,10 @@ public class Configuration implements ContainerParent<Configuration> {
         this.listOfLoadErrors.add(error);
     }
 
+    public void addLoadErrors(Collection<ConfigurationLoadError> errors) {
+        this.listOfLoadErrors.addAll(errors);
+    }
+
     public List<ConfigurationLoadError> getListOfLoadErrors() {
         LinkedList<ConfigurationLoadError> errors = new LinkedList<>();
         for(Configuration c : parents) {
@@ -391,6 +412,17 @@ public class Configuration implements ContainerParent<Configuration> {
         }
         errors.addAll(listOfLoadErrors);
         return errors;
+    }
+
+
+    public boolean hasErrors() {
+        boolean hasErrors = listOfLoadErrors.size() > 0;
+        if(parents != null) {
+            for (Configuration parent : parents) {
+                hasErrors |= parent.hasErrors();
+            }
+        }
+        return hasErrors;
     }
 
     public boolean isInvalid() {

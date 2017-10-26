@@ -6,13 +6,13 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.config.AnalysisConfiguration;
+import de.dkfz.roddy.config.AnalysisConfiguration
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ProjectConfiguration
-import de.dkfz.roddy.knowledge.files.BaseFile;
-
-import java.io.File;
-import java.util.Map;
+import de.dkfz.roddy.config.ResourceSet
+import de.dkfz.roddy.execution.io.NoNoExecutionService
+import de.dkfz.roddy.execution.jobs.*
+import de.dkfz.roddy.knowledge.files.BaseFile
 
 /**
  * Created by heinold on 01.07.16.
@@ -20,7 +20,7 @@ import java.util.Map;
 @groovy.transform.CompileStatic
 public class MockupExecutionContextBuilder {
 
-    public static final String DIR_PREFIX = "RoddyTests_";
+    public static final String DIR_PREFIX = "RoddyTests_"
 
     public static File getTestBaseDirectory(String testID) {
         final File testBaseDirectory = File.createTempDir(DIR_PREFIX, "_" + testID)
@@ -69,23 +69,8 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            public void releaseCache() {
-
-            }
-
-            @Override
             File getLoggingDirectory(ExecutionContext context) {
                 return getTestLoggingDirectory(testClassName)
-            }
-
-            @Override
-            public boolean initialize() {
-                return false;
-            }
-
-            @Override
-            public void destroy() {
-
             }
 
         }
@@ -147,4 +132,163 @@ public class MockupExecutionContextBuilder {
         };
     }
 
+    public static BatchEuphoriaJobManager createMockupJobManager() {
+        new BatchEuphoriaJobManager(new NoNoExecutionService(), new JobManagerCreationParametersBuilder().setCreateDaemon(false).build()) {
+
+            @Override
+            BEJobResult runJob(BEJob job) {
+                return null
+            }
+
+            @Override
+            ProcessingParameters convertResourceSet(BEJob job, ResourceSet resourceSet) {
+                return null
+            }
+
+            @Override
+            ProcessingParameters extractProcessingParametersFromToolScript(File file) {
+                return null
+            }
+
+            @Override
+            BEJob parseToJob(String s) {
+                return null
+            }
+
+            @Override
+            GenericJobInfo parseGenericJobInfo(String s) {
+                return null
+            }
+
+            @Override
+            BEJobResult convertToArrayResult(BEJob arrayChildJob, BEJobResult parentJobsResult, int arrayIndex) {
+                return null
+            }
+
+            @Override
+            void updateJobStatus() {
+
+            }
+
+            @Override
+            Map<BEJob, GenericJobInfo> queryExtendedJobState(List list, boolean forceUpdate) {
+                return null
+            }
+
+            @Override
+            void addJobStatusChangeListener(BEJob job) {
+
+            }
+
+            @Override
+            String getLogFileWildcard(BEJob job) {
+                return null
+            }
+
+            @Override
+            boolean compareJobIDs(String s, String s1) {
+                return false
+            }
+
+            @Override
+            String getStringForQueuedJob() {
+                return null
+            }
+
+            @Override
+            String getStringForJobOnHold() {
+                return null
+            }
+
+            @Override
+            String getStringForRunningJob() {
+                return null
+            }
+
+            @Override
+            String getJobIdVariable() {
+                return null
+            }
+
+            @Override
+            String getQueueVariable() {
+                return null
+            }
+
+            @Override
+            String getJobArrayIndexVariable() {
+                return null
+            }
+
+            @Override
+            String getNodeFileVariable() {
+                return null
+            }
+
+            @Override
+            String getSubmitHostVariable() {
+                return null
+            }
+
+            @Override
+            String getSubmitDirectoryVariable() {
+                return null
+            }
+
+            @Override
+            void queryJobAbortion(List list) {
+
+            }
+
+            @Override
+            Map<String, JobState> queryJobStatus(List list) {
+                return null
+            }
+
+            @Override
+            Command createCommand(BEJob job, String s, List list, File file, Map map, List parentJobs) {
+                return null
+            }
+
+            @Override
+            String[] peekLogFile(BEJob job) {
+                return new String[0]
+            }
+
+            @Override
+            String parseJobID(String commandOutput) {
+                return null
+            }
+
+            @Override
+            String getSubmissionCommand() {
+                return null
+            }
+
+            @Override
+            Map<BEJob, JobState> queryJobStatus(List list, boolean forceUpdate) {
+                return null
+            }
+
+            @Override
+            JobState parseJobState(String stateString) {
+                return null
+            }
+
+            @Override
+            Map<String, GenericJobInfo> queryExtendedJobStateById(List<String> jobIds, boolean forceUpdate) {
+                return null
+            }
+
+            @Override
+            Map<String, JobState> queryJobStatusAll(boolean forceUpdate = false) {
+                return null
+            }
+
+            @Override
+            Map<String, JobState> queryJobStatusById(List<String> jobIds, boolean forceUpdate = false) {
+                return null
+            }
+        }
+    }
 }

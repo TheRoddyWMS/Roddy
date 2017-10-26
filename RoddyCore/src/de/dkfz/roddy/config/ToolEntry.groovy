@@ -6,14 +6,12 @@
 
 package de.dkfz.roddy.config
 
-import de.dkfz.roddy.core.ExecutionContext;
+import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.knowledge.files.BaseFile
-import groovy.transform.CompileStatic;
+import groovy.transform.CompileStatic
 
-import java.lang.reflect.Method;
-import java.util.stream.Collectors;
-
-import static de.dkfz.roddy.Constants.NO_VALUE;
+import java.lang.reflect.Method
+import java.util.stream.Collectors
 
 /**
  * @author michael
@@ -98,6 +96,7 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
         ToolParameterOfFiles(String scriptParameterName) {
             super(scriptParameterName);
         }
+
         public abstract boolean hasSelectionTag();
         /**
          * The childFiles methods only return the possibly empty set of children. The files methods
@@ -105,6 +104,7 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
          * itself and all its children. The getAllChildFiles returns all children recursively.
          */
         public abstract List<? extends ToolParameterOfFiles> getAllFiles();
+
         public abstract List<? extends ToolParameterOfFiles> getFiles();
     }
 
@@ -118,6 +118,7 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
     final List<ToolParameter> outputParameters = new LinkedList<>();
     final List<ResourceSet> resourceSets = new LinkedList<>();
     boolean overridesResourceSets;
+    boolean useAutoCheckpoint;
 
     ToolEntry(String id, String basePathId, String path) {
         this.id = id;
@@ -197,11 +198,14 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
         ResourceSetSize key = configuration.getResourcesSize();
         int size = key.ordinal()
 
-        ResourceSet first = resourceSets.get(0);
         if (resourceSets.size() == 1) { // Only one set exists.
             return resourceSets.get(0)
         }
 
+        if (resourceSets.size() == 0)
+            return new EmptyResourceSet()
+
+        ResourceSet first = resourceSets.get(0);
         ResourceSet last = resourceSets.get(resourceSets.size() - 1);
         if (size <= first.getSize().ordinal()) {  // The given key is smaller than the available keys. Return the first set.
             return first
@@ -219,7 +223,7 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
                 return resourceSet
         }
 
-        return null;
+        return new EmptyResourceSet()
     }
 
     void setOverridesResourceSets() {
@@ -228,6 +232,14 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
 
     boolean doesOverrideResourceSets() {
         return overridesResourceSets
+    }
+
+    void setUseAutoCheckpoint() {
+        useAutoCheckpoint = true
+    }
+
+    boolean usesAutoCheckpoint() {
+        return useAutoCheckpoint
     }
 
     List<ToolParameter> getInputParameters(ExecutionContext context) {
@@ -275,5 +287,10 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
     @Override
     String getID() {
         return id;
+    }
+
+    @Override
+    public String toString() {
+        return "ToolEntry " + id;
     }
 }

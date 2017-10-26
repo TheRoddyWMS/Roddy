@@ -6,10 +6,18 @@
 
 package de.dkfz.roddy.config
 
+import de.dkfz.roddy.config.ResourceSet
+import de.dkfz.roddy.config.ResourceSetSize
+import de.dkfz.roddy.RunMode
+import de.dkfz.roddy.config.loader.ConfigurationFactory
+import de.dkfz.roddy.config.loader.ProcessingToolReader
+import de.dkfz.roddy.execution.io.ExecutionService
+import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.LibrariesFactoryTest
 import de.dkfz.roddy.tools.BufferValue
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.TimeUnit
 import de.dkfz.roddy.tools.Tuple3
 import groovy.transform.TypeCheckingMode
@@ -19,7 +27,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder
-import static ResourceSetSize.*;
+import static de.dkfz.roddy.config.ResourceSetSize.*;
 
 import java.lang.reflect.Method
 
@@ -44,6 +52,10 @@ public class ConfigurationFactoryTest {
 
     @BeforeClass
     public static void setupClass() {
+
+        ExecutionService.initializeService(LocalExecutionService, RunMode.CLI);
+
+        FileSystemAccessProvider.initializeProvider(true)
 
         LibrariesFactory.initializeFactory(true);
         LibrariesFactory.getInstance().loadLibraries(LibrariesFactory.buildupPluginQueue(LibrariesFactoryTest.callLoadMapOfAvailablePlugins(), "DefaultPlugin").values() as List);
@@ -141,7 +153,7 @@ public class ConfigurationFactoryTest {
                             <rset size="l" memory="1" cores="1" nodes="1" walltime="5"/>
                         </resourcesets>
                         <input type="file" typeof="de.dkfz.roddy.knowledge.files.GenericFileGroup" scriptparameter='FILENAME'/>
-                        <output type="file" typeof="de.dkfz.roddy.knowledge.files.GenericFileGroup"/>
+                        <output type="file" typeof="de.dkfz.roddy.knowledge.files.GenericFileGroup" scriptparameter='OUTFILENAME'/>
                         <script value='testscript.sh'>
                         <![CDATA[
                           echo 'test'
@@ -161,7 +173,7 @@ public class ConfigurationFactoryTest {
 
     @Test
     public void testReadInlineScript() {
-        def toolEntry = ConfigurationFactory.getInstance().readProcessingTool(getToolEntryWithInlineScript(), null)
+        def toolEntry = new ProcessingToolReader(getToolEntryWithInlineScript(), null).readProcessingTool()
         assert toolEntry.hasInlineScript()
         assert toolEntry.getInlineScript().equals("echo 'test'")
         assert toolEntry.getInlineScriptName().equals("testscript.sh")
@@ -423,7 +435,7 @@ public class ConfigurationFactoryTest {
                     <output type="file" typeof="CFile" scriptparameter="FC"/>
                 </output>
             """)
-        ToolFileGroupParameter tparm = new ConfigurationFactory([]).parseFileGroup(nc, "testTool")
+        ToolFileGroupParameter tparm = new ProcessingToolReader(null, null).parseFileGroup(nc, "testTool")
         assert tparm.files.size() == 3
         assert tparm.files.collect { ToolFileParameter tfp -> tfp.fileClass.simpleName } == ["AFile", "BFile", "CFile"]
         assert tparm.scriptParameterName == "APARM"
@@ -440,7 +452,7 @@ public class ConfigurationFactoryTest {
                     <output type="file" typeof="CFile" scriptparameter="FC"/>
                 </output>
             """)
-        ToolFileGroupParameter tparm = new ConfigurationFactory([]).parseFileGroup(nc, "testTool")
+        ToolFileGroupParameter tparm = new ProcessingToolReader(null, null).parseFileGroup(nc, "testTool")
         def clone = tparm.clone()
         assert clone
         assert tparm.files.size() == clone.files.size()
@@ -450,7 +462,7 @@ public class ConfigurationFactoryTest {
     @Test
     public void testParseFileGroupWithMinimalDefinition() {
         NodeChild nc = asNodeChild("""<output type="filegroup" fileclass="TestFile" scriptparameter="APARM"/>""")
-        ToolFileGroupParameter tparm = new ConfigurationFactory([]).parseFileGroup(nc, "testTool")
+        ToolFileGroupParameter tparm = new ProcessingToolReader(null, null).parseFileGroup(nc, "testTool")
         assert tparm.isGeneric()
         assert tparm.getGenericClassString() == "de.dkfz.roddy.knowledge.files.GenericFileGroup<de.dkfz.roddy.synthetic.files.TestFile>"
         assert tparm.passOptions == ToolFileGroupParameter.PassOptions.parameters
@@ -461,13 +473,13 @@ public class ConfigurationFactoryTest {
     public void testParseFileGroupWithMissingOptions() {
         String xml = """<output type="filegroup" />"""
         NodeChild nc = (NodeChild) new XmlSlurper().parseText(xml);
-        new ConfigurationFactory([]).parseFileGroup(nc, "testTool")
+        new ProcessingToolReader(null, null).parseFileGroup(nc, "testTool")
     }
 
     @Test
     void testParseFileGroupForInputFileGroupPassasParameters() {
         NodeChild nc = asNodeChild("<input type='filegroup' typeof='GenericFileGroup' fileclass='ASyntheticTestClass' passas='parameters' scriptparameter='APARM' />")
-        ToolFileGroupParameter res = ConfigurationFactory.parseFileGroup(nc, "EMPTY");
+        ToolFileGroupParameter res = new ProcessingToolReader(null, null).parseFileGroup(nc, "EMPTY")
         assert res
         assert res.groupClass == GenericFileGroup.class
         assert res.genericFileClass.name.endsWith("ASyntheticTestClass")
@@ -477,7 +489,7 @@ public class ConfigurationFactoryTest {
     @Test
     void testParseFileGroupForOutputFileGroupPassasParametersAndDefaultFileIndex() {
         NodeChild nc = asNodeChild("<output type='filegroup' typeof='de.dkfz.roddy.knowledge.files.GenericFileGroup' fileclass='ASyntheticClass' passas='parameters' scriptparameter='APARM' />")
-        ToolFileGroupParameter res = ConfigurationFactory.parseFileGroup(nc, "EMPTY");
+        ToolFileGroupParameter res = new ProcessingToolReader(null, null).parseFileGroup(nc, "EMPTY")
         assert res
         assert res.groupClass == GenericFileGroup.class
         assert res.genericFileClass.name.endsWith("ASyntheticClass")
@@ -489,7 +501,7 @@ public class ConfigurationFactoryTest {
     @Test
     void testParseFileGroupForOutputFileGroupPassasParametersWithStringIndexForFilenames() {
         NodeChild nc = asNodeChild("<output type='filegroup' typeof='de.dkfz.roddy.knowledge.files.GenericFileGroup' fileclass='ASyntheticClass' passas='parameters' indices='strings' scriptparameter='APARM'/>")
-        ToolFileGroupParameter res = ConfigurationFactory.parseFileGroup(nc, "EMPTY")
+        ToolFileGroupParameter res = new ProcessingToolReader(null, null).parseFileGroup(nc, "EMPTY")
         assert res
         assert res.groupClass == GenericFileGroup.class
         assert res.genericFileClass.name.endsWith("ASyntheticClass")

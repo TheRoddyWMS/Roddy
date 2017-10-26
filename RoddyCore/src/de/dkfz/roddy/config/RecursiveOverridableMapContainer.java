@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.config;
 
+import de.dkfz.roddy.config.ConfigurationError;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 
 import java.util.LinkedHashMap;
@@ -78,7 +79,7 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
         return new LinkedList<>(getAllValues().values());
     }
 
-    public List<V> getInheritanceList(String valueID) {
+    public List<V> getInheritanceList(String valueID) throws ConfigurationError {
         List<V> allValues = new LinkedList<>();
 
         if (getMap().containsKey(valueID))
@@ -143,9 +144,13 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
         return _getValueUnchecked(id);
     }
 
-    public V getValue(String id) {
+    /**
+     * @throws ConfigurationError if a value is requested that does not exist.
+     * @param id    Configuration value to return.
+     */
+    public V getValue(String id) throws ConfigurationError {
         if (!hasValue(id))
-            throw new RuntimeException("Value " + id + " could not be found in containers with id " + id);
+            throw new ConfigurationError("Value could not be found in containers", id);
         return _getValueUnchecked(id);
     }
 

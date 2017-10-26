@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.execution.io;
 
+import de.dkfz.roddy.execution.jobs.Command;
+
 import java.io.File;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -21,8 +23,8 @@ public class NoNoExecutionService extends ExecutionService {
     }
 
     @Override
-    protected List<String> _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream) {
-        return new LinkedList<>();
+    protected ExecutionResult _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream) {
+        return new ExecutionResult(true, 0, new LinkedList<>(), "");
     }
 
     @Override
@@ -106,7 +108,8 @@ public class NoNoExecutionService extends ExecutionService {
     }
 
     @Override
-    public void releaseCache() {
-
+    public File queryWorkingDirectory() {
+        return null;
     }
+
 }

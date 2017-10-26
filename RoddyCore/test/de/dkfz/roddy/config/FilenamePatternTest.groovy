@@ -6,20 +6,13 @@
 
 package de.dkfz.roddy.config
 
+import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
-import de.dkfz.roddy.execution.jobs.Command
-import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.JobDependencyID
-import de.dkfz.roddy.execution.jobs.JobManager
-import de.dkfz.roddy.execution.jobs.JobResult
-import de.dkfz.roddy.execution.jobs.JobState
-import de.dkfz.roddy.execution.jobs.ProcessingCommands
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.GenericFile
 import de.dkfz.roddy.knowledge.methods.GenericMethod
-import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.LibrariesFactoryTest
 import org.junit.BeforeClass
@@ -45,7 +38,7 @@ class FilenamePatternTest {
         LibrariesFactory.getInstance().loadLibraries(LibrariesFactory.buildupPluginQueue(LibrariesFactoryTest.callLoadMapOfAvailablePlugins(), "DefaultPlugin").values() as List)
         ConfigurationFactory.initialize(LibrariesFactory.getInstance().getLoadedPlugins().collect { it -> it.getConfigurationDirectory() })
 
-        final Configuration mockupConfig = new Configuration(new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "default", "", "", null, "", ResourceSetSize.l, null, null, null, null), ConfigurationFactory.getInstance().getConfiguration("default")) {
+        final Configuration mockupConfig = new Configuration(new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "default", "", "", null, "", ResourceSetSize.l, null, null, null, null), ConfigurationFactory.getInstance().getConfiguration("default")) {
             @Override
             File getSourceToolPath(String tool) {
                 if (tool == "wrapinScript")
@@ -108,103 +101,8 @@ class FilenamePatternTest {
     }
 
     @Test
-    void testJobCreationWithFileUsingToolIDForNamePattern() {
-        JobManager.initializeFactory(new JobManager() {
-            @Override
-            void createUpdateDaemonThread(int interval) {
-
-            }
-
-            @Override
-            Command createCommand(GenericJobInfo jobInfo) {
-                return null
-            }
-
-            @Override
-            Command createCommand(Job job, ExecutionContext run, String jobName, List processingCommands, File tool, Map parameters, List dependencies, List arraySettings) {
-                return null
-            }
-
-            @Override
-            JobDependencyID createJobDependencyID(Job job, String jobResult) {
-                return null
-            }
-
-            @Override
-            ProcessingCommands convertResourceSet(Configuration configuration, ResourceSet resourceSet) {
-                return null
-            }
-
-            @Override
-            ProcessingCommands parseProcessingCommands(String alignmentProcessingOptions) {
-                return null
-            }
-
-            @Override
-            ProcessingCommands getProcessingCommandsFromConfiguration(Configuration configuration, String toolID) {
-                return new ProcessingCommands() {}
-            }
-
-            @Override
-            ProcessingCommands extractProcessingCommandsFromToolScript(File file) {
-                return null
-            }
-
-            @Override
-            Job parseToJob(ExecutionContext executionContext, String commandString) {
-                return null
-            }
-
-            @Override
-            GenericJobInfo parseGenericJobInfo(ExecutionContext context, String command) {
-                return null
-            }
-
-            @Override
-            JobResult convertToArrayResult(Job arrayChildJob, JobResult parentJobsResult, int arrayIndex) {
-                return null
-            }
-
-            @Override
-            Map<String, JobState> queryJobStatus(List jobIDs) {
-                return null
-            }
-
-            @Override
-            void queryJobAbortion(List executedJobs) {
-
-            }
-
-            @Override
-            void addJobStatusChangeListener(Job job) {
-
-            }
-
-            @Override
-            String getLogFileWildcard(Job job) {
-                return null
-            }
-
-            @Override
-            boolean compareJobIDs(String jobID, String id) {
-                return false
-            }
-
-            @Override
-            String[] peekLogFile(Job job) {
-                return new String[0]
-            }
-
-            @Override
-            String parseJobID(String commandOutput) {
-                return null
-            }
-
-            @Override
-            String getSubmissionCommand() {
-                return null
-            }
-        })
+    public void testJobCreationWithFileUsingToolIDForNamePattern() {
+        MockupExecutionContextBuilder.createMockupJobManager()
 
         FilenamePattern fp = new OnToolFilenamePattern(testClass, "RoddyTests", "/tmp/RoddyTests/testFileResult.sh", "default")
         mockedContext.getConfiguration().getFilenamePatterns().add(fp)
@@ -213,6 +111,8 @@ class FilenamePatternTest {
         assert result != null
         assert result.class == testClass
     }
+
+
 
     @Test
     void testExtractCommand() {
@@ -243,7 +143,7 @@ class FilenamePatternTest {
         String srcFull = 'something_${avalue}_${cvalue,name="anothervalue"}_${cvalue,name="unknown",default="bebe"}'
         ExecutionContext context = createMockupContext()
         FilenamePattern fpattern = createFilenamePattern()
-        assert fpattern.fillConfigurationVariables(srcFull, context) == 'something_abc_abc_bebe'
+        assert fpattern.fillConfigurationVariables(srcFull, context.configuration) == 'something_abc_abc_bebe'
     }
 
     @Test
@@ -251,7 +151,7 @@ class FilenamePatternTest {
         String srcFull = 'something_${avalue}_${cvalue,name="anothervalue"}_${cvalue,name="unknown"}'
         ExecutionContext context = createMockupContext()
         FilenamePattern fpattern = createFilenamePattern()
-        assert fpattern.fillConfigurationVariables(srcFull, context) == 'something_abc_abc_${cvalue}'
+        assert fpattern.fillConfigurationVariables(srcFull, context.configuration) == 'something_abc_abc_${cvalue}'
     }
 
     @Test
@@ -259,7 +159,7 @@ class FilenamePatternTest {
         String srcFull = 'something_${avalue}_${cvalue,name="unknown"}_${pid}_${fileStageID[0]}'
         ExecutionContext context = createMockupContext()
         FilenamePattern fpattern = createFilenamePattern()
-        assert fpattern.fillConfigurationVariables(srcFull, context) == 'something_abc_${cvalue}_${pid}_${fileStageID[0]}'
+        assert fpattern.fillConfigurationVariables(srcFull, context.configuration) == 'something_abc_${cvalue}_${pid}_${fileStageID[0]}'
     }
 
     private FilenamePattern createFilenamePattern() {

@@ -10,15 +10,29 @@ autoSelectRoddy=false
 foundPluginID=none
 
 function grepFromConfigFile() {
-  local stringToGrep=$1
-                                  # Strip comments                    get the second field
-                                  #              Grep all the strings                   strip comments from end and trim.
-  echo `cat ${customconfigfile} | grep -v "^#" | grep $stringToGrep | cut -d "=" -f 2 | cut -d "#" -f 1 | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | tail -n 1`
+  local stringToGrep="${1:-Missing string to grep}"
+  local configFile="${2:-Missing config file argument}"
+  # Strip comments.
+  # Grep all the strings.
+  # Get the second field.
+  # Strip comments from end and trim.
+  cat "$configFile" \
+    | grep -v "^#" \
+    | grep -v "^;" \
+    | grep "$stringToGrep" \
+    | cut -d "=" -f 2 \
+    | cut -d "#" -f 1 \
+    | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
+    | tail -n 1
+  if [[ $? -ne 0 ]]; then
+    echo "Could not grep from '$configFile'" >> /dev/stderr
+    exit $?
+  fi
 }
 
 function tryExtractRoddyVersionFromPlugin() {
   [[ $parm1 == compile* ]] && echo "current" # Output current in case of compilation
-  echo $( getValueFromConfigOrCommandLine useRoddyVersion useRoddyVersion )
+  echo $( getValueFromConfigOrCommandLine useRoddyVersion useRoddyVersion rv )
 }
 
 function tryExtractPluginIDFromConfig() {
@@ -40,16 +54,23 @@ function setRoddyBinaryVariables() {
 function getValueFromConfigOrCommandLine() {
   local valueNameInCfg=$1
   local valueNameOnCLI=$2
+  local valueNameOnCLIShort=$3
+  [[ -z "$3" ]] && valueNameOnCLIShort=$valueNameOnCLI
   local var="none"
+  local startIndex
+
   IFS=""
-  for i in ${fullParameterList[@]}; do
-    if [[ $i == --${valueNameOnCLI}* ]]; then
+  for i in "${fullParameterList[@]}"; do
+    if [[ $i == --${valueNameOnCLI}*  ]]; then
       startIndex=$(expr 2 + ${#valueNameOnCLI} + 1)
+      var=${i:$startIndex:800}
+    elif [[ -z ${valueNameOnCLIShort-} || $i == --${valueNameOnCLIShort} || $i == --${valueNameOnCLIShort}"="* ]]; then
+      startIndex=$(expr 2 + ${#valueNameOnCLIShort} + 1)
       var=${i:$startIndex:800}
     fi
   done
   if [[ ${var-none} == none ]]; then
-    local var=$(grepFromConfigFile $valueNameInCfg)
+    var=$(grepFromConfigFile $valueNameInCfg $customconfigfile)
   fi
   IFS=$OFS
   echo $var
@@ -57,7 +78,8 @@ function getValueFromConfigOrCommandLine() {
 
 for option in $@
 do
-    [[ $option == --useconfig* ]] && customconfigfile=${option:12:800}
+    [[ "$option" == --useconfig=* ]] && customconfigfile=${option:12:800}
+    [[ "$option" == --c=* ]]         && customconfigfile=${option:4:800}
 done
 
 if [[ ${customconfigfile-false} != false ]]
@@ -73,7 +95,7 @@ then
         customconfigfile=`dirname $0`/${customconfigfile}
     fi
 
-    _temp=`cat ${customconfigfile} | grep useRoddyVersion || echo 0` 
+    _temp=`(cat ${customconfigfile} 2> /dev/null) | grep useRoddyVersion || echo 0`
     if [[ $_temp != 0 ]] && [[ $_temp != "useRoddyVersion=" ]]
     then
         setRoddyBinaryVariables $(tryExtractRoddyVersionFromPlugin)
@@ -81,13 +103,19 @@ then
     fi
 fi
 
+
 overrideRoddyVersionParameter=""
 
 #Is the roddy binary or anything set via command line?
 for i in $*
 do
-    if [[ $i == --useRoddyVersion* ]]; then
-        setRoddyBinaryVariables ${i:18:40}
+    index=-1
+    [[ $i == --useRoddyVersion=* ]] && index=18
+    [[ $i == --useroddyversion=* ]] && index=18
+    [[ $i == --rv=* ]] && index=5
+
+    if [[ $index -gt 0 ]]; then
+        setRoddyBinaryVariables ${i:${index}:40}
         if [[ ! -f $RODDY_BINARY  ]]; then
             echo "${RODDY_BINARY} not found, the following versions might be available:"
             for bin in `ls -d dist/bin`; do
@@ -97,7 +125,7 @@ do
         fi
     fi
 
-    if [[ $i == --usePluginVersion* ]]; then
+    if [[ $i == "--usePluginVersion="* ]]; then
         foundPluginID=${i:19:140}
     fi
 done
@@ -139,9 +167,9 @@ if [[ $autoSelectRoddy == true && ! $parm1 == autoselect ]]; then
     # Store the fullParameterList variable to a new variable to prevent a mess up in Bashs array handling:
     #   a=`echo ${a[@]} sed 's/d/f/g'`  replaced the 4th parameter in fullParameterList so that:
     #   a=( a b c d ) would become a=( a b c f b c d )
-    
+
     export fullParameterListFinal=""
-    if [[ ${fullParameterList[@]} == *useRoddyVersion=auto* ]]; then
+    if [[ ${fullParameterList[@]} == --useRoddyVersion=auto ]]; then
       # Replace what is set as a parameter
       fullParameterListFinal=$(echo ${fullParameterList[@]} | sed "s/useRoddyVersion=auto/useRoddyVersion=${activeRoddyVersion}/g")
     else # It is not set or in the ini. So set it now and override everything else.

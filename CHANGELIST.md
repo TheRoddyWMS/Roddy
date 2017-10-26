@@ -1,5 +1,13 @@
 # Work in progress
 
+* Version update to 2.3.187
+
+* Version update to 2.3.170
+
+* Version update to 2.3.166
+
+* Version update to 2.3.154
+
 * Version update to 2.3.139
 
 * Version update to 2.3.134

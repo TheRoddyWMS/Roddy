@@ -6,13 +6,13 @@
 
 package de.dkfz.roddy.config
 
+import de.dkfz.roddy.config.ResourceSet
+import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.tools.BufferValue
 import de.dkfz.roddy.tools.TimeUnit
 import groovy.transform.CompileStatic
-
-import java.lang.reflect.Method
-
 import static de.dkfz.roddy.config.ResourceSetSize.*
+import java.lang.reflect.Method
 
 /**
  * Test class for ToolEntry

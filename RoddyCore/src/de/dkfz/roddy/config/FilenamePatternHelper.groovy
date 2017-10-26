@@ -44,7 +44,7 @@ class FilenamePatternHelper {
         }
     }
 
-    public static Command extractCommand(ExecutionContext context, String commandID, String temp, int startIndex = -1) {
+    static Command extractCommand(String commandID, String temp, int startIndex = -1) {
         if (!commandID.startsWith('${'))
             commandID = '${' + commandID
         if (startIndex == -1)
@@ -75,11 +75,6 @@ class FilenamePatternHelper {
                 FilenamePattern.PLACEHOLDER_JOBPARAMETER
         ]
 
-        // Check if the attribute at least has a name tag
-        if (commandsWithNameTags.find { command.startsWith(it) } && !attributes["name"]) {
-            context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("The jobParameter for ${command} must have a name tag with a value."))
-        }
-
         return new Command(command, attributes);
     }
 
@@ -108,7 +103,7 @@ class FilenamePatternHelper {
         int lastIndex = 0
         for (int i = 0; i < no; i++) {
             lastIndex = temp.indexOf(commandID, lastIndex + 1);
-            cmds << extractCommand(context, commandID, temp, lastIndex);
+            cmds << extractCommand( commandID, temp, lastIndex);
         }
         return cmds
     }

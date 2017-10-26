@@ -7,15 +7,20 @@
 package de.dkfz.roddy.plugins;
 
 import de.dkfz.roddy.StringConstants;
+import de.dkfz.roddy.core.RuntimeService;
+import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.tools.RuntimeTools;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
-import java.util.Enumeration;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.nio.file.Files;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -24,6 +29,8 @@ import java.util.zip.ZipFile;
  * An informational class for loaded plugins.
  */
 public class PluginInfo {
+
+    private static LoggerWrapper logger = LoggerWrapper.getLogger(PluginInfo.class);
 
     public enum PluginInfoConnection {
         /**
@@ -46,15 +53,15 @@ public class PluginInfo {
         INCOMPATIBLE
     }
 
-    private String name;
-    private File directory;
-    private File developmentDirectory;
-    private String prodVersion;
-    private final String roddyAPIVersion;
-    private final String jdkVersion;
-    private final String groovyVersion;
-    private Map<String, String> dependencies;
-    private final File zipFile;
+    protected String name;
+    protected File directory;
+    protected File developmentDirectory;
+    protected String prodVersion;
+    protected final String roddyAPIVersion;
+    protected final String jdkVersion;
+    protected final String groovyVersion;
+    protected Map<String, String> dependencies;
+    protected final File zipFile;
 
     /**
      * Stores the next entry in the plugin chain or null if there is nor further plugin available.
@@ -71,9 +78,18 @@ public class PluginInfo {
 
     private boolean isBetaPlugin = false;
 
-    private Map<String, File> listOfToolDirectories = new LinkedHashMap<>();
+    protected final Map<String, File> listOfToolDirectories = new LinkedHashMap<>();
 
-    public PluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, String roddyAPIVersion, String jdkVersion, String groovyVersion, Map<String, String> dependencies) {
+    private final List<String> errors = new LinkedList<>();
+
+    public PluginInfo(String name, File directory, String version, String roddyAPIVersion,
+                      String jdkVersion, String groovyVersion, Map<String, String> dependencies) {
+        this(name, null, directory, null, version, roddyAPIVersion, jdkVersion, groovyVersion, dependencies);
+    }
+
+    @Deprecated
+    public PluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, String roddyAPIVersion,
+                      String jdkVersion, String groovyVersion, Map<String, String> dependencies) {
         this.name = name;
         this.directory = directory;
         this.developmentDirectory = developmentDirectory;
@@ -86,61 +102,73 @@ public class PluginInfo {
         fillListOfToolDirectories();
     }
 
-    private void fillListOfToolDirectories() {
+    protected void fillListOfToolDirectories() {
         File toolsBaseDir = null;
-        try {
-            if (developmentDirectory != null && developmentDirectory.exists()) {
-                toolsBaseDir = new File(new File(developmentDirectory, "resources"), "analysisTools");
-            } else if (directory != null && directory.exists()) {
-                toolsBaseDir = new File(new File(directory, "resources"), "analysisTools");
-            }
+        toolsBaseDir = getToolsDirectory();
 
-            if (toolsBaseDir != null && toolsBaseDir.exists() && toolsBaseDir.isDirectory()) { //Search through the default folders, if possible.
+        if (toolsBaseDir != null && toolsBaseDir.exists() && toolsBaseDir.isDirectory()) { //Search through the default folders, if possible.
                 for (File file : toolsBaseDir.listFiles()) {
+                    PosixFileAttributes attr;
+                    try {
+                        attr = Files.readAttributes(file.toPath(), PosixFileAttributes.class);
+                    } catch (IOException ex) {
+                        errors.add("An IOException occurred while accessing '" + file.getAbsolutePath() + "': " + ex.getMessage());
+                        continue;
+                    }
+
+                    if (!attr.isDirectory() || file.isHidden()) {
+                        continue;
+                    }
+
                     String toolsDir = file.getName();
                     listOfToolDirectories.put(toolsDir, file);
                 }
-
-            } else { //Otherwise, finally look into the zip file. (Which must be existing at this point!)
-                directory = RoddyIOHelperMethods.assembleLocalPath(zipFile.getParent(), zipFile.getName().split(".zip")[0]);
-                toolsBaseDir = RoddyIOHelperMethods.assembleLocalPath(directory, "resources", "analysisTools");
-                ZipFile zFile = new ZipFile(zipFile);
-                try {
-                    Enumeration<? extends ZipEntry> e = zFile.entries();
-                    while (e.hasMoreElements()) {
-                        String entry = e.nextElement().getName();
-                        if (entry.endsWith("/") && !entry.endsWith("analysisTools/") && entry.contains("resources/analysisTools")) {
-                            String name = entry.split("resources/analysisTools/")[1].split(StringConstants.SPLIT_SLASH)[0];
-                            listOfToolDirectories.put(name, RoddyIOHelperMethods.assembleLocalPath(toolsBaseDir, name));
-                        }
-                    }
-                } finally {
-                    try {
-                        if (zFile != null)
-                            zFile.close();
-                    } catch (IOException ioe) {
-                        System.out.println("Error while closing zip file" + ioe);
-                    }
-                }
-            }
-        } catch (Exception ex) {
         }
     }
 
+    public List<String> getErrors() {
+        return errors;
+    }
+
+    public File getToolsDirectory() {
+        // Had a bad side effect...
+//        if (directory != null && directory.exists()) {
+        return new File(new File(directory, RuntimeService.DIRNAME_RESOURCES), RuntimeService.DIRNAME_ANALYSIS_TOOLS);
+//        }
+//        return null;
+    }
+
     public File getBrawlWorkflowDirectory() {
-        return new File(new File(directory, "resources"), "brawlworkflows");
+        return new File(new File(directory, RuntimeService.DIRNAME_RESOURCES), RuntimeService.DIRNAME_BRAWLWORKFLOWS);
     }
 
     public File getConfigurationDirectory() {
-        return new File(new File(directory, "resources"), "configurationFiles");
+        return new File(new File(directory, RuntimeService.DIRNAME_RESOURCES), RuntimeService.DIRNAME_CONFIG_FILES);
+    }
+
+    public List<File> getConfigurationFiles() {
+        File configPath = getConfigurationDirectory();
+        return Arrays.asList(configPath.listFiles((FileFilter) new WildcardFileFilter(new String[]{"*.sh", "*.xml"})));
     }
 
     public String getName() {
         return name;
     }
 
+    public boolean isBetaPlugin() {
+        return isBetaPlugin;
+    }
+
+    public void setIsBetaPlugin(boolean betaPlugin) {
+        isBetaPlugin = betaPlugin;
+    }
+
     public File getDirectory() {
         return directory;
+    }
+
+    protected void setDirectory(File f) {
+        directory = f;
     }
 
     public String getProdVersion() {
@@ -167,12 +195,24 @@ public class PluginInfo {
         return dependencies;
     }
 
+    public void setNextInChain(PluginInfo nextInChain) {
+        this.nextInChain = nextInChain;
+    }
+
     public PluginInfo getNextInChain() {
         return nextInChain;
     }
 
+    public void setPreviousInChain(PluginInfo previousInChain) {
+        this.previousInChain = previousInChain;
+    }
+
     public PluginInfo getPreviousInChain() {
         return previousInChain;
+    }
+
+    public void setPreviousInChainConnectionType(PluginInfoConnection previousInChainConnectionType) {
+        this.previousInChainConnectionType = previousInChainConnectionType;
     }
 
     public PluginInfoConnection getPreviousInChainConnectionType() {
@@ -188,26 +228,10 @@ public class PluginInfo {
     }
 
     public boolean isCompatibleToRuntimeSystem() {
-        return jdkVersion == RuntimeTools.getJavaRuntimeVersion()
-                && groovyVersion == RuntimeTools.getRoddyRuntimeVersion()
-                && roddyAPIVersion == RuntimeTools.getGroovyRuntimeVersion();
-    }
-
-    public boolean isJavaProject() {
-        File srcFolder = new File(directory, "src");
-        // Java projects need a valid jar file
-        // Scan for java files?? Only in src?
-        return false;
-    }
-
-    public boolean isGroovyProject() {
-        // Scan for groovy files?? Only in src?
-        return false;
-    }
-
-    public boolean hasValidJarFile() {
-        // Check
-        return false;
+        boolean jdkEquals = jdkVersion.equals(RuntimeTools.getJavaRuntimeVersion());
+        boolean groovyEquals = groovyVersion.equals(RuntimeTools.getGroovyRuntimeVersion());
+        boolean apiEquals = roddyAPIVersion.equals(RuntimeTools.getRoddyRuntimeVersion());
+        return jdkEquals && groovyEquals && apiEquals;
     }
 
     public int getRevision() {
@@ -220,7 +244,6 @@ public class PluginInfo {
                 result = RoddyConversionHelperMethods.toInt(split[1], 0);
         } catch (Exception e) {
             System.out.println("Error for revision fetch of " + this.name + " in " + this.directory);
-//            e.printStackTrace();
         }
         return result;
     }

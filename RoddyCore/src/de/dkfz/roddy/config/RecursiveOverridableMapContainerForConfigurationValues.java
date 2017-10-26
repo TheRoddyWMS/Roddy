@@ -7,21 +7,21 @@
 package de.dkfz.roddy.config;
 
 import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Helps configurations to store overridable versions of configuration values and other things
  */
-public class RecursiveOverridableMapContainerForConfigurationValues extends RecursiveOverridableMapContainer<String, ConfigurationValue, Configuration> {
+public class RecursiveOverridableMapContainerForConfigurationValues
+        extends RecursiveOverridableMapContainer<String, ConfigurationValue, Configuration> {
     RecursiveOverridableMapContainerForConfigurationValues(Configuration parent, String id) {
         super(parent, id);
     }
 
     public ConfigurationValue get(String id, String defaultValue) {
-        if (!hasValue(id)) {
-            return new ConfigurationValue(getContainerParent(), id, defaultValue);
-        } else {
+        try {
             return getValue(id);
+        } catch (ConfigurationError ex) {
+            return new ConfigurationValue(getContainerParent(), id, defaultValue);
         }
     }
 
@@ -38,18 +38,24 @@ public class RecursiveOverridableMapContainerForConfigurationValues extends Recu
      * expected C.b = 'klm'
      * expected B.b = 'hij'
      *
-     * If you do not elevate the value, B.b would resolve to B.b = 'abc', because the configuration value does only know about its parent and predecessors
+     * If you do not elevate the value, B.b would resolve to B.b = 'abc', because the configuration value does only know about its parent and predecessors.
      *
      * @param src
      * @return
      */
     @Override
     protected ConfigurationValue temporarilyElevateValue(ConfigurationValue src) {
-        return new ConfigurationValue(this.getContainerParent(), src.id, src.value, src.getType(), src.getDescription(), new LinkedList<>(src.getListOfTags()));
+        return new ConfigurationValue(this.getContainerParent(), src.id, src.value, src.getType(),
+                src.getDescription(), new LinkedList<>(src.getListOfTags()));
     }
 
     public ConfigurationValue get(String id) {
         return get(id, "");
+    }
+
+    /** Get value or throw a RuntimeException, if the value does not exist. */
+    public ConfigurationValue getOrThrow(String id) throws ConfigurationError {
+        return getValue(id);
     }
 
     public ConfigurationValue getAt(String id) {
@@ -61,7 +67,11 @@ public class RecursiveOverridableMapContainerForConfigurationValues extends Recu
     }
 
     public boolean getBoolean(String id, boolean b) {
-        return hasValue(id) ? getValue(id).toBoolean() : b;
+        try {
+            return getValue(id).toBoolean();
+        } catch (ConfigurationError e) {
+            return b;
+        }
     }
 
     /**
@@ -75,7 +85,11 @@ public class RecursiveOverridableMapContainerForConfigurationValues extends Recu
     }
 
     public String getString(String id, String s) {
-        return hasValue(id) ? getValue(id).toString() : s;
+        try {
+            return getValue(id).toString();
+        } catch (ConfigurationError e) {
+            return s;
+        }
     }
 
     /**

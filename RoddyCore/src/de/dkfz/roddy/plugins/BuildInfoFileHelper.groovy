@@ -23,7 +23,8 @@ public class BuildInfoFileHelper {
 
     private Map<String, List<String>> entries = [:];
     private final String pluginName
-    private final String pluginVersion;
+    private final String pluginVersion
+    private final boolean hasBuildInfoEntries
 
     public static String[] validEntries = [
             LibrariesFactory.BUILDINFO_RUNTIME_APIVERSION, // Full reference, otherwise Groovy makes a String out of the entry and does not take the constants content
@@ -53,13 +54,21 @@ public class BuildInfoFileHelper {
             }
         }
 
+        hasBuildInfoEntries = true
+
         if (invalid)
-            logger.postAlwaysInfo("There are invalid entries in file buildinfo.txt for plugin ${pluginName}:\n  " + invalid.join("\n "));
+            logger.postAlwaysInfo("There are invalid entries in file buildinfo.txt for plugin ${pluginName}:${pluginVersion}:\n  " + invalid.join("\n "));
     }
 
     /** This constructor is the "real" constructor **/
     BuildInfoFileHelper(String pluginName, String pluginVersion, File buildinfoFile) {
         this(pluginName, pluginVersion, buildinfoFile.readLines())
+    }
+
+    BuildInfoFileHelper(String pluginname, String pluginVersion) {
+        this.pluginName = pluginname
+        this.pluginVersion = pluginVersion
+        hasBuildInfoEntries = false
     }
 
     Map<String, List<String>> getEntries() {

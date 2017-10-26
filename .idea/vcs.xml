@@ -2,6 +2,7 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/../RoddyInfra/RoddyToolLib" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../BatchEuphoria" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../RoddyToolLib" vcs="Git" />
   </component>
 </project>

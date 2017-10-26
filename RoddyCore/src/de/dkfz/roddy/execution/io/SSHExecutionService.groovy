@@ -12,9 +12,10 @@ package de.dkfz.roddy.execution.io
 
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.execution.io.FileAttributes
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.common.IOUtils
@@ -132,14 +133,15 @@ class SSHExecutionService extends RemoteExecutionService {
                 t2 = System.nanoTime();
                 logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("start ssh client session", t1, t2));
             } catch (Exception ex) {
-                println(ex);
+                logger.severe("Fatal error during initialization of SSHExecutionService. Message: \"${ex.message}\". Check password-based or password-less key-based authentication to all your head nodes.")
+                Roddy.exit(1)
             }
             client = c;
             sftpClient = client.newSFTPClient();
             scpFileTransfer = client.newSCPFileTransfer();
             scpDownloadClient = scpFileTransfer.newSCPDownloadClient();
             t1 = System.nanoTime();
-            logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("create additionial ssh services", t2, t1));
+            logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("create additional ssh services", t2, t1));
 
         }
 
@@ -278,7 +280,6 @@ class SSHExecutionService extends RemoteExecutionService {
         return initialize(false);
     }
 
-    @Override
     boolean initialize(boolean waitFor) {
         if (!waitFor) {
             Thread.start { connectionPool.initialize() };
@@ -333,64 +334,59 @@ class SSHExecutionService extends RemoteExecutionService {
         byte[] buffer = new byte[1024]
         int length
         while ((length = inputStream.read(buffer)) != -1)
-            result.write(buffer, 0 , length)
+            result.write(buffer, 0, length)
         return result.toString("UTF-8")
     }
 
-//    @Override
-    public
-    synchronized List<String> _execute(String command, boolean waitFor = true, boolean ignoreError = false, OutputStream outputStream = null) {
+    // This method actually overrides a base class. But if we keep the @Override, the Groovy (or Java) compiler constantly
+    // claims, that the method does not override it's base method.
+    // That is, why we keep it in but only as a comment.
+    //    @Override
+    synchronized ExecutionResult _execute(String command, boolean waitFor = true, boolean ignoreError = false, OutputStream outputStream = null) {
         SSHPoolConnectionSet set = waitForService()
         SSHClient sshClient = set.client;
 
         if (waitFor) {
-//            long id = fireExecutionStartedEvent(command)
-
             set.acquire();
             Session session = sshClient.startSession();
             Session.Command cmd;
-            //long tBefore = System.nanoTime()
+
             try {
                 cmd = session.exec(command)
             } finally {
                 set.release();
             }
-            //String content = IOUtils.readFully(cmd.getInputStream()).toString();
             String content = readStream(cmd.getInputStream())
-            //measureStop(tBefore, "SSH: ${command}", LoggerWrapper.VERBOSITY_ALWAYS)
-            //session.close();
 
             cmd.join();
             session.close();
-
 
             // Get the exit status of the process. In case of things like caught signals (SEGV-Segmentation fault), the value is null and will be set to 256.
             Integer exitStatus = cmd.getExitStatus();
             if (exitStatus == null) exitStatus = 256;
 
             List<String> output = new LinkedList<String>()
-            output << "" + exitStatus;
-//            measureStop(id, "blocking command [sshclient:${set.id}] '" + RoddyIOHelperMethods.truncateCommand(command, Roddy.getApplicationProperty("commandLogTruncate", '20').toInteger()) + "'");
-//            fireExecutionStoppedEvent(id, command);
+//            output << "" + exitStatus;
 
             if (exitStatus > 0) {
                 if (ignoreError) {
                     // In case the command is ignored, a warning is sent out instead of a severe error.
                     logger.warning("Command not executed correctly, return code: " + exitStatus + ", error was ignored on purpose.");
+                    logger.postRareInfo("Ignored failed command was: '${command}'")
                     content.readLines().each { String line -> output << "" + line }
+                    readStream(cmd.errorStream).readLines().each { String line -> output << "" + line }
                 } else {
                     logger.severe("Command not executed correctly, return code: " + exitStatus +
-                                    (cmd.getExitSignal()
-                                            ? " Caught signal is " + cmd.getExitSignal().name()
-                                            : "\n\tCommand Str. " + RoddyIOHelperMethods.truncateCommand(command,
-                                                Roddy.getApplicationProperty("commandLogTruncate", '80').toInteger())));
-                    // IOUtils.readFully(cmd.getErrorStream()).toString();
+                            (cmd.getExitSignal()
+                                    ? " Caught signal is " + cmd.getExitSignal().name()
+                                    : "\n\tCommand Str. " + RoddyIOHelperMethods.truncateCommand(command,
+                                    Roddy.getApplicationProperty("commandLogTruncate", '80').toInteger())));
                 }
             } else {
                 content.readLines().each { String line -> output << "" + line }
             }
 
-            return output;
+            return new ExecutionResult(exitStatus == 0, exitStatus, output, "0")
         }
 
         Runnable runnable = new Runnable() {
@@ -416,20 +412,17 @@ class SSHExecutionService extends RemoteExecutionService {
         Thread thread = new Thread(runnable)
         thread.setName("SSHExecutionService::_execute()")
         thread.start();
-        return ["0"];
+        return new ExecutionResult(true, 0, [], "");
     }
 
-
-    @Override
-    public ExecutionResult execute(String string, boolean waitFor = true) {
-        List<String> result = _execute(string, waitFor);
-        String returnCodeStr = result[0];
-        int returnCode = result.size() > 0 && result[0] != "null" ? Integer.parseInt(returnCodeStr) : 256;
-        result.remove(0);
-        ExecutionResult er = new ExecutionResult(returnCode == 0, returnCode, result, "");
-//        fireStringExecutedEvent(string, er);
-        return er;
-    }
+//    @Override
+//    public ExecutionResult execute(String string, boolean waitFor = true) {
+//        ExecutionResult result = _execute(string, waitFor);
+//        int returnCode = result.size() > 0 && result[0] != "null" ? result.exitValue : 256;
+//        result.remove(0)
+//        ExecutionResult er = new ExecutionResult(returnCode == 0, returnCode, result, "");
+//        return _execute(string, waitFor)
+//    }
 
     @Override
     boolean copyFile(File _in, File _out) {
@@ -460,7 +453,7 @@ class SSHExecutionService extends RemoteExecutionService {
 //            fireExecutionStoppedEvent(id, "");
         }
         if (retry) {
-            logger.warning("Catched no such file exception, attempting to retry copyFile ${_in.absolutePath} to ${_out.absolutePath}")
+            logger.warning("Caught no such file exception, attempting to retry copyFile ${_in.absolutePath} to ${_out.absolutePath}")
             result = copyFile(_in, _out, retries + 1);
         }
         return result
@@ -497,8 +490,8 @@ class SSHExecutionService extends RemoteExecutionService {
         boolean result = true;
         try {
             FileSystemAccessProvider fp = FileSystemAccessProvider.getInstance();
-            if(rightsStr) service.sftpClient.chmod(file.getAbsolutePath(), RoddyIOHelperMethods.symbolicToIntegerAccessRights(rightsStr, FileSystemAccessProvider.getInstance().getDefaultUserMask()));
-            if(groupID)   service.sftpClient.chgrp(file.getAbsolutePath(), fp.getGroupID(groupID));
+            if (rightsStr) service.sftpClient.chmod(file.getAbsolutePath(), RoddyIOHelperMethods.symbolicToIntegerAccessRights(rightsStr, FileSystemAccessProvider.getInstance().getDefaultUserMask()));
+            if (groupID) service.sftpClient.chgrp(file.getAbsolutePath(), fp.getGroupID(groupID));
         } catch (Exception ex) {
             logger.severe("Could not set access attributes for ${file.absolutePath}")
             result = false;
@@ -688,6 +681,13 @@ class SSHExecutionService extends RemoteExecutionService {
         return connectionPool.check();
     }
 
+    @Override
+    File queryWorkingDirectory() {
+        def rs = _execute("pwd")
+        if (rs.successful)
+            return new File(rs.resultLines[1])
+        return null
+    }
     private static Random random = new Random();
 
     @Override
@@ -868,10 +868,5 @@ class SSHExecutionService extends RemoteExecutionService {
 
     @Override
     boolean canQueryFileAttributes() { return true; }
-
-    @Override
-    void releaseCache() {
-
-    }
 
 }

@@ -87,20 +87,6 @@ class MockupExecutionContextBuilderTest extends GroovyTestCase {
                 return false
             }
 
-            @Override
-            void releaseCache() {
-
-            }
-
-            @Override
-            boolean initialize() {
-                return false
-            }
-
-            @Override
-            void destroy() {
-
-            }
         }
         MockupExecutionContextBuilder.createSimpleContext(MockupExecutionContextBuilderTest.name, configuration, rs);
     }

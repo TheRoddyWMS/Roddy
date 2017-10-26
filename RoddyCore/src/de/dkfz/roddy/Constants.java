@@ -16,9 +16,9 @@ public class Constants {
     // Application constants
     /////////////////////////
 
-    public static final String APP_CURRENT_VERSION_STRING = "2.3.154";
-    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Mon Mar 27 13:57:45 CEST 2017";
-    public static final String APP_PROPERTY_COMMAND_FACTORY_CLASS = "jobManagerClass";
+    public static final String APP_CURRENT_VERSION_STRING = "2.4.1";
+    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Wed Oct 18 13:58:09 CEST 2017";
+    public static final String APP_PROPERTY_JOB_MANAGER_CLASS = "jobManagerClass";
     public static final String APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS = "fileSystemAccessManagerClass";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_CLASS = "executionServiceClass";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_USER = "executionServiceUser";
@@ -72,4 +72,13 @@ public class Constants {
     public static final String NO_VALUE = "<NO_VALUE>";
 
     public static final String RODDY_PARENT_JOBS = "RODDY_PARENT_JOBS";
+    public static final String CONFIG_FILE = "CONFIG_FILE";
+    public static final String PARAMETER_FILE = "PARAMETER_FILE";
+    public static final String ANALYSIS_DIR = "ANALYSIS_DIR";
+    public static final String PARAMETER_FILE_SUFFIX = ".parameters";
+    public static final String WRAPPED_SCRIPT = "WRAPPED_SCRIPT";
+    public static final String PID_CAP = "PID";
+    public static final String PID = "pid";
+
+    public static final String COMMAND_TAG_EXECUTION_CONTEXT = "ExecutionContext";
 }

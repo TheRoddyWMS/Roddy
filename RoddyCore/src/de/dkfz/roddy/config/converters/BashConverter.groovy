@@ -6,21 +6,18 @@
 
 package de.dkfz.roddy.config.converters
 
+import com.sun.org.apache.xerces.internal.impl.xpath.regex.RegularExpression
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
-import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationConstants
-import de.dkfz.roddy.config.ConfigurationFactory
-import de.dkfz.roddy.config.ConfigurationValue
-import de.dkfz.roddy.config.ConfigurationValueBundle
-import de.dkfz.roddy.config.InformationalConfigurationContent
-import de.dkfz.roddy.config.ToolEntry
+import de.dkfz.roddy.config.*
+import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.fs.BashCommandSet
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
 
 import java.util.logging.Level
@@ -36,22 +33,29 @@ class BashConverter extends ConfigurationConverter {
 
     //TODO Use a pipeline converter interface with methods like "convertCValues, convertCValueBundles, convertTools"
     @Override
-    String convert(ExecutionContext context, Configuration cfg) {
+    String convert(ExecutionContext context, Configuration _cfg) {
+        Configuration cfg = new Configuration(null, _cfg)
+
+        cfg.configurationValues.addAll(cfg.tools.allValuesAsList.collect {
+            ToolEntry te ->
+                new ConfigurationValue(createVariableName("TOOL_", te.getID()),
+                        cfg.getProcessingToolPath(context, te.getID()).absolutePath)
+        })
+
         StringBuilder text = createNewDocumentStringBuilder(context, cfg)
 
         text << appendConfigurationValues(context, cfg)
 
         text << appendConfigurationValueBundles(context, cfg)
 
-        text << appendToolEntries(context, cfg)
-
         text << appendDebugVariables(cfg)
 
         text << appendPathVariables()
 
-        text << separator << "";
+        text << separator << ""
 
-        return text.toString();
+        return text.toString()
+
     }
 
     StringBuilder createNewDocumentStringBuilder(ExecutionContext context, Configuration cfg) {
@@ -141,6 +145,11 @@ class BashConverter extends ConfigurationConverter {
         return text;
     }
 
+    /**
+     *
+     * @param cfg    Configuration object. Basically a tree of configuration values that may additionally contain cross-references in the values.
+     * @return
+     */
     Map<String, ConfigurationValue> getConfigurationValuesSortedByDependencies(Configuration cfg) {
         def values = cfg.getConfigurationValues().getAllValuesAsList();
         Map<String, ConfigurationValue> listOfUnsortedValues = [:]
@@ -155,21 +164,23 @@ class BashConverter extends ConfigurationConverter {
         while (somethingChanged) { //Passes
             somethingChanged = false;
             i++;
-            if (LoggerWrapper.isVerbosityHigh())
-                println "Pass ${i}, left ${listOfUnsortedValues.values().size()}";
+//            if (LoggerWrapper.isVerbosityHigh())
+//                println "Pass ${i}, left ${listOfUnsortedValues.values().size()}";
             Map<String, ConfigurationValue> foundValues = [:];
 
             //TODO Add command manager specific arguments to the command manager class, leave central things here.
             //TODO How to figure out, where to put things like pid sample...
-            List<String> valueBlacklist = ["PBS_JOBID", "PBS_ARRAYID", 'PWD', "PID", "pid", "sample", "run", "projectName", "testDataOptionID", "analysisMethodNameOnInput", "analysisMethodNameOnOutput"
+            List<String> valueBlacklist = [ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW, 'PWD', Constants.PID_CAP, Constants.PID
+                                           , "sample", "run", "projectName", "testDataOptionID", "analysisMethodNameOnInput", "analysisMethodNameOnOutput"
                                            , "outputAnalysisBaseDirectory", "inputAnalysisBaseDirectory", "executionTimeString"]
             for (ConfigurationValue cv in listOfUnsortedValues.values()) {
                 boolean isValidationRule = cv.id.contains("cfgValidationRule");
                 if (isValidationRule)
                     continue;
-                if (cv.toString().startsWith("#"))
+                String value = cv.toString()
+                if (value != null && value.startsWith("#"))
                     continue;
-                def dependencies = cv.getIDsForParrentValues();
+                def dependencies = cv.getIDsForParentValues();
                 int noOfDependencies = dependencies.size();
                 int noOfOriginalDependencies = dependencies.size();
                 List<String> notFound = [];
@@ -181,7 +192,7 @@ class BashConverter extends ConfigurationConverter {
                 }
 
                 if (noOfDependencies > 0) {
-                    logger.postRareInfo("CValue not accepted in dependecy resolution round: ${cv.id} = ${cv.value} $separator" + notFound.collect { "Could not resolve: ${it}" }.join(separator));
+//                    logger.postRareInfo("CValue not accepted in dependency resolution pass: ${cv.id} = ${cv.value} $separator" + notFound.collect { "Could not resolve: ${it}" }.join(separator));
                     continue;
                 }
 
@@ -201,11 +212,60 @@ class BashConverter extends ConfigurationConverter {
         return listOfSortedValues
     }
 
-    private boolean isQuoted(String string) {
+    static boolean isQuoted(String string) {
         (string.startsWith("'") && string.endsWith("'")) || (string.startsWith('"') && string.endsWith('"'))
     }
 
-    StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context, Boolean quoteSomeScalarConfigValues) {
+
+    static String convertListToBashArray(List list) {
+        "(${list.collect { it.toString() }.join(" ")})" as String
+    }
+
+    /** Dependent on the settings and whether the string is quoted, return the quoted string. */
+    static String addQuotesIfRequested(String value, Boolean doQuote = true) {
+        if (isQuoted(value) || !doQuote)
+            return value
+        else
+            return '"' + value + '"'
+    }
+
+    /** To convert a simple Map of String keys to String values (possibly pre-converted!), this method should be used.
+     *
+     * @param map
+     * @param doDeclare
+     * @param quoteSomeScalarConfigValues
+     * @param doQuote
+     * @return
+     */
+    static String convertStringMap(LinkedHashMap<String, String> map, Boolean doDeclare = true,
+                                   Boolean quoteSomeScalarConfigValues = true, Boolean doQuote = true) {
+        String declareString = ""
+        if (doDeclare) {
+            declareString = "declare -x   "
+        }
+        return map.collect { String k, String v ->
+            String tmp
+            if (v.startsWith("-") || v.startsWith("*")) {
+                tmp = '"' + v + '"'
+            } else if (quoteSomeScalarConfigValues && !isQuoted(v) && v =~ /[\s\t\n;]/) {
+                tmp = '"' + v + '"'
+            } else {
+                tmp = addQuotesIfRequested(v, doQuote)
+            }
+            "${declareString} ${k}=${tmp}\n".toString()
+        }.join("")
+    }
+
+    /** ConfigurationValue provides meta-data about types for the values. To exploit this specialized conversion function exists.
+     *
+     * @param cv
+     * @param context
+     * @param quoteSomeScalarConfigValues
+     * @param autoQuoteArrays
+     * @return
+     */
+    StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context,
+                                            Boolean quoteSomeScalarConfigValues, Boolean autoQuoteArrays) {
         StringBuilder text = new StringBuilder();
         String declareVar = ""
         String declareInt = ""
@@ -218,13 +278,8 @@ class BashConverter extends ConfigurationConverter {
         } else {
             String tmp
 
-                if (cv.type && cv.type.toLowerCase() == "basharray") {
-                // Check, if it is already quoted.
-                // If so, take the existing quotes.
-                if (isQuoted(cv.value))
-                    return new StringBuilder("${declareVar} ${cv.id}=${cv.toString()}".toString());
-                // If not, quote
-                return new StringBuilder("${declareVar} ${cv.id}=\"${cv.toString()}\"".toString());
+            if (cv.type && cv.type.toLowerCase() == "basharray") {
+                return new StringBuilder("${declareVar} ${cv.id}=${addQuotesIfRequested(cv.toString(), autoQuoteArrays)}".toString())
             } else if (cv.type && cv.type.toLowerCase() == "integer") {
                 return new StringBuilder("${declareInt} ${cv.id}=${cv.toString()}".toString());
             } else if (cv.type && ["double", "float"].contains(cv.type.toLowerCase())) {
@@ -253,7 +308,16 @@ class BashConverter extends ConfigurationConverter {
     @Override
     @CompileStatic
     StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context) {
-        convertConfigurationValue(cv, context, context.getFeatureToggleStatus(AvailableFeatureToggles.QuoteSomeScalarConfigValues))
+        convertConfigurationValue(
+                cv
+                , context
+                , context.getFeatureToggleStatus(AvailableFeatureToggles.QuoteSomeScalarConfigValues)
+                , context.getFeatureToggleStatus(AvailableFeatureToggles.AutoQuoteBashArrayVariables)
+        )
+    }
+
+    public Configuration loadShellScript(File configurationFile) {
+        return loadShellScript(configurationFile.getAbsolutePath())
     }
 
     public Configuration loadShellScript(String configurationFile) {
@@ -300,7 +364,7 @@ class BashConverter extends ConfigurationConverter {
         }
 
         Map<String, Integer> doubletteCounter = new HashMap<String, Integer>();
-        InformationalConfigurationContent userConfig = new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "userconfig_INVALIDNAME", "An imported configuration, please change the name and this description. Also set the classname and type as necessary.", null, null, "", null, null, "");
+        PreloadedConfiguration userConfig = new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "userconfig_INVALIDNAME", "An imported configuration, please change the name and this description. Also set the classname and type as necessary.", null, null, "", null, null, "");
         Configuration newCfg = new Configuration(userConfig, (Map<String, Configuration>) null);
         Map<String, ConfigurationValue> cValues = newCfg.configurationValues.getMap();
         Map<String, ConfigurationValueBundle> cValueBundles = newCfg.configurationValueBundles.getMap();
@@ -368,18 +432,28 @@ class BashConverter extends ConfigurationConverter {
      * preventJobExecution=false
      * UNZIPTOOL=gunzip
      * ZIPTOOL_OPTIONS="-c"
-     * sampleDirectory=/data/michael/temp/roddyLocalTest/testproject/vbp/A100/${sample}/${SEQUENCER_PROTOCOL}
-     *
-     * @param text
+     * sampleDirectory=/data/michael/temp/roddyLocalTest/testproject/vbp/A100/${sample}/${SEQUENCER_PROTOCOL}*
+     * @param file
      * @return
      */
-    String convertToXML(String text) {
+    String convertToXML(File file) {
         String previousLine = ""
-        List<String> allLines = text.readLines()
+        List<String> allLines = file.readLines()
         List<String> header = extractHeader(allLines)
 
         List<String> xmlLines = [];
-        xmlLines << "<configuration name='${getHeaderValue(header, "name", "")}'".toString()
+
+        String type = ""
+        String additionalEntries = ""
+        if (file.name.startsWith("projects")) {
+            type = 'configurationType="project"'
+        } else if (file.name.startsWith("analysis")) {
+            type = 'configurationType="analysis"'
+            additionalEntries="class='de.dkfz.roddy.core.Analysis' workflowClass='de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow' runtimeServiceClass=\"de.dkfz.roddy.knowledge.examples.SimpleRuntimeService\""
+        } else  {
+        }
+
+        xmlLines << "<configuration ${type} ${additionalEntries} name='${getHeaderValue(header, "name", file.parentFile.name + "Analysis")}'".toString()
 
         xmlLines += convertHeader(header)
 
@@ -400,8 +474,8 @@ class BashConverter extends ConfigurationConverter {
                 break;
         }
 
-        if (!header)
-            throw new IOException("Simple Bash configuration files need a valid header")
+//        if (!header)
+//            throw new IOException("Simple Bash configuration files need a valid header")
         header
     }
 
@@ -412,11 +486,13 @@ class BashConverter extends ConfigurationConverter {
         xmlLines << "description='" + getHeaderValue(header, "description", "") + "'"
         xmlLines << "usedresourcessize='" + getHeaderValue(header, "usedresourcessize", "l") + "' >"
 
+        def headerValues = getHeaderValues(header, "analysis", [])
         xmlLines << "  <availableAnalyses>"
-        getHeaderValues(header, "analysis", []).each {
+
+        headerValues.each {
             String analysis ->
                 String[] split = analysis.split(StringConstants.COMMA)
-                if(split.size() < 3) {
+                if (split.size() < 3) {
                     ConfigurationFactory.logger.severe("The analysis string ${analysis} in the Bash configuration file is malformed.")
                     return
                 }
@@ -434,31 +510,32 @@ class BashConverter extends ConfigurationConverter {
         List<String> xmlLines = []
         xmlLines << "  <configurationvalues>"
 
-        allLines[header.size()..-1].each {
-            String[] s = it.split("[=]")
+        allLines[header.size()..-1].each { String line ->
+            String it = line.trim()
+            String[] s = it.trim().split("[=]")
             if (!it) return;
             if (!s) return;
 
             if (isBashPipe(it)) {
 
             } else if (isBashComment(it)) {
-                if (isBashComment(previousLine)) {
-                    xmlLines << ("""     ${it}""").toString()
-                } else {
-                    xmlLines << ("""<!-- ${it}""").toString()
-                }
+//                if (isBashComment(previousLine)) {
+//                    xmlLines << ("""     ${it}""").toString()
+//                } else {
+                    xmlLines << ("""<!-- ${it} -->""").toString()
+//                }
             } else {
 
-                if (isBashComment(previousLine)) {
-                    xmlLines[-1] += ("""-->""").toString()
-                }
+//                if (isBashComment(previousLine)) {
+//                    xmlLines[-1] += ("""-->""").toString()
+//                }
 
                 if (s.size() == 2)
-                    xmlLines << ("""    <cvalue name='${s[0]}' value='${s[1]}' type='string' />""").toString()
+                    xmlLines << ("""    <cvalue name='${s[0].trim()}' value='${s[1]}' type='string' />""").toString()
                 else if (s.size() == 1)
-                    xmlLines << ("""    <cvalue name='${s[0]}' value='' type='string' />""").toString()
+                    xmlLines << ("""    <cvalue name='${s[0].trim()}' value='' type='string' />""").toString()
                 else
-                    xmlLines << ("""    <cvalue name='${s[0]}' value='${s[1..-1].join("=")}' type='string' />""").toString()
+                    xmlLines << ("""    <cvalue name='${s[0].trim()}' value='${s[1..-1].join("=")}' type='string' />""").toString()
             }
             previousLine = it;
         }

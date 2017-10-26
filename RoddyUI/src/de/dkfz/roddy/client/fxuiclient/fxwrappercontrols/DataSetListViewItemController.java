@@ -1,0 +1,277 @@
+/*
+ * Copyright (c) 2016 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
+
+package de.dkfz.roddy.client.fxuiclient.fxwrappercontrols;
+
+import de.dkfz.roddy.client.fxuiclient.RoddyUIController;
+import de.dkfz.roddy.client.rmiclient.RoddyRMIClientConnection;
+import de.dkfz.roddy.client.rmiclient.RoddyRMIInterfaceImplementation;
+import de.dkfz.roddy.core.*;
+import de.dkfz.roddy.execution.jobs.JobState;
+import de.dkfz.roddy.client.fxuiclient.RoddyUITask;
+import de.dkfz.roddy.client.fxuiclient.fxcontrols.ExecutionContextPresenter;
+import de.dkfz.roddy.client.fxuiclient.fxdatawrappers.FXDataSetWrapper;
+import javafx.fxml.FXML;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ */
+public class DataSetListViewItemController extends ExecutionContextPresenter<FXDataSetWrapper> {
+
+//    @FXML
+//    private Label lblCurrentExecutionInformation;
+
+    @FXML
+    private ImageView indicatorNotExecutedByRoddy;
+
+    @FXML
+    private ImageView indicatorOK;
+
+    @FXML
+    private ImageView indicatorError;
+
+    @FXML
+    private ImageView indicatorUnknown;
+
+    @FXML
+    private ImageView indicatorRunning;
+
+    @FXML
+    private ImageView indicatorAborted;
+
+    @FXML
+    private ProgressIndicator indicatorQueryIsActive;
+
+    @FXML
+    private Label pidID;
+
+//    @FXML
+//    private Label dbgLbl;
+
+//    @FXML
+//    private GridPane runInfoPane;
+
+//    @FXML
+//    private HBox numberOfRunsPane;
+
+    @FXML
+    private BorderPane borderPane;
+
+//    @FXML
+//    private GridPane dataSetInfo;
+
+//    @FXML
+//    private GridPane runViews;
+
+//    @FXML
+//    private Label runErrorLogStatesMissing;
+//
+//    @FXML
+//    private Label runErrorJobCallsMissing;
+
+    @FXML
+    private Label furtherInfo;
+
+    @FXML
+    private Label furtherInfo2;
+
+    @FXML
+    private HBox errorInfo;
+
+    @FXML
+    private HBox pidExecInfo;
+
+//
+//    @FXML
+//    private GridPane ecDetails;
+
+
+    @Override
+    public void initialize() {
+    }
+
+    private void setIconVisiblity(JobState state) {
+        setIconVisiblity(indicatorNotExecutedByRoddy);
+        if (state == JobState.UNKNOWN)
+            setIconVisiblity(indicatorUnknown);
+        else if (state == JobState.RUNNING)
+            setIconVisiblity(indicatorRunning);
+        else if (state == JobState.FAILED)
+            setIconVisiblity(JobState.FAILED);
+//        else
+//            setIconVisiblity(JobState.UNKNOWN);
+    }
+
+    private synchronized void setIconVisiblity(Node icon) {
+        indicatorNotExecutedByRoddy.setVisible(indicatorNotExecutedByRoddy == icon);
+        indicatorOK.setVisible(indicatorOK == icon);
+        indicatorError.setVisible(indicatorError == icon);
+        indicatorQueryIsActive.setVisible(indicatorQueryIsActive == icon);
+        indicatorUnknown.setVisible(indicatorUnknown == icon);
+        indicatorRunning.setVisible(indicatorRunning == icon);
+        indicatorAborted.setVisible(indicatorAborted == icon);
+//        furtherInfo2.setText(
+//                indicatorNotExecutedByRoddy.isVisible() + ", " +
+//                        indicatorOK.isVisible() + ", " +
+//                        indicatorError.isVisible() + ", " +
+//                        indicatorQueryIsActive.isVisible() + ", " +
+//                        indicatorUnknown.isVisible() + ", " +
+//                        indicatorAborted.isVisible()
+//        );
+    }
+
+    @Override
+    public void itemSet(final FXDataSetWrapper item) {
+//        this.item = item;
+//        item.getDataSet().addListener(this, true);
+//
+        pidID.setText(item.getId());
+
+//        runViews.getChildren().remove(runInfoPane);
+//        JobState state = item.getJobStateProperty().getValue();
+        setIconVisiblity(JobState.UNKNOWN);
+        updateUI();
+    }
+
+    private void updateUI() {
+        final FXDataSetWrapper item = getItem();
+//        RoddyUITask.invokeLater(() -> setIconVisiblity(indicatorQueryIsActive), "set icon visibility", false);
+
+        RoddyUITask.runTask(new RoddyUITask<ExecutionContext>("set states map", false) {
+            public String ecUser;
+            public String ecTimeStamp;
+            public boolean isExecutable;
+            Map<JobState, Integer> stateMap = new HashMap<>();
+            RoddyRMIInterfaceImplementation.ExtendedDataSetInfoObjectCollection extendedInfo;
+
+            @Override
+            public ExecutionContext _call() throws Exception {
+                try {
+                    RoddyRMIClientConnection rmiConnection = RoddyUIController.getMainUIController().getRMIConnection(item.getLongAnalysisId());
+                    isExecutable = rmiConnection.queryDataSetExecutability(item.getId(), item.getAnalysis());
+
+                    extendedInfo = rmiConnection.queryExtendedDataSetInfo(item.getId(), item.getAnalysis());
+                    ecUser = item.getLastExecutingUser();
+                    ecTimeStamp = item.getLastTimestamp();
+//                    api = item.getRunningOrPlannedProcessingInfo();
+//                    if (api == null && item.getProcessingInfo().size() > 0)
+//                        api = item.getProcessingInfo().get(0);
+
+//                    if (api == null) // || !api.getDetailedProcessingInfo().hasRunningJobs())
+//                        if (item.getProcessingInfo().size() > 0)
+//                            for (AnalysisProcessingInformation _api : item.getProcessingInfo()) {
+//                                if (_api.getDetailedProcessingInfo().getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS)
+//                                    continue;
+//                                api = item.getProcessingInfo().get(0);
+//                                break;
+//                            }
+//                        else
+//                        return null;
+//                    item.
+//                    ec = api.getDetailedProcessingInfo();
+//                    ecUser = ec.getExecutingUser();
+//                    ecTimeStamp = ec.getTimestampString();
+                    for (JobState js : JobState.values())
+                        stateMap.put(js, 0);
+
+                    RoddyRMIInterfaceImplementation.ExecutionContextInfoObject ec = extendedInfo.getList().size() > 0 ? extendedInfo.getList().get(0) : null;
+                    if (ec != null) {
+                        ec.getExecutedJobs().forEach((job) -> {
+                            if (job.isFakeJob()) return; //Do not count Fake jobs
+                            JobState s = job.getJobState();
+                            if (s == null) s = JobState.UNKNOWN;
+                            stateMap.put(s, stateMap.get(s) + 1);
+                        });
+                        for (RoddyRMIInterfaceImplementation.JobInfoObject job : ec.getExecutedJobs()) {
+                            JobState s = job.getJobState();
+                            if (s == null) s = JobState.UNKNOWN;
+                            stateMap.put(s, stateMap.get(s) + 1);
+                        }
+                    }
+                } catch (Exception ex) {
+                    System.out.println(ex);
+                    for (Object o : ex.getStackTrace())
+                        System.out.println(o.toString());
+                } finally {
+//                    return ec;
+                    return null;
+                }
+            }
+
+            @Override
+            public void _succeeded() {
+                RoddyUITask.invokeLater(() -> {
+                    try {
+
+//                        if (!item.isExecutable()) {
+//                            pidID.setId("InactiveItem");
+//                        } else
+//                            pidID.setId("ActiveItem");
+
+                        setIconVisiblity(indicatorUnknown);
+                        if (errorInfo.getChildren().size() > 0)
+                            errorInfo.getChildren().clear();
+
+                        if (extendedInfo == null) {
+                            setIconVisiblity(indicatorNotExecutedByRoddy);
+                            return;
+                        }
+
+//                        if (ec == null) return;
+//
+                        if (extendedInfo != null && extendedInfo.getList().size() > 0) {
+                            for (ExecutionContextError ece : extendedInfo.getList().get(0).getErrors()) {
+                                errorInfo.getChildren().add(createErrorIcon(ece));
+                            }
+                        }
+
+                        if (extendedInfo != null && ecUser != null)
+                            furtherInfo.setText(String.format("%s / %s", ecTimeStamp, ecUser));
+
+                        pidExecInfo.setVisible(true);
+
+                        boolean isRunning = stateMap.get(JobState.RUNNING) > 0 || stateMap.get(JobState.HOLD) > 0 || stateMap.get(JobState.QUEUED) > 0;
+                        boolean hasFailedJobs = stateMap.get(JobState.FAILED) > 0;
+                        boolean hasUnknownJobs = stateMap.get(JobState.UNKNOWN) > 0;
+                        boolean hasAbortedJobs = stateMap.get(JobState.ABORTED) > 0;
+                        boolean isOk = !hasFailedJobs && !hasUnknownJobs && !hasAbortedJobs;
+
+                        setIconVisiblity(indicatorError);
+                        if (isRunning) {
+                            setIconVisiblity(indicatorRunning);
+                        } else if (hasFailedJobs) {
+                            setIconVisiblity(indicatorError);
+                        } else if (hasUnknownJobs) {
+                            setIconVisiblity(indicatorUnknown);
+                        } else if (hasAbortedJobs) {
+                            setIconVisiblity(indicatorAborted);
+                        } else if (isOk) {
+                            setIconVisiblity(indicatorOK);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }, "Invoke ds lv icon update", false);
+
+            }
+
+            @Override
+            public void _failed() {
+                super.failed();
+//                setIconVisiblity(indicatorUnknown);
+            }
+        });
+
+    }
+}

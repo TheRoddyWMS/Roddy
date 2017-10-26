@@ -16,10 +16,8 @@ import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValu
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.*
-import de.dkfz.roddy.knowledge.files.*
+import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.tools.LoggerWrapper
-
-import java.util.*
 
 /**
  * An ExecutionContect is the runtime context for an analysis and a DataSet.<br />
@@ -27,7 +25,7 @@ import java.util.*
  * <ul>
  * <li>Created files</li>
  * <li>Executed jobs and commands</li>
- * <li>Job states</li>
+ * <li>BEJob states</li>
  * <li>Log files</li>
  * </ul>
  * It also contains information about context specific settings like:<br />
@@ -68,7 +66,7 @@ class ExecutionContext {
     /**
      * Keeps a list of all (previously) started jobs which belong to this process.
      */
-    protected final List<Job> jobsForProcess = new LinkedList<Job>()
+    protected final List<Job> jobsForProcess = new LinkedList<>()
     /**
      * Stores a list of all calls which were passed to the job system within this context.
      */
@@ -127,6 +125,10 @@ class ExecutionContext {
     private ExecutionContextSubLevel executionContextSubLevel = ExecutionContextSubLevel.RUN_UNINITIALIZED
     private ToolEntry currentExecutedTool
     private ProcessingFlag processingFlag = ProcessingFlag.STORE_EVERYTHING
+    /**
+     * Job-specific configuration object used to evaluate variables in global configuration and job parameters.
+     */
+    private Map<Integer, Configuration> currentJobConfiguration = null
     /**
      * The user who created the context (if known)
      */
@@ -292,18 +294,18 @@ class ExecutionContext {
         return analysis.getConfiguration()
     }
 
-    Configuration getJobConfiguration(Job job) {
-
-    }
-
-    Configuration getFileConfiguration(BaseFile baseFile) {
-
+    Configuration createJobConfiguration() {
+        return new Configuration(null, getConfiguration())
     }
 
     boolean getFeatureToggleStatus(AvailableFeatureToggles toggle) {
-        def cvalues = getConfiguration().getConfigurationValues()
-        if(cvalues.hasValue(toggle.name()))
-            return cvalues.get(toggle.name()).toBoolean()
+        if (toggle.applicationLevelOnly) {
+            logger.warning("The feature toggle ${toggle} is marked as application level only. The application level value will be used.")
+        } else {
+            def cvalues = configuration.configurationValues
+            if (cvalues.hasValue(toggle.name()))
+                return cvalues.get(toggle.name()).toBoolean()
+        }
         return Roddy.getFeatureToggleValue(toggle)
     }
 
@@ -418,8 +420,10 @@ class ExecutionContext {
     }
 
     synchronized File getLoggingDirectory() {
-        if (loggingDirectory == null)
+        if (loggingDirectory == null) {
             loggingDirectory = analysis.getRuntimeService().getLoggingDirectory(this)
+            assert (null != loggingDirectory)
+        }
         return loggingDirectory
     }
 
@@ -429,8 +433,8 @@ class ExecutionContext {
         return analysisToolsDirectory
     }
 
-    File getParameterFilename(Command command) {
-        new File(getExecutionDirectory(), "${command.getJob().getJobName()}_${command.getJob().jobCreationCounter}.parameters")
+    File getParameterFilename(Job job) {
+        new File(getExecutionDirectory(), "${job.getJobName()}_${job.jobCreationCounter}${Constants.PARAMETER_FILE_SUFFIX}")
     }
 
 
@@ -498,7 +502,7 @@ class ExecutionContext {
 
         //Query readout jobs.
         if (jobsForProcess.get(0) instanceof ReadOutJob) {
-            for (Job job : jobsForProcess) {
+            for (BEJob job : jobsForProcess) {
                 ReadOutJob rj = (ReadOutJob) job
 
                 def state = rj.getJobState()
@@ -515,13 +519,13 @@ class ExecutionContext {
 
         //Query current jobs, i.e. on recheck
         List<String> jobIDsForQuery = new LinkedList<>()
-        for (Job job : jobsForProcess) {
-            JobResult runResult = job.getRunResult()
+        for (BEJob job : jobsForProcess) {
+            BEJobResult runResult = job.getRunResult()
             if (runResult != null && runResult.getJobID().getId() != null) {
                 jobIDsForQuery.add(runResult.getJobID().getId())
             }
         }
-        Map<String, JobState> map = JobManager.getInstance().queryJobStatus(jobIDsForQuery)
+        Map<BEJob, JobState> map = Roddy.getJobManager().queryJobStatus(jobsForProcess as List<BEJob>)
         for (JobState js : map.values()) {
             if (js.isPlannedOrRunning())
                 return true
@@ -540,7 +544,7 @@ class ExecutionContext {
 
     List<File> getLogFilesForExecutedJobs() {
         List<File> allFiles = new LinkedList<>()
-        for (Job j : getExecutedJobs()) {
+        for (BEJob j : getExecutedJobs()) {
             allFiles.add(j.getLogFile())
         }
         return allFiles
@@ -587,10 +591,18 @@ class ExecutionContext {
         }
         return false
     }
-
     boolean fileIsAccessible(File file, String variableName = null) {
         if (valueIsEmpty(file, variableName) || !FileSystemAccessProvider.getInstance().checkFile(file, false, this)) {
             addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("File '${file}' not accessible${variableName ? ": " + variableName : "."}"))
+            return false
+        }
+        return true
+    }
+
+    boolean fileIsExecutable(File file, String variableName = null) {
+        if (!(fileIsAccessible(file, variableName))) return;
+        if (!FileSystemAccessProvider.getInstance().isExecutable(file)) {
+            addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("File '${file}' is not executable${variableName ? ": " + variableName : "."}"))
             return false
         }
         return true

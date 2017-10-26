@@ -7,6 +7,7 @@
 package de.dkfz.roddy.knowledge.examples;
 
 import de.dkfz.roddy.core.DataSet;
+import de.dkfz.roddy.core.InfoObject;
 import de.dkfz.roddy.knowledge.files.FileStage;
 import de.dkfz.roddy.knowledge.files.FileStageSettings;
 

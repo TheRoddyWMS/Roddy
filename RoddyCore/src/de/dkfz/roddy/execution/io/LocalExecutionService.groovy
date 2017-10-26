@@ -11,7 +11,7 @@ import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.Command
-import de.dkfz.roddy.execution.jobs.JobManager
+import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.tools.LoggerWrapper
 
 import java.lang.reflect.Field
@@ -45,16 +45,15 @@ public class LocalExecutionService extends ExecutionService {
     // This method actually overrides a base class. But if we keep the @Override, the Groovy (or Java) compiler constantly
     // claims, that the method does not override it's base method.
     // That is, why we keep it in but only as a comment.
-    // @Override
-    protected List<String> _execute(String command, boolean waitFor, boolean ignoreErrors, OutputStream outputStream = null) {
+//     @Override
+    protected ExecutionResult _execute(String command, boolean waitFor, boolean ignoreErrors, OutputStream outputStream = null) {
         if (waitFor) {
-            ExecutionHelper.ExtendedProcessExecutionResult helper = ExecutionHelper.executeCommandWithExtendedResult(command, outputStream);
-            return (["" + helper.exitValue, helper.processID] + helper.lines).asList();
+            return LocalExecutionHelper.executeCommandWithExtendedResult(command, outputStream);
         } else {
             Thread.start {
                 command.execute();
             }
-            return ["0", "0"];
+            return new ExecutionResult(true, 0, [], "")
         }
     }
 
@@ -71,29 +70,26 @@ public class LocalExecutionService extends ExecutionService {
     }
 
     @Override
-    protected String handleServiceBasedJobExitStatus(Command command, ExecutionResult res, OutputStream outputStream) {
-        if (command.isBlockingCommand()) {
-            command.setExecutionID(JobManager.getInstance().createJobDependencyID(command.getJob(), res.processID));
+    protected void finalizeServiceBasedOutputStream(Command command, OutputStream outputStream) {
+        if (!outputStream) return
 
-            File logFile = command.getExecutionContext().getRuntimeService().getLogFileForCommand(command)
+        File logFile = new File(((Job)command.job).context.getExecutionDirectory(), "${command.job.getJobName()}_${command.job.jobCreationCounter}.logfile")
 
-            // Use reflection to get access to the hidden path field :p The stream object does not natively give
-            // access to it and I do not want to create a new class just for this.
-            Field fieldOfFile = FileOutputStream.class.getDeclaredField("path");
-            fieldOfFile.setAccessible(true);
-            File tmpFile2 = new File((String)fieldOfFile.get(outputStream));
+        // Use reflection to get access to the hidden path field :p The stream object does not natively give
+        // access to it and I do not want to create a new class just for this.
+        Field fieldOfFile = FileOutputStream.class.getDeclaredField("path")
+        fieldOfFile.setAccessible(true);
+        File tmpFile2 = new File((String) fieldOfFile.get(outputStream))
 
-            FileSystemAccessProvider.getInstance().moveFile(tmpFile2, logFile);
-            return "none";
-        } else {
-            String exID = "none";
-            if (res.successful) {
-                exID = JobManager.getInstance().parseJobID(res.resultLines[0]);
-                command.setExecutionID(JobManager.getInstance().createJobDependencyID(command.getJob(), exID));
-                JobManager.getInstance().storeJobStateInfo(command.getJob());
-            }
-            return exID;
-        }
+        FileSystemAccessProvider.getInstance().moveFile(tmpFile2, logFile)
+    }
+
+    @Override
+    /**
+     * Should be the current directory
+     */
+    File queryWorkingDirectory() {
+        return new File("")
     }
 
     @Override
@@ -101,8 +97,4 @@ public class LocalExecutionService extends ExecutionService {
         return true;
     }
 
-    @Override
-    void releaseCache() {
-
-    }
 }

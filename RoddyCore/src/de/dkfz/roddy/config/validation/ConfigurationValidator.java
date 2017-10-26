@@ -56,7 +56,7 @@ public abstract class ConfigurationValidator {
 //        clone.execute();
 //        int contextErrorCountStart = context.getErrors().size();
 
-//        Collection<String> calledTools = clone.getExecutedJobs().collect { Job j -> j.getToolID(); }.unique();
+//        Collection<String> calledTools = clone.getExecutedJobs().collect { BEJob j -> j.getTool(); }.unique();
 //        Collection<File> calledToolPaths = calledTools.collect { String toolID -> context.getConfiguration().getSourceToolPath(toolID) };
 //        Collection<File> calledToolPathsOriginalList = new LinkedList<>(calledToolPaths);
 //
@@ -124,7 +124,7 @@ public abstract class ConfigurationValidator {
 //            List<String> specialChars = Arrays.asList("%", StringConstants.SPLIT_COLON, "/", "[-]", "[+]", '#');
 //            // Keep a list of blacklistet variables, those are not checked.
 //            // TODO This list has to be configurable, some can also be coming from the command factory.
-//            List<String> blacklist = Arrays.asList("CONFIG_FILE", "PBS_*", "RODDY_*");
+//            List<String> blacklist = Arrays.asList(Constants.CONFIG_FILE, "PBS_*", "RODDY_*");
 //            List<String> alreadyChecked = [];
 ////            Collection<String> allLinesWithVariables = allLinesInFile.findAll { String line -> !line.startsWith("#") && line.contains("\${") };
 ////            Collection<String> allLinesWithVariableDeclarations = allLinesInFile.findAll { String line -> !line.startsWith("#") && line.contains("\${") };

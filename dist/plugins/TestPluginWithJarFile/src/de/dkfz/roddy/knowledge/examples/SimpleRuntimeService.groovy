@@ -6,11 +6,11 @@
 
 package de.dkfz.roddy.knowledge.examples
 
+import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.JobManager
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForSourceFiles;
 
@@ -20,7 +20,6 @@ import de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForSourceFiles;
 public class SimpleRuntimeService extends RuntimeService {
     @Override
     public Map<String, Object> getDefaultJobParameters(ExecutionContext context, String toolID) {
-        //File cf = fs..createTemporaryConfigurationFile(executionContext);
         Configuration cfg = context.getConfiguration();
         String pid = context.getDataSet().toString();
         Map<String, Object> parameters = new LinkedHashMap<>();
@@ -36,7 +35,7 @@ public class SimpleRuntimeService extends RuntimeService {
 
     @Override
     public String createJobName(ExecutionContext executionContext, BaseFile file, String TOOLID, boolean reduceLevel) {
-        return JobManager.getInstance().createJobName(file, TOOLID, reduceLevel);
+        return "RoddyTest_${TOOLID}"
     }
 
     @Override
@@ -93,21 +92,6 @@ public class SimpleRuntimeService extends RuntimeService {
         if (!result) { }
 
         return result;
-    }
-
-    @Override
-    public void releaseCache() {
-
-    }
-
-    @Override
-    public boolean initialize() {
-
-    }
-
-    @Override
-    public void destroy() {
-
     }
 
     public SimpleTestTextFile createInitialTextFile(ExecutionContext ec) {
