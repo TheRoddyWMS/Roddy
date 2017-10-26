@@ -1,7 +1,5 @@
 #!/bin/bash
 
-source ${CONFIG_FILE}
-
 set -xuv
 
 sleepCnt=${SLEEP_COUNT-5}

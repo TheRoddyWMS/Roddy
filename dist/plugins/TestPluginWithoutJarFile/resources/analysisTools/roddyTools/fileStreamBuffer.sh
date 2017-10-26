@@ -5,5 +5,3 @@
 
 # Read a list of files and push them to n MemoryStreamer servers.
 
-source ${CONFIG_FILE}
-

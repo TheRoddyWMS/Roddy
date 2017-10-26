@@ -10,9 +10,8 @@
 # Cluster options (like i.e. PBS ) have to be parsed and set before job submission!
 # They will be ignored after the script is wrapped.
 
-[[ ${PARAMETER_FILE-false} != false ]] && source ${PARAMETER_FILE}
-
 source ${CONFIG_FILE}
+source ${PARAMETER_FILE}
 
 isOutputFileGroup=${outputFileGroup-false}
 

@@ -159,8 +159,6 @@ Only one thing is missing, before you try out your new workflow.
 
     cd ~/RoddyPlugins/NewPlugin/resources/analysisTools/workflowTools
 
-    echo 'source ${CONFIG_FILE}' > testScriptSleep.sh
-    echo '' > testScriptSleep.sh
     echo 'sleep 10' > testScriptSleep.sh
     echo 'cat $FILENAME_IN > $FILENAME_OUT' > testScriptSleep.sh
 

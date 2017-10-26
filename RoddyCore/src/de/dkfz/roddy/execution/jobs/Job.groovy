@@ -344,11 +344,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         } else if (value instanceof Collection) {
             return collectionToParameterString(key, value as Collection)
         } else {
-            try {
-                return value.toString()
-            } catch (Exception e) {
-                e.printStackTrace()
-            }
+            return value.toString()
         }
     }
 
