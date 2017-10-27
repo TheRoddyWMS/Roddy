@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.knowledge.files;
 
+import de.dkfz.roddy.config.ConfigurationError;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.DataSet;
 import de.dkfz.roddy.core.Project;
@@ -26,7 +27,7 @@ public abstract class FileObject implements Serializable {
         this.executionContext = executionContext;
     }
 
-    public abstract void runDefaultOperations();
+    public abstract void runDefaultOperations() throws ConfigurationError;
 
     public DataSet getPid() {
         // TODO Deprecated. Remove if not needed in any workflow! Possibly move to plugin.
