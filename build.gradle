@@ -4,10 +4,14 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
+// Gradle Migration TODOs
+// TODO Finish shadowJar
+// TODO Fix dist/bin/current/roddy.sh (compile, compileplugin)
+// TODO Create shadowDistTar/Zip
+// TODO Document changes to IntelliJ
 // TODO Add travis config
 // TODO Put git short hash into manifests
-// TODO Use subproject { ... } for building external plugins configured on the command line. Then maybe remove explicit projects PluginBase and DefaultPlugin.
-
+// TODO How to compile plugins? Can this be done with gradle as well?
 
 buildscript {
     repositories {
