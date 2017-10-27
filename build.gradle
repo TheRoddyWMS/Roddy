@@ -17,12 +17,13 @@ buildscript {
     }
     dependencies {
         // The Shadow plugin to create a fat-jar of the Roddy application.
-        classpath "com.github.jengelman.gradle.plugins:shadow:2.0.1"
+        classpath "com.github.jengelman.gradle.plugins:shadow:2.0.1"           // Apache 2.0
     }
 }
 
 plugins {
-    id 'org.ajoberstar.grgit' version '1.7.2'
+    id 'org.ajoberstar.grgit' version '1.7.2'                                  // Apache 2.0
+    id 'idea'
 }
 
 group = "com.github.eilslabs"
@@ -47,12 +48,11 @@ ext.allowDirtyRepo = (project.hasProperty("allowDirty") && project.allowDirty ==
 
 allprojects {
 
-    apply plugin: 'groovy'
-    apply plugin: 'idea'
-    apply plugin: 'maven'
+    apply plugin: "java"
 
     // Java settings
     ext.langLevel = "1.8"
+
     sourceCompatibility = langLevel
     targetCompatibility = langLevel
     compileJava.options.fork = true
@@ -98,51 +98,57 @@ project("RoddyCore") {
 
     apply plugin: 'application'
     apply plugin: 'com.github.johnrengelman.shadow'
+    apply plugin: 'java'
+    apply plugin: 'groovy'
 
     mainClassName = "de.dkfz.roddy.Roddy"
 
     repositories {
         mavenCentral()                                        // Most dependencies
-        jcenter()                                             // Shadow plugin
+        jcenter()                                             // Shadow plugin to produce the fat jar
         maven { url 'https://jitpack.io' }                    // Github: RoddyToolLib, BatchEuphoria
         maven { url "http://central.maven.org/maven2/" }      // Some of the remaining dependencies
-        // flatDir dirs: ["${rootProject.projectDir}/dist/bin/current/lib/"] // Locally kept libraries
     }
 
     dependencies {
-        compile 'com.github.eilslabs:RoddyToolLib:0.0.2'
-        compile 'com.github.eilslabs:BatchEuphoria:'
-        compile 'org.codehaus.groovy:groovy-all:2.4.9'
+        compile 'com.github.eilslabs:RoddyToolLib:0.0.2'            // MIT
+        compile 'com.github.eilslabs:BatchEuphoria:'                // MIT
+        compile 'org.codehaus.groovy:groovy-all:2.4.9'              // Apache 2.0
 
-        compile 'org.bouncycastle:bcpg-jdk15on:1.51'
-        compile 'org.bouncycastle:bcpkix-jdk15on:1.51'
-        compile 'org.bouncycastle:bcprov-ext-jdk15on:1.51'
-        compile 'org.bouncycastle:bcprov-jdk15on:1.51'
-        compile 'net.i2p.crypto:eddsa:0.1.0'
+        compile 'org.bouncycastle:bcpg-jdk15on:1.51'                // MIT
+        compile 'org.bouncycastle:bcpkix-jdk15on:1.51'              // MIT
+        compile 'org.bouncycastle:bcprov-ext-jdk15on:1.51'          // MIT
+        compile 'org.bouncycastle:bcprov-jdk15on:1.51'              // MIT
 
-        compile 'com.google.guava:guava:23.0'
-        compile 'org.apache.commons:commons-csv:1.2'
-        compile 'commons-cli:commons-cli:1.2'
-        compile 'commons-codec:commons-codec:1.8'
-        compile 'commons-io:commons-io:2.4'
-        compile 'commons-logging:commons-logging:1.1.1'
-        compile 'net.vrallev.ecc:ecc-25519-java:1.0.1'
-        compile 'com.jcraft:jzlib:1.1.3'
-        compile 'com.github.markusbernhardt:proxy-vole:1.0.4'
-        //compile name: 'proxy-vole_20131209'                                   // Local copy! Consider updating with version from Mavencentral.
+        compile 'com.google.guava:guava:23.0'                       // Apache 2.0
+
+        compile 'org.apache.commons:commons-csv:1.2'                // Apache 2.0
+        compile 'commons-cli:commons-cli:1.2'                       // Apache 2.0
+        compile 'commons-codec:commons-codec:1.8'                   // Apache 2.0
+        compile 'commons-io:commons-io:2.4'                         // Apache 2.0
+        compile 'commons-logging:commons-logging:1.1.1'             // Apache 2.0
+
+        compile 'com.jcraft:jzlib:1.1.3'                            // BSD
+        compile 'com.github.markusbernhardt:proxy-vole:1.0.4'       // Apache 2.0
         compile 'org.reflections:reflections:0.9.9-RC1'
-        compile 'org.slf4j:slf4j-api:1.7.22'
-        compile 'org.slf4j:slf4j-jcl:1.7.22'
-        compile 'org.slf4j:slf4j-nop:1.7.22'
-        compile 'org.slf4j:jcl-over-slf4j:1.7.22'
-        compile 'com.hierynomus:sshj:0.20.0'
-        compile 'com.thoughtworks.xstream:xstream:1.4.5'
+
+        compile 'org.slf4j:slf4j-api:1.7.22'                        // MIT
+        compile 'org.slf4j:slf4j-jcl:1.7.22'                        // MIT
+        compile 'org.slf4j:slf4j-nop:1.7.22'                        // MIT
+        compile 'org.slf4j:jcl-over-slf4j:1.7.22'                   // MIT
+
+        compile 'com.hierynomus:sshj:0.20.0'                        // Apache 2.0
+        compile 'net.vrallev.ecc:ecc-25519-java:1.0.1'              // Apache 2.0; elliptic curve cryptography (ECC) with Curve25519
+        compile 'net.i2p.crypto:eddsa:0.1.0'                        // CC0 1.0 Universal; Ed25519
+
+        compile 'com.thoughtworks.xstream:xstream:1.4.5'            // BSD
+
         compile files("${rootProject.projectDir}/dist/runtimeDevel/jdk/jre/lib/ext/jfxrt.jar")
 
-        // Testing libraries
-        testCompile 'junit:junit:4.12'
-        testCompile 'org.spockframework:spock-core:1.1-groovy-2.4'
-        testCompile 'org.hamcrest:hamcrest-all:1.3'
+        // Testing libraries (do not end up in the fat-jar)
+        testCompile 'junit:junit:4.12'                              // EPL 1.0
+        testCompile 'org.spockframework:spock-core:1.1-groovy-2.4'  // Apache 2.0
+        testCompile 'org.hamcrest:hamcrest-all:1.3'                 // BSD 2-clause
     }
 
     project.ext.developmentDir = new File(rootProject.projectDir, "dist/bin/current")
@@ -174,8 +180,9 @@ project("RoddyCore") {
         }
     }
 
-    jar {
+    shadowJar {
         baseName = "Roddy"
+        // version = getVersionName()  // toggle to get a versioned jar name
         setDestinationDir(project.ext.developmentDir)
         manifest {
             attributes 'Main-Class': mainClassName
