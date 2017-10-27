@@ -200,7 +200,8 @@ public class Roddy {
             //TODO Think about a better way to get Roddys base directory.
             String[] list = applicationDirectory.list((dir, name) -> name.equals("roddy.sh"));
             if (list == null || list.length != 1) {
-                System.out.println("You must call roddy from the right location! (Base roddy folder where roddy.sh resides)");
+                System.out.println("You must call roddy from the right location! (Base roddy folder where roddy.sh resides). You used: '" +
+                        applicationDirectory + "'");
                 System.exit(255);
             }
 

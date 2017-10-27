@@ -297,7 +297,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
      * Run the default operations for a file.
      */
     @Override
-    void runDefaultOperations() {
+    void runDefaultOperations() throws ConfigurationError {
     }
 
     /**
