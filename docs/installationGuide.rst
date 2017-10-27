@@ -71,11 +71,8 @@ Please see `Roddy version mix`_ for information about how to mix different versi
 Roddy 2.4
 ---------
 
-Roddy version 2.4 is installed in the same way as 2.3. In addition, there will be an automatic downloader for JRE / JDK and Groovy.
-If you want to use this, you can skip the download steps.
-
-
-.. [1] If you cannot find the necessary Groovy version, you can also download it from the `Maven Groovy repository`_
+For Roddy version 2.4 zips are deployed to Github releases (continuous deployment via Travis). The thus installed Roddy will contain all dependencies
+but the JDK. Additionally, there is an automatic downloader for the JRE / JDK.
 
 Roddy version mix
 -----------------

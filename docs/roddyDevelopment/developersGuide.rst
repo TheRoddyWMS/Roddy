@@ -7,11 +7,11 @@ Roddy has no specific development or code style.
 Here, we try to collect topics and settings, where we think that they might be important.
 
 Code Format
-^^^^^^^^^^~
+^^^^^^^^^^^
 We are mainly using IntelliJ IDEA and use the default settings for code formatting.
 
 Collections as return types
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 By default, we do not return a copy (neither shallow, nor deep) of the Collection object. Be careful, not to modify the collection, if you do not change the contents of the object.
 
@@ -39,8 +39,8 @@ Roddys versioning system makes it easy to go back to previous versions.
 Settings for Groovy classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We will not accept Groovy classes without the @CompileStatic annotation.
-
+We will not accept Groovy classes without the @CompileStatic annotation. If you are in the rare situation that you need dynamic dispatch on more than
+the object (this) itself, you can mark the affected methods with @CompileDynamic.
 
 Roddy versioning scheme
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -102,7 +102,20 @@ Repository Structure
 Compiling Roddy
 ~~~~~~~~~~~~~~~
 
-Currently, the compilation & packaging is implemented in the top-level
+The preferred way to build Roddy is via Gradle. Please run
+
+::
+
+    ./gradlew build
+
+If you want to develop Roddy and additionally want to work on the RoddyToolLib or BatchEuphoria you can clone these libraries into neighbouring
+directories and execute gradle in a composite build parameters
+
+::
+
+     ./gradlew clean build --include-build ../RoddyToolLib/ --include-build ../BatchEuphoria/
+
+There is still, the compilation & packaging implemented in the top-level
 roddy.sh script that itself calls a number of scripts in the
 dist/bin/current/helperScripts directory. On the long run we will
 probably implement a Gradle-based re-implementation of the workflow.
