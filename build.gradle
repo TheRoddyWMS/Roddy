@@ -1,25 +1,28 @@
-/** Gradle file for Roddy */
+/*
+ * Copyright (c) 2017 eilslabs.
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ */
 
-import de.dkfz.roddy.Version
-import de.dkfz.roddy.VersionIO
-import de.dkfz.roddy.GitRepo
+plugins {
+    id 'org.ajoberstar.grgit' version '1.7.2'
+}
 
-apply plugin: "java"
-apply plugin: "groovy"
-apply plugin: "idea"
-
-// TODO Implement -X revisioning system
 // TODO Move plugin buildGradle directories out of rootProject.projectDir.
-// TODO Release only with clean git
+// TODO Add travis config
 // TODO Put git short hash into manifests
-// TODO Clean up the directory structure to get three separate [sub]project directories. Move PluginBase and DefaultPlugin out of dist/.
-// TODO "gradle release" should not release anything. Only explicitly released subprojects, so "gradle roddy:release"
 // TODO Use subproject { ... } for building external plugins configured on the command line. Then maybe remove explicit projects PluginBase and DefaultPlugin.
-// TODO Sometimes repo.isDirty() test fails
-// TODO Print general help information with "gradlew help"
-// TODO Describe how to set up idea for gradle debugging.
 
-group = "de.dkfz.eils"
+group = "com.github.eilslabs"
+
+/**
+ * Gets the version name from the current Git tag. If the current commit is not tagged,
+ * this returned string will indicate that. Also if the repository is dirty.
+ */
+String getVersionName() {
+    def dirtySuffix = grgit.status().isClean() ? '' : '-dirty'
+    return grgit.describe() + dirtySuffix
+}
 
 /**
  * -PignoreFailedTests                  Continue despite failed tests.
@@ -28,146 +31,16 @@ group = "de.dkfz.eils"
  * -Pchecked=false                      Turn off -F Xlint:unchecked
  */
 
-String buildVersionFilename = "buildversion.txt"
-ext.repo = new GitRepo (rootProject.projectDir)
 ext.allowDirtyRepo = (project.hasProperty("allowDirty") && project.allowDirty == "true")
-
-def getVersionIncreaseMethodName () {
-    if (hasProperty("releaseLevel")) {
-        String result = [minor: "increaseMinor",
-                         major: "increaseMajor",
-                         patch: "increasePatch",
-                         revision: "noIncrease"].getAt(releaseLevel)
-        if (result == null) {
-            throw new RuntimeException("Unknown release level '${releaseLevel}'. Only accepting major, minor, patch, revision")
-        } else {
-            return result
-        }
-    } else {
-        return "noIncrease"
-    }
-}
-
-void increaseVersion (Project project) {
-    if (!allowDirtyRepo && repo.isDirty()) {
-        throw new RuntimeException("Dirty repo. Cannot release!")
-    }
-    String methodName = getVersionIncreaseMethodName()
-    configure(project) {
-        if ("noIncrease" != methodName) {
-            String oldBuildVersion = buildVersion.toString()
-            buildVersion."${methodName}"()
-            System.err.println("Increasing ${project.name} build version ${oldBuildVersion} to ${buildVersion}")
-            VersionIO.writeBuildVersion(buildVersion)
-            // repo.commit([buildVersion.buildVersionFile], "Updated to ${buildVersion} for ${name}")
-        } else {
-            System.err.println("Not increasing build version for ${project.name} ${buildVersion} -- you may want to use -PreleaseLevel={major,minor,patch}")
-        }
-    }
-}
-
-void tagWithBuildVersion (Project project) {
-    configure(project) {
-        String tag = "${project.name}-${buildVersion}"
-        System.err.println("Tagging current commit '${repo.currentCommit(allowDirtyRepo)}' as '${tag}'")
-        // repo.tag(tag, "Release ${tag}", allowDirtyRepo)
-        System.err.println("Don't forget to push the tag: git push origin '${tag}'")
-    }
-}
-
-
-void declareReleaseTasks (Project project,
-                          Manifest projectManifest,
-                          CopySpec projectSpec = copySpec {}) {
-
-    configure(project) {
-
-        task deleteReleaseDir(type: Delete) {
-            description("Remove the current release directory.")
-            delete releaseDir
-            doLast {
-                System.err.println("Deleting ${releaseDir}")
-            }
-        }
-
-        task releaseJar(type: Jar) {
-            description("Create a release Jar in the release directory for ${project.name}.")
-            mustRunAfter("deleteReleaseDir")
-            inputs.dir developmentDir
-            outputs.file archiveName
-            baseName = project.name
-            destinationDir = releaseDir
-            manifest {
-                from projectManifest
-                attributes("Implementation-Version": buildVersion.toString())
-            }
-            with projectSpec
-            from(new File(project.buildDir, "classes/main"))
-        }
-
-        task fillReleaseDir(type: Copy) {
-            description("Coyp files from the development directory for ${project.name} to the release directory (excluding jar).")
-            mustRunAfter("deleteReleaseDir")
-            inputs.dir developmentDir
-            outputs.dir releaseDir
-            from(fileTree(developmentDir) {
-                exclude "${project.name}.jar"
-            })
-            into(releaseDir)
-        }
-
-        task createInfoFile {
-            description("Make an .nfo file in the release directory for ${project.name}.")
-            mustRunAfter("releaseJar")
-            mustRunAfter("fillReleaseDir")
-            //outputs.file new File(releaseDir, "${project.name}.jar.nfo").toString()
-            doLast {
-                String nfoFile = new File(releaseDir, "${project.name}.jar.nfo").canonicalPath
-                System.err.println("Creating $nfoFile")
-                ["bash", "-c", "find '${releaseDir.canonicalPath}' > '${nfoFile}'"].execute().waitFor()
-                ["bash", "-c", "ls -l '${releaseDir}' >> '${nfoFile}'"].execute().waitFor()
-            }
-        }
-
-        task release {
-            description("Make a release of sub-project ${project.name}.")
-            // dependsOn("clean")
-            dependsOn("build")
-            dependsOn("deleteReleaseDir")
-            dependsOn("fillReleaseDir")
-            dependsOn("releaseJar")
-            dependsOn("createInfoFile")
-            inputs.dir developmentDir
-            outputs.dir releaseDir
-            doLast {
-                increaseVersion(project)
-                tagWithBuildVersion(project)
-            }
-        }
-
-        task pack(type: Zip) {
-            description("Pack all files from the release directory of ${project.name}.")
-            dependsOn("release")
-            inputs.dir releaseDir
-            destinationDir = releaseDir.parentFile
-            from(fileTree(releaseDir))
-            archiveName = "${baseName}_${buildVersion}.zip"
-            doLast {
-                System.err.println("Packing into ${archivePath}")
-            }
-        }
-    }
-
-}
 
 allprojects {
 
-    apply plugin: 'java'
     apply plugin: 'groovy'
     apply plugin: 'idea'
+    apply plugin: 'maven'
 
     // Java settings
-    ext.langLevel = 1.8
+    ext.langLevel = "1.8"
     sourceCompatibility = langLevel
     targetCompatibility = langLevel
     compileJava.options.fork = true
@@ -180,7 +53,7 @@ allprojects {
     }
 
     if (project != rootProject) {
-        ext.buildVersion = VersionIO.readBuildVersion(new File(project.projectDir, buildVersionFilename))
+        ext.buildVersion = getVersionName()
     }
 
     // Set -Pchecked on the command line to change this compiler parameter.
@@ -191,48 +64,8 @@ allprojects {
     // The following keeps the Gradle build files separate from the ones build by IntelliJ (usually in build/).
     buildDir = "${projectDir}/gradleBuild"
 
-    repositories {
-	    mavenCentral()
-        maven {
-            url "http://central.maven.org/maven2/"
-        }
-        // Manage a local copy of the required libraries.
-        flatDir dirs: ["${rootProject.projectDir}/dist/bin/current/lib/"]
-    }
-
-    dependencies {
-        compile 'de.dkfz.eilslabs:RoddyToolLib:'
-	    compile 'org.codehaus.groovy:groovy-all:2.4.7'
-
-        // Roddy dependencies
-	    compile 'org.bouncycastle:bcpg-jdk15on:1.49'
-	    compile 'org.bouncycastle:bcpkix-jdk15on:1.49'
-	    compile 'org.bouncycastle:bcprov-ext-jdk15on:1.49'
-    	compile 'org.bouncycastle:bcprov-jdk15on:1.49'
-
-	    compile 'org.apache.commons:commons-csv:1.2'
-        compile 'commons-cli:commons-cli:1.2'
-        compile 'commons-codec:commons-codec:1.8'
-        compile 'commons-io:commons-io:2.4'
-        compile 'commons-logging:commons-logging:1.1.1'
-        compile 'commons-logging-adapters:commons-logging-adapters:1.1.1'
-        compile 'commons-logging-api:commons-logging-api:1.1.1'
-        compile 'com.jcraft:jzlib:1.1.3'
-        compile name: 'proxy-vole_20131209'   // local copy!
-        compile 'org.reflections:reflections:0.9.9-RC1'
-        compile 'org.slf4j:slf4j-api:1.7.2'
-        compile 'org.slf4j:slf4j-jcl:1.7.2'
-	    compile 'com.hierynomus:sshj:0.20.0'
-        compile 'com.thoughtworks.xstream:xstream:1.4.5'
-	    compile files("${rootProject.projectDir}/dist/runtimeDevel/jdk/jre/lib/ext/jfxrt.jar")
-
-        // Testing libraries
-        testCompile 'junit:junit:4.12'
-        testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
-    }
-
     test {
-        workingDir = projectDir
+        workingDir = System.getProperty("user.dir")
         ignoreFailures = project.hasProperty("ignoreFailedTests")
 
         testLogging {
@@ -242,18 +75,64 @@ allprojects {
             }
             events "failed"
             exceptionFormat "full"
-            showStandardStreams false
+            setShowStandardStreams true
         }
     }
 
 }
 
 // Sub-projects. Paths are configured in settings.gradle.
+project("RoddyCore") {
 
-project(":RoddyCore") {
+    apply plugin: 'application'
 
-    ext.developmentDir = new File(rootProject.projectDir, "dist/bin/current")
-    convention.add("releaseDir", new File(developmentDir, "../" + buildVersion).absoluteFile)
+    mainClassName = "de.dkfz.roddy.Roddy"
+
+    repositories {
+        mavenCentral()
+        maven { url 'https://jitpack.io' }
+        maven { url "http://central.maven.org/maven2/" }
+        // Locally kept libraries
+        flatDir dirs: ["${rootProject.projectDir}/dist/bin/current/lib/"]
+    }
+
+    dependencies {
+        compile 'com.github.eilslabs:RoddyToolLib:0.0.2'
+        compile 'com.github.eilslabs:BatchEuphoria:'
+        compile 'org.codehaus.groovy:groovy-all:2.4.9'
+
+        compile 'org.bouncycastle:bcpg-jdk15on:1.51'
+        compile 'org.bouncycastle:bcpkix-jdk15on:1.51'
+        compile 'org.bouncycastle:bcprov-ext-jdk15on:1.51'
+        compile 'org.bouncycastle:bcprov-jdk15on:1.51'
+        compile 'net.i2p.crypto:eddsa:0.1.0'
+
+        compile 'com.google.guava:guava:23.0'
+        compile 'org.apache.commons:commons-csv:1.2'
+        compile 'commons-cli:commons-cli:1.2'
+        compile 'commons-codec:commons-codec:1.8'
+        compile 'commons-io:commons-io:2.4'
+        compile 'commons-logging:commons-logging:1.1.1'
+        compile 'net.vrallev.ecc:ecc-25519-java:1.0.1'
+        compile 'com.jcraft:jzlib:1.1.3'
+        compile name: 'proxy-vole_20131209'                                   // Local copy! Consider updating with version from Mavencentral.
+        compile 'org.reflections:reflections:0.9.9-RC1'
+        compile 'org.slf4j:slf4j-api:1.7.22'
+        compile 'org.slf4j:slf4j-jcl:1.7.22'
+        compile 'org.slf4j:slf4j-nop:1.7.22'
+        compile 'org.slf4j:jcl-over-slf4j:1.7.22'
+        compile 'com.hierynomus:sshj:0.20.0'
+        compile 'com.thoughtworks.xstream:xstream:1.4.5'
+        compile files("${rootProject.projectDir}/dist/runtimeDevel/jdk/jre/lib/ext/jfxrt.jar")
+
+        // Testing libraries
+        testCompile 'junit:junit:4.12'
+        testCompile 'org.spockframework:spock-core:1.1-groovy-2.4'
+        testCompile 'org.hamcrest:hamcrest-all:1.3'
+    }
+
+    project.ext.developmentDir = new File(rootProject.projectDir, "dist/bin/current")
+    convention.add("releaseDir", new File(project.ext.developmentDir, "../" + getVersionName()).absoluteFile)
 
     sourceSets {
         main {
@@ -269,7 +148,7 @@ project(":RoddyCore") {
     }
 
     def projectManifest = manifest {
-        attributes("Main-Class": "de.dkfz.roddy.Roddy", "Implementation-Title": name)
+        attributes("Main-Class": mainClassName, "Implementation-Title": name)
     }
 
     def baseSpec = copySpec {
@@ -283,101 +162,27 @@ project(":RoddyCore") {
 
     jar {
         baseName = "Roddy"
-        destinationDir = developmentDir
+        setDestinationDir(project.ext.developmentDir)
         manifest {
-            attributes("Implementation-Version": buildVersion.toString() + "-devel")
+            attributes 'Main-Class': mainClassName
+            attributes 'Implementation-Version': getVersionName()
         }
         with(baseSpec)
     }
 
-    declareReleaseTasks(project, projectManifest, baseSpec)
-
 }
-
-
-project(":PluginBase") {
-
-    ext.developmentDir = new File ("${rootProject.projectDir}/dist/plugins/PluginBase")
-    convention.add("releaseDir", new File(developmentDir, "../" + project.name + "-" + buildVersion).absoluteFile)
-
-    sourceSets {
-        main {
-            groovy {
-                srcDirs = ["${developmentDir}/src"]
-            }
-        }
-    }
-
-    dependencies {
-        compile project(":RoddyCore")
-    }
-
-    def projectManifest = manifest {
-        attributes("Implementation-Title": name)
-    }
-
-    // The current JAR
-    jar {
-        baseName = "PluginBase"
-        destinationDir = developmentDir
-        manifest {
-            attributes("Implementation-Version": buildVersion.toString() + "-devel")
-        }
-    }
-
-    declareReleaseTasks(project, projectManifest)
-
-}
-
-project(":DefaultPlugin") {
-
-    ext.developmentDir = new File ("${rootProject.projectDir}/dist/plugins/DefaultPlugin")
-    convention.add("releaseDir", new File(developmentDir, "../" + project.name + "-" + buildVersion).absoluteFile)
-
-    sourceSets {
-        main {
-            groovy {
-                srcDirs = ["${developmentDir}/src"]
-            }
-        }
-    }
-
-    dependencies {
-        compile project(":RoddyCore")
-        compile project(":PluginBase")
-    }
-
-
-    def projectManifest = manifest {
-        attributes("Implementation-Title": name)
-    }
-
-    // The current JAR
-    jar {
-        baseName = "DefaultPlugin"
-        destinationDir = developmentDir
-        manifest {
-            attributes("Implementation-Version": buildVersion.toString() + "-devel")
-        }
-
-    }
-
-    declareReleaseTasks(project, projectManifest)
-
-}
-
 
 // IntelliJ IDEA
 idea {
     project {
-        jdkName = langLevel
+        setJdkName(langLevel)
         languageLevel = langLevel
     }
 }
 
 // Gradle Wrapper
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.3'
+    gradleVersion = '4.2.1'
 }
 
 
