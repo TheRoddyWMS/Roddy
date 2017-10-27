@@ -19,6 +19,7 @@ import de.dkfz.roddy.tools.Tuple2
 import de.dkfz.roddy.tools.Tuple5
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
+import net.logstash.logback.marker.MapEntriesAppendingMarker
 
 import java.util.regex.Pattern
 
@@ -87,7 +88,12 @@ public class LibrariesFactory extends Initializable {
     }
 
     static List<String> getErrorsForPlugin(String plugin) {
-        return mapOfErrorsForPluginEntries.find { plugin }.value
+        MapEntry hit = mapOfErrorsForPluginEntries.find { k, v -> k == plugin } as MapEntry
+        if (hit == null as MapEntry) {
+            return []
+        } else {
+            return hit.value as List<String>
+        }
     }
 
     public SyntheticPluginInfo getSynthetic() {

@@ -45,13 +45,13 @@ public class PluginInfoMapTest {
         assert null != pim.getPluginInfoWithPluginString("BasePlugin") && pim.getPluginInfoWithPluginString("BasePlugin").getProdVersion() == "current"
     }
 
-    @Test(expected = RuntimeException)
+    @Test(expected = PluginLoaderException)
     public void testGetPluginInfoWithMissingPluginEntry() {
         PluginInfoMap pim = assemblePluginInfoMap();
         pim.getPluginInfo("NewPlugin", "1.0.0")
     }
 
-    @Test(expected = RuntimeException)
+    @Test(expected = PluginLoaderException)
     public void testGetPluginInfoWithMissingVersionEntry() {
         PluginInfoMap pim = assemblePluginInfoMap();
         pim.getPluginInfo("BasePlugin", "1.0.0")

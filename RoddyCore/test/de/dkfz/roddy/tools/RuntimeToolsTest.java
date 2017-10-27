@@ -7,10 +7,9 @@
 package de.dkfz.roddy.tools;
 
 import de.dkfz.roddy.Roddy;
-import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import org.junit.Test;
 
-import java.io.File;
+import static org.junit.Assert.assertEquals;
 
 /**
  * This test class does runtime environment specific tests. It is not very well written and uses some hardcoded elements.
@@ -20,35 +19,35 @@ import java.io.File;
 public class RuntimeToolsTest {
     @Test
     public void getRoddyRuntimeVersion() throws Exception {
-        assert RuntimeTools.getRoddyRuntimeVersion().equals("2.3");
+        assertEquals("2.4", RuntimeTools.getRoddyRuntimeVersion());
     }
 
     @Test
     public void getJavaRuntimeVersion() throws Exception {
-        assert RuntimeTools.getJavaRuntimeVersion().equals("1.8");
+        assertEquals("1.8", RuntimeTools.getJavaRuntimeVersion());
     }
 
     @Test
     public void getGroovyRuntimeVersion() throws Exception {
-        assert RuntimeTools.getGroovyRuntimeVersion().equals("2.4");
+        assertEquals("2.4", RuntimeTools.getGroovyRuntimeVersion());
     }
 
     @Test
     public void testGetBuildinfoFile() {
         String buildinfoTextFile = RuntimeTools.getBuildinfoFile().getAbsolutePath();
         String estimatedBuildInfoTextFile = RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current", "buildinfo.txt").getAbsolutePath();
-        assert buildinfoTextFile.equals(estimatedBuildInfoTextFile);
+        assertEquals(estimatedBuildInfoTextFile, buildinfoTextFile);
     }
 
     @Test
     public void testGetCurrentDistFolder() {
-        assert RuntimeTools.getCurrentDistFolder().getAbsolutePath().equals(RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current").getAbsolutePath());
+        assertEquals(
+                RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current").getAbsolutePath(),
+                RuntimeTools.getCurrentDistFolder().getAbsolutePath());
     }
 
     @Test
     public void testGetGroovyLibrary() {
-        File gPath = RuntimeTools.getGroovyLibrary();
-        File aPath = RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current", "lib", "groovy-all-2.4.7-indy.jar");
-        assert gPath.getAbsolutePath().equals(aPath.getAbsolutePath());
+        assertEquals("groovy-all-2.4.9.jar", RuntimeTools.getGroovyLibrary().getName());
     }
 }

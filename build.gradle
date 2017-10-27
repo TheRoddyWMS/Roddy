@@ -4,14 +4,26 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-plugins {
-    id 'org.ajoberstar.grgit' version '1.7.2'
-}
-
-// TODO Move plugin buildGradle directories out of rootProject.projectDir.
 // TODO Add travis config
 // TODO Put git short hash into manifests
 // TODO Use subproject { ... } for building external plugins configured on the command line. Then maybe remove explicit projects PluginBase and DefaultPlugin.
+
+
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        // The Shadow plugin to create a fat-jar of the Roddy application.
+        classpath "com.github.jengelman.gradle.plugins:shadow:2.0.1"
+    }
+}
+
+plugins {
+    id 'org.ajoberstar.grgit' version '1.7.2'
+}
 
 group = "com.github.eilslabs"
 
@@ -85,15 +97,16 @@ allprojects {
 project("RoddyCore") {
 
     apply plugin: 'application'
+    apply plugin: 'com.github.johnrengelman.shadow'
 
     mainClassName = "de.dkfz.roddy.Roddy"
 
     repositories {
-        mavenCentral()
-        maven { url 'https://jitpack.io' }
-        maven { url "http://central.maven.org/maven2/" }
-        // Locally kept libraries
-        flatDir dirs: ["${rootProject.projectDir}/dist/bin/current/lib/"]
+        mavenCentral()                                        // Most dependencies
+        jcenter()                                             // Shadow plugin
+        maven { url 'https://jitpack.io' }                    // Github: RoddyToolLib, BatchEuphoria
+        maven { url "http://central.maven.org/maven2/" }      // Some of the remaining dependencies
+        // flatDir dirs: ["${rootProject.projectDir}/dist/bin/current/lib/"] // Locally kept libraries
     }
 
     dependencies {
@@ -115,7 +128,8 @@ project("RoddyCore") {
         compile 'commons-logging:commons-logging:1.1.1'
         compile 'net.vrallev.ecc:ecc-25519-java:1.0.1'
         compile 'com.jcraft:jzlib:1.1.3'
-        compile name: 'proxy-vole_20131209'                                   // Local copy! Consider updating with version from Mavencentral.
+        compile 'com.github.markusbernhardt:proxy-vole:1.0.4'
+        //compile name: 'proxy-vole_20131209'                                   // Local copy! Consider updating with version from Mavencentral.
         compile 'org.reflections:reflections:0.9.9-RC1'
         compile 'org.slf4j:slf4j-api:1.7.22'
         compile 'org.slf4j:slf4j-jcl:1.7.22'

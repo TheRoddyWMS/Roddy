@@ -6,7 +6,8 @@
 
 package de.dkfz.roddy;
 
-import com.btr.proxy.search.ProxySearch;
+import com.github.markusbernhardt.proxy.ProxySearch;
+import com.github.markusbernhardt.proxy.util.PlatformUtil;
 import de.dkfz.roddy.client.RoddyStartupModes;
 import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
@@ -27,7 +28,6 @@ import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import groovy.transform.CompileStatic;
-import org.apache.commons.io.FileExistsException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -99,7 +99,7 @@ public class Roddy {
     private static String baseInputDirectory;
     private static String baseOutputDirectory;
 
-    private static final File applicationDirectory = new File("").getAbsoluteFile();
+    private static final File applicationDirectory = new File(System.getProperty("user.dir"));
     private static final File applicationBundleDirectory = new File(applicationDirectory, "bundledFiles");
 
     private static CommandLineCall commandLineCall;
@@ -547,20 +547,31 @@ public class Roddy {
 
             System.setProperty("java.net.useSystemProxies", "true");
             System.out.println("detecting proxies");
+
+            ProxySearch proxySearch = new ProxySearch();
+            if (PlatformUtil.getCurrentPlattform() == PlatformUtil.Platform.WIN) {
+                proxySearch.addStrategy(ProxySearch.Strategy.IE);
+                proxySearch.addStrategy(ProxySearch.Strategy.FIREFOX);
+                proxySearch.addStrategy(ProxySearch.Strategy.JAVA);
+            } else if (PlatformUtil.getCurrentPlattform() == PlatformUtil.Platform.LINUX) {
+                proxySearch.addStrategy(ProxySearch.Strategy.GNOME);
+                proxySearch.addStrategy(ProxySearch.Strategy.KDE);
+                proxySearch.addStrategy(ProxySearch.Strategy.FIREFOX);
+            } else {
+                proxySearch.addStrategy(ProxySearch.Strategy.OS_DEFAULT);
+            }
+
+            ProxySelector proxySelector = proxySearch.getProxySelector();
+            ProxySelector.setDefault(proxySelector);
+
             List l = null;
             try {
-                ProxySearch proxySearch = new ProxySearch();
-                proxySearch.addStrategy(ProxySearch.Strategy.OS_DEFAULT);
-                proxySearch.addStrategy(ProxySearch.Strategy.ENV_VAR);
-                proxySearch.addStrategy(ProxySearch.Strategy.KDE);
-
-                proxySearch.addStrategy(ProxySearch.Strategy.BROWSER);
-                ProxySelector proxySelector = proxySearch.getProxySelector();
-                ProxySelector.setDefault(proxySelector);
                 l = ProxySelector.getDefault().select(new URI("http://codemirror.net"));
             } catch (URISyntaxException e) {
                 e.printStackTrace();
+                System.exit(1);
             }
+
             if (l != null) {
                 for (Iterator iter = l.iterator(); iter.hasNext(); ) {
                     java.net.Proxy proxy = (java.net.Proxy) iter.next();
@@ -585,10 +596,12 @@ public class Roddy {
     private static Configuration applicationSpecificConfiguration = null;
 
     private static void setDefaultRoddyJobIdVariable(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
+        assert(Roddy.jobManager != null);
         configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_JOBID_RAW, "$" + Roddy.jobManager.getJobIdVariable()));
     }
 
     private static void setDefaultRoddyQueueVariable(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
+        assert(Roddy.jobManager != null);
         configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_QUEUE_RAW, "$" + Roddy.jobManager.getJobIdVariable()));
     }
 
@@ -606,9 +619,13 @@ public class Roddy {
             applicationSpecificConfiguration = new Configuration(null);
             RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
 
-            setDefaultRoddyJobIdVariable(configurationValues);
-            setDefaultRoddyQueueVariable(configurationValues);
-            setDefaultRoddyScratchVariable(configurationValues);
+            if (Roddy.jobManager != null) {
+                setDefaultRoddyJobIdVariable(configurationValues);
+                setDefaultRoddyQueueVariable(configurationValues);
+                setDefaultRoddyScratchVariable(configurationValues);
+            } else {
+                logger.postAlwaysInfo("Roddy.jobManager is not set. Cannot set all application-specific configurations");
+            }
 
             // Add custom command line values to the project configuration.
             List<ConfigurationValue> externalConfigurationValues = getCommandLineCall().getSetConfigurationValues();

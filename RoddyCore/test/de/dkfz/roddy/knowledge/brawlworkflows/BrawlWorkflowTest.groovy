@@ -16,7 +16,8 @@ import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.plugins.LibrariesFactory
-import groovy.transform.TypeCheckingMode;
+import groovy.transform.TypeCheckingMode
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.reflect.Method
@@ -64,6 +65,7 @@ public class BrawlWorkflowTest {
     }
 
     @Test
+    @Ignore("Test to create")
     public void testAssembleCall() {
 //        callAssembleCall(null, 0, null, null, null);
         assert false
