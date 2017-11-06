@@ -368,13 +368,14 @@ public class RoddyCLIClient {
         })
         List<ProjectTreeItem> items = loadProjectsRec(availableProjectConfigurations)
         items.findAll { projectIDContains(it, filter) }.collect { it.icc.id }
+        def fulltext = items.findAll { projectIDContains(it, filter) }.collect { ConsoleStringFormatter.getFormatter().formatAll(printRecursively(0, it).toString()) }.join("\n")
 
         if (filter) {
             logger.always("\nlistworkflows was called with a filter: ${filter}. Be aware to check, that the filter has the right value!\n")
         }
 
-        logger.postAlwaysInfo("Don't print information about configuration id:\n\t" + items.findAll { projectIDContains(it, filter) }.collect { it.icc.id }.join("\n\t") + "\n")
-        logger.postAlwaysInfo(items.findAll { projectIDContains(it, filter) }.collect { ConsoleStringFormatter.getFormatter().formatAll(printRecursively(0, it).toString()) }.join("\n"))
+        logger.postAlwaysInfo("Don't print information about configuration id:\n\t" + items.findAll { !projectIDContains(it, filter) }.collect { it.icc.id }.join("\n\t") + "\n")
+        logger.postAlwaysInfo(fulltext)
     }
 
     private static List<ProjectTreeItem> loadProjectsRec(List<PreloadedConfiguration> availableProjectConfigurations) {
