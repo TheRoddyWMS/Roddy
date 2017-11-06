@@ -23,13 +23,12 @@ fi
 jfxLibrary=`cat ~/.roddy/jfxlibInfo`
 
 # TODO Find proper PluginBase jar file Not the most current one!
-pluginbaseLib=${RODDY_DIRECTORY}/dist/plugins/PluginBase/PluginBase.jar
 libraries=`ls -d1 ${RODDY_DIRECTORY}/dist/bin/current/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
-libraries=$libraries:$pluginbaseLib:$jfxLibrary
+libraries=$libraries:$jfxLibrary
 
 cd dist
 librariesForManifest=`ls -d1 ${RODDY_DIRECTORY}/dist/bin/current/lib/**`
-librariesForManifest="$librariesForManifest $pluginbaseLib $jfxLibrary"
+librariesForManifest="$librariesForManifest $jfxLibrary"
 cd ..
 
 NEW_RODDY_BINARY=dist/bin/current/Roddy.jar
