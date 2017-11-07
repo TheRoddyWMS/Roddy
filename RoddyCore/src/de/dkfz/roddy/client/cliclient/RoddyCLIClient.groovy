@@ -14,6 +14,7 @@ import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.loader.ConfigurationLoadError
+import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.config.validation.ValidationError
 import de.dkfz.roddy.config.validation.WholeConfigurationValidator
 import de.dkfz.roddy.core.*
@@ -358,7 +359,17 @@ public class RoddyCLIClient {
         String filter = clc.hasParameters() ? clc.getParameters().get(0) : ""
 
         //TODO colours will only work on linux bash, so fix that or at least disable it on other environments
-        List<PreloadedConfiguration> availableProjectConfigurations = ConfigurationFactory.getInstance().getAvailableProjectConfigurations();
+
+        List<PreloadedConfiguration> availableProjectConfigurations
+        try {
+            availableProjectConfigurations = ConfigurationFactory.getInstance().getAvailableProjectConfigurations();
+        } catch (ConfigurationLoaderException ex) {
+            // This exception can occurr and is e.g. catched for testrun/run/rerun... during loadAnalysis. Here we just catch it and "ignore" it.
+            // The loader will print a nice error message.
+
+            logger.severe(ex.message)
+            return
+        }
 
         availableProjectConfigurations.sort(new Comparator<PreloadedConfiguration>() {
             @Override
@@ -423,22 +434,22 @@ public class RoddyCLIClient {
             int longestPluginID = 0
             List<List<String>> splitted = pti.icc.listOfAnalyses.sort().collect {
                 def split = it.split("[:][:]")
-                def res =  [split[0], split[1], split[2].replace("useplugin=", ""), split[3].replace("killswitches=", "")]
-                if(longestAnalysisID < res[0].length()) longestAnalysisID = res[0].length()
-                if(longestAnalysisSrcID < res[1].length()) longestAnalysisSrcID = res[1].length()
-                if(longestPluginID < res[2].length()) longestPluginID = res[2].length()
+                def res = [split[0], split[1], split[2].replace("useplugin=", ""), split[3].replace("killswitches=", "")]
+                if (longestAnalysisID < res[0].length()) longestAnalysisID = res[0].length()
+                if (longestAnalysisSrcID < res[1].length()) longestAnalysisSrcID = res[1].length()
+                if (longestPluginID < res[2].length()) longestPluginID = res[2].length()
                 return res
             }
 
             splitted.each {
                 List split ->
-                configText << prefix << "   " << (i.toString() + ":").padRight(5) <<
-                        split[0].toString().padRight(longestAnalysisID) << " of type " <<
-                        split[1].toString().padRight(longestAnalysisSrcID) << " in " <<
-                        split[2].toString().padRight(longestPluginID) <<
-                        (split[3] ? " with enabled killswitches" : "") <<
-                        separator
-                i++;
+                    configText << prefix << "   " << (i.toString() + ":").padRight(5) <<
+                            split[0].toString().padRight(longestAnalysisID) << " of type " <<
+                            split[1].toString().padRight(longestAnalysisSrcID) << " in " <<
+                            split[2].toString().padRight(longestPluginID) <<
+                            (split[3] ? " with enabled killswitches" : "") <<
+                            separator
+                    i++
             }
         }
 
