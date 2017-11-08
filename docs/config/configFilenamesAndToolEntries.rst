@@ -215,6 +215,22 @@ syntax for input objects, so we'll skip explanations for known attributes. Valid
 
       <output type="file" typeof="de.dkfz.b080.co.files.BamFile" scriptparameter="FILENAME" />
 
+  In addition to the basic parameters, you can also add a filename attribute like:
+
+  .. code-block:: XML
+
+      <output type="file" typeof="BasicBamFile" scriptparameter="FILE_IN" filename="/tmp/somefile_${pid}.txt" />
+
+  If you do this, you will create an inline filename pattern of the onScriptParameter type.
+  Just see the below section about filename patterns and rules for more info.
+
+  Also you can tell Roddy to omit the file existence check for workflow reruns by adding the check attribute with its value set to "false".
+
+  .. code-block:: XML
+
+      <output type="file" typeof="BasicBamFile" scriptparameter="FILE_IN" check="false" />
+
+
 - Files with children:
 
   Files with children are a bit special. They are necessary, if you want to create a file which has some children.
