@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.config.loader
 
+import de.dkfz.roddy.config.OnScriptParameterFilenamePattern
 import de.dkfz.roddy.config.ResourceSet
 import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.config.Configuration
@@ -73,6 +74,21 @@ class ProcessingToolReader {
         else
             addLoadErr("Could not get attribute value for '${id}'", null)
         return text
+    }
+
+    /**
+     * Read a value if it is set, otherwise return ""
+     * No error is reported.
+     * @param node
+     * @param id
+     * @return
+     */
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    String tryReadAttribute(NodeChild node, String id) {
+        String text = node.@"$id".text()
+        if (text)
+            return text
+        return ""
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
@@ -251,6 +267,7 @@ class ProcessingToolReader {
         Class _cls = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, BaseFile.class.name)
 
         String pName = readAttribute(child, "scriptparameter")
+        String fnPattern = tryReadAttribute(child, "filename")
         String fnpSelTag = extractAttributeText(child, "selectiontag", extractAttributeText(child, "fnpatternselectiontag", FilenamePattern.DEFAULT_SELECTION_TAG))
         String parentFileVariable = extractAttributeText(child, "variable", null) //This is only the case for child files.
         ToolFileParameterCheckCondition check = new ToolFileParameterCheckCondition(extractAttributeText(child, "check", "true"))
@@ -268,6 +285,10 @@ class ProcessingToolReader {
             subParameters << (ToolFileParameter) parseToolParameter(toolID, fileChild)
         }
         ToolFileParameter tp = new ToolFileParameter(_cls, constraints, pName, check, fnpSelTag, subParameters, parentFileVariable)
+
+        if (fnPattern) {
+            config.getFilenamePatterns().add(new OnScriptParameterFilenamePattern(_cls, toolID, pName, fnPattern))
+        }
 
         return tp
     }
