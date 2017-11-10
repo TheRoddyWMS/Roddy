@@ -28,10 +28,14 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     private AnalysisConfiguration parentConfiguration;
     private final String analysisID;
     private final String analysisCfg;
+    private final String usePluginAttribute;
+    private final String killswitchesAttribute;
     private NodeChild analysisNode;
 
-    public AnalysisConfigurationProxy(AnalysisConfiguration parentConfiguration, String analysisID, String analysisCfg, NodeChild analysisNode) {
+    public AnalysisConfigurationProxy(AnalysisConfiguration parentConfiguration, String analysisID, String analysisCfg, String usePluginAttribute, String killswitchesAttribute, NodeChild analysisNode) {
         super(null, null, null, null, null, null, null);
+        this.usePluginAttribute = usePluginAttribute;
+        this.killswitchesAttribute = killswitchesAttribute;
         this.analysisNode = analysisNode;
 
 //        PreloadedConfiguration preloadedConfiguration, String
@@ -68,6 +72,14 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
 
     public String getAnalysisCfg() {
         return analysisCfg;
+    }
+
+    public String getUsePluginAttribute() {
+        return usePluginAttribute;
+    }
+
+    public String getKillswitchesAttribute() {
+        return killswitchesAttribute;
     }
 
     public NodeChild getAnalysisNode() {
