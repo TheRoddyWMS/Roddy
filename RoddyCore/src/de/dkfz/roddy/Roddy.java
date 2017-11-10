@@ -7,6 +7,7 @@
 package de.dkfz.roddy;
 
 import com.btr.proxy.search.ProxySearch;
+import de.dkfz.roddy.client.RoddyStartupModeScopes;
 import de.dkfz.roddy.client.RoddyStartupModes;
 import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
@@ -21,6 +22,7 @@ import de.dkfz.roddy.execution.io.fs.BashCommandSet;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.io.fs.ShellCommandSet;
 import de.dkfz.roddy.execution.jobs.*;
+import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager;
 import de.dkfz.roddy.plugins.LibrariesFactory;
 import de.dkfz.roddy.tools.AppConfig;
 import de.dkfz.roddy.tools.LoggerWrapper;
@@ -276,17 +278,19 @@ public class Roddy {
         LoggerWrapper.setup(applicationProperties);
         LoggerWrapper.setCentralLogFile(clf);
 
-        if (initializeServices(clc.startupMode.needsFullInit())) {
-            if (!jobExecutionRequirementsFulfilled())
-                exit(1);
-            time("initserv");
-            parseRoddyStartupModeAndRun(clc);
-            time("parsemode");
-            performCLIExit(clc.startupMode);
-        } else {
+        if (!initializeServices(clc.startupMode)) {
             logger.postAlwaysInfo("Could not initialize services. Roddy will not execute jobs.");
             performCLIExit(clc.startupMode, 1);
         }
+
+        if (!jobExecutionRequirementsFulfilled())
+            exit(1);
+
+        time("initserv");
+        parseRoddyStartupModeAndRun(clc);
+        time("parsemode");
+        performCLIExit(clc.startupMode);
+
         time("exit");
     }
 
@@ -509,7 +513,7 @@ public class Roddy {
      * Initializes basic Roddy services
      * The execution service has two configuration settings, one for command line interface and one for the ui based instance.
      */
-    public static final boolean initializeServices(boolean fullSetup) {
+    public static final boolean initializeServices(RoddyStartupModes mode) {
         String currentStep = "Initialize proxy settings";
         try {
 
@@ -518,16 +522,16 @@ public class Roddy {
             time("init proxy");
 
             currentStep = "Initialize file system access provider";
-            FileSystemAccessProvider.initializeProvider(fullSetup);
+            FileSystemAccessProvider.initializeProvider(mode.needsFullInit());
             time("init fsap");
 
             //Do not touch the calling order, execution service must be set before BatchEuphoriaJobManager.
             currentStep = "Initialize execution service";
-            ExecutionService.initializeService(fullSetup);
+            ExecutionService.initializeService(mode.needsFullInit());
             time("init execserv");
 
             currentStep = "Initialize command factory";
-            initializeJobManager(fullSetup);
+            initializeJobManager(mode);
             time("init cmd fac");
             return true;
         } catch (Exception ex) {
@@ -593,8 +597,10 @@ public class Roddy {
         configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_QUEUE_RAW, "$" + Roddy.jobManager.getJobIdVariable()));
     }
 
-    /** Take RODDY_SCRATCH, or if this is empty "defaultScratchDir" as scratch base directory. The job-manager specific _JOBID variable (e.g.
-     *  PBS_JOBID) is then appended as "/${PBS_JOBID}", to ensure that every job gets its own scratch directory.
+    /**
+     * Take RODDY_SCRATCH, or if this is empty "defaultScratchDir" as scratch base directory. The job-manager specific _JOBID variable (e.g.
+     * PBS_JOBID) is then appended as "/${PBS_JOBID}", to ensure that every job gets its own scratch directory.
+     *
      * @return
      */
     private static void setDefaultRoddyScratchVariable(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
@@ -630,22 +636,27 @@ public class Roddy {
     }
 
     @CompileStatic
-    public static void initializeJobManager(boolean fullSetup)
+    public static void initializeJobManager(RoddyStartupModes mode)
             throws ClassNotFoundException, IllegalAccessException, InvocationTargetException,
             InstantiationException, NoSuchMethodException, FileNotFoundException {
         logger.postSometimesInfo("public static void initializeFactory(boolean fullSetup)");
-        if (!fullSetup)
-            return;
+
+        if (!mode.needsFullInit()) return;
 
         ClassLoader classLoader;
         String jobManagerClassID = "";
         Class jobManagerClass = null;
 
         try {
+
             classLoader = LibrariesFactory.getGroovyClassLoader();
-            jobManagerClassID = Roddy.getApplicationProperty(Constants.APP_PROPERTY_JOB_MANAGER_CLASS);
-            if (RoddyConversionHelperMethods.isNullOrEmpty(jobManagerClassID)) jobManagerClassID = "UNSET";
-            jobManagerClass = classLoader.loadClass(jobManagerClassID);
+            if (mode.scope == RoddyStartupModeScopes.SCOPE_FULL_WITHJOBMANAGER) {
+                jobManagerClassID = Roddy.getApplicationProperty(Constants.APP_PROPERTY_JOB_MANAGER_CLASS);
+                if (RoddyConversionHelperMethods.isNullOrEmpty(jobManagerClassID)) jobManagerClassID = "UNSET";
+                jobManagerClass = classLoader.loadClass(jobManagerClassID);
+            } else
+                jobManagerClass = DirectSynchronousExecutionJobManager.class;
+            logger.always("Roddy will try to use the " + jobManagerClass.getSimpleName() + " job manager class to manage jobs.");
         } catch (ClassNotFoundException e) {
             StringBuilder available = new StringBuilder();
             for (AvailableClusterSystems acs : AvailableClusterSystems.values()) {
@@ -826,6 +837,7 @@ public class Roddy {
      * throw an exception.
      * If just a filename is given, return the first existing file in the current directory, the settingsDirectory or the applicationDirectory.
      * If none of these files exists, throw an exception.
+     *
      * @return
      */
     public static File getPropertiesFilePath() throws FileNotFoundException {
