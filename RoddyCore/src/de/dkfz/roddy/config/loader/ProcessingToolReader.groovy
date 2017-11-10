@@ -84,7 +84,7 @@ class ProcessingToolReader {
      * @return
      */
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    String tryReadAttribute(NodeChild node, String id) {
+    String readAttributeOrDefault(NodeChild node, String id) {
         String text = node.@"$id".text()
         if (text)
             return text
@@ -267,7 +267,7 @@ class ProcessingToolReader {
         Class _cls = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, BaseFile.class.name)
 
         String pName = readAttribute(child, "scriptparameter")
-        String fnPattern = tryReadAttribute(child, "filename")
+        String fnPattern = readAttributeOrDefault(child, "filename")
         String fnpSelTag = extractAttributeText(child, "selectiontag", extractAttributeText(child, "fnpatternselectiontag", FilenamePattern.DEFAULT_SELECTION_TAG))
         String parentFileVariable = extractAttributeText(child, "variable", null) //This is only the case for child files.
         ToolFileParameterCheckCondition check = new ToolFileParameterCheckCondition(extractAttributeText(child, "check", "true"))
@@ -289,7 +289,7 @@ class ProcessingToolReader {
         if (fnPattern) {
             config.getFilenamePatterns().add(new OnScriptParameterFilenamePattern(_cls, toolID, pName, fnPattern))
         }
-
+e
         return tp
     }
 
