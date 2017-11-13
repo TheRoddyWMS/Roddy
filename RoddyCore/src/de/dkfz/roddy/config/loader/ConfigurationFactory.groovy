@@ -251,7 +251,7 @@ class ConfigurationFactory {
     PreloadedConfiguration loadInformationalConfigurationContent(File file) {
         String text = loadAndPreprocessTextFromFile(file)
         NodeChild xml = (NodeChild) new XmlSlurper().parseText(text)
-        return _loadInformationalConfigurationContent(file, text, xml, null)
+        return _preloadConfiguration(file, text, xml, null)
     }
 
     /**
@@ -261,7 +261,7 @@ class ConfigurationFactory {
      * @return
      */
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private PreloadedConfiguration _loadInformationalConfigurationContent(File file, String text, NodeChild configurationNode, PreloadedConfiguration parent) {
+    private PreloadedConfiguration _preloadConfiguration(File file, String text, NodeChild configurationNode, PreloadedConfiguration parent) {
         NodeChild.metaClass.extract = { String id, String defaultValue -> return extractAttributeText((NodeChild) delegate, id, defaultValue) }
         Map<String, Configuration> subConfigurations = [:]
         List<PreloadedConfiguration> subConf = new LinkedList<PreloadedConfiguration>()
@@ -278,7 +278,7 @@ class ConfigurationFactory {
 
             NodeChildren san = configurationNode.availableAnalyses
             if (!Boolean.parseBoolean(extractAttributeText(configurationNode, XMLTAG_ATTRIBUTE_INHERITANALYSES, FALSE))) {
-                analyses = _loadICCAnalyses(san)
+                analyses = _loadPreloadedConfigurationAnalyses(san)
             } else {
                 analyses = parent.getListOfAnalyses()
             }
@@ -289,18 +289,18 @@ class ConfigurationFactory {
         }
 
         for (subConfiguration in configurationNode.subconfigurations.configuration) {
-            subConf << _loadInformationalConfigurationContent(file, text, subConfiguration, icc)
+            subConf << _preloadConfiguration(file, text, subConfiguration, icc)
         }
 
         return icc
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private List<String> _loadICCAnalyses(NodeChildren analyses) {
+    private List<String> _loadPreloadedConfigurationAnalyses(NodeChildren analyses) {
         List<String> listOfanalyses = []
         for (analysis in analyses.analysis) {
             String id = analysis.@id.text()
-            String configuration = analysis.@configuration.@id.text()
+            String configuration = analysis.@configuration.text()
             String useplugin = extractAttributeText(analysis, "useplugin", "")
             String killswitches = extractAttributeText(analysis, "killswitches", "")
             String idStr = "${id}::${configuration}::useplugin=${useplugin}::killswitches=${killswitches}".toString()
@@ -322,9 +322,15 @@ class ConfigurationFactory {
         return loadConfiguration(icc)
     }
 
-    Configuration loadConfiguration(PreloadedConfiguration icc) {
-        logger.always("  Fully load configurationFile ${icc.file}")
+    private static final List<File> _cfgFileLoaderMessageCache = []
 
+    Configuration loadConfiguration(PreloadedConfiguration icc) {
+        synchronized(_cfgFileLoaderMessageCache) {
+            if(!_cfgFileLoaderMessageCache.contains(icc.file)) {
+                logger.always("  Fully load configurationFile ${icc.file}")
+                _cfgFileLoaderMessageCache << icc.file
+            }
+        }
         Configuration config = _loadConfiguration(icc)
 
         for (String ic in config.getImportConfigurations()) {
@@ -378,7 +384,7 @@ class ConfigurationFactory {
         try {
             blk.call()
         } catch (Exception ex) {
-            addFormattedErrorToConfig(msg, id, null, config)
+            addFormattedErrorToConfig(msg + ' : ' + ex.message, id, null, config)
             return false
         }
         return true
@@ -727,7 +733,9 @@ class ConfigurationFactory {
         for (NodeChild analysis in nAnalyses.analysis) {
             String analysisID = extractAttributeText((NodeChild) analysis, "id")
             String analysisCfg = extractAttributeText((NodeChild) analysis, "configuration")
-            AnalysisConfiguration ac = new AnalysisConfigurationProxy(parentConfiguration, analysisID, analysisCfg, analysis)
+            String usePluginAttribute = extractAttributeText((NodeChild) analysis, "useplugin")
+            String killSwitchesAttribute = extractAttributeText((NodeChild) analysis, "killswitches")
+            AnalysisConfiguration ac = new AnalysisConfigurationProxy(parentConfiguration, analysisID, analysisCfg, usePluginAttribute, killSwitchesAttribute, analysis)
             availableAnalyses[analysisID] = ac
 
             _loadAnalyses(analysis.subanalyses, ac).each {

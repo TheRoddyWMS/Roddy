@@ -362,15 +362,15 @@ public class Analysis {
             boolean contextRightsSettings = ExecutionService.getInstance().checkAccessRightsSettings(context);
             boolean contextPermissions = ExecutionService.getInstance().checkContextDirectoriesAndFiles(context);
             boolean contextExecutability = context.checkExecutability();
-            boolean configurarionValidity = Roddy.isStrictModeEnabled() && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors) ? !getConfiguration().hasErrors() : true;
-            isExecutable = contextRightsSettings && contextPermissions && contextExecutability && configurarionValidity;
+            boolean configurationValidity = Roddy.isStrictModeEnabled() && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors) ? !getConfiguration().hasErrors() : true;
+            isExecutable = contextRightsSettings && contextPermissions && contextExecutability && configurationValidity;
 
             if (!isExecutable) {
                 StringBuilder message = new StringBuilder("The workflow does not seem to be executable for dataset " + datasetID);
                 if (!contextRightsSettings) message.append("\n\tContext access rights settings could not be validated.");
                 if (!contextPermissions) message.append("\n\tContext permissions could not be validated.");
                 if (!contextExecutability) message.append("\n\tContext and workflow is not considered executable.");
-                if (!configurarionValidity) message.append("\n\tContext configuration has errors.");
+                if (!configurationValidity) message.append("\n\tContext configuration has errors.");
                 logger.severe(message.toString());
             } else {
                 try {

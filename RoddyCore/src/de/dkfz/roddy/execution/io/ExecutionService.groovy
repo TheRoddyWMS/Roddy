@@ -411,7 +411,7 @@ public abstract class ExecutionService implements BEExecutionService {
         provider.writeTextFile(context.getRuntimeService().getNameOfConfigurationFile(context), configText, context);
 
         //The application ini
-        provider.copyFile(Roddy.getPropertiesFilePath(), new File(executionDirectory, "applicationProperties.ini"), context);
+        provider.copyFile(Roddy.getPropertiesFilePath(), new File(executionDirectory, Constants.APP_PROPERTIES_FILENAME), context);
         provider.writeTextFile(new File(executionDirectory, "roddyCall.sh"), Roddy.getApplicationDirectory().getAbsolutePath() + "/roddy.sh " + Roddy.getCommandLineCall().getArguments().join(StringConstants.WHITESPACE) + "\n", context);
 
         //Current configs xml files (default, user, pipeline config file)
@@ -453,7 +453,7 @@ public abstract class ExecutionService implements BEExecutionService {
         // Check the ignorable files. It is still nice to see whether they are there
         if (!context.fileIsAccessible(runtimeService.getNameOfExecCacheFile(context.getAnalysis()))) inaccessibleIgnorableFiles << "Execution cache file"
         if (!context.fileIsAccessible(runtimeService.getNameOfRuntimeFile(context))) inaccessibleIgnorableFiles << "Runtime information file"
-        if (!context.fileIsAccessible(new File(context.getExecutionDirectory(), "applicationProperties.ini"))) inaccessibleIgnorableFiles << "Copy of application.ini file"
+        if (!context.fileIsAccessible(new File(context.getExecutionDirectory(), Constants.APP_PROPERTIES_FILENAME))) inaccessibleIgnorableFiles << "Copy of application.ini file"
         if (!context.fileIsAccessible(runtimeService.getNameOfXMLConfigurationFile(context))) inaccessibleIgnorableFiles << "XML configuration file"
 
         // Return true, if the neccessary files are there and if strict mode is enabled and in this case all ignorable files exist

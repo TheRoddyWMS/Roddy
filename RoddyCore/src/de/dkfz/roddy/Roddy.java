@@ -29,6 +29,7 @@ import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import groovy.transform.CompileStatic;
 
+import javax.naming.ConfigurationException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Constructor;
@@ -606,12 +607,26 @@ public class Roddy {
         configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_QUEUE_RAW, "$" + Roddy.jobManager.getJobIdVariable()));
     }
 
-    /** Take RODDY_SCRATCH, or if this is empty "defaultScratchDir" as scratch base directory. The job-manager specific _JOBID variable (e.g.
-     *  PBS_JOBID) is then appended as "/${PBS_JOBID}", to ensure that every job gets its own scratch directory.
+    /** Copy the scratchBaseDirectory value from the applicationProperties.ini into the configuration. Set the default value for RODDY_SCRATCH
+     *  to $scratchBaseDirectory/$RODDY_JOBID.
      * @return
      */
-    private static void setDefaultRoddyScratchVariable(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
-        String scratchDir = new File(ConfigurationConstants.DEFAULT_SCRATCH_DIR, "$" + Roddy.jobManager.getJobIdVariable()).getAbsolutePath();
+    private static void setScratchDirectory(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
+        String scratchBaseDir = Roddy.getApplicationProperty(Constants.APP_SCRATCH_BASE_DIRECTORY, "");
+        if (scratchBaseDir.equals("")) {
+            File propertyFilePath = null;
+            try {
+                propertyFilePath = Roddy.getPropertiesFilePath();
+            } catch (FileNotFoundException e) {
+                // The file must have existed, because we are accessing the values in it.
+            }
+            System.err.println(Constants.APP_SCRATCH_BASE_DIRECTORY +
+                    " is not defined. Please add it to your application properties file: '" + propertyFilePath + "'");
+            System.exit(1);
+        }
+        configurationValues.add(new ConfigurationValue(Constants.APP_SCRATCH_BASE_DIRECTORY, scratchBaseDir));
+        String scratchDir = new File ("$" + Constants.APP_SCRATCH_BASE_DIRECTORY ,
+                "$" + ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW).toString();
         configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW, scratchDir));
     }
 
@@ -620,13 +635,9 @@ public class Roddy {
             applicationSpecificConfiguration = new Configuration(null);
             RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
 
-            if (Roddy.jobManager != null) {
-                setDefaultRoddyJobIdVariable(configurationValues);
-                setDefaultRoddyQueueVariable(configurationValues);
-                setDefaultRoddyScratchVariable(configurationValues);
-            } else {
-                logger.postAlwaysInfo("Roddy.jobManager is not set. Cannot set all application-specific configurations");
-            }
+            setDefaultRoddyJobIdVariable(configurationValues);
+            setDefaultRoddyQueueVariable(configurationValues);
+            setScratchDirectory(configurationValues);
 
             // Add custom command line values to the project configuration.
             List<ConfigurationValue> externalConfigurationValues = getCommandLineCall().getSetConfigurationValues();
