@@ -384,7 +384,7 @@ class ConfigurationFactory {
         try {
             blk.call()
         } catch (Exception ex) {
-            addFormattedErrorToConfig(msg, id, null, config)
+            addFormattedErrorToConfig(msg + ' : ' + ex.message, id, null, config)
             return false
         }
         return true
