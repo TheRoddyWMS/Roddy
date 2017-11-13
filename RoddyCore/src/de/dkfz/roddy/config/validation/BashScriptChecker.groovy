@@ -19,41 +19,41 @@ import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_SUFFIX_BINARY_S
  * Checks linux shell scripts.
  */
 @groovy.transform.CompileStatic
-public class BashScriptChecker extends ScriptChecker {
+class BashScriptChecker extends ScriptChecker {
 
-    private List<String> specialChars = Arrays.asList(SPLIT_PERCENT, SPLIT_COLON, SPLIT_SLASH, SPLIT_MINUS, SPLIT_PLUS, SPLIT_HASH);
+    private List<String> specialChars = Arrays.asList(SPLIT_PERCENT, SPLIT_COLON, SPLIT_SLASH, SPLIT_MINUS, SPLIT_PLUS, SPLIT_HASH)
 
-    public BashScriptChecker(File file, String toolID, ScriptValidator scriptValidator) {
-        super(file, toolID, scriptValidator);
+    BashScriptChecker(File file, String toolID, ScriptValidator scriptValidator) {
+        super(file, toolID, scriptValidator)
     }
 
     @Override
-    public void validateScript() {
-        List<String> allLinesInFile = file.readLines();
+    void validateScript() {
+        List<String> allLinesInFile = file.readLines()
 
-        List<String> alreadyChecked = [];
-        List<String> foundVariableNames = [];
+        List<String> alreadyChecked = []
+        List<String> foundVariableNames = []
 
         for (String line in allLinesInFile) {
             //Skip comments
-            line = line.trim();
-            if (line.startsWith(HASH)) continue;
-            if (line.length() == 0) continue;
+            line = line.trim()
+            if (line.startsWith(HASH)) continue
+            if (line.length() == 0) continue
             //First step, find variable assignments
             //These can either be declared using declare or by just assigning them
             //Variables can be created in a [[ ]] && clause!
             //Split by " " and parse every value.
-            String[] splitLine = line.split(SPLIT_WHITESPACE);
+            String[] splitLine = line.split(SPLIT_WHITESPACE)
             for (String splitVar : splitLine) {
                 if (!splitVar.contains(EQUALS))
-                    continue;
+                    continue
                 if (splitVar.size() <= 3) //Leave out things like "==" or " = " which are not used for declarations
-                    continue;
+                    continue
                 try {
-                    String variableName = splitVar.split(SPLIT_EQUALS)[0];
-                    alreadyChecked << variableName;
+                    String variableName = splitVar.split(SPLIT_EQUALS)[0]
+                    alreadyChecked << variableName
                 } catch (Exception ex) {
-                    scriptValidator.addErrorToList(new ValidationError(configuration, "Cannot extract variable name", line + " - " + splitVar, ex));
+                    scriptValidator.addErrorToList(new ValidationError(configuration, "Cannot extract variable name", line + " - " + splitVar, ex))
                 }
 //                    foundVariableNames << variableName;
 
@@ -61,16 +61,16 @@ public class BashScriptChecker extends ScriptChecker {
 
             //Second step, find variable usages
             //Maybe also keep line number so you see if a variable was used before assignment if it was created in the script
-            String[] splitted = line.split(SPLIT_DOLLAR);
+            String[] splitted = line.split(SPLIT_DOLLAR)
             for (String splitVar in splitted) {
                 if (splitVar.contains(BRACE_LEFT) && splitVar.contains(BRACE_RIGHT)) {
                     if (splitVar.indexOf(BRACE_LEFT) > splitVar.indexOf(BRACE_RIGHT))
-                        continue;
+                        continue
                     try {
-                        String variableName = splitVar.split(SPLIT_BRACE_LEFT)[1].split(SPLIT_BRACE_RIGHT)[0].toString();
-                        foundVariableNames << variableName;
+                        String variableName = splitVar.split(SPLIT_BRACE_LEFT)[1].split(SPLIT_BRACE_RIGHT)[0].toString()
+                        foundVariableNames << variableName
                     } catch (Exception ex) {
-                        scriptValidator.addErrorToList(new ValidationError(configuration, "Cannot extract variable name", line + " - " + splitVar, ex));
+                        scriptValidator.addErrorToList(new ValidationError(configuration, "Cannot extract variable name", line + " - " + splitVar, ex))
                     }
                 }
             }
@@ -79,56 +79,56 @@ public class BashScriptChecker extends ScriptChecker {
         for (String variableName in foundVariableNames) {
 
             if (variableName.endsWith(CVALUE_SUFFIX_BINARY) || variableName.endsWith(CVALUE_SUFFIX_BINARY_SHORT) || variableName.startsWith(CVALUE_PREFIX_TOOL) || variableName.startsWith(CVALUE_PREFIX_BASEPATH))
-                continue;
+                continue
 
             specialChars.each { String chr -> variableName = variableName.split(chr)[0] }
 
             if (alreadyChecked.contains(variableName))
-                continue;
-            alreadyChecked << variableName;
-            boolean skip = false;
-            for (String entry in ScriptValidator.blacklist) {
+                continue
+            alreadyChecked << variableName
+            boolean skip = false
+            for (String entry in scriptValidator.blacklist) {
                 if (entry.endsWith("*")) {
                     if (variableName.startsWith(entry[0..-2]))
-                        skip = true;
+                        skip = true
                 } else {
                     if (entry == variableName) {
-                        skip = true;
+                        skip = true
                     }
                 }
                 if (skip)
-                    break;
+                    break
             }
             if (skip)
-                continue;
+                continue
 
             //Check if the variable is in the configuration
             if (configuration.getConfigurationValues().hasValue(variableName))
-                continue;
+                continue
 
             //Check if variable was passed as a parameter
-            ToolEntry toolEntry = configuration.getTools().getValue(toolID, null);
+            ToolEntry toolEntry = configuration.getTools().getValue(toolID, null)
             if (toolEntry) {
-                boolean foundAsParameter;
+                boolean foundAsParameter
                 for (ToolEntry.ToolParameter toolParameter : toolEntry.getInputParameters(configuration)) {
                     if (toolParameter.scriptParameterName.equals(variableName)) {
-                        foundAsParameter = true;
-                        break;
+                        foundAsParameter = true
+                        break
                     }
                 }
                 for (ToolEntry.ToolParameter toolParameter : toolEntry.getOutputParameters(configuration)) {
                     if (toolParameter.scriptParameterName.equals(variableName)) {
-                        foundAsParameter = true;
-                        break;
+                        foundAsParameter = true
+                        break
                     }
                 }
                 if (foundAsParameter)
-                    continue;
+                    continue
             } else {
-                scriptValidator.addErrorToList(new ValidationError(configuration, ExecutionContextError.EXECUTION_SCRIPT_NOTFOUND.description, "The tool with id ${toolID} could not be found in configuration.", null));
+                scriptValidator.addErrorToList(new ValidationError(configuration, ExecutionContextError.EXECUTION_SCRIPT_NOTFOUND.description, "The tool with id ${toolID} could not be found in configuration.", null))
             }
 
-            scriptValidator.addErrorToList(new ValidationError(configuration, ExecutionContextError.EXECUTION_SCRIPT_INVALID.description, "The variable ${variableName} is possibly not defined correctly: ${file.getAbsolutePath()}", null));
+            scriptValidator.addErrorToList(new ValidationError(configuration, ExecutionContextError.EXECUTION_SCRIPT_INVALID.description, "The variable ${variableName} is possibly not defined correctly: ${file.getAbsolutePath()}", null))
         }
     }
 }
