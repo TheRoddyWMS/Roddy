@@ -289,7 +289,7 @@ class ProcessingToolReader {
         if (fnPattern) {
             config.getFilenamePatterns().add(new OnScriptParameterFilenamePattern(_cls, toolID, pName, fnPattern))
         }
-e
+
         return tp
     }
 
