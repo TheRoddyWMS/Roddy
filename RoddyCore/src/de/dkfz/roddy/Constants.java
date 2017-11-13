@@ -39,6 +39,7 @@ public class Constants {
     public static final String APP_PROPERTY_NET_USEPROXY = "netUseProxy";
     public static final String APP_PROPERTY_NET_PROXY_ADDRESS = "netProxyAddress";
     public static final String APP_PROPERTY_NET_PROXY_USR = "netProxyUser";
+    public static final String APP_SCRATCH_BASE_DIRECTORY = "scratchBaseDirectory";
 
     /////////////////////////
     // Error messages
