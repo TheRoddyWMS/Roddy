@@ -221,11 +221,6 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            String getJobArrayIndexVariable() {
-                return null
-            }
-
-            @Override
             String getNodeFileVariable() {
                 return null
             }
