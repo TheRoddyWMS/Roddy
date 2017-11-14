@@ -15,7 +15,11 @@ fi
 
 PATH="${JDK_HOME:?Please set JDK_HOME}/bin:${JAVA_HOME:?Please set JAVA_HOME}/bin:${GROOVY_HOME:?Please set GROOVY_HOME}/bin:$PATH"
 
-libraries=`ls -d1 ${RODDY_BINARY_DIR}/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
+if [[ -x "$RODDY_BINARY_DIR/lib" ]]; then
+    libraries=`ls -d1 ${RODDY_BINARY_DIR}/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
+else
+    libraries=""
+fi
 
 #Is the roddy binary or anything set via command line?
 for i in $*
