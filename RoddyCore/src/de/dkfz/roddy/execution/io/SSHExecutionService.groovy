@@ -23,6 +23,7 @@ import net.schmizz.sshj.connection.channel.OpenFailException
 import net.schmizz.sshj.connection.channel.direct.Session
 import net.schmizz.sshj.sftp.*
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier
+import net.schmizz.sshj.userauth.UserAuthException
 import net.schmizz.sshj.xfer.scp.SCPDownloadClient
 import net.schmizz.sshj.xfer.scp.SCPFileTransfer
 import org.apache.commons.io.filefilter.WildcardFileFilter
@@ -121,7 +122,17 @@ class SSHExecutionService extends RemoteExecutionService {
                 if (method == Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD) {
                     c.authPassword(user, Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_PWD))
                 } else {
-                    c.authPublickey(user)
+                    String customKeyfile = Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE_LOCATION, "")
+                    if (customKeyfile) {
+                        File _f = new File(customKeyfile)
+                        if (!_f.canRead()) {
+                            throw new UserAuthException("Cannot read the set keyfile: ${customKeyfile}")
+                        }
+                        def keys = c.loadKeys(customKeyfile)
+                        c.authPublickey(user, keys)
+                    } else {
+                        c.authPublickey(user)
+                    }
                 }
 
                 //At least for the moment compression is either not supported or maybe jzlib is not recognized
@@ -132,6 +143,18 @@ class SSHExecutionService extends RemoteExecutionService {
                 c.startSession()
                 t2 = System.nanoTime()
                 logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("start ssh client session", t1, t2))
+            } catch (UserAuthException ex) {
+                logger.severe(
+                        [
+                                "Could not setup SSH access with your configuration:",
+                                "- Is the user and password combination right?",
+                                "- Did you store the password and is it right?",
+                                "- Did you use keyfile authentification and are there any keyfiles available and accessible?",
+                                "- Did you set the custom keyfile location and is this file accessible?"
+                        ].join("\n\t")
+                )
+
+                Roddy.exit(1)
             } catch (Exception ex) {
                 logger.severe("Fatal error during initialization of SSHExecutionService. Message: \"${ex.message}\". Check password-based or password-less key-based authentication to all your head nodes.")
                 Roddy.exit(1)

@@ -31,6 +31,7 @@ public class Constants {
     public static final String APP_PROPERTY_USED_LIBRARIES = "usedLibraries";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD = "password";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE = "keyfile";
+    public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE_LOCATION = "executionServiceKeyfileLocation";
     public static final String APP_PROPERTY_CONFIGURATION_DIRECTORIES = "configurationDirectories";
     public static final String APP_PROPERTY_PLUGIN_DIRECTORIES = "pluginDirectories";
     public static final String APP_PROPERTY_APPLICATION_DEBUG_TAGS = "applicationDebugTags";
