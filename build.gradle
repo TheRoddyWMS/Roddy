@@ -200,12 +200,10 @@ distributions {
                 include("CONTRIBUTORS.md")
                 include("3RDPARTY_LICENSES")
                 include("CHANGELIST.md")
-            }
-            from("./dist") {
-                include("bin")
-                include("runtimeDevel")
-                include("runtime")
-                include("plugins")
+                include("dist/bin")
+                include("dist/runtimeDevel")
+                include("dist/runtime")
+                include("dist/plugins")
             }
         }
     }
