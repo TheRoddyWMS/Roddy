@@ -172,6 +172,7 @@ shadowJar {
  *  * RoddyEnv.zip with the runtime environment, starter script, etc.
  */
 distributions {
+
     roddy {
         baseName = "Roddy-" + getVersionName()
         contents {
@@ -207,7 +208,11 @@ distributions {
             }
         }
     }
+
 }
+
+roddyDistTar.dependsOn(shadowJar)
+roddyDistZip.dependsOn(shadowJar)
 
 // IntelliJ IDEA
 idea {
