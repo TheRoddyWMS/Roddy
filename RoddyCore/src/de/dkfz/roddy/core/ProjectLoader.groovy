@@ -121,21 +121,23 @@ class ProjectLoader {
      * @return
      */
     String getPluginRoddyAPILevel(String configurationIdentifier) {
+        if (configurationIdentifier == null) return null
+
         extractProjectIDAndAnalysisIDOrFail(configurationIdentifier)
 
-        if (analysisID == null) return null; //Return null (which needs to be checked then) because an auto id is not possible.
+        if (analysisID == null) return null //Return null (which needs to be checked then) because an auto id is not possible.
 
         String fullAnalysisID = getFullAnalysisID(projectID, analysisID)
 
-        LibrariesFactory librariesFactory = LibrariesFactory.initializeFactory();
+        LibrariesFactory librariesFactory = LibrariesFactory.initializeFactory()
 
-        String pluginString; List<AnalysisImportKillSwitch> killSwitches;
+        String pluginString
         def res = dissectFullAnalysisID(fullAnalysisID)
-        pluginString = res[0];
+        pluginString = res[0]
 
-        PluginInfoMap mapOfPlugins = librariesFactory.loadMapOfAvailablePluginsForInstance();
-        PluginInfo pinfo = mapOfPlugins.getPluginInfoWithPluginString(pluginString);
-        return pinfo.getRoddyAPIVersion();
+        PluginInfoMap mapOfPlugins = librariesFactory.loadMapOfAvailablePluginsForInstance()
+        PluginInfo pinfo = mapOfPlugins.getPluginInfoWithPluginString(pluginString)
+        return pinfo.getRoddyAPIVersion()
     }
 
     /**
@@ -185,6 +187,7 @@ class ProjectLoader {
     }
 
     void extractProjectIDAndAnalysisIDOrFail(String configurationIdentifier) {
+        assert configurationIdentifier != null
         String[] splitProjectAnalysis
         if (configurationIdentifier.findAll("[@]").size() == 1) {
             splitProjectAnalysis = configurationIdentifier.split(StringConstants.SPLIT_AT)
