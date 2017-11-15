@@ -5,7 +5,6 @@
  */
 
 // Gradle Migration TODOs
-// TODO Create shadowDistTar/Zip
 // TODO Document changes to IntelliJ
 // TODO Add travis config
 // TODO Put git short hash into manifests
@@ -177,7 +176,7 @@ distributions {
         baseName = "Roddy-" + getVersionName()
         contents {
             into(getVersionName())
-            from("dist/bin/current") {
+            from("dist/bin/current/") {
                 include("**")
             }
             from("./") {
@@ -186,6 +185,9 @@ distributions {
                 include("CONTRIBUTORS.md")
                 include("3RDPARTY_LICENSES")
                 include("CHANGELIST.md")
+            }
+            from ("RoddyCore/") {
+                include("buildversion.txt")
             }
         }
     }
