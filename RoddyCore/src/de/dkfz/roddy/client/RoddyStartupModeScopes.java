@@ -10,7 +10,7 @@ package de.dkfz.roddy.client;
  * Created by michael on 31.03.15.
  */
 @groovy.transform.CompileStatic
-public class RoddyStartupModeScopes {
+public enum RoddyStartupModeScopes {
 
     /**
      * Use this scope to leave options for command line processing.
@@ -19,16 +19,30 @@ public class RoddyStartupModeScopes {
      * This is useful, if things can be handled in an easier way with scripts,
      * like i.e. file operations
      */
-    public static final int SCOPE_CLI = 0x00;
+    SCOPE_CLI,
 
     /**
      * This scope is for startup modes where only a reduced init is necessary.
      */
-    public static final int SCOPE_REDUCED = 0x10;
+    SCOPE_REDUCED,
 
     /**
-     * This scope is for modes with a full init.
+     * This scope is for modes with a full init. The job manager however will be the direct job manager.
      */
-    public static final int SCOPE_FULL = 0x20;
+    SCOPE_FULL(true),
 
+    /**
+     * This scope starts all modes and also initializes the Job Manager
+     */
+    SCOPE_FULL_WITHJOBMANAGER(true);
+
+    public final boolean needsFullInit;
+
+    RoddyStartupModeScopes() {
+        this(false);
+    }
+
+    RoddyStartupModeScopes(boolean fullInit) {
+        this.needsFullInit = fullInit;
+    }
 }

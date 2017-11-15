@@ -62,9 +62,6 @@ public class ConfigurationFactoryTest {
         FileSystemAccessProvider.initializeProvider(true)
 
         LibrariesFactory.initializeFactory(true);
-        /** The following statement fails, because the DefaultPlugin cannot be found.
-         *  This plugin has been factored in its own repo. The mechanism to be tested here should use some other class!
-         */
         LibrariesFactory.getInstance().loadLibraries(LibrariesFactory.buildupPluginQueue(LibrariesFactoryTest.callLoadMapOfAvailablePlugins(), "DefaultPlugin").values() as List);
 
         // Create buggy directories first.
@@ -125,8 +122,8 @@ public class ConfigurationFactoryTest {
         // Load context from valid directories and see, if the step fails.
         ConfigurationFactory.initialize([testFolder1, testFolder2])
 
-        assertThat(ConfigurationFactory.getInstance().getAvailableProjectConfigurations().size(), equalTo(6))
-        assertThat(ConfigurationFactory.getInstance().getAvailableConfigurationsOfType(Configuration.ConfigurationType.OTHER).size(), equalTo(2))
+        assert ConfigurationFactory.getInstance().getAvailableProjectConfigurations().size() == 6
+        assert ConfigurationFactory.getInstance().getAvailableConfigurationsOfType(Configuration.ConfigurationType.OTHER).size() == 2
     }
 
     private NodeChild asNodeChild(String text) {

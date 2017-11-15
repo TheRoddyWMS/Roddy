@@ -36,9 +36,6 @@ class FilenamePatternTest {
     static void setUpMocks() throws Exception {
         //Setup plugins and default configuration folders
         LibrariesFactory.initializeFactory(true)
-        /** The following statement fails, because the DefaultPlugin cannot be found.
-         *  This plugin has been factored in its own repo. The mechanism to be tested here should use some other class!
-         */
         LibrariesFactory.getInstance().loadLibraries(LibrariesFactory.buildupPluginQueue(LibrariesFactoryTest.callLoadMapOfAvailablePlugins(), "DefaultPlugin").values() as List)
         ConfigurationFactory.initialize(LibrariesFactory.getInstance().getLoadedPlugins().collect { it -> it.getConfigurationDirectory() })
 

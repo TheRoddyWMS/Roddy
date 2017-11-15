@@ -7,6 +7,7 @@
 package de.dkfz.roddy
 
 import de.dkfz.roddy.client.cliclient.CommandLineCall
+import de.dkfz.roddy.client.RoddyStartupModes
 import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSJobManager
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
@@ -79,7 +80,7 @@ class RoddyTest {
     @Ignore
     @Test
     void testInitializeJobManager() {
-        Roddy.initializeJobManager(true)
+        Roddy.initializeJobManager(RoddyStartupModes.run)
         assert Roddy.getJobManager() instanceof PBSJobManager
     }
 

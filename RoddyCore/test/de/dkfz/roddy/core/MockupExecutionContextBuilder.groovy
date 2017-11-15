@@ -216,7 +216,7 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            String getJobArrayIndexVariable() {
+            String getJobNameVariable() {
                 return null
             }
 

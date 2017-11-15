@@ -13,13 +13,11 @@ import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflowConverter
 import de.dkfz.roddy.tools.LoggerWrapper
-import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RuntimeTools
 import de.dkfz.roddy.tools.Tuple2
 import de.dkfz.roddy.tools.Tuple5
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
-import net.logstash.logback.marker.MapEntriesAppendingMarker
 
 import java.util.regex.Pattern
 
@@ -27,7 +25,7 @@ import java.util.regex.Pattern
  * Factory to load and integrate plugins.
  */
 @groovy.transform.CompileStatic
-public class LibrariesFactory extends Initializable {
+class LibrariesFactory extends Initializable {
     private static LoggerWrapper logger = LoggerWrapper.getLogger(LibrariesFactory.class.getSimpleName());
 
     private static LibrariesFactory librariesFactory;

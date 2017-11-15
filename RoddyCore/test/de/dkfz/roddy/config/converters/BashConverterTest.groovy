@@ -6,36 +6,24 @@
 
 package de.dkfz.roddy.config.converters
 
-import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationValue
-import de.dkfz.roddy.config.ResourceSet
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.MockupExecutionContextBuilder
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.NoNoExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.BEJob
-import de.dkfz.roddy.execution.jobs.BEJobResult
-import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager
-import de.dkfz.roddy.execution.jobs.Command
-import de.dkfz.roddy.execution.jobs.GenericJobInfo
-import de.dkfz.roddy.execution.jobs.JobState
-import de.dkfz.roddy.execution.jobs.ProcessingParameters
 import org.junit.BeforeClass
 import org.junit.Ignore
 import org.junit.Test
-
-import static org.hamcrest.core.IsEqual.equalTo
-import static org.junit.Assert.assertThat
 
 /**
  * Created by heinold on 30.06.16.
  */
 @groovy.transform.CompileStatic
-public class BashConverterTest {
+class BashConverterTest {
 
 
     public static final String CVAL_TEST_OUTPUT_DIRECTORY = "testOutputDirectory"
@@ -144,35 +132,29 @@ public class BashConverterTest {
     public void appendDebugVariables() throws Exception {
         Configuration configuration = createTestConfiguration()
 
-        assertThat(
-                new BashConverter().
-                appendDebugVariables(configuration).
-                toString().
-                trim(),
-                equalTo(["set -o pipefail",
-                         "set -v",
-                         "set -x"].join("\n")))
+        assert new BashConverter().
+               appendDebugVariables(configuration).
+               toString().
+               trim() ==  ["set -o pipefail",
+                           "set -v",
+                           "set -x"].join("\n")
 
         configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT, "true", "boolean")
-        assertThat(
-                new BashConverter().
-                appendDebugVariables(configuration).
-                toString().
-                trim(),
-                equalTo(["set -o pipefail",
-                         "set -v",
-                         "set -x",
-                         "export PS4='+(\${BASH_SOURCE}:\${LINENO}): \${FUNCNAME[0]: +\$ { FUNCNAME[0] }():}'"].join("\n")))
+        assert new BashConverter().
+               appendDebugVariables(configuration).
+               toString().
+               trim() == ["set -o pipefail",
+                          "set -v",
+                          "set -x",
+                          "export PS4='+(\${BASH_SOURCE}:\${LINENO}): \${FUNCNAME[0]: +\$ { FUNCNAME[0] }():}'"].join("\n")
 
         configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXECUTE_OUTPUT, "false", "boolean")
         configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT, "false", "boolean")
-        assertThat(
-                new BashConverter().
-                        appendDebugVariables(configuration).
-                        toString().
-                        trim(),
-                equalTo(["set -o pipefail",
-                         "set -v"].join("\n")))
+        assert new BashConverter().
+                       appendDebugVariables(configuration).
+                       toString().
+                       trim() == ["set -o pipefail",
+                                  "set -v"].join("\n")
     }
 //
 //    @Test
@@ -216,7 +198,7 @@ public class BashConverterTest {
                     convertConfigurationValue(configuration.getConfigurationValues()[id], context,
                             true, true).toString()
 
-            assertThat(val.toString(), equalTo(expected))
+            assert val.toString() == expected
         }
 
         // DISABLE auto quoting.
@@ -227,14 +209,13 @@ public class BashConverterTest {
 
     @Test
     public void testGetHeaderValue() {
-        assertThat(new BashConverter().getHeaderValue(sampleBashCode.readLines(), "description", ""),
-                equalTo("aConfig"))
+        assert new BashConverter().getHeaderValue(sampleBashCode.readLines(), "description", "") == "aConfig"
     }
 
     @Test
     public void testGetHeaderValues() {
         List<String> values = new BashConverter().getHeaderValues(sampleBashCode.readLines(), "analysis", [])
-        assertThat(values.size(), equalTo(3))
+        assert values.size() == 3
     }
 
     @Test
