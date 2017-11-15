@@ -30,7 +30,6 @@ import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import groovy.transform.CompileStatic;
 
-import javax.naming.ConfigurationException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Constructor;

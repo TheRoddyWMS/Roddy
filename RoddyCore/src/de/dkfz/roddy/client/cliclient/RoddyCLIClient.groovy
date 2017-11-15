@@ -27,6 +27,7 @@ import de.dkfz.roddy.execution.jobs.ProcessingParameters
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.ScannerWrapper
+import de.dkfz.roddy.tools.versions.Version
 
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 import static de.dkfz.roddy.client.RoddyStartupModes.*
@@ -488,13 +489,15 @@ public class RoddyCLIClient {
         return datasets;
     }
 
-    public static void autoselect(CommandLineCall clc) {
+    static void autoselect(CommandLineCall clc) {
 
-        String apiLevel = new ProjectLoader().getPluginRoddyAPILevel(clc.getAnalysisID());
-        if (apiLevel == null) //Explicitely query for null (then there is no auto detect!)
-            logger.postAlwaysInfo("Roddy API level could not be detected");
-        else
-            logger.postAlwaysInfo("Roddy API level for ${clc.getAnalysisID()} == ${apiLevel}");
+        String apiLevel = new ProjectLoader().getPluginRoddyAPILevel(clc.getAnalysisID())
+        if (apiLevel == null) {
+            def version = Version.fromString(Constants.APP_CURRENT_VERSION_STRING)
+            apiLevel = version.major + '.' + version.minor
+            logger.postAlwaysInfo("Using the current Roddy API level: ${apiLevel}")
+        } else
+            logger.postAlwaysInfo("Roddy API level for ${clc.getAnalysisID()}: ${apiLevel}")
     }
 
     public static void run(CommandLineCall clc) {
