@@ -598,12 +598,10 @@ public class Roddy {
     private static Configuration applicationSpecificConfiguration = null;
 
     private static void setDefaultRoddyJobIdVariable(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
-        assert(Roddy.jobManager != null);
         configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_JOBID_RAW, "$" + Roddy.jobManager.getJobIdVariable()));
     }
 
     private static void setDefaultRoddyQueueVariable(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
-        assert(Roddy.jobManager != null);
         configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_QUEUE_RAW, "$" + Roddy.jobManager.getJobIdVariable()));
     }
 
@@ -635,6 +633,7 @@ public class Roddy {
             applicationSpecificConfiguration = new Configuration(null);
             RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
 
+            assert(Roddy.jobManager != null);
             setDefaultRoddyJobIdVariable(configurationValues);
             setDefaultRoddyQueueVariable(configurationValues);
             setScratchDirectory(configurationValues);
