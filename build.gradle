@@ -58,7 +58,6 @@ ext.langLevel = "1.8"
 sourceCompatibility = langLevel
 targetCompatibility = langLevel
 compileJava.options.fork = true
-compileJava.options.forkOptions.executable = "${rootProject.projectDir}/dist/runtimeDevel/jdk"
 
 ext.buildVersion = getVersionName()
 
@@ -124,8 +123,6 @@ dependencies {
     compile 'net.i2p.crypto:eddsa:0.1.0'                        // CC0 1.0 Universal; Ed25519
 
     compile 'com.thoughtworks.xstream:xstream:1.4.5'            // BSD
-
-    compile files("${rootProject.projectDir}/dist/runtimeDevel/jdk/jre/lib/ext/jfxrt.jar")
 
     // Testing libraries (do not end up in the fat-jar)
     testCompile 'junit:junit:4.12'                              // EPL 1.0
@@ -204,7 +201,6 @@ distributions {
                 include("3RDPARTY_LICENSES")
                 include("CHANGELIST.md")
                 include("dist/bin")
-                include("dist/runtimeDevel")
                 include("dist/runtime")
                 include("dist/plugins")
             }
