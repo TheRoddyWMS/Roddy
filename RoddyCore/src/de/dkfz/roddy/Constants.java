@@ -16,8 +16,8 @@ public class Constants {
     // Application constants
     /////////////////////////
 
-    public static final String APP_CURRENT_VERSION_STRING = "2.4.1";
-    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Wed Oct 25 14:39:09 CEST 2017";
+    public static final String APP_CURRENT_VERSION_STRING = "2.4.8";
+    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Thu Nov 16 15:24:50 CET 2017";
     public static final String APP_PROPERTY_JOB_MANAGER_CLASS = "jobManagerClass";
     public static final String APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS = "fileSystemAccessManagerClass";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_CLASS = "executionServiceClass";
@@ -30,6 +30,7 @@ public class Constants {
     public static final String APP_PROPERTY_LIBRARYDIRECTORIES = "libraryDirectories";
     public static final String APP_PROPERTY_USED_LIBRARIES = "usedLibraries";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD = "password";
+    public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_SSHAGENT = "sshagent";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE = "keyfile";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE_LOCATION = "executionServiceKeyfileLocation";
     public static final String APP_PROPERTY_CONFIGURATION_DIRECTORIES = "configurationDirectories";

@@ -10,8 +10,15 @@
 */
 package de.dkfz.roddy.execution.io
 
+import com.jcraft.jsch.agentproxy.AgentProxy
+import com.jcraft.jsch.agentproxy.AgentProxyException
+import com.jcraft.jsch.agentproxy.Connector
+import com.jcraft.jsch.agentproxy.ConnectorFactory
+import com.jcraft.jsch.agentproxy.Identity
+import com.jcraft.jsch.agentproxy.sshj.AuthAgent
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.config.ConfigurationError
 import de.dkfz.roddy.execution.io.FileAttributes
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -24,6 +31,7 @@ import net.schmizz.sshj.connection.channel.direct.Session
 import net.schmizz.sshj.sftp.*
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier
 import net.schmizz.sshj.userauth.UserAuthException
+import net.schmizz.sshj.userauth.method.AuthMethod
 import net.schmizz.sshj.xfer.scp.SCPDownloadClient
 import net.schmizz.sshj.xfer.scp.SCPFileTransfer
 import org.apache.commons.io.filefilter.WildcardFileFilter
@@ -91,7 +99,7 @@ class SSHExecutionService extends RemoteExecutionService {
                     sftpClient.close()
                 }
             } catch (Exception ex) {
-                logger.postRareInfo("Could not close SFTP client object." + ex)
+                logger.rare("Could not close SFTP client object." + ex)
             }
 
             try {
@@ -100,7 +108,7 @@ class SSHExecutionService extends RemoteExecutionService {
                     client.close()
                 }
             } catch (Exception ex) {
-                logger.postRareInfo("Could not close SSH client object." + ex)
+                logger.rare("Could not close SSH client object." + ex)
             }
 
         }
@@ -111,17 +119,23 @@ class SSHExecutionService extends RemoteExecutionService {
 
             SSHClient c = new SSHClient()
             long t2 = System.nanoTime()
-            logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("create ssh client", t1, t2))
+
+            logger.sometimes(RoddyIOHelperMethods.printTimingInfo("create ssh client", t1, t2))
             try {
                 c.setConnectTimeout(1000)
                 c.addHostKeyVerifier(new PromiscuousVerifier())
                 c.connect(host)
                 t1 = System.nanoTime()
-                logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("connect ssh client", t2, t1))
+                logger.sometimes(RoddyIOHelperMethods.printTimingInfo("connect ssh client", t2, t1))
 
                 if (method == Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD) {
+                    logger.always("Try setup the SSH connection ${user}@${host} using password authentification.")
                     c.authPassword(user, Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_PWD))
-                } else {
+                } else if (method == Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_SSHAGENT) {
+                    logger.always("Try setup the SSH connection ${user}@${host} using an ssh agent.")
+                    c.auth(user, getAuthMethods(getAgentProxy()))
+                } else if (method == Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE) {
+                    logger.always("Try setup the SSH connection ${user}@${host} using a password less keyfile.")
                     String customKeyfile = Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE_LOCATION, "")
                     if (customKeyfile) {
                         File _f = new File(customKeyfile)
@@ -133,6 +147,8 @@ class SSHExecutionService extends RemoteExecutionService {
                     } else {
                         c.authPublickey(user)
                     }
+                } else {
+                    logger.always("")
                 }
 
                 //At least for the moment compression is either not supported or maybe jzlib is not recognized
@@ -142,7 +158,7 @@ class SSHExecutionService extends RemoteExecutionService {
 
                 c.startSession()
                 t2 = System.nanoTime()
-                logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("start ssh client session", t1, t2))
+                logger.sometimes(RoddyIOHelperMethods.printTimingInfo("start ssh client session", t1, t2))
             } catch (UserAuthException ex) {
                 logger.severe(
                         [
@@ -150,13 +166,15 @@ class SSHExecutionService extends RemoteExecutionService {
                                 "- Is the user and password combination right?",
                                 "- Did you store the password and is it right?",
                                 "- Did you use keyfile authentification and are there any keyfiles available and accessible?",
-                                "- Did you set the custom keyfile location and is this file accessible?"
+                                "- Did you set the custom keyfile location and is this file accessible?",
+                                "- Did you try to use an ssh agent and is it setup properly? Was Roddy called properly?",
+                                "- Did you check if the authentification method is right (keyfile, password, sshagent)?"
                         ].join("\n\t")
                 )
 
                 Roddy.exit(1)
             } catch (Exception ex) {
-                logger.severe("Fatal error during initialization of SSHExecutionService. Message: \"${ex.message}\". Check password-based or password-less key-based authentication to all your head nodes.")
+                logger.severe("Fatal and unknown error during initialization of SSHExecutionService. Message: \"${ex.message}\".")
                 Roddy.exit(1)
             }
             client = c
@@ -164,8 +182,19 @@ class SSHExecutionService extends RemoteExecutionService {
             scpFileTransfer = client.newSCPFileTransfer()
             scpDownloadClient = scpFileTransfer.newSCPDownloadClient()
             t1 = System.nanoTime()
-            logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("create additional ssh services", t2, t1))
+            logger.sometimes(RoddyIOHelperMethods.printTimingInfo("create additional ssh services", t2, t1))
 
+        }
+
+        AgentProxy getAgentProxy() {
+            Connector connector = ConnectorFactory.getDefault().createConnector()
+            if (connector != null)
+                return new AgentProxy(connector)
+            return null
+        }
+
+        List<AuthMethod> getAuthMethods(AgentProxy agent) throws Exception {
+            return agent.identities.collect { Identity it -> new AuthAgent(agent, it) } as List<AuthMethod>
         }
 
         void acquire() {
@@ -188,7 +217,7 @@ class SSHExecutionService extends RemoteExecutionService {
             if (sshUser == "USERNAME") sshUser = System.getProperty("user.name") //Get the local name if USERNAME is set
             String sshMethod = Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD)
 
-            if (sshMethod != Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD && sshMethod != Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE)
+            if (![Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_SSHAGENT].contains(sshMethod))
                 sshMethod = Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD
 
             List<SSHPoolConnectionSet> tempEntries = new LinkedList<>()
@@ -253,8 +282,8 @@ class SSHExecutionService extends RemoteExecutionService {
                     try {
                         it.close()
                     } catch (Exception ex) {
-                        logger.postSometimesInfo("There were some problems when Roddy tried to close an SSH connection object.")
-                        logger.postRareInfo(ex.toString())
+                        logger.sometimes("There were some problems when Roddy tried to close an SSH connection object.")
+                        logger.rare(ex.toString())
                     }
                 }
             }
@@ -321,20 +350,6 @@ class SSHExecutionService extends RemoteExecutionService {
         if (!connectionPool.check())
             connectionPool.initialize()
         return connectionPool.get()
-
-//        SSHClient sshClient = set.client;
-//
-//            if (sshClient != null && !sshClient.isConnected()) {
-//                fireExecutionServiceStateChange(TriState.FALSE);
-//                logger.severe("Reconnecting!");
-//                initIsInProgress = true;
-//                sshClient = null;
-//                initialize();
-//                if (sshClient != null)
-//                    logger.info("SSH client is connected: " + sshClient.isConnected());
-//                else
-//                    logger.info("SSH client is null and not connected.");
-//            }
     }
 
     String readStream(InputStream inputStream) {
@@ -380,7 +395,7 @@ class SSHExecutionService extends RemoteExecutionService {
                 if (ignoreError) {
                     // In case the command is ignored, a warning is sent out instead of a severe error.
                     logger.warning("Command not executed correctly, return code: " + exitStatus + ", error was ignored on purpose.")
-                    logger.postRareInfo("Ignored failed command was: '${command}'")
+                    logger.rare("Ignored failed command was: '${command}'")
                     content.readLines().each { String line -> output << "" + line }
                     readStream(cmd.errorStream).readLines().each { String line -> output << "" + line }
                 } else {
