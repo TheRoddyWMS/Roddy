@@ -114,9 +114,9 @@ dependencies {
     compile 'org.reflections:reflections:0.9.9-RC1'
 
     compile 'org.slf4j:slf4j-api:1.7.22'                        // MIT
-    compile 'org.slf4j:slf4j-jcl:1.7.22'                        // MIT
+//    compile 'org.slf4j:slf4j-jcl:1.7.22'                        // MIT
     compile 'org.slf4j:slf4j-nop:1.7.22'                        // MIT
-    compile 'org.slf4j:jcl-over-slf4j:1.7.22'                   // MIT
+//    compile 'org.slf4j:jcl-over-slf4j:1.7.22'                   // MIT
 
     compile 'com.hierynomus:sshj:0.20.0'                        // Apache 2.0
     compile 'net.vrallev.ecc:ecc-25519-java:1.0.1'              // Apache 2.0; elliptic curve cryptography (ECC) with Curve25519
