@@ -28,11 +28,6 @@ public class RuntimeToolsTest {
     }
 
     @Test
-    public void getGroovyRuntimeVersion() throws Exception {
-        assertEquals("2.4", RuntimeTools.getGroovyRuntimeVersion());
-    }
-
-    @Test
     public void testGetBuildinfoFile() {
         String buildinfoTextFile = RuntimeTools.getBuildinfoFile().getAbsolutePath();
         String estimatedBuildInfoTextFile = RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current", "buildinfo.txt").getAbsolutePath();
@@ -46,8 +41,4 @@ public class RuntimeToolsTest {
                 RuntimeTools.getCurrentDistFolder().getAbsolutePath());
     }
 
-    @Test
-    public void testGetGroovyLibrary() {
-        assertEquals("groovy-all-2.4.9.jar", RuntimeTools.getGroovyLibrary().getName());
-    }
 }

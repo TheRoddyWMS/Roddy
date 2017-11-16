@@ -19,14 +19,14 @@ public class PluginInfoMapTest {
     private PluginInfoMap assemblePluginInfoMap() {
         return new PluginInfoMap([
                 "BasePlugin": [
-                        "1.0.1"  : new PluginInfo("BasePlugin", null, null, null, "1.0.1", "2.3", "1.8", "2.4", null),
-                        "1.0.2"  : new PluginInfo("BasePlugin", null, null, null, "1.0.2", "2.3", "1.8", "2.4", null),
-                        "current": new PluginInfo("BasePlugin", null, null, null, "current", "2.3", "1.8", "2.4", null),
+                        "1.0.1"  : new PluginInfo("BasePlugin", null, null, null, "1.0.1", "2.3", "1.8", null),
+                        "1.0.2"  : new PluginInfo("BasePlugin", null, null, null, "1.0.2", "2.3", "1.8", null),
+                        "current": new PluginInfo("BasePlugin", null, null, null, "current", "2.3", "1.8", null),
                 ] as Map<String, List<PluginInfo>>,
                 "TestPlugin": [
-                        "1.0.1"  : new PluginInfo("TestPlugin", null, null, null, "1.0.1", "2.3", "1.8", "2.4", null),
-                        "1.0.2"  : new PluginInfo("TestPlugin", null, null, null, "1.0.2", "2.3", "1.8", "2.4", null),
-                        "current": new PluginInfo("TestPlugin", null, null, null, "current", "2.3", "1.8", "2.4", null),
+                        "1.0.1"  : new PluginInfo("TestPlugin", null, null, null, "1.0.1", "2.3", "1.8", null),
+                        "1.0.2"  : new PluginInfo("TestPlugin", null, null, null, "1.0.2", "2.3", "1.8", null),
+                        "current": new PluginInfo("TestPlugin", null, null, null, "current", "2.3", "1.8", null),
                 ] as Map<String, List<PluginInfo>>
         ] );
     }
