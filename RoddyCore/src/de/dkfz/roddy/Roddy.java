@@ -606,6 +606,11 @@ public class Roddy {
      * @return
      */
     private static void setScratchDirectory(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
+        String deprecatedDefaultScratchDir = Roddy.getApplicationProperty(ConfigurationConstants.CVALUE_DEFAULT_SCRATCH_DIR, "");
+        if (!deprecatedDefaultScratchDir.equals("")) {
+            System.err.println("WARNING: You did set the deprecated " + ConfigurationConstants.CVALUE_DEFAULT_SCRATCH_DIR + " to '" +
+                    deprecatedDefaultScratchDir + ".\nPlease use " + Constants.APP_SCRATCH_BASE_DIRECTORY + ".");
+        }
         String scratchBaseDir = Roddy.getApplicationProperty(Constants.APP_SCRATCH_BASE_DIRECTORY, "");
         if (scratchBaseDir.equals("")) {
             File propertyFilePath = null;
