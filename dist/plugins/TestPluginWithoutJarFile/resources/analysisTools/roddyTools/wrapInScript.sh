@@ -10,6 +10,21 @@
 # Cluster options (like i.e. PBS ) have to be parsed and set before job submission!
 # They will be ignored after the script is wrapped.
 
+# Set the "RODDY_SCRATCH" variable and directory from the predefined "RODDY_SCRATCH" variable or the "defaultScratchDir" variable.
+# Die if the resulting directory is not accessible (executable).
+setupRoddyScratch() {
+  if [[ "${RODDY_SCRATCH:-}" == "" ]]; then
+    throw 200 "Undefined RODDY_SCRATCH variable."
+  elif [[ ! -x "$RODDY_SCRATCH" ]]; then
+    throw 200 "Cannot access RODDY_SCRATCH=$RODDY_SCRATCH"
+  else
+    if [[ ! -d ${RODDY_SCRATCH} ]]; then
+        mkdir -p ${RODDY_SCRATCH}
+    fi
+    echo "RODDY_SCRATCH is set to ${RODDY_SCRATCH}"
+  fi
+}
+
 source ${CONFIG_FILE}
 source ${PARAMETER_FILE}
 
@@ -40,11 +55,7 @@ else
     export RODDY_JOBID=$_temp
   done <<< `export | grep "#{"`
 
-  # Default to the data folder on the node
-  defaultScratchDir=${defaultScratchDir-/data/roddyScratch}
-  [[ ${RODDY_SCRATCH-x} == "x" ]] && export RODDY_SCRATCH=${defaultScratchDir}/${RODDY_JOBID}
-  [[ ! -d ${RODDY_SCRATCH} ]] && mkdir -p ${RODDY_SCRATCH}
-  echo "RODDY_SCRATCH is set to ${RODDY_SCRATCH}"
+  setupRoddyScratch
 
   # Check
   _lock="$jobStateLogFile~"
