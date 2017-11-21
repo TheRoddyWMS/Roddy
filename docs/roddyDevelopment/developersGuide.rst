@@ -94,6 +94,8 @@ Repository Structure
             current/
             $major.$minor.$build
         plugins/
+            DefaultPlugin (Git submodule see below!)
+            PluginBase    (Git submodule see below!)
         plugins_R$major.$minor
         runtimeDevel
             groovy-$major.$minor.$build
@@ -126,3 +128,17 @@ Similar to compile, Roddy has a pack option:
     bash roddy.sh pack
 
 Will pack current to a directory called $major.$minor.$build.
+
+
+Further important notes
+~~~~~~~~~~~~~~~~~~~~~~~
+
+In addition to the Roddy core project, we also use Git submodules for the base plugins.
+After you cloned the Roddy repository, please navigate into the folder and:
+
+::
+
+    git submodule add https://github.com/eilslabs/Roddy-Default-Plugin.git dist/plugins/DefaultPlugin
+    git submodule add -f  https://github.com/eilslabs/Roddy-Base-Plugin.git dist/plugins/PluginBase
+
+Both commands will install the necessary submodules.
