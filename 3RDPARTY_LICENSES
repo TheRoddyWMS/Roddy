@@ -27,3 +27,6 @@ SSHJ.jar
 
 XStream: BSD Licence - http://xstream.codehaus.org/license.html
 xstream-1.4.5.jar
+
+JSCH: BSD-Style http://www.jcraft.com/jsch/
+
