@@ -146,8 +146,18 @@ class BashConverter extends ConfigurationConverter {
     }
 
     /**
-     *
      * @param cfg Configuration object. Basically a tree of configuration values that may additionally contain cross-references in the values.
+     *
+     * As the name says, the method will return a sorted map of configuration values. The vlaues are sorted by their dependencies so e.g.:
+     *
+     *   1.  valueA=abc
+     *   2.  valueB=def
+     *   3.  valueC=${valueA}*
+     *   4.  valueD=${valueB}*
+     *   5.  valueE=${valueA}_${valueB}*
+     *
+     * Note, that values are not sorted by their id! They are initially sorted by load order and this will be kept as far as it is possible.
+     *
      * @return
      */
     Map<String, ConfigurationValue> getConfigurationValuesSortedByDependencies(Configuration cfg) {
@@ -157,56 +167,68 @@ class BashConverter extends ConfigurationConverter {
 
         // Blacklist of values which will be ignored for the dependency resolution. E.g. values, which will be available later on
         // in the runtime config / job.
-        List<String> valueBlacklist = cfg.configurationValues.get("blacklistForCfgToRuntimeCfgConversion").toStringList()
+        List<String> valueBlacklist = getValueBlackList(cfg)
 
-        boolean somethingChanged = true
-        for (int i = 0; somethingChanged; i++) {
-
+        // Would have like to do this with a simple do .. while loop, but Groovy does not know that yet.
+        boolean listOfSortedValuesChanged = true
+        while (listOfSortedValuesChanged) {
             Map<String, ConfigurationValue> foundValues = [:]
 
-            for (ConfigurationValue cv in listOfUnsortedValues.values()) {
-                boolean isValidationRule = cv.id.contains("cfgValidationRule")
-                if (isValidationRule)
+            for (ConfigurationValue cv in listOfUnsortedValues.values().findAll { !isValidationRule(it) && !isComment(it) }) {
+
+                List<String> dependenciesToOtherValues = cv.getIDsForParentValues()
+
+                // Check, how many dependencies to other values are set and find out for each dependency, if
+                // it was resolved in a former loop run or if it is a blacklisted value.
+                int noOfDependencies = dependenciesToOtherValues.size()
+                int resolvedOrBlacklistedCount = dependenciesToOtherValues.findAll { listOfSortedValues.containsKey(it) || valueBlacklist.contains(it) }.size()
+
+                // Continue, if the value cannot be resolved fully and at least one dependency is left.
+                if (noOfDependencies - resolvedOrBlacklistedCount > 0)
                     continue
 
-                boolean isCommentLine = cv.value != null && cv.value.trim().startsWith("#")
-                if (isCommentLine)
-                    continue
-
-                List<String> dependencies = cv.getIDsForParentValues()
-                List<String> notFound = []
-
-                int noOfDependencies = dependencies.size()
-                for (String dep : dependencies) {
-                    if (listOfSortedValues.containsKey(dep) || valueBlacklist.contains(dep))
-                        noOfDependencies--
-                    else
-                        notFound << dep
-                }
-
-                if (noOfDependencies > 0)
-                    continue
-
+                // Otherwise, put the value to the list of found values and to the list of already "sorted" values.
                 foundValues[cv.id] = cv
                 listOfSortedValues[cv.id] = cv
             }
 
-            somethingChanged = foundValues.values().size() > 0
-
+            // Remove any found value from the list of unsorted / not found values.
+            // Remove the values as a block, the list is used in the loop before and should not be touched during the loop
             listOfUnsortedValues -= foundValues
+            listOfSortedValuesChanged = foundValues.values().size() > 0
         }
 
-        listOfSortedValues += listOfUnsortedValues
-        return listOfSortedValues
+        // Finally put the leftover values to the end of the list. and return this.
+        return listOfSortedValues + listOfUnsortedValues
+    }
+
+    static List<String> getValueBlackList(Configuration cfg) {
+
+        // Default values
+        List<String> defaultValues = [
+                'PWD',
+                ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW,
+                "projectName",
+                Constants.PID_CAP, Constants.PID,
+                "analysisMethodNameOnInput", "analysisMethodNameOnOutput",
+                "outputAnalysisBaseDirectory", "inputAnalysisBaseDirectory", "executionTimeString",
+                "sample", "run",
+        ]
+
+        // Trimming of values
+        return defaultValues + cfg.configurationValues.get("additionalBlacklistForCfgRuntimeConversion").toStringList().collect { it.trim() }.findAll()
+    }
+
+    static boolean isComment(ConfigurationValue cv) {
+        cv.value != null && cv.value.trim().startsWith("#")
+    }
+
+    static boolean isValidationRule(ConfigurationValue cv) {
+        cv.id.contains("cfgValidationRule")
     }
 
     static boolean isQuoted(String string) {
         (string.startsWith("'") && string.endsWith("'")) || (string.startsWith('"') && string.endsWith('"'))
-    }
-
-
-    static String convertListToBashArray(List list) {
-        "(${list.collect { it.toString() }.join(" ")})" as String
     }
 
     /** Dependent on the settings and whether the string is quoted, return the quoted string. */
@@ -215,6 +237,10 @@ class BashConverter extends ConfigurationConverter {
             return value
         else
             return '"' + value + '"'
+    }
+
+    static String convertListToBashArray(List list) {
+        "(${list.collect { it.toString() }.join(" ")})" as String
     }
 
     /** To convert a simple Map of String keys to String values (possibly pre-converted!), this method should be used.
@@ -507,17 +533,8 @@ class BashConverter extends ConfigurationConverter {
             if (isBashPipe(it)) {
 
             } else if (isBashComment(it)) {
-//                if (isBashComment(previousLine)) {
-//                    xmlLines << ("""     ${it}""").toString()
-//                } else {
                 xmlLines << ("""<!-- ${it} -->""").toString()
-//                }
             } else {
-
-//                if (isBashComment(previousLine)) {
-//                    xmlLines[-1] += ("""-->""").toString()
-//                }
-
                 if (s.size() == 2)
                     xmlLines << ("""    <cvalue name='${s[0].trim()}' value='${s[1]}' type='string' />""").toString()
                 else if (s.size() == 1)
