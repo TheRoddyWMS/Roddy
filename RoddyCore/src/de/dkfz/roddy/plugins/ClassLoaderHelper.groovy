@@ -7,7 +7,7 @@
 package de.dkfz.roddy.plugins
 
 import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.execution.io.ExecutionHelper
+import de.dkfz.roddy.execution.io.LocalExecutionHelper
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -90,7 +90,7 @@ class ClassLoaderHelper {
             LibrariesFactory.instance.loadedPlugins.each {
                 PluginInfo plugin ->
                     if (!classListCacheByPlugin.containsKey(plugin)) {
-                        String text = ExecutionHelper.execute("jar tvf ${LibrariesFactory.instance.loadedJarsByPlugin[plugin]}")
+                        String text = LocalExecutionHelper.execute("jar tvf ${LibrariesFactory.instance.loadedJarsByPlugin[plugin]}")
                         classListCacheByPlugin[plugin] = text.readLines();
                     }
                     for (String line in classListCacheByPlugin[plugin]) {

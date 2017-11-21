@@ -13,8 +13,11 @@ import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.loader.ConfigurationFactory
+import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.config.validation.XSDValidator
+import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.MetadataTableFactory
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.plugins.PluginInfoMap
@@ -22,7 +25,6 @@ import de.dkfz.roddy.plugins.PluginLoaderException
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
 import java.lang.reflect.InvocationTargetException
-import java.nio.channels.FileChannel
 import java.nio.channels.FileLock
 
 /**
@@ -119,21 +121,23 @@ class ProjectLoader {
      * @return
      */
     String getPluginRoddyAPILevel(String configurationIdentifier) {
+        if (configurationIdentifier == null) return null
+
         extractProjectIDAndAnalysisIDOrFail(configurationIdentifier)
 
-        if (analysisID == null) return null; //Return null (which needs to be checked then) because an auto id is not possible.
+        if (analysisID == null) return null //Return null (which needs to be checked then) because an auto id is not possible.
 
         String fullAnalysisID = getFullAnalysisID(projectID, analysisID)
 
-        LibrariesFactory librariesFactory = LibrariesFactory.initializeFactory();
+        LibrariesFactory librariesFactory = LibrariesFactory.initializeFactory()
 
-        String pluginString; List<AnalysisImportKillSwitch> killSwitches;
+        String pluginString
         def res = dissectFullAnalysisID(fullAnalysisID)
-        pluginString = res[0];
+        pluginString = res[0]
 
-        PluginInfoMap mapOfPlugins = librariesFactory.loadMapOfAvailablePluginsForInstance();
-        PluginInfo pinfo = mapOfPlugins.getPluginInfoWithPluginString(pluginString);
-        return pinfo.getRoddyAPIVersion();
+        PluginInfoMap mapOfPlugins = librariesFactory.loadMapOfAvailablePluginsForInstance()
+        PluginInfo pinfo = mapOfPlugins.getPluginInfoWithPluginString(pluginString)
+        return pinfo.getRoddyAPIVersion()
     }
 
     /**
@@ -155,6 +159,8 @@ class ProjectLoader {
 
             loadProjectConfigurationOrFail(projectID, analysisID)
 
+            attachAdditionallyPassedConfigurations()
+
             createProjectFromConfigurationOrFail()
 
             loadAnalysisOrFail()
@@ -168,6 +174,9 @@ class ProjectLoader {
             // Try to build up the metadata table from here on. Project and analysis are ready.
             MetadataTableFactory.getTable(analysis);
             return analysis;
+        } catch (ConfigurationLoaderException ex) {
+            logger.severe(ex.message)
+            return null
         } catch (ProjectLoaderException ex) {
             logger.severe(ex.message)
             return null;
@@ -178,6 +187,7 @@ class ProjectLoader {
     }
 
     void extractProjectIDAndAnalysisIDOrFail(String configurationIdentifier) {
+        assert configurationIdentifier != null
         String[] splitProjectAnalysis
         if (configurationIdentifier.findAll("[@]").size() == 1) {
             splitProjectAnalysis = configurationIdentifier.split(StringConstants.SPLIT_AT)
@@ -236,7 +246,7 @@ class ProjectLoader {
 
         lines << "inputBaseDirectory=" + Roddy.customBaseInputDirectory
         lines << "outputBaseDirectory=" + Roddy.customBaseOutputDirectory
-        lines << 'outputAnalysisBaseDirectory=${outputBaseDirectory}/${pid}'
+        lines << "outputAnalysisBaseDirectory=\${outputBaseDirectory}/\${${Constants.PID}}".toString()
 
         projectID = "CFreeMode_" + Integer.toHexString(configurationFileName.hashCode())
 
@@ -304,13 +314,25 @@ class ProjectLoader {
         projectConfiguration = fac.getProjectConfiguration(projectID);
 
         if (projectConfiguration.hasErrors()) {
-
             RoddyCLIClient.checkConfigurationErrorsAndMaybePrintAndFail(projectConfiguration)
         }
 
-        InformationalConfigurationContent iccAnalysis = ((AnalysisConfigurationProxy) projectConfiguration.getAnalysis(analysisID)).informationalConfigurationContent;
+        PreloadedConfiguration iccAnalysis = ((AnalysisConfigurationProxy) projectConfiguration.getAnalysis(analysisID)).preloadedConfiguration;
         if (!XSDValidator.validateTree(iccAnalysis) && Roddy.isStrictModeEnabled()) {
             throw new ProjectLoaderException("Validation of project configuration failed.")
+        }
+    }
+
+    /**
+     * If --additionalImports is passed on the command line, try to add all set configuration objects
+     * as a parent to the loaded project configuration.
+     */
+    void attachAdditionallyPassedConfigurations() {
+        if (Roddy.isOptionSet(RoddyStartupOptions.additionalImports)) {
+            Roddy.commandLineCall.getOptionList(RoddyStartupOptions.additionalImports).each {
+                String cfg ->
+                    projectConfiguration.addParent(ConfigurationFactory.instance.getConfiguration(cfg))
+            }
         }
     }
 
@@ -417,15 +439,15 @@ class ProjectLoader {
     }
 
     String getFullAnalysisID(String projectID, String analysisID) {
-        InformationalConfigurationContent iccProject = loadAndValidateProjectICCOrFail(projectID);
+        PreloadedConfiguration iccProject = loadAndValidateProjectICCOrFail(projectID);
 
         String fullAnalysisID = loadFullAnalysisIDOrFail(iccProject, analysisID);
         fullAnalysisID
     }
 
-    InformationalConfigurationContent loadAndValidateProjectICCOrFail(String projectID) {
+    PreloadedConfiguration loadAndValidateProjectICCOrFail(String projectID) {
         ConfigurationFactory fac = ConfigurationFactory.getInstance();
-        InformationalConfigurationContent iccProject = fac.getAllAvailableConfigurations()[projectID];
+        PreloadedConfiguration iccProject = fac.getAllAvailableConfigurations()[projectID];
 
         if (!iccProject) {
             throw new ProjectLoaderException("The project configuration \"${projectID}\" could not be found (call Roddy with listworkflows)")
@@ -438,11 +460,11 @@ class ProjectLoader {
         return iccProject;
     }
 
-    String loadFullAnalysisIDOrFail(InformationalConfigurationContent iccProject, String analysisID) {
+    String loadFullAnalysisIDOrFail(PreloadedConfiguration iccProject, String analysisID) {
         String fullAnalysisID = iccProject.getListOfAnalyses().find { String aID -> aID.split("[:][:]")[0] == analysisID; }
 
         if (!fullAnalysisID) {
-            throw new ProjectLoaderException("The analysis \"${analysisID}\" could not be found in (call Roddy with listworkflows)")
+            throw new ProjectLoaderException("The analysis \"${analysisID}\" could not be found (call Roddy with listworkflows)")
         }
         return fullAnalysisID
     }
@@ -458,8 +480,44 @@ class ProjectLoader {
                 sb << "  " << projectID << "@" << aID << Constants.ENV_LINESEPARATOR;
             }
             throw new ProjectLoaderException(sb.toString());
-        } else if (analysis.getRuntimeService() == null) {
+        }
+
+        if (analysis.getRuntimeService() == null) {
             throw new ProjectLoaderException("There is no runtime service class set for the selected analysis. This has to be set in either the project configuration or the analysis configuration.");
         }
+
+        List<String> errors = []
+
+        // Earliest check for valid input and output directories. If they are not accessible or writeable.
+        // Start with the input directory
+        errors += checkDirForReadabilityAndExecutability(analysis.getInputBaseDirectory(), "input")
+        errors += checkDirForReadabilityAndExecutability(analysis.getOutputBaseDirectory(), "output")
+
+        // Out dir needs to be writable
+        if (!FileSystemAccessProvider.instance.isWritable(analysis.getOutputBaseDirectory()))
+            errors << (String) "The output was not writeable at path ${analysis.getOutputBaseDirectory()}."
+
+        if (!errors)
+            return
+
+        throw new ProjectLoaderException((["There were errors in directory access checks:"] + errors).join("\n\t"))
+    }
+
+    List<String> checkDirForReadabilityAndExecutability(File dirToCheck, String dirtype) {
+        List<String> errors = []
+        for (File _dir = dirToCheck; _dir; _dir = _dir.parentFile) {
+            boolean readable = FileSystemAccessProvider.instance.isReadable(_dir)
+            boolean executable = FileSystemAccessProvider.instance.isExecutable(_dir)
+            if (!readable || !executable) {
+                if (!readable && !executable)
+                    errors << (String) "The ${dirtype} directory was neither readable nor executable at path ${_dir}."
+                else if (!readable)
+                    errors << (String) "The ${dirtype} directory was not readable at path ${_dir}."
+                else if (!executable)
+                    errors << (String) "The ${dirtype} directory was not executable at path ${_dir}."
+                break
+            }
+        }
+        return errors
     }
 }

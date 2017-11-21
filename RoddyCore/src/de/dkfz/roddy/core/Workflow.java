@@ -7,6 +7,7 @@
 package de.dkfz.roddy.core;
 
 import de.dkfz.roddy.config.Configuration;
+import de.dkfz.roddy.config.ConfigurationError;
 import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.knowledge.files.FileGroup;
 import de.dkfz.roddy.knowledge.files.FileObject;
@@ -49,7 +50,7 @@ public abstract class Workflow {
         return true;
     }
 
-    public abstract boolean execute(ExecutionContext context);
+    public abstract boolean execute(ExecutionContext context) throws ConfigurationError;
 
     public boolean canCreateTestdata() {
         for (Method m : this.getClass().getMethods()) {

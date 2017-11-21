@@ -6,34 +6,31 @@
 
 package de.dkfz.roddy.client.cliclient
 
-import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.JobState
-import de.dkfz.roddy.execution.jobs.BEJob as BEJob
-import de.dkfz.roddy.execution.jobs.ProcessingCommands
-import de.dkfz.roddy.AvailableFeatureToggles
-import de.dkfz.roddy.Constants
-import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.RunMode
-import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.*
 import de.dkfz.roddy.client.RoddyStartupModes
 import de.dkfz.roddy.client.RoddyStartupOptions
-import de.dkfz.roddy.client.cliclient.clioutput.*
+import de.dkfz.roddy.client.cliclient.clioutput.ConsoleStringFormatter
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.loader.ConfigurationLoadError
+import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.config.validation.ValidationError
 import de.dkfz.roddy.config.validation.WholeConfigurationValidator
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.SSHExecutionService
+import de.dkfz.roddy.execution.jobs.BEJob as BEJob
+import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.JobState
+import de.dkfz.roddy.execution.jobs.ProcessingParameters
 import de.dkfz.roddy.tools.LoggerWrapper
-import de.dkfz.roddy.tools.ScannerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
+import de.dkfz.roddy.tools.ScannerWrapper
+import de.dkfz.roddy.tools.versions.Version
 
-import static de.dkfz.roddy.Constants.ENV_LINESEPARATOR as NEWLINE
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
-import static de.dkfz.roddy.client.RoddyStartupModes.*;
+import static de.dkfz.roddy.client.RoddyStartupModes.*
 
 /**
  * Command line client for roddy.
@@ -47,9 +44,9 @@ public class RoddyCLIClient {
     private static class ProjectTreeItem {
 
         final List<ProjectTreeItem> children = [];
-        final InformationalConfigurationContent icc;
+        final PreloadedConfiguration icc;
 
-        ProjectTreeItem(InformationalConfigurationContent icc, List<ProjectTreeItem> children) {
+        ProjectTreeItem(PreloadedConfiguration icc, List<ProjectTreeItem> children) {
             this.icc = icc
             this.children += children;
         }
@@ -165,8 +162,8 @@ public class RoddyCLIClient {
  * @param args
  */
     public static void showConfigurationPaths() {
-        Map<String, InformationalConfigurationContent> configObjects = ConfigurationFactory.getInstance().getAllAvailableConfigurations();
-        def listOfFiles = configObjects.values().collect { InformationalConfigurationContent icc -> return icc.file; }
+        Map<String, PreloadedConfiguration> configObjects = ConfigurationFactory.getInstance().getAllAvailableConfigurations();
+        def listOfFiles = configObjects.values().collect { PreloadedConfiguration icc -> return icc.file; }
         Map<String, List<String>> filesInFolders = [:];
         listOfFiles.each { File f -> filesInFolders.get(f.parent, []) << f.name; }
         filesInFolders.sort();
@@ -246,7 +243,7 @@ public class RoddyCLIClient {
 
     public static void printAnalysisXML(CommandLineCall commandLineCall) {
         Analysis analysis = loadAnalysisOrFail(commandLineCall)
-        def content = analysis.getConfiguration().getInformationalConfigurationContent()
+        def content = analysis.getConfiguration().getPreloadedConfiguration()
 
         System.out.println("Print analysis XML file for analysis ${analysis.getName()}: \n\t" + content.file);
         System.out.println(content.text);
@@ -290,7 +287,7 @@ public class RoddyCLIClient {
 
     public static int printConfigurationLoadErrors(Configuration configuration, StringBuilder sb, int i, String separator) {
         for (ConfigurationLoadError error : configuration.getListOfLoadErrors()) {
-            String f = error.configuration?.informationalConfigurationContent?.file?.absolutePath
+            String f = error.configuration?.preloadedConfiguration?.file?.absolutePath
             sb << "#FRED#" << "${i}: ".padLeft(6) << "Load error #CLEAR#"
             sb << separator << "      FILE:        " << f ?: "#FBLUE#NO FILE#CLEAR#"
             sb << separator << "      ID:          " << error.id
@@ -331,7 +328,7 @@ public class RoddyCLIClient {
                             boolean first = true;
                             println(id);
                             for (ConfigurationValue iValue : inheritanceList.reverse()) {
-                                println(((first ? "    " : "  * ") + "") + iValue.value.padRight(70).substring(0, 70) + " " + iValue?.getConfiguration()?.getInformationalConfigurationContent().file);
+                                println(((first ? "    " : "  * ") + "") + iValue.value.padRight(70).substring(0, 70) + " " + iValue?.getConfiguration()?.getPreloadedConfiguration().file);
                                 first = false
                             }
                     }
@@ -343,7 +340,7 @@ public class RoddyCLIClient {
                     cvalues.getAllValues().each {
                         String id, ConfigurationValue cvalue ->
                             try {
-                                def path = cvalue?.getConfiguration()?.getInformationalConfigurationContent()?.file
+                                def path = cvalue?.getConfiguration()?.getPreloadedConfiguration()?.file
                                 if (!path) path = "[ Automatically generated by Roddy ]"
                                 println(id.padRight(50).substring(0, 50) + " " + cvalue.value.padRight(70).substring(0, 70) + " " + path);
                             } catch (Exception ex) {
@@ -359,45 +356,46 @@ public class RoddyCLIClient {
         }
     }
 
-    public static void listWorkflows(CommandLineCall clc) {
-        String filter = clc.hasParameters() ? clc.getParameters().get(0) : "";
-
-        final String separator = Constants.ENV_LINESEPARATOR;
+    static void listWorkflows(CommandLineCall clc) {
+        String filter = clc.hasParameters() ? clc.getParameters().get(0) : ""
 
         //TODO colours will only work on linux bash, so fix that or at least disable it on other environments
-        List<InformationalConfigurationContent> availableProjectConfigurations = ConfigurationFactory.getInstance().getAvailableProjectConfigurations();
 
-        availableProjectConfigurations.sort(new Comparator<InformationalConfigurationContent>() {
-            @Override
-            public int compare(InformationalConfigurationContent o1, InformationalConfigurationContent o2) {
-                return o1.name.compareTo(o2.name);
-            }
-        });
+        List<PreloadedConfiguration> availableProjectConfigurations
+        try {
+            availableProjectConfigurations = ConfigurationFactory.getInstance().getAvailableProjectConfigurations();
+        } catch (ConfigurationLoaderException ex) {
+            // This exception can occurr and is e.g. catched for testrun/run/rerun... during loadAnalysis. Here we just catch it and "ignore" it.
+            // The loader will print a nice error message.
 
-        List<ProjectTreeItem> items = loadProjectsRec(availableProjectConfigurations);
-
-        for (ProjectTreeItem pti in items) {
-
-            //First check, if a filter must be applied.
-            if (!projectIDContains(pti, filter)) {
-                logger.postSometimesInfo(ConsoleStringFormatter.getFormatter().formatAll("#FRED#Configuration ${pti.icc.id} left out because of the specified filter.#CLEAR#"));
-                continue;
-            }
-            logger.postAlwaysInfo(ConsoleStringFormatter.getFormatter().formatAll("${separator}#FWHITE##BGRED#Parsing configuration ${pti.icc.id}#CLEAR# : ${pti.icc.file}"));
-            if (clc.isOptionSet(RoddyStartupOptions.shortlist)) {
-                logger.postAlwaysInfo(ConsoleStringFormatter.getFormatter().formatAll(printRecursivelyShort(pti).toString()));
-            } else {
-                logger.postAlwaysInfo(ConsoleStringFormatter.getFormatter().formatAll(printRecursively(0, pti).toString())); ;
-            }
+            logger.severe(ex.message)
+            return
         }
+
+        availableProjectConfigurations.sort(new Comparator<PreloadedConfiguration>() {
+            @Override
+            int compare(PreloadedConfiguration o1, PreloadedConfiguration o2) {
+                return o1.name <=> o2.name
+            }
+        })
+        List<ProjectTreeItem> items = loadProjectsRec(availableProjectConfigurations)
+        items.findAll { projectIDContains(it, filter) }.collect { it.icc.id }
+        def fulltext = items.findAll { projectIDContains(it, filter) }.collect { ConsoleStringFormatter.getFormatter().formatAll(printRecursively(0, it).toString()) }.join("\n")
+
+        if (filter) {
+            logger.always("\nlistworkflows was called with a filter: ${filter}. Be aware to check, that the filter has the right value!\n")
+        }
+
+        logger.postAlwaysInfo("Don't print information about configuration id:\n\t" + items.findAll { !projectIDContains(it, filter) }.collect { it.icc.id }.join("\n\t") + "\n")
+        logger.postAlwaysInfo(fulltext)
     }
 
-    private static List<ProjectTreeItem> loadProjectsRec(List<InformationalConfigurationContent> availableProjectConfigurations) {
-        List<ProjectTreeItem> lst = [];
-        for (InformationalConfigurationContent icc : availableProjectConfigurations) {
-            lst << new ProjectTreeItem(icc, loadProjectsRec(icc.getSubContent()));
+    private static List<ProjectTreeItem> loadProjectsRec(List<PreloadedConfiguration> availableProjectConfigurations) {
+        List<ProjectTreeItem> lst = []
+        for (PreloadedConfiguration icc : availableProjectConfigurations) {
+            lst << new ProjectTreeItem(icc, loadProjectsRec(icc.getSubContent()))
         }
-        return lst;
+        return lst
     }
 
     private static StringBuilder printRecursivelyShort(ProjectTreeItem pti) {
@@ -406,8 +404,7 @@ public class RoddyCLIClient {
         Configuration cfg = ConfigurationFactory.getInstance().getConfiguration(pti.icc.id);
         for (String iccAna in pti.icc.listOfAnalyses) configText << cfg.getID() << "@" << iccAna.split("::")[-2] << separator
         for (ProjectTreeItem it in pti.children) configText << printRecursivelyShort(it);
-//        configText << separator;
-        return configText;
+        return configText
     }
 
     private static StringBuilder printRecursively(int depth, ProjectTreeItem pti) {
@@ -430,15 +427,30 @@ public class RoddyCLIClient {
         configText << separator;
 
         if (pti.icc.listOfAnalyses) {
-            if (depth == 0) configText << prefix << " Class:   ${cfg.configuredClass}${separator}";
-            if (pti.icc.imports) configText << prefix << " Imports: " << pti.icc.imports << separator;
 
             configText << prefix << " #FBLUE#Available analyses:#CLEAR#" << separator
             int i = 0;
-            for (String iccAna in pti.icc.listOfAnalyses) {
-                String[] split = iccAna.split("::");
-                configText << prefix << "   " << i << ": ID=[" << split[-2] << "], Workflow=[" << split[-1] << "]" << separator;
-                i++;
+            int longestAnalysisID = 0
+            int longestAnalysisSrcID = 0
+            int longestPluginID = 0
+            List<List<String>> splitted = pti.icc.listOfAnalyses.sort().collect {
+                def split = it.split("[:][:]")
+                def res = [split[0], split[1], split[2].replace("useplugin=", ""), split[3].replace("killswitches=", "")]
+                if (longestAnalysisID < res[0].length()) longestAnalysisID = res[0].length()
+                if (longestAnalysisSrcID < res[1].length()) longestAnalysisSrcID = res[1].length()
+                if (longestPluginID < res[2].length()) longestPluginID = res[2].length()
+                return res
+            }
+
+            splitted.each {
+                List split ->
+                    configText << prefix << "   " << (i.toString() + ":").padRight(5) <<
+                            split[0].toString().padRight(longestAnalysisID) << " of type " <<
+                            split[1].toString().padRight(longestAnalysisSrcID) << " in " <<
+                            split[2].toString().padRight(longestPluginID) <<
+                            (split[3] ? " with enabled killswitches" : "") <<
+                            separator
+                    i++
             }
         }
 
@@ -477,13 +489,15 @@ public class RoddyCLIClient {
         return datasets;
     }
 
-    public static void autoselect(CommandLineCall clc) {
+    static void autoselect(CommandLineCall clc) {
 
-        String apiLevel = new ProjectLoader().getPluginRoddyAPILevel(clc.getAnalysisID());
-        if (apiLevel == null) //Explicitely query for null (then there is no auto detect!)
-            logger.postAlwaysInfo("Roddy API level could not be detected");
-        else
-            logger.postAlwaysInfo("Roddy API level for ${clc.getAnalysisID()} == ${apiLevel}");
+        String apiLevel = new ProjectLoader().getPluginRoddyAPILevel(clc.getAnalysisID())
+        if (apiLevel == null) {
+            def version = Version.fromString(Constants.APP_CURRENT_VERSION_STRING)
+            apiLevel = version.major + '.' + version.minor
+            logger.postAlwaysInfo("Using the current Roddy API level: ${apiLevel}")
+        } else
+            logger.postAlwaysInfo("Roddy API level for ${clc.getAnalysisID()}: ${apiLevel}")
     }
 
     public static void run(CommandLineCall clc) {
@@ -549,8 +563,8 @@ public class RoddyCLIClient {
                     ToolEntry tool = configuration.getTools().getValue(job.getToolID());
                     ResourceSet resourceSet = tool.getResourceSet(configuration);
                     if (!(resourceSet instanceof EmptyResourceSet)) {
-                        ProcessingCommands convertResourceSet = Roddy.getJobManager().convertResourceSet(resourceSet);
-                        if(convertResourceSet)
+                        ProcessingParameters convertResourceSet = Roddy.getJobManager().convertResourceSet(job, resourceSet)
+                        if (convertResourceSet)
                             resources = convertResourceSet.toString();
                     }
                 } catch (Exception ex) {

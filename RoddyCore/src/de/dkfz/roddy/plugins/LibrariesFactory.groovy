@@ -13,6 +13,7 @@ import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflowConverter
 import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RuntimeTools
 import de.dkfz.roddy.tools.Tuple2
 import de.dkfz.roddy.tools.Tuple5
@@ -40,6 +41,7 @@ public class LibrariesFactory extends Initializable {
     public static final String BUILDINFO_DEPENDENCY = "dependson";
     public static final String BUILDINFO_COMPATIBILITY = "compatibleto";
     public static final String BUILDINFO_TEXTFILE = "buildinfo.txt";
+    public static final String BUILDVERSION_TEXTFILE = "buildversion.txt";
     public static final String BUILDINFO_STATUS = "status"
     public static final String BUILDINFO_STATUS_BETA = "beta"
     public static final String BUILDINFO_RUNTIME_JDKVERSION = "JDKVersion"
@@ -185,6 +187,19 @@ public class LibrariesFactory extends Initializable {
 
             return false
         }
+
+        Map<String, List<String>> errors = mapOfErrorsForPluginEntries.findAll { String k, List v -> v }
+        if (errors) {
+            StringBuilder builder = new StringBuilder("There were several plugin directories which were rejected:\n")
+            builder << [
+                    errors.collect { String k, List<String> v -> (["\t" + k] + v).join("\n\t\t") }.join("\n"),
+                    "To prevent wrong plugin selection, Roddy needs you to keep your plugin directories clean. A plugin directory is dirty if:",
+                    '\t- A contained directory does not follow the plugin name convention: "PluginName_\$major.\$minor.\$patch[-\$revision]"',
+                    "\t- A plugin directory does not contain all necessary files and directories or other errors"
+            ].join("\n")
+            logger.severe(builder.toString())
+            return false
+        }
         // Prepare plugins in queue
         queue.each { String id, PluginInfo pi ->
             if (pi instanceof NativePluginInfo) {
@@ -301,8 +316,7 @@ public class LibrariesFactory extends Initializable {
 
         if (!directory.isDirectory()) {
             // Just return silently here.
-//            errors << "File is not a directory"
-            PluginType.INVALID
+            return PluginType.INVALID
         }
         if (directory.isHidden())
             errors << "Directory is hidden"
@@ -311,14 +325,14 @@ public class LibrariesFactory extends Initializable {
 
         if (errors) {
             logger.postRareInfo((["A directory was rejected as a plugin directory because:"] + errors).join("\n\t"))
-            PluginType.INVALID
+            return PluginType.INVALID
         }
 
         String dirName = directory.getName();
         if (!isPluginDirectoryNameValid(dirName)) {
             logger.postRareInfo("A directory was rejected as a plugin directory because its name did not match the naming rules.")
             errorsUnimportant << "A directory was rejected as a plugin directory because its name did not match the naming rules."
-            PluginType.INVALID
+            return PluginType.INVALID
         }
 
         // Check if it is a native workflow
@@ -330,7 +344,7 @@ public class LibrariesFactory extends Initializable {
             // If not, check for regular workflows.
             if (!checkFile(new File(directory, BUILDINFO_TEXTFILE)))
                 errors << "The buildinfo.txt file is missing"
-            if (!checkFile(new File(directory, "buildversion.txt")))
+            if (!checkFile(new File(directory, BUILDVERSION_TEXTFILE)))
                 errors << "The buildversion.txt file is missing"
             if (!checkDirectory(new File(directory, "resources/analysisTools")))
                 errors << "The analysisTools resource directory is missing"
@@ -357,7 +371,7 @@ public class LibrariesFactory extends Initializable {
             }
             if (rev) rev = rev.split("[.]")[0]; // Filter out .zip
             if (rev?.isNumber() || !rev) collectedTemporary << pdi
-            else logger.severe("Filtered out plugin ${name}, as the revision id is not numeric.")
+            else mapOfErrorsForPluginFolders.get(pdi.directory, []) << "Filtered out plugin ${name}, as the revision id is not numeric.".toString()
         }
         return collectedTemporary
     }
@@ -468,6 +482,10 @@ public class LibrariesFactory extends Initializable {
 
             if (isBetaPlugin)
                 newPluginInfo.isBetaPlugin = true;
+
+
+            if (newPluginInfo.errors)
+                mapOfErrorsForPluginEntries.get(newPluginInfo.directory.path, []).addAll(newPluginInfo.getErrors())
         }
         return new PluginInfoMap(_mapOfPlugins)
     }
@@ -609,7 +627,7 @@ public class LibrariesFactory extends Initializable {
 
     public static LibrariesFactory getInstance() {
         if (librariesFactory == null) {
-            logger.postAlwaysInfo("The libraries factory for plugin management was not initialized! Creating a new, empty object.")
+            logger.postSometimesInfo("The libraries factory for plugin management was not initialized! Creating a new, empty object.")
             librariesFactory = new LibrariesFactory();
         }
 

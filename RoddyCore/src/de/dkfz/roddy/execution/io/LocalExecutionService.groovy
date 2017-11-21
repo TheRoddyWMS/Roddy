@@ -21,8 +21,8 @@ import java.lang.reflect.Field
  * @author michael
  */
 @groovy.transform.CompileStatic
-public class LocalExecutionService extends ExecutionService {
-    private static final LoggerWrapper logger = LoggerWrapper.getLogger(LocalExecutionService.class.name);
+class LocalExecutionService extends ExecutionService {
+    private static final LoggerWrapper logger = LoggerWrapper.getLogger(LocalExecutionService.class.name)
 
     @Override
     String getUsername() {
@@ -32,14 +32,14 @@ public class LocalExecutionService extends ExecutionService {
     @Override
     void addSpecificSettingsToConfiguration(Configuration configuration) {
         //Disable several things which don't work.
-        configuration.getConfigurationValues().add(new ConfigurationValue(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, "false"));
-        configuration.getConfigurationValues().add(new ConfigurationValue(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERMASK, "false"));
-        configuration.getConfigurationValues().add(new ConfigurationValue(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_QUERY_ID, "false"));
+        configuration.getConfigurationValues().add(new ConfigurationValue(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, "false"))
+        configuration.getConfigurationValues().add(new ConfigurationValue(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERMASK, "false"))
+        configuration.getConfigurationValues().add(new ConfigurationValue(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_QUERY_ID, "false"))
     }
 
     @Override
     boolean isLocalService() {
-        return true;
+        return true
     }
 
     // This method actually overrides a base class. But if we keep the @Override, the Groovy (or Java) compiler constantly
@@ -48,10 +48,10 @@ public class LocalExecutionService extends ExecutionService {
 //     @Override
     protected ExecutionResult _execute(String command, boolean waitFor, boolean ignoreErrors, OutputStream outputStream = null) {
         if (waitFor) {
-            return ExecutionHelper.executeCommandWithExtendedResult(command, outputStream);
+            return LocalExecutionHelper.executeCommandWithExtendedResult(command, outputStream)
         } else {
             Thread.start {
-                command.execute();
+                command.execute()
             }
             return new ExecutionResult(true, 0, [], "")
         }
@@ -60,13 +60,13 @@ public class LocalExecutionService extends ExecutionService {
     @Override
     protected FileOutputStream createServiceBasedOutputStream(Command command, boolean waitFor) {
         //Store away process output if this is a local service.
-        FileOutputStream outputStream = null;
+        FileOutputStream outputStream = null
         if (waitFor && command.isBlockingCommand()) {
             File tmpFile = File.createTempFile("roddy_", "_temporaryLogfileStream")
-            tmpFile.deleteOnExit();
+            tmpFile.deleteOnExit()
             outputStream = new FileOutputStream(tmpFile)
         }
-        return outputStream;
+        return outputStream
     }
 
     @Override
@@ -78,7 +78,7 @@ public class LocalExecutionService extends ExecutionService {
         // Use reflection to get access to the hidden path field :p The stream object does not natively give
         // access to it and I do not want to create a new class just for this.
         Field fieldOfFile = FileOutputStream.class.getDeclaredField("path")
-        fieldOfFile.setAccessible(true);
+        fieldOfFile.setAccessible(true)
         File tmpFile2 = new File((String) fieldOfFile.get(outputStream))
 
         FileSystemAccessProvider.getInstance().moveFile(tmpFile2, logFile)
@@ -94,7 +94,7 @@ public class LocalExecutionService extends ExecutionService {
 
     @Override
     boolean isAvailable() {
-        return true;
+        return true
     }
 
 }

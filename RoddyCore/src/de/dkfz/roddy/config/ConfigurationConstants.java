@@ -21,14 +21,18 @@ public class ConfigurationConstants {
     public static final String DEBUG_OPTIONS_USE_UNDEFINED_VARIABLE_BREAK = "debugOptionsUseUndefinedVariableBreak";
     public static final String DEBUG_OPTIONS_USE_EXIT_ON_ERROR = "debugOptionsUseExitOnError";
     public static final String DEBUG_OPTIONS_PARSE_SCRIPTS = "debugOptionsParseScripts";
+    public static final String DEBUG_WRAP_IN_SCRIPT = "debugWrapInScript";
 
     public static final String CVALUE_PLACEHOLDER_EXECUTION_DIRECTORY = "$PWD";
     public static final String CVALUE_PLACEHOLDER_RODDY_JOBID = "${RODDY_JOBID}";
     public static final String CVALUE_PLACEHOLDER_RODDY_JOBARRAYINDEX = "${RODDY_JOBARRAYINDEX}";
     public static final String CVALUE_PLACEHOLDER_RODDY_SCRATCH = "${RODDY_SCRATCH}";
     public static final String CVALUE_PLACEHOLDER_RODDY_JOBID_RAW = "RODDY_JOBID";
+    public static final String CVALUE_PLACEHOLDER_RODDY_JOBNAME_RAW = "RODDY_JOBNAME";
+    public static final String CVALUE_PLACEHOLDER_RODDY_QUEUE_RAW = "RODDY_QUEUE";
     public static final String CVALUE_PLACEHOLDER_RODDY_JOBARRAYINDEX_RAW = "RODDY_JOBARRAYINDEX";
     public static final String CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW = "RODDY_SCRATCH";
+    public static final String CVALUE_DEFAULT_SCRATCH_DIR = "defaultScratchDir";
     public static final String CVALUE_TYPE_BASH_ARRAY = "bashArray";
     public static final String CVALUE_TYPE_PATH = "path";
     public static final String CVALUE_TYPE_STRING = "string";

@@ -35,7 +35,7 @@ public abstract class ConfigurationConverter {
     }
 
     /**
-     * Converts a string to a proper variable name i.e.
+     * Converts a string to a normalized variable name i.e.
      * alignSampeSort will be TOOL_ALIGN_SAMPE_SORT
      * replaces colon with underscore.
      * @param prefix
@@ -50,7 +50,7 @@ public abstract class ConfigurationConverter {
     }
 
     /**
-     * Tries to convert back a converted variable name to its original form.
+     * Tries to convert back a converted (normalized) variable name to its original form.
      * Does not convert back colon though!
      *
      * TOOL_ALIGN_SAMPE_SORT will be alignSampeSort

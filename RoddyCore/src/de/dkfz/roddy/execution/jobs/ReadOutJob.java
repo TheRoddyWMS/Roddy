@@ -37,11 +37,6 @@ public class ReadOutJob extends Job {
         this.readOut = true;
         this.jobID = executedJobID;
     }
-//
-//    @Override
-//    public JobResult run(BEExecutionService executionService, AppConfig configuration, Map<String, String> parameters) {
-//        throw new RuntimeException("A read out job cannot be run!");
-//    }
 
     /**
      * Returns the read out jobs id.
@@ -49,7 +44,7 @@ public class ReadOutJob extends Job {
      */
     @Override
     public BEJobID getJobID() {
-        return new BEJobID(jobID, this);
+        return new BEJobID(jobID);
     }
 
     @Override

@@ -40,7 +40,7 @@ then
     roddyLibrary=${RODDY_BINARY}
     jfxLibrary=`find $JDK_HOME/ -name "jfxrt.jar"`
     libraries=`ls -d1 ${RODDY_BINARY_DIR}/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
-    libraries=$roddyLibrary:$pluginbaseLib:$libraries:$jfxLibrary
+    libraries=$roddyLibrary:$libraries:$jfxLibrary
 
     # Check if there is a buildinfo.txt and resolve additional library dependencies.
     if [[ -f buildinfo.txt ]]
@@ -59,7 +59,7 @@ then
     echo "Working in:" $PWD
     echo "Using jfx lib:" $jfxLibrary
     librariesForManifest=`ls -d1 ${RODDY_BINARY_DIR}/lib/*groo*`
-    librariesForManifest="$librariesForManifest $pluginbaseLib $jfxLibrary ${RODDY_BINARY}"
+    librariesForManifest="$librariesForManifest $jfxLibrary ${RODDY_BINARY}"
 
     echo "Compiling library / plugin in $1"
     javac -version

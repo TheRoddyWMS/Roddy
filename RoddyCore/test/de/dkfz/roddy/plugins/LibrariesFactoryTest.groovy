@@ -12,8 +12,7 @@ import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
-import de.dkfz.roddy.core.MockupExecutionContextBuilder
-import de.dkfz.roddy.execution.io.ExecutionHelper
+import de.dkfz.roddy.execution.io.LocalExecutionHelper
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -24,8 +23,6 @@ import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-
-import java.lang.reflect.Method
 
 /**
  * The tests for the jar file loading are not very nice.
@@ -174,7 +171,7 @@ public class LibrariesFactoryTest {
         File testSource = new File(LibrariesFactory.groovyClassLoader.getResource("LibrariesFactoryTestData.zip").file)
         pluginsDirWithInvalidEntries = pluginsBaseDirWithInvalidEntries.root
         String copyTestSourceommand = "unzip -d ${pluginsDirWithInvalidEntries} ${testSource}"
-        ExecutionHelper.executeSingleCommand(copyTestSourceommand);
+        LocalExecutionHelper.executeSingleCommand(copyTestSourceommand);
         pluginsDirWithInvalidEntries = new File(pluginsDirWithInvalidEntries, "LibrariesFactoryTestData")
         new File(pluginsDirWithInvalidEntries, "InValidContentCantRead").setReadable(false);
     }

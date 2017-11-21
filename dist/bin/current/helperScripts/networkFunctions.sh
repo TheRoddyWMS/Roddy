@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function checkAndDownloadGroovyServ() {
-  # Check for groovyserv. If it does not exist, try to downloading it. If it still fails, start Roddy without it.
+  # Check for groovyserv. If it does not exist, try to download it. If it still fails, start Roddy without it.
   local callerBinary=java
   local roddyApplicationDirectory=${1-""}
   local runtimeFolder=${roddyApplicationDirectory}/dist/runtime
@@ -23,17 +23,17 @@ function checkAndDownloadGroovyServ() {
         | grep .zip)) &> /dev/null
 
     if [[ $? -ne 0 ]]; then
-        echo "Error downloading groovyserv. Skipping groovyserv setup. Remove ${forbiddenFile} before trying again." > /dev/stderr
+        echo "Error downloading groovyserv. Skipping groovyserv setup. Remove ${forbiddenFile} before trying again." >> /dev/stderr
         touch ${forbiddenFile}
     else
       (cd ${runtimeFolder} && unzip groovyser*.zip && rm groovyser*.zip*) &> /dev/null
       if [[ $? -ne 0 ]]; then
-        echo "Error unzipping groovyserv. Skipping groovyserv setup. Remove ${forbiddenFile} before trying again." > /dev/stderr
+        echo "Error unzipping groovyserv. Skipping groovyserv setup. Remove ${forbiddenFile} before trying again." >> /dev/stderr
         touch ${forbiddenFile}
       fi
       ${runtimeFolder}/groovys*/bin/groovyclient &> /dev/null
       if [[ $? -ne 0 ]]; then
-        echo "Error starting groovyserv. Skipping groovyserv setup. Remove ${forbiddenFile} before trying again." > /dev/stderr
+        echo "Error starting groovyserv. Skipping groovyserv setup. Remove ${forbiddenFile} before trying again." >> /dev/stderr
         touch ${forbiddenFile}
       fi
     fi
@@ -45,7 +45,7 @@ function checkAndDownloadGroovyServ() {
 
 function getExistingOrNewGroovyServPort() {
   # Check first, if GroovyServ is running for the local user!
-  local runningGServInstance=$(pgrep -f -a -u $(whoami) GroovyServ)
+  local runningGServInstance=$(ps -O command -U $(whoami) | grep GroovyServ | grep -v grep)
 
   if [[ -n ${runningGServInstance-} ]]; then
     # Use the existing port, it is passed as an argument to GroovyServ, so we can just get it from that.

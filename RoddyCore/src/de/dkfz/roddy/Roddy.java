@@ -7,33 +7,31 @@
 package de.dkfz.roddy;
 
 import com.btr.proxy.search.ProxySearch;
-import de.dkfz.roddy.config.ResourceSetSize;
-import de.dkfz.roddy.config.loader.ConfigurationLoaderException;
-import de.dkfz.roddy.execution.BEExecutionService;
-import de.dkfz.roddy.execution.jobs.*;
+import de.dkfz.roddy.client.RoddyStartupModeScopes;
 import de.dkfz.roddy.client.RoddyStartupModes;
 import de.dkfz.roddy.client.RoddyStartupOptions;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient;
 import de.dkfz.roddy.client.rmiclient.RoddyRMIServer;
-import de.dkfz.roddy.config.Configuration;
-import de.dkfz.roddy.config.ConfigurationConstants;
-import de.dkfz.roddy.config.ConfigurationValue;
-import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues;
-import de.dkfz.roddy.execution.io.ExecutionHelper;
-import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
-import de.dkfz.roddy.tools.RoddyIOHelperMethods;
-import de.dkfz.roddy.tools.AppConfig;
+import de.dkfz.roddy.config.*;
 import de.dkfz.roddy.core.Initializable;
+import de.dkfz.roddy.execution.BEExecutionService;
 import de.dkfz.roddy.execution.io.ExecutionService;
+import de.dkfz.roddy.execution.io.LocalExecutionHelper;
 import de.dkfz.roddy.execution.io.fs.BashCommandSet;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.io.fs.ShellCommandSet;
+import de.dkfz.roddy.execution.jobs.*;
+import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager;
 import de.dkfz.roddy.plugins.LibrariesFactory;
+import de.dkfz.roddy.tools.AppConfig;
 import de.dkfz.roddy.tools.LoggerWrapper;
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
+import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import groovy.transform.CompileStatic;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
@@ -44,9 +42,7 @@ import java.util.*;
 
 import static de.dkfz.roddy.RunMode.CLI;
 import static de.dkfz.roddy.StringConstants.FALSE;
-import static de.dkfz.roddy.config.ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY;
-import static de.dkfz.roddy.config.ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY;
-import static de.dkfz.roddy.config.ConfigurationConstants.CFG_USED_RESOURCES_SIZE;
+import static de.dkfz.roddy.config.ConfigurationConstants.*;
 
 /**
  * This is the main class for the Roddy command line application.
@@ -205,7 +201,8 @@ public class Roddy {
             //TODO Think about a better way to get Roddys base directory.
             String[] list = applicationDirectory.list((dir, name) -> name.equals("roddy.sh"));
             if (list == null || list.length != 1) {
-                System.out.println("You must call roddy from the right location! (Base roddy folder where roddy.sh resides)");
+                System.out.println("You must call roddy from the right location! (Base roddy folder where roddy.sh resides). You used: '" +
+                        applicationDirectory + "'");
                 System.exit(255);
             }
 
@@ -262,7 +259,7 @@ public class Roddy {
         logger.postAlwaysInfo("Roddy version " + Constants.APP_CURRENT_VERSION_STRING);
 
         time("initial checks");
-        if (!performInitialCheck())
+        if (!roddyExecutionRequirementsFulfilled())
             exit(1);
 
         time("ftoggleini");
@@ -275,36 +272,60 @@ public class Roddy {
         loadPropertiesFile();
         time("loadprop");
 
-        // Reset the logger with the new setings but keep the old logfile
+        // Reset the logger with the new settings but keep the old logfile.
         File clf = LoggerWrapper.getCentralLogFile();
         LoggerWrapper.setup(applicationProperties);
         LoggerWrapper.setCentralLogFile(clf);
 
-        if (initializeServices(clc.startupMode.needsFullInit())) {
-            time("initserv");
-            parseRoddyStartupModeAndRun(clc);
-            time("parsemode");
-            performCLIExit(clc.startupMode);
-        } else {
+        if (!initializeServices(clc.startupMode)) {
             logger.postAlwaysInfo("Could not initialize services. Roddy will not execute jobs.");
             performCLIExit(clc.startupMode, 1);
         }
+
+        if (!jobExecutionRequirementsFulfilled())
+            exit(1);
+
+        time("initserv");
+        parseRoddyStartupModeAndRun(clc);
+        time("parsemode");
+        performCLIExit(clc.startupMode);
+
         time("exit");
     }
 
-    public static boolean performInitialCheck() {
+    public static boolean jobExecutionRequirementsFulfilled() {
+        List<String> errors = new LinkedList<>();
+        errors.add("Requirements for job execution are not fulfilled:");
+        ExecutionService jobSubmissionExecutionService = ExecutionService.getInstance();
+
+        if (!jobSubmissionExecutionService.execute("which unzip").isSuccessful())
+            errors.add("\tTool unzip not found.");
+
+        if (!jobSubmissionExecutionService.execute("which lockfile").isSuccessful())
+            errors.add("\tTool lockfile not found. lockfile can be found e.g. in the package procmail.");
+
+        if (errors.size() == 1) return true;
+
+        logger.severe(RoddyIOHelperMethods.joinArray(errors.toArray(new String[0]), "\n"));
+        logger.severe("Please make sure that the dependencies are installed on the submission and execution hosts.");
+        return false;
+    }
+
+
+    public static boolean roddyExecutionRequirementsFulfilled() {
         List<String> errors = new LinkedList<>();
         errors.add("Roddy cannot run:");
-        if (!ExecutionHelper.executeCommandWithExtendedResult("which jar").isSuccessful())
+        if (!LocalExecutionHelper.executeCommandWithExtendedResult("which jar").isSuccessful())
             errors.add("\tTool jar not found.");
-        if (!ExecutionHelper.executeCommandWithExtendedResult("which zip").isSuccessful())
+        if (!LocalExecutionHelper.executeCommandWithExtendedResult("which zip").isSuccessful())
             errors.add("\tTool zip not found.");
-        if (!ExecutionHelper.executeCommandWithExtendedResult("which unzip").isSuccessful())
+        if (!LocalExecutionHelper.executeCommandWithExtendedResult("which unzip").isSuccessful())
             errors.add("\tTool unzip not found.");
 
         if (errors.size() == 1) return true;
 
         logger.severe(RoddyIOHelperMethods.joinArray(errors.toArray(new String[0]), "\n"));
+        logger.severe("Please make sure that the dependencies are installed on the submission host and also on the execution hosts.");
         return false;
     }
 
@@ -491,7 +512,7 @@ public class Roddy {
      * Initializes basic Roddy services
      * The execution service has two configuration settings, one for command line interface and one for the ui based instance.
      */
-    public static final boolean initializeServices(boolean fullSetup) {
+    public static final boolean initializeServices(RoddyStartupModes mode) {
         String currentStep = "Initialize proxy settings";
         try {
 
@@ -500,16 +521,16 @@ public class Roddy {
             time("init proxy");
 
             currentStep = "Initialize file system access provider";
-            FileSystemAccessProvider.initializeProvider(fullSetup);
+            FileSystemAccessProvider.initializeProvider(mode.needsFullInit());
             time("init fsap");
 
             //Do not touch the calling order, execution service must be set before BatchEuphoriaJobManager.
             currentStep = "Initialize execution service";
-            ExecutionService.initializeService(fullSetup);
+            ExecutionService.initializeService(mode.needsFullInit());
             time("init execserv");
 
             currentStep = "Initialize command factory";
-            initializeJobManager(fullSetup);
+            initializeJobManager(mode);
             time("init cmd fac");
             return true;
         } catch (Exception ex) {
@@ -567,15 +588,55 @@ public class Roddy {
 
     private static Configuration applicationSpecificConfiguration = null;
 
+    private static void setDefaultRoddyJobIdVariable(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
+        configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_JOBID_RAW, "$" + Roddy.jobManager.getJobIdVariable()));
+    }
+
+    private static void setDefaultRoddyJobNameVariable(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
+        configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_JOBNAME_RAW, "$" + Roddy.jobManager.getJobNameVariable()));
+    }
+
+    private static void setDefaultRoddyQueueVariable(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
+        configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_QUEUE_RAW, "$" + Roddy.jobManager.getQueueVariable()));
+    }
+
+    /** Copy the scratchBaseDirectory value from the applicationProperties.ini into the configuration. Set the default value for RODDY_SCRATCH
+     *  to $scratchBaseDirectory/$RODDY_JOBID.
+     * @return
+     */
+    private static void setScratchDirectory(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
+        String deprecatedDefaultScratchDir = Roddy.getApplicationProperty(ConfigurationConstants.CVALUE_DEFAULT_SCRATCH_DIR, "");
+        if (!deprecatedDefaultScratchDir.equals("")) {
+            System.err.println("WARNING: You did set the deprecated " + ConfigurationConstants.CVALUE_DEFAULT_SCRATCH_DIR + " to '" +
+                    deprecatedDefaultScratchDir + ".\nPlease use " + Constants.APP_SCRATCH_BASE_DIRECTORY + ".");
+        }
+        String scratchBaseDir = Roddy.getApplicationProperty(Constants.APP_SCRATCH_BASE_DIRECTORY, "");
+        if (scratchBaseDir.equals("")) {
+            File propertyFilePath = null;
+            try {
+                propertyFilePath = Roddy.getPropertiesFilePath();
+            } catch (FileNotFoundException e) {
+                // The file must have existed, because we are accessing the values in it.
+            }
+            System.err.println(Constants.APP_SCRATCH_BASE_DIRECTORY +
+                    " is not defined. Please add it to your application properties file: '" + propertyFilePath + "'");
+            System.exit(1);
+        }
+        configurationValues.add(new ConfigurationValue(Constants.APP_SCRATCH_BASE_DIRECTORY, scratchBaseDir));
+        String scratchDir = new File ("$" + Constants.APP_SCRATCH_BASE_DIRECTORY ,
+                "$" + ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW).toString();
+        configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW, scratchDir));
+    }
+
     public static Configuration getApplicationSpecificConfiguration() {
         if (applicationSpecificConfiguration == null) {
             applicationSpecificConfiguration = new Configuration(null);
             RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
-            Map<String, String> specificEnvironmentSettings = jobManager.getSpecificEnvironmentSettings();
-            for (String k : specificEnvironmentSettings.keySet()) {
-                logger.postSometimesInfo("Add job manager value " + k + "=" + specificEnvironmentSettings.get(k) + " to context configuration");
-                configurationValues.add(new ConfigurationValue(k, specificEnvironmentSettings.get(k)));
-            }
+
+            setDefaultRoddyJobIdVariable(configurationValues);
+            setDefaultRoddyJobNameVariable(configurationValues);
+            setDefaultRoddyQueueVariable(configurationValues);
+            setScratchDirectory(configurationValues);
 
             // Add custom command line values to the project configuration.
             List<ConfigurationValue> externalConfigurationValues = getCommandLineCall().getSetConfigurationValues();
@@ -596,20 +657,27 @@ public class Roddy {
     }
 
     @CompileStatic
-    public static void initializeJobManager(boolean fullSetup) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
+    public static void initializeJobManager(RoddyStartupModes mode)
+            throws ClassNotFoundException, IllegalAccessException, InvocationTargetException,
+            InstantiationException, NoSuchMethodException, FileNotFoundException {
         logger.postSometimesInfo("public static void initializeFactory(boolean fullSetup)");
-        if (!fullSetup)
-            return;
+
+        if (!mode.needsFullInit()) return;
 
         ClassLoader classLoader;
         String jobManagerClassID = "";
         Class jobManagerClass = null;
 
         try {
+
             classLoader = LibrariesFactory.getGroovyClassLoader();
-            jobManagerClassID = Roddy.getApplicationProperty(Constants.APP_PROPERTY_COMMAND_FACTORY_CLASS);
-            if (RoddyConversionHelperMethods.isNullOrEmpty(jobManagerClassID)) jobManagerClassID = "UNSET";
-            jobManagerClass = classLoader.loadClass(jobManagerClassID);
+            if (mode.scope == RoddyStartupModeScopes.SCOPE_FULL_WITHJOBMANAGER) {
+                jobManagerClassID = Roddy.getApplicationProperty(Constants.APP_PROPERTY_JOB_MANAGER_CLASS);
+                if (RoddyConversionHelperMethods.isNullOrEmpty(jobManagerClassID)) jobManagerClassID = "UNSET";
+                jobManagerClass = classLoader.loadClass(jobManagerClassID);
+            } else
+                jobManagerClass = DirectSynchronousExecutionJobManager.class;
+            logger.always("Roddy will try to use the " + jobManagerClass.getSimpleName() + " job manager class to manage jobs.");
         } catch (ClassNotFoundException e) {
             StringBuilder available = new StringBuilder();
             for (AvailableClusterSystems acs : AvailableClusterSystems.values()) {
@@ -626,11 +694,7 @@ public class Roddy {
                         .setCreateDaemon(true)
                         .setTrackUserJobsOnly(trackUserJobsOnly)
                         .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
-                        .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI())
-                        .setJobIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW)
-                        .setJobArrayIDIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBARRAYINDEX_RAW)
-                        .setJobScratchIdentifier(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW).build());
-
+                        .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI()).build());
 
 // There are many values which need to be extracted from the xml (context, project?)
 //        configuration.getProperty("PBS_AccountName", "")
@@ -704,14 +768,15 @@ public class Roddy {
     }
 
     public static void loadPropertiesFile() {
-        File file = getPropertiesFilePath();
-        if (file == null || !file.exists()) {
-            // Skip and exit!
-            logger.postAlwaysInfo("Could not load the application properties file " + file.getAbsolutePath() + ". Roddy will exit.");
+        File file = null;
+        try {
+            file = getPropertiesFilePath();
+        } catch (FileNotFoundException e) {
+            logger.postAlwaysInfo("Could not load the application properties file: " + e.getMessage() + ". Roddy will exit.");
             exit(1);
-        } else {
-            logger.postAlwaysInfo("Loading properties file " + file.getAbsolutePath() + ".");
         }
+        logger.postAlwaysInfo("Loading properties file " + file.getAbsolutePath() + ".");
+
         applicationProperties = new AppConfig(file);
 
         getApplicationProperty("useRoddyVersion", LibrariesFactory.PLUGIN_VERSION_CURRENT); // Load some default properties
@@ -788,17 +853,35 @@ public class Roddy {
         return logDir;
     }
 
-    public static File getPropertiesFilePath() {
+    /**
+     * If the filename is a path, e.g. a filename in the local directory (starting with ./), return exactly this file. If the file does not exist,
+     * throw an exception.
+     * If just a filename is given, return the first existing file in the current directory, the settingsDirectory or the applicationDirectory.
+     * If none of these files exists, throw an exception.
+     *
+     * @return
+     */
+    public static File getPropertiesFilePath() throws FileNotFoundException {
         if (customPropertiesFile == null) customPropertiesFile = Constants.APP_PROPERTIES_FILENAME;
-        File _customPropertiesFile = new File("" + customPropertiesFile);
-        String customPropertiesFileName = _customPropertiesFile.getName();
 
-        List<File> files = Arrays.asList(_customPropertiesFile, new File(getSettingsDirectory(), customPropertiesFileName), new File(getApplicationDirectory(), customPropertiesFileName));
-        for (File cpf : files)
-            if (cpf.exists())
-                return cpf;
+        File propertiesFile = new File(customPropertiesFile);
 
-        return null;
+        if (propertiesFile.getName() != propertiesFile.toString()) {
+            if (!propertiesFile.exists()) {
+                throw new FileNotFoundException(propertiesFile.toString());
+            }
+            return propertiesFile;
+        } else {
+            File settingsDirPropertiesFile = new File(getSettingsDirectory(), propertiesFile.toString());
+            File applicationDirPropertiesFile = new File(getApplicationDirectory(), propertiesFile.toString());
+
+            List<File> files = Arrays.asList(propertiesFile, settingsDirPropertiesFile, applicationDirPropertiesFile);
+            for (File cpf : files)
+                if (cpf.exists())
+                    return cpf;
+
+            throw new FileNotFoundException(RoddyIOHelperMethods.joinArray(files.toArray(), ", "));
+        }
     }
 
     public static File getCompressedAnalysisToolsDirectory() {
@@ -922,7 +1005,7 @@ public class Roddy {
         return LibrariesFactory.PLUGIN_VERSION_CURRENT;
     }
 
-    public static FileSystemAccessProvider getLocalFileSystemInfoProvider() {
+    public static FileSystemAccessProvider getLocalFileSystemAccessProvider() {
         return new FileSystemAccessProvider();
     }
 

@@ -11,6 +11,7 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.*
+import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
@@ -22,15 +23,12 @@ import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileDynamic
-import sun.reflect.generics.reflectiveObjects.NotImplementedException
-
-import java.lang.reflect.Field
 
 import static de.dkfz.roddy.Constants.NO_VALUE
 import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 
 @groovy.transform.CompileStatic
-class Job extends BEJob<BEJob, JobResult> {
+class Job extends BEJob<BEJob, BEJobResult> {
 
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(BEJob.class.getSimpleName())
 
@@ -42,6 +40,11 @@ class Job extends BEJob<BEJob, JobResult> {
      * The current context.
      */
     public final ExecutionContext context
+
+    /**
+     * The local tool path
+     */
+    private final File localToolPath
 
     /**
      * The tool you want to call.
@@ -128,8 +131,8 @@ class Job extends BEJob<BEJob, JobResult> {
         List<BEJob> pJobs
         if ((null != parentJobIDs && !parentJobIDs.isEmpty()) &&
                 (null != parentJobs && !parentJobs.isEmpty())) {
-            def validJobs = findJobsWithValidJobId(parentJobs)
-            def validIds = findValidJobIDs(parentJobIDs).collect { it.toString() }
+            def validJobs = jobsWithUniqueValidJobId(parentJobs)
+            def validIds = uniqueValidJobIDs(parentJobIDs).collect{ it.toString() }
             def idsOfValidJobs = jobs2jobIDs(validJobs).collect { it.toString() }
             if (validIds != idsOfValidJobs) {
                 throw new RuntimeException("parentJobBEJob needs to be called with one of parentJobs, parentJobIDs, or parentJobsIDs and *corresponding* parentJobs.")
@@ -138,21 +141,26 @@ class Job extends BEJob<BEJob, JobResult> {
         } else if (null == parentJobIDs && null == parentJobs) {
             pJobs = new LinkedList<BEJob>()
         } else if (null != parentJobs) {
-            pJobs = findJobsWithValidJobId(parentJobs)
+            pJobs = jobsWithUniqueValidJobId(parentJobs)
         } else {
-            pJobs = findValidJobIDs(parentJobIDs).collect { fromJobID(it, jobManager) }
+            pJobs = uniqueValidJobIDs(parentJobIDs).collect { new BEJob(it, jobManager) }
         }
         return pJobs
     }
 
-    Job(ExecutionContext context, String jobName, String toolID, String inlineScript, List<String> arrayIndices, Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
-        super(jobName
+    Job(ExecutionContext context, String jobName, String toolID, String inlineScript, List<String> arrayIndices, Map<String, Object> inputParameters,
+        List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
+        super(new BEJobID()
+                , jobName
                 , context.getConfiguration().getProcessingToolPath(context, TOOLID_WRAPIN_SCRIPT)
                 , inlineScript
                 , inlineScript ? null : getToolMD5(TOOLID_WRAPIN_SCRIPT, context)
                 , getResourceSetFromConfiguration(toolID, context)
+                , []
                 , [:]
                 , Roddy.getJobManager())
+        this.localToolPath = context.getConfiguration().getSourceToolPath(toolID)
+        this.setLoggingDirectory(context.loggingDirectory)
         this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectDependencyIDsFromFiles(parentFiles), jobManager))
         this.context = context
         this.toolID = toolID
@@ -167,11 +175,11 @@ class Job extends BEJob<BEJob, JobResult> {
             if (this.parameters.containsKey(k)) continue
             Object _v = defaultParameters[k]
             if (_v == null) {
-                context.addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("The parameter " + k + " has no valid value and will be set to <NO_VALUE>."))
+                context.addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("The parameter " + k + " has no valid value and will be set to ${NO_VALUE}."))
                 this.parameters[k] = NO_VALUE
             } else {
-                Map<String, String> newParameters = convertParameterObject(k, _v)
-                this.parameters.putAll(newParameters)
+                String newParameters = parameterObjectToString(k, _v)
+                this.parameters.put(k, newParameters)
             }
         }
 
@@ -194,7 +202,7 @@ class Job extends BEJob<BEJob, JobResult> {
         return te.getResourceSet(context.configuration) ?: new EmptyResourceSet();
     }
 
-    static String getToolMD5(String toolID, ExecutionContext context) {
+    static String getToolMD5(String toolID, ExecutionContext context) throws ConfigurationError {
         toolID != null && toolID.trim().length() > 0 ? context.getConfiguration().getProcessingToolMD5(toolID) : null
     }
 
@@ -228,71 +236,116 @@ class Job extends BEJob<BEJob, JobResult> {
         return dIDs
     }
 
-    private Map<String, String> convertParameterObject(String k, Object _v) {
-        Map<String, String> newParameters = new LinkedHashMap<>()
-//            String v = "";
-        if (_v instanceof File) {
-            newParameters.put(k, ((File) _v).getAbsolutePath())
-        } else if (_v instanceof BaseFile) {
-            BaseFile bf = (BaseFile) _v
-            String newPath = replaceParametersInFilePath(bf, allRawInputParameters)
-
-            //Explicitely query newPath for a proper value!
-            if (newPath == null) {
-                // Auto path!
-                int slotPosition = allRawInputParameters.keySet().asList().indexOf(k)
-                if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.FailOnAutoFilenames))
-                    throw new RuntimeException("Auto filenames are forbidden when strict mode is active.")
-                else
-                    context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("An auto filename will be used for ${jobName}:${slotPosition} / ${bf.class.name}"))
-                String completeString = jobName + k + slotPosition
-                if (parentFiles)
-                    parentFiles.each {
-                        BaseFile p ->
-                            if (!p instanceof BaseFile) return
-
-                            BaseFile _bf = (BaseFile) p
-                            completeString += ("" + _bf.getAbsolutePath())
-
-                    }
-
-                File autoPath = new File(context.getOutputDirectory(), [jobName, k, Math.abs(completeString.hashCode()) as int, slotPosition].join("_") + ".auto")
-//                File autoPath = new File(context.getOutputDirectory(), [jobName, k, '${RODDY_JOBID}', slotPosition].join("_") + ".auto")
-                bf.setPath(autoPath)
-                bf.setAsTemporaryFile()
-                newPath = autoPath.absolutePath
-            }
-
-            newParameters.put(k, newPath)
-//            newParameters.put(k + "_path", newPath);
-            //TODO Create a toStringList method for filestages. The method should then be very generic.
-//                this.parameters.put(k + "_fileStage_numericIndex", "" + bf.getFileStage().getNumericIndex());
-//                this.parameters.put(k + "_fileStage_index", bf.getFileStage().getIndex());
-//                this.parameters.put(k + "_fileStage_laneID", bf.getFileStage().getLaneId());
-//                this.parameters.put(k + "_fileStage_runID", bf.getFileStage().getRunID());
-        } else if (_v instanceof Collection) {
-            //TODO This is not the best way to do this, think of a better one which is more generic.
-
-            List<Object> convertedParameters = new LinkedList<>()
-            for (Object o : _v as Collection) {
-                if (o instanceof BaseFile) {
-                    if (((BaseFile) o).getPath() != null)
-                        convertedParameters.add(((BaseFile) o).getAbsolutePath())
-                } else
-                    convertedParameters.add(o.toString())
-            }
-            this.parameters[k] = "(${RoddyIOHelperMethods.joinArray(convertedParameters.toArray(), " ")})".toString()
-
-//        } else if(_v.getClass().isArray()) {
-//            newParameters.put(k, "parameterArray=(" + RoddyIOHelperMethods.joinArray((Object[]) _v, " ") + ")"); //TODO Put conversion to roddy helper methods?
-        } else {
-            try {
-                newParameters[k] = _v.toString()
-            } catch (Exception e) {
-                e.printStackTrace()
+    private List<String> finalParameters() {
+        List<String> allParametersForFile = new LinkedList<>();
+        if (parameters.size() > 0) {
+            for (String parm : parameters.keySet()) {
+                String val = parameters.get(parm);
+                if (val.contains(StringConstants.DOLLAR_LEFTBRACE) && val.contains(StringConstants.BRACE_RIGHT)) {
+                    val = val.replace(StringConstants.DOLLAR_LEFTBRACE, "#{"); // Replace variable names so they can be passed to qsub.
+                }
+                String key = parm;
+                allParametersForFile << FileSystemAccessProvider.getInstance().getConfigurationConverter().convertConfigurationValue(new ConfigurationValue(key, val), this.executionContext).toString();
             }
         }
-        return newParameters
+        return allParametersForFile;
+    }
+
+
+    private static String fileToParameterString(File file) {
+        return file.getAbsolutePath()
+    }
+
+    private static Integer generateHashCode(String template, List<BaseFile> parentFiles) {
+        if (parentFiles) {
+            parentFiles.each {
+                BaseFile p ->
+                    if (!p instanceof BaseFile) return
+
+                    BaseFile _bf = (BaseFile) p
+                    template += ("" + _bf.getAbsolutePath())
+
+            }
+        }
+        return Math.abs(template.hashCode()) as Integer
+    }
+
+    /** The auto filename is generated from the raw job parameters as background information.
+     *  If feature toggle FailOnAutoFilename is set, this method will fail with a RuntimeException.
+     *
+     *  The auto file name will be composed from the jobName, the key value, a hash code generated
+     *  from these information and the list of parent files and the .auto suffix.
+     *
+     * @param key
+     * @param baseFile
+     * @return auto filename as path string
+     */
+    private String generateAutoFilename(String key, BaseFile baseFile) {
+        int slotPosition = allRawInputParameters.keySet().asList().indexOf(key)
+
+        if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.FailOnAutoFilenames))
+            throw new RuntimeException("Auto filenames are forbidden when strict mode is active.")
+        else
+            context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.
+                    expand("An auto filename will be used for ${jobName}:${slotPosition} / ${baseFile.class.name}"))
+
+        Integer hashCode = generateHashCode(jobName + key + slotPosition, parentFiles)
+
+        File autoPath = new File(context.getOutputDirectory(), [jobName, key, hashCode, slotPosition].join("_") + ".auto")
+        baseFile.setPath(autoPath)
+        baseFile.setAsTemporaryFile()
+        return autoPath.absolutePath
+    }
+
+    /** Convert a BaseFile object into a path string. First try to replace all variables using the raw job input parameters as background variables.
+     *  If that fails, generate an auto file name.
+     *
+     * @param key
+     * @param baseFile
+     * @return path to basefile
+     */
+    private String baseFileToParameterString(String key, BaseFile baseFile) {
+        String newPath = replaceParametersInFilePath(baseFile, allRawInputParameters)
+        //Explicitly query newPath for a proper value!
+        if (newPath == null) {
+            newPath = generateAutoFilename(key, baseFile)
+        }
+        return newPath
+        //            newParameters[k + "_path"] = newPath;
+        //TODO Create a toStringList method for filestages. The method should then be very generic.
+        //                this.parameters.put(k + "_fileStage_numericIndex", "" + bf.getFileStage().getNumericIndex());
+        //                this.parameters.put(k + "_fileStage_index", bf.getFileStage().getIndex());
+        //                this.parameters.put(k + "_fileStage_laneID", bf.getFileStage().getLaneId());
+        //                this.parameters.put(k + "_fileStage_runID", bf.getFileStage().getRunID());
+    }
+
+
+    private String collectionToParameterString(String key, Collection collection) {
+        //TODO This is not the best way to do this, think of a better one which is more generic.
+        List<Object> convertedParameters = new LinkedList<>()
+        for (Object o : collection) {
+            if (o instanceof BaseFile) {
+                if (((BaseFile) o).getPath() != null)
+                    convertedParameters.add(baseFileToParameterString(key, o as BaseFile))
+            } else
+                convertedParameters.add(o.toString())
+        }
+        return BashConverter.convertListToBashArray(convertedParameters)
+    }
+
+
+    private String parameterObjectToString(String key, Object value) {
+        if (value instanceof File) {
+            return fileToParameterString(value as File)
+        } else if (value instanceof BaseFile) {
+            return baseFileToParameterString(key, value as BaseFile)
+        } else if (value instanceof FileGroup) {
+            return collectionToParameterString(key, (value as FileGroup).getFilesInGroup())
+        } else if (value instanceof Collection) {
+            return collectionToParameterString(key, value as Collection)
+        } else {
+            return value.toString()
+        }
     }
 
     Map<String, String> convertResourceSetToParameters() {
@@ -427,7 +480,9 @@ class Job extends BEJob<BEJob, JobResult> {
                 code = "FAILED" // E
 
             if (null != res.job.getJobID()) {
-                String jobInfoLine = jobStateInfoLine(res.job.getJobID(), code, millis)
+                // That is indeed funny here: on our cluster, the following line did not work without the forced toString(), however
+                // on our local machine it always worked! Don't know why it worked for PBS... Now we force-convert the parameters.
+                String jobInfoLine = jobStateInfoLine("" + res.job.getJobID(), code, millis)
                 FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getNameOfJobStateLogFile(executionContext), jobInfoLine, false)
             } else {
                 logger.postSometimesInfo("Did not store info for job " + res.job.getJobName() + ", job id was null.")
@@ -440,23 +495,26 @@ class Job extends BEJob<BEJob, JobResult> {
     //TODO Create a runArray method which returns several job results with proper array ids.
     @Override
     @CompileDynamic
-    JobResult run() {
+    BEJobResult run() {
         if (runResult != null)
             throw new RuntimeException(Constants.ERR_MSG_ONLY_ONE_JOB_ALLOWED)
 
         ExecutionContextLevel contextLevel = context.getExecutionContextLevel()
         Configuration configuration = context.getConfiguration()
-        File tool = configuration.getProcessingToolPath(context, toolID)
 
         StringBuilder dbgMessage = new StringBuilder()
         StringBuilder jobDetailsLine = new StringBuilder()
         Command cmd
         boolean runJob
 
-        //Remove duplicate job ids as qsub cannot handle duplicate keys => job will hold forever as it releases the dependency queue linearly
-        List<String> dependencies = dependencyIDsAsString.unique()
-        //.collect { BEJobID jobDependencyID -> return jobDependencyID.getId() }.unique() as List<String>
-        this.parameters.putAll(convertParameterObject(Constants.RODDY_PARENT_JOBS, dependencies))
+        //Remove duplicate job ids as PBS qsub cannot handle duplicate keys => job will hold forever as it releases the dependency queue linearly.
+        this.parameters[Constants.RODDY_PARENT_JOBS] = parameterObjectToString(Constants.RODDY_PARENT_JOBS, parentJobIDsAsString.unique())
+        this.parameters[Constants.PARAMETER_FILE] = parameterObjectToString(Constants.PARAMETER_FILE, parameterFile)
+        boolean debugWrapInScript = true
+        if (configuration.configurationValues.hasValue(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)) {
+            debugWrapInScript = configuration.configurationValues.getBoolean(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)
+        }
+        this.parameters.put(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT, parameterObjectToString(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT, debugWrapInScript))
 
         appendProcessingCommands(configuration)
 
@@ -473,22 +531,24 @@ class Job extends BEJob<BEJob, JobResult> {
 
         //Execute the job or create a dummy command.
         if (runJob) {
-            runResult = new JobResult(jobManager.runJob(this))
+            runResult = jobManager.runJob(this)
             appendToJobStateLogfile(jobManager, executionContext, runResult, null)
             cmd = runResult.command
             jobDetailsLine << " => " + cmd.getExecutionID()
             System.out.println(jobDetailsLine.toString())
             if (cmd.getExecutionID() == null) {
                 context.addErrorEntry(ExecutionContextError.EXECUTION_SUBMISSION_FAILURE.expand("Please check your submission command manually.\n\t  Is your access group set properly? [${context.getAnalysis().getUsergroup()}]\n\t  Can the submission binary handle your binary?\n\t  Is your submission system offline?"))
+                logger.postSometimesInfo("Command: ${runResult.command}\nStatus Code: ${runResult.executionResult.exitCode}, Output:\n${runResult.executionResult.resultLines.join("\n")}")
                 if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.BreakSubmissionOnError)) {
                     context.abortJobSubmission()
                 }
             }
         } else {
+            // The Job is not actually executed. Therefore, create a DummyCommand that creates a dummy JobID which in turn is used to create a dummy JobResult.
             Command command = new DummyCommand(jobManager, this, jobName, false)
-            setJobState(JobState.DUMMY)
-            setRunResult(new JobResult(new BEJobResult(command, command.getExecutionID(), false, false, this.tool, parameters, parentJobs as List<BEJob>)))
-            this.setJobState(JobState.DUMMY)
+            jobState = JobState.DUMMY
+            resetJobID(command.executionID)
+            runResult = new BEJobResult(command, new BEJob(command.executionID, jobManager), null, this.tool, parameters, parentJobs as List<BEJob>)
         }
 
         //For auto filenames. Get the job id and push propagate it to all filenames.
@@ -499,8 +559,8 @@ class Job extends BEJob<BEJob, JobResult> {
                 if (!bf) return
 
                 String absolutePath = bf.getPath().getAbsolutePath()
-                if (absolutePath.contains('${RODDY_JOBID}')) {
-                    bf.setPath(new File(absolutePath.replace('${RODDY_JOBID}', runResult.jobID.shortID)))
+                if (absolutePath.contains(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID)) {
+                    bf.setPath(new File(absolutePath.replace(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID, runResult.jobID.shortID)))
                 }
             }
         }
@@ -512,7 +572,7 @@ class Job extends BEJob<BEJob, JobResult> {
 
     private void appendProcessingCommands(Configuration configuration) {
 // Only extract commands from file if none are set
-        if (getListOfProcessingCommand().size() == 0) {
+        if (getListOfProcessingParameters().size() == 0) {
             File srcTool = configuration.getSourceToolPath(toolID)
 
             logger.severe("Appending processing commands from config is currently not supported: Roddy/../BEJob.groovy appendProcessingCommands")
@@ -528,11 +588,12 @@ class Job extends BEJob<BEJob, JobResult> {
         }
     }
 
-    private JobResult handleDifferentJobRun(StringBuilder dbgMessage) {
+    private BEJobResult handleDifferentJobRun(StringBuilder dbgMessage) {
 //        logger.severe("Handling different job run is currently not supported: Roddy/../BEJob.groovy handleDifferentJobRun")
         dbgMessage << "\tdummy job created." + Constants.ENV_LINESEPARATOR
         File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
-        runResult = new JobResult(new BEJobResult(null, (Command) null, BEJobID.getNotExecutedFakeJob(this), false, tool, parameters, parentFiles.collect { it.getCreatingJobsResult()?.getJob() }.findAll { it }))
+        this.resetJobID(new BEFakeJobID(BEFakeJobID.FakeJobReason.NOT_EXECUTED))
+        runResult = new BEJobResult((Command) null, this, null, tool, parameters, parentFiles.collect { it.getCreatingJobsResult()?.getJob() }.findAll { it })
         this.setJobState(JobState.DUMMY)
         return runResult
     }
@@ -642,7 +703,7 @@ class Job extends BEJob<BEJob, JobResult> {
         String sep = Constants.ENV_LINESEPARATOR
         File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
         setJobState(JobState.UNSTARTED)
-        Command cmd = Roddy.getJobManager().createCommand(this, tool, dependencies)
+        Command cmd = Roddy.getJobManager().createCommand(this, tool, dependencies, parameters)
         jobManager.executionService.execute(cmd)
         if (LoggerWrapper.isVerbosityMedium()) {
             dbgMessage << sep << "\tcommand was created and executed for job. ID is " + cmd.getExecutionID() << sep
@@ -688,23 +749,6 @@ class Job extends BEJob<BEJob, JobResult> {
         return true;
     }
 
-    @Override
-    List<String> finalParameters() {
-        List<String> allParametersForFile = new LinkedList<>();
-        if (parameters.size() > 0) {
-            for (String parm : parameters.keySet()) {
-                String val = parameters.get(parm);
-                if (val.contains(StringConstants.DOLLAR_LEFTBRACE) && val.contains(StringConstants.BRACE_RIGHT)) {
-                    val = val.replace(StringConstants.DOLLAR_LEFTBRACE, "#{"); // Replace variable names so they can be passed to qsub.
-                }
-                String key = parm;
-                allParametersForFile << FileSystemAccessProvider.getInstance().getConfigurationConverter().convertConfigurationValue(new ConfigurationValue(key, val), this.executionContext).toString();
-            }
-        }
-        return allParametersForFile;
-    }
-
-    @Override
     File getParameterFile() {
         return this.context.getParameterFilename(this)
     }
@@ -725,15 +769,8 @@ class Job extends BEJob<BEJob, JobResult> {
         return toolID
     }
 
-    File getToolPath() {
-        return getExecutionContext().getConfiguration().getProcessingToolPath(getExecutionContext(), toolID)
-    }
-
     File getLocalToolPath() {
-        return getExecutionContext().getConfiguration().getSourceToolPath(toolID)
+        return localToolPath
     }
 
-    String getToolMD5() {
-        return toolID == null ? "-" : getExecutionContext().getConfiguration().getProcessingToolMD5(toolID)
-    }
 }

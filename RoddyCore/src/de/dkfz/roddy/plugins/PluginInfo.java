@@ -17,6 +17,9 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributes;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -77,12 +80,16 @@ public class PluginInfo {
 
     protected final Map<String, File> listOfToolDirectories = new LinkedHashMap<>();
 
-    public PluginInfo(String name, File directory, String version, String roddyAPIVersion, String jdkVersion, String groovyVersion, Map<String, String> dependencies) {
+    private final List<String> errors = new LinkedList<>();
+
+    public PluginInfo(String name, File directory, String version, String roddyAPIVersion,
+                      String jdkVersion, String groovyVersion, Map<String, String> dependencies) {
         this(name, null, directory, null, version, roddyAPIVersion, jdkVersion, groovyVersion, dependencies);
     }
 
     @Deprecated
-    public PluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, String roddyAPIVersion, String jdkVersion, String groovyVersion, Map<String, String> dependencies) {
+    public PluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, String roddyAPIVersion,
+                      String jdkVersion, String groovyVersion, Map<String, String> dependencies) {
         this.name = name;
         this.directory = directory;
         this.developmentDirectory = developmentDirectory;
@@ -97,22 +104,30 @@ public class PluginInfo {
 
     protected void fillListOfToolDirectories() {
         File toolsBaseDir = null;
-        try {
-            toolsBaseDir = getToolsDirectory();
+        toolsBaseDir = getToolsDirectory();
 
-            if (toolsBaseDir != null && toolsBaseDir.exists() && toolsBaseDir.isDirectory()) { //Search through the default folders, if possible.
+        if (toolsBaseDir != null && toolsBaseDir.exists() && toolsBaseDir.isDirectory()) { //Search through the default folders, if possible.
                 for (File file : toolsBaseDir.listFiles()) {
-                    if (!file.isDirectory() || file.isHidden()) {
-                        logger.always("Ignore directory " + file.getAbsolutePath() + "; It is not a valid tools directory.");
+                    PosixFileAttributes attr;
+                    try {
+                        attr = Files.readAttributes(file.toPath(), PosixFileAttributes.class);
+                    } catch (IOException ex) {
+                        errors.add("An IOException occurred while accessing '" + file.getAbsolutePath() + "': " + ex.getMessage());
+                        continue;
+                    }
+
+                    if (!attr.isDirectory() || file.isHidden()) {
                         continue;
                     }
 
                     String toolsDir = file.getName();
                     listOfToolDirectories.put(toolsDir, file);
                 }
-            }
-        } catch (Exception ex) {
         }
+    }
+
+    public List<String> getErrors() {
+        return errors;
     }
 
     public File getToolsDirectory() {
@@ -133,7 +148,7 @@ public class PluginInfo {
 
     public List<File> getConfigurationFiles() {
         File configPath = getConfigurationDirectory();
-        return Arrays.asList(configPath.listFiles((FileFilter) new WildcardFileFilter(new String[] {"*.sh", "*.xml"})));
+        return Arrays.asList(configPath.listFiles((FileFilter) new WildcardFileFilter(new String[]{"*.sh", "*.xml"})));
     }
 
     public String getName() {
@@ -215,7 +230,7 @@ public class PluginInfo {
     public boolean isCompatibleToRuntimeSystem() {
         boolean jdkEquals = jdkVersion.equals(RuntimeTools.getJavaRuntimeVersion());
         boolean groovyEquals = groovyVersion.equals(RuntimeTools.getGroovyRuntimeVersion());
-        boolean apiEquals =roddyAPIVersion.equals(RuntimeTools.getRoddyRuntimeVersion());
+        boolean apiEquals = roddyAPIVersion.equals(RuntimeTools.getRoddyRuntimeVersion());
         return jdkEquals && groovyEquals && apiEquals;
     }
 

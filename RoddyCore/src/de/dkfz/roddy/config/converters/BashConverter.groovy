@@ -6,22 +6,18 @@
 
 package de.dkfz.roddy.config.converters
 
+import com.sun.org.apache.xerces.internal.impl.xpath.regex.RegularExpression
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
-import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationConstants
+import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.loader.ConfigurationFactory
-import de.dkfz.roddy.config.ConfigurationValue
-import de.dkfz.roddy.config.ConfigurationValueBundle
-import de.dkfz.roddy.config.InformationalConfigurationContent
-import de.dkfz.roddy.config.ToolEntry
-import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.fs.BashCommandSet
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
 
 import java.util.logging.Level
@@ -149,6 +145,11 @@ class BashConverter extends ConfigurationConverter {
         return text;
     }
 
+    /**
+     *
+     * @param cfg    Configuration object. Basically a tree of configuration values that may additionally contain cross-references in the values.
+     * @return
+     */
     Map<String, ConfigurationValue> getConfigurationValuesSortedByDependencies(Configuration cfg) {
         def values = cfg.getConfigurationValues().getAllValuesAsList();
         Map<String, ConfigurationValue> listOfUnsortedValues = [:]
@@ -169,7 +170,8 @@ class BashConverter extends ConfigurationConverter {
 
             //TODO Add command manager specific arguments to the command manager class, leave central things here.
             //TODO How to figure out, where to put things like pid sample...
-            List<String> valueBlacklist = ["PBS_JOBID", "PBS_ARRAYID", 'PWD', "PID", "pid", "sample", "run", "projectName", "testDataOptionID", "analysisMethodNameOnInput", "analysisMethodNameOnOutput"
+            List<String> valueBlacklist = [ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW, 'PWD', Constants.PID_CAP, Constants.PID
+                                           , "sample", "run", "projectName", "testDataOptionID", "analysisMethodNameOnInput", "analysisMethodNameOnOutput"
                                            , "outputAnalysisBaseDirectory", "inputAnalysisBaseDirectory", "executionTimeString"]
             for (ConfigurationValue cv in listOfUnsortedValues.values()) {
                 boolean isValidationRule = cv.id.contains("cfgValidationRule");
@@ -210,11 +212,60 @@ class BashConverter extends ConfigurationConverter {
         return listOfSortedValues
     }
 
-    private boolean isQuoted(String string) {
+    static boolean isQuoted(String string) {
         (string.startsWith("'") && string.endsWith("'")) || (string.startsWith('"') && string.endsWith('"'))
     }
 
-    StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context, Boolean quoteSomeScalarConfigValues, Boolean autoQuoteArrays) {
+
+    static String convertListToBashArray(List list) {
+        "(${list.collect { it.toString() }.join(" ")})" as String
+    }
+
+    /** Dependent on the settings and whether the string is quoted, return the quoted string. */
+    static String addQuotesIfRequested(String value, Boolean doQuote = true) {
+        if (isQuoted(value) || !doQuote)
+            return value
+        else
+            return '"' + value + '"'
+    }
+
+    /** To convert a simple Map of String keys to String values (possibly pre-converted!), this method should be used.
+     *
+     * @param map
+     * @param doDeclare
+     * @param quoteSomeScalarConfigValues
+     * @param doQuote
+     * @return
+     */
+    static String convertStringMap(LinkedHashMap<String, String> map, Boolean doDeclare = true,
+                                   Boolean quoteSomeScalarConfigValues = true, Boolean doQuote = true) {
+        String declareString = ""
+        if (doDeclare) {
+            declareString = "declare -x   "
+        }
+        return map.collect { String k, String v ->
+            String tmp
+            if (v.startsWith("-") || v.startsWith("*")) {
+                tmp = '"' + v + '"'
+            } else if (quoteSomeScalarConfigValues && !isQuoted(v) && v =~ /[\s\t\n;]/) {
+                tmp = '"' + v + '"'
+            } else {
+                tmp = addQuotesIfRequested(v, doQuote)
+            }
+            "${declareString} ${k}=${tmp}\n".toString()
+        }.join("")
+    }
+
+    /** ConfigurationValue provides meta-data about types for the values. To exploit this specialized conversion function exists.
+     *
+     * @param cv
+     * @param context
+     * @param quoteSomeScalarConfigValues
+     * @param autoQuoteArrays
+     * @return
+     */
+    StringBuilder convertConfigurationValue(ConfigurationValue cv, ExecutionContext context,
+                                            Boolean quoteSomeScalarConfigValues, Boolean autoQuoteArrays) {
         StringBuilder text = new StringBuilder();
         String declareVar = ""
         String declareInt = ""
@@ -228,12 +279,7 @@ class BashConverter extends ConfigurationConverter {
             String tmp
 
             if (cv.type && cv.type.toLowerCase() == "basharray") {
-                // Check, if it is already quoted OR auto quote is disabled
-                // If so, take the existing quotes, if not auto-quote
-                if (isQuoted(cv.value) || !autoQuoteArrays)
-                    return new StringBuilder("${declareVar} ${cv.id}=${cv.toString()}".toString())
-                else
-                    return new StringBuilder("${declareVar} ${cv.id}=\"${cv.toString()}\"".toString());
+                return new StringBuilder("${declareVar} ${cv.id}=${addQuotesIfRequested(cv.toString(), autoQuoteArrays)}".toString())
             } else if (cv.type && cv.type.toLowerCase() == "integer") {
                 return new StringBuilder("${declareInt} ${cv.id}=${cv.toString()}".toString());
             } else if (cv.type && ["double", "float"].contains(cv.type.toLowerCase())) {
@@ -318,7 +364,7 @@ class BashConverter extends ConfigurationConverter {
         }
 
         Map<String, Integer> doubletteCounter = new HashMap<String, Integer>();
-        InformationalConfigurationContent userConfig = new InformationalConfigurationContent(null, Configuration.ConfigurationType.OTHER, "userconfig_INVALIDNAME", "An imported configuration, please change the name and this description. Also set the classname and type as necessary.", null, null, "", null, null, "");
+        PreloadedConfiguration userConfig = new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "userconfig_INVALIDNAME", "An imported configuration, please change the name and this description. Also set the classname and type as necessary.", null, null, "", null, null, "");
         Configuration newCfg = new Configuration(userConfig, (Map<String, Configuration>) null);
         Map<String, ConfigurationValue> cValues = newCfg.configurationValues.getMap();
         Map<String, ConfigurationValueBundle> cValueBundles = newCfg.configurationValueBundles.getMap();

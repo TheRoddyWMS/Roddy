@@ -15,8 +15,6 @@ fi
 
 PATH="${JDK_HOME:?Please set JDK_HOME}/bin:${JAVA_HOME:?Please set JAVA_HOME}/bin:${GROOVY_HOME:?Please set GROOVY_HOME}/bin:$PATH"
 
-#TODO Resolve the PluginBase.jar This might be set in the ini file.
-pluginbaseLib=${RODDY_DIRECTORY}/dist/plugins/PluginBase/PluginBase.jar
 libraries=`ls -d1 ${RODDY_BINARY_DIR}/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
 libraries=$libraries:$jfxlibInfo
 
@@ -128,14 +126,14 @@ export RODDY_GROOVYLIB_PATH=`readlink -f ${RODDY_BINARY_DIR}/lib/groovy*.jar`
 source ${RODDY_HELPERSCRIPTS_FOLDER}/networkFunctions.sh
 
 debuggerSettings=""
-[[ -n ${DEBUG_ROODY} ]] && debuggerSettings=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+[[ -n ${DEBUG_RODDY} ]] && debuggerSettings=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
 
 caller=$(checkAndDownloadGroovyServ "${RODDY_DIRECTORY}")
 
 if [[ ${caller} == java ]]; then
 
-  echo "Using Java to start Roddy"
-  ${caller} ${debuggerSettings} $JAVA_OPTS -enableassertions -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy $*
+  echo "Using Java to start Roddy" >> /dev/stderr
+  ${caller} ${debuggerSettings} $JAVA_OPTS -enableassertions -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy "$@"
 
 elif [[ $(basename ${caller}) == groovyclient && -f ${caller} && -x ${caller} ]]; then
 
@@ -146,7 +144,7 @@ elif [[ $(basename ${caller}) == groovyclient && -f ${caller} && -x ${caller} ]]
   [[ -z ${portForGroovyServ-} ]] && echo "Could not get a free port for GroovyServ. GroovyServ will be disabled. Delete the file dist/runtime/gservforbidden to reenable it. Please restart Roddy." && exit 5
 
   # JAVA_OPTS are automatically used by groovyserver (see the .go files in the sources)
-  ${caller} -Cenv-all ${debuggerSettings} -cp .:$libraries:${RODDY_BINARY} GServCaller.groovy $*
+  ${caller} -Cenv-all ${debuggerSettings} -cp .:$libraries:${RODDY_BINARY} GServCaller.groovy "$@"
 
 else
   echo "Cannot start Roddy, neither Java nor GroovyServ was recognized" && exit 5

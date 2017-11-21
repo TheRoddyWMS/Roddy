@@ -6,7 +6,6 @@
 
 package de.dkfz.roddy.config;
 
-import de.dkfz.roddy.config.ResourceSetSize;
 import de.dkfz.roddy.config.loader.ConfigurationFactory;
 import de.dkfz.roddy.config.loader.ConfigurationLoadError;
 import de.dkfz.roddy.config.validation.ConfigurationValidationError;
@@ -29,15 +28,19 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     private AnalysisConfiguration parentConfiguration;
     private final String analysisID;
     private final String analysisCfg;
+    private final String usePluginAttribute;
+    private final String killswitchesAttribute;
     private NodeChild analysisNode;
 
-    public AnalysisConfigurationProxy(AnalysisConfiguration parentConfiguration, String analysisID, String analysisCfg, NodeChild analysisNode) {
+    public AnalysisConfigurationProxy(AnalysisConfiguration parentConfiguration, String analysisID, String analysisCfg, String usePluginAttribute, String killswitchesAttribute, NodeChild analysisNode) {
         super(null, null, null, null, null, null, null);
+        this.usePluginAttribute = usePluginAttribute;
+        this.killswitchesAttribute = killswitchesAttribute;
         this.analysisNode = analysisNode;
 
-//        InformationalConfigurationContent informationalConfigurationContent, String
+//        PreloadedConfiguration preloadedConfiguration, String
 //    } workflowClass, Map<String, TestDataOption> testdataOptions, Configuration parentConfiguration, List<String> listOfUsedTools, List<String> usedToolFolders, String cleanupScript) {
-//        super(informationalConfigurationContent, workflowClass, testdataOptions, parentConfiguration, listOfUsedTools, usedToolFolders, cleanupScript);
+//        super(preloadedConfiguration, workflowClass, testdataOptions, parentConfiguration, listOfUsedTools, usedToolFolders, cleanupScript);
         analysisConfiguration = null;
         this.parentConfiguration = parentConfiguration;
         this.analysisID = analysisID;
@@ -69,6 +72,14 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
 
     public String getAnalysisCfg() {
         return analysisCfg;
+    }
+
+    public String getUsePluginAttribute() {
+        return usePluginAttribute;
+    }
+
+    public String getKillswitchesAttribute() {
+        return killswitchesAttribute;
     }
 
     public NodeChild getAnalysisNode() {
@@ -156,8 +167,8 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
-    public InformationalConfigurationContent getInformationalConfigurationContent() {
-        return checkAnalysisConfig().getInformationalConfigurationContent();
+    public PreloadedConfiguration getPreloadedConfiguration() {
+        return checkAnalysisConfig().getPreloadedConfiguration();
     }
 
     @Override
@@ -260,17 +271,17 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
-    public File getSourceToolPath(String tool) {
+    public File getSourceToolPath(String tool) throws ConfigurationError {
         return checkAnalysisConfig().getSourceToolPath(tool);
     }
 
     @Override
-    public File getProcessingToolPath(ExecutionContext context, String tool) {
+    public File getProcessingToolPath(ExecutionContext context, String tool) throws ConfigurationError {
         return checkAnalysisConfig().getProcessingToolPath(context, tool);
     }
 
     @Override
-    public String getProcessingToolMD5(String tool) {
+    public String getProcessingToolMD5(String tool) throws ConfigurationError {
         return checkAnalysisConfig().getProcessingToolMD5(tool);
     }
 

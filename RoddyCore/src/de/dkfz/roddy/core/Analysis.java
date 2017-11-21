@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.core;
 
+import de.dkfz.roddy.Constants;
 import de.dkfz.roddy.execution.jobs.Job;
 import de.dkfz.roddy.execution.jobs.JobState;
 import de.dkfz.roddy.AvailableFeatureToggles;
@@ -234,7 +235,7 @@ public class Analysis {
     private boolean checkJobStartability(DataSet ds) {
         String datasetID = ds.getId();
         if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning) && checkStatusForDataset(ds)) {
-            logger.postAlwaysInfo("The pid " + datasetID + " is still running and will be skipped for the process.");
+            logger.postAlwaysInfo("The " + Constants.PID + " " + datasetID + " is still running and will be skipped for the process.");
             return false;
         }
         return true;
@@ -332,7 +333,7 @@ public class Analysis {
         Thread t = new Thread(() -> {
             executeRun(ec);
         });
-        t.setName(String.format("Deferred execution context execution for pid %s", ec.getDataSet().getId()));
+        t.setName(String.format("Deferred execution context execution for " + Constants.PID + " %s", ec.getDataSet().getId()));
         t.start();
     }
 
@@ -361,15 +362,15 @@ public class Analysis {
             boolean contextRightsSettings = ExecutionService.getInstance().checkAccessRightsSettings(context);
             boolean contextPermissions = ExecutionService.getInstance().checkContextDirectoriesAndFiles(context);
             boolean contextExecutability = context.checkExecutability();
-            boolean configurarionValidity = Roddy.isStrictModeEnabled() && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors) ? !getConfiguration().hasErrors() : true;
-            isExecutable = contextRightsSettings && contextPermissions && contextExecutability && configurarionValidity;
+            boolean configurationValidity = Roddy.isStrictModeEnabled() && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors) ? !getConfiguration().hasErrors() : true;
+            isExecutable = contextRightsSettings && contextPermissions && contextExecutability && configurationValidity;
 
             if (!isExecutable) {
                 StringBuilder message = new StringBuilder("The workflow does not seem to be executable for dataset " + datasetID);
                 if (!contextRightsSettings) message.append("\n\tContext access rights settings could not be validated.");
                 if (!contextPermissions) message.append("\n\tContext permissions could not be validated.");
                 if (!contextExecutability) message.append("\n\tContext and workflow is not considered executable.");
-                if (!configurarionValidity) message.append("\n\tContext configuration has errors.");
+                if (!configurationValidity) message.append("\n\tContext configuration has errors.");
                 logger.severe(message.toString());
             } else {
                 try {
@@ -424,10 +425,13 @@ public class Analysis {
 
             // Look up errors when jobs are executed directly and when there were any started jobs.
             if (context.getStartedJobs().size() > 0) {
+                String failedJobs = "";
                 for (Job job : context.getExecutedJobs()) {
                     if (job.getJobState() == JobState.FAILED)
-                        context.addErrorEntry(ExecutionContextError.EXECUTION_JOBFAILED.expand("A job execution failed "));
+                        failedJobs += "\n\t" + job.getJobID() + ",\t" + job.getJobName();
                 }
+                if (failedJobs.length() > 0)
+                    context.addErrorEntry(ExecutionContextError.EXECUTION_JOBFAILED.expand("One or more jobs failed to execute:" + failedJobs + "\n\tPlease check extended logs in ~/.roddy/logs to see more details."));
             }
 
             // It is very nice now, that a lot of error messages will be printed. But how about colours?
@@ -556,6 +560,6 @@ public class Analysis {
     }
 
     public File getReadmeFile() {
-        return getConfiguration().getInformationalConfigurationContent().getReadmeFile();
+        return getConfiguration().getPreloadedConfiguration().getReadmeFile();
     }
 }
