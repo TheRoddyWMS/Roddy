@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.core
 
+import de.dkfz.roddy.execution.jobs.BEJobID
+import de.dkfz.roddy.execution.jobs.GenericJobInfo
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.Constants
@@ -79,7 +81,7 @@ class ExecutionContextReaderAndWriter {
                 for (String id : statusList.keySet()) {
                     JobState status = statusList[id]
 
-                    if (!Roddy.getJobManager().compareJobIDs(job.getJobID().toString(), (id)))
+                    if (job.getJobID() ==  new BEJobID(id))
                         continue
                     job.setJobState(status)
                 }
@@ -300,15 +302,15 @@ class ExecutionContextReaderAndWriter {
             //TODO Load a list of the previously created jobs and query those using qstat!
             for (String call : jobCalls) {
                 //TODO. How can we recognize different command factories? i.e. for other cluster systems?
-                BEJob beJob = Roddy.getJobManager().parseToJob(call)
-                if(beJob == null){
+                GenericJobInfo jobInfo = Roddy.getJobManager().parseGenericJobInfo(call)
+                if(jobInfo == null){
                     logger.severe("Skipped read in of job call: ${call}")
                     continue;
                 }
                 // Try to find the tool id in the context. If it is not available, set "UNKNOWN"
-                String toolID = allToolsByResourcePath[beJob.tool.parentFile.name + "/" + beJob.tool.name] ?: Constants.UNKNOWN
+                String toolID = allToolsByResourcePath[jobInfo.tool.parentFile.name + "/" + jobInfo.tool.name] ?: Constants.UNKNOWN
 
-                Job job = new Job(context, beJob.jobName, toolID, beJob.parameters as Map<String, Object>, new LinkedList<BaseFile>(), new LinkedList<BaseFile>())
+                Job job = new Job(context, jobInfo.jobName, toolID, jobInfo.parameters as Map<String, Object>, new LinkedList<BaseFile>(), new LinkedList<BaseFile>())
                 jobsStartedInContext.add(job)
             }
         }

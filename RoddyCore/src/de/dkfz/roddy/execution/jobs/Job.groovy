@@ -158,9 +158,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 , getResourceSetFromConfiguration(toolID, context)
                 , []
                 , [:]
-                , Roddy.getJobManager())
+                , Roddy.getJobManager()
+                , JobLog.toOneFile(context.loggingDirectory))
         this.localToolPath = context.getConfiguration().getSourceToolPath(toolID)
-        this.setLoggingDirectory(context.loggingDirectory)
         this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectDependencyIDsFromFiles(parentFiles), jobManager))
         this.context = context
         this.toolID = toolID
@@ -492,8 +492,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
 //        }
     }
 
-    //TODO Create a runArray method which returns several job results with proper array ids.
-    @Override
     @CompileDynamic
     BEJobResult run() {
         if (runResult != null)
@@ -692,26 +690,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return [fileUnverified, knownFilesCnt]
     }
 
-    /**
-     * Finally execute a job.
-     * @param dependencies
-     * @param dbgMessage
-     * @param cmd
-     * @return
-     */
-    private Command executeJob(List<String> dependencies, StringBuilder dbgMessage) {
-        String sep = Constants.ENV_LINESEPARATOR
-        File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
-        setJobState(JobState.UNSTARTED)
-        Command cmd = Roddy.getJobManager().createCommand(this, tool, dependencies, parameters)
-        jobManager.executionService.execute(cmd)
-        if (LoggerWrapper.isVerbosityMedium()) {
-            dbgMessage << sep << "\tcommand was created and executed for job. ID is " + cmd.getExecutionID() << sep
-        }
-        if (LoggerWrapper.isVerbosityHigh()) logger.info(dbgMessage.toString())
-        return cmd
-    }
-
     ExecutionContext getExecutionContext() {
         return context
     }
@@ -723,24 +701,19 @@ class Job extends BEJob<BEJob, BEJobResult> {
             return new LinkedList<>()
     }
 
-    @Override
-    File getLoggingDirectory() {
-        return this.executionContext.getLoggingDirectory()
-    }
+    private File _logFile = null
 /**
  * Returns the path to an existing log file.
  * If no logfile exists this returns null.
  *
  * @return
  */
-    @Override
     public synchronized File getLogFile() {
         if (_logFile == null)
             _logFile = this.getExecutionContext().getRuntimeService().getLogFileForJob(this);
         return _logFile;
     }
 
-    @Override
     public boolean hasLogFile() {
         if (getJobState().isPlannedOrRunning())
             return false;

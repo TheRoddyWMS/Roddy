@@ -112,7 +112,7 @@ class NativeWorkflow extends Workflow {
         Job wrapperJob = new Job(context, context.getTimestampString() + "_nativeJobWrapper:" + toolID, toolID, null)
 
         DirectSynchronousExecutionJobManager dcfac = new DirectSynchronousExecutionJobManager(ExecutionService.getInstance(), new JobManagerCreationParametersBuilder().setCreateDaemon(false).build())
-        DirectCommand wrapperJobCommand = new DirectCommand(dcfac, wrapperJob, "some_id", [], wrapperJob.parameters, [:], [], [], nativeWorkflowScriptWrapper, new File("/tmp"))
+        DirectCommand wrapperJobCommand = new DirectCommand(dcfac, wrapperJob, [], nativeWorkflowScriptWrapper)
         String submissionCommand = targetJobManager.getSubmissionCommand()
         if (submissionCommand == null) {
             context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("There is no submission command for this type of command factory."))

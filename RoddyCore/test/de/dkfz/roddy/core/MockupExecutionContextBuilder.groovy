@@ -151,11 +151,6 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            BEJob parseToJob(String s) {
-                return null
-            }
-
-            @Override
             GenericJobInfo parseGenericJobInfo(String s) {
                 return null
             }
@@ -166,12 +161,7 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            void updateJobStatus() {
-
-            }
-
-            @Override
-            Map<BEJob, GenericJobInfo> queryExtendedJobState(List list, boolean forceUpdate) {
+            protected Map<BEJobID, JobState> getJobStates(List list) {
                 return null
             }
 
@@ -183,11 +173,6 @@ public class MockupExecutionContextBuilder {
             @Override
             String getLogFileWildcard(BEJob job) {
                 return null
-            }
-
-            @Override
-            boolean compareJobIDs(String s, String s1) {
-                return false
             }
 
             @Override
@@ -241,21 +226,6 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            Map<String, JobState> queryJobStatus(List list) {
-                return null
-            }
-
-            @Override
-            Command createCommand(BEJob job, String s, List list, File file, Map map, List parentJobs) {
-                return null
-            }
-
-            @Override
-            String[] peekLogFile(BEJob job) {
-                return new String[0]
-            }
-
-            @Override
             String parseJobID(String commandOutput) {
                 return null
             }
@@ -266,27 +236,12 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            Map<BEJob, JobState> queryJobStatus(List list, boolean forceUpdate) {
-                return null
-            }
-
-            @Override
             JobState parseJobState(String stateString) {
                 return null
             }
 
             @Override
-            Map<String, GenericJobInfo> queryExtendedJobStateById(List<String> jobIds, boolean forceUpdate) {
-                return null
-            }
-
-            @Override
-            Map<String, JobState> queryJobStatusAll(boolean forceUpdate = false) {
-                return null
-            }
-
-            @Override
-            Map<String, JobState> queryJobStatusById(List<String> jobIds, boolean forceUpdate = false) {
+            Map<BEJobID, GenericJobInfo> queryExtendedJobStateById(List list) {
                 return null
             }
         }
