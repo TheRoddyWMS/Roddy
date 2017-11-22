@@ -27,6 +27,7 @@ import de.dkfz.roddy.execution.jobs.ProcessingParameters
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.ScannerWrapper
+import de.dkfz.roddy.tools.versions.Version
 
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 import static de.dkfz.roddy.client.RoddyStartupModes.*
@@ -488,13 +489,15 @@ public class RoddyCLIClient {
         return datasets;
     }
 
-    public static void autoselect(CommandLineCall clc) {
+    static void autoselect(CommandLineCall clc) {
 
-        String apiLevel = new ProjectLoader().getPluginRoddyAPILevel(clc.getAnalysisID());
-        if (apiLevel == null) //Explicitely query for null (then there is no auto detect!)
-            logger.postAlwaysInfo("Roddy API level could not be detected");
-        else
-            logger.postAlwaysInfo("Roddy API level for ${clc.getAnalysisID()} == ${apiLevel}");
+        String apiLevel = new ProjectLoader().getPluginRoddyAPILevel(clc.getAnalysisID())
+        if (apiLevel == null) {
+            def version = Version.fromString(Constants.APP_CURRENT_VERSION_STRING)
+            apiLevel = version.major + '.' + version.minor
+            logger.postAlwaysInfo("Using the current Roddy API level: ${apiLevel}")
+        } else
+            logger.postAlwaysInfo("Roddy API level for ${clc.getAnalysisID()}: ${apiLevel}")
     }
 
     public static void run(CommandLineCall clc) {
@@ -734,7 +737,7 @@ public class RoddyCLIClient {
     /**
      * Sets up Roddys property file from the command line.
      */
-    public static void performCommandLineSetup() {
+    static void performCommandLineSetup() {
         try {
             ScannerWrapper sc = new ScannerWrapper();
             System.out.println("Setup roddy for command line processing.\n========================================\n");
@@ -774,7 +777,8 @@ public class RoddyCLIClient {
                 String selectedAuthenticationMethod = Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE);
                 String authQuery = "Chose an authentication method:";
                 List<String> authOptions = Arrays.asList("Authenticate using a pair of passwordless keyfiles.", "Authenticate using a user and a password.");
-                List<String> authMethods = Arrays.asList(Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD);
+                List<String> authMethods =
+                        [Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_SSHAGENT]
                 selected = null;
                 if (selectedAuthenticationMethod.equals(Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE))
                     selected = authOptions.get(0);

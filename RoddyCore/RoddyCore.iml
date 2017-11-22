@@ -14,5 +14,6 @@
     <orderEntry type="library" name="R Skeletons" level="application" />
     <orderEntry type="module" module-name="RoddyToolLib_main" />
     <orderEntry type="module" module-name="BatchEuphoria_main" />
+    <orderEntry type="library" name="roddyBundledLibraries" level="project" />
   </component>
 </module>

@@ -16,8 +16,8 @@ public class Constants {
     // Application constants
     /////////////////////////
 
-    public static final String APP_CURRENT_VERSION_STRING = "2.4.4";
-    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Fri Nov 10 18:04:04 CET 2017";
+    public static final String APP_CURRENT_VERSION_STRING = "2.4.8";
+    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Thu Nov 16 15:24:50 CET 2017";
     public static final String APP_PROPERTY_JOB_MANAGER_CLASS = "jobManagerClass";
     public static final String APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS = "fileSystemAccessManagerClass";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_CLASS = "executionServiceClass";
@@ -30,7 +30,9 @@ public class Constants {
     public static final String APP_PROPERTY_LIBRARYDIRECTORIES = "libraryDirectories";
     public static final String APP_PROPERTY_USED_LIBRARIES = "usedLibraries";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD = "password";
+    public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_SSHAGENT = "sshagent";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE = "keyfile";
+    public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE_LOCATION = "executionServiceKeyfileLocation";
     public static final String APP_PROPERTY_CONFIGURATION_DIRECTORIES = "configurationDirectories";
     public static final String APP_PROPERTY_PLUGIN_DIRECTORIES = "pluginDirectories";
     public static final String APP_PROPERTY_APPLICATION_DEBUG_TAGS = "applicationDebugTags";
@@ -39,6 +41,7 @@ public class Constants {
     public static final String APP_PROPERTY_NET_USEPROXY = "netUseProxy";
     public static final String APP_PROPERTY_NET_PROXY_ADDRESS = "netProxyAddress";
     public static final String APP_PROPERTY_NET_PROXY_USR = "netProxyUser";
+    public static final String APP_SCRATCH_BASE_DIRECTORY = "scratchBaseDirectory";
 
     /////////////////////////
     // Error messages
