@@ -12,6 +12,7 @@ import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.converters.BashConverter
+import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
@@ -132,7 +133,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         if ((null != parentJobIDs && !parentJobIDs.isEmpty()) &&
                 (null != parentJobs && !parentJobs.isEmpty())) {
             def validJobs = jobsWithUniqueValidJobId(parentJobs)
-            def validIds = uniqueValidJobIDs(parentJobIDs).collect{ it.toString() }
+            def validIds = uniqueValidJobIDs(parentJobIDs).collect { it.toString() }
             def idsOfValidJobs = jobs2jobIDs(validJobs).collect { it.toString() }
             if (validIds != idsOfValidJobs) {
                 throw new RuntimeException("parentJobBEJob needs to be called with one of parentJobs, parentJobIDs, or parentJobsIDs and *corresponding* parentJobs.")
@@ -515,6 +516,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             debugWrapInScript = configuration.configurationValues.getBoolean(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)
         }
         this.parameters.put(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT, parameterObjectToString(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT, debugWrapInScript))
+        def jobConfiguration = createJobConfiguration()
 
         appendProcessingCommands(configuration)
 
@@ -531,6 +533,10 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         //Execute the job or create a dummy command.
         if (runJob) {
+            // Write parameter file first!
+            storeJobConfigurationFile(jobConfiguration)
+
+            // Then execute the job
             runResult = jobManager.runJob(this)
             appendToJobStateLogfile(jobManager, executionContext, runResult, null)
             cmd = runResult.command
@@ -570,26 +576,43 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return runResult
     }
 
-    private void appendProcessingCommands(Configuration configuration) {
-// Only extract commands from file if none are set
-        if (getListOfProcessingParameters().size() == 0) {
-            File srcTool = configuration.getSourceToolPath(toolID)
+/**
+ * There are several reasons, why we need a job configuration.
+ * The most important reason is, that we need to replicate Roddys configuration mechanism with all it's functionality for
+ * any target system (Bash so far). If we don't do it, we will suffer from:
+ * - wrong values
+ * - wrong resolved value dependencies
+ * - mistakenly overriden values
+ * There might be more, but these are the ones for now.
+ * @return
+ */
+    Configuration createJobConfiguration() {
+// Necessary? Could be needed.
+//        List<String> convertedParameters = BashConverter.convertStringMapToList(parameters,
+//                executionContext.getFeatureToggleStatus(AvailableFeatureToggles.UseDeclareFunctionalityForBashConverter),
+//                executionContext.getFeatureToggleStatus(AvailableFeatureToggles.QuoteSomeScalarConfigValues),
+//                executionContext.getFeatureToggleStatus(AvailableFeatureToggles.AutoQuoteBashArrayVariables))
+        Configuration jobConfiguration = new Configuration(null, executionContext.configuration)
+        jobConfiguration.configurationValues.addAll(parameters.collect { String k, String v -> new ConfigurationValue(jobConfiguration, k, v) })
+        return jobConfiguration
+    }
 
+    void storeJobConfigurationFile(Configuration cfg) {
+        String configText = ConfigurationConverter.convertAutomatically(context, cfg)
+        FileSystemAccessProvider.getInstance().writeTextFile(getParameterFile(), configText, context)
+
+//        if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
+//            FileSystemAccessProvider.getInstance().writeTextFile(getParameterFile(), convertedParameters, context)
+    }
+
+    private void appendProcessingCommands(Configuration configuration) {
+        // Only extract commands from file if none are set
+        if (getListOfProcessingParameters().size() == 0) {
             logger.severe("Appending processing commands from config is currently not supported: Roddy/../BEJob.groovy appendProcessingCommands")
-//            //Look in the configuration for resource options
-//            ProcessingCommands extractedPCommands = Roddy.getJobManager().getProcessingCommandsFromConfiguration(configuration, toolID);
-//
-//            //Look in the script if no options are configured
-//            if (extractedPCommands == null)
-//                extractedPCommands = Roddy.getJobManager().extractProcessingCommandsFromToolScript(srcTool);
-//
-//            if (extractedPCommands != null)
-//                this.addProcessingCommand(extractedPCommands);
         }
     }
 
     private BEJobResult handleDifferentJobRun(StringBuilder dbgMessage) {
-//        logger.severe("Handling different job run is currently not supported: Roddy/../BEJob.groovy handleDifferentJobRun")
         dbgMessage << "\tdummy job created." + Constants.ENV_LINESEPARATOR
         File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
         this.resetJobID(new BEFakeJobID(BEFakeJobID.FakeJobReason.NOT_EXECUTED))

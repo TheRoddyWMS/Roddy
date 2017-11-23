@@ -17,6 +17,10 @@
         <!--<cvalue name="valuec" value="${valuea}"/>-->
         <!--<cvalue name="valuea" value="${valueb}"/>-->
         <!--<cvalue name="valueb" value="${valuea}"/>-->
+        <cvalue name="runWithErrors" value="false" type="boolean" />
+        <cvalue name="aValueWhichWillBePassedAsParameter" value="WillBeOverriden" />
+        <cvalue name="aValueWithASystemDependency" value="${SHELL}" />
+        <cvalue name="aValueWithDependencyToAParameter" value="${aJobParm}" />
         <cvalue name="testOutputDirectory" value="${outputAnalysisBaseDirectory}/testfiles" type="path"/>
         <cvalue name="testInnerOutputDirectory" value="${testOutputDirectory}/testfilesw2"/>
     </configurationvalues>
@@ -37,6 +41,11 @@
         <tool name='testScriptExitBad' value='testScriptSleepExitBad.sh' basepath='roddyTests'>
             <input type="file" typeof="SimpleTestTextFile" scriptparameter="FILENAME_IN"/>
             <output type="file" typeof="SimpleTestTextFile" scriptparameter="FILENAME_OUT"/>
+        </tool>
+        <tool name='testScriptWithParams' value='testScriptSleepExitBad.sh' basepath='roddyTests'>
+            <input type="file" typeof="SimpleTestTextFile" scriptparameter="FILENAME_IN"/>
+            <input type="string" setby="callingCode" scriptparameter="aJobParm" />
+            <output type="file" typeof="SimpleTestTextFile" scriptparameter="FILENAME_OUT" filename="${testOutputDirectory}/test_onScript_withParm_${aJobParm}.txt"/>
         </tool>
         <tool name="testFileWithChildren" value="testScriptSleep.sh" basepath="roddyTests">
             <input type="file" typeof="SimpleTestTextFile" scriptparameter="FILENAME_IN"/>

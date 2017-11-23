@@ -160,14 +160,18 @@ class BashConverter extends ConfigurationConverter {
      *
      * @return
      */
-    Map<String, ConfigurationValue> getConfigurationValuesSortedByDependencies(Configuration cfg) {
-        List<ConfigurationValue> values = cfg.getConfigurationValues().getAllValuesAsList()
+    Map<String, ConfigurationValue> getConfigurationValuesSortedByDependencies(Configuration cfg, boolean returnLeftOverCValuesOnly = false) {
+        return getConfigurationValuesSortedByDependencies(cfg.getConfigurationValues().getAllValuesAsList(), returnLeftOverCValuesOnly)
+    }
+
+    Map<String, ConfigurationValue> getConfigurationValuesSortedByDependencies(List<ConfigurationValue> values, boolean returnLeftOverCValuesOnly = false) {
+
         Map<String, ConfigurationValue> listOfUnsortedValues = values.collectEntries { [it.id, it] }
         Map<String, ConfigurationValue> listOfSortedValues = new LinkedHashMap<String, ConfigurationValue>()
 
         // Blacklist of values which will be ignored for the dependency resolution. E.g. values, which will be available later on
         // in the runtime config / job.
-        List<String> valueBlacklist = getValueBlackList(cfg)
+        List<String> valueBlacklist = getValueBlackList(values)
 
         // Would have like to do this with a simple do .. while loop, but Groovy does not know that yet.
         boolean listOfSortedValuesChanged = true
@@ -198,25 +202,23 @@ class BashConverter extends ConfigurationConverter {
             listOfSortedValuesChanged = foundValues.values().size() > 0
         }
 
+        // In the rare case, that you want to have all the values, which still contain unresolvable dependencies, return here.
+        if (returnLeftOverCValuesOnly)
+            return listOfUnsortedValues
+
         // Finally put the leftover values to the end of the list. and return this.
         return listOfSortedValues + listOfUnsortedValues
     }
 
-    static List<String> getValueBlackList(Configuration cfg) {
+    static List<String> getValueBlackList(def values) {
 
         // Default values
         List<String> defaultValues = [
                 'PWD',
                 ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW,
-                "projectName",
-                Constants.PID_CAP, Constants.PID,
-                "analysisMethodNameOnInput", "analysisMethodNameOnOutput",
-                "outputAnalysisBaseDirectory", "inputAnalysisBaseDirectory", "executionTimeString",
-                "sample", "run",
         ]
 
-        // Trimming of values
-        return defaultValues + cfg.configurationValues.get("additionalBlacklistForCfgRuntimeConversion").toStringList().collect { it.trim() }.findAll()
+        return defaultValues
     }
 
     static boolean isComment(ConfigurationValue cv) {
@@ -251,7 +253,7 @@ class BashConverter extends ConfigurationConverter {
      * @param doQuote
      * @return
      */
-    static String convertStringMap(LinkedHashMap<String, String> map, Boolean doDeclare = true,
+    static List<String> convertStringMapToList(Map<String, String> map, Boolean doDeclare = true,
                                    Boolean quoteSomeScalarConfigValues = true, Boolean doQuote = true) {
         String declareString = ""
         if (doDeclare) {
@@ -267,7 +269,20 @@ class BashConverter extends ConfigurationConverter {
                 tmp = addQuotesIfRequested(v, doQuote)
             }
             "${declareString} ${k}=${tmp}\n".toString()
-        }.join("")
+        }
+    }
+
+    /** To convert a simple Map of String keys to String values (possibly pre-converted!), this method should be used.
+     *
+     * @param map
+     * @param doDeclare
+     * @param quoteSomeScalarConfigValues
+     * @param doQuote
+     * @return
+     */
+    static String convertStringMap(Map<String, String> map, Boolean doDeclare = true,
+                                   Boolean quoteSomeScalarConfigValues = true, Boolean doQuote = true) {
+        return convertStringMapToList(map, doDeclare, quoteSomeScalarConfigValues, doQuote).join("")
     }
 
     /** ConfigurationValue provides meta-data about types for the values. To exploit this specialized conversion function exists.

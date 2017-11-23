@@ -246,14 +246,7 @@ class GenericMethod {
 
         List<BaseFile> filesToVerify = fillListOfCreatedObjects(outputObject)
 
-        F result
-
-        // Call the job as either an array or a single job.
-        if (arrayIndices != null) {
-            result = createAndRunArrayJob(filesToVerify) as F
-        } else {
-            result = createAndRunSingleJob(filesToVerify, outputObject) as F
-        }
+        F result = createAndRunSingleJob(filesToVerify, outputObject) as F
 
         // Finally check the result and append an error to the context.
         if (result == null) {
