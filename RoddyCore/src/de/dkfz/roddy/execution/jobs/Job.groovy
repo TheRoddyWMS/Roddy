@@ -159,7 +159,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 , []
                 , [:]
                 , Roddy.getJobManager()
-                , JobLog.toOneFile(context.loggingDirectory))
+                , JobLog.toOneFile(context.loggingDirectory)
+                , null)
         this.localToolPath = context.getConfiguration().getSourceToolPath(toolID)
         this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectDependencyIDsFromFiles(parentFiles), jobManager))
         this.context = context

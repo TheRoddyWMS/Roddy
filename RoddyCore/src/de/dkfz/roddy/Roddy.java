@@ -731,14 +731,7 @@ public class Roddy {
             return;
 
         if (jobManager != null) {
-            if (jobManager.executesWithoutJobSystem() && waitForJobsToFinish) {
-                exitCode = performWaitforJobs();
-            } else {
-                List<Command> listOfCreatedCommands = jobManager.getListOfCreatedCommands();
-                for (Command command : listOfCreatedCommands) {
-                    if (command.getJob().getJobState() == JobState.FAILED) exitCode++;
-                }
-            }
+            exitCode = performWaitforJobs();
         }
         exit(exitCode);
     }

@@ -161,12 +161,12 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            protected Map<BEJobID, JobState> getJobStates(List list) {
+            protected Map<BEJobID, JobState> queryJobStates(List list) {
                 return null
             }
 
             @Override
-            void addJobStatusChangeListener(BEJob job) {
+            void addToListOfStartedJobs(BEJob job) {
 
             }
 

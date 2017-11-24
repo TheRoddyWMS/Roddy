@@ -103,7 +103,7 @@ class ExecutionContextReaderAndWriter {
             for (String jobID : unknownJobs.keySet()) {
                 BEJob job = unknownJobs[jobID]
                 job.setJobState(map[job])
-                Roddy.getJobManager().addJobStatusChangeListener(job)
+                Roddy.getJobManager().addToListOfStartedJobs(job)
             }
             for (String jobID : possiblyRunningJobs.keySet()) {
                 BEJob job = possiblyRunningJobs[jobID]
@@ -111,7 +111,7 @@ class ExecutionContextReaderAndWriter {
                     job.setJobState(JobState.FAILED)
                 } else {
                     job.setJobState(map[job])
-                    Roddy.getJobManager().addJobStatusChangeListener(job)
+                    Roddy.getJobManager().addToListOfStartedJobs(job)
                 }
             }
 
