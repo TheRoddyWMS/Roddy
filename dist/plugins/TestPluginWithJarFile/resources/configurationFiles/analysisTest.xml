@@ -21,8 +21,6 @@
         <cvalue name="aValueWhichWillBePassedAsParameter" value="WillBeOverriden" />
         <cvalue name="aValueWithASystemDependency" value="${SHELL}" />
         <cvalue name="aValueWithDependencyToAParameter" value="${aJobParm}" />
-        <cvalue name="testOutputDirectory" value="${outputAnalysisBaseDirectory}/testfiles" type="path"/>
-        <cvalue name="testInnerOutputDirectory" value="${testOutputDirectory}/testfilesw2"/>
     </configurationvalues>
     <processingTools>
         <!--<tool name="cleanupScript" value="cleanupScript.sh" basepath="roddyTests">-->

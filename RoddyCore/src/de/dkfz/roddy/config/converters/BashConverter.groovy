@@ -169,10 +169,6 @@ class BashConverter extends ConfigurationConverter {
         Map<String, ConfigurationValue> listOfUnsortedValues = values.collectEntries { [it.id, it] }
         Map<String, ConfigurationValue> listOfSortedValues = new LinkedHashMap<String, ConfigurationValue>()
 
-        // Blacklist of values which will be ignored for the dependency resolution. E.g. values, which will be available later on
-        // in the runtime config / job.
-        List<String> valueBlacklist = getValueBlackList(values)
-
         // Would have like to do this with a simple do .. while loop, but Groovy does not know that yet.
         boolean listOfSortedValuesChanged = true
         while (listOfSortedValuesChanged) {
@@ -185,7 +181,7 @@ class BashConverter extends ConfigurationConverter {
                 // Check, how many dependencies to other values are set and find out for each dependency, if
                 // it was resolved in a former loop run or if it is a blacklisted value.
                 int noOfDependencies = dependenciesToOtherValues.size()
-                int resolvedOrBlacklistedCount = dependenciesToOtherValues.findAll { listOfSortedValues.containsKey(it) || valueBlacklist.contains(it) }.size()
+                int resolvedOrBlacklistedCount = dependenciesToOtherValues.findAll { listOfSortedValues.containsKey(it) }.size()
 
                 // Continue, if the value cannot be resolved fully and at least one dependency is left.
                 if (noOfDependencies - resolvedOrBlacklistedCount > 0)
@@ -208,17 +204,6 @@ class BashConverter extends ConfigurationConverter {
 
         // Finally put the leftover values to the end of the list. and return this.
         return listOfSortedValues + listOfUnsortedValues
-    }
-
-    static List<String> getValueBlackList(def values) {
-
-        // Default values
-        List<String> defaultValues = [
-                'PWD',
-                ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW,
-        ]
-
-        return defaultValues
     }
 
     static boolean isComment(ConfigurationValue cv) {
