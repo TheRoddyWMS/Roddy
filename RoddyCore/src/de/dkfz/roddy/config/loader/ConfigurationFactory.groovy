@@ -135,6 +135,7 @@ class ConfigurationFactory {
             } catch (Exception ex) {
                 logger.severe("File ${file.absolutePath} cannot be loaded! Error in config file! ${ex.toString()}")
                 logger.severe(RoddyIOHelperMethods.getStackTraceAsString(ex))
+                Roddy.exit(1)
             }
         }
         if (duplicateConfigurationIDs) {
@@ -183,7 +184,7 @@ class ConfigurationFactory {
             } catch (org.xml.sax.SAXParseException ex) {
                 throw new ProjectLoaderException("The validation of a configuration file ${it.absolutePath} failed.")
             } catch (Exception ex) {
-                logger.severe("An unknown exception occured during the atempt to load a configuration file:\n\t${it.absolutePath} cannot be loaded.\n\t${ex.toString()}")
+                logger.severe("An unknown exception occured during the attempt to load a configuration file:\n\t${it.absolutePath} cannot be loaded.\n\t${ex.toString()}")
                 logger.sometimes(RoddyIOHelperMethods.getStackTraceAsString(ex))
                 throw ex
             }

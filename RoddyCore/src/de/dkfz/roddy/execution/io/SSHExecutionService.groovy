@@ -11,14 +11,12 @@
 package de.dkfz.roddy.execution.io
 
 import com.jcraft.jsch.agentproxy.AgentProxy
-import com.jcraft.jsch.agentproxy.AgentProxyException
 import com.jcraft.jsch.agentproxy.Connector
 import com.jcraft.jsch.agentproxy.ConnectorFactory
 import com.jcraft.jsch.agentproxy.Identity
 import com.jcraft.jsch.agentproxy.sshj.AuthAgent
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.config.ConfigurationError
 import de.dkfz.roddy.execution.io.FileAttributes
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper

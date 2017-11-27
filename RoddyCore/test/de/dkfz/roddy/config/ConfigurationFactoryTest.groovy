@@ -6,18 +6,16 @@
 
 package de.dkfz.roddy.config
 
-import de.dkfz.roddy.config.ResourceSet
-import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.loader.ProcessingToolReader
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.LibrariesFactoryTest
 import de.dkfz.roddy.tools.BufferValue
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.TimeUnit
 import de.dkfz.roddy.tools.Tuple3
 import groovy.transform.TypeCheckingMode
@@ -25,11 +23,12 @@ import groovy.util.slurpersupport.NodeChild
 import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException;
+import org.junit.rules.ExpectedException
 import org.junit.rules.TemporaryFolder
-import static de.dkfz.roddy.config.ResourceSetSize.*;
 
 import java.lang.reflect.Method
+
+import static de.dkfz.roddy.config.ResourceSetSize.*
 
 /**
  * Tests for ConfigurationFactory
