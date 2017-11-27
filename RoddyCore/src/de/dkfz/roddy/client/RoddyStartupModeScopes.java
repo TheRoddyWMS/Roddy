@@ -14,12 +14,9 @@ public enum RoddyStartupModeScopes {
 
     /**
      * Use this scope to ignore options for command line processing. They will not be used in the Roddy binary!
-     * CLI scope is used for startup modes in which the Roddy binary is not active, except for
-     * Instead, they need a script file and are fully handled in the roddy.sh
-     * This is useful, if things can be handled in an easier way with scripts,
-     * like i.e. file operations
+     * Roddy may be called with the requested mode, but without options.
      *
-     * no execution service, no execution service, no filesystem access provider
+     * no job manager, no execution service, no filesystem access provider
      * help
      */
     SCOPE_CLI,
