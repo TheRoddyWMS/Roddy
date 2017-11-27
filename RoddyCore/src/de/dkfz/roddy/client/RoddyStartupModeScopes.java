@@ -13,36 +13,42 @@ package de.dkfz.roddy.client;
 public enum RoddyStartupModeScopes {
 
     /**
-     * Use this scope to leave options for command line processing.
-     * They will not be used in the Roddy binary!
+     * Use this scope to ignore options for command line processing. They will not be used in the Roddy binary!
+     * CLI scope is used for startup modes in which the Roddy binary is not active, except for
      * Instead, they need a script file and are fully handled in the roddy.sh
      * This is useful, if things can be handled in an easier way with scripts,
      * like i.e. file operations
+     *
+     * no execution service, no execution service, no filesystem access provider
+     * help
      */
     SCOPE_CLI,
 
     /**
      * This scope is for startup modes where only a reduced init is necessary.
+     * direct job manager, no execution service, no filesystem access provider
      */
-    SCOPE_REDUCED,
+    SCOPE_REDUCED(true),
 
     /**
      * This scope is for modes with a full init. The job manager however will be the direct job manager.
+     * direct job manager, execution service, filesystem access provider
      */
     SCOPE_FULL(true),
 
     /**
      * This scope starts all modes and also initializes the Job Manager
+     * custom job manager, execution service, filesystem access provider
      */
     SCOPE_FULL_WITHJOBMANAGER(true);
 
-    public final boolean needsFullInit;
+    public final boolean needsJobManager;
 
     RoddyStartupModeScopes() {
         this(false);
     }
 
     RoddyStartupModeScopes(boolean fullInit) {
-        this.needsFullInit = fullInit;
+        this.needsJobManager = fullInit;
     }
 }
