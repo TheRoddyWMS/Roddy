@@ -64,6 +64,11 @@ class Job extends BEJob<BEJob, BEJobResult> {
     private Map<String, Object> initialInputParameters = [:]
 
     /**
+     * Command object of last execution.
+     */
+    protected transient Command lastCommand
+
+    /**
      * The list contains files which should be validated for a job restart.
      */
     public final List<BaseFile> filesToVerify
@@ -507,7 +512,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         boolean runJob
 
         //Remove duplicate job ids as PBS qsub cannot handle duplicate keys => job will hold forever as it releases the dependency queue linearly.
-        this.parameters[Constants.RODDY_PARENT_JOBS] = parameterObjectToString(Constants.RODDY_PARENT_JOBS, parentJobIDsAsString.unique())
+        this.parameters[Constants.RODDY_PARENT_JOBS] = parameterObjectToString(Constants.RODDY_PARENT_JOBS, parentJobIDs.unique()*.id)
         this.parameters[Constants.PARAMETER_FILE] = parameterObjectToString(Constants.PARAMETER_FILE, parameterFile)
         boolean debugWrapInScript = true
         if (configuration.configurationValues.hasValue(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)) {
@@ -533,9 +538,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
             runResult = jobManager.runJob(this)
             appendToJobStateLogfile(jobManager, executionContext, runResult, null)
             cmd = runResult.command
-            jobDetailsLine << " => " + cmd.getExecutionID()
+            jobDetailsLine << " => " + cmd.setJobID()
             System.out.println(jobDetailsLine.toString())
-            if (cmd.getExecutionID() == null) {
+            if (cmd.setJobID() == null) {
                 context.addErrorEntry(ExecutionContextError.EXECUTION_SUBMISSION_FAILURE.expand("Please check your submission command manually.\n\t  Is your access group set properly? [${context.getAnalysis().getUsergroup()}]\n\t  Can the submission binary handle your binary?\n\t  Is your submission system offline?"))
                 logger.postSometimesInfo("Command: ${runResult.command}\nStatus Code: ${runResult.executionResult.exitCode}, Output:\n${runResult.executionResult.resultLines.join("\n")}")
                 if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.BreakSubmissionOnError)) {
@@ -546,8 +551,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
             // The Job is not actually executed. Therefore, create a DummyCommand that creates a dummy JobID which in turn is used to create a dummy JobResult.
             Command command = new DummyCommand(jobManager, this, jobName, false)
             jobState = JobState.DUMMY
-            resetJobID(command.executionID)
-            runResult = new BEJobResult(command, new BEJob(command.executionID, jobManager), null, this.tool, parameters, parentJobs as List<BEJob>)
+            resetJobID(command.jobID)
+            runResult = new BEJobResult(command, new BEJob(command.jobID, jobManager), null, this.tool, parameters, parentJobs as List<BEJob>)
         }
 
         //For auto filenames. Get the job id and push propagate it to all filenames.
@@ -564,7 +569,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
             }
         }
 
-        jobManager.addJobStatusChangeListener(this)
         lastCommand = cmd
         return runResult
     }

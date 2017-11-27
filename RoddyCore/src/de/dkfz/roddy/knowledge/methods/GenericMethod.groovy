@@ -249,11 +249,7 @@ class GenericMethod {
         F result
 
         // Call the job as either an array or a single job.
-        if (arrayIndices != null) {
-            result = createAndRunArrayJob(filesToVerify) as F
-        } else {
-            result = createAndRunSingleJob(filesToVerify, outputObject) as F
-        }
+        result = createAndRunSingleJob(filesToVerify, outputObject) as F
 
         // Finally check the result and append an error to the context.
         if (result == null) {
@@ -483,24 +479,6 @@ class GenericMethod {
 
         //Verifiable output files:
         return allCreatedObjects.findAll { FileObject fo -> fo instanceof BaseFile && !((BaseFile) fo).isTemporaryFile() } as List<BaseFile>
-    }
-
-    private FileObject createAndRunArrayJob(List<BaseFile> filesToVerify) {
-        BEJobResult jobResult = new Job(context, context.createJobName(firstInputFile, toolName), toolName, arrayIndices, parameters, allInputFiles, filesToVerify).run();
-
-        Map<String, FileObject> outputObjectsByArrayIndex = [:];
-        IndexedFileObjects indexedFileObjects = new IndexedFileObjects(arrayIndices, outputObjectsByArrayIndex, context);
-        // Run array job and afterwards create output files for all sub jobs. The values in filesToVerify will be used and the path names will be corrected.
-        int i = 1;
-        for (String arrayIndex in arrayIndices) {
-            List<FileObject> newObjects = [];
-            outputObjectsByArrayIndex[arrayIndex] = createOutputObject(arrayIndex);
-            BEJobResult jr = Roddy.getJobManager().convertToArrayResult(jobResult.job, jobResult, i++)
-            for (FileObject fo : newObjects) {
-                fo.setCreatingJobsResult(jr);
-            }
-        }
-        return indexedFileObjects;
     }
 
     private FileObject createAndRunSingleJob(List<BaseFile> filesToVerify, FileObject outputObject) {

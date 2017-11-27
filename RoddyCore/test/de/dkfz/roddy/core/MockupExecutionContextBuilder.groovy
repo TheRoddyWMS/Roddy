@@ -133,11 +133,16 @@ public class MockupExecutionContextBuilder {
     }
 
     public static BatchEuphoriaJobManager createMockupJobManager() {
-        new BatchEuphoriaJobManager(new NoNoExecutionService(), new JobManagerCreationParametersBuilder().setCreateDaemon(false).build()) {
+        new BatchEuphoriaJobManager(new NoNoExecutionService(), JobManagerOptions.create().setCreateDaemon(false).build()) {
 
             @Override
             BEJobResult runJob(BEJob job) {
                 return null
+            }
+
+            @Override
+            void startHeldJobs(List list) {
+
             }
 
             @Override
@@ -156,11 +161,6 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            BEJobResult convertToArrayResult(BEJob arrayChildJob, BEJobResult parentJobsResult, int arrayIndex) {
-                return null
-            }
-
-            @Override
             protected Map<BEJobID, JobState> queryJobStates(List list) {
                 return null
             }
@@ -168,26 +168,6 @@ public class MockupExecutionContextBuilder {
             @Override
             void addToListOfStartedJobs(BEJob job) {
 
-            }
-
-            @Override
-            String getLogFileWildcard(BEJob job) {
-                return null
-            }
-
-            @Override
-            String getStringForQueuedJob() {
-                return null
-            }
-
-            @Override
-            String getStringForJobOnHold() {
-                return null
-            }
-
-            @Override
-            String getStringForRunningJob() {
-                return null
             }
 
             @Override
@@ -232,11 +212,6 @@ public class MockupExecutionContextBuilder {
 
             @Override
             String getSubmissionCommand() {
-                return null
-            }
-
-            @Override
-            JobState parseJobState(String stateString) {
                 return null
             }
 

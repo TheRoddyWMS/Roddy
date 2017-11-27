@@ -683,9 +683,9 @@ public class Roddy {
         }
 
         /** Get the constructor which comes with no parameters */
-        Constructor first = jobManagerClass.getDeclaredConstructor(BEExecutionService.class, JobManagerCreationParameters.class);
+        Constructor first = jobManagerClass.getDeclaredConstructor(BEExecutionService.class, JobManagerOptions.class);
         jobManager = (BatchEuphoriaJobManager) first.newInstance(ExecutionService.getInstance()
-                , new JobManagerCreationParametersBuilder()
+                , JobManagerOptions.create()
                         .setCreateDaemon(true)
                         .setTrackUserJobsOnly(trackUserJobsOnly)
                         .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
