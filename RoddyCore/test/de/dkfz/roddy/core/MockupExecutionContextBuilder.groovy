@@ -133,10 +133,10 @@ public class MockupExecutionContextBuilder {
     }
 
     public static BatchEuphoriaJobManager createMockupJobManager() {
-        new BatchEuphoriaJobManager(new NoNoExecutionService(), JobManagerOptions.create().setCreateDaemon(false).build()) {
+        new BatchEuphoriaJobManager(new NoNoExecutionService(), JobManagerOptions.create().setStrictMode(false).build()) {
 
             @Override
-            BEJobResult runJob(BEJob job) {
+            BEJobResult submitJob(BEJob job) {
                 return null
             }
 
@@ -147,11 +147,6 @@ public class MockupExecutionContextBuilder {
 
             @Override
             ProcessingParameters convertResourceSet(BEJob job, ResourceSet resourceSet) {
-                return null
-            }
-
-            @Override
-            ProcessingParameters extractProcessingParametersFromToolScript(File file) {
                 return null
             }
 
@@ -201,7 +196,7 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            void queryJobAbortion(List list) {
+            void killJobs(List<BEJob> list) {
 
             }
 

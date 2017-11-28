@@ -543,11 +543,7 @@ class ExecutionContext {
     }
 
     List<File> getLogFilesForExecutedJobs() {
-        List<File> allFiles = new LinkedList<>()
-        for (BEJob j : getExecutedJobs()) {
-            allFiles.add(Roddy.getJobManager().queryExtendedJobStateById([j]*.jobID).get(j*.jobID).logFile)
-        }
-        return allFiles
+        return Roddy.jobManager.queryExtendedJobStateById(getExecutedJobs()*.jobID).collect { it.value.logFile }
     }
 
     List<File> getAdditionalLogFiles() {

@@ -535,7 +535,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         //Execute the job or create a dummy command.
         if (runJob) {
-            runResult = jobManager.runJob(this)
+            runResult = jobManager.submitJob(this)
             appendToJobStateLogfile(jobManager, executionContext, runResult, null)
             cmd = runResult.command
             jobDetailsLine << " => " + cmd.setJobID()

@@ -687,6 +687,7 @@ public class Roddy {
         jobManager = (BatchEuphoriaJobManager) first.newInstance(ExecutionService.getInstance()
                 , JobManagerOptions.create()
                         .setCreateDaemon(true)
+                        .setStrictMode(false)
                         .setTrackUserJobsOnly(trackUserJobsOnly)
                         .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
                         .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI()).build());
@@ -731,12 +732,12 @@ public class Roddy {
             return;
 
         if (jobManager != null) {
-            exitCode = performWaitforJobs();
+            exitCode = waitforJobs();
         }
         exit(exitCode);
     }
 
-    private static int performWaitforJobs() {
+    private static int waitforJobs() {
         try {
             Thread.sleep(15000); //Sleep at least 15 seconds to let any job scheduler handle things...
             return jobManager.waitForJobsToFinish();
