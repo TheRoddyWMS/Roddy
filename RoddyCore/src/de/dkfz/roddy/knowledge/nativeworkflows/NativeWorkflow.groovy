@@ -15,13 +15,14 @@ import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.Workflow
 import de.dkfz.roddy.execution.BEExecutionService
-import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
-import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.execution.jobs.GenericJobInfo as BEGenJI
+import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
+import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
+import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods

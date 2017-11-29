@@ -521,12 +521,12 @@ public class Roddy {
             time("init proxy");
 
             currentStep = "Initialize file system access provider";
-            FileSystemAccessProvider.initializeProvider(mode.needsFullInit());
+            FileSystemAccessProvider.initializeProvider(mode.needsJobManager());
             time("init fsap");
 
             //Do not touch the calling order, execution service must be set before BatchEuphoriaJobManager.
             currentStep = "Initialize execution service";
-            ExecutionService.initializeService(mode.needsFullInit());
+            ExecutionService.initializeService(mode.needsJobManager());
             time("init execserv");
 
             currentStep = "Initialize command factory";
@@ -662,7 +662,7 @@ public class Roddy {
             InstantiationException, NoSuchMethodException, FileNotFoundException {
         logger.postSometimesInfo("public static void initializeFactory(boolean fullSetup)");
 
-        if (!mode.needsFullInit()) return;
+        if (!mode.needsJobManager()) return;
 
         ClassLoader classLoader;
         String jobManagerClassID = "";
@@ -732,7 +732,7 @@ public class Roddy {
 //        if (option == RoddyStartupModes.ui)
 //            return;
 
-        if (!option.needsFullInit())
+        if (!option.needsJobManager())
             return;
 
         if (jobManager != null) {

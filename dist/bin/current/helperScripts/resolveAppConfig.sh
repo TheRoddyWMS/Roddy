@@ -51,7 +51,12 @@ function setRoddyBinaryVariables() {
   fi
   local numberOfDots=$(grep -o "[.]" <<< "$useRoddyVersion" | wc -l)    # Try find out, if we got an api level input like 2.2 or 2.3
   if [[ $numberOfDots == 1 ]]; then
-    useRoddyVersion=$(cd $RODDY_DIRECTORY/dist/bin; ls -d $useRoddyVersion* | sort -V | tail -n 1)
+    useRoddyVersionDir=$(find $RODDY_DIRECTORY/dist/bin -maxdepth 1 -name "$useRoddyVersion*")
+    if [[ "$useRoddyVersionDir" == "" ]]; then
+        1>&2 echo "No versioned directory for Roddy $useRoddyVersion found in $RODDY_DIRECTORY/dist/bin. Cannot start!"
+        exit 1
+    fi
+    useRoddyVersion=$(echo "$useRoddyVersionDir" | xargs basename | sort -V | tail -n 1)
   fi
   export activeRoddyVersion=$useRoddyVersion
   RODDY_BINARY_DIR=${RODDY_DIRECTORY}/dist/bin/$useRoddyVersion

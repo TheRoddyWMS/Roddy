@@ -136,7 +136,7 @@ class ConfigurationFactory {
             } catch (Exception ex) {
                 logger.severe("File ${file.absolutePath} cannot be loaded! Error in config file! ${ex.toString()}")
                 logger.severe(RoddyIOHelperMethods.getStackTraceAsString(ex))
-                Roddy.exit(1)
+                throw new ConfigurationLoadError(null, null, "Could not load '${file}'", ex)
             }
         }
         if (duplicateConfigurationIDs) {
