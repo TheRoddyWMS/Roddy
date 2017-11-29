@@ -345,13 +345,13 @@ class ConfigurationFactory {
         Configuration config = _loadConfiguration(icc)
 
         for (String ic in config.getImportConfigurations()) {
-//            try {
-            Configuration cfg = getConfiguration(ic)
-            config.addParent(cfg)
-//            } catch (Exception ex) {
-//                if (LibrariesFactory.getInstance().areLibrariesLoaded())
-            logger.severe("Configuration ${ic} cannot be read!")
-//            }
+            try {
+                Configuration cfg = getConfiguration(ic)
+                config.addParent(cfg)
+            } finally {
+                if (LibrariesFactory.getInstance().areLibrariesLoaded())
+                    logger.severe("Configuration ${ic} cannot be read!")
+            }
         }
         return config
     }
