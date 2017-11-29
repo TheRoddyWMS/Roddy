@@ -4,33 +4,28 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.tools;
+package de.dkfz.roddy.tools
 
+import de.dkfz.roddy.Constants
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.plugins.LibrariesFactory
-import org.apache.commons.io.filefilter.WildcardFileFilter
-
-import java.lang.reflect.Field;
+import de.dkfz.roddy.tools.versions.Version
 
 /**
  * A class which gives you access to several runtime specific values (e.g. from System.getProperty...)
  * Created by heinold on 29.02.16.
  */
 @groovy.transform.CompileStatic
-public final class RuntimeTools {
+final class RuntimeTools {
     private RuntimeTools() {}
 
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(RuntimeTools)
 
-    public static String getRoddyRuntimeVersion() {
-        // Get from buildinfo file. If this is not available... don't know... take 2.2. then.
-        def buildinfoFile = getBuildinfoFile()
-        def lines = buildinfoFile.readLines()
-        if (lines) return lines.find { String line -> line.startsWith("Roddy") }.split(StringConstants.SPLIT_EQUALS)[1]
-        return "2.2";
+    static String getRoddyRuntimeVersion() {
+        return Version.fromString(Constants.APP_CURRENT_VERSION_STRING).toString(Version.VersionLevel.MINOR)
     }
 
-    public static String getJavaRuntimeVersion() {
+    static String getJavaRuntimeVersion() {
         String javaRuntimeVersion = System.getProperty("java.version").split("[.]")[0..1].join(".")
         javaRuntimeVersion
     }
@@ -39,22 +34,21 @@ public final class RuntimeTools {
      * Extract the groovy library version from the current class path
      * @return
      */
-    public static String getGroovyRuntimeVersion() {
+    static String getGroovyRuntimeVersion() {
         File groovyLibrary = getGroovyLibrary()
         String version = groovyLibrary.name.split(StringConstants.SPLIT_MINUS)[2].split("[.]")[0..1].join(".")
         return version;
     }
 
-    public static File getBuildinfoFile() {
+    static File getBuildinfoFile() {
         return new File(getCurrentDistFolder(), LibrariesFactory.BUILDINFO_TEXTFILE);
     }
 
-    public static File getCurrentDistFolder() {
-        File f = getGroovyLibrary()
-        f.getParentFile().getParentFile()
+    static File getCurrentDistFolder() {
+        return new File(System.getProperty("user.dir"), "dist/bin/current")
     }
 
-    public static File getGroovyLibrary() {
+    static File getGroovyLibrary() {
         // Try to get Groovy from the environment. This is needed for groovyserv.
         // If it is not working get it from the classpath.
         logger.rare(([""] + System.getenv().collect { String k, String v -> "${k}=${v}" }.join("\n") + [""]).flatten().join("\n"))
