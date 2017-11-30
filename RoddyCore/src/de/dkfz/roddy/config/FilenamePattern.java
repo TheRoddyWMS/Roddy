@@ -183,10 +183,14 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
      */
     String fillConfigurationVariables(String src, Configuration cfg) {
         RecursiveOverridableMapContainerForConfigurationValues configurationValues = cfg.getConfigurationValues();
-        while (src.contains(PLACEHOLDER_CVALUE)) {
+
+        for (boolean valueChanged = true; valueChanged && src.contains(PLACEHOLDER_CVALUE); ) {
+            String oldValue = src;
+
             Command command = FilenamePatternHelper.extractCommand(PLACEHOLDER_CVALUE, src);
             CommandAttribute name = command.attributes.get("name");
             CommandAttribute defaultValue = command.attributes.get("default");
+
             if (name != null) {
                 ConfigurationValue cv;
 
@@ -210,7 +214,10 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
                     logger.postSometimesInfo("A variable could not be resolved " + command.rawName + " for a filename pattern. Replace part with the variable name.");
                     src = src.replace(command.fullString, "${" + command.rawName + "}");
                 }
+
             }
+            
+            valueChanged = !oldValue.equals(src);
         }
 
         /** Try and resolve the leftofer ${someKindOfValue}, stop, when nothing changed. **/

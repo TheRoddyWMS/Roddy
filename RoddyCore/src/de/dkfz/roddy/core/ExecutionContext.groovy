@@ -471,7 +471,7 @@ class ExecutionContext {
         return new LinkedList<Job>(jobsForProcess)
     }
 
-    Collection<Job> getStartedJobs() {
+    List<Job> getStartedJobs() {
         return jobsForProcess.findAll { Job job -> job != null && !job.isFakeJob() && !job.getJobState().dummy }
     }
 

@@ -522,12 +522,12 @@ public class Roddy {
             time("init proxy");
 
             currentStep = "Initialize file system access provider";
-            FileSystemAccessProvider.initializeProvider(mode.needsFullInit());
+            FileSystemAccessProvider.initializeProvider(mode.needsJobManager());
             time("init fsap");
 
             //Do not touch the calling order, execution service must be set before BatchEuphoriaJobManager.
             currentStep = "Initialize execution service";
-            ExecutionService.initializeService(mode.needsFullInit());
+            ExecutionService.initializeService(mode.needsJobManager());
             time("init execserv");
 
             currentStep = "Initialize command factory";
@@ -617,6 +617,11 @@ public class Roddy {
      * @return
      */
     private static void setScratchDirectory(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
+        String deprecatedDefaultScratchDir = Roddy.getApplicationProperty(ConfigurationConstants.CVALUE_DEFAULT_SCRATCH_DIR, "");
+        if (!deprecatedDefaultScratchDir.equals("")) {
+            System.err.println("WARNING: You did set the deprecated " + ConfigurationConstants.CVALUE_DEFAULT_SCRATCH_DIR + " to '" +
+                    deprecatedDefaultScratchDir + ".\nPlease use " + Constants.APP_SCRATCH_BASE_DIRECTORY + ".");
+        }
         String scratchBaseDir = Roddy.getApplicationProperty(Constants.APP_SCRATCH_BASE_DIRECTORY, "");
         if (scratchBaseDir.equals("")) {
             File propertyFilePath = null;
@@ -670,7 +675,7 @@ public class Roddy {
             InstantiationException, NoSuchMethodException, FileNotFoundException {
         logger.postSometimesInfo("public static void initializeFactory(boolean fullSetup)");
 
-        if (!mode.needsFullInit()) return;
+        if (!mode.needsJobManager()) return;
 
         ClassLoader classLoader;
         String jobManagerClassID = "";
@@ -740,7 +745,7 @@ public class Roddy {
 //        if (option == RoddyStartupModes.ui)
 //            return;
 
-        if (!option.needsFullInit())
+        if (!option.needsJobManager())
             return;
 
         if (jobManager != null) {
