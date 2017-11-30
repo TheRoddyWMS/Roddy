@@ -185,7 +185,7 @@ class NativeWorkflow extends Workflow {
             Command command = result.command
             String id = null;
             try {
-                id = command.setJobID().getShortID();
+                id = command.getJobID().getShortID();
             } catch (Exception ex) {
                 println(ex.getMessage())
             }

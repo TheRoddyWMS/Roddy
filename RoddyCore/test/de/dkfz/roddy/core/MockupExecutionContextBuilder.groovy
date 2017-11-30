@@ -10,6 +10,7 @@ import de.dkfz.roddy.config.AnalysisConfiguration
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ProjectConfiguration
 import de.dkfz.roddy.config.ResourceSet
+import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.NoNoExecutionService
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
@@ -141,8 +142,8 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            void startHeldJobs(List list) {
-
+            protected ExecutionResult executeStartHeldJobs(List list) {
+                return null
             }
 
             @Override
@@ -152,6 +153,11 @@ public class MockupExecutionContextBuilder {
 
             @Override
             GenericJobInfo parseGenericJobInfo(String s) {
+                return null
+            }
+
+            @Override
+            protected Command createCommand(BEJob beJob) {
                 return null
             }
 
@@ -196,8 +202,8 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            void killJobs(List<BEJob> list) {
-
+            protected ExecutionResult executeKillJobs(List list) {
+                return null
             }
 
             @Override
