@@ -139,7 +139,8 @@ enum RoddyStartupModes {
                 [RoddyStartupModes.validateconfig, "(configuration@analysis) [--useconfig={file}]", "Tries to find errors in the specified configuration and shows them."],
                 [RoddyStartupModes.listworkflows, "[filter word] [--shortlist] [--useconfig={file}]", "Shows a list of available configurations and analyses.", "If a filter word is specified, then the whole configuration tree is only printed", "if at least one configuration id in the tree contains the word."],
                 [RoddyStartupModes.listdatasets, "(configuration@analysis) [--useconfig={file}]", "Lists the available datasets for a configuration."],
-                [RoddyStartupModes.printruntimeconfig, "(configuration@analysis) [--useconfig={file}] [--extendedlist] [--showentrysources]", "Basically calls testrun but prints out the converted / prepared runtime configuration script content.", "--extendedlist shows all stored values (also e.g. tool entries. Works only in combination with --showentrysources", "--showentrysources shows the source file of the entry in addition to the value."],
+                [RoddyStartupModes.printruntimeconfig, "(configuration@analysis) [pid_0,..,pid_n] [--useconfig={file}] [--extendedlist] [--showentrysources]", "Basically calls testrun but prints out the converted / prepared runtime configuration script content.", "--extendedlist shows all stored values (also e.g. tool entries. Works only in combination with --showentrysources", "--showentrysources shows the source file of the entry in addition to the value."],
+                [RoddyStartupModes.printidlessruntimeconfig, "(configuration@analysis) [--useconfig={file}] [--extendedlist] [--showentrysources]", "Like printruntimeconfig, but no dataset ID needs to be provided. All ID-related fields will be left empty."],
                 [RoddyStartupModes.testrun, "(configuration@analysis) [pid_0,..,pid_n] [--useconfig={file}]", "Displays the current workflow status for the given datasets."],
                 [RoddyStartupModes.testrerun, "(configuration@analysis) [pid_0,..,pid_n] [--useconfig={file}]", "Displays the current workflow status for the given datasets."],
                 [RoddyStartupModes.run, "(configuration@analysis) [pid_0,..,pid_n] [--waitforjobs] [--useconfig={file}]", "Runs a workflow with the configured Jobfactory.", "Does not check if the workflow is already running on the cluster."],
@@ -191,8 +192,8 @@ enum RoddyStartupModes {
         System.out.println(Constants.ENV_LINESEPARATOR + Constants.ENV_LINESEPARATOR + "Roddy version " + Constants.APP_CURRENT_VERSION_STRING + " build at " + Constants.APP_CURRENT_VERSION_BUILD_DATE)
     }
 
-    boolean needsFullInit() {
-        return scope.needsFullInit
+    boolean needsJobManager() {
+        return scope.needsJobManager
     }
 
     @Override

@@ -161,11 +161,6 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            BEJobResult convertToArrayResult(BEJob arrayChildJob, BEJobResult parentJobsResult, int arrayIndex) {
-                return null
-            }
-
-            @Override
             void updateJobStatus() {
 
             }

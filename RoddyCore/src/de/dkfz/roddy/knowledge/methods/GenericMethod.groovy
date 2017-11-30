@@ -6,10 +6,7 @@
 
 package de.dkfz.roddy.knowledge.methods
 
-import de.dkfz.roddy.AvailableFeatureToggles
-import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.*
-import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.execution.jobs.BEJobResult
@@ -246,7 +243,7 @@ class GenericMethod {
 
         List<BaseFile> filesToVerify = fillListOfCreatedObjects(outputObject)
 
-        F result = createAndRunSingleJob(filesToVerify, outputObject) as F
+        F result = createAndRunJob(filesToVerify, outputObject) as F
 
         // Finally check the result and append an error to the context.
         if (result == null) {
@@ -478,25 +475,7 @@ class GenericMethod {
         return allCreatedObjects.findAll { FileObject fo -> fo instanceof BaseFile && !((BaseFile) fo).isTemporaryFile() } as List<BaseFile>
     }
 
-    private FileObject createAndRunArrayJob(List<BaseFile> filesToVerify) {
-        BEJobResult jobResult = new Job(context, context.createJobName(firstInputFile, toolName), toolName, arrayIndices, parameters, allInputFiles, filesToVerify).run();
-
-        Map<String, FileObject> outputObjectsByArrayIndex = [:];
-        IndexedFileObjects indexedFileObjects = new IndexedFileObjects(arrayIndices, outputObjectsByArrayIndex, context);
-        // Run array job and afterwards create output files for all sub jobs. The values in filesToVerify will be used and the path names will be corrected.
-        int i = 1;
-        for (String arrayIndex in arrayIndices) {
-            List<FileObject> newObjects = [];
-            outputObjectsByArrayIndex[arrayIndex] = createOutputObject(arrayIndex);
-            BEJobResult jr = Roddy.getJobManager().convertToArrayResult(jobResult.job, jobResult, i++)
-            for (FileObject fo : newObjects) {
-                fo.setCreatingJobsResult(jr);
-            }
-        }
-        return indexedFileObjects;
-    }
-
-    private FileObject createAndRunSingleJob(List<BaseFile> filesToVerify, FileObject outputObject) {
+    private FileObject createAndRunJob(List<BaseFile> filesToVerify, FileObject outputObject) {
         BEJobResult jobResult = new Job(context, context.createJobName(firstInputFile, toolName), toolName, parameters, allInputFiles, filesToVerify).run()
 
         if (allCreatedObjects) {
