@@ -928,6 +928,7 @@ public class Roddy {
     public static List<File> getConfigurationDirectories() {
         List<File> list = loadFolderListFromConfiguration(RoddyStartupOptions.configurationDirectories, Constants.APP_PROPERTY_CONFIGURATION_DIRECTORIES);
         list.add(getFolderForConfigurationFreeMode());
+        list.add(new File(Roddy.getApplicationDirectory(), "configurationfiles"));
         return list;
     }
 
