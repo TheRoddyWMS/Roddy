@@ -124,7 +124,6 @@ elif [[ "$parm1" == "createworkflow" ]]; then
 fi
 
 export RODDY_HELPERSCRIPTS_FOLDER=`readlink -f dist/bin/current/helperScripts`
-export RODDY_GROOVYLIB_PATH=`readlink -f ${RODDY_BINARY_DIR}/lib/groovy*.jar`
 
 source ${RODDY_HELPERSCRIPTS_FOLDER}/networkFunctions.sh
 

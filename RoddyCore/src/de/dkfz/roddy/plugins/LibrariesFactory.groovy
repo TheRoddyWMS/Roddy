@@ -467,7 +467,7 @@ class LibrariesFactory extends Initializable {
             } else if (_entry.type == PluginType.RODDY) {
                 File jarFile = directory.listFiles().find { File f -> f.name.endsWith ".jar"; }
                 if (jarFile) {
-                    newPluginInfo = new JarFulPluginInfo(pluginName, directory, jarFile, pluginFullVersion, biHelper.getRoddyAPIVersion(), biHelper.getJDKVersion(), biHelper.getGroovyVersion(), biHelper.getDependencies())
+                    newPluginInfo = new JarFulPluginInfo(pluginName, directory, jarFile, pluginFullVersion, biHelper.getRoddyAPIVersion(), biHelper.getJDKVersion(), biHelper.getDependencies())
                 } else {
                     newPluginInfo = new JarLessPluginInfo(pluginName, directory, pluginFullVersion, biHelper.getDependencies())
                 }
@@ -692,7 +692,7 @@ class LibrariesFactory extends Initializable {
                 incompatiblePlugins << pi
         }
         if (incompatiblePlugins) {
-            logger.severe("Could not load plugins, runtime API versions mismatch! (Current Groovy: ${RuntimeTools.groovyRuntimeVersion}, JDK ${RuntimeTools.javaRuntimeVersion}, Roddy ${RuntimeTools.getRoddyRuntimeVersion()})\n"
+            logger.severe("Could not load plugins, runtime API versions mismatch! (JDK ${RuntimeTools.javaRuntimeVersion}, Roddy ${RuntimeTools.getRoddyRuntimeVersion()})\n"
                     + incompatiblePlugins.collect { PluginInfo pi -> pi.fullID }.join("\n\t")
             )
         }

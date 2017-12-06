@@ -28,7 +28,7 @@ class NativePluginInfo extends PluginInfo {
                 null,
                 prodVersion,
                 Constants.UNKNOWN,
-                null, null, dependencies)
+                null, dependencies)
         this.nativeSourceDirectory = nativeSourceDirectory
         // Can't be passed into super() because nativeSourceDirectory is not set.
         this.directory = getConvertedPluginDirectory()

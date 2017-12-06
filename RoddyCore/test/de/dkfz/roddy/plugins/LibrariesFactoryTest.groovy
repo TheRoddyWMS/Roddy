@@ -186,13 +186,13 @@ public class LibrariesFactoryTest {
         ["A", "B"].each { String pID ->
             File pFolder = RoddyIOHelperMethods.assembleLocalPath(pluginsBaseDirForResourceTests.root, pID)
             ["toolDirA", "toolDirB", "toolDirC"].each { RoddyIOHelperMethods.assembleLocalPath(pFolder, RuntimeService.DIRNAME_RESOURCES, RuntimeService.DIRNAME_ANALYSIS_TOOLS, it).mkdirs() }
-            pluginInfoObjectsForResourceTests[pID] = new PluginInfo(pID, null, pFolder, null, null, null, null, null, null)
+            pluginInfoObjectsForResourceTests[pID] = new PluginInfo(pID, null, pFolder, null, null, null, null, null)
         }
 
         ["C", "D"].each { String pID ->
             File pFolder = RoddyIOHelperMethods.assembleLocalPath(pluginsBaseDirForResourceTests.root, pID)
             ["toolDirD", "toolDirE", "toolDirF"].each { RoddyIOHelperMethods.assembleLocalPath(pFolder, RuntimeService.DIRNAME_RESOURCES, RuntimeService.DIRNAME_ANALYSIS_TOOLS, it).mkdirs() }
-            pluginInfoObjectsForResourceTests[pID] = new PluginInfo(pID, null, pFolder, null, null, null, null, null, null)
+            pluginInfoObjectsForResourceTests[pID] = new PluginInfo(pID, null, pFolder, null, null, null, null, null)
         }
     }
 
@@ -218,21 +218,21 @@ public class LibrariesFactoryTest {
     @Test
     public void testPerformCompatibleAPIChecks() {
         assert LibrariesFactory.performAPIChecks([
-                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", "1.3", null),
-                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", "1.3", null)])
+                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", null),
+                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", null)])
     }
 
     @Test
     public void testPerformIncompatibleAPIChecks() {
         assert false == LibrariesFactory.performAPIChecks([
-                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "000", "1.3", "1.3", null),
-                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", "1.3", null)])
+                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "000", "1.3", null),
+                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", null)])
         assert false == LibrariesFactory.performAPIChecks([
-                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "000", "1.3", null),
-                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", "1.3", null)])
+                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "000", null),
+                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", null)])
         assert false == LibrariesFactory.performAPIChecks([
-                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", "000", null),
-                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", "1.3", null)])
+                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", null),
+                new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "1.3", "1.3", null)])
 
     }
 
