@@ -161,11 +161,6 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            BEJobResult convertToArrayResult(BEJob arrayChildJob, BEJobResult parentJobsResult, int arrayIndex) {
-                return null
-            }
-
-            @Override
             void updateJobStatus() {
 
             }
@@ -220,6 +215,7 @@ public class MockupExecutionContextBuilder {
             String getQueueVariable() {
                 return null
             }
+
 
             @Override
             String getNodeFileVariable() {

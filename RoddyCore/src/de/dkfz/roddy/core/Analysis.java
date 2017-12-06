@@ -514,7 +514,7 @@ public class Analysis {
         if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.RollbackOnWorkflowError)) {
             try {
                 logger.severe("A workflow error occurred, try to rollback / abort submitted jobs.");
-                Roddy.getJobManager().queryJobAbortion(context.jobsForProcess);
+                Roddy.getJobManager().queryJobAbortion(context.getStartedJobs());
             } catch (Exception ex) {
                 logger.severe("Could not successfully abort jobs.", ex);
             }

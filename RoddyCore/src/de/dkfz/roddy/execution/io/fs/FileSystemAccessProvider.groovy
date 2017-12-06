@@ -577,10 +577,10 @@ public class FileSystemAccessProvider {
         return ExecutionService.getInstance().execute(commandSet.getSetAccessRightsRecursivelyCommand(path, accessStringDirectories, accessString, group), false);
     }
 
-    public boolean setDefaultAccessRights(File file, ExecutionContext context) {
+    boolean setDefaultAccessRights(File file, ExecutionContext context) {
         if (!context.isAccessRightsModificationAllowed())
-            return true; // an economic decision ...
-        return setAccessRights(file, context.getOutputFileAccessRights(), context.getOutputGroupString());
+            return true // an economic decision ...
+        return setAccessRights(file, context.getOutputFileAccessRights(), context.getOutputGroupString())
     }
 
     public boolean setAccessRights(File file, String accessString, String groupID) {

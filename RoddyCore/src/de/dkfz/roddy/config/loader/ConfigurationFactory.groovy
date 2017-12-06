@@ -29,6 +29,7 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.Tuple3
+import groovy.transform.CompileDynamic
 import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.NodeChild
 import groovy.util.slurpersupport.NodeChildren
@@ -135,6 +136,7 @@ class ConfigurationFactory {
             } catch (Exception ex) {
                 logger.severe("File ${file.absolutePath} cannot be loaded! Error in config file! ${ex.toString()}")
                 logger.severe(RoddyIOHelperMethods.getStackTraceAsString(ex))
+                throw new ConfigurationLoadError(null, null, "Could not load '${file}'", ex)
             }
         }
         if (duplicateConfigurationIDs) {
@@ -183,7 +185,7 @@ class ConfigurationFactory {
             } catch (org.xml.sax.SAXParseException ex) {
                 throw new ProjectLoaderException("The validation of a configuration file ${it.absolutePath} failed.")
             } catch (Exception ex) {
-                logger.severe("An unknown exception occured during the atempt to load a configuration file:\n\t${it.absolutePath} cannot be loaded.\n\t${ex.toString()}")
+                logger.severe("An unknown exception occured during the attempt to load a configuration file:\n\t${it.absolutePath} cannot be loaded.\n\t${ex.toString()}")
                 logger.sometimes(RoddyIOHelperMethods.getStackTraceAsString(ex))
                 throw ex
             }
@@ -314,19 +316,28 @@ class ConfigurationFactory {
         PreloadedConfiguration icc = availableConfigurations[usedConfiguration]
 
         if (icc == null) {
-            throw new ProjectLoaderException("The configuration identified by \"${usedConfiguration}\" cannot be found, is the identifier correct? Is the configuration available? Possible are:\n\t"
-                    + availableAnalysisConfigurations.collect { it.id }.join("\n\t")
+            throw new ProjectLoaderException("The configuration identified by \"${usedConfiguration}\" cannot be found, is the identifier correct? Is the configuration available? Possible are:\n"
+                    + convertMapToFormattedTable(availableConfigurations, 1, " : ", { PreloadedConfiguration v -> v.file }).join("\n")
             )
         }
 
         return loadConfiguration(icc)
     }
 
+    @CompileDynamic
+    static List<String> convertMapToFormattedTable(Map map, int cntOfTabs, String tabSep, def clojureForValue) {
+        int keyWidth = map.keySet().collect { it.size() }.max()
+        map.collect {
+            def k, def v ->
+                "   " + k.toString().padRight(keyWidth) + tabSep + clojureForValue(v)
+        }
+    }
+
     private static final List<File> _cfgFileLoaderMessageCache = []
 
     Configuration loadConfiguration(PreloadedConfiguration icc) {
-        synchronized(_cfgFileLoaderMessageCache) {
-            if(!_cfgFileLoaderMessageCache.contains(icc.file)) {
+        synchronized (_cfgFileLoaderMessageCache) {
+            if (!_cfgFileLoaderMessageCache.contains(icc.file)) {
                 logger.always("  Fully load configurationFile ${icc.file}")
                 _cfgFileLoaderMessageCache << icc.file
             }
@@ -337,9 +348,9 @@ class ConfigurationFactory {
             try {
                 Configuration cfg = getConfiguration(ic)
                 config.addParent(cfg)
-            } catch (Exception ex) {
+            } finally {
                 if (LibrariesFactory.getInstance().areLibrariesLoaded())
-                    logger.severe("Configuration ${ic} cannot be read!" + ex.toString())
+                    logger.severe("Configuration ${ic} cannot be read!")
             }
         }
         return config

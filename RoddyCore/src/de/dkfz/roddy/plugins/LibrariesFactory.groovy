@@ -323,7 +323,7 @@ class LibrariesFactory extends Initializable {
             return PluginType.INVALID
         }
         if (directory.isHidden())
-            errors << "Directory is hidden"
+            return PluginType.INVALID
         if (!directory.canRead())
             errors << "Directory cannot be read"
 
