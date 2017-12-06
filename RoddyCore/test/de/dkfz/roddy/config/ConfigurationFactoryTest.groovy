@@ -7,8 +7,6 @@
 package de.dkfz.roddy.config
 
 import de.dkfz.roddy.RunMode
-import de.dkfz.roddy.config.ResourceSet
-import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.loader.ProcessingToolReader
 import de.dkfz.roddy.execution.io.ExecutionService
@@ -32,8 +30,6 @@ import org.junit.rules.TemporaryFolder
 import java.lang.reflect.Method
 
 import static de.dkfz.roddy.config.ResourceSetSize.*
-import static org.hamcrest.MatcherAssert.assertThat
-import static org.hamcrest.core.IsEqual.equalTo
 
 /**
  * Tests for ConfigurationFactory
