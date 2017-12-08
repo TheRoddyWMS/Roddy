@@ -87,7 +87,6 @@ class ExecutionContextReaderAndWriter {
 
             Map<String, BEJob> unknownJobs = new LinkedHashMap<>()
             Map<String, BEJob> possiblyRunningJobs = new LinkedHashMap<>()
-            List<String> queryList = new LinkedList<>()
             //For every job which is still unknown or possibly running get the actual jobState from the cluster
             for (BEJob job : jobsStartedInContext) {
                 if (job.getJobState().isUnknown() || job.getJobState() == JobState.UNSTARTED) {

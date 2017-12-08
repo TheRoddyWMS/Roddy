@@ -14,6 +14,8 @@ import de.dkfz.roddy.execution.io.NoNoExecutionService
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
 
+import java.util.concurrent.TimeoutException
+
 /**
  * Created by heinold on 01.07.16.
  */
@@ -136,7 +138,7 @@ public class MockupExecutionContextBuilder {
         new BatchEuphoriaJobManager(new NoNoExecutionService(), new JobManagerCreationParametersBuilder().setCreateDaemon(false).build()) {
 
             @Override
-            BEJobResult runJob(BEJob job) {
+            BEJobResult runJob(BEJob job) throws TimeoutException {
                 return null
             }
 
