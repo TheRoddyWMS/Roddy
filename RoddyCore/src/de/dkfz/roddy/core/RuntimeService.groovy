@@ -312,10 +312,6 @@ public class RuntimeService {
         return new ExecutionContextReaderAndWriter(this).readInExecutionContext(api)
     }
 
-    Map<String, JobState> readInJobStateLogFile(ExecutionContext context) {
-        return new ExecutionContextReaderAndWriter(this).readInJobStateLogFile(context)
-    }
-
     List<Job> readJobInfoFile(ExecutionContext context) {
         return new ExecutionContextReaderAndWriter(this).readJobInfoFile(context)
     }

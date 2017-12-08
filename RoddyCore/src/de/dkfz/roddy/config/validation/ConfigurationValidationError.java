@@ -13,7 +13,7 @@ import de.dkfz.roddy.config.EnumerationValue;
 /**
  * A basic class for the storage of configuration validation errors.
  * TODO Unify ValidationError and ConvigurationValidationError
- * TODO Rethink validation error sytstem
+ * TODO Rethink validation error system
  */
 public abstract class ConfigurationValidationError {
 

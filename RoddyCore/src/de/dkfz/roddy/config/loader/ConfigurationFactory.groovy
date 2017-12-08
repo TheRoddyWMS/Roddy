@@ -83,7 +83,7 @@ class ConfigurationFactory {
         return singleton
     }
 
-    ConfigurationFactory(List<File> configurationDirectories = null) {
+    private ConfigurationFactory(List<File> configurationDirectories = null) {
         if (configurationDirectories == null)
             configurationDirectories = Roddy.getConfigurationDirectories()
 
@@ -99,7 +99,7 @@ class ConfigurationFactory {
                 logger.log(Level.CONFIG, "Searching for configuration files in: " + baseDir.toString())
                 if (!baseDir.canRead() || !baseDir.canExecute()) {
                     logger.log(Level.SEVERE, "Cannot read from configuration directory ${baseDir.absolutePath}, does the folder exist und do you have access (read/execute) rights to it?")
-                    throw new RuntimeException("Cannot access (read and execute) configuration directory '${baseDir}'")
+                    throw new ConfigurationLoaderException("Cannot access (read and execute) configuration directory '${baseDir}'")
                 }
                 File[] files = baseDir.listFiles((FileFilter) new WildcardFileFilter(["*.xml", "*.sh", "*.yml"]))
                 if (files == null) {
@@ -350,14 +350,14 @@ class ConfigurationFactory {
                 config.addParent(cfg)
             } finally {
                 if (LibrariesFactory.getInstance().areLibrariesLoaded())
-                    logger.severe("Configuration ${ic} cannot be read!")
+                    logger.severe("Configuration ${ic} cannot be loaded!")
             }
         }
         return config
     }
 
     /**
-     * Reverse - recursively load a configuration. Start with the deepest configuration object and move to the front.
+     * Reverse - recursively load a configuration. Start with the deepest configuration object and move to the top.
      * The reverse walk ist possible as the information about dependencies is stored in the PreloadedConfiguration objects which are created on startup.
      */
     private Configuration _loadConfiguration(PreloadedConfiguration icc) {
@@ -372,13 +372,18 @@ class ConfigurationFactory {
 
         // Errors are always caught and a message is appended. We want to see everything, if possible.
 
-        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "cvalues", "Could not read configuration values for configuration ${icc.id}", { readConfigurationValues(configurationNode, config) })
-        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "cvbundles", "Could not read configuration value bundles for configuration ${icc.id}", { readValueBundles(configurationNode, config) })
-        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "fnpatterns", "Could not read filename patterns for configuration ${icc.id}", {
+        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "cvalues",
+                "Could not read configuration values for configuration ${icc.id}", { readConfigurationValues(configurationNode, config) })
+        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "cvbundles",
+                "Could not read configuration value bundles for configuration ${icc.id}", { readValueBundles(configurationNode, config) })
+        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "fnpatterns",
+                "Could not read filename patterns for configuration ${icc.id}", {
             config.filenamePatterns.map.putAll(readFilenamePatterns(configurationNode))
         })
-        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "enums", "Could not read enumerations for configuration ${icc.id}", { readEnums(config, configurationNode) })
-        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "ptools", "Could not read processing tools for configuration ${icc.id}", { readProcessingTools(configurationNode, config) })
+        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "enums",
+                "Could not read enumerations for configuration ${icc.id}", { readEnums(config, configurationNode) })
+        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "ptools",
+                "Could not read processing tools for configuration ${icc.id}", { readProcessingTools(configurationNode, config) })
 
         if (!configurationWasLoadedProperly) {
             logger.severe("There were errors in the configuration file ${icc.file}.")
@@ -394,7 +399,7 @@ class ConfigurationFactory {
     private boolean withErrorEntryOnUnknownException(Configuration config, String id, String msg, Closure blk) {
         try {
             blk.call()
-        } catch (Exception ex) {
+        } catch (ConfigurationError ex) {
             addFormattedErrorToConfig(msg + ' : ' + ex.message, id, null, config)
             return false
         }
@@ -406,7 +411,7 @@ class ConfigurationFactory {
      *
      * @param icc The informational object for a configuration (file)
      * @param configurationNode The xml node read in by an xml slurper
-     * @param parentConfig A (possibly) available parent configuration.
+     * @param parentConfig A (optionally) available parent configuration.
      * @return A new configuration object
      */
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
@@ -825,13 +830,13 @@ class ConfigurationFactory {
 
 
     static String extractAttributeText(NodeChild node, String id, String defaultText = "") {
-
         try {
             if (node.attributes().get(id) != null) {
                 return node.attributes().get(id).toString()
             }
         } catch (Exception ex) {
             logger.severe("" + ex)
+            throw new ConfigurationLoadError(null, id, "Attribute '${id}' not defined in node ${node.name()}", ex)
         }
         return defaultText
     }

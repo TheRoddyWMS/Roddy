@@ -22,7 +22,7 @@ class ConfigurationLoadError extends ConfigurationError {
 
 
     @Override
-    public String toString() {
+    String toString() {
         return "${id.padRight(20)}: ${description}";
     }
 }
