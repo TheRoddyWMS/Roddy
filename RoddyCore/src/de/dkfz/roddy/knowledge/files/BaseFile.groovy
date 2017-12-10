@@ -24,6 +24,7 @@ import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.BEJobResult
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.Tuple2
 
 /**
@@ -43,6 +44,8 @@ import de.dkfz.roddy.tools.Tuple2
 abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
 
     private static LoggerWrapper logger = LoggerWrapper.getLogger(BaseFile)
+
+    public static final String STANDARD_FILE_CLASS = STANDARD_FILE_CLASS
 
     static abstract class ConstructionHelperForBaseFiles<T extends ConstructionHelperForBaseFiles> {
         public final ExecutionContext context;
@@ -184,6 +187,25 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         return constructManual(classToConstruct, parentFile, null, null, null, null, null, null, null);
     }
 
+    /**
+     * To "load" a source file from storage.
+     *
+     * This is basically a convenience method for constructSourceFile!
+     *
+     * @param path   Path to the file (remote or local)
+     * @param _class The class of the file, omit it and it will be of the synthetic class StandardFile
+     * @return
+     */
+    static BaseFile loadSourceFile(ExecutionContext context, String path, String _class = STANDARD_FILE_CLASS) {
+        if (RoddyConversionHelperMethods.isNullOrEmpty(_class)) _class = STANDARD_FILE_CLASS
+        LibrariesFactory.getInstance().loadRealOrSyntheticClass(_class, BaseFile as Class<FileObject>)
+        return constructSourceFile(_class as Class<? extends BaseFile>, new File(path), context)
+    }
+
+    static BaseFile getFile(BaseFile parentFile, String _class = STANDARD_FILE_CLASS) {
+        if (RoddyConversionHelperMethods.isNullOrEmpty(_class)) _class = STANDARD_FILE_CLASS
+        return constructManual(_class as Class<? extends BaseFile>,  parentFile);
+    }
 
     protected File path;
 

@@ -12,6 +12,8 @@ import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.knowledge.files.FileGroup;
 import de.dkfz.roddy.knowledge.files.FileObject;
 import de.dkfz.roddy.knowledge.methods.GenericMethod;
+import de.dkfz.roddy.plugins.LibrariesFactory;
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -43,6 +45,7 @@ public abstract class Workflow {
     /**
      * Override this method to enable initial checks for a workflow run.
      * I.e. check if input files can be found.
+     *
      * @param context
      * @return
      */
@@ -80,6 +83,7 @@ public abstract class Workflow {
 
     /**
      * Convenience method to call GenericMethod.callGenericTool()
+     *
      * @param toolName
      * @param input
      * @param additionalInput
@@ -99,6 +103,7 @@ public abstract class Workflow {
 
     /**
      * Convenience method to get a boolean runflag from the context config, defaults to true
+     *
      * @param context
      * @param flagID
      * @return
@@ -109,11 +114,56 @@ public abstract class Workflow {
 
     /**
      * Convenience method to get a boolean runflag from the context config, defaults to defaultValue
+     *
      * @param context
      * @param flagID
      * @return
      */
     protected boolean getflag(ExecutionContext context, String flagID, boolean defaultValue) {
         return context.getConfiguration().getConfigurationValues().getBoolean(flagID, defaultValue);
+    }
+
+    /**
+     * To "load" a source file from storage
+     * Will call loadFile with context, path and BaseFile.STANDARD_FILE_CLASS
+     *
+     * @param context The context to which the file belongs
+     * @param path Path to the file (remote or local)
+     * @return
+     */
+    protected BaseFile loadFile(ExecutionContext context, String path) {
+        return loadFile(context, path, BaseFile.STANDARD_FILE_CLASS);
+    }
+
+    /**
+     * To "load" a source file from storage
+     *
+     * @param context The context to which the file belongs
+     * @param path Path to the file (remote or local)
+     * @param _class The class of the new file object. This may be an existing or a new class (which will then be created)
+     * @return
+     */
+    protected BaseFile loadFile(ExecutionContext context, String path, String _class) {
+        return BaseFile.loadSourceFile(context, path, _class);
+    }
+
+    /**
+     * Easily create a file which inherits from another file.
+     * Will call getFile with parent and BaseFile.STANDARD_FILE_CLASS
+     * @param parent The file from which the new file object inherits
+     * @return
+     */
+    protected BaseFile getFile(BaseFile parent) {
+        return getFile(parent, BaseFile.STANDARD_FILE_CLASS);
+    }
+
+    /**
+     * Easily create a file which inherits from another file.
+     * @param parent The file from which the new file object inherits
+     * @param _class The class of the new file object. This may be an existing or a new class (which will then be created)
+     * @return
+     */
+    protected BaseFile getFile(BaseFile parent, String _class) {
+        return BaseFile.getFile(parent, _class);
     }
 }
