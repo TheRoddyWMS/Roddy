@@ -36,9 +36,9 @@ class PBSJobManagerTest {
         assertEquals("-l mem=1024M -l walltime=00:01:00:00 -l nodes=1:ppn=2", test.getProcessingCommandString().trim())
 
         test = (ProcessingParameters) cFactory.convertResourceSet(null, rset2)
-        assertEquals(" -l walltime=00:01:00:00 -l nodes=1:ppn=1", test.getProcessingCommandString())
+        assertEquals("-l walltime=00:01:00:00 -l nodes=1:ppn=1", test.getProcessingCommandString())
 
         test = (ProcessingParameters) cFactory.convertResourceSet(null, rset3)
-        assertEquals(" -l mem=1024M -l nodes=1:ppn=2", test.getProcessingCommandString())
+        assertEquals("-l mem=1024M -l nodes=1:ppn=2", test.getProcessingCommandString())
     }
 }

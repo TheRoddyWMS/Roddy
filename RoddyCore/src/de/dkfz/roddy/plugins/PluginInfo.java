@@ -59,7 +59,6 @@ public class PluginInfo {
     protected String prodVersion;
     protected final String roddyAPIVersion;
     protected final String jdkVersion;
-    protected final String groovyVersion;
     protected Map<String, String> dependencies;
     protected final File zipFile;
 
@@ -83,20 +82,19 @@ public class PluginInfo {
     private final List<String> errors = new LinkedList<>();
 
     public PluginInfo(String name, File directory, String version, String roddyAPIVersion,
-                      String jdkVersion, String groovyVersion, Map<String, String> dependencies) {
-        this(name, null, directory, null, version, roddyAPIVersion, jdkVersion, groovyVersion, dependencies);
+                      String jdkVersion, Map<String, String> dependencies) {
+        this(name, null, directory, null, version, roddyAPIVersion, jdkVersion, dependencies);
     }
 
     @Deprecated
     public PluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, String roddyAPIVersion,
-                      String jdkVersion, String groovyVersion, Map<String, String> dependencies) {
+                      String jdkVersion, Map<String, String> dependencies) {
         this.name = name;
         this.directory = directory;
         this.developmentDirectory = developmentDirectory;
         this.prodVersion = prodVersion;
         this.roddyAPIVersion = roddyAPIVersion;
         this.jdkVersion = jdkVersion;
-        this.groovyVersion = groovyVersion;
         this.dependencies = dependencies;
         this.zipFile = zipFile;
         fillListOfToolDirectories();
@@ -183,10 +181,6 @@ public class PluginInfo {
         return jdkVersion;
     }
 
-    public String getGroovyVersion() {
-        return groovyVersion;
-    }
-
     public Map<String, File> getToolsDirectories() {
         return listOfToolDirectories;
     }
@@ -229,9 +223,8 @@ public class PluginInfo {
 
     public boolean isCompatibleToRuntimeSystem() {
         boolean jdkEquals = jdkVersion.equals(RuntimeTools.getJavaRuntimeVersion());
-        boolean groovyEquals = groovyVersion.equals(RuntimeTools.getGroovyRuntimeVersion());
         boolean apiEquals = roddyAPIVersion.equals(RuntimeTools.getRoddyRuntimeVersion());
-        return jdkEquals && groovyEquals && apiEquals;
+        return jdkEquals && apiEquals;
     }
 
     public int getRevision() {

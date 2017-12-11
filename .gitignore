@@ -6,13 +6,15 @@ dist/build
 dist/plugins/DefaultPlugin_*
 dist/plugins/*/build
 dist/plugins/PluginBase_1.0.28
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
 build
-gradle
 .nfo
 .gradle
 .idea/encodings.xml
 manifest.tmp
+*~
+gradleBuild
 coverage/
 .idea/codeStyleSettings.xml
 .idea/gradle.xml
-README.md~

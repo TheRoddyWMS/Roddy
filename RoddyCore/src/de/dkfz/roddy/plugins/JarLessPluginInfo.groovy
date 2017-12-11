@@ -17,7 +17,7 @@ import groovy.transform.CompileStatic
 class JarLessPluginInfo extends PluginInfo{
 
     JarLessPluginInfo(String name, File directory, String version, Map<String, String> dependencies) {
-        super(name, directory, version, Constants.UNKNOWN, null, null, dependencies)
+        super(name, directory, version, Constants.UNKNOWN, null, dependencies)
     }
 
     @Override

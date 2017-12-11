@@ -6,7 +6,6 @@
 
 package de.dkfz.roddy.config
 
-import de.dkfz.roddy.config.Configuration
 import groovy.transform.CompileStatic
 
 /**

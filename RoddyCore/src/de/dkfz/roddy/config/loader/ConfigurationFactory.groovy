@@ -29,6 +29,7 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.Tuple3
+import groovy.transform.CompileDynamic
 import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.NodeChild
 import groovy.util.slurpersupport.NodeChildren
@@ -82,7 +83,7 @@ class ConfigurationFactory {
         return singleton
     }
 
-    ConfigurationFactory(List<File> configurationDirectories = null) {
+    private ConfigurationFactory(List<File> configurationDirectories = null) {
         if (configurationDirectories == null)
             configurationDirectories = Roddy.getConfigurationDirectories()
 
@@ -98,7 +99,7 @@ class ConfigurationFactory {
                 logger.log(Level.CONFIG, "Searching for configuration files in: " + baseDir.toString())
                 if (!baseDir.canRead() || !baseDir.canExecute()) {
                     logger.log(Level.SEVERE, "Cannot read from configuration directory ${baseDir.absolutePath}, does the folder exist und do you have access (read/execute) rights to it?")
-                    throw new RuntimeException("Cannot access (read and execute) configuration directory '${baseDir}'")
+                    throw new ConfigurationLoaderException("Cannot access (read and execute) configuration directory '${baseDir}'")
                 }
                 File[] files = baseDir.listFiles((FileFilter) new WildcardFileFilter(["*.xml", "*.sh", "*.yml"]))
                 if (files == null) {
@@ -135,6 +136,7 @@ class ConfigurationFactory {
             } catch (Exception ex) {
                 logger.severe("File ${file.absolutePath} cannot be loaded! Error in config file! ${ex.toString()}")
                 logger.severe(RoddyIOHelperMethods.getStackTraceAsString(ex))
+                throw new ConfigurationLoadError(null, null, "Could not load '${file}'", ex)
             }
         }
         if (duplicateConfigurationIDs) {
@@ -183,7 +185,7 @@ class ConfigurationFactory {
             } catch (org.xml.sax.SAXParseException ex) {
                 throw new ProjectLoaderException("The validation of a configuration file ${it.absolutePath} failed.")
             } catch (Exception ex) {
-                logger.severe("An unknown exception occured during the atempt to load a configuration file:\n\t${it.absolutePath} cannot be loaded.\n\t${ex.toString()}")
+                logger.severe("An unknown exception occured during the attempt to load a configuration file:\n\t${it.absolutePath} cannot be loaded.\n\t${ex.toString()}")
                 logger.sometimes(RoddyIOHelperMethods.getStackTraceAsString(ex))
                 throw ex
             }
@@ -314,19 +316,28 @@ class ConfigurationFactory {
         PreloadedConfiguration icc = availableConfigurations[usedConfiguration]
 
         if (icc == null) {
-            throw new ProjectLoaderException("The configuration identified by \"${usedConfiguration}\" cannot be found, is the identifier correct? Is the configuration available? Possible are:\n\t"
-                    + availableAnalysisConfigurations.collect { it.id }.join("\n\t")
+            throw new ProjectLoaderException("The configuration identified by \"${usedConfiguration}\" cannot be found, is the identifier correct? Is the configuration available? Possible are:\n"
+                    + convertMapToFormattedTable(availableConfigurations, 1, " : ", { PreloadedConfiguration v -> v.file }).join("\n")
             )
         }
 
         return loadConfiguration(icc)
     }
 
+    @CompileDynamic
+    static List<String> convertMapToFormattedTable(Map map, int cntOfTabs, String tabSep, def clojureForValue) {
+        int keyWidth = map.keySet().collect { it.size() }.max()
+        map.collect {
+            def k, def v ->
+                "   " + k.toString().padRight(keyWidth) + tabSep + clojureForValue(v)
+        }
+    }
+
     private static final List<File> _cfgFileLoaderMessageCache = []
 
     Configuration loadConfiguration(PreloadedConfiguration icc) {
-        synchronized(_cfgFileLoaderMessageCache) {
-            if(!_cfgFileLoaderMessageCache.contains(icc.file)) {
+        synchronized (_cfgFileLoaderMessageCache) {
+            if (!_cfgFileLoaderMessageCache.contains(icc.file)) {
                 logger.always("  Fully load configurationFile ${icc.file}")
                 _cfgFileLoaderMessageCache << icc.file
             }
@@ -337,16 +348,16 @@ class ConfigurationFactory {
             try {
                 Configuration cfg = getConfiguration(ic)
                 config.addParent(cfg)
-            } catch (Exception ex) {
+            } finally {
                 if (LibrariesFactory.getInstance().areLibrariesLoaded())
-                    logger.severe("Configuration ${ic} cannot be read!" + ex.toString())
+                    logger.severe("Configuration ${ic} cannot be loaded!")
             }
         }
         return config
     }
 
     /**
-     * Reverse - recursively load a configuration. Start with the deepest configuration object and move to the front.
+     * Reverse - recursively load a configuration. Start with the deepest configuration object and move to the top.
      * The reverse walk ist possible as the information about dependencies is stored in the PreloadedConfiguration objects which are created on startup.
      */
     private Configuration _loadConfiguration(PreloadedConfiguration icc) {
@@ -361,13 +372,18 @@ class ConfigurationFactory {
 
         // Errors are always caught and a message is appended. We want to see everything, if possible.
 
-        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "cvalues", "Could not read configuration values for configuration ${icc.id}", { readConfigurationValues(configurationNode, config) })
-        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "cvbundles", "Could not read configuration value bundles for configuration ${icc.id}", { readValueBundles(configurationNode, config) })
-        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "fnpatterns", "Could not read filename patterns for configuration ${icc.id}", {
+        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "cvalues",
+                "Could not read configuration values for configuration ${icc.id}", { readConfigurationValues(configurationNode, config) })
+        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "cvbundles",
+                "Could not read configuration value bundles for configuration ${icc.id}", { readValueBundles(configurationNode, config) })
+        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "fnpatterns",
+                "Could not read filename patterns for configuration ${icc.id}", {
             config.filenamePatterns.map.putAll(readFilenamePatterns(configurationNode))
         })
-        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "enums", "Could not read enumerations for configuration ${icc.id}", { readEnums(config, configurationNode) })
-        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "ptools", "Could not read processing tools for configuration ${icc.id}", { readProcessingTools(configurationNode, config) })
+        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "enums",
+                "Could not read enumerations for configuration ${icc.id}", { readEnums(config, configurationNode) })
+        configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "ptools",
+                "Could not read processing tools for configuration ${icc.id}", { readProcessingTools(configurationNode, config) })
 
         if (!configurationWasLoadedProperly) {
             logger.severe("There were errors in the configuration file ${icc.file}.")
@@ -383,7 +399,7 @@ class ConfigurationFactory {
     private boolean withErrorEntryOnUnknownException(Configuration config, String id, String msg, Closure blk) {
         try {
             blk.call()
-        } catch (Exception ex) {
+        } catch (ConfigurationError ex) {
             addFormattedErrorToConfig(msg + ' : ' + ex.message, id, null, config)
             return false
         }
@@ -395,7 +411,7 @@ class ConfigurationFactory {
      *
      * @param icc The informational object for a configuration (file)
      * @param configurationNode The xml node read in by an xml slurper
-     * @param parentConfig A (possibly) available parent configuration.
+     * @param parentConfig A (optionally) available parent configuration.
      * @return A new configuration object
      */
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
@@ -814,13 +830,13 @@ class ConfigurationFactory {
 
 
     static String extractAttributeText(NodeChild node, String id, String defaultText = "") {
-
         try {
             if (node.attributes().get(id) != null) {
                 return node.attributes().get(id).toString()
             }
         } catch (Exception ex) {
             logger.severe("" + ex)
+            throw new ConfigurationLoadError(null, id, "Attribute '${id}' not defined in node ${node.name()}", ex)
         }
         return defaultText
     }

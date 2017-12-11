@@ -737,7 +737,7 @@ public class RoddyCLIClient {
     /**
      * Sets up Roddys property file from the command line.
      */
-    public static void performCommandLineSetup() {
+    static void performCommandLineSetup() {
         try {
             ScannerWrapper sc = new ScannerWrapper();
             System.out.println("Setup roddy for command line processing.\n========================================\n");
@@ -777,7 +777,8 @@ public class RoddyCLIClient {
                 String selectedAuthenticationMethod = Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE);
                 String authQuery = "Chose an authentication method:";
                 List<String> authOptions = Arrays.asList("Authenticate using a pair of passwordless keyfiles.", "Authenticate using a user and a password.");
-                List<String> authMethods = Arrays.asList(Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD);
+                List<String> authMethods =
+                        [Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_SSHAGENT]
                 selected = null;
                 if (selectedAuthenticationMethod.equals(Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE))
                     selected = authOptions.get(0);

@@ -9,6 +9,7 @@ package de.dkfz.roddy.execution.io
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.plugins.LibrariesFactory
 import groovy.transform.CompileStatic
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
@@ -45,7 +46,7 @@ public class BaseMetadataTableTest {
     }
 
     public static final String getResourceFile(String table) {
-        String testFileName = LibrariesFactory.groovyClassLoader.getResource(table).file
+        String testFileName = new File("RoddyCore/test/resources", table)
         testFileName
     }
 

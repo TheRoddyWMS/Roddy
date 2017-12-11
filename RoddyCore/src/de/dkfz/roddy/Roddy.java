@@ -6,7 +6,8 @@
 
 package de.dkfz.roddy;
 
-import com.btr.proxy.search.ProxySearch;
+import com.github.markusbernhardt.proxy.ProxySearch;
+import com.github.markusbernhardt.proxy.util.PlatformUtil;
 import de.dkfz.roddy.client.RoddyStartupModeScopes;
 import de.dkfz.roddy.client.RoddyStartupModes;
 import de.dkfz.roddy.client.RoddyStartupOptions;
@@ -100,7 +101,7 @@ public class Roddy {
     private static String baseInputDirectory;
     private static String baseOutputDirectory;
 
-    private static final File applicationDirectory = new File("").getAbsoluteFile();
+    private static final File applicationDirectory = new File(System.getProperty("user.dir"));
     private static final File applicationBundleDirectory = new File(applicationDirectory, "bundledFiles");
 
     private static CommandLineCall commandLineCall;
@@ -521,12 +522,12 @@ public class Roddy {
             time("init proxy");
 
             currentStep = "Initialize file system access provider";
-            FileSystemAccessProvider.initializeProvider(mode.needsFullInit());
+            FileSystemAccessProvider.initializeProvider(mode.needsJobManager());
             time("init fsap");
 
             //Do not touch the calling order, execution service must be set before BatchEuphoriaJobManager.
             currentStep = "Initialize execution service";
-            ExecutionService.initializeService(mode.needsFullInit());
+            ExecutionService.initializeService(mode.needsJobManager());
             time("init execserv");
 
             currentStep = "Initialize command factory";
@@ -551,20 +552,31 @@ public class Roddy {
 
             System.setProperty("java.net.useSystemProxies", "true");
             System.out.println("detecting proxies");
+
+            ProxySearch proxySearch = new ProxySearch();
+            if (PlatformUtil.getCurrentPlattform() == PlatformUtil.Platform.WIN) {
+                proxySearch.addStrategy(ProxySearch.Strategy.IE);
+                proxySearch.addStrategy(ProxySearch.Strategy.FIREFOX);
+                proxySearch.addStrategy(ProxySearch.Strategy.JAVA);
+            } else if (PlatformUtil.getCurrentPlattform() == PlatformUtil.Platform.LINUX) {
+                proxySearch.addStrategy(ProxySearch.Strategy.GNOME);
+                proxySearch.addStrategy(ProxySearch.Strategy.KDE);
+                proxySearch.addStrategy(ProxySearch.Strategy.FIREFOX);
+            } else {
+                proxySearch.addStrategy(ProxySearch.Strategy.OS_DEFAULT);
+            }
+
+            ProxySelector proxySelector = proxySearch.getProxySelector();
+            ProxySelector.setDefault(proxySelector);
+
             List l = null;
             try {
-                ProxySearch proxySearch = new ProxySearch();
-                proxySearch.addStrategy(ProxySearch.Strategy.OS_DEFAULT);
-                proxySearch.addStrategy(ProxySearch.Strategy.ENV_VAR);
-                proxySearch.addStrategy(ProxySearch.Strategy.KDE);
-
-                proxySearch.addStrategy(ProxySearch.Strategy.BROWSER);
-                ProxySelector proxySelector = proxySearch.getProxySelector();
-                ProxySelector.setDefault(proxySelector);
                 l = ProxySelector.getDefault().select(new URI("http://codemirror.net"));
             } catch (URISyntaxException e) {
                 e.printStackTrace();
+                System.exit(1);
             }
+
             if (l != null) {
                 for (Iterator iter = l.iterator(); iter.hasNext(); ) {
                     java.net.Proxy proxy = (java.net.Proxy) iter.next();
@@ -633,6 +645,7 @@ public class Roddy {
             applicationSpecificConfiguration = new Configuration(null);
             RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
 
+            assert(Roddy.jobManager != null);
             setDefaultRoddyJobIdVariable(configurationValues);
             setDefaultRoddyJobNameVariable(configurationValues);
             setDefaultRoddyQueueVariable(configurationValues);
@@ -662,7 +675,7 @@ public class Roddy {
             InstantiationException, NoSuchMethodException, FileNotFoundException {
         logger.postSometimesInfo("public static void initializeFactory(boolean fullSetup)");
 
-        if (!mode.needsFullInit()) return;
+        if (!mode.needsJobManager()) return;
 
         ClassLoader classLoader;
         String jobManagerClassID = "";
@@ -732,7 +745,7 @@ public class Roddy {
 //        if (option == RoddyStartupModes.ui)
 //            return;
 
-        if (!option.needsFullInit())
+        if (!option.needsJobManager())
             return;
 
         if (jobManager != null) {
@@ -915,6 +928,7 @@ public class Roddy {
     public static List<File> getConfigurationDirectories() {
         List<File> list = loadFolderListFromConfiguration(RoddyStartupOptions.configurationDirectories, Constants.APP_PROPERTY_CONFIGURATION_DIRECTORIES);
         list.add(getFolderForConfigurationFreeMode());
+        list.add(new File(Roddy.getApplicationDirectory(), "configurationfiles"));
         return list;
     }
 
