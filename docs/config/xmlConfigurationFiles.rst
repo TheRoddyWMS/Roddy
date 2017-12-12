@@ -98,9 +98,47 @@ Configuration values
 --------------------
 
 Configuration values are the thing you might change most of the times. When Roddy executes a workflow, a shell script will be created where all the configuration values are stored. This script can then be imported by workflow scripts.
+Please take a look at :doc:`runtimeConfigurationFiles`.
 
-Types of values
-~~~~~~~~~~~~~~~
+Configuration values are embedded in a configuration values section like:
+
+.. code-block:: XML
+    <configurationvalues>
+        <cvalue name='analysisMethodNameOnInput' value='testAnalysis' type='string'/>
+        <cvalue name='analysisMethodNameOnOutput' value='testAnalysis' type='string'/>
+
+        <cvalue name="testAOutputDirectory" value="testfiles" type="path"/>
+        <!--<cvalue name="valuec" value="${valuea}"/>-->
+        <!--<cvalue name="valuea" value="${valueb}"/>-->
+        <!--<cvalue name="valueb" value="${valuea}"/>-->
+        <cvalue name="testOutputDirectory" value="${outputAnalysisBaseDirectory}/testfiles" type="path"/>
+        <cvalue name="testInnerOutputDirectory" value="${testOutputDirectory}/testfilesw2"/>
+    </configurationvalues>
+
+
+The configuration value itself is defined as a cvalue element. Each element can have several tags:
+
+* *name* - The tag is used to identify the value both in Roddy and in the job scripts.
+
+* *description* - If you want to describe a value, do it with this tag.
+
+* *value* - The actual value is store here. You can set dependencies to other values by enclosing the referenced value
+  like ${targetValue}. Roddy will evaluate the dependency, as soon as it is necessary.
+
+* *type* - There exist several types for configuration values. The default value is string. Note, that the selection of
+  the type will influence, how variables are interpreted and evaluated / converted.
+
+  - *string* will
+
+  - *int* will accept integer values only. E.g. 1, 2, 3 or 4.
+
+  - *float* will accept float values in differnt formats. E.g. 1.2f 1.2
+
+  - *double* will accept
+
+
+
+  - *boolean*
 
 Special values
 ~~~~~~~~~~~~~~
