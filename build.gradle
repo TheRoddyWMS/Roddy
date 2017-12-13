@@ -16,10 +16,6 @@ buildscript {
             url "https://plugins.gradle.org/m2/"
         }
     }
-    dependencies {
-        // The Shadow plugin to create a fat-jar of the Roddy application.
-        classpath "com.github.jengelman.gradle.plugins:shadow:2.0.1"           // Apache 2.0
-    }
 }
 
 plugins {
@@ -50,7 +46,6 @@ ext.allowDirtyRepo = (project.hasProperty("allowDirty") && project.allowDirty ==
 apply plugin: "java"
 apply plugin: 'application'
 apply plugin: 'distribution'
-apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'groovy'
 
 // Java settings
@@ -86,7 +81,6 @@ test {
 
 repositories {
     mavenCentral()                                        // Most dependencies
-    jcenter()                                             // Shadow plugin to produce the fat jar
     maven { url 'https://jitpack.io' }                    // Github: RoddyToolLib, BatchEuphoria
     maven { url "http://central.maven.org/maven2/" }      // Some of the remaining dependencies
 }
@@ -161,7 +155,12 @@ sourceSets {
 
 mainClassName = "de.dkfz.roddy.Roddy"
 
-shadowJar {
+task copyRuntimeLibs(type: Copy) {
+    into new File(project.ext.currentDistributionDir, "lib")
+    from configurations.runtime
+}
+
+jar {
     baseName = "Roddy"
     classifier = null
     version = null
@@ -173,6 +172,7 @@ shadowJar {
         attributes("Implementation-Title": name)
         attributes 'Implementation-Version': getVersionName()
     }
+    dependsOn copyRuntimeLibs
 }
 
 /** Produce 2 distribution packages:
@@ -222,8 +222,8 @@ distributions {
 
 }
 
-roddyDistTar.dependsOn(shadowJar)
-roddyDistZip.dependsOn(shadowJar)
+roddyDistTar.dependsOn(jar)
+roddyDistZip.dependsOn(jar)
 
 // IntelliJ IDEA
 idea {
