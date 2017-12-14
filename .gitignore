@@ -6,6 +6,8 @@ dist/build
 dist/plugins/DefaultPlugin_*
 dist/plugins/*/build
 dist/plugins/PluginBase_1.0.28
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
 build
 .nfo
 .gradle

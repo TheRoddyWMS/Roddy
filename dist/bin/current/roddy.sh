@@ -15,8 +15,11 @@ fi
 
 PATH="${JDK_HOME:?Please set JDK_HOME}/bin:${JAVA_HOME:?Please set JAVA_HOME}/bin:${GROOVY_HOME:?Please set GROOVY_HOME}/bin:$PATH"
 
-libraries=`ls -d1 ${RODDY_BINARY_DIR}/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
-libraries=$libraries:$jfxlibInfo
+if [[ -x "$RODDY_BINARY_DIR/lib" ]]; then
+    libraries=`ls -d1 ${RODDY_BINARY_DIR}/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
+else
+    libraries=""
+fi
 
 #Is the roddy binary or anything set via command line?
 for i in $*
@@ -121,7 +124,6 @@ elif [[ "$parm1" == "createworkflow" ]]; then
 fi
 
 export RODDY_HELPERSCRIPTS_FOLDER=`readlink -f dist/bin/current/helperScripts`
-export RODDY_GROOVYLIB_PATH=`readlink -f ${RODDY_BINARY_DIR}/lib/groovy*.jar`
 
 source ${RODDY_HELPERSCRIPTS_FOLDER}/networkFunctions.sh
 

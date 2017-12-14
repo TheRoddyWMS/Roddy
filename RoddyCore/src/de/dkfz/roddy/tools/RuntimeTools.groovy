@@ -50,7 +50,7 @@ final class RuntimeTools {
 
     static File getGroovyLibrary() {
         // Try to get Groovy from the environment. This is needed for groovyserv.
-        // If it is not working get it from the classpath.
+        // If this is not working get it from the classpath.
         logger.rare(([""] + System.getenv().collect { String k, String v -> "${k}=${v}" }.join("\n") + [""]).flatten().join("\n"))
         if (System.getenv().containsKey("RODDY_GROOVYLIB_PATH")) {
             def file = new File(System.getenv("RODDY_GROOVYLIB_PATH"))
@@ -58,6 +58,8 @@ final class RuntimeTools {
             return file
         } else {
             def file = new File(System.getProperty("java.class.path").split("[:]").find { new File(it).name.startsWith("groovy") })
+            if (file == null)
+                throw new RuntimeException("Could not find groovy library in class path: " + System.getProperty("java.class.path"))
             logger.info("Loading groovy library from local environment " + file)
             return file
         }

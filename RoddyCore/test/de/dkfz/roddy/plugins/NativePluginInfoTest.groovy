@@ -71,7 +71,7 @@ class NativePluginInfoTest {
     @Test
     void testFillListOfToolDirectories() {
         def pi = getPluginInfoComplete()
-        assert pi.getToolsDirectories().size() == 1
+        assert pi.getToolsDirectories().size() == 2
         assert pi.getToolsDirectories().values()[0].absolutePath == getToolsDirForPluginComplete()
     }
 

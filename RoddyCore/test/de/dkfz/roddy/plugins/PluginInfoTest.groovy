@@ -37,10 +37,10 @@ class PluginInfoTest extends GroovyTestCase {
     }
 
     void testConstructionWithValidDirectoryEntries() {
-        new PluginInfo("Valid", null, validPlugin, null, null, null, null, null, null)
+        new PluginInfo("Valid", null, validPlugin, null, null, null, null, null)
     }
 
     void testConstructionWithInvalidContents() {
-        new PluginInfo("Invalid", null, badPlugin, null, null, null, null, null, null)
+        new PluginInfo("Invalid", null, badPlugin, null, null, null, null, null)
     }
 }

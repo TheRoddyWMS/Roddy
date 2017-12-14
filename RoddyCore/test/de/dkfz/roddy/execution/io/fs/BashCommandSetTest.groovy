@@ -20,7 +20,7 @@ public class BashCommandSetTest {
     @Test
     public void testGetCheckForInteractiveConsoleCommand() {
         String separator = "\n"
-        assert new BashCommandSet().getCheckForInteractiveConsoleCommand() == 'if [ -z "${PS1-}" ]; then' + separator + "\t echo non interactive process!" + separator + "else" + separator + "\t echo interactive process"
+        assert new BashCommandSet().getCheckForInteractiveConsoleCommand() == 'if [[ -z "${PS1-}" ]]; then' + separator + "\t echo \"non interactive process!\" >> /dev/stderr" + separator + "else" + separator + "\t echo \"interactive process\" >> /dev/stderr"
     }
 
     @Test

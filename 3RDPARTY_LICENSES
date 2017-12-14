@@ -13,7 +13,7 @@ commons-logging-adapters-1.1.1.jar
 commons-logging-api-1.1.1.jar
 
 Groovy: Apache 2.0 - http://groovy.codehaus.org/License+Information
-groovy-all.jar
+groovy-2.4.9-all.jar
 
 JZLib: BSD-Style (formerly LGPL)
 jzlib.jar

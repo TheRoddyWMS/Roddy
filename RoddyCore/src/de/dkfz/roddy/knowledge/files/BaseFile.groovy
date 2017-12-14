@@ -6,9 +6,16 @@
 
 package de.dkfz.roddy.knowledge.files
 
-import de.dkfz.roddy.config.*
-
+import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationError
+import de.dkfz.roddy.config.DerivedFromFilenamePattern
+import de.dkfz.roddy.config.FileStageFilenamePattern
+import de.dkfz.roddy.config.FilenamePattern
+import de.dkfz.roddy.config.FilenamePatternDependency
+import de.dkfz.roddy.config.OnMethodFilenamePattern
+import de.dkfz.roddy.config.OnScriptParameterFilenamePattern
+import de.dkfz.roddy.config.OnToolFilenamePattern
+import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.Workflow
@@ -45,7 +52,8 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         public final String indexInFileGroup
         private Configuration jobConfiguration
 
-        protected ConstructionHelperForBaseFiles(ExecutionContext context, FileStageSettings fileStageSettings, String selectionTag, String indexInFileGroup, BEJobResult jobResult) {
+        protected ConstructionHelperForBaseFiles(ExecutionContext context, FileStageSettings fileStageSettings, String selectionTag,
+                                                 String indexInFileGroup, BEJobResult jobResult) {
             this.context = context
             this.fileStageSettings = fileStageSettings
             this.selectionTag = selectionTag
@@ -90,11 +98,14 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         public final List<FileObject> parentFiles
 
         @Deprecated
-        ConstructionHelperForGenericCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
+        ConstructionHelperForGenericCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID,
+                                             String slotID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
             this(parentObject, parentFiles, creatingTool, toolID, slotID, selectionTag, null, fileStageSettings, jobResult)
         }
 
-        ConstructionHelperForGenericCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, String indexInFileGroup, FileStageSettings fileStageSettings, BEJobResult jobResult) {
+        ConstructionHelperForGenericCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID,
+                                             String slotID, String selectionTag, String indexInFileGroup, FileStageSettings fileStageSettings,
+                                             BEJobResult jobResult) {
             super(parentObject.getExecutionContext(), fileStageSettings, selectionTag, indexInFileGroup, jobResult)
             this.parentFiles = parentFiles
             this.slotID = slotID
@@ -103,7 +114,8 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
             this.parentObject = parentObject
         }
 
-        ConstructionHelperForGenericCreation(ExecutionContext context, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
+        ConstructionHelperForGenericCreation(ExecutionContext context, ToolEntry creatingTool, String toolID, String slotID, String selectionTag,
+                                             FileStageSettings fileStageSettings, BEJobResult jobResult) {
             super(context, fileStageSettings, selectionTag, null, jobResult)
             this.slotID = slotID
             this.toolID = toolID
@@ -112,42 +124,60 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
     }
 
     static class ConstructionHelperForManualCreation extends ConstructionHelperForGenericCreation<ConstructionHelperForManualCreation> {
-        ConstructionHelperForManualCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, String indexInFileGroup, FileStageSettings fileStageSettings, BEJobResult jobResult) {
+        ConstructionHelperForManualCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID,
+                                            String slotID, String selectionTag, String indexInFileGroup, FileStageSettings fileStageSettings,
+                                            BEJobResult jobResult) {
             super(parentObject, parentFiles, creatingTool, toolID, slotID, selectionTag, indexInFileGroup, fileStageSettings, jobResult);
         }
 
-        ConstructionHelperForManualCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
+        ConstructionHelperForManualCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID,
+                                            String slotID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
             super(parentObject, parentFiles, creatingTool, toolID, slotID, selectionTag, null, fileStageSettings, jobResult);
         }
 
-        ConstructionHelperForManualCreation(ExecutionContext context, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
+        ConstructionHelperForManualCreation(ExecutionContext context, ToolEntry creatingTool, String toolID, String slotID, String selectionTag,
+                                            FileStageSettings fileStageSettings, BEJobResult jobResult) {
             super(context, creatingTool, toolID, slotID, selectionTag, fileStageSettings, jobResult);
         }
     }
 
 
-    static BaseFile constructSourceFile(Class<? extends BaseFile> classToConstruct, File path, ExecutionContext context, FileStageSettings fileStageSettings = null, BEJobResult jobResult = null) {
+    static BaseFile constructSourceFile(Class<? extends BaseFile> classToConstruct, File path, ExecutionContext context,
+                                        FileStageSettings fileStageSettings = null, BEJobResult jobResult = null) {
         return classToConstruct.newInstance(new ConstructionHelperForSourceFiles(path, context, fileStageSettings, jobResult));
     }
 
-    static BaseFile constructGeneric(Class<? extends BaseFile> classToConstruct, FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, String indexInFileGroup, FileStageSettings fileStageSettings, BEJobResult jobResult) {
-        return classToConstruct.newInstance(new ConstructionHelperForGenericCreation(parentObject, parentFiles, creatingTool, toolID, slotID, selectionTag, indexInFileGroup, fileStageSettings, jobResult));
+    static BaseFile constructGeneric(Class<? extends BaseFile> classToConstruct, FileObject parentObject, List<FileObject> parentFiles,
+                                     ToolEntry creatingTool, String toolID, String slotID, String selectionTag, String indexInFileGroup,
+                                     FileStageSettings fileStageSettings, BEJobResult jobResult) {
+        return classToConstruct.newInstance(new ConstructionHelperForGenericCreation(parentObject, parentFiles, creatingTool, toolID, slotID,
+                selectionTag, indexInFileGroup, fileStageSettings, jobResult));
     }
 
-    static BaseFile constructGeneric(Class<? extends BaseFile> classToConstruct, FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
-        return classToConstruct.newInstance(new ConstructionHelperForGenericCreation(parentObject, parentFiles, creatingTool, toolID, slotID, selectionTag, null, fileStageSettings, jobResult));
+    static BaseFile constructGeneric(Class<? extends BaseFile> classToConstruct, FileObject parentObject, List<FileObject> parentFiles, ToolEntry
+            creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
+        return classToConstruct.newInstance(new ConstructionHelperForGenericCreation(parentObject, parentFiles, creatingTool, toolID, slotID,
+                selectionTag, null, fileStageSettings, jobResult));
     }
 
-    static BaseFile constructGeneric(Class<? extends BaseFile> classToConstruct, ExecutionContext context, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
-        return classToConstruct.newInstance(new ConstructionHelperForGenericCreation(context, creatingTool, toolID, slotID, selectionTag, fileStageSettings, jobResult));
+    static BaseFile constructGeneric(Class<? extends BaseFile> classToConstruct, ExecutionContext context, ToolEntry creatingTool, String toolID,
+                                     String slotID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
+        return classToConstruct.newInstance(new ConstructionHelperForGenericCreation(context, creatingTool, toolID, slotID, selectionTag,
+                fileStageSettings, jobResult));
     }
 
-    static BaseFile constructManual(Class<? extends BaseFile> classToConstruct, FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
-        return classToConstruct.newInstance(new ConstructionHelperForManualCreation(parentObject, parentFiles, creatingTool, toolID, slotID, selectionTag, fileStageSettings, jobResult));
+    static BaseFile constructManual(Class<? extends BaseFile> classToConstruct, FileObject parentObject, List<FileObject> parentFiles,
+                                    ToolEntry creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings,
+                                    BEJobResult jobResult) {
+        return classToConstruct.newInstance(new ConstructionHelperForManualCreation(parentObject, parentFiles,
+                creatingTool, toolID, slotID, selectionTag, fileStageSettings, jobResult));
     }
 
-    static BaseFile constructManual(Class<? extends BaseFile> classToConstruct, ExecutionContext context, ToolEntry creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
-        return classToConstruct.newInstance(new ConstructionHelperForManualCreation(context, creatingTool, toolID, slotID, selectionTag, fileStageSettings, jobResult));
+    static BaseFile constructManual(Class<? extends BaseFile> classToConstruct, ExecutionContext context,
+                                    ToolEntry creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings,
+                                    BEJobResult jobResult) {
+        return classToConstruct.newInstance(new ConstructionHelperForManualCreation(context, creatingTool, toolID, slotID, selectionTag,
+                fileStageSettings, jobResult));
     }
 
     static BaseFile constructManual(Class<? extends BaseFile> classToConstruct, FileObject parentFile) {
@@ -220,8 +250,8 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
             }
             Tuple2<File, FilenamePattern> fnresult = getFilename(this, _helper.selectionTag);
             if (fnresult) {
-                this.path = fnresult.x;
-                this.appliedFilenamePattern = fnresult.y;
+                this.path = fnresult.x
+                this.appliedFilenamePattern = fnresult.y
             }
         } else if (helper instanceof ConstructionHelperForSourceFiles) {
             ConstructionHelperForSourceFiles _helper = helper as ConstructionHelperForSourceFiles;
@@ -465,10 +495,10 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
      * @param selectionTag
      */
     void overrideFilenameUsingSelectionTag(String selectionTag) {
-        Tuple2<File, FilenamePattern> fnresult = getFilename(this, selectionTag);
-        File _path = fnresult.x;
-        this.appliedFilenamePattern = fnresult.y;
-        this.setPath(_path);
+        Tuple2<File, FilenamePattern> fnresult = getFilename(this, selectionTag)
+        File _path = fnresult.x
+        this.appliedFilenamePattern = fnresult.y
+        this.setPath(_path)
     }
 
     /**

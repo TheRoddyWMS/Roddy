@@ -176,7 +176,7 @@ public class RuntimeService {
     }
 
     List<DataSet> loadDatasetsWithFilter(Analysis analysis, List<String> pidFilters, boolean suppressInfo = false) {
-        if (analysis.configuration.configurationValues.getBoolean("loadCohortDatasets", false)) {
+        if (analysis.configuration?.configurationValues?.getBoolean("loadCohortDatasets", false)) {
             return loadCohortDatasetsWithFilter(analysis, pidFilters, suppressInfo)
         } else {
             loadStandardDatasetsWithFilter(analysis, pidFilters, suppressInfo)
@@ -310,10 +310,6 @@ public class RuntimeService {
 
     ExecutionContext readInExecutionContext(AnalysisProcessingInformation api) {
         return new ExecutionContextReaderAndWriter(this).readInExecutionContext(api)
-    }
-
-    Map<String, JobState> readInJobStateLogFile(ExecutionContext context) {
-        return new ExecutionContextReaderAndWriter(this).readInJobStateLogFile(context)
     }
 
     List<Job> readJobInfoFile(ExecutionContext context) {

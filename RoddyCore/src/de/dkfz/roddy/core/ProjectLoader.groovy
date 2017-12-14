@@ -117,7 +117,7 @@ class ProjectLoader {
     }
 
     /**
-     * There is some code duplication in this method and I do not actually like it. It has to be refactored for future times.
+     * There is some code duplication in this method and I do not actually like it. It has to be refactored.
      * @return
      */
     String getPluginRoddyAPILevel(String configurationIdentifier) {

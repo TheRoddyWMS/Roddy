@@ -7,11 +7,11 @@ Roddy has no specific development or code style.
 Here, we try to collect topics and settings, where we think that they might be important.
 
 Code Format
-^^^^^^^^^^~
+^^^^^^^^^^^
 We are mainly using IntelliJ IDEA and use the default settings for code formatting.
 
 Collections as return types
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 By default, we do not return a copy (neither shallow, nor deep) of the Collection object. Be careful, not to modify the collection, if you do not change the contents of the object.
 
@@ -39,8 +39,8 @@ Roddys versioning system makes it easy to go back to previous versions.
 Settings for Groovy classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We will not accept Groovy classes without the @CompileStatic annotation.
-
+We will not accept Groovy classes without the @CompileStatic annotation. If you are in the rare situation that you need dynamic dispatch on more than
+the object (this) itself, you can mark the affected methods with @CompileDynamic.
 
 Roddy versioning scheme
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -79,6 +79,8 @@ Have you already checked out the :doc:`../installationGuide`?
 If not, please do so and do not forget to use the developer
 settings instead of the user settings.
 
+The first thing you'll need is a working Java 8+ installation and a Groovy installation (e.g. 2.4.9+).
+
 Repository Structure
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -86,43 +88,49 @@ Repository Structure
 
     /
     roddy.sh                                          Top-level script
-    ./RoddyCore                                       The core project
+    ./RoddyCore/                                      The core project
         buildversion.txt                              Current buildversion
         Java/Groovy sources
     dist/
         bin/
             current/
-            $major.$minor.$build
+            $major.$minor.$build/
         plugins/
-        plugins_R$major.$minor
-        runtimeDevel
-            groovy-$major.$minor.$build
-            jdk, jre, jdk_$major.$minor._$revision
+        plugins_R$major.$minor/
 
 Compiling Roddy
 ~~~~~~~~~~~~~~~
 
-Currently, the compilation & packaging is implemented in the top-level
-roddy.sh script that itself calls a number of scripts in the
-dist/bin/current/helperScripts directory. On the long run we will
-probably implement a Gradle-based re-implementation of the workflow.
-
-Compiling Roddy is easy:
+The preferred way to build Roddy is via Gradle. Please run
 
 ::
 
-    bash roddy.sh compile
+    ./gradlew build
 
-Will compile a new “current” version.
+If you want to develop Roddy and additionally want to work on the RoddyToolLib or BatchEuphoria you can clone these libraries into neighbouring
+directories and execute gradle in a composite build parameters
 
+::
+
+     ./gradlew clean build --include-build ../RoddyToolLib/ --include-build ../BatchEuphoria/
+
+This will produce a slim jar file. Use the "shadowJar" target for a full jar file with all dependencies (recursively) that you can use for command-
+line tests. The shadow-jar will be put into dist/bin/current/Roddy.jar.
 
 Packing Roddy
 ~~~~~~~~~~~~~
 
-Similar to compile, Roddy has a pack option:
+The packaging of Roddy is done using the gradle distribution plugin. There is two packaging targets
 
 ::
 
-    bash roddy.sh pack
+    ./gradlew roddyDistZip roddyEnvironmentDistZip --include-build ../RoddyToolLib/ --include-build ../BatchEuphoria/
 
-Will pack current to a directory called $major.$minor.$build.
+The distribution zips are put in the "gradleBuild/distribution" directory.
+
+The "roddyEnvironmentDistZip" target will produce a zip with the top-level directory containing the roddy.sh and the essential dist/bin
+subdirectories.
+
+The "roddyDistZip" target will produce a zip with the content of the "dist/bin/current" directory. For deployment you should unzip it in that
+directory and copy its content into an appropriately named dist/bin/ subdirectory, e.g. "current" for testing purposes or the version number, such as
+2.4.10.

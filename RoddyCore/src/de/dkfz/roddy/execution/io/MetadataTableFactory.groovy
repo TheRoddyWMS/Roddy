@@ -97,7 +97,7 @@ final class MetadataTableFactory {
             instream = new FileReader(file)
             return readTable(instream, format, internalToCustomIDMap, mandatoryColumns)
         } finally {
-            instream.close()
+            instream?.close()
         }
     }
 
