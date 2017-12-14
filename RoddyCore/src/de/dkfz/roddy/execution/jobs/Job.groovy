@@ -540,7 +540,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             cmd = runResult.command
             jobDetailsLine << " => " + cmd.job.getJobID()
             System.out.println(jobDetailsLine.toString())
-            if (cmd.jobID) {
+            if (!cmd.jobID) {
                 context.addErrorEntry(ExecutionContextError.EXECUTION_SUBMISSION_FAILURE.expand("Please check your submission command manually.\n\t  Is your access group set properly? [${context.getAnalysis().getUsergroup()}]\n\t  Can the submission binary handle your binary?\n\t  Is your submission system offline?"))
                 logger.postSometimesInfo("Command: ${runResult.command}\nStatus Code: ${runResult.executionResult.exitCode}, Output:\n${runResult.executionResult.resultLines.join("\n")}")
                 if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.BreakSubmissionOnError)) {
