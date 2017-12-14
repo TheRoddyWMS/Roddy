@@ -740,7 +740,7 @@ abstract class ExecutionService implements BEExecutionService {
         StringBuilder repeatCalls = new StringBuilder()
 
         for (Command c : commandCalls) {
-            BEJobID eID = c.getExecutionID()
+            BEJobID eID = c.getJobID()
             if (eID != null) {
                 jobIDs.add(eID)
                 if (eID.getShortID() != null) {
@@ -749,7 +749,7 @@ abstract class ExecutionService implements BEExecutionService {
             }
         }
         for (Command c : commandCalls) {
-            BEJobID eID = c.getExecutionID()
+            BEJobID eID = c.getJobID()
             String cmdStr = c.toString()
             realCalls.append(eID).append(", ").append(cmdStr).append(separator)
 

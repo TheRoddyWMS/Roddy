@@ -118,7 +118,7 @@
 //            BEExecutionService.getInstance().execute(command);
 //            String id = null;
 //            try {
-//                id = command.getExecutionID().getShortID();
+//                id = command.setJobID().getShortID();
 //                fakeIDWithRealID.put(jInfo.getID(), id);
 //            } catch(Exception ex) {
 //

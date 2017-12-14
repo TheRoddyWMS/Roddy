@@ -701,10 +701,11 @@ public class Roddy {
         }
 
         /** Get the constructor which comes with no parameters */
-        Constructor first = jobManagerClass.getDeclaredConstructor(BEExecutionService.class, JobManagerCreationParameters.class);
+        Constructor first = jobManagerClass.getDeclaredConstructor(BEExecutionService.class, JobManagerOptions.class);
         jobManager = (BatchEuphoriaJobManager) first.newInstance(ExecutionService.getInstance()
-                , new JobManagerCreationParametersBuilder()
+                , JobManagerOptions.create()
                         .setCreateDaemon(true)
+                        .setStrictMode(false)
                         .setTrackUserJobsOnly(trackUserJobsOnly)
                         .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
                         .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI()).build());
@@ -749,19 +750,12 @@ public class Roddy {
             return;
 
         if (jobManager != null) {
-            if (jobManager.executesWithoutJobSystem() && waitForJobsToFinish) {
-                exitCode = performWaitforJobs();
-            } else {
-                List<Command> listOfCreatedCommands = jobManager.getListOfCreatedCommands();
-                for (Command command : listOfCreatedCommands) {
-                    if (command.getJob().getJobState() == JobState.FAILED) exitCode++;
-                }
-            }
+            exitCode = waitforJobs();
         }
         exit(exitCode);
     }
 
-    private static int performWaitforJobs() {
+    private static int waitforJobs() {
         try {
             Thread.sleep(15000); //Sleep at least 15 seconds to let any job scheduler handle things...
             return jobManager.waitForJobsToFinish();
