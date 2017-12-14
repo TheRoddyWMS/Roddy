@@ -560,7 +560,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         if (runResult?.jobID?.shortID) {
             allRawInputParameters.each { String k, Object o ->
                 BaseFile bf = o instanceof BaseFile ? (BaseFile) o : null
-                if (bf) return
+                if (!bf) return
 
                 String absolutePath = bf.getPath().getAbsolutePath()
                 if (absolutePath.contains(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID)) {
