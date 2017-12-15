@@ -8,6 +8,7 @@ package de.dkfz.roddy.config
 
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.loader.ConfigurationFactory
+import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.config.loader.ProcessingToolReader
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
@@ -102,15 +103,15 @@ public class ConfigurationFactoryTest {
     }
 
     @Test
-    public void testLoadInvalidConfigurationDirectories() {
-        testFolder3.setReadable(false);
-        testFolder4.setReadable(true);
+    void testLoadInvalidConfigurationDirectories() {
+        testFolder3.setReadable(false)
+        testFolder4.setReadable(true)
 
-        thrown.expect(RuntimeException.class);
-        thrown.expectMessage("Cannot access (read and execute) configuration directory '${testFolder3}'")
-
-        // Load context from invalid directories and see, if the step fails.
-        ConfigurationFactory.initialize([testFolder3, testFolder4])
+        try {
+            ConfigurationFactory.initialize([testFolder3, testFolder4])
+        } catch (ConfigurationLoaderException e) {
+            assert e.message == "Cannot access (read and execute) configuration directory '${testFolder3}'"
+        }
     }
 
     @Test
