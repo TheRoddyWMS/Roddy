@@ -13,7 +13,6 @@ import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflowConverter
 import de.dkfz.roddy.tools.LoggerWrapper
-import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RuntimeTools
 import de.dkfz.roddy.tools.Tuple2
 import de.dkfz.roddy.tools.Tuple5
@@ -26,7 +25,7 @@ import java.util.regex.Pattern
  * Factory to load and integrate plugins.
  */
 @groovy.transform.CompileStatic
-public class LibrariesFactory extends Initializable {
+class LibrariesFactory extends Initializable {
     private static LoggerWrapper logger = LoggerWrapper.getLogger(LibrariesFactory.class.getSimpleName());
 
     private static LibrariesFactory librariesFactory;
@@ -87,7 +86,12 @@ public class LibrariesFactory extends Initializable {
     }
 
     static List<String> getErrorsForPlugin(String plugin) {
-        return mapOfErrorsForPluginEntries.find { plugin }.value
+        MapEntry hit = mapOfErrorsForPluginEntries.find { k, v -> k == plugin } as MapEntry
+        if (hit == null as MapEntry) {
+            return []
+        } else {
+            return hit.value as List<String>
+        }
     }
 
     public SyntheticPluginInfo getSynthetic() {
@@ -319,7 +323,7 @@ public class LibrariesFactory extends Initializable {
             return PluginType.INVALID
         }
         if (directory.isHidden())
-            errors << "Directory is hidden"
+            return PluginType.INVALID
         if (!directory.canRead())
             errors << "Directory cannot be read"
 
@@ -463,7 +467,7 @@ public class LibrariesFactory extends Initializable {
             } else if (_entry.type == PluginType.RODDY) {
                 File jarFile = directory.listFiles().find { File f -> f.name.endsWith ".jar"; }
                 if (jarFile) {
-                    newPluginInfo = new JarFulPluginInfo(pluginName, directory, jarFile, pluginFullVersion, biHelper.getRoddyAPIVersion(), biHelper.getJDKVersion(), biHelper.getGroovyVersion(), biHelper.getDependencies())
+                    newPluginInfo = new JarFulPluginInfo(pluginName, directory, jarFile, pluginFullVersion, biHelper.getRoddyAPIVersion(), biHelper.getJDKVersion(), biHelper.getDependencies())
                 } else {
                     newPluginInfo = new JarLessPluginInfo(pluginName, directory, pluginFullVersion, biHelper.getDependencies())
                 }
@@ -688,7 +692,7 @@ public class LibrariesFactory extends Initializable {
                 incompatiblePlugins << pi
         }
         if (incompatiblePlugins) {
-            logger.severe("Could not load plugins, runtime API versions mismatch! (Current Groovy: ${RuntimeTools.groovyRuntimeVersion}, JDK ${RuntimeTools.javaRuntimeVersion}, Roddy ${RuntimeTools.getRoddyRuntimeVersion()})\n"
+            logger.severe("Could not load plugins, runtime API versions mismatch! (JDK ${RuntimeTools.javaRuntimeVersion}, Roddy ${RuntimeTools.getRoddyRuntimeVersion()})\n"
                     + incompatiblePlugins.collect { PluginInfo pi -> pi.fullID }.join("\n\t")
             )
         }

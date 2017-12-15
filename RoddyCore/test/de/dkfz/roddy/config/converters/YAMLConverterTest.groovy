@@ -4,17 +4,17 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.config.converters;
+package de.dkfz.roddy.config.converters
 
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+import org.junit.Ignore
+import org.junit.Test
 
 /**
  * Created by heinold on 30.01.17.
  */
 public class YAMLConverterTest {
-//    @Test
+    @Test
+    @Ignore("Fix this test")
     public void convertToXML() throws Exception {
         String yaml = """
             configuration:

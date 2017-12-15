@@ -492,7 +492,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
 //        }
     }
 
-    //TODO Create a runArray method which returns several job results with proper array ids.
     @Override
     @CompileDynamic
     BEJobResult run() {

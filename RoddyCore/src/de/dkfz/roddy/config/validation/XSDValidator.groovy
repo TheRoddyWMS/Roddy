@@ -70,7 +70,7 @@ public class XSDValidator {
         def list = factory.newSchema(  new StreamSource(new StringReader(xsdString))  )
                 .newValidator().with { validator ->
             List exceptions = []
-            Closure<Void> handler = { exception -> exceptions << exception }
+            Closure<Void> handler = { newException -> exceptions << newException }
             errorHandler = [warning: handler, fatalError: handler, error: handler] as ErrorHandler
             validate(new StreamSource(new StringReader(xmlString)))
             exceptions

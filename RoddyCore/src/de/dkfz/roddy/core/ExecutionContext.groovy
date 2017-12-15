@@ -126,10 +126,6 @@ class ExecutionContext {
     private ToolEntry currentExecutedTool
     private ProcessingFlag processingFlag = ProcessingFlag.STORE_EVERYTHING
     /**
-     * Job-specific configuration object used to evaluate variables in global configuration and job parameters.
-     */
-    private Map<Integer, Configuration> currentJobConfiguration = null
-    /**
      * The user who created the context (if known)
      */
     private String executingUser = Constants.UNKNOWN_USER
@@ -208,18 +204,10 @@ class ExecutionContext {
     }
 
     String createJobName(BaseFile p, String TOOLID) {
-        return createJobName(p, TOOLID, false, new LinkedList<BaseFile>())
+        return createJobName(p, TOOLID, false)
     }
 
     String createJobName(BaseFile p, String TOOLID, boolean reduceLevel) {
-        return createJobName(p, TOOLID, reduceLevel, new LinkedList<BaseFile>())
-    }
-
-    String createJobName(BaseFile p, String TOOLID, List<BaseFile> inputFilesForSizeCalculation) {
-        return createJobName(p, TOOLID, false, inputFilesForSizeCalculation)
-    }
-
-    String createJobName(BaseFile p, String TOOLID, boolean reduceLevel, List<BaseFile> inputFilesForSizeCalculatio) {
         return getRuntimeService().createJobName(this, p, TOOLID, reduceLevel)
     }
 
@@ -248,7 +236,6 @@ class ExecutionContext {
     }
 
     synchronized void setDetailedExecutionContextLevel(ExecutionContextSubLevel subLevel) {
-        ExecutionContextSubLevel temp = this.executionContextSubLevel
         this.executionContextSubLevel = subLevel
     }
 
@@ -459,14 +446,6 @@ class ExecutionContext {
         return newList
     }
 
-    Map<String, JobState> readJobStatesFromLogFile() {
-        return null
-    }
-
-    Map<String, JobState> readJobStateLogFile() {
-        return getRuntimeService().readInJobStateLogFile(this)
-    }
-
     List<Job> getExecutedJobs() {
         return new LinkedList<Job>(jobsForProcess)
     }
@@ -484,8 +463,6 @@ class ExecutionContext {
     void addExecutedJob(Job job) {
         if ((job.getJobState() == JobState.DUMMY || job.getJobState() == JobState.UNKNOWN) && !processingFlag.contains(ProcessingFlag.STORE_DUMMY_JOBS))
             return
-
-        //TODO Synchronize jobsForProcess!
         jobsForProcess.add(job)
     }
 
@@ -591,6 +568,7 @@ class ExecutionContext {
         }
         return false
     }
+
     boolean fileIsAccessible(File file, String variableName = null) {
         if (valueIsEmpty(file, variableName) || !FileSystemAccessProvider.getInstance().checkFile(file, false, this)) {
             addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("File '${file}' not accessible${variableName ? ": " + variableName : "."}"))

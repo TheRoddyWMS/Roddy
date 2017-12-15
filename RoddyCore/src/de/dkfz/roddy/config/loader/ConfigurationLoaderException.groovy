@@ -16,4 +16,8 @@ class ConfigurationLoaderException extends Throwable {
     ConfigurationLoaderException(String msg) {
         super(msg)
     }
+
+    ConfigurationLoaderException(String msg, Throwable cause) {
+        super(msg, cause)
+    }
 }
