@@ -348,9 +348,10 @@ class ConfigurationFactory {
             try {
                 Configuration cfg = getConfiguration(ic)
                 config.addParent(cfg)
-            } finally {
+            } catch(Exception ex) {
                 if (LibrariesFactory.getInstance().areLibrariesLoaded())
                     logger.severe("Configuration ${ic} cannot be loaded!")
+                throw ex
             }
         }
         return config
