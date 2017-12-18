@@ -742,12 +742,17 @@ public class Roddy {
             return;
 
         if (jobManager != null) {
-            exitCode = waitforJobs();
+            if (jobManager.executesWithoutJobSystem() && waitForJobsToFinish) {
+                exitCode = waitForJobs();
+            } else {
+                // TODO: #167 (https://github.com/eilslabs/Roddy/issues/167)
+                exit(0);
+            }
         }
         exit(exitCode);
     }
 
-    private static int waitforJobs() {
+    private static int waitForJobs() {
         try {
             Thread.sleep(15000); //Sleep at least 15 seconds to let any job scheduler handle things...
             return jobManager.waitForJobsToFinish();
