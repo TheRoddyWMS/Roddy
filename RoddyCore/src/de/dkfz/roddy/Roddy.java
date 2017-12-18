@@ -708,16 +708,13 @@ public class Roddy {
                         .setStrictMode(false)
                         .setTrackUserJobsOnly(trackUserJobsOnly)
                         .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
+                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestMemoryIsEnabled", "true"), true))
+                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestWalltimeIsEnabled", "true"), true))
+                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestQueueIsEnabled", "true"), true))
+                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestCoresIsEnabled", "true"), true))
+                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestStorageIsEnabled", "false"), false))
                         .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI()).build());
 
-// There are many values which need to be extracted from the xml (context, project?)
-//        configuration.getProperty("PBS_AccountName", "")
-//        configuration.getProperty("email")
-//        configuration.getProperty("outputFileGroup", null)
-//        configuration.getProperty("umask", "")
-
-        // Was in Command
-//        new File(configuration.getProperty("loggingDirectory", "/"))
     }
 
     private static BatchEuphoriaJobManager jobManager;
@@ -727,8 +724,6 @@ public class Roddy {
     }
 
     private static void parseRoddyStartupModeAndRun(CommandLineCall clc) {
-//        if (clc.startupMode == RoddyStartupModes.ui)
-//            RoddyUIController.App.main(clc.getArguments().toArray(new String[0]));
         if (clc.startupMode == RoddyStartupModes.rmi)
             RoddyRMIServer.startServer(clc);
         else
@@ -742,9 +737,6 @@ public class Roddy {
     private static void performCLIExit(RoddyStartupModes option, int exitCode) {
         if (commandLineCall.getOptionList().contains(RoddyStartupOptions.disallowexit))
             return;
-
-//        if (option == RoddyStartupModes.ui)
-//            return;
 
         if (!option.needsJobManager())
             return;
