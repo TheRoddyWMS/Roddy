@@ -365,6 +365,7 @@ public class Analysis {
             boolean contextExecutability = context.checkExecutability();
             boolean configurationValidity = Roddy.isStrictModeEnabled() && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors) ? !getConfiguration().hasErrors() : true;
             isExecutable = contextRightsSettings && contextPermissions && contextExecutability && configurationValidity;
+            boolean successfullyExecuted = false;
 
             if (!isExecutable) {
                 StringBuilder message = new StringBuilder("The workflow does not seem to be executable for dataset " + datasetID);
@@ -398,13 +399,14 @@ public class Analysis {
 
                     // Finally, if execution is allowed, run it and start the submitted jobs (if hold jobs is enabled)
                     if (execute) {
-                        context.execute();
-                        finallyStartJobsOfContext(context);
+                        successfullyExecuted = context.execute();
+                        if (successfullyExecuted)
+                            finallyStartJobsOfContext(context);
                     }
                 } catch (Exception ex) {
                     // (Maybe) abort jobs in strict mode
                     logger.warning(ex.getMessage());
-                    maybeAbortStartedJobsOfContext(context);
+                    successfullyExecuted = false;
                     throw ex;
                 } finally {
 
@@ -412,6 +414,9 @@ public class Analysis {
                         //Query file validity of all files
                         FileSystemAccessProvider.getInstance().validateAllFilesInContext(context);
                     } else {
+                        if (!successfullyExecuted)
+                            maybeAbortStartedJobsOfContext(context);
+
                         cleanUpAndFinishWorkflowRun(context);
                     }
                 }
