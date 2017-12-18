@@ -701,22 +701,20 @@ public class Roddy {
         }
 
         /** Get the constructor which comes with no parameters */
-        Constructor first = jobManagerClass.getDeclaredConstructor(BEExecutionService.class, JobManagerCreationParameters.class);
+        Constructor first = jobManagerClass.getDeclaredConstructor(BEExecutionService.class, JobManagerOptions.class);
         jobManager = (BatchEuphoriaJobManager) first.newInstance(ExecutionService.getInstance()
-                , new JobManagerCreationParametersBuilder()
+                , JobManagerOptions.create()
                         .setCreateDaemon(true)
+                        .setStrictMode(false)
                         .setTrackUserJobsOnly(trackUserJobsOnly)
                         .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
+//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestMemoryIsEnabled", "true"), true))
+//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestWalltimeIsEnabled", "true"), true))
+//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestQueueIsEnabled", "true"), true))
+//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestCoresIsEnabled", "true"), true))
+//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestStorageIsEnabled", "false"), false))
                         .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI()).build());
 
-// There are many values which need to be extracted from the xml (context, project?)
-//        configuration.getProperty("PBS_AccountName", "")
-//        configuration.getProperty("email")
-//        configuration.getProperty("outputFileGroup", null)
-//        configuration.getProperty("umask", "")
-
-        // Was in Command
-//        new File(configuration.getProperty("loggingDirectory", "/"))
     }
 
     private static BatchEuphoriaJobManager jobManager;
@@ -726,8 +724,6 @@ public class Roddy {
     }
 
     private static void parseRoddyStartupModeAndRun(CommandLineCall clc) {
-//        if (clc.startupMode == RoddyStartupModes.ui)
-//            RoddyUIController.App.main(clc.getArguments().toArray(new String[0]));
         if (clc.startupMode == RoddyStartupModes.rmi)
             RoddyRMIServer.startServer(clc);
         else
@@ -742,26 +738,21 @@ public class Roddy {
         if (commandLineCall.getOptionList().contains(RoddyStartupOptions.disallowexit))
             return;
 
-//        if (option == RoddyStartupModes.ui)
-//            return;
-
         if (!option.needsJobManager())
             return;
 
         if (jobManager != null) {
             if (jobManager.executesWithoutJobSystem() && waitForJobsToFinish) {
-                exitCode = performWaitforJobs();
+                exitCode = waitForJobs();
             } else {
-                List<Command> listOfCreatedCommands = jobManager.getListOfCreatedCommands();
-                for (Command command : listOfCreatedCommands) {
-                    if (command.getJob().getJobState() == JobState.FAILED) exitCode++;
-                }
+                // TODO: #167 (https://github.com/eilslabs/Roddy/issues/167)
+                exit(0);
             }
         }
         exit(exitCode);
     }
 
-    private static int performWaitforJobs() {
+    private static int waitForJobs() {
         try {
             Thread.sleep(15000); //Sleep at least 15 seconds to let any job scheduler handle things...
             return jobManager.waitForJobsToFinish();
