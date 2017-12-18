@@ -12,8 +12,6 @@ import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.knowledge.files.FileGroup;
 import de.dkfz.roddy.knowledge.files.FileObject;
 import de.dkfz.roddy.knowledge.methods.GenericMethod;
-import de.dkfz.roddy.plugins.LibrariesFactory;
-import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -54,19 +52,6 @@ public abstract class Workflow {
     }
 
     public abstract boolean execute(ExecutionContext context) throws ConfigurationError;
-
-    public boolean canCreateTestdata() {
-        for (Method m : this.getClass().getMethods()) {
-            if (m.getName().equals("createTestdata") && m.getDeclaringClass() == this.getClass()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean createTestdata(ExecutionContext context) {
-        return false;
-    }
 
     public boolean hasCleanupMethod() {
         for (Method m : this.getClass().getMethods()) {
@@ -125,14 +110,14 @@ public abstract class Workflow {
 
     /**
      * To "load" a source file from storage
-     * Will call loadFile with context, path and BaseFile.STANDARD_FILE_CLASS
+     * Will call getSourceFile with context, path and BaseFile.STANDARD_FILE_CLASS
      *
      * @param context The context to which the file belongs
      * @param path Path to the file (remote or local)
      * @return
      */
-    protected BaseFile loadFile(ExecutionContext context, String path) {
-        return loadFile(context, path, BaseFile.STANDARD_FILE_CLASS);
+    protected BaseFile getSourceFile(ExecutionContext context, String path) {
+        return getSourceFile(context, path, BaseFile.STANDARD_FILE_CLASS);
     }
 
     /**
@@ -143,18 +128,18 @@ public abstract class Workflow {
      * @param _class The class of the new file object. This may be an existing or a new class (which will then be created)
      * @return
      */
-    protected BaseFile loadFile(ExecutionContext context, String path, String _class) {
-        return BaseFile.loadSourceFile(context, path, _class);
+    protected BaseFile getSourceFile(ExecutionContext context, String path, String _class) {
+        return BaseFile.fromStorage(context, path, _class);
     }
 
     /**
      * Easily create a file which inherits from another file.
-     * Will call getFile with parent and BaseFile.STANDARD_FILE_CLASS
+     * Will call getDerivedFile with parent and BaseFile.STANDARD_FILE_CLASS
      * @param parent The file from which the new file object inherits
      * @return
      */
-    protected BaseFile getFile(BaseFile parent) {
-        return getFile(parent, BaseFile.STANDARD_FILE_CLASS);
+    protected BaseFile getDerivedFile(BaseFile parent) {
+        return getDerivedFile(parent, BaseFile.STANDARD_FILE_CLASS);
     }
 
     /**
@@ -163,7 +148,7 @@ public abstract class Workflow {
      * @param _class The class of the new file object. This may be an existing or a new class (which will then be created)
      * @return
      */
-    protected BaseFile getFile(BaseFile parent, String _class) {
-        return BaseFile.getFile(parent, _class);
+    protected BaseFile getDerivedFile(BaseFile parent, String _class) {
+        return BaseFile.deriveFrom(parent, _class);
     }
 }
