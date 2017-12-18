@@ -24,6 +24,7 @@ import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.BEJobResult
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.Tuple2
 
 /**
@@ -44,6 +45,8 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
 
     private static LoggerWrapper logger = LoggerWrapper.getLogger(BaseFile)
 
+    public static final String STANDARD_FILE_CLASS = "StandardRoddyFileClass"
+
     static abstract class ConstructionHelperForBaseFiles<T extends ConstructionHelperForBaseFiles> {
         public final ExecutionContext context;
         public final FileStageSettings fileStageSettings;
@@ -63,7 +66,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
 
         T setJobConfiguration(Configuration configuration) {
             this.jobConfiguration = configuration
-            return (T)this
+            return (T) this
         }
 
         Configuration getJobConfiguration() {
@@ -184,6 +187,50 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         return constructManual(classToConstruct, parentFile, null, null, null, null, null, null, null);
     }
 
+    /**
+     * To "load" a source file from storage.
+     *
+     * This is basically a convenience method for constructSourceFile!
+     *
+     * @param path Path to the file (remote or local)
+     * @param _class The class of the file, omit it and it will be of the synthetic class StandardFile
+     * @return
+     */
+    static BaseFile getSourceFile(ExecutionContext context, String path, String _class = STANDARD_FILE_CLASS) {
+        if (RoddyConversionHelperMethods.isNullOrEmpty(_class)) _class = STANDARD_FILE_CLASS
+        LibrariesFactory.getInstance().loadRealOrSyntheticClass(_class, BaseFile as Class<FileObject>)
+        return constructSourceFile(_class as Class<? extends BaseFile>, new File(path), context)
+    }
+
+    /**
+     * Just another name for getSourceFile()
+     * @param context
+     * @param path
+     * @param _class
+     * @return
+     */
+    static BaseFile fromStorage(ExecutionContext context, String path, String _class = STANDARD_FILE_CLASS) {
+        return getSourceFile(context, path, _class)
+    }
+
+    /**
+     * Call constructManual in a short way
+     */
+    static BaseFile getFile(BaseFile parentFile, String _class = STANDARD_FILE_CLASS) {
+        if (RoddyConversionHelperMethods.isNullOrEmpty(_class)) _class = STANDARD_FILE_CLASS
+        return constructManual(_class as Class<? extends BaseFile>, parentFile)
+    }
+
+    /**
+     * Derive a file from another file. Effectively call getFile, but enforce parentFile to be non null
+     * @param parentFile
+     * @param _class
+     * @return
+     */
+    static BaseFile deriveFrom(BaseFile parentFile, String _class = STANDARD_FILE_CLASS) {
+        assert parentFile
+        getFile(parentFile, _class)
+    }
 
     protected File path;
 
@@ -511,7 +558,8 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         return getFilename(baseFile, FilenamePattern.DEFAULT_SELECTION_TAG);
     }
 
-    private static Map<Class, LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>>> _classPatternsCache = new LinkedHashMap<>();
+    private
+    static Map<Class, LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>>> _classPatternsCache = new LinkedHashMap<>();
 
     static LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>> loadAvailableFilenamePatterns(BaseFile baseFile, ExecutionContext context) {
         Configuration cfg = context.getConfiguration();
@@ -594,13 +642,14 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
             }
         } catch (IOException ex) {
             // baseFile.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_PATH_INACCESSIBLE.expand(baseFile.absolutePath))
-        // } catch (RuntimeException ex) {
+            // } catch (RuntimeException ex) {
         } finally {
             return patternResult;
         }
     }
 
-    private static Tuple2<File, FilenamePattern> findFilenameFromGenericPatterns(BaseFile baseFile, LinkedList<FilenamePattern> availablePatterns, String selectionTag) {
+    private
+    static Tuple2<File, FilenamePattern> findFilenameFromGenericPatterns(BaseFile baseFile, LinkedList<FilenamePattern> availablePatterns, String selectionTag) {
         Tuple2<File, FilenamePattern> result = null;
         File filename = null;
         FilenamePattern appliedPattern = null;
@@ -620,7 +669,8 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         return new Tuple2<>(filename, appliedPattern);
     }
 
-    private static Tuple2<File, FilenamePattern> findFilenameFromSourcefilePatterns(BaseFile baseFile, LinkedList<FilenamePattern> availablePatterns, String selectionTag) {
+    private
+    static Tuple2<File, FilenamePattern> findFilenameFromSourcefilePatterns(BaseFile baseFile, LinkedList<FilenamePattern> availablePatterns, String selectionTag) {
         Tuple2<File, FilenamePattern> result = null;
         File filename = null;
         FilenamePattern appliedPattern = null;
@@ -654,7 +704,8 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
      * @param selectionTag
      * @return
      */
-    private static Tuple2<File, FilenamePattern> findFilenameFromOnMethodPatterns(BaseFile baseFile, LinkedList<FilenamePattern> availablePatterns, String selectionTag) {
+    private
+    static Tuple2<File, FilenamePattern> findFilenameFromOnMethodPatterns(BaseFile baseFile, LinkedList<FilenamePattern> availablePatterns, String selectionTag) {
         Tuple2<File, FilenamePattern> result = null;
         File filename = null;
         FilenamePattern appliedPattern = null;
@@ -697,7 +748,8 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
      * @param selectionTag
      * @return
      */
-    private static Tuple2<File, FilenamePattern> findFilenameFromOnToolIDPatterns(BaseFile baseFile, LinkedList<FilenamePattern> availablePatterns, String selectionTag) {
+    private
+    static Tuple2<File, FilenamePattern> findFilenameFromOnToolIDPatterns(BaseFile baseFile, LinkedList<FilenamePattern> availablePatterns, String selectionTag) {
         Tuple2<File, FilenamePattern> result = null;
         File filename = null;
         FilenamePattern appliedPattern = null;
@@ -724,7 +776,8 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
      * @param selectionTag
      * @return
      */
-    private static Tuple2<File, FilenamePattern> findFilenameFromOnScriptParameterPatterns(BaseFile baseFile, LinkedList<FilenamePattern> availablePatterns, String selectionTag) {
+    private
+    static Tuple2<File, FilenamePattern> findFilenameFromOnScriptParameterPatterns(BaseFile baseFile, LinkedList<FilenamePattern> availablePatterns, String selectionTag) {
         Tuple2<File, FilenamePattern> result = null;
 
         //Find the called basefile method, if on_method patterns are available.
