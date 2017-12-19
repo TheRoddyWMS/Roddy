@@ -17,7 +17,6 @@ import static de.dkfz.roddy.plugins.LibrariesFactory.*
 public class BuildInfoFileHelper {
     private static LoggerWrapper logger = LoggerWrapper.getLogger(LibrariesFactory.class.getSimpleName());
 
-    public static final String DEFAULT_GROOVY_VERSION = "2.3" // Groovy was 2.3.x for a long time.
     public static final String DEFAULT_JDK_VERSION = "1.8" // For backward compatibility, the api versions are set for older plugins
     public static final String DEFAULT_RODDY_VERSION = "2.2"
 
@@ -118,23 +117,18 @@ public class BuildInfoFileHelper {
 
     boolean checkMatchingAPIVersions(PluginInfo pluginInfo) {
         return pluginInfo.getJdkVersion() == getJDKVersion() &&
-                pluginInfo.getGroovyVersion() == getGroovyVersion() &&
-                pluginInfo.getRoddyAPIVersion() == getRoddyAPIVersion();
+                pluginInfo.getRoddyAPIVersion() == getRoddyAPIVersion()
     }
 
-    public String getJDKVersion() {
-        return entries.get(BUILDINFO_RUNTIME_JDKVERSION, [DEFAULT_JDK_VERSION])[0].split(StringConstants.SPLIT_STOP)[0..1].join(".");
+    String getJDKVersion() {
+        return entries.get(BUILDINFO_RUNTIME_JDKVERSION, [DEFAULT_JDK_VERSION])[0].split(StringConstants.SPLIT_STOP)[0..1].join(".")
     }
 
-    public String getGroovyVersion() {
-        return entries.get(BUILDINFO_RUNTIME_GROOVYVERSION, [DEFAULT_GROOVY_VERSION])[0].split(StringConstants.SPLIT_STOP)[0..1].join(".");
+    String getRoddyAPIVersion() {
+        return entries.get(BUILDINFO_RUNTIME_APIVERSION, [DEFAULT_RODDY_VERSION])[0].split(StringConstants.SPLIT_STOP)[0..1].join(".")
     }
 
-    public String getRoddyAPIVersion() {
-        return entries.get(BUILDINFO_RUNTIME_APIVERSION, [DEFAULT_RODDY_VERSION])[0].split(StringConstants.SPLIT_STOP)[0..1].join(".");
-    }
-
-    public boolean isBetaPlugin() {
+    boolean isBetaPlugin() {
         return entries.get(BUILDINFO_STATUS_BETA, ["false"])[0].toBoolean()
     }
 }

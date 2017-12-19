@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.core;
 
+import de.dkfz.roddy.BEException;
 import de.dkfz.roddy.Constants;
 import de.dkfz.roddy.execution.jobs.Job;
 import de.dkfz.roddy.execution.jobs.JobState;
@@ -364,6 +365,7 @@ public class Analysis {
             boolean contextExecutability = context.checkExecutability();
             boolean configurationValidity = Roddy.isStrictModeEnabled() && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors) ? !getConfiguration().hasErrors() : true;
             isExecutable = contextRightsSettings && contextPermissions && contextExecutability && configurationValidity;
+            boolean successfullyExecuted = false;
 
             if (!isExecutable) {
                 StringBuilder message = new StringBuilder("The workflow does not seem to be executable for dataset " + datasetID);
@@ -383,8 +385,11 @@ public class Analysis {
                         execute &= ignoreFileChecks || (invalidPreparedFiles.size() == 0 && copiedAnalysisToolsAreExecutable);
                         if (!execute) {
                             StringBuilder message = new StringBuilder("There were errors after preparing the workflow run for dataset " + datasetID);
-                            if (invalidPreparedFiles.size() > 0) message.append("\n\tSome files could not be written. Workflow will not execute.\n\t" + RoddyIOHelperMethods.joinArray(invalidPreparedFiles.toArray(), "\t\n"));
-                            if (!copiedAnalysisToolsAreExecutable) message.append("\n\tSome declared tools are not executable. Workflow will not execute.");
+                            if (invalidPreparedFiles.size() > 0)
+                                message.append("\n\tSome files could not be written. Workflow will not execute.\n\t"
+                                    + RoddyIOHelperMethods.joinArray(invalidPreparedFiles.toArray(), "\t\n"));
+                            if (!copiedAnalysisToolsAreExecutable)
+                                message.append("\n\tSome declared tools are not executable. Workflow will not execute.");
                             if (ignoreFileChecks) {
                                 message.append("\n  The errors were ignored because disablestrictfilechecks is set.");
                             }
@@ -394,13 +399,14 @@ public class Analysis {
 
                     // Finally, if execution is allowed, run it and start the submitted jobs (if hold jobs is enabled)
                     if (execute) {
-                        context.execute();
-                        finallyStartJobsOfContext(context);
+                        successfullyExecuted = context.execute();
+                        if (successfullyExecuted)
+                            finallyStartJobsOfContext(context);
                     }
                 } catch (Exception ex) {
                     // (Maybe) abort jobs in strict mode
                     logger.warning(ex.getMessage());
-                    maybeAbortStartedJobsOfContext(context);
+                    successfullyExecuted = false;
                     throw ex;
                 } finally {
 
@@ -408,6 +414,9 @@ public class Analysis {
                         //Query file validity of all files
                         FileSystemAccessProvider.getInstance().validateAllFilesInContext(context);
                     } else {
+                        if (!successfullyExecuted)
+                            maybeAbortStartedJobsOfContext(context);
+
                         cleanUpAndFinishWorkflowRun(context);
                     }
                 }
@@ -476,7 +485,7 @@ public class Analysis {
      *
      * @param context
      */
-    private void finallyStartJobsOfContext(ExecutionContext context) {
+    private void finallyStartJobsOfContext(ExecutionContext context) throws BEException {
         Roddy.getJobManager().startHeldJobs(context.getExecutedJobs());
     }
 
@@ -514,7 +523,7 @@ public class Analysis {
         if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.RollbackOnWorkflowError)) {
             try {
                 logger.severe("A workflow error occurred, try to rollback / abort submitted jobs.");
-                Roddy.getJobManager().queryJobAbortion(context.getStartedJobs());
+                Roddy.getJobManager().killJobs(context.jobsForProcess);
             } catch (Exception ex) {
                 logger.severe("Could not successfully abort jobs.", ex);
             }

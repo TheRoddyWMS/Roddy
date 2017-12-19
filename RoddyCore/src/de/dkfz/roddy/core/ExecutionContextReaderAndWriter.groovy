@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.core
 
+import de.dkfz.roddy.execution.jobs.BEJobID
+import de.dkfz.roddy.execution.jobs.GenericJobInfo
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.Constants
@@ -79,7 +81,7 @@ class ExecutionContextReaderAndWriter {
                 for (String id : statusList.keySet()) {
                     JobState status = statusList[id]
 
-                    if (!Roddy.getJobManager().compareJobIDs(job.getJobID().toString(), (id)))
+                    if (job.getJobID() ==  new BEJobID(id))
                         continue
                     job.setJobState(status)
                 }
@@ -87,7 +89,6 @@ class ExecutionContextReaderAndWriter {
 
             Map<String, BEJob> unknownJobs = new LinkedHashMap<>()
             Map<String, BEJob> possiblyRunningJobs = new LinkedHashMap<>()
-            List<String> queryList = new LinkedList<>()
             //For every job which is still unknown or possibly running get the actual jobState from the cluster
             for (BEJob job : jobsStartedInContext) {
                 if (job.getJobState().isUnknown() || job.getJobState() == JobState.UNSTARTED) {
@@ -101,7 +102,7 @@ class ExecutionContextReaderAndWriter {
             for (String jobID : unknownJobs.keySet()) {
                 BEJob job = unknownJobs[jobID]
                 job.setJobState(map[job])
-                Roddy.getJobManager().addJobStatusChangeListener(job)
+                Roddy.getJobManager().addToListOfStartedJobs(job)
             }
             for (String jobID : possiblyRunningJobs.keySet()) {
                 BEJob job = possiblyRunningJobs[jobID]
@@ -109,7 +110,7 @@ class ExecutionContextReaderAndWriter {
                     job.setJobState(JobState.FAILED)
                 } else {
                     job.setJobState(map[job])
-                    Roddy.getJobManager().addJobStatusChangeListener(job)
+                    Roddy.getJobManager().addToListOfStartedJobs(job)
                 }
             }
 
@@ -235,7 +236,7 @@ class ExecutionContextReaderAndWriter {
                     try {
                         if (ej.isFakeJob()) continue //Skip fake jobs.
                         job(id: ej.getJobID(), name: ej.jobName) {
-                            String commandString = ej.getLastCommand() != null ? ej.getLastCommand().toString() : ""
+                            String commandString = ej.runResult.command != null ? ej.runResult.command.toString() : ""
                             calledcommand(command: commandString)
                             tool(id: ej.getToolID(), md5: ej.getToolMD5())
                             parameters {
@@ -267,7 +268,7 @@ class ExecutionContextReaderAndWriter {
                             }
                         }
                     } catch (Exception ex) {
-                        logger.severe("An error occured, when the job info xml file was written. These errors are not vital but should be handled properly", ex)
+                        logger.severe("An error occurred, when the job info xml file was written. These errors are not vital but should be handled properly", ex)
                     }
                 }
             }
@@ -300,15 +301,15 @@ class ExecutionContextReaderAndWriter {
             //TODO Load a list of the previously created jobs and query those using qstat!
             for (String call : jobCalls) {
                 //TODO. How can we recognize different command factories? i.e. for other cluster systems?
-                BEJob beJob = Roddy.getJobManager().parseToJob(call)
-                if(beJob == null){
+                GenericJobInfo jobInfo = Roddy.getJobManager().parseGenericJobInfo(call)
+                if(jobInfo == null){
                     logger.severe("Skipped read in of job call: ${call}")
                     continue;
                 }
                 // Try to find the tool id in the context. If it is not available, set "UNKNOWN"
-                String toolID = allToolsByResourcePath[beJob.tool.parentFile.name + "/" + beJob.tool.name] ?: Constants.UNKNOWN
+                String toolID = allToolsByResourcePath[jobInfo.tool.parentFile.name + "/" + jobInfo.tool.name] ?: Constants.UNKNOWN
 
-                Job job = new Job(context, beJob.jobName, toolID, beJob.parameters as Map<String, Object>, new LinkedList<BaseFile>(), new LinkedList<BaseFile>())
+                Job job = new Job(context, jobInfo.jobName, toolID, jobInfo.parameters as Map<String, Object>, new LinkedList<BaseFile>(), new LinkedList<BaseFile>())
                 jobsStartedInContext.add(job)
             }
         }
@@ -340,7 +341,7 @@ class ExecutionContextReaderAndWriter {
                 if (split.length < 2) continue
 
                 String id = split[0]
-                JobState status = Roddy.getJobManager().parseJobState(split[1])
+                JobState status = null // TODO: Roddy.getJobManager().parseJobState(split[1])
                 long timestamp = 0
                 if (split.length == 3)
                     timestamp = Long.parseLong(split[2])

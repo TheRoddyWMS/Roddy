@@ -6,7 +6,8 @@
 
 package de.dkfz.roddy;
 
-import com.btr.proxy.search.ProxySearch;
+import com.github.markusbernhardt.proxy.ProxySearch;
+import com.github.markusbernhardt.proxy.util.PlatformUtil;
 import de.dkfz.roddy.client.RoddyStartupModeScopes;
 import de.dkfz.roddy.client.RoddyStartupModes;
 import de.dkfz.roddy.client.RoddyStartupOptions;
@@ -100,7 +101,7 @@ public class Roddy {
     private static String baseInputDirectory;
     private static String baseOutputDirectory;
 
-    private static final File applicationDirectory = new File("").getAbsoluteFile();
+    private static final File applicationDirectory = new File(System.getProperty("user.dir"));
     private static final File applicationBundleDirectory = new File(applicationDirectory, "bundledFiles");
 
     private static CommandLineCall commandLineCall;
@@ -551,20 +552,31 @@ public class Roddy {
 
             System.setProperty("java.net.useSystemProxies", "true");
             System.out.println("detecting proxies");
+
+            ProxySearch proxySearch = new ProxySearch();
+            if (PlatformUtil.getCurrentPlattform() == PlatformUtil.Platform.WIN) {
+                proxySearch.addStrategy(ProxySearch.Strategy.IE);
+                proxySearch.addStrategy(ProxySearch.Strategy.FIREFOX);
+                proxySearch.addStrategy(ProxySearch.Strategy.JAVA);
+            } else if (PlatformUtil.getCurrentPlattform() == PlatformUtil.Platform.LINUX) {
+                proxySearch.addStrategy(ProxySearch.Strategy.GNOME);
+                proxySearch.addStrategy(ProxySearch.Strategy.KDE);
+                proxySearch.addStrategy(ProxySearch.Strategy.FIREFOX);
+            } else {
+                proxySearch.addStrategy(ProxySearch.Strategy.OS_DEFAULT);
+            }
+
+            ProxySelector proxySelector = proxySearch.getProxySelector();
+            ProxySelector.setDefault(proxySelector);
+
             List l = null;
             try {
-                ProxySearch proxySearch = new ProxySearch();
-                proxySearch.addStrategy(ProxySearch.Strategy.OS_DEFAULT);
-                proxySearch.addStrategy(ProxySearch.Strategy.ENV_VAR);
-                proxySearch.addStrategy(ProxySearch.Strategy.KDE);
-
-                proxySearch.addStrategy(ProxySearch.Strategy.BROWSER);
-                ProxySelector proxySelector = proxySearch.getProxySelector();
-                ProxySelector.setDefault(proxySelector);
                 l = ProxySelector.getDefault().select(new URI("http://codemirror.net"));
             } catch (URISyntaxException e) {
                 e.printStackTrace();
+                System.exit(1);
             }
+
             if (l != null) {
                 for (Iterator iter = l.iterator(); iter.hasNext(); ) {
                     java.net.Proxy proxy = (java.net.Proxy) iter.next();
@@ -633,6 +645,7 @@ public class Roddy {
             applicationSpecificConfiguration = new Configuration(null);
             RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
 
+            assert(Roddy.jobManager != null);
             setDefaultRoddyJobIdVariable(configurationValues);
             setDefaultRoddyJobNameVariable(configurationValues);
             setDefaultRoddyQueueVariable(configurationValues);
@@ -688,22 +701,20 @@ public class Roddy {
         }
 
         /** Get the constructor which comes with no parameters */
-        Constructor first = jobManagerClass.getDeclaredConstructor(BEExecutionService.class, JobManagerCreationParameters.class);
+        Constructor first = jobManagerClass.getDeclaredConstructor(BEExecutionService.class, JobManagerOptions.class);
         jobManager = (BatchEuphoriaJobManager) first.newInstance(ExecutionService.getInstance()
-                , new JobManagerCreationParametersBuilder()
+                , JobManagerOptions.create()
                         .setCreateDaemon(true)
+                        .setStrictMode(false)
                         .setTrackUserJobsOnly(trackUserJobsOnly)
                         .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
+//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestMemoryIsEnabled", "true"), true))
+//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestWalltimeIsEnabled", "true"), true))
+//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestQueueIsEnabled", "true"), true))
+//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestCoresIsEnabled", "true"), true))
+//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestStorageIsEnabled", "false"), false))
                         .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI()).build());
 
-// There are many values which need to be extracted from the xml (context, project?)
-//        configuration.getProperty("PBS_AccountName", "")
-//        configuration.getProperty("email")
-//        configuration.getProperty("outputFileGroup", null)
-//        configuration.getProperty("umask", "")
-
-        // Was in Command
-//        new File(configuration.getProperty("loggingDirectory", "/"))
     }
 
     private static BatchEuphoriaJobManager jobManager;
@@ -713,8 +724,6 @@ public class Roddy {
     }
 
     private static void parseRoddyStartupModeAndRun(CommandLineCall clc) {
-//        if (clc.startupMode == RoddyStartupModes.ui)
-//            RoddyUIController.App.main(clc.getArguments().toArray(new String[0]));
         if (clc.startupMode == RoddyStartupModes.rmi)
             RoddyRMIServer.startServer(clc);
         else
@@ -729,26 +738,21 @@ public class Roddy {
         if (commandLineCall.getOptionList().contains(RoddyStartupOptions.disallowexit))
             return;
 
-//        if (option == RoddyStartupModes.ui)
-//            return;
-
         if (!option.needsJobManager())
             return;
 
         if (jobManager != null) {
             if (jobManager.executesWithoutJobSystem() && waitForJobsToFinish) {
-                exitCode = performWaitforJobs();
+                exitCode = waitForJobs();
             } else {
-                List<Command> listOfCreatedCommands = jobManager.getListOfCreatedCommands();
-                for (Command command : listOfCreatedCommands) {
-                    if (command.getJob().getJobState() == JobState.FAILED) exitCode++;
-                }
+                // TODO: #167 (https://github.com/eilslabs/Roddy/issues/167)
+                exit(0);
             }
         }
         exit(exitCode);
     }
 
-    private static int performWaitforJobs() {
+    private static int waitForJobs() {
         try {
             Thread.sleep(15000); //Sleep at least 15 seconds to let any job scheduler handle things...
             return jobManager.waitForJobsToFinish();
@@ -915,6 +919,7 @@ public class Roddy {
     public static List<File> getConfigurationDirectories() {
         List<File> list = loadFolderListFromConfiguration(RoddyStartupOptions.configurationDirectories, Constants.APP_PROPERTY_CONFIGURATION_DIRECTORIES);
         list.add(getFolderForConfigurationFreeMode());
+        list.add(new File(Roddy.getApplicationDirectory(), "configurationfiles"));
         return list;
     }
 

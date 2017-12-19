@@ -39,7 +39,7 @@ function tryExtractRoddyVersionFromPlugin() {
 }
 
 function tryExtractPluginIDFromConfig() {
-  local var=$( getValueFromConfigOrCommandLine usePlugin usePlugin )
+  local var=$( getValueFromConfigOrCommandLine usePluginVersion usePluginVersion )
   echo ${var-none}
 }
 

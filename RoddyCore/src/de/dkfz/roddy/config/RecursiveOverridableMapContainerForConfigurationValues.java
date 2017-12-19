@@ -69,11 +69,7 @@ public class RecursiveOverridableMapContainerForConfigurationValues
     }
 
     public boolean getBoolean(String id, boolean b) {
-        try {
-            return getValue(id).toBoolean();
-        } catch (ConfigurationError e) {
-            return b;
-        }
+        return getValue(id, new ConfigurationValue(id, b ? "true" : "false")).toBoolean();
     }
 
     public List<String> getList(String id) {
@@ -99,11 +95,7 @@ public class RecursiveOverridableMapContainerForConfigurationValues
     }
 
     public String getString(String id, String s) {
-        try {
-            return getValue(id).toString();
-        } catch (ConfigurationError e) {
-            return s;
-        }
+        return getValue(id, new ConfigurationValue(id, s)).toString();
     }
 
     /**

@@ -23,7 +23,7 @@ class SyntheticPluginInfo extends PluginInfo {
     SyntheticPluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, Map<String, String> dependencies)
         throws IOException {
         super(name, zipFile, directory, developmentDirectory, prodVersion, RuntimeTools.getRoddyRuntimeVersion(),
-                RuntimeTools.getJavaRuntimeVersion(), RuntimeTools.getGroovyRuntimeVersion(), dependencies)
+                RuntimeTools.getJavaRuntimeVersion(), dependencies)
     }
 
     final Map<String, Class> map = [:]

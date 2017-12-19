@@ -46,7 +46,7 @@ class GenericJobInfo {
         id = jInfo.id
         parameters = jInfo.parameters
         parentJobIDs = jInfo.parentJobIDs
-        walltime = jInfo.usedResources.walltime
+        walltime = TimeUnit.fromDuration(jInfo.usedResources.walltime)
         assert(jInfo.usedResources.mem.toLong(bufferUnit) <= Integer.MAX_VALUE)
         memory = jInfo.usedResources.mem.toLong(bufferUnit) as Integer
         memoryBufferUnit = bufferUnit

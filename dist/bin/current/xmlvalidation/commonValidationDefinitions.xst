@@ -72,7 +72,6 @@
             <xs:element type="resourcesetsType" name="resourcesets" minOccurs="0" maxOccurs="1"/>
             <xs:element type="inputType" name="input" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element type="outputType" name="output" minOccurs="0" maxOccurs="1"/>
-            <!--<xs:element type="outputType" name="output" minOccurs="0" maxOccurs="1" />-->
         </xs:sequence>
         <xs:attribute type="xs:string" name="name"/>
         <xs:attribute type="xs:string" name="value"/>

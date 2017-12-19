@@ -17,8 +17,8 @@ class JarFulPluginInfo extends PluginInfo {
 
     final File jarFile
 
-    JarFulPluginInfo(String name, File directory, File jarFile, String version, String roddyAPIVersion, String jdkVersion, String groovyVersion, Map<String, String> dependencies) {
-        super(name, directory, version, roddyAPIVersion, jdkVersion, groovyVersion, dependencies)
+    JarFulPluginInfo(String name, File directory, File jarFile, String version, String roddyAPIVersion, String jdkVersion, Map<String, String> dependencies) {
+        super(name, directory, version, roddyAPIVersion, jdkVersion, dependencies)
         this.jarFile = jarFile
     }
 }
