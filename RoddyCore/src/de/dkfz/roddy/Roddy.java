@@ -19,6 +19,7 @@ import de.dkfz.roddy.core.Initializable;
 import de.dkfz.roddy.execution.BEExecutionService;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.LocalExecutionHelper;
+import de.dkfz.roddy.execution.io.NoNoExecutionService;
 import de.dkfz.roddy.execution.io.fs.BashCommandSet;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.io.fs.ShellCommandSet;
@@ -627,12 +628,17 @@ public class Roddy {
             File propertyFilePath = null;
             try {
                 propertyFilePath = Roddy.getPropertiesFilePath();
+                System.err.println(Constants.APP_SCRATCH_BASE_DIRECTORY +
+                        " is not defined. Please add it to your application properties file: '" + propertyFilePath + "'");
+                System.exit(1);
             } catch (FileNotFoundException e) {
                 // The file must have existed, because we are accessing the values in it.
+                scratchBaseDir = System.getenv("CURRENT_PWD");
+                if (scratchBaseDir == null) {
+                    scratchBaseDir = System.getProperty("user.dir");
+                }
             }
-            System.err.println(Constants.APP_SCRATCH_BASE_DIRECTORY +
-                    " is not defined. Please add it to your application properties file: '" + propertyFilePath + "'");
-            System.exit(1);
+
         }
         configurationValues.add(new ConfigurationValue(Constants.APP_SCRATCH_BASE_DIRECTORY, scratchBaseDir));
         String scratchDir = new File ("$" + Constants.APP_SCRATCH_BASE_DIRECTORY ,
@@ -645,10 +651,14 @@ public class Roddy {
             applicationSpecificConfiguration = new Configuration(null);
             RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
 
-            assert(Roddy.jobManager != null);
-            setDefaultRoddyJobIdVariable(configurationValues);
-            setDefaultRoddyJobNameVariable(configurationValues);
-            setDefaultRoddyQueueVariable(configurationValues);
+            if (Roddy.jobManager != null) {
+                setDefaultRoddyJobIdVariable(configurationValues);
+                setDefaultRoddyJobNameVariable(configurationValues);
+                setDefaultRoddyQueueVariable(configurationValues);
+            } else {
+                logger.always("No job manager specific variables available because no job manager is set.");
+            }
+
             setScratchDirectory(configurationValues);
 
             // Add custom command line values to the project configuration.
@@ -717,7 +727,7 @@ public class Roddy {
 
     }
 
-    private static BatchEuphoriaJobManager jobManager;
+    private static BatchEuphoriaJobManager jobManager; // = new DirectSynchronousExecutionJobManager(new NoNoExecutionService(), new JobManagerOptions());
 
     public static BatchEuphoriaJobManager getJobManager() {
         return jobManager;
