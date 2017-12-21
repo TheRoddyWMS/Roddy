@@ -656,7 +656,7 @@ public class Roddy {
                 setDefaultRoddyJobNameVariable(configurationValues);
                 setDefaultRoddyQueueVariable(configurationValues);
             } else {
-                logger.always("No job manager specific variables available because no job manager is set.");
+                logger.warning("No job manager specific variables available because no job manager is set.");
             }
 
             setScratchDirectory(configurationValues);
