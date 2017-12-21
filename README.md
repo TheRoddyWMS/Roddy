@@ -51,26 +51,30 @@ systemProp.https.proxyPort=
 
 Then
 
-* Download and activate the Gradle-plugin of IntelliJ, if you have not done so already.
-* Open a new project. The project should be an "Empty Project".
-* Clone the `RoddyToolLib`, `BatchEuphoria` and `Roddy` into your new empty project. The `DefaultPlugin` and `PluginBase` plugins are optional but required for some of the integration tests.
-```bash
-git clone https://github.com/eilslabs/RoddyToolLib
-git clone https://github.com/eilslabs/BatchEuphoria
-git clone https://github.com/eilslabs/Roddy
-pushd Roddy/dist/plugin
-git clone https://github.com/eilslabs/Roddy-Default-Plugin.git DefaultPlugin
-git clone https://github.com/eilslabs/Roddy-Base-Plugin PluginBase
-popd
-```
-* Import the three source repositories via "File" -> "Project Structure" -> "+" (Module pane). For import select the `build.gradle` of in the respective repository.  
-* If there is no Gradle symbol in the tool bars of IntelliJ, select "View" -> "Tool Windows" -> "Gradle".
-* Now configure the composite builds by right-clicking on the gradle project.
-
-Now if you go to the Gradle toolbar and select the build target of Roddy, all three repos will be build with gradle.
+1. Download and activate the Gradle-plugin of IntelliJ, if you have not done so already.
+2. Open a new project. The project should be an "Empty Project".
+3. Clone the `RoddyToolLib`, `BatchEuphoria` and `Roddy` into your new empty project. The `DefaultPlugin` and `PluginBase` plugins are required for some of the integration tests and should be present for most useful things you can do with Roddy.
+    ```bash
+    git clone https://github.com/eilslabs/RoddyToolLib
+    git clone https://github.com/eilslabs/BatchEuphoria
+    git clone https://github.com/eilslabs/Roddy
+    mkdir -p Roddy/dist/plugins
+    pushd Roddy/dist/plugins
+    git clone https://github.com/eilslabs/Roddy-Default-Plugin.git DefaultPlugin
+    git clone https://github.com/eilslabs/Roddy-Base-Plugin PluginBase
+    popd
+    ```
+4. Import the five source repositories via "File" -> "Project Structure" -> "+" (Module pane). For import select the `build.gradle` from the specific repository.
+5. Open the Gradle tasks window by clicking on the Gradle symbol on the task bar. If there is no Gradle symbol in the tool bars of IntelliJ, select "View" -> "Tool Windows" -> "Gradle".
+6. Configure the composite Gradle builds by right-clicking on the gradle project.
+7. Now if you go to the Gradle toolbar and select the `build` target of Roddy, RoddyToolLib, BatchEuphoria and Roddy itself will be build with Gradle.
 
 ## Setting up plugins in the project 
 
-After this initial step you can add your Roddy plugins to you project. We usually clone the plugin repositories into a dedicated `plugins_R2.4/` directory just beneath the root project directory (the now not so empty project that you initially created). This directory is then used for the `usePluginVersion` command-line option or in the `applicationProperties.ini`. The only exception are the `DefaultPlugin` and `PluginBase` that need to be in the `Roddy/dist/plugins` directory.
+After these initial steps you can add your Roddy plugins to you project. We usually clone the plugin repositories into a dedicated `plugins_R2.4/` directory just beneath the root project directory (the now not so empty project that you initially created). This directory is then used for the `usePluginVersion` command-line option or in the `applicationProperties.ini`. The only exception are the `DefaultPlugin` and `PluginBase` that need to be in the `Roddy/dist/plugins` directory.
 
 In IntelliJ then add the repository to your project as a module, ideally by directly importing the `.iml` file from the repository. Make sure that the plugin modules depends on the PluginBase, Roddy_main and maybe RoddyToolLib_main modules.
+
+## Running Roddy from within IntelliJ
+
+For running Roddy with parameters from IntelliJ you an "Application" configuration with "-enableassertions -Xms4m -Xmx50m" as VM options, the path to your `Roddy/` repository as working dir and `de.dkfz.roddy.Roddy` as Main class. When debugging plugin code you should use the plugin's repository root for "Use class path of module".
