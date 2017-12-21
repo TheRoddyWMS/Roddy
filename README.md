@@ -58,7 +58,8 @@ Then
 git clone https://github.com/eilslabs/RoddyToolLib
 git clone https://github.com/eilslabs/BatchEuphoria
 git clone https://github.com/eilslabs/Roddy
-pushd Roddy/dist/plugin
+mkdir -p Roddy/dist/plugins
+pushd Roddy/dist/plugins
 git clone https://github.com/eilslabs/Roddy-Default-Plugin.git DefaultPlugin
 git clone https://github.com/eilslabs/Roddy-Base-Plugin PluginBase
 popd
