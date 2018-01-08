@@ -10,10 +10,21 @@ You can find our documentation under http://roddy-documentation.readthedocs.io
 
 To run Roddy you need at least 
 
+* Java and Groovy
 * the Roddy environment, which basically is a set of directories into which to install the rest
 * a compiled Roddy installation installed into `dist/bin/$versionNumber` 
 * the default plugin
 * the base plugin
+
+## Java and Groovy
+
+During the start-up a Groovy interpreter is used. Then, as Roddy is a JVM-based tool, you need a Java installation. Groovy 2.4.7+ and Java 8u121+ should do the job (and maybe also smaller versions). On a blank system you may want to used [sdkman](http://sdkman.io/) to install Groovy 2.4.7 and Oracle Java 8u151:
+
+```bash
+curl -s "https://get.sdkman.io" | bash
+sdk install groovy 2.4.7
+sdk install java 8u151-oracle
+```
 
 ## Minimal installation from release packages
 
@@ -33,8 +44,8 @@ If you want to build Roddy yourself, clone the repository. The repository contai
 
 ```bash
 git clone https://github.com/eilslabs/Roddy.git
-git checkout develop
 cd Roddy
+git checkout develop
 mkdir -p dist/plugins
 pushd dist/plugins
 git clone https://github.com/eilslabs/Roddy-Default-Plugin.git DefaultPlugin
