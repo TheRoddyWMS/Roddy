@@ -35,10 +35,15 @@ If you want to build Roddy yourself, clone the repository. The repository contai
 git clone https://github.com/eilslabs/Roddy.git
 git checkout develop
 cd Roddy
+mkdir -p dist/plugins
+pushd dist/plugins
+git clone https://github.com/eilslabs/Roddy-Default-Plugin.git DefaultPlugin
+git clone https://github.com/eilslabs/Roddy-Base-Plugin PluginBase
+popd
 ./gradlew build
 ```
 
-The example will build the Roddy from `develop` branch. If you use this branch, the dependencies BatchEuphoria and RoddyToolLib will automatically be pulled from Github with their development snapshots.
+The example will build the Roddy from `develop` branch. If you use this branch, the dependencies BatchEuphoria and RoddyToolLib will automatically be pulled from Github with their development snapshots. 
 
 ## Full developer build instructions
 
