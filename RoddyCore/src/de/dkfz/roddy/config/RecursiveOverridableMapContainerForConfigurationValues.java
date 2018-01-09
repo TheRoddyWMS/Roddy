@@ -6,7 +6,9 @@
 
 package de.dkfz.roddy.config;
 
+import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Helps configurations to store overridable versions of configuration values and other things
@@ -68,6 +70,18 @@ public class RecursiveOverridableMapContainerForConfigurationValues
 
     public boolean getBoolean(String id, boolean b) {
         return getValue(id, new ConfigurationValue(id, b ? "true" : "false")).toBoolean();
+    }
+
+    public List<String> getList(String id) {
+        return getList(id, ",");
+    }
+
+    public List<String> getList(String id, String separator) {
+        try {
+            return Arrays.asList(getValue(id).toString().split("[" + separator + "]"));
+        } catch(ConfigurationError e) {
+            return new LinkedList<>();
+        }
     }
 
     /**

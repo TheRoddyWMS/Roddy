@@ -182,7 +182,6 @@ abstract class ExecutionService implements BEExecutionService {
         if (!configurationDisallowsJobSubmission && !allJobsBlocked && !pidIsBlocked && !preventCalls && !isDummyCommand) {
             try {
                 cmdString = command.toString()
-                storeParameterFile(command)
 
                 OutputStream outputStream = createServiceBasedOutputStream(command, waitFor)
 
@@ -215,16 +214,6 @@ abstract class ExecutionService implements BEExecutionService {
     protected FileOutputStream createServiceBasedOutputStream(Command command, boolean waitFor) { return null }
 
     protected void finalizeServiceBasedOutputStream(Command command, OutputStream outputStream) {}
-
-    static void storeParameterFile(Command command) {
-        ExecutionContext context = ((Job) command.job).executionContext
-        String convertedParameters = BashConverter.convertStringMap(command.parameters,
-                context.getFeatureToggleStatus(AvailableFeatureToggles.UseDeclareFunctionalityForBashConverter),
-                context.getFeatureToggleStatus(AvailableFeatureToggles.QuoteSomeScalarConfigValues),
-                context.getFeatureToggleStatus(AvailableFeatureToggles.AutoQuoteBashArrayVariables))
-        if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
-            FileSystemAccessProvider.getInstance().writeTextFile((command.job as Job).getParameterFile(), convertedParameters, context)
-    }
 
     static long measureStart() { return System.nanoTime() }
 
