@@ -148,7 +148,9 @@ class BashConverter extends ConfigurationConverter {
     /**
      * @param cfg Configuration object. Basically a tree of configuration values that may additionally contain cross-references in the values.
      *
-     * As the name says, the method will return a sorted map of configuration values. The vlaues are sorted by their dependencies so e.g.:
+     * @param If returnLeftOverCValuesOnly is set, only the configuration values referencing undeclared variables are returned.
+     *
+     * @return As the name says, the method will return a sorted map of configuration values. The values are sorted by their dependencies so e.g.:
      *
      *   1.  valueA=abc
      *   2.  valueB=def
@@ -158,7 +160,7 @@ class BashConverter extends ConfigurationConverter {
      *
      * Note, that values are not sorted by their id! They are initially sorted by load order and this will be kept as far as it is possible.
      *
-     * @return
+     * Values with unresolved dependencies (i.e. variables that are not declared in the configuration tree) are put at the end.
      */
     Map<String, ConfigurationValue> getConfigurationValuesSortedByDependencies(Configuration cfg, boolean returnLeftOverCValuesOnly = false) {
         return getConfigurationValuesSortedByDependencies(cfg.getConfigurationValues().getAllValuesAsList(), returnLeftOverCValuesOnly)
