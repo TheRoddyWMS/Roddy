@@ -78,7 +78,7 @@ class BashConverter extends ConfigurationConverter {
 
     StringBuilder appendConfigurationValues(ExecutionContext context, Configuration cfg) {
         StringBuilder text = new StringBuilder()
-        Map<String, ConfigurationValue> listOfSortedValues = getConfigurationValuesSortedByDependencies(cfg)
+        Map<String, ConfigurationValue> listOfSortedValues = getConfigurationValuesSortedByDependencies(cfg.configurationValues.allValuesAsList)
         for (ConfigurationValue cv : listOfSortedValues.values()) {
             boolean isValidationRule = cv.id.contains("cfgValidationRule")
 
@@ -146,6 +146,16 @@ class BashConverter extends ConfigurationConverter {
     }
 
     /**
+     * Effectively calls getConfigurationValuesSortedByDependenciesAndUnresolvable but return a joined map of the result.
+     * @param values
+     * @return A map of resolved and unresolved values. Unresolved are found at the end of the (linked!) map.
+     */
+    Map<String, ConfigurationValue> getConfigurationValuesSortedByDependencies(List<ConfigurationValue> values) {
+        def tuple = getConfigurationValuesSortedByDependenciesAndUnresolvable(values)
+        return tuple.first + tuple.second
+    }
+
+    /**
      * @param cfg Configuration object. Basically a tree of configuration values that may additionally contain cross-references in the values.
      *
      * @param If returnLeftOverCValuesOnly is set, only the configuration values referencing undeclared variables are returned.
@@ -162,11 +172,7 @@ class BashConverter extends ConfigurationConverter {
      *
      * Values with unresolved dependencies (i.e. variables that are not declared in the configuration tree) are put at the end.
      */
-    Map<String, ConfigurationValue> getConfigurationValuesSortedByDependencies(Configuration cfg, boolean returnLeftOverCValuesOnly = false) {
-        return getConfigurationValuesSortedByDependencies(cfg.getConfigurationValues().getAllValuesAsList(), returnLeftOverCValuesOnly)
-    }
-
-    Map<String, ConfigurationValue> getConfigurationValuesSortedByDependencies(List<ConfigurationValue> values, boolean returnLeftOverCValuesOnly = false) {
+    Tuple2<Map<String, ConfigurationValue>, Map<String, ConfigurationValue>> getConfigurationValuesSortedByDependenciesAndUnresolvable(List<ConfigurationValue> values) {
 
         Map<String, ConfigurationValue> listOfUnsortedValues = values.collectEntries { [it.id, it] }
         Map<String, ConfigurationValue> listOfSortedValues = new LinkedHashMap<String, ConfigurationValue>()
@@ -200,12 +206,8 @@ class BashConverter extends ConfigurationConverter {
             listOfSortedValuesChanged = foundValues.values().size() > 0
         }
 
-        // In the rare case, that you want to have all the values, which still contain unresolvable dependencies, return here.
-        if (returnLeftOverCValuesOnly)
-            return listOfUnsortedValues
-
         // Finally put the leftover values to the end of the list. and return this.
-        return listOfSortedValues + listOfUnsortedValues
+        return new Tuple2<>(listOfSortedValues, listOfUnsortedValues)
     }
 
     static boolean isComment(ConfigurationValue cv) {
@@ -241,7 +243,7 @@ class BashConverter extends ConfigurationConverter {
      * @return
      */
     static List<String> convertStringMapToList(Map<String, String> map, Boolean doDeclare = true,
-                                   Boolean quoteSomeScalarConfigValues = true, Boolean doQuote = true) {
+                                               Boolean quoteSomeScalarConfigValues = true, Boolean doQuote = true) {
         String declareString = ""
         if (doDeclare) {
             declareString = "declare -x   "
