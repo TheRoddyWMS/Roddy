@@ -112,7 +112,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
 //                , arrayIndices
 //                , parameters
 //                , collectParentJobsFromFiles(parentFiles)
-//                , collectDependencyIDsFromFiles(parentFiles)
+//                , collectJobIDsFromFiles(parentFiles)
 //                , Roddy.getJobManager())
 //        this.toolID = toolID
 //        this.context = context
@@ -168,7 +168,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 , JobLog.toOneFile(new File (context.loggingDirectory, jobName + ".o{JOB_ID}"))
                 , null)
         this.localToolPath = context.getConfiguration().getSourceToolPath(toolID)
-        this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectDependencyIDsFromFiles(parentFiles), jobManager))
+        this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectJobIDsFromFiles(parentFiles), jobManager))
         this.context = context
         this.toolID = toolID
 
@@ -223,7 +223,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return parentJobs
     }
 
-    static List<BEJobID> collectDependencyIDsFromFiles(List<BaseFile> parentFiles) {
+    static List<BEJobID> collectJobIDsFromFiles(List<BaseFile> parentFiles) {
         List<BEJobID> dIDs = []
         if (parentFiles != null) {
             for (BaseFile bf : parentFiles) {
@@ -520,9 +520,10 @@ class Job extends BEJob<BEJob, BEJobResult> {
             debugWrapInScript = configuration.configurationValues.getBoolean(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)
         }
         this.parameters.put(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT, parameterObjectToString(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT, debugWrapInScript))
-        def jobConfiguration = createJobConfiguration()
 
         appendProcessingCommands(configuration)
+
+        storeJobConfigurationFile(createJobConfiguration())
 
         //See if the job should be executed
         if (contextLevel == ExecutionContextLevel.RUN || contextLevel == ExecutionContextLevel.CLEANUP) {
@@ -586,11 +587,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
  * @return
  */
     Configuration createJobConfiguration() {
-// Necessary? Could be needed.
-//        List<String> convertedParameters = BashConverter.convertStringMapToList(parameters,
-//                executionContext.getFeatureToggleStatus(AvailableFeatureToggles.UseDeclareFunctionalityForBashConverter),
-//                executionContext.getFeatureToggleStatus(AvailableFeatureToggles.QuoteSomeScalarConfigValues),
-//                executionContext.getFeatureToggleStatus(AvailableFeatureToggles.AutoQuoteBashArrayVariables))
         Configuration jobConfiguration = new Configuration(null, executionContext.configuration)
         jobConfiguration.configurationValues.addAll(parameters.collect { String k, String v -> new ConfigurationValue(jobConfiguration, k, v) })
         return jobConfiguration
@@ -599,9 +595,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
     void storeJobConfigurationFile(Configuration cfg) {
         String configText = ConfigurationConverter.convertAutomatically(context, cfg)
         FileSystemAccessProvider.getInstance().writeTextFile(getParameterFile(), configText, context)
-
-//        if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs)
-//            FileSystemAccessProvider.getInstance().writeTextFile(getParameterFile(), convertedParameters, context)
     }
 
     private void appendProcessingCommands(Configuration configuration) {
