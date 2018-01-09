@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export CURRENT_PWD="$PWD"
+
 cd `dirname $0`
 RODDY_DIRECTORY=`readlink -f .`
 parm1=${1-}
