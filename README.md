@@ -46,7 +46,6 @@ If you want to build Roddy yourself, clone the repository. The repository contai
 git clone https://github.com/eilslabs/Roddy.git
 cd Roddy
 git checkout develop
-mkdir -p dist/plugins
 pushd dist/plugins
 git clone https://github.com/eilslabs/Roddy-Default-Plugin.git DefaultPlugin
 git clone https://github.com/eilslabs/Roddy-Base-Plugin PluginBase
@@ -54,7 +53,18 @@ popd
 ./gradlew build
 ```
 
-The example will build the Roddy from `develop` branch. If you use this branch, the dependencies BatchEuphoria and RoddyToolLib will automatically be pulled from Github with their development snapshots. 
+The example will build the Roddy from `develop` branch. If you use this branch, the dependencies BatchEuphoria and RoddyToolLib will automatically be pulled from Github with their development snapshots.
+
+Note that if you need specific versions of the default and base plugins, you need to go into their repositories and check out the corresponding tags (usually just the version number, e.g. "1.2.0"). Additionally, you need to rename the plugin directory by suffixing it with the version number separated by an underscore. E.g. 
+
+```bash
+pushd DefaultPlugin
+git checkout 1.2.0
+popd
+mv DefaultPlugin DefaultPlugin_1.2.0
+```
+
+The actual versions you need can be found in the `buildinfo.txt` file of the dependent plugins.
 
 ## Full developer build instructions
 
