@@ -523,7 +523,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         appendProcessingCommands(configuration)
 
-        storeJobConfigurationFile(createJobConfiguration())
 
         //See if the job should be executed
         if (contextLevel == ExecutionContextLevel.RUN || contextLevel == ExecutionContextLevel.CLEANUP) {
@@ -538,6 +537,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         //Execute the job or create a dummy command.
         if (runJob) {
+            storeJobConfigurationFile(createJobConfiguration())
             runResult = jobManager.submitJob(this)
             appendToJobStateLogfile(jobManager, executionContext, runResult, null)
             cmd = runResult.command
