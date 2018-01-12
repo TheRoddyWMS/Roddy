@@ -338,7 +338,7 @@ class ConfigurationFactory {
     Configuration loadConfiguration(PreloadedConfiguration icc) {
         synchronized (_cfgFileLoaderMessageCache) {
             if (!_cfgFileLoaderMessageCache.contains(icc.file)) {
-                logger.always("  Fully load configurationFile ${icc.file}")
+                logger.always("  Fully load configuration file ${icc.file}")
                 _cfgFileLoaderMessageCache << icc.file
             }
         }
