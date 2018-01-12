@@ -329,7 +329,7 @@ class ConfigurationFactory {
         int keyWidth = map.keySet().collect { it.size() }.max()
         map.collect {
             def k, def v ->
-                "   " + k.toString().padRight(keyWidth) + tabSep + clojureForValue(v)
+                ("\t" * cntOfTabs) + k.toString().padRight(keyWidth) + tabSep + clojureForValue(v)
         }
     }
 
@@ -338,7 +338,7 @@ class ConfigurationFactory {
     Configuration loadConfiguration(PreloadedConfiguration icc) {
         synchronized (_cfgFileLoaderMessageCache) {
             if (!_cfgFileLoaderMessageCache.contains(icc.file)) {
-                logger.always("  Fully load configuration file ${icc.file}")
+                logger.always("Load configuration file ${icc.file}")
                 _cfgFileLoaderMessageCache << icc.file
             }
         }
@@ -348,7 +348,7 @@ class ConfigurationFactory {
             try {
                 Configuration cfg = getConfiguration(ic)
                 config.addParent(cfg)
-            } catch(Exception ex) {
+            } catch (Exception ex) {
                 if (LibrariesFactory.getInstance().areLibrariesLoaded())
                     logger.severe("Configuration ${ic} cannot be loaded!")
                 throw ex

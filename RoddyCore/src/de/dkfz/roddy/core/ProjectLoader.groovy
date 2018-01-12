@@ -155,12 +155,15 @@ class ProjectLoader {
 
             checkAndPreparePremisesOrFail()
 
+            println()
             loadPluginsOrFail(projectID, analysisID)
 
+            println()
             loadProjectConfigurationOrFail(projectID, analysisID)
 
             attachAdditionallyPassedConfigurations()
 
+            println()
             createProjectFromConfigurationOrFail()
 
             loadAnalysisOrFail()
