@@ -128,7 +128,7 @@ export RODDY_HELPERSCRIPTS_FOLDER=`readlink -f dist/bin/current/helperScripts`
 source ${RODDY_HELPERSCRIPTS_FOLDER}/networkFunctions.sh
 
 debuggerSettings=""
-[[ -n ${DEBUG_RODDY} ]] && debuggerSettings=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+[[ -n ${DEBUG_RODDY} ]] && debuggerSettings=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005
 
 caller=$(checkAndDownloadGroovyServ "${RODDY_DIRECTORY}")
 

@@ -677,7 +677,7 @@ class LibrariesFactory extends Initializable {
                 loadedJarsByPlugin[pi] = jarFile;
             }
         }
-        logger.always(ConfigurationFactory.convertMapToFormattedTable(loadedPluginsPrintout, 0, " ", { String v -> v }).join("\n"))
+        logger.always("\n" + ConfigurationFactory.convertMapToFormattedTable(loadedPluginsPrintout, 0, " ", { String v -> v }).join("\n"))
 
         if (errors) {
             logger.severe("Some plugins were not loaded:\n\t" + errors.join("\n\t"));

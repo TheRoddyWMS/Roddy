@@ -3,7 +3,7 @@
 set -e
 
 echo "Increasing build number and date to"
-$GROOVY_BINARY ${SCRIPTS_DIR}/IncreaseAndSetBuildVersion.groovy RoddyCore/buildversion.txt RoddyCore/src/de/dkfz/roddy/Constants.java &
+$GROOVY_BINARY ${SCRIPTS_DIR}/IncreaseAndSetBuildVersion.groovy RoddyCore/buildversion.txt RoddyCore/src/de/dkfz/roddy/Constants.java
 echo "  "$(head -n 1 RoddyCore/buildversion.txt).$(tail -n 1 RoddyCore/buildversion.txt)
 
 echo "Storing buildinfo for the new Roddy jar file"

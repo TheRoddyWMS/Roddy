@@ -155,15 +155,14 @@ class ProjectLoader {
 
             checkAndPreparePremisesOrFail()
 
-            println()
             loadPluginsOrFail(projectID, analysisID)
 
-            println()
+            System.err.println() // Just for console output formatting
             loadProjectConfigurationOrFail(projectID, analysisID)
 
             attachAdditionallyPassedConfigurations()
 
-            println()
+            System.err.println() // Just for console output formatting
             createProjectFromConfigurationOrFail()
 
             loadAnalysisOrFail()
