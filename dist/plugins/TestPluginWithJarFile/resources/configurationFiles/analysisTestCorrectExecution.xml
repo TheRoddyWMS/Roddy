@@ -4,7 +4,7 @@
   ~ Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
   -->
 
-<configuration name='testAnalysisCorrectExecution' description='A test analysis for local and remote roddy workflow tests.'
+<configuration name='testCorrectExecutionAnalysis' description='A test analysis for local and remote roddy workflow tests.'
                configurationType='analysis' class='de.dkfz.roddy.core.Analysis' workflowClass='de.dkfz.roddy.knowledge.examples.SimpleWorkflowWithCorrectExecution'
                runtimeServiceClass="de.dkfz.roddy.knowledge.examples.SimpleRuntimeService"
                listOfUsedTools="testScript,testScriptExitBad,testFileWithChildren" usedToolFolders="devel"
