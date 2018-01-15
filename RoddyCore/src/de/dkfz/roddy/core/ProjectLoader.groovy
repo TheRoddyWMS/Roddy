@@ -157,10 +157,12 @@ class ProjectLoader {
 
             loadPluginsOrFail(projectID, analysisID)
 
+            System.err.println() // Just for console output formatting
             loadProjectConfigurationOrFail(projectID, analysisID)
 
             attachAdditionallyPassedConfigurations()
 
+            System.err.println() // Just for console output formatting
             createProjectFromConfigurationOrFail()
 
             loadAnalysisOrFail()
