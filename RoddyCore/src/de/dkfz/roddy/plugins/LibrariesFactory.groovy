@@ -8,6 +8,7 @@ package de.dkfz.roddy.plugins
 
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.core.Initializable
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
@@ -645,6 +646,7 @@ class LibrariesFactory extends Initializable {
         // TODO Cover with a unit or integration test (if not already done...)
         List<String> errors = [];
         //All is right? Let's go
+        Map<String, String> loadedPluginsPrintout = [:]
         pluginInfo.parallelStream().each { PluginInfo pi ->
             if (!pi.directory) {
                 synchronized (errors) {
@@ -666,14 +668,16 @@ class LibrariesFactory extends Initializable {
 
             }
 
-            def loadInfo = "The plugin ${pi.getName()} [ Version: ${pi.getProdVersion()} ] was loaded (${pi.getDirectory()})."
-            logger.postAlwaysInfo(loadInfo)
             synchronized (loadedLibrariesInfo) {
+                String stringLeft = "Loaded plugin ${pi.getName()}:${pi.getProdVersion()}".toString()
+                String stringRight = "(${pi.getDirectory()})".toString()
+                loadedPluginsPrintout[stringLeft] = stringRight
                 loadedPlugins << pi;
-                loadedLibrariesInfo << loadInfo.toString()
+                loadedLibrariesInfo << "${stringLeft} from (${stringRight})".toString()
                 loadedJarsByPlugin[pi] = jarFile;
             }
         }
+        logger.always("\n" + ConfigurationFactory.convertMapToFormattedTable(loadedPluginsPrintout, 0, " ", { String v -> v }).join("\n"))
 
         if (errors) {
             logger.severe("Some plugins were not loaded:\n\t" + errors.join("\n\t"));

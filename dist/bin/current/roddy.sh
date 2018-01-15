@@ -16,7 +16,7 @@ fi
 PATH="${JDK_HOME:?Please set JDK_HOME}/bin:${JAVA_HOME:?Please set JAVA_HOME}/bin:${GROOVY_HOME:?Please set GROOVY_HOME}/bin:$PATH"
 
 if [[ -x "$RODDY_BINARY_DIR/lib" ]]; then
-    libraries=`ls -d1 ${RODDY_BINARY_DIR}/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
+    libraries=`ls -d1 ${RODDY_BINARY_DIR}/lib/** 2> /dev/null | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
 else
     libraries=""
 fi
@@ -128,7 +128,7 @@ export RODDY_HELPERSCRIPTS_FOLDER=`readlink -f dist/bin/current/helperScripts`
 source ${RODDY_HELPERSCRIPTS_FOLDER}/networkFunctions.sh
 
 debuggerSettings=""
-[[ -n ${DEBUG_RODDY} ]] && debuggerSettings=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+[[ -n ${DEBUG_RODDY} ]] && debuggerSettings=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005
 
 caller=$(checkAndDownloadGroovyServ "${RODDY_DIRECTORY}")
 
