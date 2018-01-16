@@ -9,6 +9,7 @@ package de.dkfz.roddy.knowledge.examples;
 
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.Workflow;
+import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.knowledge.files.Tuple4;
 
 /**
@@ -17,6 +18,7 @@ public class SimpleWorkflow extends Workflow {
     @Override
     public boolean execute(ExecutionContext context) {
         SimpleRuntimeService srs = (SimpleRuntimeService) context.getRuntimeService();
+        BaseFile abc = getSourceFile(context, "/tmp/test.txt");
         SimpleTestTextFile initialTextFile = srs.createInitialTextFile(context);
         SimpleTestTextFile textFile1 = initialTextFile.test1(); //(TextFile) GenericMethod.callGenericTool("testScript", initialTextFile);
         call("testScriptWithParams", textFile1, "aJobParameter=A_JOB_PARAMETER_VALUE");

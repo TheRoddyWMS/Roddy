@@ -198,8 +198,8 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
      */
     static BaseFile getSourceFile(ExecutionContext context, String path, String _class = STANDARD_FILE_CLASS) {
         if (RoddyConversionHelperMethods.isNullOrEmpty(_class)) _class = STANDARD_FILE_CLASS
-        LibrariesFactory.getInstance().loadRealOrSyntheticClass(_class, BaseFile as Class<FileObject>)
-        return constructSourceFile(_class as Class<? extends BaseFile>, new File(path), context)
+        Class<BaseFile> fileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(_class, BaseFile as Class<FileObject>) as Class<BaseFile>
+        return constructSourceFile(fileClass, new File(path), context)
     }
 
     /**
