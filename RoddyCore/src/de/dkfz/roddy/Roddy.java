@@ -19,6 +19,7 @@ import de.dkfz.roddy.core.Initializable;
 import de.dkfz.roddy.execution.BEExecutionService;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.LocalExecutionHelper;
+import de.dkfz.roddy.execution.io.NoNoExecutionService;
 import de.dkfz.roddy.execution.io.fs.BashCommandSet;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.io.fs.ShellCommandSet;
@@ -627,12 +628,17 @@ public class Roddy {
             File propertyFilePath = null;
             try {
                 propertyFilePath = Roddy.getPropertiesFilePath();
+                System.err.println(Constants.APP_SCRATCH_BASE_DIRECTORY +
+                        " is not defined. Please add it to your application properties file: '" + propertyFilePath + "'");
+                System.exit(1);
             } catch (FileNotFoundException e) {
                 // The file must have existed, because we are accessing the values in it.
+                scratchBaseDir = System.getenv("CURRENT_PWD");
+                if (scratchBaseDir == null) {
+                    scratchBaseDir = System.getProperty("user.dir");
+                }
             }
-            System.err.println(Constants.APP_SCRATCH_BASE_DIRECTORY +
-                    " is not defined. Please add it to your application properties file: '" + propertyFilePath + "'");
-            System.exit(1);
+
         }
         configurationValues.add(new ConfigurationValue(Constants.APP_SCRATCH_BASE_DIRECTORY, scratchBaseDir));
         String scratchDir = new File ("$" + Constants.APP_SCRATCH_BASE_DIRECTORY ,
@@ -645,10 +651,14 @@ public class Roddy {
             applicationSpecificConfiguration = new Configuration(null);
             RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
 
-            assert(Roddy.jobManager != null);
-            setDefaultRoddyJobIdVariable(configurationValues);
-            setDefaultRoddyJobNameVariable(configurationValues);
-            setDefaultRoddyQueueVariable(configurationValues);
+            if (Roddy.jobManager != null) {
+                setDefaultRoddyJobIdVariable(configurationValues);
+                setDefaultRoddyJobNameVariable(configurationValues);
+                setDefaultRoddyQueueVariable(configurationValues);
+            } else {
+                logger.warning("No job manager specific variables available because no job manager is set.");
+            }
+
             setScratchDirectory(configurationValues);
 
             // Add custom command line values to the project configuration.
@@ -701,33 +711,29 @@ public class Roddy {
         }
 
         /** Get the constructor which comes with no parameters */
-        Constructor first = jobManagerClass.getDeclaredConstructor(BEExecutionService.class, JobManagerCreationParameters.class);
+        Constructor first = jobManagerClass.getDeclaredConstructor(BEExecutionService.class, JobManagerOptions.class);
         jobManager = (BatchEuphoriaJobManager) first.newInstance(ExecutionService.getInstance()
-                , new JobManagerCreationParametersBuilder()
+                , JobManagerOptions.create()
                         .setCreateDaemon(true)
+                        .setStrictMode(false)
                         .setTrackUserJobsOnly(trackUserJobsOnly)
                         .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
+//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestMemoryIsEnabled", "true"), true))
+//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestWalltimeIsEnabled", "true"), true))
+//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestQueueIsEnabled", "true"), true))
+//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestCoresIsEnabled", "true"), true))
+//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestStorageIsEnabled", "false"), false))
                         .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI()).build());
 
-// There are many values which need to be extracted from the xml (context, project?)
-//        configuration.getProperty("PBS_AccountName", "")
-//        configuration.getProperty("email")
-//        configuration.getProperty("outputFileGroup", null)
-//        configuration.getProperty("umask", "")
-
-        // Was in Command
-//        new File(configuration.getProperty("loggingDirectory", "/"))
     }
 
-    private static BatchEuphoriaJobManager jobManager;
+    private static BatchEuphoriaJobManager jobManager; // = new DirectSynchronousExecutionJobManager(new NoNoExecutionService(), new JobManagerOptions());
 
     public static BatchEuphoriaJobManager getJobManager() {
         return jobManager;
     }
 
     private static void parseRoddyStartupModeAndRun(CommandLineCall clc) {
-//        if (clc.startupMode == RoddyStartupModes.ui)
-//            RoddyUIController.App.main(clc.getArguments().toArray(new String[0]));
         if (clc.startupMode == RoddyStartupModes.rmi)
             RoddyRMIServer.startServer(clc);
         else
@@ -742,26 +748,21 @@ public class Roddy {
         if (commandLineCall.getOptionList().contains(RoddyStartupOptions.disallowexit))
             return;
 
-//        if (option == RoddyStartupModes.ui)
-//            return;
-
         if (!option.needsJobManager())
             return;
 
         if (jobManager != null) {
             if (jobManager.executesWithoutJobSystem() && waitForJobsToFinish) {
-                exitCode = performWaitforJobs();
+                exitCode = waitForJobs();
             } else {
-                List<Command> listOfCreatedCommands = jobManager.getListOfCreatedCommands();
-                for (Command command : listOfCreatedCommands) {
-                    if (command.getJob().getJobState() == JobState.FAILED) exitCode++;
-                }
+                // TODO: #167 (https://github.com/eilslabs/Roddy/issues/167)
+                exit(0);
             }
         }
         exit(exitCode);
     }
 
-    private static int performWaitforJobs() {
+    private static int waitForJobs() {
         try {
             Thread.sleep(15000); //Sleep at least 15 seconds to let any job scheduler handle things...
             return jobManager.waitForJobsToFinish();

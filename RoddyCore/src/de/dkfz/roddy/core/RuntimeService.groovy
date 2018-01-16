@@ -491,12 +491,7 @@ public class RuntimeService {
 
     public File getLogFileForJob(Job job) {
         //Returns the log files path of the job.
-        File f = new File(job.context.getExecutionDirectory(), Roddy.getJobManager().getLogFileName(job));
-    }
-
-    public File getLogFileForCommand(Command command) {
-        //Nearly the same as for the job but with a process id
-        File f = new File(getExecutionDirectory(command.getTag(Constants.COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext), Roddy.getJobManager().getLogFileName(command));
+        Roddy.getJobManager().queryExtendedJobStateById([job.jobID]).get(job.jobID).logFile
     }
 
     public boolean hasLogFileForJob(Job job) {

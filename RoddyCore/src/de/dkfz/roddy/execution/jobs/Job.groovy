@@ -12,6 +12,7 @@ import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.converters.BashConverter
+import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
@@ -64,6 +65,11 @@ class Job extends BEJob<BEJob, BEJobResult> {
     private Map<String, Object> initialInputParameters = [:]
 
     /**
+     * Command object of last execution.
+     */
+    protected transient Command lastCommand
+
+    /**
      * The list contains files which should be validated for a job restart.
      */
     public final List<BaseFile> filesToVerify
@@ -106,7 +112,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
 //                , arrayIndices
 //                , parameters
 //                , collectParentJobsFromFiles(parentFiles)
-//                , collectDependencyIDsFromFiles(parentFiles)
+//                , collectJobIDsFromFiles(parentFiles)
 //                , Roddy.getJobManager())
 //        this.toolID = toolID
 //        this.context = context
@@ -132,7 +138,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         if ((null != parentJobIDs && !parentJobIDs.isEmpty()) &&
                 (null != parentJobs && !parentJobs.isEmpty())) {
             def validJobs = jobsWithUniqueValidJobId(parentJobs)
-            def validIds = uniqueValidJobIDs(parentJobIDs).collect{ it.toString() }
+            def validIds = uniqueValidJobIDs(parentJobIDs).collect { it.toString() }
             def idsOfValidJobs = jobs2jobIDs(validJobs).collect { it.toString() }
             if (validIds != idsOfValidJobs) {
                 throw new RuntimeException("parentJobBEJob needs to be called with one of parentJobs, parentJobIDs, or parentJobsIDs and *corresponding* parentJobs.")
@@ -158,10 +164,11 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 , getResourceSetFromConfiguration(toolID, context)
                 , []
                 , [:]
-                , Roddy.getJobManager())
+                , Roddy.getJobManager()
+                , JobLog.toOneFile(new File (context.loggingDirectory, jobName + ".o{JOB_ID}"))
+                , null)
         this.localToolPath = context.getConfiguration().getSourceToolPath(toolID)
-        this.setLoggingDirectory(context.loggingDirectory)
-        this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectDependencyIDsFromFiles(parentFiles), jobManager))
+        this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectJobIDsFromFiles(parentFiles), jobManager))
         this.context = context
         this.toolID = toolID
 
@@ -216,7 +223,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return parentJobs
     }
 
-    static List<BEJobID> collectDependencyIDsFromFiles(List<BaseFile> parentFiles) {
+    static List<BEJobID> collectJobIDsFromFiles(List<BaseFile> parentFiles) {
         List<BEJobID> dIDs = []
         if (parentFiles != null) {
             for (BaseFile bf : parentFiles) {
@@ -492,7 +499,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
 //        }
     }
 
-    @Override
     @CompileDynamic
     BEJobResult run() {
         if (runResult != null)
@@ -507,7 +513,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         boolean runJob
 
         //Remove duplicate job ids as PBS qsub cannot handle duplicate keys => job will hold forever as it releases the dependency queue linearly.
-        this.parameters[Constants.RODDY_PARENT_JOBS] = parameterObjectToString(Constants.RODDY_PARENT_JOBS, parentJobIDsAsString.unique())
+        this.parameters[Constants.RODDY_PARENT_JOBS] = parameterObjectToString(Constants.RODDY_PARENT_JOBS, parentJobIDs.unique()*.id)
         this.parameters[Constants.PARAMETER_FILE] = parameterObjectToString(Constants.PARAMETER_FILE, parameterFile)
         boolean debugWrapInScript = true
         if (configuration.configurationValues.hasValue(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)) {
@@ -516,6 +522,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         this.parameters.put(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT, parameterObjectToString(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT, debugWrapInScript))
 
         appendProcessingCommands(configuration)
+
 
         //See if the job should be executed
         if (contextLevel == ExecutionContextLevel.RUN || contextLevel == ExecutionContextLevel.CLEANUP) {
@@ -530,12 +537,13 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         //Execute the job or create a dummy command.
         if (runJob) {
-            runResult = jobManager.runJob(this)
+            storeJobConfigurationFile(createJobConfiguration())
+            runResult = jobManager.submitJob(this)
             appendToJobStateLogfile(jobManager, executionContext, runResult, null)
             cmd = runResult.command
-            jobDetailsLine << " => " + cmd.getExecutionID()
+            jobDetailsLine << " => " + cmd.job.getJobID()
             System.out.println(jobDetailsLine.toString())
-            if (cmd.getExecutionID() == null) {
+            if (!cmd.jobID) {
                 context.addErrorEntry(ExecutionContextError.EXECUTION_SUBMISSION_FAILURE.expand("Please check your submission command manually.\n\t  Is your access group set properly? [${context.getAnalysis().getUsergroup()}]\n\t  Can the submission binary handle your binary?\n\t  Is your submission system offline?"))
                 logger.postSometimesInfo("Command: ${runResult.command}\nStatus Code: ${runResult.executionResult.exitCode}, Output:\n${runResult.executionResult.resultLines.join("\n")}")
                 if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.BreakSubmissionOnError)) {
@@ -546,8 +554,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
             // The Job is not actually executed. Therefore, create a DummyCommand that creates a dummy JobID which in turn is used to create a dummy JobResult.
             Command command = new DummyCommand(jobManager, this, jobName, false)
             jobState = JobState.DUMMY
-            resetJobID(command.executionID)
-            runResult = new BEJobResult(command, new BEJob(command.executionID, jobManager), null, this.tool, parameters, parentJobs as List<BEJob>)
+            resetJobID(command.jobID)
+            runResult = new BEJobResult(command, new BEJob(command.jobID, jobManager), null, this.tool, parameters, parentJobs as List<BEJob>)
         }
 
         //For auto filenames. Get the job id and push propagate it to all filenames.
@@ -564,31 +572,39 @@ class Job extends BEJob<BEJob, BEJobResult> {
             }
         }
 
-        jobManager.addJobStatusChangeListener(this)
         lastCommand = cmd
         return runResult
     }
 
-    private void appendProcessingCommands(Configuration configuration) {
-// Only extract commands from file if none are set
-        if (getListOfProcessingParameters().size() == 0) {
-            File srcTool = configuration.getSourceToolPath(toolID)
+/**
+ * There are several reasons, why we need a job configuration.
+ * The most important reason is, that we need to replicate Roddys configuration mechanism with all it's functionality for
+ * any target system (Bash so far). If we don't do it, we will suffer from:
+ * - wrong values
+ * - wrong resolved value dependencies
+ * - mistakenly overriden values
+ * There might be more, but these are the ones for now.
+ * @return
+ */
+    Configuration createJobConfiguration() {
+        Configuration jobConfiguration = new Configuration(null, executionContext.configuration)
+        jobConfiguration.configurationValues.addAll(parameters.collect { String k, String v -> new ConfigurationValue(jobConfiguration, k, v) })
+        return jobConfiguration
+    }
 
+    void storeJobConfigurationFile(Configuration cfg) {
+        String configText = ConfigurationConverter.convertAutomatically(context, cfg)
+        FileSystemAccessProvider.getInstance().writeTextFile(getParameterFile(), configText, context)
+    }
+
+    private void appendProcessingCommands(Configuration configuration) {
+        // Only extract commands from file if none are set
+        if (getListOfProcessingParameters().size() == 0) {
             logger.severe("Appending processing commands from config is currently not supported: Roddy/../BEJob.groovy appendProcessingCommands")
-//            //Look in the configuration for resource options
-//            ProcessingCommands extractedPCommands = Roddy.getJobManager().getProcessingCommandsFromConfiguration(configuration, toolID);
-//
-//            //Look in the script if no options are configured
-//            if (extractedPCommands == null)
-//                extractedPCommands = Roddy.getJobManager().extractProcessingCommandsFromToolScript(srcTool);
-//
-//            if (extractedPCommands != null)
-//                this.addProcessingCommand(extractedPCommands);
         }
     }
 
     private BEJobResult handleDifferentJobRun(StringBuilder dbgMessage) {
-//        logger.severe("Handling different job run is currently not supported: Roddy/../BEJob.groovy handleDifferentJobRun")
         dbgMessage << "\tdummy job created." + Constants.ENV_LINESEPARATOR
         File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
         this.resetJobID(new BEFakeJobID(BEFakeJobID.FakeJobReason.NOT_EXECUTED))
@@ -691,26 +707,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return [fileUnverified, knownFilesCnt]
     }
 
-    /**
-     * Finally execute a job.
-     * @param dependencies
-     * @param dbgMessage
-     * @param cmd
-     * @return
-     */
-    private Command executeJob(List<String> dependencies, StringBuilder dbgMessage) {
-        String sep = Constants.ENV_LINESEPARATOR
-        File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
-        setJobState(JobState.UNSTARTED)
-        Command cmd = Roddy.getJobManager().createCommand(this, tool, dependencies, parameters)
-        jobManager.executionService.execute(cmd)
-        if (LoggerWrapper.isVerbosityMedium()) {
-            dbgMessage << sep << "\tcommand was created and executed for job. ID is " + cmd.getExecutionID() << sep
-        }
-        if (LoggerWrapper.isVerbosityHigh()) logger.info(dbgMessage.toString())
-        return cmd
-    }
-
     ExecutionContext getExecutionContext() {
         return context
     }
@@ -722,24 +718,19 @@ class Job extends BEJob<BEJob, BEJobResult> {
             return new LinkedList<>()
     }
 
-    @Override
-    File getLoggingDirectory() {
-        return this.executionContext.getLoggingDirectory()
-    }
+    private File _logFile = null
 /**
  * Returns the path to an existing log file.
  * If no logfile exists this returns null.
  *
  * @return
  */
-    @Override
     public synchronized File getLogFile() {
         if (_logFile == null)
             _logFile = this.getExecutionContext().getRuntimeService().getLogFileForJob(this);
         return _logFile;
     }
 
-    @Override
     public boolean hasLogFile() {
         if (getJobState().isPlannedOrRunning())
             return false;

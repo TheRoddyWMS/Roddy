@@ -90,8 +90,8 @@ class NativeWorkflow extends Workflow {
             String clz = aCfg.getTargetJobManagerClass()
             ClassLoader classLoader = LibrariesFactory.getGroovyClassLoader()
             Class<?> targetJobManagerClass = classLoader.loadClass(clz)
-            Constructor c = targetJobManagerClass.getConstructor(BEExecutionService.class, JobManagerCreationParameters.class)
-            return (BatchEuphoriaJobManager) c.newInstance(ExecutionService.getInstance(), new JobManagerCreationParametersBuilder().setCreateDaemon(false).build())
+            Constructor c = targetJobManagerClass.getConstructor(BEExecutionService.class, JobManagerOptions.class)
+            return (BatchEuphoriaJobManager) c.newInstance(ExecutionService.getInstance(), JobManagerOptions.create().setStrictMode(false).build())
         } catch (NullPointerException e) {
             context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("No command factory class is set."))
             return null
@@ -112,8 +112,8 @@ class NativeWorkflow extends Workflow {
         String nativeWorkflowScriptWrapper = configuration.getProcessingToolPath(context, nativeScriptID).absolutePath
         Job wrapperJob = new Job(context, context.getTimestampString() + "_nativeJobWrapper:" + toolID, toolID, null)
 
-        DirectSynchronousExecutionJobManager dcfac = new DirectSynchronousExecutionJobManager(ExecutionService.getInstance(), new JobManagerCreationParametersBuilder().setCreateDaemon(false).build())
-        DirectCommand wrapperJobCommand = new DirectCommand(dcfac, wrapperJob, "some_id", [], wrapperJob.parameters, [:], [], [], nativeWorkflowScriptWrapper, new File("/tmp"))
+        DirectSynchronousExecutionJobManager dcfac = new DirectSynchronousExecutionJobManager(ExecutionService.getInstance(), JobManagerOptions.create().setStrictMode(false).build())
+        DirectCommand wrapperJobCommand = new DirectCommand(dcfac, wrapperJob, [], nativeWorkflowScriptWrapper)
         String submissionCommand = targetJobManager.getSubmissionCommand()
         if (submissionCommand == null) {
             context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("There is no submission command for this type of command factory."))
@@ -186,7 +186,7 @@ class NativeWorkflow extends Workflow {
             Command command = result.command
             String id = null;
             try {
-                id = command.getExecutionID().getShortID();
+                id = command.getJobID().getShortID();
             } catch (Exception ex) {
                 println(ex.getMessage())
             }

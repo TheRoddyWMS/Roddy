@@ -243,9 +243,7 @@ class GenericMethod {
 
         List<BaseFile> filesToVerify = fillListOfCreatedObjects(outputObject)
 
-        F result
-
-        result = createAndRunJob(filesToVerify, outputObject) as F
+        F result = createAndRunJob(filesToVerify, outputObject) as F
 
         // Finally check the result and append an error to the context.
         if (result == null) {

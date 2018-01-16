@@ -324,12 +324,21 @@ class ConfigurationFactory {
         return loadConfiguration(icc)
     }
 
-    @CompileDynamic
-    static List<String> convertMapToFormattedTable(Map map, int cntOfTabs, String tabSep, def clojureForValue) {
-        int keyWidth = map.keySet().collect { it.size() }.max()
+    /**
+     * Will format a map to a two column table. The width of the first column will be calculated using the length of the
+     * longest element.
+     * @param map
+     * @param cntOfTabs
+     * @param tabSep
+     * @param closureForValue
+     * @return
+     */
+    @Deprecated
+    static List<String> convertMapToFormattedTable(Map<String,?> map, int cntOfTabs, String tabSep, Closure closureForValue) {
+        final int keyWidth = map.keySet().collect { it.size() }.max()
         map.collect {
             def k, def v ->
-                "   " + k.toString().padRight(keyWidth) + tabSep + clojureForValue(v)
+                ("\t" * cntOfTabs) + k.toString().padRight(keyWidth) + tabSep + closureForValue(v)
         }
     }
 
@@ -338,7 +347,7 @@ class ConfigurationFactory {
     Configuration loadConfiguration(PreloadedConfiguration icc) {
         synchronized (_cfgFileLoaderMessageCache) {
             if (!_cfgFileLoaderMessageCache.contains(icc.file)) {
-                logger.always("  Fully load configurationFile ${icc.file}")
+                logger.always("Load configuration file ${icc.file}")
                 _cfgFileLoaderMessageCache << icc.file
             }
         }
@@ -348,9 +357,10 @@ class ConfigurationFactory {
             try {
                 Configuration cfg = getConfiguration(ic)
                 config.addParent(cfg)
-            } finally {
+            } catch (Exception ex) {
                 if (LibrariesFactory.getInstance().areLibrariesLoaded())
                     logger.severe("Configuration ${ic} cannot be loaded!")
+                throw ex
             }
         }
         return config

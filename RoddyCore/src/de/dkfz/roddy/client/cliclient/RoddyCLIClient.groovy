@@ -730,7 +730,7 @@ public class RoddyCLIClient {
                         listOfRunningJobs << job;
                 }
             if (listOfRunningJobs)
-                Roddy.getJobManager().queryJobAbortion(listOfRunningJobs)
+                Roddy.getJobManager().killJobs(listOfRunningJobs)
         }
     }
 

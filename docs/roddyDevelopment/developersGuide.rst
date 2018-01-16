@@ -113,15 +113,15 @@ The preferred way to build Roddy is via Gradle. Please run
 
     ./gradlew build
 
+This will download all necessary dependencies into the dist/bin/current/lib directory and create the Roddy.jar in dist/bin/current.
+
 If you want to develop Roddy and additionally want to work on the RoddyToolLib or BatchEuphoria you can clone these libraries into neighbouring
 directories and execute gradle in a composite build parameters
 
 ::
 
-     ./gradlew clean build --include-build ../RoddyToolLib/ --include-build ../BatchEuphoria/
+     ./gradlew build --include-build ../RoddyToolLib/ --include-build ../BatchEuphoria/
 
-This will produce a slim jar file. Use the "shadowJar" target for a full jar file with all dependencies (recursively) that you can use for command-
-line tests. The shadow-jar will be put into dist/bin/current/Roddy.jar.
 
 Packing Roddy
 ~~~~~~~~~~~~~
@@ -130,7 +130,7 @@ The packaging of Roddy is done using the gradle distribution plugin. There is tw
 
 ::
 
-    ./gradlew roddyDistZip roddyEnvironmentDistZip --include-build ../RoddyToolLib/ --include-build ../BatchEuphoria/
+    ./gradlew roddyDistZip roddyEnvironmentDistZip
 
 The distribution zips are put in the "gradleBuild/distribution" directory.
 

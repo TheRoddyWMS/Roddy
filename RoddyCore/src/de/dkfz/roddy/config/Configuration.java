@@ -99,6 +99,10 @@ public class Configuration implements ContainerParent<Configuration> {
     private RecursiveOverridableMapContainer<String, FilenamePattern, Configuration> filenamePatterns =
             new RecursiveOverridableMapContainer<>(this, "filenamePatterns");
 
+    public Configuration() {
+        preloadedConfiguration = null;
+    }
+
     /**
      * Creates a new configuration that can be filled by filling the containers.
      */
