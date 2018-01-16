@@ -334,9 +334,8 @@ class ConfigurationFactory {
      * @return
      */
     @Deprecated
-    @CompileDynamic
-    static List<String> convertMapToFormattedTable(Map map, int cntOfTabs, String tabSep, def closureForValue) {
-        int keyWidth = map.keySet().collect { it.size() }.max()
+    static List<String> convertMapToFormattedTable(Map<String,?> map, int cntOfTabs, String tabSep, Closure closureForValue) {
+        final int keyWidth = map.keySet().collect { it.size() }.max()
         map.collect {
             def k, def v ->
                 ("\t" * cntOfTabs) + k.toString().padRight(keyWidth) + tabSep + closureForValue(v)
