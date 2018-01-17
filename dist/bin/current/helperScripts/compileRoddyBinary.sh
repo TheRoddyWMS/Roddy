@@ -11,7 +11,5 @@ echo JDKVersion=$JDK_VERSION > dist/bin/current/buildinfo.txt
 echo GroovyVersion=$GROOVY_VERSION >> dist/bin/current/buildinfo.txt
 echo RoddyAPIVersion=`head RoddyCore/buildversion.txt -n 1` >> dist/bin/current/buildinfo.txt
 
-(set +e rm  dist/bin/current/lib/*.jar 2> /dev/null)
-touch dist/bin/current/lib/.keep
 declare -a gradleParameters=$*
 ./gradlew build "${fullParameterList[@]:1:99}"
