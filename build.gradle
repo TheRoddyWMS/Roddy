@@ -114,9 +114,7 @@ dependencies {
     compile 'org.reflections:reflections:0.9.9-RC1'
 
     compile 'org.slf4j:slf4j-api:1.7.22'                        // MIT
-//    compile 'org.slf4j:slf4j-jcl:1.7.22'                        // MIT
     compile 'org.slf4j:slf4j-nop:1.7.22'                        // MIT
-//    compile 'org.slf4j:jcl-over-slf4j:1.7.22'                   // MIT
 
     compile 'com.hierynomus:sshj:0.23.0'                        // Apache 2.0
     compile 'net.vrallev.ecc:ecc-25519-java:1.0.1'              // Apache 2.0; elliptic curve cryptography (ECC) with Curve25519
@@ -132,7 +130,7 @@ dependencies {
 
     compile 'com.thoughtworks.xstream:xstream:1.4.5'            // BSD
 
-    // Testing libraries (do not end up in the fat-jar)
+    // Testing libraries
     testCompile 'junit:junit:4.12'                              // EPL 1.0
     testCompile 'org.spockframework:spock-core:1.1-groovy-2.4'  // Apache 2.0
 }
@@ -155,8 +153,17 @@ sourceSets {
 
 mainClassName = "de.dkfz.roddy.Roddy"
 
+project.ext.librariesDirectory = new File(project.ext.currentDistributionDir, "lib")
+
+task cleanRuntimeLibs(type: Delete) {
+    delete fileTree(dir: librariesDirectory, exclude: ".keep")
+}
+
+clean.dependsOn(cleanRuntimeLibs)
+
+
 task copyRuntimeLibs(type: Copy) {
-    into new File(project.ext.currentDistributionDir, "lib")
+    into librariesDirectory
     from configurations.runtime
 }
 
@@ -172,7 +179,7 @@ jar {
         attributes("Implementation-Title": name)
         attributes 'Implementation-Version': getVersionName()
     }
-    dependsOn copyRuntimeLibs
+    dependsOn cleanRuntimeLibs, copyRuntimeLibs
 }
 
 /** Produce 2 distribution packages:
