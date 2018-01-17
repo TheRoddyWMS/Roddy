@@ -15,6 +15,11 @@ buildscript {
         maven {
             url "https://plugins.gradle.org/m2/"
         }
+        mavenLocal()
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'kr.motd.gradle', name: 'sphinx-gradle-plugin', version: '1.0.6'
     }
 }
 
@@ -47,6 +52,7 @@ apply plugin: "java"
 apply plugin: 'application'
 apply plugin: 'distribution'
 apply plugin: 'groovy'
+apply plugin: 'kr.motd.sphinx'  // Apache 2.0
 
 // Java settings
 ext.langLevel = "1.8"
@@ -245,6 +251,8 @@ task wrapper(type: Wrapper) {
     gradleVersion = '4.2.1'
 }
 
-
+sphinx {
+    sourceDirectory = "${project.projectDir}/docs/"
+}
 
 // end of build.gradle
