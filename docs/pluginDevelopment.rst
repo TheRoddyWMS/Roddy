@@ -12,3 +12,4 @@ Plugin development
     pluginDevelopment/brawlPlugins
     pluginDevelopment/nativePlugins
     pluginDevelopment/writingRoddyJobs
+    pluginDevelopment/BasicPluginForCOWorkflows

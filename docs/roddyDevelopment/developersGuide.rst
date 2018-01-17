@@ -96,6 +96,12 @@ Repository Structure
             current/
             $major.$minor.$build/
         plugins/
+            DefaultPlugin (Git submodule see below!)
+            PluginBase    (Git submodule see below!)
+        plugins_R$major.$minor
+        runtimeDevel
+            groovy-$major.$minor.$build
+            jdk, jre, jdk_$major.$minor._$revision
         plugins_R$major.$minor/
 
 Compiling Roddy
@@ -131,6 +137,22 @@ The distribution zips are put in the "gradleBuild/distribution" directory.
 The "roddyEnvironmentDistZip" target will produce a zip with the top-level directory containing the roddy.sh and the essential dist/bin
 subdirectories.
 
+Will pack current to a directory called $major.$minor.$build.
+
+
+Further important notes
+~~~~~~~~~~~~~~~~~~~~~~~
+
+In addition to the Roddy core project, we also use Git submodules for the base plugins.
+After you cloned the Roddy repository, please navigate into the folder and:
+
+::
+
+    git submodule add https://github.com/eilslabs/Roddy-Default-Plugin.git dist/plugins/DefaultPlugin
+    git submodule add -f  https://github.com/eilslabs/Roddy-Base-Plugin.git dist/plugins/PluginBase
+
+Both commands will install the necessary submodules.
+=======
 The "roddyDistZip" target will produce a zip with the content of the "dist/bin/current" directory. For deployment you should unzip it in that
 directory and copy its content into an appropriately named dist/bin/ subdirectory, e.g. "current" for testing purposes or the version number, such as
 2.4.10.
