@@ -21,7 +21,7 @@ If it still does not work, you can also disable it.
 
 Premises
 --------
-To install and run Roddy the following programs need to be installed on your computer:
+To install and run Roddy the following programs need to be installed on your computer or the execution hosts:
 
 - zip / unzip
 
@@ -29,9 +29,24 @@ To install and run Roddy the following programs need to be installed on your com
 
 - bash
 
-- lockfile (part of procmail mail-processing-package (v3.22))
+- lockfile (part of procmail mail-processing-package (v3.22), only needed on job execution hosts)
 
-As Roddy is Linux based, you will be able to find them in your package manager.
+- A recent JDK (e.g. 1.8.0_121)
+
+- Groovy (e.g. 2.4.7)
+
+- The DefaultPlugin and the PluginBase (see below)
+
+As Roddy is Linux based, you will be able to find them in your package manager. For the JDK and Groovy, which are both required on the host on which
+you run Roddy, you may alternativel want to use [sdkman](http://sdkman.io/). The following will get you going:
+
+```bash
+curl -s "https://get.sdkman.io" | bash
+sdk install groovy 2.4.13
+sdk install java 8u151-oracle
+```
+
+Specific workflows you execute may require additional software.
 
 Roddy 2.2
 ---------
@@ -72,34 +87,35 @@ Roddy 2.4
 ---------
 
 For Roddy version 2.4 zips are deployed to Github releases (continuous deployment via Travis). The thus installed Roddy will contain all dependencies
-but the JDK. Additionally, there is an automatic downloader for the JRE / JDK.
+except the JDK and Groovy. Additionally, there is an automatic downloader for the JRE / JDK.
 
-Roddy version mix
------------------
+1. Release ZIPs for Roddy and the Roddy environment are available via [Github Releases](https://github.com/eilslabs/Roddy/releases). Download the latest release of the RoddyEnv ZIP and unpack it and change into the Roddy environment directory (e.g. "Roddy").
+2. After that you can install arbitrary releases of the Roddy ZIP into `dist/bin/$major.$minor.$patch` directories.
+3. The default and base plugin repositories need to be cloned into the `dist/plugins/` directory.
+   .. code-block:: Bash
 
-Different Roddy versions can be co-installed the same installation folder.
-Currently we do not offer prepackaged zip files, but you can easily assemble the version mix you need.
+   pushd dist/plugins
+   git clone https://github.com/eilslabs/Roddy-Default-Plugin.git DefaultPlugin
+   git clone https://github.com/eilslabs/Roddy-Base-Plugin PluginBase
+   popd
 
-1. You need to install Roddy like in the description above.
+Versioning
+----------
 
-2. Switch to the desired release tag.
+The Roddy environment with the top-level "roddy.sh" allow you to co-install multiple Roddy versions. Simply install the different versions of Roddy,
+e.g. from the release zips, into directories in "dist/bin" following the naming scheme "dist/bin/$major.$minor.$patch". The desired version can than
+be selected during Roddy invocations using the "--useRoddyVersion" parameter.
 
-3. Run Roddy with the pack option like
+Additionally, Roddy is capable of handling multiple versions of the same workflow plugin. Different versions of the default or base plugin need to be
+installed in the "dist/plugins/" directory following the naming scheme "${workflowName}_$major.$minor.$patch[-$revision]", e.g. "DefaultPlugin_1.2.0".
+Other plugins may be installed in arbitrary plugin directories using the same naming scheme.
 
-::
 
-  ./roddy.sh pack
+[Optional] Setup GroovyServ
+---------------------------
 
-4. Switch back to master / develop and OR repeat steps 1 - 3 for additional Roddy versions.
-
-If you take a look into your dist folder now, you'll see a new zip file and a folder with the proper version numbers.
-
-Setup GroovyServ
-----------------
-
-As explained above, GroovyServ tremendously decreases the startup time of Groovy applications and Roddy will
-try to download and set it up automatically. If that fails or if you want to set it up by yourself, do the following in your
-Roddy directory:
+GroovyServ tremendously decreases the startup time of Groovy applications and Roddy will try to download and set it up automatically. If that fails or
+if you want to set it up by yourself, do the following in your Roddy directory:
 
 .. code-block:: Bash
 

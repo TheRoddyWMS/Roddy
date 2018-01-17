@@ -45,29 +45,36 @@ the object (this) itself, you can mark the affected methods with @CompileDynamic
 Roddy versioning scheme
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Roddy version numbers consist of three entries: [major].[minor].[build].
-These are added to the repository for releases.
+Roddy version numbers consist of three entries: $major.$minor.$build.
+The build number is also sometimes called patch number. Release numbers
+are added to the repository.
 
-The [major] entry is used to mark huge changes in the Roddy core
+The $major entry is used to mark huge changes in the Roddy core
 functions. Backward compatibility is most likely not granted and Roddy
-will not execute plugins built with different [major] versions.
+will not execute plugins built with different $major versions.
 
-The [minor] entry marks smaller changes which might affect your plugin.
+The $minor entry marks smaller changes which might affect your plugin.
 Backward compatibility might be affected and Roddy will warn you when a
-plugin was built with another [minor] version. Only decrease this value,
-when you increase the [major] version.
+plugin was built with another $minor version. Only decrease this value,
+when you increase the $major version. Likewise, you should only decrease
+the build number, if you increase either the $major or $minor version.
 
-The [build] number is automatically increased when Roddy is packed or
-compiled. You should only lower the build number, if you increase either
-the [major] or [minor] version.
-
-The combination of [major].[minor] can somehow be seen as the API level
+The combination of $major.$minor can somehow be seen as the API level
 of Roddy. For a “full API level” the plugin versions of “PluginBase” and
 “DefaultPlugin” need to be considered as well.
 
-If we have to maintain old plugin version with bugfixes or feature
-backports for specific projects in production, then we extend the tag to
-a full branch called “ReleaseBranch_$major.$minor.$build and tag the subversions with a "-$revision” suffix.
+Basically the same versioning convention applies to the plugins, with
+some extension. If we have to maintain old plugin version with bugfixes or
+feature backports for specific projects in production, the we usually
+release version numbers with an additional "-$revision” suffix.
+
+Importantly, if Roddy sees multiple plugin directories for the same plugin
+only differing in the revision number, Roddy may automatically upgrade
+to the version with the largest revision number! So be sure only to use
+revisions for semantically equivalent plugin versions (e.g. minor bugfixes).
+Every change that affects the output of you plugin in a way that, e.g., the
+results are not comparable with previous versions anymore, should receive
+at least a build-number increase.
 
 Below, you’ll find, how things are (or are supposed to be) handled in
 git.
@@ -96,13 +103,14 @@ Repository Structure
             current/
             $major.$minor.$build/
         plugins/
-            DefaultPlugin (Git submodule see below!)
-            PluginBase    (Git submodule see below!)
-        plugins_R$major.$minor
-        runtimeDevel
+            DefaultPlugin
+            PluginBase
+        plugins_R$major.$minor/                       Plugin directory for specific Roddy versions
+        runtimeDevel/
             groovy-$major.$minor.$build
             jdk, jre, jdk_$major.$minor._$revision
-        plugins_R$major.$minor/
+
+The runtimeDevel/ directory is only required for Roddy up to version 2.3.
 
 Compiling Roddy
 ~~~~~~~~~~~~~~~
@@ -116,7 +124,7 @@ The preferred way to build Roddy is via Gradle. Please run
 This will download all necessary dependencies into the dist/bin/current/lib directory and create the Roddy.jar in dist/bin/current.
 
 If you want to develop Roddy and additionally want to work on the RoddyToolLib or BatchEuphoria you can clone these libraries into neighbouring
-directories and execute gradle in a composite build parameters
+directories and execute gradle with composite build parameters
 
 ::
 
@@ -126,7 +134,7 @@ directories and execute gradle in a composite build parameters
 Packing Roddy
 ~~~~~~~~~~~~~
 
-The packaging of Roddy is done using the gradle distribution plugin. There is two packaging targets
+The packaging of Roddy is done using the Gradle distribution plugin. There is two packaging targets
 
 ::
 
@@ -134,10 +142,10 @@ The packaging of Roddy is done using the gradle distribution plugin. There is tw
 
 The distribution zips are put in the "gradleBuild/distribution" directory.
 
-The "roddyEnvironmentDistZip" target will produce a zip with the top-level directory containing the roddy.sh and the essential dist/bin
+The "roddyEnvironmentDistZip" target will produce a zip with the top-level directory containing the roddy.sh and the essential "dist/bin"
 subdirectories.
 
-Will pack current to a directory called $major.$minor.$build.
+The content of the "roddyDistZip" produces a release zip that is supposed to be extracted into a directory called "dist/bin/$major.$minor.$build".
 
 
 Further important notes
