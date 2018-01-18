@@ -15,6 +15,9 @@ To run Roddy you need at least
 * a compiled Roddy installation installed into `dist/bin/$versionNumber` 
 * the default plugin
 * the base plugin
+* zip/unzip
+* bash
+* the tool `lockfile` (usually in the procmail)
 
 ## Java and Groovy
 
