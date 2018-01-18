@@ -30,7 +30,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING
 @groovy.transform.CompileStatic
 public class CachedFileSystemAccessProvider extends FileSystemAccessProvider {
 
-    private static LoggerWrapper logger = LoggerWrapper.getLogger(CachedFileSystemAccessProvider.getClass().getSimpleName());
+    private static LoggerWrapper logger = LoggerWrapper.getLogger(CachedFileSystemAccessProvider.class.getSimpleName());
     private static final String TBL_FILECHACHEINFO = (CachedFileSystemAccessProvider.class.getSimpleName() + "_fileCacheInfo").toUpperCase();
     private static final String TBL_RUNOWNER = (CachedFileSystemAccessProvider.class.getSimpleName() + "_runOwner").toUpperCase();
     public static final String FORMATSTRING_FILELISTENTRY = "fileList_%08X"
@@ -93,18 +93,6 @@ public class CachedFileSystemAccessProvider extends FileSystemAccessProvider {
     public CachedFileSystemAccessProvider() {
         //Connect to a database
         initializeCacheDB()
-
-//        conn.close();
-    }
-
-    @Override
-    void destroy() {
-        try {
-            if(conn != null)
-            conn.close();
-        } catch (Exception ex) {
-            logger.severe("Could not destroy " + getClass().getName() + "\n" + ex);
-        }
     }
 
     @Override
@@ -119,10 +107,8 @@ public class CachedFileSystemAccessProvider extends FileSystemAccessProvider {
             if (!_filesInDirectoryCache.containsKey(f) || _filesInDirectoryCache[f].isOutdated(30)) {
                 List<File> files = super.listFilesInDirectory(f, null);
                 _filesInDirectoryCache[f] = new CacheEntry<File, List<File>>(f, files);
-                fireCacheValueAddedEvent(id, "${f.absolutePath}: List<File> of size ${files.size()}");
             }
         }
-        fireCacheValueReadEvent(id, -1);
         if (_filesInDirectoryCache[f].entry.size() > 0 && filters) {
             WildcardFileFilter wff = new WildcardFileFilter(filters.toArray(new String[0]));
             List<File> finalFiles = [];
@@ -207,12 +193,7 @@ public class CachedFileSystemAccessProvider extends FileSystemAccessProvider {
                 putFileToLocalCache(file);
             }
             _fileDeserializationCache[file] = o;
-            if (o != null)
-                fireCacheValueAddedEvent(id, "Object of type ${o.getClass().getName()}");
-            else
-                fireCacheValueAddedEvent(id, "Invalid object with null value");
         }
-        fireCacheValueReadEvent(id, -1);
         return _fileDeserializationCache[file];
     }
 
@@ -235,16 +216,7 @@ public class CachedFileSystemAccessProvider extends FileSystemAccessProvider {
                 text = super.loadTextFile(file);
             }
             _fileTextContentCache.put(file, text);
-            if (text != null)
-                try {
-                    fireCacheValueAddedEvent(id, "Text array of size ${_fileTextContentCache[file].length}");
-                } catch(Exception ex) {
-                    logger.severe(ex.toString());
-                }
-            else
-                fireCacheValueAddedEvent(id, "Invalid (null) text array, size 0");
         }
-        fireCacheValueReadEvent(id, -1);
         return _fileTextContentCache[file];
     }
 
@@ -280,18 +252,7 @@ public class CachedFileSystemAccessProvider extends FileSystemAccessProvider {
                 putOwnerToLocalCache(file, owner);
             }
             _pathOwnerCache.put(file, owner);
-            fireCacheValueAddedEvent(id, "${owner}");
         }
-        fireCacheValueReadEvent(id, -1);
         return _pathOwnerCache.get(file)    //To change body of overridden methods use File | Settings | File Templates.
     }
-//
-//    @Override
-//    boolean providesCacheMechanisms() {
-//        return true;
-//    }
-//
-//    @Override
-//    void eraseCache() {
-//    }
 }

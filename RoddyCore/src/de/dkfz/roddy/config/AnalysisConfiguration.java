@@ -29,8 +29,8 @@ public class AnalysisConfiguration extends Configuration {
     /**
      * For main configurations
      */
-    public AnalysisConfiguration(InformationalConfigurationContent informationalConfigurationContent, String workflowClass, String runtimeServiceClass, Configuration parentConfiguration, List<String> listOfUsedTools, List<String> usedToolFolders, String cleanupScript) {
-        super(informationalConfigurationContent, parentConfiguration);
+    public AnalysisConfiguration(PreloadedConfiguration preloadedConfiguration, String workflowClass, String runtimeServiceClass, Configuration parentConfiguration, List<String> listOfUsedTools, List<String> usedToolFolders, String cleanupScript) {
+        super(preloadedConfiguration, parentConfiguration);
         this.workflowClass = workflowClass;
         this.listOfUsedTools = listOfUsedTools;
         this.usedToolFolders = usedToolFolders != null ? usedToolFolders : new LinkedList<>();

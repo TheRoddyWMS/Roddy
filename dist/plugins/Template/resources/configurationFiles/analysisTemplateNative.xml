@@ -1,8 +1,14 @@
+<!--
+  ~ Copyright (c) 2017 eilslabs.
+  ~
+  ~ Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+  -->
+
 <configuration name='templateNativeAnalysis' description='A template for native workflows.'
                configurationType='analysis' class='de.dkfz.roddy.core.Analysis'
                workflowClass='de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow'
                listOfUsedTools="nativeWorkflow,cleanupScript,testScript" usedToolFolders="roddyTests"
-               nativeWorkflowTool="nativeWorkflow" targetCommandFactory="de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommandFactory"
+               nativeWorkflowTool="nativeWorkflow" targetJobManager="de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommandFactory"
                cleanupScript="cleanupScript">
     <configurationvalues>
         <cvalue name='analysisMethodNameOnInput' value='testAnalysis' type='string'/>

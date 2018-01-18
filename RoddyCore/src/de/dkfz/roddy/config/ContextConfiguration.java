@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.config;
 
+import de.dkfz.roddy.Roddy;
+
 /**
  * A combined combination for a process / context.
  * In this combo, the input analysis configuration is set as the parent in such a way, that the project configuration
@@ -14,15 +16,16 @@ package de.dkfz.roddy.config;
 public class ContextConfiguration extends AnalysisConfiguration {
     private final AnalysisConfiguration analysisConfiguration;
     private final ProjectConfiguration projectConfiguration;
+    private final Configuration applicationSpecificConfiguration;
 
     public ContextConfiguration(AnalysisConfiguration configuration, ProjectConfiguration projectConfiguration) {
-        super(configuration.getInformationalConfigurationContent(), configuration.getWorkflowClass(), configuration.getRuntimeServiceClass(), configuration, configuration.getListOfUsedTools(), configuration.getUsedToolFolders(), configuration.getCleanupScript());
+        super(configuration.getPreloadedConfiguration(), configuration.getWorkflowClass(), configuration.getRuntimeServiceClass(), configuration, configuration.getListOfUsedTools(), configuration.getUsedToolFolders(), configuration.getCleanupScript());
+        this.applicationSpecificConfiguration = Roddy.getApplicationSpecificConfiguration();
         this.analysisConfiguration = configuration;
         this.projectConfiguration = projectConfiguration;
         addParent(analysisConfiguration);
         addParent(projectConfiguration);
-//        for(Configuration c : configuration.getContainerParents())
-//            addParent(c);
+        addParent(applicationSpecificConfiguration);
     }
 
     public AnalysisConfiguration getAnalysisConfiguration() {
@@ -32,4 +35,5 @@ public class ContextConfiguration extends AnalysisConfiguration {
     public ProjectConfiguration getProjectConfiguration() {
         return projectConfiguration;
     }
+
 }

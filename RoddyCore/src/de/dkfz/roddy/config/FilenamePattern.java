@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -7,19 +7,20 @@
 package de.dkfz.roddy.config;
 
 import de.dkfz.roddy.Roddy;
-import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.knowledge.files.BaseFile;
+import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.knowledge.files.FileStageSettings;
 
 
 import java.io.File;
 import java.lang.reflect.Method;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static de.dkfz.roddy.StringConstants.*;
 import de.dkfz.roddy.config.FilenamePatternHelper.Command;
 import de.dkfz.roddy.config.FilenamePatternHelper.CommandAttribute;
+
+import static de.dkfz.roddy.StringConstants.EMPTY;
 
 /**
  * Filename patterns are stored in a configuration file. They are project specific and should be fully configurable.
@@ -75,17 +76,91 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
 
     public abstract FilenamePatternDependency getFilenamePatternDependency();
 
-    protected String fillVariables(BaseFile baseFile, String temp) {
-        ExecutionContext context = baseFile.getExecutionContext();
+    protected BaseFile getSourceFile(BaseFile[] baseFiles) {
+        return null;
+    }
+
+    /**
+     * Fills special values collected from the first parent file.
+     * <p>
+     * ${sourcefile}                            - Full name and path
+     * ${sourcefileAtomic}                      - Only the name
+     * ${sourcefileProperty,[VALUE]}            - Call a property from the source files.
+     * The method tries to assemble the property getter name: get[Uppercase:V]alue
+     * retrieve this via reflection and call it.
+     * ${sourcefileAtomicPrefix,[delimiter]}    - Name of the source file until first occurrence of delimiter
+     * ${sourcepath}                            - The path of the source file
+     *
+     * @param temp
+     * @param baseFiles
+     * @return
+     * @throws Exception
+     */
+    String fillValuesFromSourceFile(String temp, BaseFile[] baseFiles) throws Exception {
+        BaseFile baseFile = baseFiles[0];
+        BaseFile sourceFile = getSourceFile(baseFiles);
+        if (sourceFile != null) {
+            File sourcepath = sourceFile.getPath();
+            temp = temp.replace("${sourcefile}", sourcepath.getAbsolutePath());
+            temp = temp.replace("${sourcefileAtomic}", sourcepath.getName());
+            if (temp.contains(PLACEHOLDER_SOURCEFILE_PROPERTY)) { //Replace the string with a property value
+                Command command = FilenamePatternHelper.extractCommand( PLACEHOLDER_SOURCEFILE_PROPERTY, temp);
+                String pName = command.attributes.keySet().toArray()[0].toString();
+
+                String accessorName = "get" + pName.substring(0, 1).toUpperCase() + pName.substring(1);
+                Method accessorMethod = sourceFile.getClass().getMethod(accessorName);
+                String value = accessorMethod.invoke(sourceFile).toString();
+                temp = temp.replace(command.fullString, value);
+            }
+
+            if (temp.contains(PLACEHOLDER_SOURCEFILE_ATOMIC_PREFIX)) {
+                Command command = FilenamePatternHelper.extractCommand( PLACEHOLDER_SOURCEFILE_ATOMIC_PREFIX, temp);
+                CommandAttribute att = command.attributes.get("delimiter");
+                if (att != null) {
+                    String sourcename = sourcepath.getName();
+                    temp = temp.replace(command.fullString, sourcename.substring(0, sourcename.lastIndexOf(att.value)));
+                }
+            }
+
+            temp = temp.replace("${sourcepath}", sourcepath.getParent());
+
+        }
+        return temp;
+    }
+
+    /**
+     * Will be put to the file base configuration
+     *
+     * @param temp
+     * @param baseFile
+     * @return
+     */
+    @Deprecated
+    String fillFileGroupIndex(String temp, BaseFile baseFile) {
+        if (baseFile.hasIndexInFileGroup())
+            temp = temp.replace("${fgindex}", baseFile.getIdxInFileGroup());
+        return temp;
+    }
+
+    /**
+     * Should this not be part of the variable replacement?
+     *
+     * @param src
+     * @param context
+     * @return
+     */
+    @Deprecated
+    String fillDirectories(String src, ExecutionContext context) {
         Configuration cfg = context.getConfiguration();
+
         //Different output folder
         String oPath = context.getOutputDirectory().getAbsolutePath();
-//        temp = temp.replace("${outputbasepath}", oPath);
-        temp = temp.replace("${outputAnalysisBaseDirectory}", oPath);
+        src = src.replace("${outputAnalysisBaseDirectory}", oPath);
+
         //Replace output directories containing OutputDirectory
         final String odComp = "OutputDirectory";
-        if (temp.contains(odComp)) {
-            String[] split = temp.split(File.separator);
+        if (src.contains(odComp)) {
+            String[] split = src.split(File.separator);
             for (String s : split) {
                 if (s.contains(odComp)) {
                     String cvalID = s.substring(2, s.length() - 1);
@@ -93,56 +168,119 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
 
                     String pathSup = cval.getType().equals("path") ? cval.toFile(context).getAbsolutePath() : cval.toString();
                     pathSup = pathSup.replace(Roddy.getApplicationDirectory().getAbsolutePath() + "/", ""); //Remove Roddy application folder from path...
-                    temp = temp.replace(s, pathSup);
+                    src = src.replace(s, pathSup);
                 }
             }
         }
-
-        while (temp.contains(PLACEHOLDER_CVALUE)) {
-            Command command = FilenamePatternHelper.extractCommand(context, PLACEHOLDER_CVALUE, temp);
-            CommandAttribute name = command.attributes.get("name");
-            CommandAttribute def = command.attributes.get("default");
-            if (name != null) {
-                ConfigurationValue cv = null;
-
-                if (def != null)
-                    cv = cfg.getConfigurationValues().get(name.value, def.value);
-                else
-                    cv = cfg.getConfigurationValues().get(name.value);
-
-                if (cv != null) {
-                    temp = temp.replace(command.name, cv.toString());
-                }
-            }
-        }
-        return temp;
+        return src;
     }
 
-    protected String fillVariablesFromSourceFileValues(BaseFile baseFile, String temp) {
+    /**
+     * Effectively try to resolve all the unresolved variables and ${cvalue,} marked variables
+     *
+     * @param src
+     * @return
+     */
+    String fillConfigurationVariables(String src, Configuration cfg) {
+        RecursiveOverridableMapContainerForConfigurationValues configurationValues = cfg.getConfigurationValues();
+
+        for (boolean valueChanged = true; valueChanged && src.contains(PLACEHOLDER_CVALUE); ) {
+            String oldValue = src;
+
+            Command command = FilenamePatternHelper.extractCommand(PLACEHOLDER_CVALUE, src);
+            CommandAttribute name = command.attributes.get("name");
+            CommandAttribute defaultValue = command.attributes.get("default");
+
+            if (name != null) {
+                ConfigurationValue cv;
+
+                if (defaultValue != null) {
+                    // If a default value is set, get the cvalue with the alternate default value.
+                    cv = configurationValues.get(name.value, defaultValue.value);
+                } else if (configurationValues.hasValue(name.value)) {
+                    // If there is no default value set, a default one with "null" as the value might be returned.
+                    // If it is null, set the cv to null.
+                    cv = configurationValues.get(name.value, null);
+                } else {
+                    cv = null;
+                }
+
+                if (cv != null) {
+                    // Available, non-null values will be inserted.
+                    src = src.replace(command.fullString, cv.toString());
+                } else {
+                    // Log out a message, that a variable was not found and leave in the original value.
+                    // In some cases, this is appropriate (like for parameters).
+                    logger.postSometimesInfo("A variable could not be resolved " + command.rawName + " for a filename pattern. Replace part with the variable name.");
+                    src = src.replace(command.fullString, "${" + command.rawName + "}");
+                }
+
+            }
+            
+            valueChanged = !oldValue.equals(src);
+        }
+
+        /** Try and resolve the leftofer ${someKindOfValue}, stop, when nothing changed. **/
+        boolean somethingChanged = true;
+        Map<String, String> blacklist = new LinkedHashMap<>();
+        int blacklistID = 1000;
+        while (src.contains("${") && somethingChanged) {
+            somethingChanged = false; //Reset
+            Command command = FilenamePatternHelper.extractCommand(EMPTY, src);
+
+            // The simple form for cvalue substitution does not allow name, default or other tags.
+            String oldValue = src;
+            // Only change it, if the value is in the configuration.
+            if(configurationValues.hasValue(command.rawName)) {
+                src = src.replace(command.fullString, configurationValues.get(command.rawName).toString());
+            } else {
+                String value = "###" + blacklistID + "###";
+                blacklist.put(value, command.fullString);
+                src = src.replace(command.fullString, value);
+                blacklistID++;
+                somethingChanged = true;
+            }
+            if (oldValue != src) somethingChanged = true;
+        }
+
+        for(String key : blacklist.keySet()) {
+            String original = blacklist.get(key);
+            src = src.replace(key, original);
+        }
+
+        return src;
+    }
+
+    String fillVariablesFromSourceFileValues(BaseFile baseFile, String temp) {
         FileStageSettings fs = baseFile.getFileStage();
         String _temp = temp;
-        temp = fs.fillStringContent(temp);
+        if (fs != null)
+            temp = fs.fillStringContent(temp);
         if (temp == null)
             temp = _temp; //TODO Look why temp gets null. This should not be the case.
         //pid, sample, run...
-        temp = temp.replace("${fileStageID}", fs.getIDString());
+        if (fs != null)
+            temp = temp.replace("${fileStageID}", fs.getIDString());
         temp = temp.replace("${pid}", baseFile.getDataSet().toString()); // TODO: Move to plugin.
         temp = temp.replace("${dataSet}", baseFile.getDataSet().toString());
         return temp;
     }
 
-    protected String fillVariablesFromSourceFileArrayValues(BaseFile baseFile, String temp, int index) {
-        FileStageSettings fs = baseFile.getFileStage();
-        //pid, sample, run...
-        temp = temp.replace(String.format("${fileStageID[%d]}", index), fs.getIDString());
-        temp = temp.replace(String.format("${pid[%d]}", index), baseFile.getDataSet().toString()); // TODO: Move to plugin.
-        temp = temp.replace(String.format("${dataSet[%d]}", index), baseFile.getDataSet().toString());
-        temp = fs.fillStringContentWithArrayValues(index, temp);
-        return temp;
-    }
+    String fillVariablesFromSourceFileArrayValues(BaseFile[] baseFiles, String src) {
+        if (!acceptsFileArrays || (enforcedArraySize != -1 && (enforcedArraySize == -1 || enforcedArraySize != baseFiles.length))) {
+            return src;
+        }
+        for (int i = 0; i < baseFiles.length; i++) {
+            BaseFile baseFile = baseFiles[i];
 
-    protected BaseFile getSourceFile(BaseFile[] baseFiles) {
-        return null;
+            //PID / Dataset id and filestage
+            FileStageSettings fs = baseFile.getFileStage();
+            src = src.replace(String.format("${fileStageID[%d]}", i), fs.getIDString());
+            src = src.replace(String.format("${pid[%d]}", i), baseFile.getDataSet().toString()); // TODO: Move to plugin.
+            src = src.replace(String.format("${dataSet[%d]}", i), baseFile.getDataSet().toString());
+            src = fs.fillStringContentWithArrayValues(i, src);
+        }
+        return src;
     }
 
     /**
@@ -165,51 +303,23 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
      */
     public String apply(BaseFile[] baseFiles) {
 
-        String temp = null;
+        String temp = pattern;
         try {
-            temp = null;
             BaseFile baseFile = baseFiles[0];
-            BaseFile sourceFile = getSourceFile(baseFiles);
-            temp = pattern;
 
             // There is one source file existing, so source file based options can be applied.
-            if (sourceFile != null) {
-                File sourcepath = sourceFile.getPath();
-                temp = temp.replace("${sourcefile}", sourcepath.getAbsolutePath());
-                temp = temp.replace("${sourcefileAtomic}", sourcepath.getName());
-                if (temp.contains(PLACEHOLDER_SOURCEFILE_PROPERTY)) { //Replace the string with a property value
-                    Command command = FilenamePatternHelper.extractCommand(baseFile.getExecutionContext(), PLACEHOLDER_SOURCEFILE_PROPERTY, temp);
-                    String pName = command.attributes.keySet().toArray()[0].toString();
-
-                    String accessorName = "get" + pName.substring(0, 1).toUpperCase() + pName.substring(1);
-                    Method accessorMethod = sourceFile.getClass().getMethod(accessorName);
-                    String value = accessorMethod.invoke(sourceFile).toString();
-                    temp = temp.replace(command.name, value);
-                }
-                if (temp.contains(PLACEHOLDER_SOURCEFILE_ATOMIC_PREFIX)) {
-                    Command command = FilenamePatternHelper.extractCommand(baseFile.getExecutionContext(), PLACEHOLDER_SOURCEFILE_ATOMIC_PREFIX, temp);
-                    CommandAttribute att = command.attributes.get("delimiter");
-                    if (att != null) {
-                        String sourcename = sourcepath.getName();
-                        temp = temp.replace(command.name, sourcename.substring(0, sourcename.lastIndexOf(att.value)));
-                    }
-                }
-
-                temp = temp.replace("${sourcepath}", sourcepath.getParent());
-                if (acceptsFileArrays && (enforcedArraySize == -1 || (enforcedArraySize != -1 && enforcedArraySize == baseFiles.length)))
-                    for (int i = 0; i < baseFiles.length; i++) {
-                        temp = fillVariablesFromSourceFileArrayValues(baseFiles[i], temp, i);
-                    }
-
-            }
-
-            temp = fillVariables(baseFile, temp);
+            temp = fillValuesFromSourceFile(temp, baseFiles);
+            temp = fillFileGroupIndex(temp, baseFile);
+            temp = fillDirectories(temp, baseFile.getExecutionContext());
+            temp = fillConfigurationVariables(temp, baseFile.getConfiguration());
             temp = fillVariablesFromSourceFileValues(baseFile, temp);
+            temp = fillVariablesFromSourceFileArrayValues(baseFiles, temp);
         } catch (Exception e) {
             logger.severe("Could not apply filename pattern " + pattern + " for file " + baseFiles[0]);
             e.printStackTrace();
         }
         return temp;
     }
+
 
 }

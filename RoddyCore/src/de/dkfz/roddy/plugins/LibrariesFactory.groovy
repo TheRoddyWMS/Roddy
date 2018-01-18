@@ -6,17 +6,18 @@
 
 package de.dkfz.roddy.plugins
 
-import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.client.RoddyStartupModes
-import de.dkfz.roddy.client.cliclient.CommandLineCall
-import de.dkfz.roddy.execution.io.ExecutionHelper
+import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.config.loader.ConfigurationFactory
+import de.dkfz.roddy.core.Initializable
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
-import de.dkfz.roddy.tools.*
+import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflowConverter
+import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RuntimeTools
 import de.dkfz.roddy.tools.Tuple2
-import de.dkfz.roddy.StringConstants
-import de.dkfz.roddy.core.Initializable
+import de.dkfz.roddy.tools.Tuple5
+import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 
 import java.util.regex.Pattern
@@ -25,7 +26,7 @@ import java.util.regex.Pattern
  * Factory to load and integrate plugins.
  */
 @groovy.transform.CompileStatic
-public class LibrariesFactory extends Initializable {
+class LibrariesFactory extends Initializable {
     private static LoggerWrapper logger = LoggerWrapper.getLogger(LibrariesFactory.class.getSimpleName());
 
     private static LibrariesFactory librariesFactory;
@@ -33,7 +34,6 @@ public class LibrariesFactory extends Initializable {
     public static URLClassLoader urlClassLoader
     public static GroovyClassLoader centralGroovyClassLoader;
 
-    public static final String SYNTHETIC_PACKAGE = "de.dkfz.roddy.synthetic.files"
 
     public static final String PLUGIN_VERSION_CURRENT = "current";
     public static final String PLUGIN_DEFAULT = "DefaultPlugin";
@@ -41,11 +41,14 @@ public class LibrariesFactory extends Initializable {
     public static final String BUILDINFO_DEPENDENCY = "dependson";
     public static final String BUILDINFO_COMPATIBILITY = "compatibleto";
     public static final String BUILDINFO_TEXTFILE = "buildinfo.txt";
+    public static final String BUILDVERSION_TEXTFILE = "buildversion.txt";
     public static final String BUILDINFO_STATUS = "status"
     public static final String BUILDINFO_STATUS_BETA = "beta"
     public static final String BUILDINFO_RUNTIME_JDKVERSION = "JDKVersion"
     public static final String BUILDINFO_RUNTIME_GROOVYVERSION = "GroovyVersion"
     public static final String BUILDINFO_RUNTIME_APIVERSION = "RoddyAPIVersion"
+    public static final String PRIMARY_ERRORS = "PRIMARY_ERRORS"  // Primary errors are "important"
+    public static final String SECONDARY_ERRORS = "SECONDARY_ERRORS" // Secondary errors could be "important" but are not checked in all cases.
 
     private List<String> loadedLibrariesInfo = [];
 
@@ -55,27 +58,18 @@ public class LibrariesFactory extends Initializable {
 
     private PluginInfoMap mapOfPlugins = [:];
 
+    private static final Map<String, List<String>> mapOfErrorsForPluginEntries = [:]
+
+    private static final Map<File, List<String>> mapOfErrorsForPluginFolders = [:]
+
     private boolean librariesAreLoaded = false;
 
     private SyntheticPluginInfo synthetic
 
     /**
-     * The synthetic plugin info object is solely used for automatically created synthetic file classes.
-     * It is not usable for other purposes.
+     * Helper class to load real and synthetic classes.
      */
-    private static class SyntheticPluginInfo extends PluginInfo {
-
-        SyntheticPluginInfo(String name, File zipFile, File directory, File developmentDirectory, String prodVersion, Map<String, String> dependencies) {
-            super(name, zipFile, directory, developmentDirectory, prodVersion, RuntimeTools.getRoddyRuntimeVersion(), RuntimeTools.getJavaRuntimeVersion(), RuntimeTools.getGroovyRuntimeVersion(), dependencies);
-        }
-
-        private Map<String, Class> map = [:]
-
-        public void addClass(Class cls) {
-            map[cls.name] = cls;
-            map[cls.simpleName] = cls;
-        }
-    }
+    final ClassLoaderHelper classLoaderHelper = new ClassLoaderHelper()
 
     /**
      * This resets the singleton and is not thread safe!
@@ -90,6 +84,15 @@ public class LibrariesFactory extends Initializable {
 
     private LibrariesFactory() {
         synthetic = new SyntheticPluginInfo("Synthetic", null, null, null, "current", [:]);
+    }
+
+    static List<String> getErrorsForPlugin(String plugin) {
+        MapEntry hit = mapOfErrorsForPluginEntries.find { k, v -> k == plugin } as MapEntry
+        if (hit == null as MapEntry) {
+            return []
+        } else {
+            return hit.value as List<String>
+        }
     }
 
     public SyntheticPluginInfo getSynthetic() {
@@ -108,82 +111,57 @@ public class LibrariesFactory extends Initializable {
         return centralGroovyClassLoader;
     }
 
-    private Map<PluginInfo, List<String>> classListCacheByPlugin = [:];
-
-    public Class searchForClass(String name) {
-        if (name.contains(".")) {
-            return getGroovyClassLoader().loadClass(name);
-        } else {
-            //Search synthetic classes first.
-            if (getSynthetic().map.containsKey(name))
-                return getSynthetic().map[name];
-
-            // SEVERE TODO This is a very quick hack and heavily depends on the existence of jar on the system!
-            List<String> listOfClasses = []
-            synchronized (loadedPlugins) {
-                loadedPlugins.each {
-                    PluginInfo plugin ->
-                        if (!classListCacheByPlugin.containsKey(plugin)) {
-                            String text = ExecutionHelper.execute("jar tvf ${loadedJarsByPlugin[plugin]}")
-                            classListCacheByPlugin[plugin] = text.readLines();
-                        }
-                        classListCacheByPlugin[plugin].each {
-                            String line ->
-                                if (!line.endsWith(".class")) return;
-                                String cls = line.split("[ ]")[-1][0..-7];
-                                if (cls.endsWith("/" + name)) {
-                                    cls = cls.replace("/", ".");
-                                    cls = cls.replace("\\", ".");
-                                    synchronized (listOfClasses) {
-                                        listOfClasses << cls;
-                                    }
-                                }
-                        }
-                }
-            }
-            if (listOfClasses.size() > 1) {
-                logger.severe("Too many available classes, please specify fully, choosing one of the following: ")
-                listOfClasses.each { logger.severe("  " + it) }
-                return null;
-            }
-            if (listOfClasses.size() == 1) {
-                return getGroovyClassLoader().loadClass(listOfClasses[0]);
-            }
-            logger.severe("No class found for ${name}")
-            return null;
-        }
+    /**
+     * Maybe deprecated or a permanent shortcut?
+     * @param name
+     * @return
+     */
+    @Deprecated
+    Class searchForClass(String name) {
+        classLoaderHelper.searchForClass(name)
     }
 
-    public Class loadRealOrSyntheticClass(String classOfFileObject, String baseClassOfFileObject) {
-        Class<BaseFile> _cls = searchForClass(classOfFileObject);
-        if (_cls == null) {
-            _cls = generateSyntheticFileClassWithParentClass(classOfFileObject, baseClassOfFileObject, LibrariesFactory.getGroovyClassLoader())
-            LibrariesFactory.getInstance().getSynthetic().addClass(_cls);
-            logger.severe("Class ${classOfFileObject} could not be found, created synthetic class ${_cls.name}.");
-        }
-        return _cls
+    /**
+     * Maybe deprecated or a permanent shortcut?
+     * @param name
+     * @return
+     */
+    @Deprecated
+    Class loadRealOrSyntheticClass(String classOfFileObject, String baseClassOfFileObject) {
+        return classLoaderHelper.loadRealOrSyntheticClass(classOfFileObject, baseClassOfFileObject)
     }
 
-    public Class loadRealOrSyntheticClass(String classOfFileObject, Class<FileObject> constructorClass) {
-        return loadRealOrSyntheticClass(classOfFileObject, constructorClass.name);
+    /**
+     * Maybe deprecated or a permanent shortcut?
+     * @param name
+     * @return
+     */
+    @Deprecated
+    Class loadRealOrSyntheticClass(String classOfFileObject, Class<FileObject> constructorClass) {
+        return classLoaderHelper.loadRealOrSyntheticClass(classOfFileObject, constructorClass)
+    }
+
+    /**
+     * Maybe deprecated or a permanent shortcut?
+     * @param name
+     * @return
+     */
+    @Deprecated
+    public Class forceLoadSyntheticClassOrFail(String classOfFileObject, Class<FileObject> constructorClass = BaseFile.class) {
+        Class<BaseFile> _cls = classLoaderHelper.searchForClass(classOfFileObject);
+        if (_cls && _cls.package.name.startsWith(SyntheticPluginInfo.SYNTHETIC_PACKAGE)) {
+            return _cls
+        }
+        throw new RuntimeException("The requested class ${classOfFileObject} already exists and is not synthetic. However, the workflow requests a synthetic class.")
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    public static Class generateSyntheticFileClassWithParentClass(String syntheticClassName, String constructorClassName, GroovyClassLoader classLoader = null) {
-        String syntheticFileClass =
-                """
-                package $SYNTHETIC_PACKAGE
+    static Class generateSyntheticFileClassWithParentClass(String syntheticClassName, String constructorClassName, GroovyClassLoader classLoader = null) {
+        ClassLoaderHelper.generateSyntheticFileClassWithParentClass(syntheticClassName, constructorClassName, classLoader)
+    }
 
-                public class ${syntheticClassName} extends de.dkfz.roddy.knowledge.files.BaseFile {
-
-                    public ${syntheticClassName}(de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForBaseFiles helper) {
-                        super(helper);
-                    }
-                }
-            """
-        GroovyClassLoader groovyClassLoader = classLoader ?: new GroovyClassLoader();
-        Class _classID = (Class<BaseFile>) groovyClassLoader.parseClass(syntheticFileClass);
-        return _classID
+    Class loadClass(String className) throws ClassNotFoundException {
+        return getGroovyClassLoader().loadClass(className);
     }
 
     /**
@@ -191,7 +169,55 @@ public class LibrariesFactory extends Initializable {
      * @param usedPlugins
      */
     public boolean resolveAndLoadPlugins(String[] usedPlugins) {
-        def queue = buildupPluginQueue(loadMapOfAvailablePluginsForInstance(), usedPlugins)
+        if (!usedPlugins.join("").trim()) {
+            logger.info("Call of resolveAndLoadPlugins was aborted, usedPlugins is empty.")
+            return false
+        }
+        def mapOfAvailablePlugins = loadMapOfAvailablePluginsForInstance()
+        if (!mapOfAvailablePlugins) {
+            logger.severe("Could not load plugins from storage. Are the plugin directories properly set?\n" + Roddy.getPluginDirectories().join("\n\t"))
+            return false
+        }
+        def queue = buildupPluginQueue(mapOfAvailablePlugins, usedPlugins)
+        if (queue == null) {
+            logger.severe("Could not build the plugin queue for: \n\t" + usedPlugins.join("\n\t"))
+
+            logger.severe("Please see all available plugin folders and their sub directories:\n" +
+                    mapOfErrorsForPluginFolders
+                            .findAll { File key, List<String> values -> values.size() > 0 && key.isDirectory() }
+                            .collect { File folder, List<String> errorsForFolder ->
+                        "Folder ${folder}" + errorsForFolder ? " with ${errorsForFolder.size()}" : ""
+                    }.collect {}.join("\n\t")
+            )
+
+            return false
+        }
+
+        Map<String, List<String>> errors = mapOfErrorsForPluginEntries.findAll { String k, List v -> v }
+        if (errors) {
+            StringBuilder builder = new StringBuilder("There were several plugin directories which were rejected:\n")
+            builder << [
+                    errors.collect { String k, List<String> v -> (["\t" + k] + v).join("\n\t\t") }.join("\n"),
+                    "To prevent wrong plugin selection, Roddy needs you to keep your plugin directories clean. A plugin directory is dirty if:",
+                    '\t- A contained directory does not follow the plugin name convention: "PluginName_\$major.\$minor.\$patch[-\$revision]"',
+                    "\t- A plugin directory does not contain all necessary files and directories or other errors"
+            ].join("\n")
+            logger.severe(builder.toString())
+            return false
+        }
+        // Prepare plugins in queue
+        queue.each { String id, PluginInfo pi ->
+            if (pi instanceof NativePluginInfo) {
+                new NativeWorkflowConverter(pi as NativePluginInfo).convert()
+            }
+        }
+
+        boolean finalChecksPassed = !checkOnToolDirDuplicates(queue.values() as List<PluginInfo>);
+        if (!finalChecksPassed) {
+            logger.severe("Final checks for plugin loading failed. There were duplicate tool directories.")
+            return false
+        };
+
         librariesAreLoaded = loadLibraries(queue.values() as List);
         return librariesAreLoaded;
     }
@@ -204,76 +230,153 @@ public class LibrariesFactory extends Initializable {
         return loadedPlugins;
     }
 
+    Map<PluginInfo, File> getLoadedJarsByPlugin() {
+        return loadedJarsByPlugin
+    }
+
     public PluginInfoMap loadMapOfAvailablePluginsForInstance() {
         if (!mapOfPlugins) {
             def directories = Roddy.getPluginDirectories()
-            mapOfPlugins = loadMapOfAvailablePlugins(directories)
-        };
+            List<PluginDirectoryInfo> mapOfIdentifiedPlugins = loadMapOfAvailablePlugins(directories)
+            mapOfPlugins = loadPluginsFromDirectories(mapOfIdentifiedPlugins)
+        }
+
+        return mapOfPlugins
     }
 
     /**
      * This method returns a list of all plugins found in plugin directories.
      * This method distinguishes between Roddy environments for development and packed Roddy versions.
      * If the user is a developer, the development directories are set and preferred over bundled libraries.
-     * * Why is this necessary?
-     * - If you develop scripts and plugins, you possibly use a version control system. However the scripts are copied to the
+     * * Why is this necessary?d to the
      *   plugin directory on compilation (and possibly out of version control. So Roddy tries to take the "original" version
      *   which resides in the plugins project space.
      * * Where can plugins be found?
+     * - If you develop scripts and plugins, you possibly use a version control system. However the scripts are copie
      * - In the dist/libraries folder (non developer)
      * - In any other configured folder. You as the developer has to set external projects up in the configuration. (developer)
      *
      * @return
      */
-    static PluginInfoMap loadMapOfAvailablePlugins(List<File> pluginDirectories) {
+    static List<PluginDirectoryInfo> loadMapOfAvailablePlugins(List<File> pluginDirectories) {
 
         //Search all plugin folders and also try to join those if possible.
-        List<Tuple2<File, String[]>> collectedPluginDirectories = [];
-        def blacklist = [".idea", "out", "Template", ".svn"]
-        boolean warningUnzippedDirectoriesMissing = false;
+        List<PluginDirectoryInfo> collectedPluginDirectories = [];
 
         for (File pBaseDirectory : pluginDirectories) {
-	    logger.postSometimesInfo("Parsing plugins folder: ${pBaseDirectory}");
+            logger.postSometimesInfo("Parsing plugins folder: ${pBaseDirectory}");
+            if (!pBaseDirectory.exists()) {
+                logger.severe("The plugins directory $pBaseDirectory does not exist.")
+                mapOfErrorsForPluginFolders.get(pBaseDirectory, []) << "The plugins directory $pBaseDirectory does not exist.".toString()
+                continue;
+            }
+            if (!pBaseDirectory.canRead()) {
+                logger.severe("The plugins directory $pBaseDirectory is not readable.")
+                mapOfErrorsForPluginFolders.get(pBaseDirectory, []) << "The plugins directory $pBaseDirectory is not readable.".toString()
+            }
+
             File[] directoryList = pBaseDirectory.listFiles().sort() as File[];
             for (File pEntry in directoryList) {
-	        logger.postRareInfo("  Parsing plugin folder: ${pEntry}");
-                String dirName = pEntry.getName();
-                boolean isZip = dirName.endsWith(".zip");
-                boolean unzippedDirectoryExists = false;
-                if (isZip) {
-                    dirName = dirName[0..-5]; // Remove .zip from the end.
-                    unzippedDirectoryExists = new File(dirName).exists();
-                    if (isZip && !unzippedDirectoryExists) warningUnzippedDirectoriesMissing = true;
-                    //set warn unzipped dir missing.
-                }
 
-                String[] splitName = dirName.split(StringConstants.SPLIT_UNDERSCORE); //First split for .zip then for the version
-                String pluginName = splitName[0];
-                if ((!pEntry.isDirectory() && !isZip) || isZip || !pluginName || blacklist.contains(pluginName))
-                    continue;
-                collectedPluginDirectories << new Tuple2<File, String[]>(pEntry, splitName);
+                Map<String, List<String>> errors = [
+                        PRIMARY_ERRORS  : [],
+                        SECONDARY_ERRORS: []
+                ]
+                def workflowType = determinePluginType(pEntry, errors)
+                mapOfErrorsForPluginEntries[pEntry.path] = (errors[PRIMARY_ERRORS] + errors[SECONDARY_ERRORS])
+
+                if (workflowType == PluginType.INVALID)
+                    continue
+
+                collectedPluginDirectories << new PluginDirectoryInfo(pEntry, workflowType);
             }
         }
 
-        if (warningUnzippedDirectoriesMissing) {
-            logger.warning("There are plugins in your directories which are not unzipped. If some plugins are not found, please consider to check your zipped plugins.")
-        }
-
-        return loadPluginsFromDirectories(collectedPluginDirectories)
+        return collectedPluginDirectories
     }
 
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private static List<Tuple2<File, String[]>> checkValidPluginNames (List<Tuple2<File, String[]>> collectedPluginDirectories) {
-        List<Tuple2<File, String[]>> collectedTemporary = [];
-        collectedPluginDirectories.each { tuple ->
-            String rev = (tuple.x.name.split("[-]") as List)[1]
-            if (tuple.x.name.endsWith(".zip")) {
-                logger.info("Did not consider to check ${tuple.x.name} as it is compressed and cannot be evaluated.")
+    /**
+     * This and the following method should not be in here! We should use the FileSystemAccessProvider for it. 
+     * However, the FSAP always tries to use the ExecService, if possible. All in all, with the current setup for FSAP / ES
+     * interaction, it will not work. As we already decided to change that at some point, I'll put the method in here
+     * and mark them as deprecated.
+     * @param file
+     * @return
+     */
+    @Deprecated
+    static boolean checkFile(File file) {
+        return file.exists() && file.isFile() && file.canRead()
+    }
+
+    @Deprecated
+    static boolean checkDirectory(File file) {
+        return file.exists() && file.isDirectory() && file.canRead() && file.canExecute()
+    }
+
+    static PluginType determinePluginType(File directory, Map<String, List<String>> mapOfErrors = [:]) {
+        logger.postRareInfo("  Parsing plugin folder: ${directory}");
+
+        List<String> errors = mapOfErrors.get(PRIMARY_ERRORS, [])
+        List<String> errorsUnimportant = mapOfErrors.get(SECONDARY_ERRORS, [])
+
+        if (!directory.isDirectory()) {
+            // Just return silently here.
+            return PluginType.INVALID
+        }
+        if (directory.isHidden())
+            return PluginType.INVALID
+        if (!directory.canRead())
+            errors << "Directory cannot be read"
+
+        if (errors) {
+            logger.postRareInfo((["A directory was rejected as a plugin directory because:"] + errors).join("\n\t"))
+            return PluginType.INVALID
+        }
+
+        String dirName = directory.getName();
+        if (!isPluginDirectoryNameValid(dirName)) {
+            logger.postRareInfo("A directory was rejected as a plugin directory because its name did not match the naming rules.")
+            errorsUnimportant << "A directory was rejected as a plugin directory because its name did not match the naming rules."
+            return PluginType.INVALID
+        }
+
+        // Check if it is a native workflow
+        // Search for a runWorkflow_[scheduler].sh
+        if (NativeWorkflowConverter.isNativePlugin(directory)) {
+            return PluginType.NATIVE
+        } else {
+
+            // If not, check for regular workflows.
+            if (!checkFile(new File(directory, BUILDINFO_TEXTFILE)))
+                errors << "The buildinfo.txt file is missing"
+            if (!checkFile(new File(directory, BUILDVERSION_TEXTFILE)))
+                errors << "The buildversion.txt file is missing"
+            if (!checkDirectory(new File(directory, "resources/analysisTools")))
+                errors << "The analysisTools resource directory is missing"
+            if (!checkDirectory(new File(directory, "resources/configurationFiles")))
+                errors << "The configurationFiles resource directory is missing"
+        }
+
+        if (errors) {
+            logger.postRareInfo((["A directory was rejected as a plugin directory because:"] + errors).join("\n\t"))
+            return PluginType.INVALID
+        }
+        return PluginType.RODDY
+    }
+
+//    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    private static List<PluginDirectoryInfo> checkValidPluginNames(List<PluginDirectoryInfo> collectedPluginDirectories) {
+        List<PluginDirectoryInfo> collectedTemporary = [];
+        collectedPluginDirectories.each { PluginDirectoryInfo pdi ->
+            def name = pdi.directory.name
+            String rev = (name.split("[-]") as List)[1]
+            if (name.endsWith(".zip")) {
+                logger.info("Did not consider to check ${name} as it is compressed and cannot be evaluated.")
                 return
             }
             if (rev) rev = rev.split("[.]")[0]; // Filter out .zip
-            if (rev?.isNumber() || !rev) collectedTemporary << tuple
-            else logger.severe("Filtered out plugin ${tuple.x.name}, as the revision id is not numeric.")
+            if (rev?.isNumber() || !rev) collectedTemporary << pdi
+            else mapOfErrorsForPluginFolders.get(pdi.directory, []) << "Filtered out plugin ${name}, as the revision id is not numeric.".toString()
         }
         return collectedTemporary
     }
@@ -281,13 +384,12 @@ public class LibrariesFactory extends Initializable {
     /** Make sure that the plugin directories are properly sorted before we start. This is especially useful
      *  if we search for revisions and extensions.
      */
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private static List<Tuple2<File, String[]>> sortPluginDirectories(List<Tuple2<File, String[]>> collectedPluginDirectories) {
+    @CompileStatic(TypeCheckingMode.SKIP)
+    private static List<PluginDirectoryInfo> sortPluginDirectories(List<PluginDirectoryInfo> collectedPluginDirectories) {
         collectedPluginDirectories = collectedPluginDirectories.sort {
-            Tuple2<File, String[]> left, Tuple2<File, String[]> right ->
-				logger.postRareInfo("Call to plugin directory sort for ${left.x} vs ${right.x}");
-                List<String> splitLeft = left.x.name.split("[_:.-]") as List;
-                List<String> splitRight = right.x.name.split("[_:.-]") as List;
+            PluginDirectoryInfo left, PluginDirectoryInfo right ->
+                List<String> splitLeft = left.directory.name.split("[_:.-]") as List
+                List<String> splitRight = right.directory.name.split("[_:.-]") as List
                 Tuple5<String, Integer, Integer, Integer, Integer> tLeft = new Tuple5<>(
                         splitLeft[0],
                         (splitLeft[1] ?: Integer.MAX_VALUE) as Integer,
@@ -302,12 +404,12 @@ public class LibrariesFactory extends Initializable {
                         (splitRight[3] ?: Integer.MAX_VALUE) as Integer,
                         (splitRight[4] ?: 0) as Integer
                 );
-                if (tLeft.x != tRight.x) return tLeft.x.compareTo(tRight.x);
-                if (tLeft.y != tRight.y) return tLeft.y.compareTo(tRight.y);
-                if (tLeft.z != tRight.z) return tLeft.z.compareTo(tRight.z);
-                if (tLeft.w != tRight.w) return tLeft.w.compareTo(tRight.w);
-                if (tLeft.q != tRight.q) return tLeft.q.compareTo(tRight.q);
-                return 0;
+                if (tLeft.x != tRight.x) return tLeft.x.compareTo(tRight.x)
+                if (tLeft.y != tRight.y) return tLeft.y.compareTo(tRight.y)
+                if (tLeft.z != tRight.z) return tLeft.z.compareTo(tRight.z)
+                if (tLeft.w != tRight.w) return tLeft.w.compareTo(tRight.w)
+                if (tLeft.q != tRight.q) return tLeft.q.compareTo(tRight.q)
+                return 0
         }
         return collectedPluginDirectories
     }
@@ -326,68 +428,32 @@ public class LibrariesFactory extends Initializable {
      * @param collectedPluginDirectories
      * @return
      */
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private static PluginInfoMap loadPluginsFromDirectories(List<Tuple2<File, String[]>> collectedPluginDirectories) {
+    public static PluginInfoMap loadPluginsFromDirectories(List<PluginDirectoryInfo> collectedPluginDirectories) {
         collectedPluginDirectories = sortPluginDirectories(checkValidPluginNames(collectedPluginDirectories))
 
         Map<String, Map<String, PluginInfo>> _mapOfPlugins = [:];
-        for (Tuple2<File, String[]> _entry : collectedPluginDirectories) {
-			logger.postRareInfo("Processing plugin entry: ${_entry.x}")
-            File pEntry = _entry.x;
-            String[] splitName = _entry.y;//pEntry.getName().split(StringConstants.SPLIT_UNDERSCORE); //First split for .zip then for the version
+        for (PluginDirectoryInfo _entry : collectedPluginDirectories) {
+            logger.postRareInfo("Processing plugin entry: ${_entry.directory}")
+            if (_entry.type == PluginType.INVALID)
+                throw new PluginLoaderException("loadPluginsFromDirectories does not take INVALID plugins!")
 
-            String pluginName = splitName[0];
-            String[] pluginVersionInfo = splitName.length > 1 ? splitName[1].split(StringConstants.SPLIT_MINUS) : [PLUGIN_VERSION_CURRENT] as String[];
+            File directory = _entry.directory;
+
+            String pluginName = _entry.pluginID;
+            String[] pluginVersionInfo = _entry.version.split(StringConstants.SPLIT_MINUS) as String[];
             String pluginVersion = pluginVersionInfo[0];
             String pluginRevision = pluginVersionInfo.length > 1 ? pluginVersionInfo[1] : "0";
             String pluginFullVersion = pluginVersion + "-" + pluginRevision;
             if (pluginVersion == PLUGIN_VERSION_CURRENT) pluginFullVersion = PLUGIN_VERSION_CURRENT;
 
-            int revisionNumber = pluginRevision as Integer;
-
-            CommandLineCall clc = Roddy.getCommandLineCall();
-            boolean helpMode = clc ? clc.startupMode == RoddyStartupModes.help : false
-
-            File develEntry = null;
-            File prodEntry = null;
-            File zipFile = null;
-
-            if (pEntry.getName().endsWith(".zip")) { // Zip files are handled differently and cannot be checked for contents!
-                zipFile = pEntry;
-                if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.UnzipZippedPlugins)) {
-                    if (!new File(zipFile.getAbsolutePath()[0..-5]).exists()) {
-                        if (!helpMode) logger.postAlwaysInfo("Unzipping zipped plugin (this is done unchecked and unlocked, processes could interfere with each other!)")
-                        (new RoddyIOHelperMethods.NativeLinuxZipCompressor()).decompress(zipFile, null, zipFile.getParentFile());
-                    }
-                }
-                continue;
+            if (!pluginRevision.isInteger()) {
+                throw new PluginLoaderException("Could not parse revision number from plugin-directory '${directory.absolutePath}'")
             }
-
-            if (zipFile != null) { // Only "releases" / packages have a zip file and need not to be dissected further.
-                continue;
-            }
-
-            // TODO Sort file list before validation?
-            // TODO Get version also from directory in case that the zip file is missing?
-
-            File prodJarFile = pEntry.listFiles().find { File f -> f.name.endsWith ".jar"; }
-            if (prodJarFile) {
-                prodEntry = pEntry;
-            }
-
-            File devSrcPath = pEntry.listFiles().find { File f -> f.name == "src"; }
-            if (devSrcPath) {
-                develEntry = pEntry;
-            }
-
-            if (!prodEntry && !develEntry) { //Now we might have a plugin without a jar file. This is allowed to happen since 2.2.87
-                prodEntry = pEntry;
-            }
-
+            int revisionNumber = pluginRevision.toInteger();
 
             def pluginMap = _mapOfPlugins.get(pluginName, new LinkedHashMap<String, PluginInfo>())
 
-            BuildInfoFileHelper biHelper = new BuildInfoFileHelper(pluginName, pluginFullVersion, pEntry.listFiles().find { File f -> f.name == BUILDINFO_TEXTFILE })
+            BuildInfoFileHelper biHelper = loadBuildinfoHelperObject(pluginName, pluginFullVersion, directory, _entry)
 
             PluginInfo previousPlugin = pluginMap.values().size() > 0 ? pluginMap.values().last() : null;
             boolean isRevisionOfPlugin = previousPlugin?.getMajorAndMinor() == pluginVersion && previousPlugin?.getRevision() == revisionNumber - 1;
@@ -395,8 +461,19 @@ public class LibrariesFactory extends Initializable {
             boolean isBetaPlugin = biHelper.isBetaPlugin();
 
             //Create a helper object which parses the buildinfo text file
+            PluginInfo newPluginInfo
 
-            PluginInfo newPluginInfo = new PluginInfo(pluginName, zipFile, prodEntry, develEntry, pluginFullVersion, biHelper.getRoddyAPIVersion(), biHelper.getJDKVersion(), biHelper.getGroovyVersion(), biHelper.getDependencies())
+            if (_entry.type == PluginType.NATIVE) {
+                newPluginInfo = new NativePluginInfo(pluginName, directory, pluginFullVersion, biHelper.getDependencies())
+            } else if (_entry.type == PluginType.RODDY) {
+                File jarFile = directory.listFiles().find { File f -> f.name.endsWith ".jar"; }
+                if (jarFile) {
+                    newPluginInfo = new JarFulPluginInfo(pluginName, directory, jarFile, pluginFullVersion, biHelper.getRoddyAPIVersion(), biHelper.getJDKVersion(), biHelper.getDependencies())
+                } else {
+                    newPluginInfo = new JarLessPluginInfo(pluginName, directory, pluginFullVersion, biHelper.getDependencies())
+                }
+            }
+
             pluginMap[pluginFullVersion] = newPluginInfo;
             if (isRevisionOfPlugin || isCompatible) {
                 newPluginInfo.previousInChain = previousPlugin;
@@ -410,8 +487,28 @@ public class LibrariesFactory extends Initializable {
 
             if (isBetaPlugin)
                 newPluginInfo.isBetaPlugin = true;
+
+
+            if (newPluginInfo.errors)
+                mapOfErrorsForPluginEntries.get(newPluginInfo.directory.path, []).addAll(newPluginInfo.getErrors())
         }
         return new PluginInfoMap(_mapOfPlugins)
+    }
+
+    static BuildInfoFileHelper loadBuildinfoHelperObject(String name, String fullVersion, File directory, PluginDirectoryInfo pluginDirectoryInfo) {
+
+        BuildInfoFileHelper biHelper
+        if (pluginDirectoryInfo.needsBuildInfoFile()) {
+            biHelper = new BuildInfoFileHelper(name, fullVersion, directory.listFiles().find { File f -> f.name == BUILDINFO_TEXTFILE })
+        } else {
+            File f = directory.listFiles().find { File f -> f.name == BUILDINFO_TEXTFILE }
+            if (f)
+                biHelper = new BuildInfoFileHelper(name, fullVersion, f.readLines())
+            else
+                biHelper = new BuildInfoFileHelper(name, fullVersion)
+        }
+        return biHelper
+
     }
 
     public static Map<String, PluginInfo> buildupPluginQueue(PluginInfoMap mapOfPlugins, String[] usedPlugins) {
@@ -433,12 +530,13 @@ public class LibrariesFactory extends Initializable {
 
             final String id = pluginsToCheck[0].x;
             String version = pluginsToCheck[0].y;
-            //There are now some  as String conversions which are just there for the Idea code view... They'll be shown as faulty otherwise.
+            //There are now some  "as String" conversions which are just there for the Idea code view... They'll be shown as faulty otherwise.
             if (version != PLUGIN_VERSION_CURRENT && !(version as String).contains("-")) version += "-0";
 
-            if(!mapOfPlugins.checkExistence(id as String, version as String)) {
-                logger.severe("The plugin ${id}:${version} could not be found, are the plugin paths properly set?");
-                return null;
+            if (!mapOfPlugins.checkExistence(id as String, version as String)) {
+                if (id) { // Skip empty entries and reduce one message.
+                    mapOfErrorsForPluginEntries.get(id, []) << ("The plugin ${id}:${version} could not be found, are the plugin paths properly set?").toString();
+                }
             }
             pluginsToCheck.remove(0);
 
@@ -449,10 +547,12 @@ public class LibrariesFactory extends Initializable {
             // version of it which may either be a revision (x:x.y-[0..n] or a higher compatible version.
             // Search the last valid entry in the chain.
             if (!usedPlugins.contains("${id}:${version}")) {
-                for (; pInfo.nextInChain != null; pInfo = pInfo.nextInChain) {
+                while (true) {
                     version = pInfo.prodVersion;
                     if (usedPlugins.contains("${id}:${version}")) //Break, if the list of used plugins contains the selected version of the plugin
-                        break;
+                        break
+                    if (pInfo.nextInChain == null) break // Break if this was the last entry in the chain
+                    pInfo = pInfo.nextInChain
                 }
             }
 
@@ -462,8 +562,9 @@ public class LibrariesFactory extends Initializable {
                 continue;
             if (pluginsToActivate[id as String] != null) {
                 if (pluginsToActivate[id as String].prodVersion != version) {
-                    logger.severe("There is a version mismatch for plugin dependencies! Not starting up.");
-                    return null;
+                    def msg = "Plugin version collision: Plugin ${id} cannot both be loaded in version ${version} and ${pluginsToActivate[id as String].prodVersion}. Not starting up."
+                    logger.severe(msg)
+                    return null
                 } else {
                     //Not checking again!
                 }
@@ -488,23 +589,22 @@ public class LibrariesFactory extends Initializable {
         return pluginsToActivate;
     }
 
-//    /**
-//     * Get a list of all available plugins in their most recent version...
-//     * @return
-//     */
-//    public List<PluginInfo> getAvailablePluginVersion() {
-//        List<PluginInfo> mostCurrentPlugins = [];
-//        PluginInfoMap availablePlugins = loadMapOfAvailablePluginsForInstance();
-//        availablePlugins.each {
-//            String pluginID, Map<String, PluginInfo> versions ->
-//                if (versions.keySet().contains(PLUGIN_VERSION_CURRENT))
-//                    mostCurrentPlugins << versions[PLUGIN_VERSION_CURRENT];
-//                else
-//                    mostCurrentPlugins << versions[versions.keySet().last()]
-//        }
-//
-//        return mostCurrentPlugins;
-//    }
+    /**
+     * Returns true, if there are any duplicate tool directories in the provided list of plugins
+     * @param plugins
+     * @return
+     */
+    static boolean checkOnToolDirDuplicates(List<PluginInfo> plugins) {
+        Collection<String> original = plugins.collect { it.toolsDirectories.keySet() }.flatten() as Collection<String>  // Put all elements into one list
+        def normalized = original.unique(false)  // Normalize the list, so that duplicates are removed.
+        boolean result = normalized.size() != original.size() // Test, if the size changed. If so, original contained duplicates.
+
+        // For verbose output
+
+        logger.sometimes((["", "Found tool folders:"] + (plugins.collect { it.toolsDirectories.collect { String k, File v -> k.padRight(30) + " : " + v } }.flatten().sort() as List<String>)).join("\n\t"));
+
+        return result
+    }
 
     public static boolean addFile(File f) throws IOException {
         return addURL(f.toURI().toURL());
@@ -532,7 +632,7 @@ public class LibrariesFactory extends Initializable {
 
     public static LibrariesFactory getInstance() {
         if (librariesFactory == null) {
-            logger.postAlwaysInfo("The libraries factory for plugin management was not initialized! Creating a new, empty object.")
+            logger.postSometimesInfo("The libraries factory for plugin management was not initialized! Creating a new, empty object.")
             librariesFactory = new LibrariesFactory();
         }
 
@@ -546,6 +646,7 @@ public class LibrariesFactory extends Initializable {
         // TODO Cover with a unit or integration test (if not already done...)
         List<String> errors = [];
         //All is right? Let's go
+        Map<String, String> loadedPluginsPrintout = [:]
         pluginInfo.parallelStream().each { PluginInfo pi ->
             if (!pi.directory) {
                 synchronized (errors) {
@@ -554,22 +655,29 @@ public class LibrariesFactory extends Initializable {
                 return;
             }
 
-            File jarFile = pi.directory.listFiles().find { File f -> f.name.endsWith(".jar") };
-            if (jarFile && !addFile(jarFile)) {
-                synchronized (errors) {
-                    errors << "Ignored ${pi.fullID}, Jar file was not available.".toString();
+            File jarFile
+            if (pi instanceof JarFulPluginInfo) {
+                jarFile = pi.directory.listFiles().find { File f -> f.name.endsWith(".jar") };
+                if (jarFile && !addFile(jarFile)) {
+                    synchronized (errors) {
+                        errors << "Ignored ${pi.fullID}, Jar file was not available.".toString();
+                    }
+                    return;
                 }
-                return;
+            } else if (pi instanceof NativePluginInfo) {
+
             }
 
-            def loadInfo = "The plugin ${pi.getName()} [ Version: ${pi.getProdVersion()} ] was loaded."
-            logger.postAlwaysInfo(loadInfo)
             synchronized (loadedLibrariesInfo) {
+                String stringLeft = "Loaded plugin ${pi.getName()}:${pi.getProdVersion()}".toString()
+                String stringRight = "(${pi.getDirectory()})".toString()
+                loadedPluginsPrintout[stringLeft] = stringRight
                 loadedPlugins << pi;
-                loadedLibrariesInfo << loadInfo.toString()
+                loadedLibrariesInfo << "${stringLeft} from (${stringRight})".toString()
                 loadedJarsByPlugin[pi] = jarFile;
             }
         }
+        logger.always("\n" + ConfigurationFactory.convertMapToFormattedTable(loadedPluginsPrintout, 0, " ", { String v -> v }).join("\n"))
 
         if (errors) {
             logger.severe("Some plugins were not loaded:\n\t" + errors.join("\n\t"));
@@ -581,16 +689,14 @@ public class LibrariesFactory extends Initializable {
      * Perform checks, if all API versions match the current runtime setup.
      * Includes Groovy, Java and Roddy.
      */
-    public static boolean performAPIChecks(List<PluginInfo> pluginInfo) {
+    public static boolean performAPIChecks(List<PluginInfo> pluginInfos) {
         List<PluginInfo> incompatiblePlugins = []
-        for (pi in pluginInfo) {
-            if (!(RuntimeTools.groovyRuntimeVersion == pi.getGroovyVersion() &&
-                    RuntimeTools.javaRuntimeVersion == pi.getJdkVersion() &&
-                    RuntimeTools.roddyRuntimeVersion == pi.getRoddyAPIVersion()))
-                incompatiblePlugins << pi;
+        for (pi in pluginInfos) {
+            if (!pi.isCompatibleToRuntimeSystem())
+                incompatiblePlugins << pi
         }
         if (incompatiblePlugins) {
-            logger.severe("Could not load plugins, runtime API versions mismatch! (Current Groovy: ${RuntimeTools.groovyRuntimeVersion}, JDK ${RuntimeTools.javaRuntimeVersion}, Roddy ${RuntimeTools.getRoddyRuntimeVersion()})\n"
+            logger.severe("Could not load plugins, runtime API versions mismatch! (JDK ${RuntimeTools.javaRuntimeVersion}, Roddy ${RuntimeTools.getRoddyRuntimeVersion()})\n"
                     + incompatiblePlugins.collect { PluginInfo pi -> pi.fullID }.join("\n\t")
             )
         }
@@ -599,20 +705,6 @@ public class LibrariesFactory extends Initializable {
 
     public List<String> getLoadedLibrariesInfoList() {
         return loadedLibrariesInfo;
-    }
-
-    public Class tryLoadClass(String className) throws ClassNotFoundException {
-        try {
-            return loadClass(className);
-
-        } catch (any) {
-            logger.severe("Could not load class className");
-            return null;
-        }
-    }
-
-    public Class loadClass(String className) throws ClassNotFoundException {
-        return getGroovyClassLoader().loadClass(className);
     }
 
     public static boolean isVersionStringValid(String s) {

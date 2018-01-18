@@ -17,13 +17,13 @@ import static de.dkfz.roddy.plugins.LibrariesFactory.*
 public class BuildInfoFileHelper {
     private static LoggerWrapper logger = LoggerWrapper.getLogger(LibrariesFactory.class.getSimpleName());
 
-    public static final String DEFAULT_GROOVY_VERSION = "2.3" // Groovy was 2.3.x for a long time.
     public static final String DEFAULT_JDK_VERSION = "1.8" // For backward compatibility, the api versions are set for older plugins
     public static final String DEFAULT_RODDY_VERSION = "2.2"
 
     private Map<String, List<String>> entries = [:];
     private final String pluginName
-    private final String pluginVersion;
+    private final String pluginVersion
+    private final boolean hasBuildInfoEntries
 
     public static String[] validEntries = [
             LibrariesFactory.BUILDINFO_RUNTIME_APIVERSION, // Full reference, otherwise Groovy makes a String out of the entry and does not take the constants content
@@ -53,13 +53,21 @@ public class BuildInfoFileHelper {
             }
         }
 
+        hasBuildInfoEntries = true
+
         if (invalid)
-            logger.postAlwaysInfo("There are invalid entries in file buildinfo.txt for plugin ${pluginName}:\n  " + invalid.join("\n "));
+            logger.postAlwaysInfo("There are invalid entries in file buildinfo.txt for plugin ${pluginName}:${pluginVersion}:\n  " + invalid.join("\n "));
     }
 
     /** This constructor is the "real" constructor **/
     BuildInfoFileHelper(String pluginName, String pluginVersion, File buildinfoFile) {
         this(pluginName, pluginVersion, buildinfoFile.readLines())
+    }
+
+    BuildInfoFileHelper(String pluginname, String pluginVersion) {
+        this.pluginName = pluginname
+        this.pluginVersion = pluginVersion
+        hasBuildInfoEntries = false
     }
 
     Map<String, List<String>> getEntries() {
@@ -109,23 +117,18 @@ public class BuildInfoFileHelper {
 
     boolean checkMatchingAPIVersions(PluginInfo pluginInfo) {
         return pluginInfo.getJdkVersion() == getJDKVersion() &&
-                pluginInfo.getGroovyVersion() == getGroovyVersion() &&
-                pluginInfo.getRoddyAPIVersion() == getRoddyAPIVersion();
+                pluginInfo.getRoddyAPIVersion() == getRoddyAPIVersion()
     }
 
-    public String getJDKVersion() {
-        return entries.get(BUILDINFO_RUNTIME_JDKVERSION, [DEFAULT_JDK_VERSION])[0].split(StringConstants.SPLIT_STOP)[0..1].join(".");
+    String getJDKVersion() {
+        return entries.get(BUILDINFO_RUNTIME_JDKVERSION, [DEFAULT_JDK_VERSION])[0].split(StringConstants.SPLIT_STOP)[0..1].join(".")
     }
 
-    public String getGroovyVersion() {
-        return entries.get(BUILDINFO_RUNTIME_GROOVYVERSION, [DEFAULT_GROOVY_VERSION])[0].split(StringConstants.SPLIT_STOP)[0..1].join(".");
+    String getRoddyAPIVersion() {
+        return entries.get(BUILDINFO_RUNTIME_APIVERSION, [DEFAULT_RODDY_VERSION])[0].split(StringConstants.SPLIT_STOP)[0..1].join(".")
     }
 
-    public String getRoddyAPIVersion() {
-        return entries.get(BUILDINFO_RUNTIME_APIVERSION, [DEFAULT_RODDY_VERSION])[0].split(StringConstants.SPLIT_STOP)[0..1].join(".");
-    }
-
-    public boolean isBetaPlugin() {
+    boolean isBetaPlugin() {
         return entries.get(BUILDINFO_STATUS_BETA, ["false"])[0].toBoolean()
     }
 }

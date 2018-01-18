@@ -6,11 +6,11 @@
 
 package de.dkfz.roddy.knowledge.files;
 
+import de.dkfz.roddy.config.ConfigurationError;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.DataSet;
 import de.dkfz.roddy.core.Project;
-import de.dkfz.roddy.execution.jobs.JobResult;
-import examples.Exec;
+import de.dkfz.roddy.execution.jobs.BEJobResult;
 
 import java.io.Serializable;
 
@@ -20,13 +20,14 @@ import java.io.Serializable;
  */
 public abstract class FileObject implements Serializable {
     private transient ExecutionContext executionContext;
-    private JobResult creatingJobsResult;
+    private BEJobResult creatingJobsResult;
 
     public FileObject(ExecutionContext executionContext) {
+        // Note: ExecutionContext can be null!
         this.executionContext = executionContext;
     }
 
-    public abstract void runDefaultOperations();
+    public abstract void runDefaultOperations() throws ConfigurationError;
 
     public DataSet getPid() {
         // TODO Deprecated. Remove if not needed in any workflow! Possibly move to plugin.
@@ -41,11 +42,11 @@ public abstract class FileObject implements Serializable {
         return executionContext.getProject();
     }
 
-    public JobResult getCreatingJobsResult() {
+    public BEJobResult getCreatingJobsResult() {
         return creatingJobsResult;
     }
 
-    public void setCreatingJobsResult(JobResult jr) {
+    public void setCreatingJobsResult(BEJobResult jr) {
         this.creatingJobsResult = jr;
     }
 

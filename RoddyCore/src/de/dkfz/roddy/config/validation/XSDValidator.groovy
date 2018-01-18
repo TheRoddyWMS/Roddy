@@ -10,16 +10,14 @@ import com.stackoverflow.questions.xmlvalidation.ResourceResolver
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants;
 import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationFactory;
-import de.dkfz.roddy.config.InformationalConfigurationContent;
+import de.dkfz.roddy.config.loader.ConfigurationFactory;
+import de.dkfz.roddy.config.PreloadedConfiguration
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import org.xml.sax.ErrorHandler
 
 import javax.xml.XMLConstants
 import javax.xml.transform.stream.StreamSource
-import javax.xml.validation.SchemaFactory;
-import java.io.File
-import java.util.logging.Logger;
+import javax.xml.validation.SchemaFactory
 
 /**
  * Created by michael on 30.04.15.
@@ -29,17 +27,17 @@ public class XSDValidator {
 
     private static List<File> alreadyChecked = [];
 
-    public static boolean validateTree(InformationalConfigurationContent icc) {
+    public static boolean validateTree(PreloadedConfiguration icc) {
         boolean validated = validate(icc);
 
         String imports = icc.imports     //Get the imports of the topmost parent config
-        for(InformationalConfigurationContent iccP = icc; iccP; iccP = iccP.getParent()) {
+        for(PreloadedConfiguration iccP = icc; iccP; iccP = iccP.getParent()) {
             imports = iccP.imports;
         }
 
         if(imports) {
             for (it in imports.split(StringConstants.SPLIT_COMMA)) {
-                InformationalConfigurationContent iccSub = ConfigurationFactory.getInstance().getAllAvailableConfigurations()[it]
+                PreloadedConfiguration iccSub = ConfigurationFactory.getInstance().getAllAvailableConfigurations()[it]
                 if(iccSub)
                     validated &= validate(iccSub);
                 else
@@ -49,7 +47,7 @@ public class XSDValidator {
         return validated;
     }
 
-    public static boolean validate(InformationalConfigurationContent icc) {
+    public static boolean validate(PreloadedConfiguration icc) {
         if(alreadyChecked.contains(icc.file))
             return true;
         logger.postSometimesInfo("Will validate configuration ${icc.id}.")
@@ -72,7 +70,7 @@ public class XSDValidator {
         def list = factory.newSchema(  new StreamSource(new StringReader(xsdString))  )
                 .newValidator().with { validator ->
             List exceptions = []
-            Closure<Void> handler = { exception -> exceptions << exception }
+            Closure<Void> handler = { newException -> exceptions << newException }
             errorHandler = [warning: handler, fatalError: handler, error: handler] as ErrorHandler
             validate(new StreamSource(new StringReader(xmlString)))
             exceptions

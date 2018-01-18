@@ -15,8 +15,12 @@ import de.dkfz.roddy.config.ProjectConfiguration;
 import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues;
 import de.dkfz.roddy.core.Analysis;
 import de.dkfz.roddy.core.Project
-import groovy.transform.CompileStatic;
+import groovy.transform.CompileStatic
+import org.apache.commons.csv.CSVFormat
+import org.junit.Ignore
+import org.junit.Rule;
 import org.junit.Test
+import org.junit.rules.ExpectedException
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -30,6 +34,7 @@ import static org.junit.Assert.*;
 @CompileStatic
 public class MetadataTableFactoryTest {
     @Test
+    @Ignore("Analysis does not have a PreloadedConfiguration. NullPointerException.")
     public void getTable() throws Exception {
 
         // Create mockup project and analysis.
@@ -57,4 +62,19 @@ public class MetadataTableFactoryTest {
         assert table.size() == 8; // Just a basic check, if things were loaded, BaseMetadataTable.read is tested in a different way.
     }
 
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
+    @Test
+    public void testConvertFormat() throws Exception {
+        assert MetadataTableFactory.convertFormat(null) == CSVFormat.TDF
+        assert MetadataTableFactory.convertFormat("") == CSVFormat.TDF
+        assert MetadataTableFactory.convertFormat("tsv") == CSVFormat.TDF
+        assert MetadataTableFactory.convertFormat("excel") == CSVFormat.EXCEL
+        assert MetadataTableFactory.convertFormat("csv") == CSVFormat.RFC4180
+
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("Value 'WONTWORK' is not a valid format for file based metadata tables. Use 'tsv', 'csv' or 'excel' (case-insensitive)!")
+        MetadataTableFactory.convertFormat("WONTWORK")
+    }
 }

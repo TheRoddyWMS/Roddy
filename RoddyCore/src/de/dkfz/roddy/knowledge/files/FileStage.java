@@ -11,6 +11,7 @@ import java.util.List;
 
 /**
 */
+@Deprecated
 public class FileStage {
 
     private static final List<FileStage> listOfAvailableFileStages = new LinkedList<>();

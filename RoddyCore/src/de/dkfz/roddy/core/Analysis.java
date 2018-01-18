@@ -6,12 +6,16 @@
 
 package de.dkfz.roddy.core;
 
+import de.dkfz.roddy.BEException;
+import de.dkfz.roddy.Constants;
+import de.dkfz.roddy.execution.jobs.Job;
+import de.dkfz.roddy.execution.jobs.JobState;
 import de.dkfz.roddy.AvailableFeatureToggles;
 import de.dkfz.roddy.Roddy;
+import de.dkfz.roddy.client.RoddyStartupOptions;
+import de.dkfz.roddy.config.loader.ConfigurationLoadError;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
-import de.dkfz.roddy.execution.jobs.*;
-import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.config.*;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -108,7 +112,11 @@ public class Analysis {
         }
     }
 
-
+    /**
+     * The object should actually move to context itself. However, currently, this would break a lot.
+     * Mark it as Deprecated for now.
+     */
+    @Deprecated
     private ContextConfiguration _contextConfiguration = null;
 
     public Configuration getConfiguration() {
@@ -131,6 +139,7 @@ public class Analysis {
     public File getInputBaseDirectory() {
         if (inputBaseDirectory == null)
             inputBaseDirectory = getRuntimeService().getInputFolderForAnalysis(this);
+        assert (inputBaseDirectory != null);
         return inputBaseDirectory;
     }
 
@@ -140,7 +149,9 @@ public class Analysis {
      * @return
      */
     public File getOutputBaseDirectory() {
-        return getRuntimeService().getOutputFolderForAnalysis(this);
+        File outputBaseDirectory = getRuntimeService().getOutputFolderForAnalysis(this);
+        assert (outputBaseDirectory != null);
+        return outputBaseDirectory;
     }
 
     /**
@@ -170,6 +181,10 @@ public class Analysis {
         return rs;
     }
 
+    public List<ExecutionContext> run(List<String> pidFilters, ExecutionContextLevel level) {
+        return run(pidFilters, level, false);
+    }
+
     /**
      * Executes this analysis for the specified list of identifiers.
      * An identifier can contain wildcards. The Apache WildCardFileFilter is used for wildcard resolution.
@@ -178,7 +193,7 @@ public class Analysis {
      * @param level      The level for the context execution
      * @return
      */
-    public List<ExecutionContext> run(List<String> pidFilters, ExecutionContextLevel level) {
+    public List<ExecutionContext> run(List<String> pidFilters, ExecutionContextLevel level, boolean preventLoggingOnQueryStatus) {
         List<DataSet> selectedDatasets = getRuntimeService().loadDatasetsWithFilter(this, pidFilters);
         List<ExecutionContext> runs = new LinkedList<>();
 
@@ -189,7 +204,7 @@ public class Analysis {
 
             ExecutionContext ec = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, level, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null, creationCheckPoint);
 
-            executeRun(ec);
+            executeRun(ec, preventLoggingOnQueryStatus);
             runs.add(ec);
         }
         return runs;
@@ -220,10 +235,8 @@ public class Analysis {
 
     private boolean checkJobStartability(DataSet ds) {
         String datasetID = ds.getId();
-        boolean running = checkStatusForDataset(ds);
-
-        if (running && Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning)) {
-            logger.postAlwaysInfo("The pid " + datasetID + " is still running and will be skipped for the process.");
+        if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning) && checkStatusForDataset(ds)) {
+            logger.postAlwaysInfo("The " + Constants.PID + " " + datasetID + " is still running and will be skipped for the process.");
             return false;
         }
         return true;
@@ -321,11 +334,14 @@ public class Analysis {
         Thread t = new Thread(() -> {
             executeRun(ec);
         });
-        t.setName(String.format("Deferred execution context execution for pid %s", ec.getDataSet().getId()));
+        t.setName(String.format("Deferred execution context execution for " + Constants.PID + " %s", ec.getDataSet().getId()));
         t.start();
     }
 
-    /*
+    protected void executeRun(ExecutionContext context) {
+        executeRun(context, false);
+    }
+
     /**
      * Executes the context object.
      * If the contexts level is QUERY_STATUS:
@@ -336,39 +352,72 @@ public class Analysis {
      * Check the file validity after execution.<br />
      * Also there are no files written for this level.
      *
-     *
      * @param context
      */
-    protected void executeRun(ExecutionContext context) {
-        logger.postSometimesInfo("" + context.getExecutionContextLevel());
+    protected void executeRun(ExecutionContext context, boolean preventLoggingOnQueryStatus) {
+        logger.rare("" + context.getExecutionContextLevel());
         boolean isExecutable;
         String datasetID = context.getDataSet().getId();
         Exception eCopy = null;
         try {
-            isExecutable = ExecutionService.getInstance().checkContextPermissions(context) && context.checkExecutability();
+            boolean contextRightsSettings = ExecutionService.getInstance().checkAccessRightsSettings(context);
+            boolean contextPermissions = ExecutionService.getInstance().checkContextDirectoriesAndFiles(context);
+            boolean contextExecutability = context.checkExecutability();
+            boolean configurationValidity = Roddy.isStrictModeEnabled() && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors) ? !getConfiguration().hasErrors() : true;
+            isExecutable = contextRightsSettings && contextPermissions && contextExecutability && configurationValidity;
+            boolean successfullyExecuted = false;
+
             if (!isExecutable) {
-                logger.postAlwaysInfo("The workflow does not seem to be executable for dataset " + datasetID);
+                StringBuilder message = new StringBuilder("The workflow does not seem to be executable for dataset " + datasetID);
+                if (!contextRightsSettings) message.append("\n\tContext access rights settings could not be validated.");
+                if (!contextPermissions) message.append("\n\tContext permissions could not be validated.");
+                if (!contextExecutability) message.append("\n\tContext and workflow is not considered executable.");
+                if (!configurationValidity) message.append("\n\tContext configuration has errors.");
+                logger.severe(message.toString());
             } else {
                 try {
                     ExecutionService.getInstance().writeFilesForExecution(context);
-                    context.execute();
+                    boolean execute = true;
+                    if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) { // Only do these checks, if we are not in query mode!
+                        List<String> invalidPreparedFiles = ExecutionService.getInstance().checkForInaccessiblePreparedFiles(context);
+                        boolean copiedAnalysisToolsAreExecutable = ExecutionService.getInstance().checkCopiedAnalysisTools(context);
+                        boolean ignoreFileChecks = Roddy.isOptionSet(RoddyStartupOptions.disablestrictfilechecks);
+                        execute &= ignoreFileChecks || (invalidPreparedFiles.size() == 0 && copiedAnalysisToolsAreExecutable);
+                        if (!execute) {
+                            StringBuilder message = new StringBuilder("There were errors after preparing the workflow run for dataset " + datasetID);
+                            if (invalidPreparedFiles.size() > 0)
+                                message.append("\n\tSome files could not be written. Workflow will not execute.\n\t"
+                                    + RoddyIOHelperMethods.joinArray(invalidPreparedFiles.toArray(), "\t\n"));
+                            if (!copiedAnalysisToolsAreExecutable)
+                                message.append("\n\tSome declared tools are not executable. Workflow will not execute.");
+                            if (ignoreFileChecks) {
+                                message.append("\n  The errors were ignored because disablestrictfilechecks is set.");
+                            }
+                            logger.severe(message.toString());
+                        }
+                    }
+
+                    // Finally, if execution is allowed, run it and start the submitted jobs (if hold jobs is enabled)
+                    if (execute) {
+                        successfullyExecuted = context.execute();
+                        if (successfullyExecuted)
+                            finallyStartJobsOfContext(context);
+                    }
+                } catch (Exception ex) {
+                    // (Maybe) abort jobs in strict mode
+                    logger.warning(ex.getMessage());
+                    successfullyExecuted = false;
+                    throw ex;
                 } finally {
+
                     if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) { //Clean up
                         //Query file validity of all files
                         FileSystemAccessProvider.getInstance().validateAllFilesInContext(context);
                     } else {
+                        if (!successfullyExecuted)
+                            maybeAbortStartedJobsOfContext(context);
 
-                        //First, check if there were any executed jobs. If not, we can safely delete the the context directory.
-                        if (context.getStartedJobs().size() == 0) {
-                            logger.postAlwaysInfo("There were no started jobs, the execution directory will be removed.");
-                            if (context.getExecutionDirectory().getName().contains(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX))
-                                FileSystemAccessProvider.getInstance().removeDirectory(context.getExecutionDirectory());
-                            else {
-                                throw new RuntimeException("A wrong path would be deleted: " + context.getExecutionDirectory().getAbsolutePath());
-                            }
-                        } else {
-                            ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context);
-                        }
+                        cleanUpAndFinishWorkflowRun(context);
                     }
                 }
             }
@@ -378,27 +427,42 @@ public class Analysis {
 
         } finally {
             if (eCopy != null) {
-                logger.postAlwaysInfo("An exception occurred: '" + eCopy.getLocalizedMessage() + "'");
-                if (logger.isVerbosityMedium()) {
-                    logger.log(Level.SEVERE, eCopy.toString());
-                    logger.postAlwaysInfo(RoddyIOHelperMethods.getStackTraceAsString(eCopy));
-                } else {
-                    logger.postAlwaysInfo("Set --verbositylevel >=" + LoggerWrapper.VERBOSITY_WARNING + " or higher to see stack trace.");
-                }
+                logger.always("An unknown / unhandled exception occurred: '" + eCopy.getLocalizedMessage() + "'");
+                // This error should always be visible fully. We have a lot of known errors, which are properly catched. So unknown things should be visible.
+                logger.always(RoddyIOHelperMethods.getStackTraceAsString(eCopy));
             }
 
             // Look up errors when jobs are executed directly and when there were any started jobs.
             if (context.getStartedJobs().size() > 0) {
+                String failedJobs = "";
                 for (Job job : context.getExecutedJobs()) {
                     if (job.getJobState() == JobState.FAILED)
-                        context.addErrorEntry(ExecutionContextError.EXECUTION_JOBFAILED.expand("A job execution failed "));
+                        failedJobs += "\n\t" + job.getJobID() + ",\t" + job.getJobName();
                 }
+                if (failedJobs.length() > 0)
+                    context.addErrorEntry(ExecutionContextError.EXECUTION_JOBFAILED.expand("One or more jobs failed to execute:" + failedJobs + "\n\tPlease check extended logs in ~/.roddy/logs to see more details."));
+            }
+
+            // It is very nice now, that a lot of error messages will be printed. But how about colours?
+            // Normally the CLI client takes care of it.
+
+            // Print out configuration errors (for context configuration! Not only for analysis)
+            // Don't know, if this is the right place.
+            if (context.getConfiguration().hasErrors()) {
+                StringBuilder messages = new StringBuilder();
+                messages.append("There were configuration errors for dataset " + datasetID);
+                for (ConfigurationLoadError configurationLoadError : context.getConfiguration().getListOfLoadErrors()) {
+                    messages.append(configurationLoadError.toString());
+                }
+                logger.always(messages.toString());
             }
 
             // Print out context errors.
-            if (context.getErrors().size() > 0) {
+            // Only print them out if !QUERY_STATUS and the runmode is testrun or testrerun.
+            if (context.getErrors().size() > 0 && (!preventLoggingOnQueryStatus || (context.getExecutionContextLevel() != ExecutionContextLevel.QUERY_STATUS))) {
                 StringBuilder messages = new StringBuilder();
                 boolean warningsOnly = true;
+
                 for (ExecutionContextError executionContextError : context.getErrors()) {
                     if (executionContextError.getErrorLevel().intValue() > Level.WARNING.intValue())
                         warningsOnly = false;
@@ -417,6 +481,60 @@ public class Analysis {
     }
 
     /**
+     * Will start all the jobs in the context.
+     *
+     * @param context
+     */
+    private void finallyStartJobsOfContext(ExecutionContext context) throws BEException {
+        Roddy.getJobManager().startHeldJobs(context.getExecutedJobs());
+    }
+
+    /**
+     * Finally write last logfiles or remove (or keep) the execution directory.
+     *
+     * @param context
+     */
+    private void cleanUpAndFinishWorkflowRun(ExecutionContext context) {
+        //First, check if there were any executed jobs. If not, we can safely delete the the context directory.
+        if (context.getStartedJobs().size() == 0) {
+            if (Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.forcekeepexecutiondirectory)) {
+                logger.always("There were no started jobs, but Roddy will keep the execution directory as forcekeepexecutiondirectory was set.");
+            } else {
+                logger.always("There were no started jobs, the execution directory will be removed.");
+                if (context.getExecutionDirectory().getName().contains(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX))
+                    FileSystemAccessProvider.getInstance().removeDirectory(context.getExecutionDirectory());
+                else {
+                    throw new RuntimeException("A wrong path would be deleted: " + context.getExecutionDirectory().getAbsolutePath());
+                }
+            }
+        } else {
+            ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context);
+        }
+    }
+
+    /**
+     * Checks, whether strict mode AND rollback toggles are enabled and
+     * try to abort jobs by calling the job manager.
+     * Occurring exceptions are catched so following code can be executed properly.
+     *
+     * @param context
+     */
+    private void maybeAbortStartedJobsOfContext(ExecutionContext context) {
+        if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.RollbackOnWorkflowError)) {
+            try {
+                logger.severe("A workflow error occurred, try to rollback / abort submitted jobs.");
+                Roddy.getJobManager().killJobs(context.jobsForProcess);
+            } catch (Exception ex) {
+                logger.severe("Could not successfully abort jobs.", ex);
+            }
+        } else {
+            logger.severe("A workflow error occurred. However, strict mode is disabled and/or RollbackOnWorkflowError is disabled and therefore all submitted jobs will be left running." +
+                    "\n\tYou might consider to enable Roddy strict mode by setting the feature toggles 'StrictMode' and 'RollbackOnWorkflowError'.");
+        }
+    }
+
+
+    /**
      * Calls a cleanup script and / or a workflows cleanup method to cleanup the directories of a workflow.
      * If you call the cleanup script, a new execution context log directory will be created for this purpose. This directory will not be created if
      * the workflows cleanup method is called!.
@@ -433,7 +551,7 @@ public class Analysis {
                 //TODO Think hard if this could be generified and simplified! This is also used in other places in a similar way right?
                 ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, ExecutionContextLevel.CLEANUP, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null);
                 Job cleanupJob = new Job(context, "cleanup", ((AnalysisConfiguration) getConfiguration()).getCleanupScript(), null);
-//                Command cleanupCmd = JobManager.getInstance().createCommand(cleanupJob, cleanupJob.getToolPath(), new LinkedList<>());
+//                Command cleanupCmd = Roddy.getJobManager().createCommand(cleanupJob, cleanupJob.getToolPath(), new LinkedList<>());
                 try {
                     ExecutionService.getInstance().writeFilesForExecution(context);
                     cleanupJob.run();
@@ -451,6 +569,6 @@ public class Analysis {
     }
 
     public File getReadmeFile() {
-        return getConfiguration().getInformationalConfigurationContent().getReadmeFile();
+        return getConfiguration().getPreloadedConfiguration().getReadmeFile();
     }
 }

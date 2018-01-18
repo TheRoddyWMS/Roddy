@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # This script wraps in a complete native workflow script and executes it.
-source ${CONFIG_FILE}
 
 [[ ${debugWrapInScript-false} == true ]]  && set -xv
 [[ ${debugWrapInScript-false} == false ]] && set +xv

@@ -6,15 +6,16 @@
 
 package de.dkfz.roddy.config
 
-import de.dkfz.roddy.core.ProjectFactory
+import groovy.transform.CompileStatic
 
 /**
  * Created by heinold on 22.07.16.
  */
+@CompileStatic
 class ConfigurationTest extends GroovyTestCase {
 
-    public InformationalConfigurationContent mockContent(String name, InformationalConfigurationContent parent) {
-        return new InformationalConfigurationContent(parent, Configuration.ConfigurationType.OTHER, name, "", "", null, "", ResourceSetSize.s, [], [], null, "");
+    public PreloadedConfiguration mockContent(String name, PreloadedConfiguration parent) {
+        return new PreloadedConfiguration(parent, Configuration.ConfigurationType.OTHER, name, "", "", null, "", ResourceSetSize.s, [], [], null, "");
     }
 
     void testGetResourcesSize() {

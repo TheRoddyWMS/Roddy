@@ -4,12 +4,14 @@ set -e
 increasebuildonly=${increasebuildonly-false}
 
 # Check for configured plugin directories. Set empty if no dirs are configured.
-pluginDirectories=`grep pluginDirectories ${customconfigfile}`
-[[ -z "$pluginDirectories" ]] && pluginDirectories="pluginDirectories="
+pluginDirectories=`grepFromConfigFile pluginDirectories $customconfigfile`
+pluginDirectories="pluginDirectories=$pluginDirectories"
 
 #TODO Find other plugin directories as well
 pluginID=$2
 srcDirectory=`groovy ${SCRIPTS_DIR}/findPluginFolders.groovy ${pluginDirectories} ${RODDY_DIRECTORY} ${pluginID}`
+[[ "$srcDirectory" == null ]] && echo "Compilation aborted: source directory for plugin not found. Is your app ini correct? pluginDirectories=$pluginDirectories" && exit 1
+echo $srcDirectory
 cd $srcDirectory
 requestedAPIVersion=`grep RoddyAPIVersion buildinfo.txt | cut -d "=" -f 2`
 [[ ! $RODDY_API == $requestedAPIVersion ]] && echo "Mismatch between used Roddy version ${RODDY_API} and requested version ${requestedAPIVersion}. Will not compile plugin." && exit 1
@@ -38,19 +40,26 @@ then
     roddyLibrary=${RODDY_BINARY}
     jfxLibrary=`find $JDK_HOME/ -name "jfxrt.jar"`
     libraries=`ls -d1 ${RODDY_BINARY_DIR}/lib/** | tr "\\n" ":"`; libraries=${libraries:0:`expr ${#libraries} - 1`}
-    libraries=$roddyLibrary:$pluginbaseLib:$libraries:$jfxLibrary
+    libraries=$roddyLibrary:$libraries:$jfxLibrary
 
     # Check if there is a buildinfo.txt and resolve additional library dependencies.
     if [[ -f buildinfo.txt ]]
     then
         [[ $? == 0 ]] && pluginLibs=`groovy ${SCRIPTS_DIR}/findPluginLibraries.groovy ${pluginDirectories} ${RODDY_DIRECTORY} ${PWD}`
         [[ $? == 0 && $pluginLibs != "null" ]] && libraries=$libraries:$pluginLibs
+        echo "Used libraries: "
+        ofs=$IFS
+        IFS=":"
+        for lib in $pluginLibs; do
+          echo "  ${lib}"
+        done
+        IFS=$ofs
     fi
 
     echo "Working in:" $PWD
     echo "Using jfx lib:" $jfxLibrary
     librariesForManifest=`ls -d1 ${RODDY_BINARY_DIR}/lib/*groo*`
-    librariesForManifest="$librariesForManifest $pluginbaseLib $jfxLibrary ${RODDY_BINARY}"
+    librariesForManifest="$librariesForManifest $jfxLibrary ${RODDY_BINARY}"
 
     echo "Compiling library / plugin in $1"
     javac -version

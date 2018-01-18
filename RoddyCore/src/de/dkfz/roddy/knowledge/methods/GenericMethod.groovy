@@ -1,25 +1,19 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.knowledge.methods
 
-import de.dkfz.roddy.execution.jobs.JobManager
-import de.dkfz.roddy.tools.*
-import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationConstants
-import de.dkfz.roddy.config.ToolEntry
+import de.dkfz.roddy.config.*
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
+import de.dkfz.roddy.execution.jobs.BEJobResult
 import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.JobResult
-import de.dkfz.roddy.knowledge.files.BaseFile
-import de.dkfz.roddy.knowledge.files.FileGroup
-import de.dkfz.roddy.knowledge.files.FileObject
-import de.dkfz.roddy.knowledge.files.IndexedFileObjects
-import de.dkfz.roddy.knowledge.files.FileObjectTupleFactory
+import de.dkfz.roddy.knowledge.files.*
+import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
@@ -49,9 +43,36 @@ class GenericMethod {
      * @param additionalInput Any additional input to the job. The input must fit the tool i/o specs in your xml file.
      * @return
      */
-    public static <F extends FileObject> F callGenericTool(String toolName, BaseFile input, Object... additionalInput) {
-        F result = callGenericToolOrToolArray(toolName, null, input, additionalInput);
+    static <F extends FileObject> F callGenericTool(String toolName, BaseFile input, Object... additionalInput) {
+        F result = new GenericMethod(toolName, null, input, null, additionalInput)._callGenericToolOrToolArray();
         return result;
+    }
+
+    /**
+     * If you need a file group output and the files in the group need an index, then this is the right method to call!
+     * @return
+     */
+    static <F extends FileGroup> F callGenericToolWithFileGroupOutput(String toolName, BaseFile input, List<String> indices, Object... additionalInput) {
+        F result = new GenericMethod(toolName, null, input, indices, additionalInput)._callGenericToolOrToolArray() as F
+        return result
+    }
+
+    /**
+     * If you need a file group output and the files in the group need an index, then this is the right method to call! This one works with number for the files from 0 .. n -1
+     * @return
+     */
+    static <F extends FileGroup> F callGenericToolWithFileGroupOutput(String toolName, BaseFile input, int numericCount, Object... additionalInput) {
+        F result = new GenericMethod(toolName, null, input, numericCount, additionalInput)._callGenericToolOrToolArray() as F
+        return result
+    }
+
+    /**
+     * If you need a file group output and the files are already set in the cfg, then this is the right method to call.
+     * @return
+     */
+    static <F extends FileGroup> F callGenericToolWithFileGroupOutput(String toolName, BaseFile input, Object... additionalInput) {
+        F result = new GenericMethod(toolName, null, input, null, additionalInput)._callGenericToolOrToolArray() as F
+        return result
     }
 
     /**
@@ -66,7 +87,7 @@ class GenericMethod {
      * @return
      */
     public static <F extends FileObject> F callGenericToolOrToolArray(String toolName, List<String> arrayIndices, BaseFile input, Object... additionalInput) {
-        new GenericMethod(toolName, arrayIndices, input, additionalInput)._callGenericToolOrToolArray();
+        new GenericMethod(toolName, arrayIndices, input, null, additionalInput)._callGenericToolOrToolArray();
     }
 
     /**
@@ -93,6 +114,11 @@ class GenericMethod {
      * If this is an array job, this variable contains the arrays indices
      */
     private final List<String> arrayIndices
+
+    /**
+     * This field is only set if you need index values for output file group objects (specifically said: String indices!)
+     */
+    private final List<String> outputFileGroupIndices
 
     /**
      * The primary input object. It must not be null! The context object is taken from this input object.
@@ -122,14 +148,39 @@ class GenericMethod {
     /**
      * The final map of parameters which will be passed to the job.
      */
-    private final Map<String, Object> parameters = [:]
+    private final LinkedHashMap<String, Object> parameters = [:]
 
     /**
      * A list of all created file objects, also the files from file groups.
      */
     private final List<FileObject> allCreatedObjects = [];
 
-    private GenericMethod(String toolName, List<String> arrayIndices, FileObject inputObject, Object... additionalInput) {
+    /**
+     *
+     */
+    private Configuration jobConfiguration
+
+    GenericMethod(String toolName, List<String> arrayIndices, FileObject inputObject, int numericCount, Object... additionalInput) {
+        this(toolName, arrayIndices, inputObject, (0..numericCount - 1) as List<String>, additionalInput)
+        if (numericCount <= 0)
+            throw new NegativeArraySizeException("It is not allowed to call GenericMethod with a negative count for a FileGroup output object.")
+    }
+
+    GenericMethod(String toolName, List<String> arrayIndices, FileObject inputObject, List<String> outputFileGroupIndices, Object... additionalInput) {
+        this.outputFileGroupIndices = outputFileGroupIndices
+        if (outputFileGroupIndices != null && outputFileGroupIndices.size() == 0)
+            throw new RuntimeException("It is not allowed to call GenericMethod with an empty non null list of file group indices.")
+
+        this.context = inputObject.getExecutionContext();
+        this.toolName = toolName
+        this.configuration = context.getConfiguration();
+        this.calledTool = configuration.getTools().getValue(toolName);
+        if(calledTool.usesAutoCheckpoint()) {
+            context.runtimeService.calculateAutoCheckpointFilename(calledTool, ([inputObject] as List<Object>) + additionalInput as List<Object>)
+
+            logger.info("Create an automatic checkpoint for tool ${toolName}")
+        }
+
         this.additionalInput = additionalInput
         this.inputObject = inputObject
         this.allInputValues << inputObject;
@@ -141,20 +192,40 @@ class GenericMethod {
             // This is not supported yet! Throw an exception.
             throw new RuntimeException("It is not allowed to use GenericMethod objects without input objects.")
         }
-        this.context = inputObject.getExecutionContext();
         this.arrayIndices = arrayIndices
-        this.toolName = toolName
-        this.configuration = context.getConfiguration();
-        this.calledTool = configuration.getTools().getValue(toolName);
     }
 
-    private <F extends FileObject> F _callGenericToolOrToolArray() {
+    private void createJobConfigurationFromParameterMap() {
+        jobConfiguration = context.createJobConfiguration()
+        RecursiveOverridableMapContainer configurationValues = jobConfiguration.configurationValues
+        configurationValues.putAll(parameters.findAll { k, v ->
+            // If FileObjects would go into ConfigurationValue (as String) they would no get their variables evaluated.
+            // Furthermore input files do not need dependency on job-specific parameters, because they were created by
+            // earlier jobs.
+            ! (v instanceof FileObject)
+        }.collectEntries { k, v ->
+                [(k), new ConfigurationValue(k, v as String)]
+        } as Map<String, ConfigurationValue>)
+    }
+
+    private updateParameters() {
+        parameters.putAll(parameters.findAll { k, v ->
+            // If FileObjects would go into ConfigurationValue (as String) they would not get their variables evaluated.
+            // Furthermore input files do not need dependency on job-specific parameters, because they were created by
+            // earlier jobs.
+            ! (v instanceof FileObject)
+        }.keySet().collectEntries { k ->
+            [k, jobConfiguration.configurationValues.getString(k)]
+        } as Map<String, String>)
+    }
+
+    public <F extends FileObject> F _callGenericToolOrToolArray() {
 
         context.setCurrentExecutedTool(calledTool);
 
         // Check if method may be executed
         if (!calledTool.isToolGeneric()) {
-            logger.severe("Tried to call a non generic tool via the generic call method");
+            logger.severe("Tried to call a non generic tool via the generic call method: " + toolName);
             throw new RuntimeException("Not able to context tool " + toolName);
         }
 
@@ -164,18 +235,15 @@ class GenericMethod {
 
         applyParameterConstraints()
 
-        F outputObject = createOutputObject();
+        createJobConfigurationFromParameterMap()
+
+        updateParameters()
+
+        F outputObject = createOutputObject()
 
         List<BaseFile> filesToVerify = fillListOfCreatedObjects(outputObject)
 
-        F result;
-
-        // Call the job as either an array or a single job.
-        if (arrayIndices != null) {
-            result = createAndRunArrayJob(filesToVerify) as F
-        } else {
-            result = createAndRunSingleJob(filesToVerify, outputObject) as F
-        }
+        F result = createAndRunJob(filesToVerify, outputObject) as F
 
         // Finally check the result and append an error to the context.
         if (result == null) {
@@ -189,20 +257,25 @@ class GenericMethod {
 
     private void assembleJobParameters() {
         // Assemble initial parameters
+        parameters[PRM_WORKFLOW_ID] = context.analysis.configuration.getName()
         if (toolName) {
-            parameters[PRM_TOOLS_DIR] = configuration.getProcessingToolPath(context, toolName).getParent();
             parameters[PRM_TOOL_ID] = toolName;
+            parameters[PRM_TOOLS_DIR] = configuration.getProcessingToolPath(context, toolName).getParent();
         }
 
         // Assemble additional parameters
         for (Object entry in additionalInput) {
             if (entry instanceof BaseFile)
+                // assert(((BaseFile) entry).isEvaluated)
                 allInputValues << (BaseFile) entry;
             else if (entry instanceof FileGroup) {
                 //Take a group and store all files in that group.
                 allInputValues << (FileGroup) entry;
-
-            } else {
+            } else if (entry instanceof Map<String, String>) {
+                (entry as Map<String, String>).forEach { String k, String v ->
+                    parameters[k] = v
+                }
+            } else {               // Catch-all, in case one still wants to use a string with '=' to define a parameter (deprecated).
                 String[] split = entry.toString().split("=");
                 if (split.length != 2)
                     throw new RuntimeException("Not able to convert entry ${entry.toString()} to parameter.")
@@ -221,11 +294,21 @@ class GenericMethod {
 
         for (int i = 0; i < calledTool.getInputParameters(context).size(); i++) {
             ToolEntry.ToolParameter toolParameter = calledTool.getInputParameters(context)[i];
-            if (toolParameter instanceof ToolEntry.ToolFileParameter) {
-                ToolEntry.ToolFileParameter _tp = (ToolEntry.ToolFileParameter) toolParameter;
+            if (toolParameter instanceof ToolFileParameter) {
+                ToolFileParameter _tp = (ToolFileParameter) toolParameter;
                 //TODO Check if input and output parameters match and also check for array indices and item count. Throw a proper error message.
-                if (!allInputValues[i].class == _tp.fileClass)
-                    logger.severe("Class mismatch for " + allInputValues[i] + " should be of class " + _tp.fileClass);
+                if(allInputValues.size() <= i ) {
+                    logger.severe("Not all input parameters were set for ${calledTool.id}. Expected ${calledTool.getInputParameters(context).size()}. Breaking loop and trying to go on.")
+                    continue
+                }
+                if(allInputValues[i] == null){
+                    logger.severe("There is an input mismatch for the tool ${calledTool.id}. Expected ${_tp.fileClass} but got null. Trying to go on.")
+                    continue
+                }
+                if (!allInputValues[i].class == _tp.fileClass){
+                    logger.severe("Class mismatch for " + allInputValues[i] + " should be of class " + _tp.fileClass + '. Trying to go on.');
+                    continue
+                }
                 if (_tp.scriptParameterName) {
                     parameters[_tp.scriptParameterName] = ((BaseFile) allInputValues[i]);
                 }
@@ -233,22 +316,21 @@ class GenericMethod {
                     ToolEntry.ToolConstraint constraint ->
                         constraint.apply(firstInputFile);
                 }
-            } else if (toolParameter instanceof ToolEntry.ToolTupleParameter) {
-                ToolEntry.ToolTupleParameter _tp = (ToolEntry.ToolTupleParameter) toolParameter;
-                logger.severe("Tuples must not be used as an input parameter for tool ${toolName}.l");
-            } else if (toolParameter instanceof ToolEntry.ToolFileGroupParameter) {
-                ToolEntry.ToolFileGroupParameter _tp = toolParameter as ToolEntry.ToolFileGroupParameter;
+            } else if (toolParameter instanceof ToolTupleParameter) {
+                ToolTupleParameter _tp = (ToolTupleParameter) toolParameter;
+                logger.severe("Tuples must not be used as an input parameter for tool ${toolName}.");
+            } else if (toolParameter instanceof ToolFileGroupParameter) {
+                ToolFileGroupParameter _tp = toolParameter as ToolFileGroupParameter;
                 if (!allInputValues[i].class == _tp.groupClass)
-                    logger.severe("Class mismatch for ${allInputValues[i]} should be of class ${_tp.groupClass}");
-                if (_tp.passOptions == ToolEntry.ToolFileGroupParameter.PassOptions.parameters) {
+                    logger.severe("Class mismatch for ${allInputValues[i]} should be of class ${_tp.groupClass}.");
+                if (_tp.passOptions == ToolFileGroupParameter.PassOptions.parameters) {
                     int cnt = 0;
                     for (BaseFile bf in (List<BaseFile>) ((FileGroup) allInputValues[i]).getFilesInGroup()) {
                         parameters[_tp.scriptParameterName + "_" + cnt] = bf;
                         cnt++;
                     }
                 } else { //Arrays
-                    int cnt = 0;
-                    parameters[_tp.scriptParameterName] = ((FileGroup) allInputValues[i]).getFilesInGroup();//paths;
+                    parameters[_tp.scriptParameterName] = (FileGroup) allInputValues[i]
                 }
             }
         }
@@ -257,8 +339,8 @@ class GenericMethod {
     private void applyParameterConstraints() {
         for (int i = 0; i < calledTool.getOutputParameters(context.getConfiguration()).size(); i++) {
             ToolEntry.ToolParameter toolParameter = calledTool.getOutputParameters(context.getConfiguration())[i];
-            if (toolParameter instanceof ToolEntry.ToolFileParameter) {
-                ToolEntry.ToolFileParameter _tp = (ToolEntry.ToolFileParameter) toolParameter;
+            if (toolParameter instanceof ToolFileParameter) {
+                ToolFileParameter _tp = (ToolFileParameter) toolParameter;
                 for (ToolEntry.ToolConstraint constraint in _tp.constraints) {
                     constraint.apply(firstInputFile);
                 }
@@ -271,14 +353,14 @@ class GenericMethod {
         def configuration = firstInputFile.getExecutionContext().getConfiguration()
         if (calledTool.getOutputParameters(configuration).size() == 1) {
             ToolEntry.ToolParameter tparm = calledTool.getOutputParameters(configuration)[0];
-            if (tparm instanceof ToolEntry.ToolFileParameter) {
-                outputObject = createOutputFile(tparm as ToolEntry.ToolFileParameter) as F
+            if (tparm instanceof ToolFileParameter) {
+                outputObject = createOutputFile(tparm as ToolFileParameter) as F
 
-            } else if (tparm instanceof ToolEntry.ToolTupleParameter) {
-                outputObject = createOutputTuple(tparm as ToolEntry.ToolTupleParameter) as F
+            } else if (tparm instanceof ToolTupleParameter) {
+                outputObject = createOutputTuple(tparm as ToolTupleParameter) as F
 
-            } else if (tparm instanceof ToolEntry.ToolFileGroupParameter) {
-                outputObject = createOutputFileGroup(tparm as ToolEntry.ToolFileGroupParameter) as F
+            } else if (tparm instanceof ToolFileGroupParameter) {
+                outputObject = createOutputFileGroup(tparm as ToolFileGroupParameter) as F
             }
         }
 
@@ -295,10 +377,10 @@ class GenericMethod {
         return outputObject;
     }
 
-    private FileObject createOutputFile(ToolEntry.ToolFileParameter tparm) {
-        ToolEntry.ToolFileParameter fileParameter = tparm;
+    private FileObject createOutputFile(ToolFileParameter tparm) {
+        ToolFileParameter fileParameter = tparm;
         BaseFile bf = convertToolFileParameterToBaseFile(fileParameter)
-        for (ToolEntry.ToolFileParameter childFileParameter in fileParameter.getChildFiles()) {
+        for (ToolFileParameter childFileParameter in fileParameter.getFiles()) {
             try {
                 if (childFileParameter.parentVariable == null) {
                     continue;
@@ -321,23 +403,23 @@ class GenericMethod {
                     }
                     continue;
                 }
-                BaseFile childFile = convertToolFileParameterToBaseFile(childFileParameter, bf, [bf]);
+                BaseFile childFile = convertToolFileParameterToBaseFile(childFileParameter, null, bf, [bf]);
                 allCreatedObjects << childFile;
                 if (_field)
                     _field.set(bf, childFile);
                 else
                     _method.invoke(bf, childFile);
             } catch (Exception ex) {
-                println ex;
+                logger.warning(ex as String)
             }
         }
         return fileParameter.fileClass.cast(bf) as FileObject;
     }
 
-    private FileObject createOutputTuple(ToolEntry.ToolTupleParameter tfg) {
+    FileObject createOutputTuple(ToolTupleParameter tfg) {
         //TODO Auto recognize tuples?
         List<FileObject> filesInTuple = [];
-        for (ToolEntry.ToolFileParameter fileParameter in tfg.files) {
+        for (ToolFileParameter fileParameter in tfg.files) {
             BaseFile bf = convertToolFileParameterToBaseFile(fileParameter);
             filesInTuple << bf;
             allCreatedObjects << bf;
@@ -345,13 +427,40 @@ class GenericMethod {
         return FileObjectTupleFactory.createTuple(filesInTuple);
     }
 
-    private FileObject createOutputFileGroup(ToolEntry.ToolFileGroupParameter tfg) {
+    FileObject createOutputFileGroup(ToolFileGroupParameter tfg) {
         List<BaseFile> filesInGroup = [];
+        if (tfg.files) {
+            // Actually this is more like a tuple.
+            /**
+             * This can only be the case if files is set. Otherwise we need a different way to identify files. E.g. based on index values... How do we set them?
+             */
+            for (ToolFileParameter fileParameter in tfg.files) {
+                BaseFile bf = convertToolFileParameterToBaseFile(fileParameter)
+                filesInGroup << bf;
+                allCreatedObjects << bf;
+            }
+        } else {
 
-        for (ToolEntry.ToolFileParameter fileParameter in tfg.files) {
-            BaseFile bf = convertToolFileParameterToBaseFile(fileParameter)
-            filesInGroup << bf;
-            allCreatedObjects << bf;
+            // Indices need to be set! Otherwise throw an Exception
+            if (!outputFileGroupIndices) {
+                throw new RuntimeException("A tool which outputs a filegroup with index values needs to be called properly! Pass index values in the call.")
+            }
+            ToolFileParameter autoToolFileParameter = new ToolFileParameter(tfg.genericFileClass, [], tfg.scriptParameterName, new ToolFileParameterCheckCondition(true))
+            for (Object index in outputFileGroupIndices) {
+                BaseFile bf = convertToolFileParameterToBaseFile(autoToolFileParameter, index.toString())
+                filesInGroup << bf
+                allCreatedObjects << bf
+            }
+            parameters.remove(tfg.scriptParameterName)
+        }
+        if (tfg.passOptions == ToolFileGroupParameter.PassOptions.parameters) {
+            int cnt = 0;
+            for (BaseFile bf in (List<BaseFile>) filesInGroup) {
+                parameters[tfg.scriptParameterName + "_" + cnt] = bf;
+                cnt++;
+            }
+        } else { //Arrays
+            parameters[tfg.scriptParameterName] = filesInGroup
         }
 
         Constructor cGroup = tfg.groupClass.getConstructor(List.class);
@@ -363,48 +472,39 @@ class GenericMethod {
         allCreatedObjects << outputObject;
 
         //Verifiable output files:
-        List<BaseFile> filesToVerify = [];
-//        allCreatedObjects.each { FileObject fo -> if (fo instanceof BaseFile && !((BaseFile) fo).isTemporaryFile()) filesToVerify << (BaseFile) fo; }
-        return allCreatedObjects.findAll { FileObject fo -> fo instanceof BaseFile && !((BaseFile) fo).isTemporaryFile() } as List<BaseFile> //filesToVerify << (BaseFile) fo; }
-//        filesToVerify
+        return allCreatedObjects.findAll { FileObject fo -> fo instanceof BaseFile && !((BaseFile) fo).isTemporaryFile() } as List<BaseFile>
     }
 
-    private FileObject createAndRunArrayJob(List<BaseFile> filesToVerify) {
-        JobResult jobResult = new Job(context, context.createJobName(firstInputFile, toolName), toolName, arrayIndices, parameters, allInputFiles, filesToVerify).run();
-
-        Map<String, FileObject> outputObjectsByArrayIndex = [:];
-        IndexedFileObjects indexedFileObjects = new IndexedFileObjects(arrayIndices, outputObjectsByArrayIndex, context);
-        // Run array job and afterwards create output files for all sub jobs. The values in filesToVerify will be used and the path names will be corrected.
-        int i = 1;
-        for (String arrayIndex in arrayIndices) {
-            List<FileObject> newObjects = [];
-            outputObjectsByArrayIndex[arrayIndex] = createOutputObject(arrayIndex);
-            JobResult jr = JobManager.getInstance().convertToArrayResult(jobResult.job, jobResult, i++);
-            for (FileObject fo : newObjects) {
-                fo.setCreatingJobsResult(jr);
-            }
-        }
-        return indexedFileObjects;
-    }
-
-    private FileObject createAndRunSingleJob(List<BaseFile> filesToVerify, FileObject outputObject) {
-        JobResult jobResult = new Job(context, context.createJobName(firstInputFile, toolName), toolName, parameters, allInputFiles, filesToVerify).run();
+    private FileObject createAndRunJob(List<BaseFile> filesToVerify, FileObject outputObject) {
+        BEJobResult jobResult = new Job(context, context.createJobName(firstInputFile, toolName), toolName, parameters, allInputFiles, filesToVerify).run()
 
         if (allCreatedObjects) {
             for (FileObject fo in allCreatedObjects) {
                 if (fo == null)
-                    continue;
-                fo.setCreatingJobsResult(jobResult);
+                    continue
+                fo.setCreatingJobsResult(jobResult)
             }
         }
         return outputObject;
     }
 
-    private BaseFile convertToolFileParameterToBaseFile(ToolEntry.ToolFileParameter fileParameter) {
-        convertToolFileParameterToBaseFile(fileParameter, firstInputFile, allInputFiles)
+    BaseFile convertToolFileParameterToBaseFile(ToolFileParameter fileParameter) {
+        convertToolFileParameterToBaseFile(fileParameter, null, firstInputFile, allInputFiles)
     }
 
-    private BaseFile convertToolFileParameterToBaseFile(ToolEntry.ToolFileParameter fileParameter, BaseFile firstInputFile, List<BaseFile> allInputFiles) {
+    BaseFile convertToolFileParameterToBaseFile(ToolFileParameter fileParameter, String fileGroupIndexValue) {
+        convertToolFileParameterToBaseFile(fileParameter, fileGroupIndexValue, firstInputFile, allInputFiles)
+    }
+
+    /**
+     *
+     * @param fileParameter
+     * @param fileGroupIndexValue May be null or empty! Is set, when a filegroup and its children are created. Holds the index value within the filegroup (numeric or a string)
+     * @param firstInputFile
+     * @param allInputFiles
+     * @return
+     */
+    BaseFile convertToolFileParameterToBaseFile(ToolFileParameter fileParameter, String fileGroupIndexValue, BaseFile firstInputFile, List<BaseFile> allInputFiles) {
         Constructor c = searchBaseFileConstructorForConstructionHelperObject(fileParameter.fileClass);
         BaseFile bf;
         try {
@@ -418,7 +518,8 @@ class GenericMethod {
                 context.addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_NOCONSTRUCTOR.expand("File object of type ${fileParameter?.fileClass} with input ${firstInputFile?.class} needs a constructor which takes a ConstuctionHelper object."));
                 throw new RuntimeException("Could not find valid constructor for type  ${fileParameter?.fileClass} with input ${firstInputFile?.class}.");
             } else {
-                BaseFile.ConstructionHelperForGenericCreation helper = new BaseFile.ConstructionHelperForGenericCreation(firstInputFile, allInputFiles as List<FileObject>, calledTool, toolName, fileParameter.scriptParameterName, fileParameter.filenamePatternSelectionTag, firstInputFile.fileStage, null);
+                BaseFile.ConstructionHelperForGenericCreation helper = new BaseFile.ConstructionHelperForGenericCreation(firstInputFile, allInputFiles as List<FileObject>, calledTool, toolName, fileParameter.scriptParameterName, fileParameter.filenamePatternSelectionTag, fileGroupIndexValue, firstInputFile.fileStage, null);
+                if(jobConfiguration) helper.setJobConfiguration(jobConfiguration)
                 bf = c.newInstance(helper);
             }
         } catch (Exception ex) {

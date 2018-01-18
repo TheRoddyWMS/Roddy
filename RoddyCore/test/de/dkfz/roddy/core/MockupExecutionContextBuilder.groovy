@@ -6,13 +6,16 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.config.AnalysisConfiguration;
+import de.dkfz.roddy.config.AnalysisConfiguration
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ProjectConfiguration
-import de.dkfz.roddy.knowledge.files.BaseFile;
+import de.dkfz.roddy.config.ResourceSet
+import de.dkfz.roddy.execution.io.ExecutionResult
+import de.dkfz.roddy.execution.io.NoNoExecutionService
+import de.dkfz.roddy.execution.jobs.*
+import de.dkfz.roddy.knowledge.files.BaseFile
 
-import java.io.File;
-import java.util.Map;
+import java.util.concurrent.TimeoutException
 
 /**
  * Created by heinold on 01.07.16.
@@ -20,10 +23,10 @@ import java.util.Map;
 @groovy.transform.CompileStatic
 public class MockupExecutionContextBuilder {
 
-    public static final String DIR_PREFIX = "/tmp/RoddyTests/";
+    public static final String DIR_PREFIX = "RoddyTests_"
 
     public static File getTestBaseDirectory(String testID) {
-        final File testBaseDirectory = File.createTempDir(DIR_PREFIX + "_", testID)
+        final File testBaseDirectory = File.createTempDir(DIR_PREFIX, "_" + testID)
         testBaseDirectory.deleteOnExit();
         testBaseDirectory
     }
@@ -69,23 +72,8 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            public void releaseCache() {
-
-            }
-
-            @Override
             File getLoggingDirectory(ExecutionContext context) {
                 return getTestLoggingDirectory(testClassName)
-            }
-
-            @Override
-            public boolean initialize() {
-                return false;
-            }
-
-            @Override
-            public void destroy() {
-
             }
 
         }
@@ -147,4 +135,96 @@ public class MockupExecutionContextBuilder {
         };
     }
 
+    public static BatchEuphoriaJobManager createMockupJobManager() {
+        new BatchEuphoriaJobManager(new NoNoExecutionService(), JobManagerOptions.create().setStrictMode(false).build()) {
+
+            @Override
+            BEJobResult submitJob(BEJob job) throws TimeoutException {
+                return null
+            }
+
+            @Override
+            protected ExecutionResult executeStartHeldJobs(List list) {
+                return null
+            }
+
+            @Override
+            ProcessingParameters convertResourceSet(BEJob job, ResourceSet resourceSet) {
+                return null
+            }
+
+            @Override
+            GenericJobInfo parseGenericJobInfo(String s) {
+                return null
+            }
+
+            @Override
+
+            protected Command createCommand(BEJob beJob) {
+                return null
+            }
+
+            @Override
+            protected Map<BEJobID, JobState> queryJobStates(List list) {
+                return null
+            }
+
+            @Override
+            void addToListOfStartedJobs(BEJob job) {
+
+            }
+
+            @Override
+            String getJobIdVariable() {
+                return null
+            }
+
+            @Override
+            String getJobNameVariable() {
+                return null
+            }
+
+            @Override
+
+            String getQueueVariable() {
+                return null
+            }
+
+
+            @Override
+            String getNodeFileVariable() {
+                return null
+            }
+
+            @Override
+            String getSubmitHostVariable() {
+                return null
+            }
+
+            @Override
+            String getSubmitDirectoryVariable() {
+                return null
+            }
+
+            @Override
+            protected ExecutionResult executeKillJobs(List list) {
+                return null
+            }
+
+            @Override
+            String parseJobID(String commandOutput) {
+                return null
+            }
+
+            @Override
+            String getSubmissionCommand() {
+                return null
+            }
+
+            @Override
+            Map<BEJobID, GenericJobInfo> queryExtendedJobStateById(List list) {
+                return null
+            }
+        }
+    }
 }

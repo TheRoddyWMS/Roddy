@@ -7,10 +7,12 @@
 package de.dkfz.roddy.config;
 
 import de.dkfz.roddy.Roddy;
+import de.dkfz.roddy.config.loader.ConfigurationLoadError;
 import de.dkfz.roddy.core.Analysis;
 import de.dkfz.roddy.core.DataSet;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
+import de.dkfz.roddy.tools.CollectionHelperMethods;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 
 import java.io.File;
@@ -35,7 +37,6 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
     public final String value;
     private final Configuration configuration;
     private final String type;
-    private boolean quoteOnConversion;
 
     /**
      * A description or comment for a configuration value.
@@ -147,31 +148,26 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
     }
 
     public File toFile(Analysis analysis) {
-        try {
-            if (analysis == null) return toFile();
+        if (analysis == null) return toFile();
 
-            String temp = toFile().getAbsolutePath();
-            temp = replaceConfigurationBasedValues(temp, analysis.getConfiguration());
-            temp = replaceString(temp, "${projectName}", analysis.getProject().getName());
-            temp = checkAndCorrectPath(temp);
+        String temp = toFile().getAbsolutePath();
+        temp = replaceConfigurationBasedValues(temp, analysis.getConfiguration());
+        temp = replaceString(temp, "${projectName}", analysis.getProject().getName());
+        temp = checkAndCorrectPath(temp);
 
-            String userID = analysis.getUsername();
-            String groupID = analysis.getUsergroup();
+        String userID = analysis.getUsername();
+        String groupID = analysis.getUsergroup();
 
-            if (userID != null)
-                temp = replaceString(temp, "$USERNAME", userID);
-            if (groupID != null)
-                temp = replaceString(temp, "$USERGROUP", groupID);
+        if (userID != null)
+            temp = replaceString(temp, "$USERNAME", userID);
+        if (groupID != null)
+            temp = replaceString(temp, "$USERGROUP", groupID);
 
-            String ud = FileSystemAccessProvider.getInstance().getUserDirectory().getAbsolutePath();
-            temp = replaceString(temp, "$USERHOME", ud);
-            temp = checkAndCorrectPath(temp);
+        String ud = FileSystemAccessProvider.getInstance().getUserDirectory().getAbsolutePath();
+        temp = replaceString(temp, "$USERHOME", ud);
+        temp = checkAndCorrectPath(temp);
 
-            return new File(temp);
-
-        } catch (Exception e) {
-            return null;
-        }
+        return new File(temp);
     }
 
     public File toFile(ExecutionContext context) {
@@ -270,22 +266,35 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
 
     @Override
     public String toString() {
+        return toString(new LinkedList<>());
+    }
+
+    public String toString(List<String> blackList) {
         String temp = value;
         if (configuration != null) {
-            List<String> valueIDs = getIDsForParrentValues();
+            List<String> valueIDs = getIDsForParentValues();
+            if (CollectionHelperMethods.intersects(blackList, valueIDs)) {
+                RuntimeException exc = new RuntimeException("Cyclic dependency found for cvalue '" + this.id + "' in file " + (configuration.preloadedConfiguration != null ? configuration.preloadedConfiguration.file : configuration.getID()));
+                configuration.addLoadError(new ConfigurationLoadError(configuration, "cValues", exc.getMessage(), exc));
+                throw exc;
+            }
+
             for (String vName : valueIDs) {
-                if (configuration.getConfigurationValues().hasValue(vName))
-                    temp = temp.replace("${" + vName + '}', configuration.getConfigurationValues().get(vName).toString());
+                if (configuration.getConfigurationValues().hasValue(vName)) {
+                    List<String> subBlackList = new LinkedList<>(blackList);
+                    subBlackList.add(vName);
+                    temp = temp.replace("${" + vName + '}', configuration.getConfigurationValues().get(vName).toString(subBlackList));
+                }
             }
         }
         return temp;
     }
 
-    public List<String> getIDsForParrentValues() {
+    public List<String> getIDsForParentValues() {
         List<String> parentValues = new LinkedList<>();
 
         Matcher m = variableDetection.matcher(value);
-//            Findall is not available in standard java, so I use groovy here.
+        // Findall is not available in standard java, so I use groovy here.
         for (String s : ConfigurationValueHelper.callFindAllForPatternMatcher(m)) {
             String vName = s.replaceAll("[${}]", "");
             parentValues.add(vName);
@@ -307,16 +316,21 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
     }
 
     public EnumerationValue getEnumerationValueType() {
-        Enumeration enumeration = null;
-        if (getConfiguration().getEnumerations().hasValue("cvalueType"))
+        return getEnumerationValueType(null);
+    }
+
+    public EnumerationValue getEnumerationValueType(EnumerationValue defaultType) {
+        Enumeration enumeration;
+        try {
             enumeration = getConfiguration().getEnumerations().getValue("cvalueType");
-        String _ev = getType();
-        if (_ev == null || _ev.trim().equals(""))
-            _ev = "string";
-        if (enumeration == null)
-            return null;
-        EnumerationValue ev = enumeration.getValue(_ev);
-        return ev;
+            String _ev = getType();
+            if (_ev == null || _ev.trim().equals(""))
+                _ev = "string";
+            EnumerationValue ev = enumeration.getValue(_ev);
+            return ev;
+        } catch (ConfigurationError e) {
+            return defaultType;
+        }
     }
 
     public boolean isInvalid() {

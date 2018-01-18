@@ -6,14 +6,10 @@
 
 package de.dkfz.roddy
 
-import de.dkfz.roddy.client.cliclient.CommandLineCall
-import de.dkfz.roddy.config.ResourceSetSize
-import org.junit.AfterClass
+import groovy.transform.CompileStatic
 import org.junit.BeforeClass
 import org.junit.Test
 
-import java.lang.reflect.Field
-import java.lang.reflect.Modifier
 import java.util.concurrent.Semaphore
 
 /**
@@ -29,6 +25,7 @@ import java.util.concurrent.Semaphore
  *
  * TODO This class was created in the wrong branch, so let's leave it for now until the diff is accepted.
  */
+@CompileStatic
 public class RoddyStartupModesIntegrativeUnitTests {
 
     public static final Semaphore maxRoddyTestInstances = new Semaphore(4);
@@ -43,7 +40,7 @@ public class RoddyStartupModesIntegrativeUnitTests {
     }
 
     @BeforeClass
-    public static final setupTestEnvironment() {
+    public static final void setupTestEnvironment() {
     }
 
     @Test

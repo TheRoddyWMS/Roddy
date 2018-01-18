@@ -16,9 +16,9 @@ public class Constants {
     // Application constants
     /////////////////////////
 
-    public static final String APP_CURRENT_VERSION_STRING = "2.3.133";
-    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Wed Jan 25 10:46:36 CET 2017";
-    public static final String APP_PROPERTY_COMMAND_FACTORY_CLASS = "jobManagerClass";
+    public static final String APP_CURRENT_VERSION_STRING = "2.4.11";
+    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Fri Dec 08 13:14:44 CET 2017";
+    public static final String APP_PROPERTY_JOB_MANAGER_CLASS = "jobManagerClass";
     public static final String APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS = "fileSystemAccessManagerClass";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_CLASS = "executionServiceClass";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_USER = "executionServiceUser";
@@ -30,7 +30,9 @@ public class Constants {
     public static final String APP_PROPERTY_LIBRARYDIRECTORIES = "libraryDirectories";
     public static final String APP_PROPERTY_USED_LIBRARIES = "usedLibraries";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD = "password";
+    public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_SSHAGENT = "sshagent";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE = "keyfile";
+    public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE_LOCATION = "executionServiceKeyfileLocation";
     public static final String APP_PROPERTY_CONFIGURATION_DIRECTORIES = "configurationDirectories";
     public static final String APP_PROPERTY_PLUGIN_DIRECTORIES = "pluginDirectories";
     public static final String APP_PROPERTY_APPLICATION_DEBUG_TAGS = "applicationDebugTags";
@@ -39,6 +41,7 @@ public class Constants {
     public static final String APP_PROPERTY_NET_USEPROXY = "netUseProxy";
     public static final String APP_PROPERTY_NET_PROXY_ADDRESS = "netProxyAddress";
     public static final String APP_PROPERTY_NET_PROXY_USR = "netProxyUser";
+    public static final String APP_SCRATCH_BASE_DIRECTORY = "scratchBaseDirectory";
 
     /////////////////////////
     // Error messages
@@ -72,4 +75,13 @@ public class Constants {
     public static final String NO_VALUE = "<NO_VALUE>";
 
     public static final String RODDY_PARENT_JOBS = "RODDY_PARENT_JOBS";
+    public static final String CONFIG_FILE = "CONFIG_FILE";
+    public static final String PARAMETER_FILE = "PARAMETER_FILE";
+    public static final String ANALYSIS_DIR = "ANALYSIS_DIR";
+    public static final String PARAMETER_FILE_SUFFIX = ".parameters";
+    public static final String WRAPPED_SCRIPT = "WRAPPED_SCRIPT";
+    public static final String PID_CAP = "PID";
+    public static final String PID = "pid";
+
+    public static final String COMMAND_TAG_EXECUTION_CONTEXT = "ExecutionContext";
 }

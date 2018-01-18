@@ -72,7 +72,6 @@
             <xs:element type="resourcesetsType" name="resourcesets" minOccurs="0" maxOccurs="1"/>
             <xs:element type="inputType" name="input" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element type="outputType" name="output" minOccurs="0" maxOccurs="1"/>
-            <!--<xs:element type="outputType" name="output" minOccurs="0" maxOccurs="1" />-->
         </xs:sequence>
         <xs:attribute type="xs:string" name="name"/>
         <xs:attribute type="xs:string" name="value"/>
@@ -107,6 +106,7 @@
         <xs:attribute type="xs:string" name="type"/>
         <xs:attribute type="xs:string" name="typeof"/>
         <xs:attribute type="xs:string" name="scriptparameter"/>
+        <xs:attribute type="xs:string" name="fileclass"/>
         <xs:attribute type="xs:string" name="setby"/>
         <xs:attribute type="xs:string" name="passas" use="optional"/>
     </xs:complexType>
@@ -118,8 +118,11 @@
         <xs:attribute type="xs:string" name="variable" use="optional"/>
         <xs:attribute type="xs:string" name="typeof" use="optional"/>
         <xs:attribute type="xs:string" name="scriptparameter" use="optional"/>
+        <xs:attribute type="xs:string" name="fileclass"/>
         <xs:attribute type="xs:string" name="fnpatternselectiontag" use="optional"/>
+        <xs:attribute type="xs:string" name="selectiontag" use="optional"/>
         <xs:attribute type="xs:string" name="passas" use="optional"/>
+        <xs:attribute type="xs:string" name="filename" use="optional"/>
         <xs:attribute type="xs:boolean" name="check" use="optional"/>
     </xs:complexType>
 </xs:schema>

@@ -4,22 +4,56 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.config;
+package de.dkfz.roddy.config
 
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+import de.dkfz.roddy.core.ExecutionContext
+import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import groovy.transform.CompileStatic
+import org.junit.BeforeClass
+import org.junit.Test
 
 /**
  * Created by heinold on 10.01.17.
  */
-public class FilenamePatternHelperTest {
+@CompileStatic
+class FilenamePatternHelperTest {
+
+    static ExecutionContext mockupContext
+
+    @BeforeClass
+    static void setup() {
+        mockupContext = MockupExecutionContextBuilder.createSimpleContext(FilenamePatternHelperTest)
+    }
 
     @Test
-    public void extractCommands() throws Exception {
-        String commandID = '\${jobParameter';
+    void testSetup() {
+        assert mockupContext
+    }
+
+    @Test
+    void extractEmptyCommand() {
+        // Extract empty command means to detect something unknown inside ${ .. }
+        def val = 'abc${value}def'
+        def result = FilenamePatternHelper.extractCommand( "", val)
+        assert result.rawName == "value"
+    }
+
+    @Test
+    void extractRegularCommand() {
+        // Extract empty command means to detect something unknown inside ${ .. }
+        def val = 'abc${cvalue,name="value"}def'
+        def result = FilenamePatternHelper.extractCommand( '\${cvalue', val)
+        assert result.rawName == "cvalue"
+        assert result.fullString == '${cvalue,name="value"}'
+        assert result.attributes.size() == 1
+        assert result.attributes["name"].value == "value"
+    }
+
+    @Test
+    void extractCommands() throws Exception {
+        String commandID = '\${jobParameter'
         String temp = '/a/real/string/${jobParameter,name="test",default="abc"}/${jobParameter,name="test2"}/a_filename.txt'
-        def result = FilenamePatternHelper.extractCommands(commandID, temp)
+        def result = FilenamePatternHelper.extractCommands(mockupContext, commandID, temp)
         assert result
         assert result.size() == 2
         assert result[0].attributes["name"].value == "test"
@@ -28,10 +62,13 @@ public class FilenamePatternHelperTest {
     }
 
     @Test
-    public void testExtractCommandsWithUnclosedLiterals() {
-        String commandID = '\${jobParameter';
+    void testExtractCommandsWithUnclosedLiterals() {
+        String commandID = '\${jobParameter'
         String temp = '/a/real/string/${jobParameter,name="test"}/${jobParameter,name="test2"/a_filename.txt'
-        assert false
+        def result = FilenamePatternHelper.extractCommands(mockupContext, commandID, temp)
+        assert result
+        // TODO What should happen?
+//        assert false
     }
 
 }

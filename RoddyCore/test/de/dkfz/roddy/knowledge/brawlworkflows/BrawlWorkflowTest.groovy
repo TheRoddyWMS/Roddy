@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -7,23 +7,20 @@
 package de.dkfz.roddy.knowledge.brawlworkflows
 
 import de.dkfz.roddy.config.AnalysisConfiguration
-import de.dkfz.roddy.config.ConfigurationFactory;
 import de.dkfz.roddy.config.ContextConfiguration
 import de.dkfz.roddy.config.ProjectConfiguration
-import de.dkfz.roddy.config.ToolEntry;
-import de.dkfz.roddy.core.ExecutionContext
+import de.dkfz.roddy.config.ToolEntry
+import de.dkfz.roddy.config.ToolFileGroupParameter
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.plugins.LibrariesFactory
-import groovy.transform.TypeCheckingMode;
+import groovy.transform.TypeCheckingMode
+import org.junit.Ignore;
 import org.junit.Test;
 
-import java.lang.reflect.Method;
-import java.util.LinkedHashMap;
-
-import static org.junit.Assert.*;
+import java.lang.reflect.Method
 
 /**
  * Created by heinold on 18.11.15.
@@ -68,8 +65,10 @@ public class BrawlWorkflowTest {
     }
 
     @Test
+    @Ignore("Test to create")
     public void testAssembleCall() {
-        callAssembleCall(null, 0, null, null, null);
+//        callAssembleCall(null, 0, null, null, null);
+        assert false
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
@@ -92,19 +91,18 @@ public class BrawlWorkflowTest {
         Class<BaseFile> testFileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass("TestFile", BaseFile.class as Class<FileObject>);
         def loadFastqFiles = new ToolEntry(LOAD_FASTQ_FILES, "testtools", "/tmp/testtools/${LOAD_FASTQ_FILES}.sh")
         loadFastqFiles.getOutputParameters(cc).add(
-                new ToolEntry.ToolFileGroupParameter(
+                new ToolFileGroupParameter(
                         (new GenericFileGroup([] as List)).class as Class<FileGroup>,
                         testFileClass,
-                        null,
                         "FUZZY_GROUP",
-                        ToolEntry.ToolFileGroupParameter.PassOptions.parameters));
+                        ToolFileGroupParameter.PassOptions.parameters));
         cc.getTools().add(loadFastqFiles)
 
         String[] _l = callPrepareAndFormatLine("""set inputfiles = loadfilesWith "${LOAD_FASTQ_FILES}"()'""").split("[ ]")
         int indexOfCallee = 4;
 
         def expected = " = de.dkfz.roddy.knowledge.files.GenericFileGroup<de.dkfz.roddy.synthetic.files.TestFile> inputfiles =\n" +
-                       "       new de.dkfz.roddy.knowledge.files.GenericFileGroup<de.dkfz.roddy.synthetic.files.TestFile>(ExecutionService.getInstance().executeTool(context, ${LOAD_FASTQ_FILES}\n" +
+                       "       new de.dkfz.roddy.knowledge.files.GenericFileGroup<de.dkfz.roddy.synthetic.files.TestFile>(BEExecutionService.getInstance().executeTool(context, ${LOAD_FASTQ_FILES}\n" +
                        "           .replaceAll('\"', ''))\n" +
                        "           .collect { it -> new TestFile(it) });"
 

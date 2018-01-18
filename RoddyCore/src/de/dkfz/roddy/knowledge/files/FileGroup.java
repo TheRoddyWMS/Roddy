@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.knowledge.files;
 
+import de.dkfz.roddy.config.ConfigurationError;
 import de.dkfz.roddy.core.ExecutionContext;
 
 import java.util.LinkedList;
@@ -35,7 +36,7 @@ public abstract class FileGroup<F extends BaseFile> extends FileObject {
      * Calls runDefaultOperations on the contained files.
      */
     @Override
-    public void runDefaultOperations() {
+    public void runDefaultOperations() throws ConfigurationError {
         for (F file : filesInGroup) {
             file.runDefaultOperations();
         }

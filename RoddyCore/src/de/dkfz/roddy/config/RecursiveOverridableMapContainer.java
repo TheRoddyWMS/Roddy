@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.config;
 
+import de.dkfz.roddy.config.ConfigurationError;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 
 import java.util.LinkedHashMap;
@@ -18,18 +19,14 @@ import java.util.Map;
  */
 public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableMapContainer.Identifiable, P extends ContainerParent> {
 
-
-
-    public static interface Identifiable {
-        public String getID();
-
+    public interface Identifiable {
+        String getID();
     }
 
     /**
      * A list of values in this container's configuration
      */
-    private final Map<K, V> values = new LinkedHashMap<>();
-
+    protected final Map<K, V> values = new LinkedHashMap<>();
 
     private final P containerParent;
 
@@ -82,7 +79,7 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
         return new LinkedList<>(getAllValues().values());
     }
 
-    public List<V> getInheritanceList(String valueID) {
+    public List<V> getInheritanceList(String valueID) throws ConfigurationError {
         List<V> allValues = new LinkedList<>();
 
         if (getMap().containsKey(valueID))
@@ -105,17 +102,56 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
         return getListOfAllValues().contains(id);
     }
 
+    /**
+     * When you have several configuration objects, e.g.
+     * A -> B
+     *
+     * A contains values a and b, where a == abc and b has a reference to a b=${a}
+     * B contains values a'  == def
+     * If you query B for b, b holds a reference to configuration A
+     * Therefore, b.toString() will result in b == abc and NOT in def as expected.
+     *
+     * By elevating a copy of b to B, everything will be fixed, as B can be the parent of b'
+     *
+     * This is true for ConfigurationValue, which rely on dependencies between themselves.
+     *
+     * In RecursiveOverridableMapContainerForConfigurationValues, we override the method and
+     * copy the value and set the configuration reference to (in this example) B
+     *
+     * @param src
+     * @return
+     */
+    protected V temporarilyElevateValue(V src) {
+        return src;
+    }
+
+    /**
+     * Does not check, if the value exists!
+     * @param id
+     * @return
+     */
+    protected V _getValueUnchecked(String id) {
+        V cval = getAllValues().get(id);
+        if(!values.containsKey(id))
+            return temporarilyElevateValue(cval);
+
+        return cval;
+    }
+
     public V getValue(String id, V defaultValue) {
         if (!hasValue(id))
             return defaultValue;
-        return getAllValues().get(id);
+        return _getValueUnchecked(id);
     }
 
-    public V getValue(String id) {
+    /**
+     * @throws ConfigurationError if a value is requested that does not exist.
+     * @param id    Configuration value to return.
+     */
+    public V getValue(String id) throws ConfigurationError {
         if (!hasValue(id))
-            throw new RuntimeException("Value " + id + " could not be found in containers with id " + id);
-
-        return getAllValues().get(id);
+            throw new ConfigurationError("Value could not be found in containers", id);
+        return _getValueUnchecked(id);
     }
 
     public void putAll(Map<K, V> values) {
@@ -134,6 +170,14 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
     public void addAll(List<V> all) {
         if(RoddyConversionHelperMethods.isNullOrEmpty(all)) return;
         for(V it : all) { add(it); }
+    }
+
+    public void append(V value) {
+        add(value);
+    }
+
+    public void leftShift(V value) {
+        add(value);
     }
 
     public int size() {

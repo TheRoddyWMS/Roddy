@@ -3,8 +3,6 @@
 #PBS -q highmem
 #PBS -l mem=120g
 
-source ${CONFIG_FILE}
-
 set -xuv
 set -o pipefail
 
@@ -38,7 +36,7 @@ do
     echo $ip $portOut > ${!portFileOut}
 
 #    echo `hostname` $port > ${!portFile}
-    java7 -Xmx12G -jar ${TOOL_MEMORY_STREAMER} serve $portIn $portOut 10G 2 $DIR_TEMP/${PBS_JOBID}_memStreamer_server_${i} &
+    ${JAVA_BINARY:-java} -Xmx12G -jar ${TOOL_MEMORY_STREAMER} serve $portIn $portOut 10G 2 $DIR_TEMP/${PBS_JOBID}_memStreamer_server_${i} &
     processNumber=("$processNumber[@]" $!)
 #    netcat -vv -l -p $port | mbuffer -m 10G > $npipe & #$BUFFER_SIZE$BUFFER_UNIT
 #    mbuffer -I $port -m 10G | tee ${DIR_TEMP}/${PBS_JOBID}_saifile_$i > $npipe & #$BUFFER_SIZE$BUFFER_UNIT

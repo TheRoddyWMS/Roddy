@@ -8,8 +8,6 @@ package de.dkfz.roddy.execution.io.fs
 
 import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.config.converters.ConfigurationConverter
-import de.dkfz.roddy.execution.io.ExecutionService
-import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
 /**
  * Provides a command generator for linux file systems / bash
@@ -74,6 +72,9 @@ public class BashCommandSet extends ShellCommandSet {
     }
 
     @Override
+    String getListOfGroupsCommand() { return "groups" }
+
+    @Override
     String getMyGroupCommand() { return "groups | cut -d \" \" -f 1"; }
 
     @Override
@@ -85,13 +86,14 @@ public class BashCommandSet extends ShellCommandSet {
     String getCheckForInteractiveConsoleCommand() {
         String separator = "\n"
         StringBuilder builder = new StringBuilder();
-        builder << 'if [ -z "${PS1-}" ]; then' << separator << "\t echo non interactive process!" << separator << "else" << separator << "\t echo interactive process"
+        builder << 'if [[ -z "${PS1-}" ]]; then' << separator << '\t echo "non interactive process!" >> /dev/stderr' << separator << 'else' <<
+                separator << '\t echo "interactive process" >> /dev/stderr'
         return builder.toString();
     }
 
     @Override
     String getSetPathCommand() {
-        return '[[ ! ${SET_PATH-} == "" ]] && export PATH=${SET_PATH}'
+        return 'if [[ "${SET_PATH-}" != "" ]]; then export PATH=${SET_PATH}; fi'
     }
 
     @Override
