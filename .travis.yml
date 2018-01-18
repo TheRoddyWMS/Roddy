@@ -10,7 +10,7 @@ jdk:
 - oraclejdk8
 before_install:
 - git clone https://github.com/eilslabs/Roddy-Default-Plugin.git dist/plugins/DefaultPlugin
-- git clone https://github.com/eilslabs/Roddy-Base-Plugin.git dist/plugin/PluginBase
+- git clone https://github.com/eilslabs/Roddy-Base-Plugin.git dist/plugins/PluginBase
 deploy:
   skip_cleanup: true
   provider: releases
