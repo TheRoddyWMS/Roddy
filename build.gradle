@@ -250,7 +250,7 @@ idea {
 
 // Gradle Wrapper
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.3'
+    gradleVersion = '4.2.1'
 }
 
 sphinx {
