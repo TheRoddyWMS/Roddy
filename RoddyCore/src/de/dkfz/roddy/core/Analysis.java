@@ -200,7 +200,10 @@ public class Analysis {
         long creationCheckPoint = System.nanoTime();
 
         for (DataSet ds : selectedDatasets) {
-            if (level.isOrWasAllowedToSubmitJobs && !checkJobStartability(ds)) continue;
+            if (level.isOrWasAllowedToSubmitJobs && !canStartJobs(ds)) {
+                logger.postAlwaysInfo("The " + Constants.PID + " " + ds.getId() + " is still running and will be skipped for the process.");
+                continue;
+            }
 
             ExecutionContext ec = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, level, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null, creationCheckPoint);
 
@@ -222,7 +225,10 @@ public class Analysis {
         LinkedList<ExecutionContext> newRuns = new LinkedList<>();
         for (ExecutionContext oldContext : contexts) {
             DataSet ds = oldContext.getDataSet();
-            if (!test && !checkJobStartability(ds)) continue;
+            if (!test && !canStartJobs(ds)) {
+                logger.postAlwaysInfo("The " + Constants.PID + " " + ds.getId() + " is still running and will be skipped for the process.");
+                continue;
+            }
 
             ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, oldContext.getDataSet(), test ? ExecutionContextLevel.TESTRERUN : ExecutionContextLevel.RERUN, oldContext.getOutputDirectory(), oldContext.getInputDirectory(), null, creationCheckPoint);
 
@@ -233,16 +239,11 @@ public class Analysis {
         return newRuns;
     }
 
-    private boolean checkJobStartability(DataSet ds) {
-        String datasetID = ds.getId();
-        if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning) && checkStatusForDataset(ds)) {
-            logger.postAlwaysInfo("The " + Constants.PID + " " + datasetID + " is still running and will be skipped for the process.");
-            return false;
-        }
-        return true;
+    private boolean canStartJobs(DataSet ds) {
+        return !Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning) || !hasKnownRunningJobs(ds);
     }
 
-    public boolean checkStatusForDataset(DataSet ds) {
+    public boolean hasKnownRunningJobs(DataSet ds) {
         AnalysisProcessingInformation api = ds.getLatestValidProcessingInformation(this);
         ExecutionContext detailedProcessingInfo = api != null ? api.getDetailedProcessingInfo() : null;
         return detailedProcessingInfo != null && detailedProcessingInfo.hasRunningJobs();
@@ -256,7 +257,7 @@ public class Analysis {
         List<DataSet> dataSets = getRuntimeService().loadDatasetsWithFilter(this, pids, suppressInfo);
         Map<DataSet, Boolean> results = new LinkedHashMap<>();
         dataSets.parallelStream().forEach(ds -> {
-            boolean result = checkStatusForDataset(ds);
+            boolean result = hasKnownRunningJobs(ds);
             synchronized (results) {
                 results.put(ds, result);
             }
