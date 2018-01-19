@@ -11,13 +11,9 @@
 Installation guide
 ==================
 
-There are several minor versions of Roddy. They can be downloaded and installed in the same directory.
-Minor versions mark changes in the Roddy API. This may or may not lead to incompatibilies of Roddy and Roddy plugins.
+There are several minor versions of Roddy, which can be downloaded and installed in the same directory.
+Minor versions mark changes in the Roddy API. Usually Roddy plugins are only compatible to a specific minor version.
 Installations for the different versions differ a bit, so we list all versions here.
-
-Roddy uses Groovy, however, Groovy is a bit slow to start. So Roddy 2.4+ supports GroovyServ, which can be used by you to speed things up.
-Roddy will try to install `GroovyServ`_ on its own. However, if that fails, you can still try to set it up on your own.
-If it still does not work, you can also disable it.
 
 Premises
 --------
@@ -115,6 +111,7 @@ Other plugins may be installed in arbitrary plugin directories using the same na
 [Optional] Setup GroovyServ
 ---------------------------
 
+Roddy uses Groovy, however, Groovy is a bit slow to start. So Roddy 2.4+ supports `GroovyServ`_, which can be used by you to speed things up.
 GroovyServ tremendously decreases the startup time of Groovy applications and Roddy will try to download and set it up automatically. If that fails or
 if you want to set it up by yourself, do the following in your Roddy directory:
 

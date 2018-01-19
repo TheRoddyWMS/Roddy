@@ -47,11 +47,11 @@ a base for workflows:
 
 -  Multi-Level configuration system
 -  Modular application design
--  A variety of supported workflows
--  Access to several cluster backends
--  Callable stand-alone or integratable in other applications
+-  Access to several cluster backends (via `BatchEuphoria`_)
 -  Different versions of plugins/workflows and the Roddy core
    application are handled in a single installation
+-  Various already implemented workflows
+-  Callable stand-alone or integrable in other applications
 -  Only a few dependencies and no database for the Roddy core
    application necessary
 -  Various execution modes to support users to get their work done
@@ -68,18 +68,18 @@ Take a look at the example workflow package: :doc:`exampleWorkflow`
 
 Do you want to use it to run existing workflows? Then head over to the :doc:`usersGuide`
 
-Do you want to develop it? See the :doc:`roddyDevelopment/developersGuide`
-
 Do you want to develop workflows with it? Open up the :doc:`pluginDevelopment/pluginDevelopersGuide`
+
+Do you want to develop it? See the :doc:`roddyDevelopment/developersGuide`
 
 Do you have questions? Please visit the `F.A.Q.`_ section in our GitHub Wiki
 
 License and associated projects
 -------------------------------
 
-Roddy is offered under and MIT based license.
+Roddy is offered under an MIT based license.
 
-We extracted two possibly helpful open source libraries, again under MIT license:
+We extracted from Roddy two possibly helpful open source libraries, again under MIT license:
 
 - `RoddyToolLib`_ is a Java / Groovy library which provides several tools used in BatchEuphoria and Roddy. See the project description for more information.
 
