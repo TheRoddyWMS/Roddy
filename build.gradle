@@ -20,6 +20,7 @@ buildscript {
     }
     dependencies {
         classpath group: 'kr.motd.gradle', name: 'sphinx-gradle-plugin', version: '1.0.6'
+        classpath group: 'gradle.plugin.net.vivin', name: 'gradle-semantic-build-versioning', version: '4.0.0'
     }
 }
 
@@ -60,7 +61,8 @@ sourceCompatibility = langLevel
 targetCompatibility = langLevel
 compileJava.options.fork = true
 
-ext.buildVersion = getVersionName()
+// ext.buildVersion = getVersionName()
+ext.buildVersion = rootProject.version
 
 // Set -Pchecked on the command line to change this compiler parameter.
 if (!project.hasProperty("checked") || !project.checked) {
@@ -248,7 +250,7 @@ idea {
 
 // Gradle Wrapper
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.2.1'
+    gradleVersion = '3.3'
 }
 
 sphinx {

@@ -1,1 +1,14 @@
 rootProject.name = "Roddy"
+
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath group: 'gradle.plugin.net.vivin', name: 'gradle-semantic-build-versioning', version: '4.0.0'
+    }
+}
+
+apply plugin: 'net.vivin.gradle-semantic-build-versioning'    // MIT
