@@ -1,5 +1,13 @@
 # Work in progress
 
+- Many bugfixes and error message improvements
+
+- Split-off BatchEuphoria and RoddyToolLib from RoddyCore
+
+- Sphinx-based documentation (for ReadTheDocs.org) 
+
+- building with Gradle
+
 * Version update to 2.3.187
 
 * Version update to 2.3.170
