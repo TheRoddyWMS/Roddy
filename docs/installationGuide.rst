@@ -92,7 +92,8 @@ except the JDK and Groovy. Additionally, there is an automatic downloader for th
 1. Release ZIPs for Roddy and the Roddy environment are available via [Github Releases](https://github.com/eilslabs/Roddy/releases). Download the latest release of the RoddyEnv ZIP and unpack it and change into the Roddy environment directory (e.g. "Roddy").
 2. After that you can install arbitrary releases of the Roddy ZIP into `dist/bin/$major.$minor.$patch` directories.
 3. The default and base plugin repositories need to be cloned into the `dist/plugins/` directory.
-   .. code-block:: Bash
+
+.. code-block:: Bash
 
    pushd dist/plugins
    git clone https://github.com/eilslabs/Roddy-Default-Plugin.git DefaultPlugin

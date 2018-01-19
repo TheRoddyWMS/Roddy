@@ -84,6 +84,7 @@ The ini files are explained in detail in :doc:`../config/applicationProperties`.
     #jobManagerClass=de.dkfz.roddy.execution.jobs.cluster.sge.SGEJobManager
     #jobManagerClass=de.dkfz.roddy.execution.jobs.cluster.slurm.SlurmJobManager
     #jobManagerClass=de.dkfz.roddy.execution.jobs.cluster.lsf.rest.LSFRestJobManager
+    #jobManagerClass=de.dkfz.roddy.execution.jobs.cluster.lsf.LSFJobManager
     commandFactoryUpdateInterval=300
     commandLogTruncate=80                       # Truncate logged commands to this length. If <= 0, then no truncation.
 
@@ -195,9 +196,10 @@ not be recognized as a project configuration by Roddy.
                          imports="baseProject"
                          usedresourcessize="m">
 
-The header of the configuration must contain the following: - The
-configurationType (in this case "project") - A name which must not
-contain "." and " "
+The header of the configuration must contain the following:
+
+- The configurationType (in this case "project")
+- A configuration name which must not contain "." and " "
 
 It may contain:
 
@@ -513,8 +515,9 @@ Import list for different workflows:
 Please consider using only one analysis import per project XML file, if
 you set configuration variables. Configuration values for different
 workflows might have the same name, which could lead to
-misconfigured workflows. If you do not want to create a new file, you
-can still use subconfigurations for the different workflows.
+misconfigured workflows. If you do not want to create a new file for every
+analysis, you can still use subconfigurations for the different workflows
+using the configuration attribute of the analysis tag:
 
 .. code-block:: XML
 

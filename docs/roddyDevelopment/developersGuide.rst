@@ -147,6 +147,16 @@ subdirectories.
 
 The content of the "roddyDistZip" produces a release zip that is supposed to be extracted into a directory called "dist/bin/$major.$minor.$build".
 
+Building the documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Sphinx-based documentation is located in the "docs/" directory and build with
+
+::
+
+    ./gradlew sphinx
+
+The output is then produced in "gradleBuild/site" for inspection in the browser.
 
 Further important notes
 ~~~~~~~~~~~~~~~~~~~~~~~

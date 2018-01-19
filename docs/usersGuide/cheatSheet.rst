@@ -6,11 +6,6 @@ fresreshment, when it comes to Roddy usage. We will mostly list useful
 commands and that’s it. No big explanations or other things. If you
 need this, open up the :doc:`walkthrough`.
 
-Where?
-~~~~~~
-
-/icgc/ngs\_share/ngsPipelines/RoddyStable/roddy.sh
-
 Create a new project
 ~~~~~~~~~~~~~~~~~~~~
 
