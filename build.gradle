@@ -20,7 +20,6 @@ buildscript {
     }
     dependencies {
         classpath group: 'kr.motd.gradle', name: 'sphinx-gradle-plugin', version: '1.0.6'
-        classpath group: 'gradle.plugin.net.vivin', name: 'gradle-semantic-build-versioning', version: '4.0.0'
     }
 }
 
