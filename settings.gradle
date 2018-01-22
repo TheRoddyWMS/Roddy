@@ -7,6 +7,7 @@ buildscript {
         }
     }
     dependencies {
+        // The configuration of this plugin is in semantic-build-versioning.gradle.
         classpath group: 'gradle.plugin.net.vivin', name: 'gradle-semantic-build-versioning', version: '4.0.0'
     }
 }
