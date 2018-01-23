@@ -64,7 +64,8 @@ ext.buildVersion = getVersionName()
 
 // Set -Pchecked on the command line to change this compiler parameter.
 if (!project.hasProperty("checked") || !project.checked) {
-    compileJava.options.compilerArgs = ["-F Xlint:unchecked"]
+    compileJava.options.compilerArgs = ["-Xlint:unchecked"]
+    compileGroovy.options.compilerArgs = ["-Xlint:unchecked"]
 }
 
 // The following keeps the Gradle build files separate from the ones build by IntelliJ (usually in build/).
