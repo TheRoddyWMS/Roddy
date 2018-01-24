@@ -60,9 +60,7 @@ sourceCompatibility = langLevel
 targetCompatibility = langLevel
 compileJava.options.fork = true
 
-ext.buildVersion = getVersionName()
-
-// Set -Pchecked on the command line to change this compiler parameter.
+// Set -Pchecked={true,false} on the command line to change this compiler parameter. Default: unchecked
 if (!project.hasProperty("checked") || !project.checked) {
     compileJava.options.compilerArgs = ["-Xlint:unchecked"]
     compileGroovy.options.compilerArgs = ["-Xlint:unchecked"]
