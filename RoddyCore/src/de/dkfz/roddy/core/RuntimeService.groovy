@@ -547,7 +547,6 @@ public class RuntimeService {
         Map<String, Object> parameters = [
                 (Constants.PID)          : (Object) dataset,
                 (Constants.PID_CAP)      : dataset,
-                (Constants.CONFIG_FILE)  : fs.getNameOfConfigurationFile(context).getAbsolutePath(),
                 (Constants.ANALYSIS_DIR) : context.getOutputDirectory().getParentFile().getParent()
         ]
         return parameters;
