@@ -47,8 +47,10 @@ public class RecursiveOverridableMapContainerForConfigurationValues
      */
     @Override
     protected ConfigurationValue temporarilyElevateValue(ConfigurationValue src) {
-        return new ConfigurationValue(this.getContainerParent(), src.id, src.value, src.getType(),
+        ConfigurationValue configurationValue = new ConfigurationValue(this.getContainerParent(), src.id, src.value, src.getType(),
                 src.getDescription(), new LinkedList<>(src.getListOfTags()));
+        configurationValue.getListOfTags().add("ELEVATED");
+        return configurationValue;
     }
 
     public ConfigurationValue get(String id) {

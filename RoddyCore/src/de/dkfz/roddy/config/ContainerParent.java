@@ -11,7 +11,7 @@ import java.util.List;
 /**
 */
 public interface ContainerParent<P extends ContainerParent> {
-    public List<P> getContainerParents();
+    public List<P> getParents();
 
     public RecursiveOverridableMapContainer getContainer(String id);
 

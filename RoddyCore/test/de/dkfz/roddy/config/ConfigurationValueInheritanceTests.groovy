@@ -91,18 +91,18 @@ class ConfigurationValueInheritanceTests {
      *
      * A1 = { a = 'A1.a', b = '${a}' }              <br/> Idea will try to pull A B C on the same line on code format.
      * A2 = { a = 'A2.a', b = 'A2.b' }              <br/>
-     * B1 = { c = 'B1.c', b = '${a}' }              <br/>
+     * B1 = { c = 'B1.c', d = '${a}' }              <br/>
      * B2 = { a = '${b} + ${c}', b = 'B2.b' }       <br/>
      * C1 = { c = 'C.c' }                           <br/>
      *
-     * A1.b = 'A1.a'
+     * A1.b = 'A1.a'     // evaluation within same configuration
      * A2.b = 'A2.b'
      *
-     * B1.a = 'A2.a'
-     * B1.b = 'A2.b'
-     * B1.d = 'A2.a'
+     * B1.a = 'A2.a'     // eval. taking value from parent of the highest priority (rightmost in parent list parameter)
+     * B1.b = 'A2.b'     // eval. taking value from parent of the highest priority (rightmost in parent list parameter)
+     * B1.d = 'A2.a'     // eval ${a} to the parent of highest priority
      *
-     * B2.a = 'B2.b + ${c}'     c is not set in A* or B* and therefore will not be evaluated
+     * B2.a = 'B2.b + ${c}'  // c is not set in A* or B* and therefore will not be evaluated
      *
      * C1.a = 'B2.b + C.c'
      * C1.b = 'B2.b'

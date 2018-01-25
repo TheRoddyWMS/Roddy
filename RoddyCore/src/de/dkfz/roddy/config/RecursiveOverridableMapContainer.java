@@ -6,7 +6,6 @@
 
 package de.dkfz.roddy.config;
 
-import de.dkfz.roddy.config.ConfigurationError;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 
 import java.util.LinkedHashMap;
@@ -53,33 +52,44 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
         return new LinkedList<>(values.keySet());
     }
 
-    public List<K> getListOfAllValues() {
+    public List<K> getListOfAllValueKeys() {
         List<K> allValues = new LinkedList<>();
-        for (P parent : (List<P>) containerParent.getContainerParents())
-            allValues.addAll(parent.getContainer(id).getListOfAllValues());
+        for (P parent : (List<P>) containerParent.getParents())
+            allValues.addAll(parent.getContainer(id).getListOfAllValueKeys());
 
         allValues.addAll(values.keySet());
         return allValues;
     }
 
+    /**
+     * @return a map of value keys and evaluated values
+     */
     public Map<K, V> getAllValues() {
-
-        Map<K, V> allValues = new LinkedHashMap<>();
-        for (P parent : (List<P>) containerParent.getContainerParents()) {
-            Map<K, V> tempValues = parent.getContainer(id).getAllValues();
-            for (K key : tempValues.keySet()) {
-                allValues.put(key, tempValues.get(key));
-            }
+        Map<K, V> elevatedValues = new LinkedHashMap<>();
+        for (V value : getAllUnevaluatedValues().values()) {
+            elevatedValues.put((K) value.getID(), temporarilyElevateValue(value));
         }
-        allValues.putAll(values);
-        return allValues;
+        return elevatedValues;
     }
 
+    /**
+     * @return a list of evaluated values
+     */
     public List<V> getAllValuesAsList() {
         return new LinkedList<>(getAllValues().values());
     }
 
-    public List<V> getInheritanceList(String valueID) throws ConfigurationError {
+    protected Map<K, V> getAllUnevaluatedValues() {
+        Map<K, V> allValues = new LinkedHashMap<>();
+        for (P parent : (List<P>) containerParent.getParents()) {
+            allValues.putAll(parent.getContainer(id).getAllUnevaluatedValues());
+        }
+
+        allValues.putAll(values);
+        return allValues;
+    }
+
+    public List<V> getInheritanceList(K valueID) throws ConfigurationError {
         List<V> allValues = new LinkedList<>();
 
         if (getMap().containsKey(valueID))
@@ -90,7 +100,7 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
         if (containerParent == null)
             return allValues;
 
-        for (Object _configuration : containerParent.getContainerParents()) {
+        for (Object _configuration : containerParent.getParents()) {
             ContainerParent configuration = (ContainerParent)_configuration;
             allValues.addAll(configuration.getContainer(this.id).getInheritanceList(valueID));
         }
@@ -98,8 +108,8 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
         return allValues;
     }
 
-    public boolean hasValue(String id) {
-        return getListOfAllValues().contains(id);
+    public boolean hasValue(K id) {
+        return getListOfAllValueKeys().contains(id);
     }
 
     /**
@@ -130,7 +140,7 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
      * @param id
      * @return
      */
-    protected V _getValueUnchecked(String id) {
+    protected V _getValueUnchecked(K id) {
         V cval = getAllValues().get(id);
         if(!values.containsKey(id))
             return temporarilyElevateValue(cval);
@@ -138,7 +148,12 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
         return cval;
     }
 
-    public V getValue(String id, V defaultValue) {
+    /**
+     * @param id
+     * @param defaultValue
+     * @return the evaluated value for the id, if it exists, otherwise the defauletValue
+     */
+    public V getValue(K id, V defaultValue) {
         if (!hasValue(id))
             return defaultValue;
         return _getValueUnchecked(id);
@@ -148,9 +163,9 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
      * @throws ConfigurationError if a value is requested that does not exist.
      * @param id    Configuration value to return.
      */
-    public V getValue(String id) throws ConfigurationError {
+    public V getValue(K id) throws ConfigurationError {
         if (!hasValue(id))
-            throw new ConfigurationError("Value could not be found in containers", id);
+            throw new ConfigurationError("Value could not be found in containers", id.toString());
         return _getValueUnchecked(id);
     }
 
