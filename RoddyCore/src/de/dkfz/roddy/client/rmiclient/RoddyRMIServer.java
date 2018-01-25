@@ -78,7 +78,7 @@ public class RoddyRMIServer {
     }
 
     private static int getRMIServerCountDown() {
-        return RoddyConversionHelperMethods.toInt(Roddy.getApplicationProperty("roddyRMIServerCountDown", "180"), 180);
+        return RoddyConversionHelperMethods.toInt(Roddy.getOrSetApplicationProperty("roddyRMIServerCountDown", "180"), 180);
     }
 
     public static void stopServer() {

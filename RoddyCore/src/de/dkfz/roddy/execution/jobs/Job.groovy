@@ -513,11 +513,16 @@ class Job extends BEJob<BEJob, BEJobResult> {
         this.parameters[Constants.PARAMETER_FILE] = parameterObjectToString(Constants.PARAMETER_FILE, parameterFile)
         // The CONFIG_FILE variable is set to the same value as the PARAMETER_FILE to keep older scripts working with job-specific only environments.
         this.parameters[Constants.CONFIG_FILE] = this.parameters[Constants.PARAMETER_FILE]
+
         boolean debugWrapInScript = false
         if (configuration.configurationValues.hasValue(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)) {
             debugWrapInScript = configuration.configurationValues.getBoolean(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)
         }
         this.parameters.put(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT, parameterObjectToString(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT, debugWrapInScript))
+
+        if (configuration.configurationValues.hasValue(Constants.BASE_ENVIRONMENT_SCRIPT)) {
+            this.parameters.put(Constants.BASE_ENVIRONMENT_SCRIPT, parameterObjectToString(Constants.BASE_ENVIRONMENT_SCRIPT))
+        }
 
         appendProcessingCommands(configuration)
 

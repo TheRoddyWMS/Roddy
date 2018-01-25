@@ -744,17 +744,17 @@ public class RoddyCLIClient {
 
             RunMode runMode = Roddy.getRunMode();
 
-            boolean useProxyForInternetConnection = Boolean.parseBoolean(Roddy.getApplicationProperty(Constants.APP_PROPERTY_NET_USEPROXY, false.toString()));
+            boolean useProxyForInternetConnection = Boolean.parseBoolean(Roddy.getOrSetApplicationProperty(Constants.APP_PROPERTY_NET_USEPROXY, false.toString()));
             useProxyForInternetConnection = sc.getBooleanYN("Does your internet connection require a proxy:", useProxyForInternetConnection);
             if (useProxyForInternetConnection) {
-                String adr = sc.getString("Enter your proxy address: ", Roddy.getApplicationProperty(Constants.APP_PROPERTY_NET_PROXY_ADDRESS, StringConstants.EMPTY));
-                String usr = sc.getString("Enter your proxy user id: ", Roddy.getApplicationProperty(Constants.APP_PROPERTY_NET_PROXY_USR, StringConstants.EMPTY));
+                String adr = sc.getString("Enter your proxy address: ", Roddy.getOrSetApplicationProperty(Constants.APP_PROPERTY_NET_PROXY_ADDRESS, StringConstants.EMPTY));
+                String usr = sc.getString("Enter your proxy user id: ", Roddy.getOrSetApplicationProperty(Constants.APP_PROPERTY_NET_PROXY_USR, StringConstants.EMPTY));
                 Roddy.setApplicationProperty(Constants.APP_PROPERTY_NET_PROXY_ADDRESS, adr);
                 Roddy.setApplicationProperty(Constants.APP_PROPERTY_NET_PROXY_USR, usr);
             }
             Roddy.setApplicationProperty(Constants.APP_PROPERTY_NET_USEPROXY, useProxyForInternetConnection.toString());
 
-            String selectedExecService = Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, LocalExecutionService.class.getName());
+            String selectedExecService = Roddy.getOrSetApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, LocalExecutionService.class.getName());
             String serviceQuery = "Chose an execution service:";
             List<String> availableServiceOptions = Arrays.asList("LocalExecutionService - Run everything locally (Data files, binaries and the command submission tool must be accessible!)", "SSHExecutionService - Run using an ssh connection.");
             List<String> availableServiceClasses = Arrays.asList(LocalExecutionService.class.getName(), SSHExecutionService.class.getName());
@@ -767,14 +767,14 @@ public class RoddyCLIClient {
 
             if (selectedExecService.equals(availableServiceClasses.get(1))) {
                 String sshHosts;
-                System.out.print("Enter a list of ssh hosts: [" + Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_HOSTS, "") + "] ");
+                System.out.print("Enter a list of ssh hosts: [" + Roddy.getOrSetApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_HOSTS, "") + "] ");
                 sshHosts = sc.getString();
                 if (sshHosts.trim().length() == 0)
-                    sshHosts = Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_HOSTS, "");
+                    sshHosts = Roddy.getOrSetApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_HOSTS, "");
 
 //                System.out.println("Create a key pair for passwordless server access? (Roddy won't run without this!) [y/N] ");
 //                boolean createKeyPair = sc.getBooleanYN();
-                String selectedAuthenticationMethod = Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE);
+                String selectedAuthenticationMethod = Roddy.getOrSetApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE);
                 String authQuery = "Chose an authentication method:";
                 List<String> authOptions = Arrays.asList("Authenticate using a pair of passwordless keyfiles.", "Authenticate using a user and a password.");
                 List<String> authMethods =
@@ -790,7 +790,7 @@ public class RoddyCLIClient {
                 String sshPassword = "";
                 boolean storePassword = false;
                 if (selectedAuthenticationMethod.equals(Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD)) {
-                    System.out.print("Enter your ssh user id: [" + Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_USER, "") + "] ");
+                    System.out.print("Enter your ssh user id: [" + Roddy.getOrSetApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_USER, "") + "] ");
                     sshUser = sc.getString();
                     System.out.print("Enter your ssh password: ");
                     sshPassword = sc.getPasswordString();

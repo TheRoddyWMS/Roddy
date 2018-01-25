@@ -89,7 +89,7 @@ public class FileSystemAccessProvider {
                 fileSystemAccessProvider = new NoNoFileSystemAccessProvider();
             }
             try {
-                Class fisClz = LibrariesFactory.getGroovyClassLoader().loadClass(Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS, FileSystemAccessProvider.class.getName()));
+                Class fisClz = LibrariesFactory.getGroovyClassLoader().loadClass(Roddy.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS, FileSystemAccessProvider.class.getName()));
                 fileSystemAccessProvider = (FileSystemAccessProvider) fisClz.getConstructors()[0].newInstance();
             } catch (Exception e) {
                 logger.warning("Falling back to default file system info provider");

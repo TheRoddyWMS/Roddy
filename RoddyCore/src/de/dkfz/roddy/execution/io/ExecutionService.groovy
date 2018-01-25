@@ -6,7 +6,6 @@
 
 package de.dkfz.roddy.execution.io
 
-import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.execution.BEExecutionService
 import de.dkfz.roddy.execution.jobs.Command
@@ -76,7 +75,7 @@ abstract class ExecutionService implements BEExecutionService {
             if (!isConnected) {
                 int queryCount = 0
                 //If password is not stored, ask once for the password only, increase queryCount.
-                if (!Boolean.parseBoolean(Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_STORE_PWD, Boolean.FALSE.toString()))) {
+                if (!Boolean.parseBoolean(Roddy.getOrSetApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_STORE_PWD, Boolean.FALSE.toString()))) {
                     Roddy.setApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD)
                     RoddyCLIClient.askForPassword()
                     isConnected = executionService.tryInitialize(true)
@@ -104,7 +103,7 @@ abstract class ExecutionService implements BEExecutionService {
         ClassLoader classLoader = LibrariesFactory.getGroovyClassLoader()
 
         RunMode runMode = Roddy.getRunMode()
-        String executionServiceClassID = Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, SSHExecutionService.class.getName())
+        String executionServiceClassID = Roddy.getOrSetApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, SSHExecutionService.class.getName())
         try {
             Class executionServiceClass = classLoader.loadClass(executionServiceClassID)
             initializeService(executionServiceClass, runMode)
@@ -172,7 +171,7 @@ abstract class ExecutionService implements BEExecutionService {
     @Override
     ExecutionResult execute(Command command, boolean waitFor = true) {
         ExecutionContext context = ((Job) command.getJob()).getExecutionContext()
-        boolean configurationDisallowsJobSubmission = Roddy.getApplicationProperty(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAGS, "").contains(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAG_NOJOBSUBMISSION)
+        boolean configurationDisallowsJobSubmission = Roddy.getOrSetApplicationProperty(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAGS, "").contains(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAG_NOJOBSUBMISSION)
         boolean preventCalls = context.getConfiguration().getPreventJobExecution()
         boolean pidIsBlocked = blockedPIDsForJobExecution.contains(context.getDataSet())
         boolean isDummyCommand = Command instanceof DummyCommand
@@ -181,7 +180,7 @@ abstract class ExecutionService implements BEExecutionService {
         String cmdString
         if (!configurationDisallowsJobSubmission && !allJobsBlocked && !pidIsBlocked && !preventCalls && !isDummyCommand) {
             try {
-                cmdString = command.toString()
+                cmdString = command.toBashCommandString()
 
                 OutputStream outputStream = createServiceBasedOutputStream(command, waitFor)
 
