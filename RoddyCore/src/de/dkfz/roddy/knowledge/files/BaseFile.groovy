@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.knowledge.files
 
+import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationError
 import de.dkfz.roddy.config.DerivedFromFilenamePattern
@@ -19,9 +20,16 @@ import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.Workflow
+import de.dkfz.roddy.execution.io.ExecutionResult
+import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.BEJobResult
+import de.dkfz.roddy.execution.jobs.Command
+import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.JobManagerOptionsBuilder
+import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
+import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
@@ -230,6 +238,48 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
     static BaseFile deriveFrom(BaseFile parentFile, String _class = STANDARD_FILE_CLASS) {
         assert parentFile
         getFile(parentFile, _class)
+    }
+
+    /**
+     * This classes purpose is to extend the original BEJobResult to get access to the internal object for the contained
+     * execution result object. Not more not less.
+     */
+    private static class BEJobResultExtension extends BEJobResult {
+
+        BEJobResultExtension(BEJobResult extended) {
+            super(extended.command, extended.job, extended.executionResult, extended.toolID, extended.jobParameters, extended.parentJobs)
+        }
+
+        List<String> resultLines() {
+            return super.executionResult.resultLines
+        }
+    }
+
+    static BaseFile getSourceFileUsingTool(ExecutionContext context, String toolID, String _class = STANDARD_FILE_CLASS) {
+        def dss = new DirectSynchronousExecutionJobManager(ExecutionService.instance, new JobManagerOptionsBuilder().build())
+        def defaultParms = context.runtimeService.getDefaultJobParameters(context, toolID)
+        def scriptContext = new ExecutionContext(context.executingUser, context.analysis, context.dataSet, ExecutionContextLevel.RUN, context.outputDirectory, context.inputDirectory, context.executionDirectory, context.creationCheckPoint)
+        def job = new Job(scriptContext, "BLLLLLAAAAA", toolID, defaultParms)
+        job.jobManager = dss
+        def jobResult = job.run()
+        if(job.wasExecuted()) {
+            def jobResultCopyExtended = new BEJobResultExtension(jobResult)
+            jobResultCopyExtended.resultLines()
+//        jobResultCopyExtended.
+//        def commandString = cmd.toString()
+//        def executionResult = ExecutionService.instance.execute(commandString, true)
+//        return fromStorage(context, executionResult.firstLine)
+            return fromStorage(context, null)
+        }
+        return null
+    }
+
+    static List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID, String _class = STANDARD_FILE_CLASS) {
+        def dss = new DirectSynchronousExecutionJobManager(ExecutionService.instance, new JobManagerOptionsBuilder().build())
+        def job = new Job(context, "BLLLLLAAAAA", toolID, [:])
+        def cmd = new DirectCommand(dss, job, [])
+
+        return ExecutionService.instance.execute(cmd.toString(), true).resultLines.collect { fromStorage(context, it) }
     }
 
     protected File path;

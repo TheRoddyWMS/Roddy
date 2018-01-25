@@ -8,6 +8,7 @@ package de.dkfz.roddy.core;
 
 import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.config.ConfigurationError;
+import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.knowledge.files.FileGroup;
 import de.dkfz.roddy.knowledge.files.FileObject;
@@ -130,6 +131,22 @@ public abstract class Workflow {
      */
     protected BaseFile getSourceFile(ExecutionContext context, String path, String _class) {
         return BaseFile.fromStorage(context, path, _class);
+    }
+
+    protected BaseFile getSourceFileUsingTool(ExecutionContext context, String toolID) {
+        return getSourceFileUsingTool(context, toolID, BaseFile.STANDARD_FILE_CLASS);
+    }
+
+    protected BaseFile getSourceFileUsingTool(ExecutionContext context, String toolID, String _class) {
+        return BaseFile.getSourceFileUsingTool(context, toolID, _class);
+    }
+
+    protected List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID) {
+        return getSourceFilesUsingTool(context, toolID, BaseFile.STANDARD_FILE_CLASS);
+    }
+
+    protected List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID, String _class) {
+        return BaseFile.getSourceFilesUsingTool(context, toolID, _class);
     }
 
     /**
