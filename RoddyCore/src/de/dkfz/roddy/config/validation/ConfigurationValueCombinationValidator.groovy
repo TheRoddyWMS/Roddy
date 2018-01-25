@@ -21,7 +21,7 @@ class ConfigurationValueCombinationValidator extends ConfigurationValidator {
 
     @Override
     boolean validate() {
-        def listOfAllValues = configuration.getConfigurationValues().getListOfAllValues().findAll { String it -> it.startsWith("cfgValidationRule") }
+        def listOfAllValues = configuration.getConfigurationValues().getListOfAllValueKeys().findAll { String it -> it.startsWith("cfgValidationRule") }
         Map<String, List<String>> rulesByGroup = [:]
         for (String id in listOfAllValues) {
             String[] split = id.split(SPLIT_UNDERSCORE)

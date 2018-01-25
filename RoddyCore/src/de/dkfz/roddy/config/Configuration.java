@@ -257,7 +257,7 @@ public class Configuration implements ContainerParent<Configuration> {
         return projectName;
     }
 
-    public List<Configuration> getContainerParents() {
+    public List<Configuration> getParents() {
         return parents;
     }
 

@@ -269,7 +269,12 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         return toString(new LinkedList<>());
     }
 
+    @Deprecated
     public String toString(List<String> blackList) {
+        return toEvaluatedValue(blackList);
+    }
+
+    public String toEvaluatedValue(List<String> blackList) {
         String temp = value;
         if (configuration != null) {
             List<String> valueIDs = getIDsForParentValues();
