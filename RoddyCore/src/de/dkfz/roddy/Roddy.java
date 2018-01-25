@@ -717,7 +717,7 @@ public class Roddy {
                         .setCreateDaemon(true)
                         .setStrictMode(false)
                         .setTrackUserJobsOnly(trackUserJobsOnly)
-                        .setPassEnvironment(Optional.of(false))
+                        .setPassEnvironment(true)
                         .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
 //                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestMemoryIsEnabled", "true"), true))
 //                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getApplicationProperty(RunMode.CLI, "requestWalltimeIsEnabled", "true"), true))
