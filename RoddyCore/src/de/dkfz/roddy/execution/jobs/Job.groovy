@@ -25,7 +25,9 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileDynamic
 
+import static de.dkfz.roddy.Constants.CONFIG_FILE
 import static de.dkfz.roddy.Constants.NO_VALUE
+import static de.dkfz.roddy.Constants.PARAMETER_FILE
 import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 
 @groovy.transform.CompileStatic
@@ -242,22 +244,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
         }
         return dIDs
     }
-
-    private List<String> finalParameters() {
-        List<String> allParametersForFile = new LinkedList<>();
-        if (parameters.size() > 0) {
-            for (String parm : parameters.keySet()) {
-                String val = parameters.get(parm);
-                if (val.contains(StringConstants.DOLLAR_LEFTBRACE) && val.contains(StringConstants.BRACE_RIGHT)) {
-                    val = val.replace(StringConstants.DOLLAR_LEFTBRACE, "#{"); // Replace variable names so they can be passed to qsub.
-                }
-                String key = parm;
-                allParametersForFile << FileSystemAccessProvider.getInstance().getConfigurationConverter().convertConfigurationValue(new ConfigurationValue(key, val), this.executionContext).toString();
-            }
-        }
-        return allParametersForFile;
-    }
-
 
     private static String fileToParameterString(File file) {
         return file.getAbsolutePath()
@@ -499,6 +485,16 @@ class Job extends BEJob<BEJob, BEJobResult> {
 //        }
     }
 
+    /** Keep only the essential command line configurations for the job, due to argument length restrictions (e.g. -env in LSF).
+     *
+     */
+    void keepOnlyEssentialParameters() {
+        Set<String> nonEssentialParameters = parameters.keySet().findAll { key ->
+            ! [PARAMETER_FILE, CONFIG_FILE, ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT].contains(key)
+        }
+        parameters.keySet().removeAll(nonEssentialParameters)
+    }
+
     @CompileDynamic
     BEJobResult run() {
         if (runResult != null)
@@ -515,7 +511,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
         //Remove duplicate job ids as PBS qsub cannot handle duplicate keys => job will hold forever as it releases the dependency queue linearly.
         this.parameters[Constants.RODDY_PARENT_JOBS] = parameterObjectToString(Constants.RODDY_PARENT_JOBS, parentJobIDs.unique()*.id)
         this.parameters[Constants.PARAMETER_FILE] = parameterObjectToString(Constants.PARAMETER_FILE, parameterFile)
-        boolean debugWrapInScript = true
+        // The CONFIG_FILE variable is set to the same value as the PARAMETER_FILE to keep older scripts working with job-specific only environments.
+        this.parameters[Constants.CONFIG_FILE] = this.parameters[Constants.PARAMETER_FILE]
+        boolean debugWrapInScript = false
         if (configuration.configurationValues.hasValue(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)) {
             debugWrapInScript = configuration.configurationValues.getBoolean(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)
         }
@@ -538,6 +536,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         //Execute the job or create a dummy command.
         if (runJob) {
             storeJobConfigurationFile(createJobConfiguration())
+            keepOnlyEssentialParameters()
             runResult = jobManager.submitJob(this)
             appendToJobStateLogfile(jobManager, executionContext, runResult, null)
             cmd = runResult.command
