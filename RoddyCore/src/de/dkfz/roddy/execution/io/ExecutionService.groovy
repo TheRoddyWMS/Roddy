@@ -6,7 +6,6 @@
 
 package de.dkfz.roddy.execution.io
 
-import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.execution.BEExecutionService
 import de.dkfz.roddy.execution.jobs.Command
@@ -181,7 +180,7 @@ abstract class ExecutionService implements BEExecutionService {
         String cmdString
         if (!configurationDisallowsJobSubmission && !allJobsBlocked && !pidIsBlocked && !preventCalls && !isDummyCommand) {
             try {
-                cmdString = command.toString()
+                cmdString = command.toBashCommandString()
 
                 OutputStream outputStream = createServiceBasedOutputStream(command, waitFor)
 

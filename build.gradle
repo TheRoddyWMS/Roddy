@@ -31,15 +31,6 @@ plugins {
 group = "com.github.eilslabs"
 
 /**
- * Gets the version name from the current Git tag. If the current commit is not tagged,
- * this returned string will indicate that. Also if the repository is dirty.
- */
-String getVersionName() {
-    def dirtySuffix = grgit.status().isClean() ? '' : '-dirty'
-    return grgit.describe() + dirtySuffix
-}
-
-/**
  * -PignoreFailedTests                  Continue despite failed tests.
  * -PreleaseLevel={major,minor,patch}   When releasing, increase the major.minor.patch number. The build number is always increased.
  * -PallowDirtyRepo=true                Continue release despite dirty repo.
@@ -60,11 +51,10 @@ sourceCompatibility = langLevel
 targetCompatibility = langLevel
 compileJava.options.fork = true
 
-ext.buildVersion = getVersionName()
-
-// Set -Pchecked on the command line to change this compiler parameter.
+// Set -Pchecked={true,false} on the command line to change this compiler parameter. Default: unchecked
 if (!project.hasProperty("checked") || !project.checked) {
-    compileJava.options.compilerArgs = ["-F Xlint:unchecked"]
+    compileJava.options.compilerArgs = ["-Xlint:unchecked"]
+    compileGroovy.options.compilerArgs = ["-Xlint:unchecked"]
 }
 
 // The following keeps the Gradle build files separate from the ones build by IntelliJ (usually in build/).
@@ -142,7 +132,7 @@ dependencies {
 }
 
 project.ext.currentDistributionDir = new File(rootProject.projectDir, "dist/bin/current")
-convention.add("releaseDir", new File(project.ext.currentDistributionDir, "../" + getVersionName()).absoluteFile)
+convention.add("releaseDir", new File(project.ext.currentDistributionDir, "../" + rootProject.version).absoluteFile)
 
 sourceSets {
     main {
@@ -177,28 +167,28 @@ jar {
     baseName = "Roddy"
     classifier = null
     version = null
-    // version = getVersionName()  // toggle to get a versioned jar name
+    // version = rootProject.version  // toggle to get a versioned jar name
     setDestinationDir(project.ext.currentDistributionDir)
     manifest {
         attributes("Implementation-Vendor": "German Cancer Research Center (DKFZ)")
         attributes 'Main-Class': mainClassName
         attributes("Implementation-Title": name)
-        attributes 'Implementation-Version': getVersionName()
+        attributes 'Implementation-Version': rootProject.version
     }
     dependsOn cleanRuntimeLibs, copyRuntimeLibs
 }
 
 /** Produce 2 distribution packages:
  *
- *  * Roddy.zip with everything that belongs into the dist/bin/current directory & some other smaller files.
- *  * RoddyEnv.zip with the runtime environment, starter script, etc.
+ *  * Roddy-*.zip with everything that belongs into the dist/bin/current directory & some other smaller files.
+ *  * RoddyEnv-*.zip with the runtime environment, starter script, etc.
  */
 distributions {
 
     roddy {
-        baseName = "Roddy-" + getVersionName()
+        baseName = "Roddy"
         contents {
-            into(getVersionName())
+            into(rootProject.version)
             from("dist/bin/current/") {
                 include("**")
             }
@@ -216,7 +206,7 @@ distributions {
     }
 
     roddyEnvironment {
-        baseName = "RoddyEnv-" + getVersionName()
+        baseName = "RoddyEnv"
         contents {
             from("./") {
                 include("roddy.sh")

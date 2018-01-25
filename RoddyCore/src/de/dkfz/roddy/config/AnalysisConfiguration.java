@@ -45,11 +45,11 @@ public class AnalysisConfiguration extends Configuration {
 
     @Override
     public ResourceSetSize getResourcesSize() {
-        for (Configuration configuration : getContainerParents()) {
+        for (Configuration configuration : getParents()) {
             if(configuration instanceof ProjectConfiguration)
                 return configuration.getResourcesSize();
         }
-        return getContainerParents().get(0).getResourcesSize();
+        return getParents().get(0).getResourcesSize();
     }
 
     /**
