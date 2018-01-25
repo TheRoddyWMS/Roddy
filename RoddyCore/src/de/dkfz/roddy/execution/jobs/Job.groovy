@@ -18,6 +18,7 @@ import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.cluster.ClusterJobManager
+import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
@@ -165,7 +166,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 , []
                 , [:]
                 , Roddy.getJobManager()
-                , JobLog.toOneFile(new File (context.loggingDirectory, jobName + ".o{JOB_ID}"))
+                , JobLog.toOneFile(new File(context.loggingDirectory, jobName + ".o{JOB_ID}"))
                 , null)
         this.localToolPath = context.getConfiguration().getSourceToolPath(toolID)
         this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectJobIDsFromFiles(parentFiles), jobManager))
@@ -194,6 +195,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         this.parameters[PARM_WRAPPED_SCRIPT] = context.getConfiguration().getProcessingToolPath(context, toolID).getAbsolutePath()
         this.parameters[PARM_WRAPPED_SCRIPT_MD5] = getToolMD5(toolID, context)
+        this.parameters[PARM_JOBCREATIONCOUNTER] = "" + jobCreationCounter
 
         if (inputParameters != null)
             initialInputParameters.putAll(inputParameters)
@@ -430,8 +432,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
      *
      * @param job
      */
-    @CompileDynamic
-    void appendToJobStateLogfile(ClusterJobManager jobManager, ExecutionContext executionContext, BEJobResult res, OutputStream out = null) {
+    void appendToJobStateLogfile(BatchEuphoriaJobManager jobManager, ExecutionContext executionContext, BEJobResult res, OutputStream out = null) {
         if (res.wasExecuted) {
             def job = res.command.getJob()
             String jobInfoLine
@@ -443,6 +444,10 @@ class Job extends BEJob<BEJob, BEJobResult> {
                     jobInfoLine = jobStateInfoLine(jobId, "UNSTARTED", millis)
                 else if (job.getJobState() == JobState.ABORTED)
                     jobInfoLine = jobStateInfoLine(jobId, "ABORTED", millis)
+                else if (job.getJobState() == JobState.COMPLETED_SUCCESSFUL)
+                    jobInfoLine = jobStateInfoLine(jobId, "0", millis)
+                else if (job.getJobState() == JobState.FAILED)
+                    jobInfoLine = jobStateInfoLine(jobId, "" + res.executionResult.exitCode, millis)
                 else
                     jobInfoLine = null
             } else {
@@ -454,52 +459,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
         }
     }
 
-    /**
-     * Stores a new job jobState info to an execution contexts job jobState log file.
-     *
-     * @param job
-     */
-    @CompileDynamic
-    void appendToJobStateLogfile(DirectSynchronousExecutionJobManager jobManager, ExecutionContext executionContext, BEJobResult res, OutputStream outputStream = null) {
-//        if (res.command.isBlockingCommand()) {
-//            assert (null != outputStream)
-//            File logFile = (res.command.getTag(Constants.COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext).getRuntimeService().getLogFileForCommand(res.command)
-//
-//            // Use reflection to get access to the hidden path field :p The stream object does not natively give
-//            // access to it and I do not want to create a new class just for this.
-//            Field fieldOfFile = FileOutputStream.class.getDeclaredField("path")
-//            fieldOfFile.setAccessible(true);
-//            File tmpFile2 = new File((String) fieldOfFile.get(outputStream))
-//
-//            FileSystemAccessProvider.getInstance().moveFile(tmpFile2, logFile)
-//        } else {
-        if (res.wasExecuted) {
-            String millis = "" + System.currentTimeMillis()
-            millis = millis.substring(0, millis.length() - 3)
-            String code = "255"
-            if (res.job.getJobState() == JobState.UNSTARTED)
-                code = "UNSTARTED" // N
-            else if (res.job.getJobState() == JobState.ABORTED)
-                code = "ABORTED" // A
-            else if (res.job.getJobState() == JobState.COMPLETED_SUCCESSFUL)
-                code = "SUCCESSFUL"  // C
-            else if (res.job.getJobState() == JobState.FAILED)
-                code = "FAILED" // E
-
-            if (null != res.job.getJobID()) {
-                // That is indeed funny here: on our cluster, the following line did not work without the forced toString(), however
-                // on our local machine it always worked! Don't know why it worked for PBS... Now we force-convert the parameters.
-                String jobInfoLine = jobStateInfoLine("" + res.job.getJobID(), code, millis)
-                FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getNameOfJobStateLogFile(executionContext), jobInfoLine, false)
-            } else {
-                logger.postSometimesInfo("Did not store info for job " + res.job.getJobName() + ", job id was null.")
-            }
-
-        }
-//        }
-    }
-
-    @CompileDynamic
     BEJobResult run() {
         if (runResult != null)
             throw new RuntimeException(Constants.ERR_MSG_ONLY_ONE_JOB_ALLOWED)
@@ -523,7 +482,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         appendProcessingCommands(configuration)
 
-
         //See if the job should be executed
         if (contextLevel == ExecutionContextLevel.RUN || contextLevel == ExecutionContextLevel.CLEANUP) {
             runJob = true //The job is always executed if run is selected
@@ -541,7 +499,13 @@ class Job extends BEJob<BEJob, BEJobResult> {
             runResult = jobManager.submitJob(this)
             appendToJobStateLogfile(jobManager, executionContext, runResult, null)
             cmd = runResult.command
-            jobDetailsLine << " => " + cmd.job.getJobID()
+            jobDetailsLine << " => " + cmd.job.getJobID().toString().padRight(10) // If we have os process id attached, we'll need some space, so pad the output.
+
+            // For direct execution it can be very helpful to know the id of the started process. Sometimes, sub processes
+            // remain and need to be killed.
+            if (cmd instanceof DirectCommand)
+                jobDetailsLine << " [OS Process ID: ${runResult.executionResult.processID}]"
+
             System.out.println(jobDetailsLine.toString())
             if (!cmd.jobID) {
                 context.addErrorEntry(ExecutionContextError.EXECUTION_SUBMISSION_FAILURE.expand("Please check your submission command manually.\n\t  Is your access group set properly? [${context.getAnalysis().getUsergroup()}]\n\t  Can the submission binary handle your binary?\n\t  Is your submission system offline?"))
@@ -576,16 +540,16 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return runResult
     }
 
-/**
- * There are several reasons, why we need a job configuration.
- * The most important reason is, that we need to replicate Roddys configuration mechanism with all it's functionality for
- * any target system (Bash so far). If we don't do it, we will suffer from:
- * - wrong values
- * - wrong resolved value dependencies
- * - mistakenly overriden values
- * There might be more, but these are the ones for now.
- * @return
- */
+    /**
+     * There are several reasons, why we need a job configuration.
+     * The most important reason is, that we need to replicate Roddys configuration mechanism with all it's functionality for
+     * any target system (Bash so far). If we don't do it, we will suffer from:
+     * - wrong values
+     * - wrong resolved value dependencies
+     * - mistakenly overriden values
+     * There might be more, but these are the ones for now.
+     * @return
+     */
     Configuration createJobConfiguration() {
         Configuration jobConfiguration = new Configuration(null, executionContext.configuration)
         jobConfiguration.configurationValues.addAll(parameters.collect { String k, String v -> new ConfigurationValue(jobConfiguration, k, v) })
