@@ -79,10 +79,6 @@ public class Constants {
     public static final String PARAMETER_FILE = "PARAMETER_FILE";
     public static final String ANALYSIS_DIR = "ANALYSIS_DIR";
     public static final String PARAMETER_FILE_SUFFIX = ".parameters";
-    public static final String WRAPPED_SCRIPT = "WRAPPED_SCRIPT";
     public static final String PID_CAP = "PID";
     public static final String PID = "pid";
-    public static final String BASE_ENVIRONMENT_SCRIPT = "baseEnvironmentScript";
-
-    public static final String COMMAND_TAG_EXECUTION_CONTEXT = "ExecutionContext";
 }

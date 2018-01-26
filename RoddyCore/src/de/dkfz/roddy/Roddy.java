@@ -847,6 +847,7 @@ public class Roddy {
                 if (!RoddyConversionHelperMethods.isBoolean(value)) {
                     throw new ConfigurationError("applicationProperty value '" + value + "' cannot be interpreted as boolean", pName);
                 }
+                break;
             default:
                 throw new RuntimeException("Unknown property value type: ${type}");
         }
