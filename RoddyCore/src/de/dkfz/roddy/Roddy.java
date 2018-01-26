@@ -613,16 +613,21 @@ public class Roddy {
         configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_QUEUE_RAW, "$" + Roddy.jobManager.getQueueVariable()));
     }
 
-    /** Copy the scratchBaseDirectory value from the applicationProperties.ini into the configuration. Set the default value for RODDY_SCRATCH
-     *  to $scratchBaseDirectory/$RODDY_JOBID.
-     * @return
-     */
-    private static void setScratchDirectory(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
+    @Deprecated
+    private static void warnDeprecatedRoddyScriptVariable() {
         String deprecatedDefaultScratchDir = Roddy.getOrSetApplicationProperty(ConfigurationConstants.CVALUE_DEFAULT_SCRATCH_DIR, "");
         if (!deprecatedDefaultScratchDir.equals("")) {
             System.err.println("WARNING: You did set the deprecated " + ConfigurationConstants.CVALUE_DEFAULT_SCRATCH_DIR + " to '" +
                     deprecatedDefaultScratchDir + ".\nPlease use " + Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY + ".");
         }
+    }
+
+    /** Copy the scratchBaseDirectory value from the applicationProperties.ini into the configuration. Set the default value for RODDY_SCRATCH
+     *  to $scratchBaseDirectory/$RODDY_JOBID.
+     * @return
+     */
+    private static void setScratchDirectory(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
+        warnDeprecatedRoddyScriptVariable();
         String scratchBaseDir = Roddy.getOrSetApplicationProperty(Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY, "");
         if (scratchBaseDir.equals("")) {
             File propertyFilePath = null;
@@ -719,16 +724,10 @@ public class Roddy {
                         .setTrackUserJobsOnly(trackUserJobsOnly)
                         .setPassEnvironment(Roddy.getOrSetBooleanApplicationProperty(Constants.APP_PROPERTY_JOB_MANAGER_PASS_ENVIRONMENT, false))
                         .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
-//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getOrSetApplicationProperty(RunMode.CLI, "requestMemoryIsEnabled", "true"), true))
-//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getOrSetApplicationProperty(RunMode.CLI, "requestWalltimeIsEnabled", "true"), true))
-//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getOrSetApplicationProperty(RunMode.CLI, "requestQueueIsEnabled", "true"), true))
-//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getOrSetApplicationProperty(RunMode.CLI, "requestCoresIsEnabled", "true"), true))
-//                        .setRequestMemoryIsEnabled(RoddyConversionHelperMethods.toBoolean(getOrSetApplicationProperty(RunMode.CLI, "requestStorageIsEnabled", "false"), false))
                         .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI()).build());
-
     }
 
-    private static BatchEuphoriaJobManager jobManager; // = new DirectSynchronousExecutionJobManager(new NoNoExecutionService(), new JobManagerOptions());
+    private static BatchEuphoriaJobManager jobManager;
 
     public static BatchEuphoriaJobManager getJobManager() {
         return jobManager;
@@ -794,7 +793,7 @@ public class Roddy {
 
         applicationProperties = new AppConfig(file);
 
-        getOrSetApplicationProperty("useRoddyVersion", LibrariesFactory.PLUGIN_VERSION_CURRENT); // Load some default properties
+        getOrSetApplicationProperty(RoddyStartupOptions.useRoddyVersion.toString(), LibrariesFactory.PLUGIN_VERSION_CURRENT); // Load some default properties
         getOrSetApplicationProperty("usePluginVersion");
         getOrSetApplicationProperty("pluginDirectories");
         getOrSetApplicationProperty("configurationDirectories");
@@ -867,16 +866,16 @@ public class Roddy {
         return applicationProperties.getProperty(pName, defaultValue);
     }
 
-    public static RunMode getRunMode() {
-        return CLI;// runMode;
-    }
-
     public static void setApplicationProperty(RunMode runMode, String appPropertyExecutionServiceClass, String text) {
         setApplicationProperty(runMode.name() + "." + appPropertyExecutionServiceClass, text);
     }
 
     public static void setApplicationProperty(String pName, String value) {
         applicationProperties.setProperty(pName, value);
+    }
+
+    public static RunMode getRunMode() {
+        return CLI;// runMode;
     }
 
     /**
@@ -1030,7 +1029,7 @@ public class Roddy {
                 result = clc.getOptionValue(opt);
         }
         if (!RoddyConversionHelperMethods.isNullOrEmpty(result)) return result;
-        return getOrSetApplicationProperty("useRoddyVersion", LibrariesFactory.PLUGIN_VERSION_CURRENT);
+        return getOrSetApplicationProperty(RoddyStartupOptions.useRoddyVersion.toString(), LibrariesFactory.PLUGIN_VERSION_CURRENT);
     }
 
     public static File getRoddyBinaryFolder() {
