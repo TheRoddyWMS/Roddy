@@ -392,7 +392,7 @@ abstract class ExecutionService implements BEExecutionService {
         context.setDetailedExecutionContextLevel(ExecutionContextSubLevel.RUN_SETUP_COPY_CONFIG)
 
         //Current version info strings.
-        String versionInfo = "Roddy version: " + Roddy.getUsedRoddyVersion() + "\nLibrary info:\n" + LibrariesFactory.getInstance().getLoadedLibrariesInfoList().join("\n")
+        String versionInfo = "Roddy version: " + Roddy.getUsedRoddyVersion() + "\nLibrary info:\n" + LibrariesFactory.getInstance().getLoadedLibrariesInfoList().join("\n") + "\n"
         provider.writeTextFile(context.getRuntimeService().getNameOfRuntimeFile(context), versionInfo, context)
 
         //Current config
