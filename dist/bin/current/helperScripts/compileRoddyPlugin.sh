@@ -84,6 +84,6 @@ then
     jar cf $outputDirectory/$libName.jar $classFiles
     cd $outputDirectory
     [[ -d ".svn" ]] && svn add $libName.jar buildversion.txt #2> /dev/null
-    [[ -d ".git" ]] && git add $libName.jar buildversion.txt `git st | grep Plugin.java | cut -d ":" -f 2` #2> /dev/null
+    [[ -d ".git" ]] && git add $libName.jar buildversion.txt `git stage | grep Plugin.java | cut -d ":" -f 2` #2> /dev/null
     rm manifest.tmp
 fi
