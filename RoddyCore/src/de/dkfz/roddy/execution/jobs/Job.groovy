@@ -7,6 +7,7 @@
 package de.dkfz.roddy.execution.jobs
 
 import de.dkfz.roddy.AvailableFeatureToggles
+import de.dkfz.roddy.config.RoddyAppConfig
 import de.dkfz.roddy.tools.Tuple2
 
 import static de.dkfz.roddy.Constants.*
@@ -520,7 +521,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
         }
         this.parameters.put(DEBUG_WRAP_IN_SCRIPT, parameterObjectToString(DEBUG_WRAP_IN_SCRIPT, debugWrapInScript))
 
-        this.parameters.put(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT, Roddy.getOrSetApplicationProperty(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT, ""))
+        this.parameters.put(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT,
+                Roddy.applicationConfiguration.getOrSetApplicationProperty(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT, ""))
 
         appendProcessingCommands(configuration)
 

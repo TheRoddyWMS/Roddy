@@ -8,6 +8,7 @@ package de.dkfz.roddy.client.rmiclient;
 
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.client.cliclient.CommandLineCall;
+import de.dkfz.roddy.config.RoddyAppConfig;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.LoggerWrapper;
 
@@ -78,7 +79,8 @@ public class RoddyRMIServer {
     }
 
     private static int getRMIServerCountDown() {
-        return RoddyConversionHelperMethods.toInt(Roddy.getOrSetApplicationProperty("roddyRMIServerCountDown", "180"), 180);
+        return RoddyConversionHelperMethods.toInt(Roddy.getApplicationConfiguration().
+                getOrSetApplicationProperty("roddyRMIServerCountDown", "180"), 180);
     }
 
     public static void stopServer() {

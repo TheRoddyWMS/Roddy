@@ -19,6 +19,7 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.config.RoddyAppConfig
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import net.schmizz.sshj.SSHClient
@@ -127,13 +128,13 @@ class SSHExecutionService extends RemoteExecutionService {
 
                 if (method == Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD) {
                     logger.always("Try setup the SSH connection ${user}@${host} using password authentification.")
-                    c.authPassword(user, Roddy.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_PWD))
+                    c.authPassword(user, Roddy.applicationConfiguration.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_PWD))
                 } else if (method == Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_SSHAGENT) {
                     logger.always("Try setup the SSH connection ${user}@${host} using an ssh agent.")
                     c.auth(user, getAuthMethods(getAgentProxy()))
                 } else if (method == Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE) {
                     logger.always("Try setup the SSH connection ${user}@${host} using a password less keyfile.")
-                    String customKeyfile = Roddy.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE_LOCATION, "")
+                    String customKeyfile = Roddy.applicationConfiguration.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE_LOCATION, "")
                     if (customKeyfile) {
                         File _f = new File(customKeyfile)
                         if (!_f.canRead()) {
@@ -150,7 +151,7 @@ class SSHExecutionService extends RemoteExecutionService {
 
                 //At least for the moment compression is either not supported or maybe jzlib is not recognized
                 //Finally compression does not work now with v. 0.9.2 of sshj
-                if (RoddyConversionHelperMethods.toBoolean(Roddy.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_USE_COMPRESSION, Boolean.FALSE.toString()), false))
+                if (RoddyConversionHelperMethods.toBoolean(Roddy.applicationConfiguration.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_USE_COMPRESSION, Boolean.FALSE.toString()), false))
                     c.useCompression()
 
                 c.startSession()
@@ -210,15 +211,16 @@ class SSHExecutionService extends RemoteExecutionService {
         private Semaphore sshSemaphore = new Semaphore(8)
 
         private void _initialize() {
-            String sshUser = Roddy.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_USER, System.getProperty("user.name"))
+            RoddyAppConfig appConf = Roddy.applicationConfiguration
+            String sshUser = appConf.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_USER, System.getProperty("user.name"))
             if (sshUser == "USERNAME") sshUser = System.getProperty("user.name") //Get the local name if USERNAME is set
-            String sshMethod = Roddy.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD)
+            String sshMethod = appConf.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD)
 
             if (![Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_SSHAGENT].contains(sshMethod))
                 sshMethod = Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD
 
             List<SSHPoolConnectionSet> tempEntries = new LinkedList<>()
-            String[] sshHosts = Roddy.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_HOSTS).split(SPLIT_COMMA)
+            String[] sshHosts = appConf.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_HOSTS).split(SPLIT_COMMA)
             int i = 0
             for (String host : sshHosts) {
                 SSHPoolConnectionSet cs = new SSHPoolConnectionSet(i++, sshUser, host, sshMethod)
@@ -303,7 +305,7 @@ class SSHExecutionService extends RemoteExecutionService {
 
     @Override
     String getUsername() {
-        String userName = Roddy.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_USER)
+        String userName = Roddy.applicationConfiguration.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_USER)
         if (userName == "USERNAME") //Get the local username.
             userName = System.getProperty("user.name")
         return userName
@@ -400,7 +402,7 @@ class SSHExecutionService extends RemoteExecutionService {
                             (cmd.getExitSignal()
                                     ? " Caught signal is " + cmd.getExitSignal().name()
                                     : "\n\tCommand Str. " + RoddyIOHelperMethods.truncateCommand(command,
-                                    Roddy.getOrSetApplicationProperty("commandLogTruncate", '80').toInteger())))
+                                    Roddy.applicationConfiguration.getOrSetApplicationProperty("commandLogTruncate", '80').toInteger())))
                 }
             } else {
                 content.readLines().each { String line -> output << "" + line }
