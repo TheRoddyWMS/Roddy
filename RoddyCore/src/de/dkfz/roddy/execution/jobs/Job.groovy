@@ -521,8 +521,10 @@ class Job extends BEJob<BEJob, BEJobResult> {
         }
         this.parameters.put(DEBUG_WRAP_IN_SCRIPT, parameterObjectToString(DEBUG_WRAP_IN_SCRIPT, debugWrapInScript))
 
-        this.parameters.put(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT,
-                Roddy.applicationConfiguration.getOrSetApplicationProperty(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT, ""))
+        if (Roddy.applicationConfiguration.containsKey(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT)) {
+            this.parameters.put(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT,
+                    Roddy.applicationConfiguration.getOrSetApplicationProperty(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT, ""))
+        }
 
         appendProcessingCommands(configuration)
 
