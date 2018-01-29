@@ -29,7 +29,7 @@ To install and run Roddy the following programs need to be installed on your com
 
 - lockfile (part of procmail mail-processing-package (v3.22), only needed on job execution hosts)
 
-- A recent JDK (e.g. 1.8.0_121)
+- A recent JDK (e.g. 1.8.0_121), Oracle JDK or OpenJDK and variants are working.
 
 - Groovy (e.g. 2.4.7)
 
