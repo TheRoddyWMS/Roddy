@@ -911,7 +911,7 @@ public class Roddy {
         return new File(getCompressedAnalysisToolsDirectory(), "listOfCompressedFiles.txt");
     }
 
-    private static List<File> loadFolderListFromConfiguration(RoddyStartupOptions option, String configurationConstant) {
+    private static List<File> loadFolderListFromConfiguration(RoddyStartupOptions option, String configurationConstant) throws ConfigurationError {
         String[] split;
         if (getCommandLineCall().isOptionSet(option))
             split = getCommandLineCall().getOptionList(option).toArray(new String[0]);
@@ -920,21 +920,25 @@ public class Roddy {
 
         List<File> folders = new LinkedList<>();
         for (String s : split) {
+            if (s.equals("")) continue;
             File f = new File(s);
-            if (f.exists())
+            if (f.exists() && f.isDirectory() && f.canRead() && f.canExecute()) {
                 folders.add(f);
+            } else {
+                throw new ConfigurationError("'" + s + "' is not an accessible directory", s);
+            }
         }
         return folders;
     }
 
-    public static List<File> getConfigurationDirectories() {
+    public static List<File> getConfigurationDirectories() throws ConfigurationError {
         List<File> list = loadFolderListFromConfiguration(RoddyStartupOptions.configurationDirectories, Constants.APP_PROPERTY_CONFIGURATION_DIRECTORIES);
         list.add(getFolderForConfigurationFreeMode());
         list.add(new File(Roddy.getApplicationDirectory(), "configurationfiles"));
         return list;
     }
 
-    public static List<File> getPluginDirectories() {
+    public static List<File> getPluginDirectories() throws ConfigurationError {
         List<File> folders = loadFolderListFromConfiguration(RoddyStartupOptions.pluginDirectories, Constants.APP_PROPERTY_PLUGIN_DIRECTORIES);
 
         // TODO For backward compatibility the following plugin folders will be used in an hardcoded way
