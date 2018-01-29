@@ -73,7 +73,7 @@ class PluginInfoMap {
      */
     public PluginInfo getPluginInfo(String pluginID, String version) {
         if (!version) version = "current";
-        String additionalMessage = "\nPlease check, if you have proper access to all plugin directories. Roddy tries to load plugins from the following directories:\n\t"
+        String additionalMessage = "\nPlease check whether you have proper access to all plugin directories. Roddy tries to load plugins from the following directories:\n\t"
         additionalMessage += Roddy.getPluginDirectories().collect { it.getAbsolutePath() }.join("\n\t") +"\n"
         if (!mapOfPlugins[pluginID]) //Can this case occur?
             throw new PluginLoaderException("Plugin '${pluginID}' is not available, available are:\n\t" + mapOfPlugins.keySet().join("\n\t") + additionalMessage)
