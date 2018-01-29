@@ -8,6 +8,7 @@ package de.dkfz.roddy.execution.io.fs
 
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.config.RoddyAppConfig
 import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.ComplexLine
@@ -84,7 +85,7 @@ public class FileSystemAccessProvider {
                 fileSystemAccessProvider = new NoNoFileSystemAccessProvider();
             }
             try {
-                Class fisClz = LibrariesFactory.getGroovyClassLoader().loadClass(Roddy.getApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS, FileSystemAccessProvider.class.getName()));
+                Class fisClz = LibrariesFactory.getGroovyClassLoader().loadClass(Roddy.applicationConfiguration.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS, FileSystemAccessProvider.class.getName()))
                 fileSystemAccessProvider = (FileSystemAccessProvider) fisClz.getConstructors()[0].newInstance();
             } catch (Exception e) {
                 logger.warning("Falling back to default file system info provider");
