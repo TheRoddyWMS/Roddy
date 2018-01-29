@@ -364,16 +364,6 @@ class GenericMethod {
             }
         }
 
-        if (arrayIndex != null) {
-            for (FileObject fo in allCreatedObjects) {
-                if (!(fo instanceof BaseFile))
-                    continue;
-
-                BaseFile bf = (BaseFile) fo;
-                String newPath = bf.getAbsolutePath().replace(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBARRAYINDEX, arrayIndex);
-                bf.setPath(new File(newPath));
-            }
-        }
         return outputObject;
     }
 

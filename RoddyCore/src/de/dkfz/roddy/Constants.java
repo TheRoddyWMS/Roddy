@@ -27,8 +27,6 @@ public class Constants {
     public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD = "executionServiceAuth";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_PWD = "executionServicePasswd";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_STORE_PWD = "executionServiceStorePassword";
-    public static final String APP_PROPERTY_LIBRARYDIRECTORIES = "libraryDirectories";
-    public static final String APP_PROPERTY_USED_LIBRARIES = "usedLibraries";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD = "password";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_SSHAGENT = "sshagent";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE = "keyfile";
@@ -41,7 +39,9 @@ public class Constants {
     public static final String APP_PROPERTY_NET_USEPROXY = "netUseProxy";
     public static final String APP_PROPERTY_NET_PROXY_ADDRESS = "netProxyAddress";
     public static final String APP_PROPERTY_NET_PROXY_USR = "netProxyUser";
-    public static final String APP_SCRATCH_BASE_DIRECTORY = "scratchBaseDirectory";
+    public static final String APP_PROPERTY_SCRATCH_BASE_DIRECTORY = "scratchBaseDirectory";
+    public static final String APP_PROPERTY_JOB_MANAGER_PASS_ENVIRONMENT = "jobManagerPassEnvironment";
+    public static final String APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT = "baseEnvironmentScript";
 
     /////////////////////////
     // Error messages
@@ -79,9 +79,6 @@ public class Constants {
     public static final String PARAMETER_FILE = "PARAMETER_FILE";
     public static final String ANALYSIS_DIR = "ANALYSIS_DIR";
     public static final String PARAMETER_FILE_SUFFIX = ".parameters";
-    public static final String WRAPPED_SCRIPT = "WRAPPED_SCRIPT";
     public static final String PID_CAP = "PID";
     public static final String PID = "pid";
-
-    public static final String COMMAND_TAG_EXECUTION_CONTEXT = "ExecutionContext";
 }

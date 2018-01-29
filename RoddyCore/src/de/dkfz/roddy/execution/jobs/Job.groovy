@@ -7,9 +7,12 @@
 package de.dkfz.roddy.execution.jobs
 
 import de.dkfz.roddy.AvailableFeatureToggles
-import de.dkfz.roddy.Constants
+import de.dkfz.roddy.config.RoddyAppConfig
+import de.dkfz.roddy.tools.Tuple2
+
+import static de.dkfz.roddy.Constants.*
+import static de.dkfz.roddy.config.ConfigurationConstants.*
 import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.config.converters.ConfigurationConverter
@@ -25,9 +28,6 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileDynamic
 
-import static de.dkfz.roddy.Constants.CONFIG_FILE
-import static de.dkfz.roddy.Constants.NO_VALUE
-import static de.dkfz.roddy.Constants.PARAMETER_FILE
 import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 
 @groovy.transform.CompileStatic
@@ -184,7 +184,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
             if (this.parameters.containsKey(k)) continue
             Object _v = defaultParameters[k]
             if (_v == null) {
-                context.addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("The parameter " + k + " has no valid value and will be set to ${NO_VALUE}."))
+                context.addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.
+                        expand("The parameter " + k + " has no valid value and will be set to ${NO_VALUE}."))
                 this.parameters[k] = NO_VALUE
             } else {
                 String newParameters = parameterObjectToString(k, _v)
@@ -396,7 +397,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             if (name != null) {
                 String val = parameters[name.value]
                 if (val == null) {
-                    val = Constants.NO_VALUE
+                    val = NO_VALUE
                     bf.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("A value named " + name.value + " cannot be found in the jobs parameter list for a file of ${bf.class.name}. The value is set to <NO_VALUE>"))
                 }
                 absolutePath = absolutePath.replace(command.fullString, val)
@@ -449,7 +450,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
     void appendToJobStateLogfile(DirectSynchronousExecutionJobManager jobManager, ExecutionContext executionContext, BEJobResult res, OutputStream outputStream = null) {
 //        if (res.command.isBlockingCommand()) {
 //            assert (null != outputStream)
-//            File logFile = (res.command.getTag(Constants.COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext).getRuntimeService().getLogFileForCommand(res.command)
+//            File logFile = (res.command.getTag(COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext).getRuntimeService().getLogFileForCommand(res.command)
 //
 //            // Use reflection to get access to the hidden path field :p The stream object does not natively give
 //            // access to it and I do not want to create a new class just for this.
@@ -490,7 +491,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
      */
     void keepOnlyEssentialParameters() {
         Set<String> nonEssentialParameters = parameters.keySet().findAll { key ->
-            ! [PARAMETER_FILE, CONFIG_FILE, ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT].contains(key)
+            ! [PARAMETER_FILE, CONFIG_FILE, DEBUG_WRAP_IN_SCRIPT, APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT].contains(key)
         }
         parameters.keySet().removeAll(nonEssentialParameters)
     }
@@ -498,7 +499,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
     @CompileDynamic
     BEJobResult run() {
         if (runResult != null)
-            throw new RuntimeException(Constants.ERR_MSG_ONLY_ONE_JOB_ALLOWED)
+            throw new RuntimeException(ERR_MSG_ONLY_ONE_JOB_ALLOWED)
 
         ExecutionContextLevel contextLevel = context.getExecutionContextLevel()
         Configuration configuration = context.getConfiguration()
@@ -509,15 +510,19 @@ class Job extends BEJob<BEJob, BEJobResult> {
         boolean runJob
 
         //Remove duplicate job ids as PBS qsub cannot handle duplicate keys => job will hold forever as it releases the dependency queue linearly.
-        this.parameters[Constants.RODDY_PARENT_JOBS] = parameterObjectToString(Constants.RODDY_PARENT_JOBS, parentJobIDs.unique()*.id)
-        this.parameters[Constants.PARAMETER_FILE] = parameterObjectToString(Constants.PARAMETER_FILE, parameterFile)
+        this.parameters[RODDY_PARENT_JOBS] = parameterObjectToString(RODDY_PARENT_JOBS, parentJobIDs.unique()*.id)
+        this.parameters[PARAMETER_FILE] = parameterObjectToString(PARAMETER_FILE, parameterFile)
         // The CONFIG_FILE variable is set to the same value as the PARAMETER_FILE to keep older scripts working with job-specific only environments.
-        this.parameters[Constants.CONFIG_FILE] = this.parameters[Constants.PARAMETER_FILE]
+        this.parameters[CONFIG_FILE] = this.parameters[PARAMETER_FILE]
+
         boolean debugWrapInScript = false
-        if (configuration.configurationValues.hasValue(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)) {
-            debugWrapInScript = configuration.configurationValues.getBoolean(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT)
+        if (configuration.configurationValues.hasValue(DEBUG_WRAP_IN_SCRIPT)) {
+            debugWrapInScript = configuration.configurationValues.getBoolean(DEBUG_WRAP_IN_SCRIPT)
         }
-        this.parameters.put(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT, parameterObjectToString(ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT, debugWrapInScript))
+        this.parameters.put(DEBUG_WRAP_IN_SCRIPT, parameterObjectToString(DEBUG_WRAP_IN_SCRIPT, debugWrapInScript))
+
+        this.parameters.put(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT,
+                Roddy.applicationConfiguration.getOrSetApplicationProperty(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT, ""))
 
         appendProcessingCommands(configuration)
 
@@ -565,8 +570,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 if (!bf) return
 
                 String absolutePath = bf.getPath().getAbsolutePath()
-                if (absolutePath.contains(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID)) {
-                    bf.setPath(new File(absolutePath.replace(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID, runResult.jobID.shortID)))
+                if (absolutePath.contains(CVALUE_PLACEHOLDER_RODDY_JOBID)) {
+                    bf.setPath(new File(absolutePath.replace(CVALUE_PLACEHOLDER_RODDY_JOBID, runResult.jobID.shortID)))
                 }
             }
         }
@@ -604,7 +609,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
     }
 
     private BEJobResult handleDifferentJobRun(StringBuilder dbgMessage) {
-        dbgMessage << "\tdummy job created." + Constants.ENV_LINESEPARATOR
+        dbgMessage << "\tdummy job created." + ENV_LINESEPARATOR
         File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
         this.resetJobID(new BEFakeJobID(BEFakeJobID.FakeJobReason.NOT_EXECUTED))
         runResult = new BEJobResult((Command) null, this, null, tool, parameters, parentFiles.collect { it.getCreatingJobsResult()?.getJob() }.findAll { it })
@@ -619,7 +624,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
      */
     private boolean checkIfJobShouldRerun(StringBuilder dbgMessage) {
         def isVerbosityHigh = logger.isVerbosityHigh()
-        String sep = Constants.ENV_LINESEPARATOR
+        String sep = ENV_LINESEPARATOR
         if (isVerbosityHigh) dbgMessage << "Rerunning job " + jobName
 
         //Check the parents of the new files to see if one of those is invalid for the current context! A file might be validated during a dry context...
@@ -637,9 +642,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
         Boolean fileUnverified = false
         //Now check if the new created files are in the list of already existing files and if those files are valid.
         if (!parentFileIsDirty) {
-            List res = verifyFiles(dbgMessage)
-            fileUnverified = (Boolean) res[0]
-            knownFilesCnt = (Integer) res[1]
+            Tuple2 res = verifyFiles(dbgMessage)
+            fileUnverified = res.x
+            knownFilesCnt = res.y
         }
 
         boolean parentJobIsDirty = parentJobs.collect { BEJob job -> job.isDirty }.any { boolean dirty -> dirty }
@@ -671,8 +676,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return true
     }
 
-    private List verifyFiles(StringBuilder dbgMessage) {
-        String sep = Constants.ENV_LINESEPARATOR
+    private Tuple2<Boolean, Integer> verifyFiles(StringBuilder dbgMessage) {
+        String sep = ENV_LINESEPARATOR
         Boolean fileUnverified = false
         Integer knownFilesCnt = 0
         boolean isVerbosityHigh = LoggerWrapper.isVerbosityHigh()
@@ -703,7 +708,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 }
             }
         }
-        return [fileUnverified, knownFilesCnt]
+        return new Tuple2<Boolean, Integer>(fileUnverified, knownFilesCnt)
     }
 
     ExecutionContext getExecutionContext() {
