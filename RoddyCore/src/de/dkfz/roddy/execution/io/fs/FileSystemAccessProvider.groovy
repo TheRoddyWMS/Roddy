@@ -67,11 +67,6 @@ public class FileSystemAccessProvider {
      */
     protected File _userHome;
 
-    /**
-     * A small cache which keeps track of checkDirectory queries
-     */
-    protected Map<String, Boolean> _directoryExistsAndIsAccessible = new LinkedHashMap<>();
-
     protected Map<String, Integer> _groupIDsByGroup = [:];
 
     protected final Map<String, String> uidToUserCache = new HashMap<>();
