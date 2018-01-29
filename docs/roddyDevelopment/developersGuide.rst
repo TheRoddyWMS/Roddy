@@ -45,6 +45,17 @@ the object (this) itself, you can mark the affected methods with @CompileDynamic
 Roddy versioning scheme
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+.. Note::
+
+    NOTE: The versioning scheme is under revision and may change in the future.
+    We consider using a versioning plugin for Gradle which calculates the
+    proper version from the commit messages and tags. E.g.
+
+    .. code-block:: Bash
+
+       ./gradlew printVersion
+
+
 Roddy version numbers consist of three entries: $major.$minor.$build.
 The build number is also sometimes called patch number. Release numbers
 are added to the repository.
@@ -98,6 +109,7 @@ Repository Structure
     ./RoddyCore/                                      The core project
         buildversion.txt                              Current buildversion
         Java/Groovy sources
+    docs/                                             Documentation
     dist/
         bin/
             current/

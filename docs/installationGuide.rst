@@ -5,6 +5,8 @@
 .. _`Groovy 2.4.*`: http://groovy-lang.org/download.html
 .. _`Maven Groovy repository`: http://repo1.maven.org/maven2/org/codehaus/groovy/groovy-binary/
 .. _`GroovyServ` : https://kobo.github.io/groovyserv/
+.. _`SDKMan` : http://sdkman.io/
+.. _`Github Releases` : https://github.com/eilslabs/Roddy/releases
 
 .. Document
 
@@ -34,13 +36,13 @@ To install and run Roddy the following programs need to be installed on your com
 - The DefaultPlugin and the PluginBase (see below)
 
 As Roddy is Linux based, you will be able to find them in your package manager. For the JDK and Groovy, which are both required on the host on which
-you run Roddy, you may alternativel want to use [sdkman](http://sdkman.io/). The following will get you going:
+you run Roddy, you may want to use `SDKMan`_. The following will get you going:
 
-```bash
-curl -s "https://get.sdkman.io" | bash
-sdk install groovy 2.4.13
-sdk install java 8u151-oracle
-```
+.. code-block:: Bash
+
+    curl -s "https://get.sdkman.io" | bash
+    sdk install groovy 2.4.13
+    sdk install java 8u151-oracle
 
 Specific workflows you execute may require additional software.
 
@@ -77,7 +79,7 @@ Roddy 2.3
 
 3. Optionally unpack one or more of the release zips in *dist/bin/* directory.
 
-Please see `Roddy version mix`_ for information about how to mix different versions of Roddy in the same directory.
+Please see `Versioning`_ for information about how to mix different versions of Roddy in the same directory.
 
 Roddy 2.4
 ---------
@@ -85,7 +87,7 @@ Roddy 2.4
 For Roddy version 2.4 zips are deployed to Github releases (continuous deployment via Travis). The thus installed Roddy will contain all dependencies
 except the JDK and Groovy. Additionally, there is an automatic downloader for the JRE / JDK.
 
-1. Release ZIPs for Roddy and the Roddy environment are available via [Github Releases](https://github.com/eilslabs/Roddy/releases). Download the latest release of the RoddyEnv ZIP and unpack it and change into the Roddy environment directory (e.g. "Roddy").
+1. Release ZIPs for Roddy and the Roddy environment are available via `Github Releases`_. Download the latest release of the RoddyEnv ZIP and unpack it and change into the Roddy environment directory (e.g. "Roddy").
 2. After that you can install arbitrary releases of the Roddy ZIP into `dist/bin/$major.$minor.$patch` directories.
 3. The default and base plugin repositories need to be cloned into the `dist/plugins/` directory.
 
@@ -148,7 +150,7 @@ Test your installation
 
 Head over to the Roddy directory and do
 
-::
+.. code-block:: Bash
 
   ./roddy.sh
 
