@@ -414,7 +414,7 @@ class BashConverter extends ConfigurationConverter {
                         String key = cvarr[0]
                         bundleValues[key] = new ConfigurationValue(newCfg, key, cval[key.length() + 1..-1])
                     }
-                    cValueBundles[bundleName] = new ConfigurationValueBundle(bundleValues)
+                    cValueBundles[bundleName] = new ConfigurationValueBundle(bundleName, bundleValues)
                 } catch (Exception ex) {
                     logger.log(Level.SEVERE, ex.toString())
                 }

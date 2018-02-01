@@ -1,6 +1,27 @@
 #!/bin/bash
 
 set -e
+
+# Return 1, if the plugin name is allowed. Otherwise 0.
+validateVersionedPluginName() {
+    echo "${1:?No plugin name given}" | perl -ne 'print scalar(/^\w+(?:[_:]\d+\.\d+\.\d+(?:-\d+)?)?$/) ? "valid\n" : "invalid\n"'
+}
+
+# Take string, check that it follows the pattern allowed for versioned plugins (with '_' or ':' between plugin name and version and
+# return the plugin name.
+getPluginName() {
+    local pluginName="${1:?No plugin name given}"
+    if [[ $(validateVersionedPluginName "$pluginName") == "invalid" ]]; then
+        echo "'$pluginName' is not a valid plugin name" >> /dev/stderr
+        exit 1
+    else
+        echo "$pluginName" | sed -r 's/:/_/' | sed -r 's/_.+//'
+    fi
+}
+
+libName=$(getPluginName "${2:?No plugin name given}")
+
+
 increasebuildonly=${increasebuildonly-false}
 
 # Check for configured plugin directories. Set empty if no dirs are configured.
@@ -24,8 +45,7 @@ echo "  Increased to" `head -n 1 $srcDirectory/buildversion.txt`.`tail -n 1 $src
 
 if [[ $increasebuildonly == false ]]
 then
-    echo "Switching to plugin directory"
-    libName=$2
+    echo "Switching to plugin directory for plugin '$versionedPluginName'"
 
     echo "Creating necessary paths"
     rm -rf build

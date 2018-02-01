@@ -182,6 +182,7 @@ enum RoddyStartupModes {
                 "    --forcenativepluginconversion   - Tell Roddy to override any existing converted Native plugin. By default Roddy will prevent this.",
                 "    --forcekeepexecutiondirectory   - Tell Roddy to keep execution directories. By default Roddy will delete them, if no jobs were executed in a run.",
                 "    --useRoddyVersion=(version no)  - Use a specific roddy version.",
+                "    --usefeaturetoggleconfig={file} - Some development and backward-compatibility options can be set here. See showfeaturetoggles mode.",
                 "    --rv=(version no)",
                 "    --usePluginVersion=(...,...)    - Supply a list of used plugins and versions.",
                 "    --configurationDirectories={path},... ",

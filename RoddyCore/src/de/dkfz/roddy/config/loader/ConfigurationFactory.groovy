@@ -488,7 +488,8 @@ class ConfigurationFactory {
                 ConfigurationValue _cvalue = readConfigurationValue(cvalue, config)
                 bundleValues[_cvalue.id] = _cvalue
             }
-            cvBundles[cbundle.@name.text()] = new ConfigurationValueBundle(bundleValues)
+            def cBundleID = cbundle.@name.text()
+            cvBundles[cBundleID] = new ConfigurationValueBundle(cBundleID, bundleValues)
         }
     }
 
