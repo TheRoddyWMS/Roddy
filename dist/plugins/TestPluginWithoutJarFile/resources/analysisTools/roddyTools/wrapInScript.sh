@@ -25,7 +25,6 @@ setupRoddyScratch() {
   fi
 }
 
-source ${CONFIG_FILE}
 source ${PARAMETER_FILE}
 
 isOutputFileGroup=${outputFileGroup-false}
