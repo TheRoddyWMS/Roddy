@@ -18,6 +18,8 @@ import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import groovy.transform.CompileStatic
 
 import java.util.logging.Level
+import static Constants.RODDY_CONFIGURATION_MAGICSTRING
+
 
 /**
  * Converts a configuration object to bash script.
@@ -414,7 +416,7 @@ class BashConverter extends ConfigurationConverter {
                         String key = cvarr[0]
                         bundleValues[key] = new ConfigurationValue(newCfg, key, cval[key.length() + 1..-1])
                     }
-                    cValueBundles[bundleName] = new ConfigurationValueBundle(bundleValues)
+                    cValueBundles[bundleName] = new ConfigurationValueBundle(bundleName, bundleValues)
                 } catch (Exception ex) {
                     logger.log(Level.SEVERE, ex.toString())
                 }
@@ -422,6 +424,19 @@ class BashConverter extends ConfigurationConverter {
 
 
         return newCfg
+    }
+
+    /**
+     * Check if the first or second line in a file starts with #Roddy configuration
+     * @param file
+     * @return
+     */
+    boolean isBashConfigFile(File file) {
+        def lines = file.readLines()
+        if (!lines) return false
+        if (lines[0] && lines[0][1..-1].trim() == RODDY_CONFIGURATION_MAGICSTRING) return true
+        if (lines.size() > 1 && lines[1] && lines[1][1..-1].trim() == RODDY_CONFIGURATION_MAGICSTRING) return true
+        return false
     }
 
     /**
@@ -435,6 +450,8 @@ class BashConverter extends ConfigurationConverter {
      * Basically a file which contains some info in the header and only config values.
      *
      * Example:
+     * #!/shebang...
+     * # Roddy configuration
      * #name aConfig
      * #imports anotherConfig
      * #description aConfig
@@ -448,10 +465,17 @@ class BashConverter extends ConfigurationConverter {
      * UNZIPTOOL=gunzip
      * ZIPTOOL_OPTIONS="-c"
      * sampleDirectory=/data/michael/temp/roddyLocalTest/testproject/vbp/A100/${sample}/${SEQUENCER_PROTOCOL}*
+     *
+     * Note, that Roddy Bash files need at least the line Roddy Bash configuration file as either the first or second line
+     * of the file! Otherwise Roddy will not load the file.
+     *
      * @param file
-     * @return
+     * @return An xml string ready to be converted by Roddys XML converter OR an empty string.
      */
     String convertToXML(File file) {
+        if (!isBashConfigFile(file))
+            return ""
+
         String previousLine = ""
         List<String> allLines = file.readLines()
         List<String> header = extractHeader(allLines)

@@ -118,6 +118,11 @@ class ConfigurationFactory {
         for (File file in allFiles) {
             try {
                 def icc = loadInformationalConfigurationContent(file)
+                if (!icc) {
+                    logger.rare("File ${icc} is not a valid Roddy configuration file.")
+                    continue
+                }
+
                 pathsForCfgs.get(icc.name, []) << icc.file.absolutePath
                 if (availableConfigurations.containsKey(icc.name)) {
                     duplicateConfigurationIDs << icc.name
@@ -165,6 +170,12 @@ class ConfigurationFactory {
         for (File it in allFiles) {
             try {
                 def icc = loadInformationalConfigurationContent(it)
+
+                if (!icc) {
+                    logger.rare("File ${it} is not a valid Roddy configuration file.")
+                    continue
+                }
+
                 File readmeFile = RoddyIOHelperMethods.assembleLocalPath(pluginsByFile[it].directory, "README." + icc.id + ".txt")
                 if (readmeFile.exists())
                     icc.setReadmeFile(readmeFile)
@@ -248,10 +259,16 @@ class ConfigurationFactory {
      * @see PreloadedConfiguration
      *
      * @param file The config file.
-     * @return An object containing basic information about a configuration.
+     * @return An object containing basic information about a configuration OR null, if the no preloaded config could be loaded.
      */
     PreloadedConfiguration loadInformationalConfigurationContent(File file) {
         String text = loadAndPreprocessTextFromFile(file)
+
+        if (!text) {
+            logger.rare("Could not identify file ${file.absolutePath} as a Roddy configuration file.")
+            return null
+        }
+
         NodeChild xml = (NodeChild) new XmlSlurper().parseText(text)
         return _preloadConfiguration(file, text, xml, null)
     }
@@ -334,7 +351,7 @@ class ConfigurationFactory {
      * @return
      */
     @Deprecated
-    static List<String> convertMapToFormattedTable(Map<String,?> map, int cntOfTabs, String tabSep, Closure closureForValue) {
+    static List<String> convertMapToFormattedTable(Map<String, ?> map, int cntOfTabs, String tabSep, Closure closureForValue) {
         final int keyWidth = map.keySet().collect { it.size() }.max()
         map.collect {
             def k, def v ->
@@ -488,7 +505,8 @@ class ConfigurationFactory {
                 ConfigurationValue _cvalue = readConfigurationValue(cvalue, config)
                 bundleValues[_cvalue.id] = _cvalue
             }
-            cvBundles[cbundle.@name.text()] = new ConfigurationValueBundle(bundleValues)
+            def cBundleID = cbundle.@name.text()
+            cvBundles[cBundleID] = new ConfigurationValueBundle(cBundleID, bundleValues)
         }
     }
 

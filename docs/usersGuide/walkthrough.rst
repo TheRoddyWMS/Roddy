@@ -71,12 +71,10 @@ The ini files are explained in detail in :doc:`../config/applicationProperties`.
 
 .. code-block:: ini
 
-    [COMMON]
-    useRoddyVersion=current                     # Use the most current version for tests
-
     [DIRECTORIES]
     configurationDirectories=[FOLDER_WITH_CONFIGURATION_FILES]
     pluginDirectories=[FOLDER_WITH_PLUGINS]
+    scratchBaseDirectory=[FOLDER_ON_EXECUTION_HOSTS]
 
     [COMMANDS]
     jobManagerClass=de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
@@ -123,6 +121,8 @@ Usually, you just need to change the following settings:
    SSH and no keyfiles
 -  CLI.executionServiceStorePassword - If you want to store the
    password, put in true, however, the password is stored in plain-text!
+-  scratchBaseDirectory - A path to a preferably fast local storage on the
+   execution hosts. E.g. /local/$USER
 
 You might remember or store away the above options for future usage
 as its likely, that they won't change too often. For you the more important
