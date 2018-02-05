@@ -40,6 +40,7 @@ Let's have a brief look at it:
     #executionServiceClass=de.dkfz.roddy.execution.io.SSHExecutionService
     executionServiceHost=[YOURHOST]
     executionServiceAuth=keyfile
+    #executionServiceKeyfileLocation=[keyfile path]   # use $HOME/.ssh/id_rsa by default
     #executionServiceAuth=password
     executionServicePasswd=
     executionServiceStorePassword=false

@@ -7,11 +7,7 @@
 package de.dkfz.roddy.execution.jobs
 
 import de.dkfz.roddy.AvailableFeatureToggles
-import de.dkfz.roddy.config.RoddyAppConfig
-import de.dkfz.roddy.tools.Tuple2
-
-import static de.dkfz.roddy.Constants.*
-import static de.dkfz.roddy.config.ConfigurationConstants.*
+import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.converters.BashConverter
@@ -26,8 +22,13 @@ import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
+import de.dkfz.roddy.tools.Tuple2
 import groovy.transform.CompileDynamic
 
+import static de.dkfz.roddy.Constants.*
+import static de.dkfz.roddy.execution.jobs.JobConstants.*
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID
+import static de.dkfz.roddy.config.ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT
 import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 
 @groovy.transform.CompileStatic
@@ -208,8 +209,12 @@ class Job extends BEJob<BEJob, BEJobResult> {
     }
 
     static ResourceSet getResourceSetFromConfiguration(String toolID, ExecutionContext context) {
-        ToolEntry te = context.getConfiguration().getTools().getValue(toolID)
-        return te.getResourceSet(context.configuration) ?: new EmptyResourceSet();
+        if (!toolID || toolID == Constants.UNKNOWN) {
+            return new EmptyResourceSet()
+        } else {
+            ToolEntry te = context.getConfiguration().getTools().getValue(toolID)
+            return te.getResourceSet(context.configuration) ?: new EmptyResourceSet()
+        }
     }
 
     static String getToolMD5(String toolID, ExecutionContext context) throws ConfigurationError {
@@ -491,7 +496,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
      */
     void keepOnlyEssentialParameters() {
         Set<String> nonEssentialParameters = parameters.keySet().findAll { key ->
-            ! [PARAMETER_FILE, CONFIG_FILE, DEBUG_WRAP_IN_SCRIPT, APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT].contains(key)
+            ! [PARAMETER_FILE, CONFIG_FILE, DEBUG_WRAP_IN_SCRIPT, APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT, PRM_TOOL_ID].contains(key)
         }
         parameters.keySet().removeAll(nonEssentialParameters)
     }
@@ -506,8 +511,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         StringBuilder dbgMessage = new StringBuilder()
         StringBuilder jobDetailsLine = new StringBuilder()
-        Command cmd
-        boolean runJob
 
         //Remove duplicate job ids as PBS qsub cannot handle duplicate keys => job will hold forever as it releases the dependency queue linearly.
         this.parameters[RODDY_PARENT_JOBS] = parameterObjectToString(RODDY_PARENT_JOBS, parentJobIDs.unique()*.id)
@@ -528,8 +531,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         appendProcessingCommands(configuration)
 
-
         //See if the job should be executed
+        boolean runJob
         if (contextLevel == ExecutionContextLevel.RUN || contextLevel == ExecutionContextLevel.CLEANUP) {
             runJob = true //The job is always executed if run is selected
             jobDetailsLine << "  Running job " + jobName
@@ -546,7 +549,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             keepOnlyEssentialParameters()
             runResult = jobManager.submitJob(this)
             appendToJobStateLogfile(jobManager, executionContext, runResult, null)
-            cmd = runResult.command
+            Command cmd = runResult.command
             jobDetailsLine << " => " + cmd.job.getJobID()
             System.out.println(jobDetailsLine.toString())
             if (!cmd.jobID) {
@@ -556,6 +559,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
                     context.abortJobSubmission()
                 }
             }
+            lastCommand = cmd
         } else {
             // The Job is not actually executed. Therefore, create a DummyCommand that creates a dummy JobID which in turn is used to create a dummy JobResult.
             Command command = new DummyCommand(jobManager, this, jobName, false)
@@ -578,7 +582,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
             }
         }
 
-        lastCommand = cmd
         return runResult
     }
 

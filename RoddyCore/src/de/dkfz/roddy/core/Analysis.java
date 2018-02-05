@@ -6,22 +6,25 @@
 
 package de.dkfz.roddy.core;
 
+import de.dkfz.roddy.AvailableFeatureToggles;
 import de.dkfz.roddy.BEException;
 import de.dkfz.roddy.Constants;
-import de.dkfz.roddy.execution.jobs.Job;
-import de.dkfz.roddy.execution.jobs.JobState;
-import de.dkfz.roddy.AvailableFeatureToggles;
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.client.RoddyStartupOptions;
+import de.dkfz.roddy.config.*;
 import de.dkfz.roddy.config.loader.ConfigurationLoadError;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
+import de.dkfz.roddy.execution.jobs.Job;
+import de.dkfz.roddy.execution.jobs.JobState;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
-import de.dkfz.roddy.config.*;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import java.io.File;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 
 
@@ -388,7 +391,7 @@ public class Analysis {
                             StringBuilder message = new StringBuilder("There were errors after preparing the workflow run for dataset " + datasetID);
                             if (invalidPreparedFiles.size() > 0)
                                 message.append("\n\tSome files could not be written. Workflow will not execute.\n\t"
-                                    + RoddyIOHelperMethods.joinArray(invalidPreparedFiles.toArray(), "\t\n"));
+                                    + String.join("\t\n", invalidPreparedFiles));
                             if (!copiedAnalysisToolsAreExecutable)
                                 message.append("\n\tSome declared tools are not executable. Workflow will not execute.");
                             if (ignoreFileChecks) {
