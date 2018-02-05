@@ -375,7 +375,7 @@ public class Analysis {
                 StringBuilder message = new StringBuilder("The workflow does not seem to be executable for dataset " + datasetID);
                 if (!contextRightsSettings) message.append("\n\tContext access rights settings could not be validated.");
                 if (!contextPermissions) message.append("\n\tContext permissions could not be validated.");
-                if (!contextExecutability) message.append("\n\tContext and workflow is not considered executable.");
+                if (!contextExecutability) message.append("\n\tContext and workflow are not considered executable.");
                 if (!configurationValidity) message.append("\n\tContext configuration has errors.");
                 logger.severe(message.toString());
             } else {
