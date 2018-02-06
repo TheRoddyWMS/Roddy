@@ -11,7 +11,10 @@ import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.execution.jobs.BEJobResult
 import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.knowledge.files.*
+import de.dkfz.roddy.knowledge.files.BaseFile
+import de.dkfz.roddy.knowledge.files.FileGroup
+import de.dkfz.roddy.knowledge.files.FileObject
+import de.dkfz.roddy.knowledge.files.FileObjectTupleFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
@@ -171,21 +174,16 @@ class GenericMethod {
         if (outputFileGroupIndices != null && outputFileGroupIndices.size() == 0)
             throw new RuntimeException("It is not allowed to call GenericMethod with an empty non null list of file group indices.")
 
-        this.context = inputObject.getExecutionContext();
+        this.context = inputObject.getExecutionContext()
         this.toolName = toolName
-        this.configuration = context.getConfiguration();
-        this.calledTool = configuration.getTools().getValue(toolName);
-        if(calledTool.usesAutoCheckpoint()) {
-            context.runtimeService.calculateAutoCheckpointFilename(calledTool, ([inputObject] as List<Object>) + additionalInput as List<Object>)
-
-            logger.info("Create an automatic checkpoint for tool ${toolName}")
-        }
+        this.configuration = context.getConfiguration()
+        this.calledTool = configuration.getTools().getValue(toolName)
 
         this.additionalInput = additionalInput
         this.inputObject = inputObject
-        this.allInputValues << inputObject;
+        this.allInputValues << inputObject
         if (inputObject instanceof FileGroup) {
-            this.firstInputFile = (inputObject as FileGroup).getFilesInGroup().get(0); // Might be null at some point... Should we throw something?
+            this.firstInputFile = (inputObject as FileGroup).getFilesInGroup().get(0) // Might be null at some point... Should we throw something?
         } else if (inputObject instanceof BaseFile) {
             this.firstInputFile = inputObject as BaseFile
         } else {
