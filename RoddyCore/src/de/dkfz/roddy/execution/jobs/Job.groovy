@@ -413,8 +413,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
         path
     }
 
-    private static String jobStateInfoLine(String jobId, String code, String millis) {
-        return String.format("%s:%s:%s", jobId, code, millis)
+    private static String jobStateInfoLine(String jobId, String code, String millis, String toolID) {
+        return String.format("%s:%s:%s:%s", jobId, code, millis, toolID)
     }
 
     /**
@@ -432,9 +432,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
             String jobId = job.getJobID()
             if (jobId != null) {
                 if (job.getJobState() == JobState.UNSTARTED)
-                    jobInfoLine = jobStateInfoLine(jobId, "UNSTARTED", millis)
+                    jobInfoLine = jobStateInfoLine(jobId, "UNSTARTED", millis, toolID)
                 else if (job.getJobState() == JobState.ABORTED)
-                    jobInfoLine = jobStateInfoLine(jobId, "ABORTED", millis)
+                    jobInfoLine = jobStateInfoLine(jobId, "ABORTED", millis, toolID)
                 else
                     jobInfoLine = null
             } else {
@@ -481,7 +481,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             if (null != res.job.getJobID()) {
                 // That is indeed funny here: on our cluster, the following line did not work without the forced toString(), however
                 // on our local machine it always worked! Don't know why it worked for PBS... Now we force-convert the parameters.
-                String jobInfoLine = jobStateInfoLine("" + res.job.getJobID(), code, millis)
+                String jobInfoLine = jobStateInfoLine("" + res.job.getJobID(), code, millis, toolID)
                 FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getNameOfJobStateLogFile(executionContext), jobInfoLine, false)
             } else {
                 logger.postSometimesInfo("Did not store info for job " + res.job.getJobName() + ", job id was null.")
