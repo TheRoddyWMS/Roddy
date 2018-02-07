@@ -10,9 +10,9 @@ and are ideally used for small project or generic configurations.
     #imports anotherConfig
     #description aConfig
     #usedresourcessize m
-    #analysis A,aAnalysis,TestPlugin:current
-    #analysis B,bAnalysis,TestPlugin:current
-    #analysis C,aAnalysis,TestPlugin:current
+    #analysis A,aAnalysis,TestPlugin:develop
+    #analysis B,bAnalysis,TestPlugin:develop
+    #analysis C,aAnalysis,TestPlugin:develop
 
     outputBaseDirectory=/data/michael/temp/roddyLocalTest/testproject/rpp
     preventJobExecution=false
@@ -28,9 +28,9 @@ As you can see in the example, a Bash configuration needs a header and a body.
     #imports anotherConfig
     #description aConfig
     #usedresourcessize m
-    #analysis A,aAnalysis,TestPlugin:current
-    #analysis B,bAnalysis,TestPlugin:current
-    #analysis C,aAnalysis,TestPlugin:current
+    #analysis A,aAnalysis,TestPlugin:develop
+    #analysis B,bAnalysis,TestPlugin:develop
+    #analysis C,aAnalysis,TestPlugin:develop
 
 The header must contain the *name* of the configuration and may contain *imports*, a *description*,
 the *usedresourcessize* attribute and several *analysis* tags. The *analysis* tags need to be set

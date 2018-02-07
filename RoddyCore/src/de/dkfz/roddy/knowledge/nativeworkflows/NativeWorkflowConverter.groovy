@@ -50,7 +50,7 @@ class NativeWorkflowConverter {
     static boolean isNativePlugin(File directory) {
         try {
             // Just create a dummy plugin info, try catch and return false on PluginLoaderException. Both methods trow this if something is bad..
-            def piTest = new NativePluginInfo("TEST", directory, "current", null)
+            def piTest = new NativePluginInfo("TEST", directory, "develop", null)
             piTest.getSourceWorkflow()
             piTest.getSourceConfigurationFile()
             return true

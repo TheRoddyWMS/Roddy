@@ -28,7 +28,7 @@ class PluginDirectoryInfo {
         String[] splitName = file.name.split(StringConstants.SPLIT_UNDERSCORE) // Split name and version
         directory = file
         pluginID = splitName[0]
-        version = splitName.size() > 1 ? splitName[1] : LibrariesFactory.PLUGIN_VERSION_CURRENT
+        version = splitName.size() > 1 ? splitName[1] : LibrariesFactory.PLUGIN_VERSION_DEVELOP
         type = pluginType
     }
 

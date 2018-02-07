@@ -34,7 +34,7 @@ List<File> pluginFolders = []
 
 if (splitPlugin.size() > 1) pluginLine.addAll(splitPlugin[1].split("[,]"))
 pluginLine.each { pl -> pluginFolders.addAll(new File(pl).listFiles().findAll { dir -> dir.isDirectory() }) }
-sourceDirectory = pluginFolders.find { it.name.endsWith(pluginID + ( (pluginVersion && !pluginVersion.equals("current"))? "_$pluginVersion" : "")); }
+sourceDirectory = pluginFolders.find { it.name.endsWith(pluginID + ( (pluginVersion && !pluginVersion.equals("develop"))? "_$pluginVersion" : "")); }
 
 if (sourceDirectory == null) {
     System.err.println("Could not find source directory among ${pluginFolders}")
