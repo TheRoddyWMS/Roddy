@@ -321,7 +321,7 @@ onMethod trigger
 ~~~~~~~~~~~~~~~~
 
   This trigger links the pattern to a method name or a class and a method name. Roddy will search all called methods using the current
-  Threads stack trace. The search will stop, as soon as the execute method is reached. Valid values are:
+  threads stack trace. The search will stop, as soon as the execute method is reached. Valid values are:
 
     * [methodName] - by specifying only a method name, the pattern will be used for any called method with this name.
 

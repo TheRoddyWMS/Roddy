@@ -495,7 +495,7 @@ public class RoddyCLIClient {
         if (apiLevel == null) {
             def version = Version.fromString(Constants.APP_CURRENT_VERSION_STRING)
             apiLevel = version.major + '.' + version.minor
-            logger.postAlwaysInfo("Using the current Roddy API level: ${apiLevel}")
+            logger.postAlwaysInfo("Using the Roddy API level: ${apiLevel}")
         } else
             logger.postAlwaysInfo("Roddy API level for ${clc.getAnalysisID()}: ${apiLevel}")
     }

@@ -1,5 +1,5 @@
-dependson=TestPluginWithJarFile:current
-dependson=PluginBase:current
+dependson=TestPluginWithJarFile:develop
+dependson=PluginBase:develop
 JDKVersion=1.8
 GroovyVersion=2.4
 RoddyAPIVersion=2.4
