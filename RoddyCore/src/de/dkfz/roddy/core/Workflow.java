@@ -138,6 +138,22 @@ public abstract class Workflow {
         return BaseFile.fromStorage(context, path, _class);
     }
 
+    protected BaseFile getSourceFileUsingTool(ExecutionContext context, String toolID) {
+        return getSourceFileUsingTool(context, toolID, BaseFile.STANDARD_FILE_CLASS);
+    }
+
+    protected BaseFile getSourceFileUsingTool(ExecutionContext context, String toolID, String _class) {
+        return BaseFile.getSourceFileUsingTool(context, toolID, _class);
+    }
+
+    protected List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID) {
+        return getSourceFilesUsingTool(context, toolID, BaseFile.STANDARD_FILE_CLASS);
+    }
+
+    protected List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID, String _class) {
+        return BaseFile.getSourceFilesUsingTool(context, toolID, _class);
+    }
+
     /**
      * Easily create a file which inherits from another file.
      * Will call getDerivedFile with parent and BaseFile.STANDARD_FILE_CLASS
