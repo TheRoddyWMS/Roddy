@@ -240,46 +240,15 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         getFile(parentFile, _class)
     }
 
-    /**
-     * This classes purpose is to extend the original BEJobResult to get access to the internal object for the contained
-     * execution result object. Not more not less.
-     */
-    private static class BEJobResultExtension extends BEJobResult {
-
-        BEJobResultExtension(BEJobResult extended) {
-            super(extended.command, extended.job, extended.executionResult, extended.toolID, extended.jobParameters, extended.parentJobs)
-        }
-
-        List<String> resultLines() {
-            return super.executionResult.resultLines
-        }
-    }
-
     static BaseFile getSourceFileUsingTool(ExecutionContext context, String toolID, String _class = STANDARD_FILE_CLASS) {
-        def dss = new DirectSynchronousExecutionJobManager(ExecutionService.instance, new JobManagerOptionsBuilder().build())
-        def defaultParms = context.runtimeService.getDefaultJobParameters(context, toolID)
-        def scriptContext = new ExecutionContext(context.executingUser, context.analysis, context.dataSet, ExecutionContextLevel.RUN, context.outputDirectory, context.inputDirectory, context.executionDirectory, context.creationCheckPoint)
-        def job = new Job(scriptContext, "BLLLLLAAAAA", toolID, defaultParms)
-        job.jobManager = dss
-        def jobResult = job.run()
-        if(job.wasExecuted()) {
-            def jobResultCopyExtended = new BEJobResultExtension(jobResult)
-            jobResultCopyExtended.resultLines()
-//        jobResultCopyExtended.
-//        def commandString = cmd.toString()
-//        def executionResult = ExecutionService.instance.execute(commandString, true)
-//        return fromStorage(context, executionResult.firstLine)
-            return fromStorage(context, null)
-        }
-        return null
+        def listOfStrings = ExecutionService.instance.callSynchronized(context, toolID)
+        return getSourceFile(context, listOfStrings[0], _class)
     }
 
     static List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID, String _class = STANDARD_FILE_CLASS) {
-        def dss = new DirectSynchronousExecutionJobManager(ExecutionService.instance, new JobManagerOptionsBuilder().build())
-        def job = new Job(context, "BLLLLLAAAAA", toolID, [:])
-        def cmd = new DirectCommand(dss, job, [])
-
-        return ExecutionService.instance.execute(cmd.toString(), true).resultLines.collect { fromStorage(context, it) }
+        return ExecutionService.instance.callSynchronized(context, toolID).collect {
+            getSourceFile(context, it, _class)
+        } as List<BaseFile>
     }
 
     protected File path;

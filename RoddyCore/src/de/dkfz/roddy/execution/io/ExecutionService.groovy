@@ -197,9 +197,8 @@ abstract class ExecutionService implements BEExecutionService {
         wrapperJob.setJobManager(dcfac)
         def result = new BEJobResultExtension(wrapperJob.run())            // Getting complicated from here on. We need to replicate some code.
 
+        // If QUERY_STATUS is set as the context status, some parts of the above .run() will not be executed and need to be mimiced (for now)
         if (!context.executionContextLevel.isOrWasAllowedToSubmitJobs) {
-//            String nativeWorkflowScriptWrapper = configuration.getProcessingToolPath(context, toolID).absolutePath
-//            wrapperJob.parameters[Job.PARM_WRAPPED_SCRIPT] = nativeWorkflowScriptWrapper
             wrapperJob.storeJobConfigurationFile(wrapperJob.createJobConfiguration())
             wrapperJob.keepOnlyEssentialParameters()
 
