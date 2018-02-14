@@ -6,7 +6,6 @@
 
 package de.dkfz.roddy.config.converters
 
-import com.sun.org.apache.xerces.internal.impl.xpath.regex.RegularExpression
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -16,8 +15,6 @@ import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.fs.BashCommandSet
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.tools.LoggerWrapper
-import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
 
 import java.util.logging.Level
@@ -417,7 +414,7 @@ class BashConverter extends ConfigurationConverter {
                         String key = cvarr[0]
                         bundleValues[key] = new ConfigurationValue(newCfg, key, cval[key.length() + 1..-1])
                     }
-                    cValueBundles[bundleName] = new ConfigurationValueBundle(bundleValues)
+                    cValueBundles[bundleName] = new ConfigurationValueBundle(bundleName, bundleValues)
                 } catch (Exception ex) {
                     logger.log(Level.SEVERE, ex.toString())
                 }

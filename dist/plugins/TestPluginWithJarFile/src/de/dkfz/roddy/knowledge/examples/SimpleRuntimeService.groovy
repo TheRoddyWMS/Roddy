@@ -25,7 +25,7 @@ class SimpleRuntimeService extends RuntimeService {
         Map<String, Object> parameters = new LinkedHashMap<>()
         parameters.put("pid", (Object) pid)
         parameters.put("PID", (Object) pid)
-        parameters.put("CONFIG_FILE", getNameOfConfigurationFile(context).getAbsolutePath())
+        parameters.put("PARAMETER_FILE", getNameOfConfigurationFile(context).getAbsolutePath())
         parameters.put("ANALYSIS_DIR", context.getOutputDirectory().getParentFile().getParent())
         if (toolID != null && toolID.length() > 0) {
             parameters.put("PRM_TOOLS_DIR", cfg.getProcessingToolPath(context, toolID).getParent())
