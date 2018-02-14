@@ -8,6 +8,7 @@ package de.dkfz.roddy.core;
 
 import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.config.ConfigurationError;
+import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.knowledge.files.FileGroup;
 import de.dkfz.roddy.knowledge.files.FileObject;
@@ -15,6 +16,7 @@ import de.dkfz.roddy.knowledge.methods.GenericMethod;
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A worklow can be created and executed to process a set of data.
@@ -86,6 +88,10 @@ public abstract class Workflow {
         return GenericMethod.callGenericToolWithFileGroupOutput(toolName, input, indices, additionalInput);
     }
 
+    public List<String> callSynchronized(ExecutionContext context, String toolID, Map<String, Object> parameters) {
+        return ExecutionService.getInstance().callSynchronized(context, toolID, parameters);
+    }
+
     /**
      * Convenience method to get a boolean runflag from the context config, defaults to true
      *
@@ -151,4 +157,5 @@ public abstract class Workflow {
     protected BaseFile getDerivedFile(BaseFile parent, String _class) {
         return BaseFile.deriveFrom(parent, _class);
     }
+
 }

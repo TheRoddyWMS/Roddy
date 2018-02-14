@@ -118,14 +118,25 @@ class BashConverter extends ConfigurationConverter {
         StringBuilder text = new StringBuilder()
         text << separator << separator
 
+        String wrappedScriptDebugOptions = ""
+
         for (List bashFlag in [
-                [ConfigurationConstants.DEBUG_OPTIONS_USE_PIPEFAIL, true, "set -o pipefail"],
-                [ConfigurationConstants.DEBUG_OPTIONS_USE_VERBOSE_OUTPUT, true, "set -v"],
-                [ConfigurationConstants.DEBUG_OPTIONS_USE_EXECUTE_OUTPUT, true, "set -x"],
+                [ConfigurationConstants.DEBUG_OPTIONS_USE_VERBOSE_OUTPUT, true, "-v"],
+                [ConfigurationConstants.DEBUG_OPTIONS_USE_EXECUTE_OUTPUT, true, "-x"],
+                [ConfigurationConstants.DEBUG_OPTIONS_USE_UNDEFINED_VARIABLE_BREAK, false, "-u"],
+                [ConfigurationConstants.DEBUG_OPTIONS_USE_EXIT_ON_ERROR, false, "-e"],
+                [ConfigurationConstants.DEBUG_OPTIONS_PARSE_SCRIPTS, false, "-n"],
+                [ConfigurationConstants.DEBUG_OPTIONS_USE_PIPEFAIL, true, "-o pipefail"],
+                ]) {
+            boolean val = cfg.getConfigurationValues().getBoolean(bashFlag[0] as String, bashFlag[1] as Boolean)
+            if(val)
+                wrappedScriptDebugOptions += "${bashFlag[2]} "
+        }
+
+        text << separator << "declare -x WRAPPED_SCRIPT_DEBUG_OPTIONS=\"$wrappedScriptDebugOptions\"" << separator
+
+        for (List bashFlag in [
                 [ConfigurationConstants.DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT, false, "export PS4='+(\${BASH_SOURCE}:\${LINENO}): \${FUNCNAME[0]: +\$ { FUNCNAME[0] }():}'"],
-                [ConfigurationConstants.DEBUG_OPTIONS_USE_UNDEFINED_VARIABLE_BREAK, false, "set -u"],
-                [ConfigurationConstants.DEBUG_OPTIONS_USE_EXIT_ON_ERROR, false, "set -e"],
-                [ConfigurationConstants.DEBUG_OPTIONS_PARSE_SCRIPTS, false, "set -n"],
                 [ConfigurationConstants.CVALUE_PROCESS_OPTIONS_QUERY_ENV, false, "env"],
                 [ConfigurationConstants.CVALUE_PROCESS_OPTIONS_QUERY_ID, false, "id"],
         ]) {

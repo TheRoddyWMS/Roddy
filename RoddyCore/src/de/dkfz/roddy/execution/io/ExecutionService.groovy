@@ -8,8 +8,10 @@ package de.dkfz.roddy.execution.io
 
 import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.execution.BEExecutionService
+import de.dkfz.roddy.execution.jobs.BEJobResult
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.JobManagerOptions
 import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.execution.jobs.DummyCommand
 import de.dkfz.roddy.AvailableFeatureToggles
@@ -28,6 +30,7 @@ import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.BEJobID
+import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -154,6 +157,72 @@ abstract class ExecutionService implements BEExecutionService {
     }
 
     protected abstract ExecutionResult _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream)
+
+    /**
+     * This classes purpose is to extend the original BEJobResult to get access to the internal object for the contained
+     * execution result object. Not more not less.
+     */
+    @Deprecated
+    private static class BEJobResultExtension extends BEJobResult {
+
+        BEJobResultExtension(BEJobResult extended) {
+            super(extended.command, extended.job, extended.executionResult, extended.toolID, extended.jobParameters, extended.parentJobs)
+        }
+
+        boolean isSuccessful() {
+            return super.executionResult.isSuccessful()
+        }
+
+        List<String> resultLines() {
+            return super.executionResult.resultLines
+        }
+    }
+
+    /**
+     * The original function is in ExecutionService, but this one takes parameters and passes them to the execution.
+     * @param context
+     * @param toolID
+     * @param parameters
+     * @param jobNameExtension
+     * @return
+     */
+    List<String> callSynchronized(ExecutionContext context, String toolID, Map<String, Object> parameters = null) {
+
+        def configuration = context.configuration
+        if (!parameters) parameters = [:]
+        parameters["disableDebugOptionsForToolscript"] = "true"
+
+        Job wrapperJob = new Job(context, context.getTimestampString() + "_directTool:" + toolID, toolID, parameters)
+        DirectSynchronousExecutionJobManager dcfac = new DirectSynchronousExecutionJobManager(ExecutionService.getInstance(), JobManagerOptions.create().setStrictMode(false).build())
+        wrapperJob.setJobManager(dcfac)
+        def result = new BEJobResultExtension(wrapperJob.run())            // Getting complicated from here on. We need to replicate some code.
+
+        if (!context.executionContextLevel.isOrWasAllowedToSubmitJobs) {
+//            String nativeWorkflowScriptWrapper = configuration.getProcessingToolPath(context, toolID).absolutePath
+//            wrapperJob.parameters[Job.PARM_WRAPPED_SCRIPT] = nativeWorkflowScriptWrapper
+            wrapperJob.storeJobConfigurationFile(wrapperJob.createJobConfiguration())
+            wrapperJob.keepOnlyEssentialParameters()
+
+            result = new BEJobResultExtension(dcfac.submitJob(wrapperJob))
+        }
+        def lines = FileSystemAccessProvider.instance.loadTextFile(new File(wrapperJob.jobLog.getOut(wrapperJob.jobID.toString())))
+
+        if (!result.isSuccessful())
+            throw new IOException(result.resultLines().join("\n"))
+
+        // Depending on which debug options are set, it is possible (set -v), that "Wrapped script ended"
+        // is found before "Starting wrapped script". It is however safe to compare the whole "Starting wrapped script"
+        // string to find the beginning of the output block of the executed wrapped script. Therefore we
+        // use this to cut away misleading trailing output and then find the end block afterwards.
+        // The end block can contain a "+ " at the beginning (again depending on the debug options), so we use
+        // the find method to identify the first upcoming line.
+        int index = lines.findIndexOf { it == "######################################################### Starting wrapped script ###########################################################" }
+        lines = lines[1 + index..-1]
+        index = lines.findIndexOf { String it -> it.contains("######################################################### Wrapped script ended ##############################################################") }
+        lines = lines[0..index - 1]
+
+        return lines as List<String>
+    }
 
     List<String> executeTool(ExecutionContext context, String toolID, String jobNameExtension = "_executedScript:") {
         File path = context.getConfiguration().getProcessingToolPath(context, toolID)
@@ -350,11 +419,11 @@ abstract class ExecutionService implements BEExecutionService {
         //Base path for the application. This path might not be available on the target system (i.e. because of ssh calls).
         File roddyBundledFilesDirectory = Roddy.getBundledFilesDirectory()
 
-        if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) {
-            provider.checkDirectories([executionBaseDirectory, executionDirectory, temporaryDirectory, lockFilesDirectory], context, true)
-            logger.always("Creating the following execution directory to store information about this process:")
-            logger.always("\t${executionDirectory.getAbsolutePath()}")
-        }
+//        if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) {
+        provider.checkDirectories([executionBaseDirectory, executionDirectory, temporaryDirectory, lockFilesDirectory], context, true)
+        logger.always("Creating the following execution directory to store information about this process:")
+        logger.always("\t${executionDirectory.getAbsolutePath()}")
+//        }
 
         Configuration cfg = context.getConfiguration()
         def configurationValues = cfg.getConfigurationValues()
@@ -376,7 +445,7 @@ abstract class ExecutionService implements BEExecutionService {
         configurationValues.put(RODDY_CVALUE_DIRECTORY_ANALYSIS_TOOLS, analysisToolsDirectory.getAbsolutePath(), CVALUE_TYPE_PATH)
         configurationValues.put(RODDY_CVALUE_JOBSTATE_LOGFILE, executionDirectory.getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + RODDY_JOBSTATE_LOGFILE, CVALUE_TYPE_STRING)
 
-        if (!context.getExecutionContextLevel().canSubmitJobs) return
+//        if (!context.getExecutionContextLevel().canSubmitJobs) return
 
         final boolean ATOMIC = true
         final boolean BLOCKING = true
