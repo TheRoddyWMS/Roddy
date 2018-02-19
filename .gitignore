@@ -1,6 +1,5 @@
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
-build
 .nfo
 .gradle
 
@@ -15,22 +14,20 @@ build
 
 # Build directories
 out
-RoddyCore/build
-dist/build
-dist/plugins/*/build
+build
 gradleBuild
 dist/bin/develop/lib/
 
 # Most plugins in dist/plugins
+dist/plugins/*
 !dist/plugins/Template
 !dist/plugins/NativeWorkflowTestPlugin
 !dist/plugins/TestPluginWithJarFile
 !dist/plugins/TestPluginWithoutJarFile
-dist/plugins
 
 # All versioned Roddy directories (except 'develop')
+dist/bin/*
 !dist/bin/develop
-dist/bin
 
 # Other files
 manifest.tmp
