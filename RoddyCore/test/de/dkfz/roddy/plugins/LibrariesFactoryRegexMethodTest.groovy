@@ -26,7 +26,7 @@ public class LibrariesFactoryRegexMethodTest {
     @Test
     public void testInvalidWorkflowIdentificationStringTester() {
         Map<String, Boolean> listOfIdentifiers = [
-                "COWorkflows:1.0.1-0:current": false,
+                "COWorkflows:1.0.1-0:develop": false,
                 "COWorkflows:1.0"            : false,
                 "COWorkflows:"               : false,
         ]
@@ -42,7 +42,7 @@ public class LibrariesFactoryRegexMethodTest {
         Map<String, Boolean> listOfIdentifiers = [
                 "COWorkflows:1.0.1-0": true,
                 "COWorkflows:1.0.1-3": true,
-                "COWorkflows:current": true,
+                "COWorkflows:develop": true,
                 "COWorkflows"        : true,
         ]
         listOfIdentifiers.each {
@@ -55,10 +55,10 @@ public class LibrariesFactoryRegexMethodTest {
     @Test
     public void testInvalidWorkflowDirectoryNameTester() {
         Map<String, Boolean> listOfIdentifiers = [
-                "COWorkflows_1.0.1-0:current": false,
+                "COWorkflows_1.0.1-0:develop": false,
                 "COWorkflows:1.0.1-r"        : false,
                 "COWorkflows:1.0.1-3"        : false,
-                "COWorkflows_current"        : false,
+                "COWorkflows_develop"        : false,
         ]
         listOfIdentifiers.each {
             String id, Boolean result ->

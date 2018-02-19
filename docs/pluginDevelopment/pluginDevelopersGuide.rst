@@ -50,14 +50,14 @@ where:
 - PluginName is the name of the plugin
 
 - _1.0.111 is the version of the plugin, this is not necessarily the same as the entry in the buildversion.txt file.
-  If you omit this entry, the plugin version is current by default!
+  If you omit this entry, the plugin version is 'develop' by default!
 
 - -1 is the revision of the plugin. if you only have smaller changes, you can increase the revision number of the new plugin
   and Roddy is able to select the revised plugin instead of the former revision. You can omit this entry and Roddy will set
   the revision to -0 internally. Please be aware:
-  * The revision is only valid, if you set the version! It is not valid for plugins marked as current.
+  * The revision is only valid, if you set the version! It is not valid for plugins marked as 'develop'.
 
-  * You are also not allowed to set current as the plugin version!
+  * You are also not allowed to set 'develop' as the plugin version!
 
 There are some main components for any plugin and files for the contained workflows.
 

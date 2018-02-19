@@ -80,7 +80,7 @@ public class BuildInfoFileHelper {
             if (!LibrariesFactory.isPluginIdentifierValid(entry)) continue
             List<String> split = entry?.split(StringConstants.SPLIT_COLON) as List;
             String workflow = split[0];
-            String version = split.size() > 1 ? split[1] : PLUGIN_VERSION_CURRENT;
+            String version = split.size() > 1 ? split[1] : PLUGIN_VERSION_DEVELOP;
             dependencies[workflow] = version;
         }
         return dependencies;

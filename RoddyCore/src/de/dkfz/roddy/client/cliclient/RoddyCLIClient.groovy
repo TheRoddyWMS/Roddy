@@ -495,7 +495,7 @@ public class RoddyCLIClient {
         if (apiLevel == null) {
             def version = Version.fromString(Constants.APP_CURRENT_VERSION_STRING)
             apiLevel = version.major + '.' + version.minor
-            logger.postAlwaysInfo("Using the current Roddy API level: ${apiLevel}")
+            logger.postAlwaysInfo("Using the Roddy API level: ${apiLevel}")
         } else
             logger.postAlwaysInfo("Roddy API level for ${clc.getAnalysisID()}: ${apiLevel}")
     }
@@ -610,7 +610,7 @@ public class RoddyCLIClient {
         Analysis analysis = loadAnalysisOrFail(clc)
         def analysisID = clc.analysisID
 
-        List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getParameters()[1].split(SPLIT_COMMA) : null;
+        List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getParameters()[1].split(SPLIT_COMMA).toList() : null
         if (dFilter == null) {
             println("There were no valid pids specified.")
             return;
@@ -737,26 +737,30 @@ public class RoddyCLIClient {
     /**
      * Sets up Roddys property file from the command line.
      */
-    static void performCommandLineSetup() {
+    static void performCommandLineSetup() throws ConfigurationError {
         try {
             ScannerWrapper sc = new ScannerWrapper();
             System.out.println("Setup roddy for command line processing.\n========================================\n");
 
-            RunMode runMode = Roddy.getRunMode();
+            RunMode runMode = Roddy.getRunMode()
+            RoddyAppConfig appConf = Roddy.applicationConfiguration
 
-            boolean useProxyForInternetConnection = Boolean.parseBoolean(Roddy.getApplicationProperty(Constants.APP_PROPERTY_NET_USEPROXY, false.toString()));
-            useProxyForInternetConnection = sc.getBooleanYN("Does your internet connection require a proxy:", useProxyForInternetConnection);
+            boolean useProxyForInternetConnection = appConf.
+                    getOrSetBooleanApplicationProperty(Constants.APP_PROPERTY_NET_USEPROXY, false)
+            useProxyForInternetConnection = sc.getBooleanYN("Does your internet connection require a proxy:", useProxyForInternetConnection)
             if (useProxyForInternetConnection) {
-                String adr = sc.getString("Enter your proxy address: ", Roddy.getApplicationProperty(Constants.APP_PROPERTY_NET_PROXY_ADDRESS, StringConstants.EMPTY));
-                String usr = sc.getString("Enter your proxy user id: ", Roddy.getApplicationProperty(Constants.APP_PROPERTY_NET_PROXY_USR, StringConstants.EMPTY));
-                Roddy.setApplicationProperty(Constants.APP_PROPERTY_NET_PROXY_ADDRESS, adr);
-                Roddy.setApplicationProperty(Constants.APP_PROPERTY_NET_PROXY_USR, usr);
+                String adr = sc.getString("Enter your proxy address: ",
+                        appConf.getOrSetApplicationProperty(Constants.APP_PROPERTY_NET_PROXY_ADDRESS, StringConstants.EMPTY))
+                String usr = sc.getString("Enter your proxy user id: ",
+                        appConf.getOrSetApplicationProperty(Constants.APP_PROPERTY_NET_PROXY_USR, StringConstants.EMPTY))
+                appConf.setApplicationProperty(Constants.APP_PROPERTY_NET_PROXY_ADDRESS, adr)
+                appConf.setApplicationProperty(Constants.APP_PROPERTY_NET_PROXY_USR, usr)
             }
-            Roddy.setApplicationProperty(Constants.APP_PROPERTY_NET_USEPROXY, useProxyForInternetConnection.toString());
+            appConf.setApplicationProperty(Constants.APP_PROPERTY_NET_USEPROXY, useProxyForInternetConnection.toString())
 
-            String selectedExecService = Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, LocalExecutionService.class.getName());
-            String serviceQuery = "Chose an execution service:";
-            List<String> availableServiceOptions = Arrays.asList("LocalExecutionService - Run everything locally (Data files, binaries and the command submission tool must be accessible!)", "SSHExecutionService - Run using an ssh connection.");
+            String selectedExecService = appConf.getOrSetApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, LocalExecutionService.class.getName())
+            String serviceQuery = "Chose an execution service:"
+            List<String> availableServiceOptions = Arrays.asList("LocalExecutionService - Run everything locally (Data files, binaries and the command submission tool must be accessible!)", "SSHExecutionService - Run using an ssh connection.")
             List<String> availableServiceClasses = Arrays.asList(LocalExecutionService.class.getName(), SSHExecutionService.class.getName());
             String selected = null;
             if (selectedExecService.equals(LocalExecutionService.class.getName()))
@@ -767,35 +771,38 @@ public class RoddyCLIClient {
 
             if (selectedExecService.equals(availableServiceClasses.get(1))) {
                 String sshHosts;
-                System.out.print("Enter a list of ssh hosts: [" + Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_HOSTS, "") + "] ");
-                sshHosts = sc.getString();
+                System.out.print("Enter a list of ssh hosts: [" +
+                        appConf.getOrSetApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_HOSTS, "") + "] ")
+                sshHosts = sc.getString()
                 if (sshHosts.trim().length() == 0)
-                    sshHosts = Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_HOSTS, "");
+                    sshHosts = appConf.getOrSetApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_HOSTS, "")
 
 //                System.out.println("Create a key pair for passwordless server access? (Roddy won't run without this!) [y/N] ");
 //                boolean createKeyPair = sc.getBooleanYN();
-                String selectedAuthenticationMethod = Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE);
+                String selectedAuthenticationMethod = appConf.getOrSetApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE)
                 String authQuery = "Chose an authentication method:";
-                List<String> authOptions = Arrays.asList("Authenticate using a pair of passwordless keyfiles.", "Authenticate using a user and a password.");
+                List<String> authOptions = Arrays.asList("Authenticate using a pair of passwordless keyfiles.", "Authenticate using a user and a password.")
                 List<String> authMethods =
-                        [Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_SSHAGENT]
-                selected = null;
+                        [Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE,
+                         Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD,
+                         Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_SSHAGENT]
+                selected = null
                 if (selectedAuthenticationMethod.equals(Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE))
-                    selected = authOptions.get(0);
+                    selected = authOptions.get(0)
                 else if (selectedAuthenticationMethod.equals(Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD))
-                    selected = authOptions.get(1);
+                    selected = authOptions.get(1)
                 selectedAuthenticationMethod = sc.getChoiceAsObject(authQuery, authOptions, 1, authMethods, selected);
 
-                String sshUser = "";
-                String sshPassword = "";
-                boolean storePassword = false;
+                String sshUser = ""
+                String sshPassword = ""
+                boolean storePassword = false
                 if (selectedAuthenticationMethod.equals(Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD)) {
-                    System.out.print("Enter your ssh user id: [" + Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_USER, "") + "] ");
-                    sshUser = sc.getString();
-                    System.out.print("Enter your ssh password: ");
-                    sshPassword = sc.getPasswordString();
-//                    System.out.print( [y/N] ");
-                    storePassword = false;//sc.getBooleanYN("Do you want to store the password (This is done unencrypted!)?", false);
+                    System.out.print("Enter your ssh user id: [" + appConf.
+                            getOrSetApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_USER, "") + "] ")
+                    sshUser = sc.getString()
+                    System.out.print("Enter your ssh password: ")
+                    sshPassword = sc.getPasswordString()
+                    storePassword = false
                 }
 
                 //TODO Put that back in?
@@ -807,22 +814,22 @@ public class RoddyCLIClient {
 //                    email = sc.getString();
 //                }
 
-                Roddy.setApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, selectedExecService);
-                Roddy.setApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_HOSTS, sshHosts);
-                Roddy.setApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD, selectedAuthenticationMethod);
-                Roddy.setApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_USER, sshUser);
-                Roddy.setApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_STORE_PWD, ((Boolean) storePassword).toString());
-                Roddy.setApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_PWD, sshPassword);
+                appConf.setApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, selectedExecService)
+                appConf.setApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_HOSTS, sshHosts)
+                appConf.setApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD, selectedAuthenticationMethod)
+                appConf.setApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_USER, sshUser)
+                appConf.setApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_STORE_PWD, ((Boolean) storePassword).toString())
+                appConf.setApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_PWD, sshPassword)
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace()
         }
     }
 
-    public static void askForPassword() {
-        ScannerWrapper sc = new ScannerWrapper();
-        System.out.print("Enter your ssh password: ");
-        String sshPassword = sc.getPasswordString();
-        Roddy.setApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_PWD, sshPassword);
+    static void askForPassword() {
+        ScannerWrapper sc = new ScannerWrapper()
+        System.out.print("Enter your ssh password: ")
+        String sshPassword = sc.getPasswordString()
+        Roddy.applicationConfiguration.setApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_PWD, sshPassword)
     }
 }

@@ -22,7 +22,7 @@ If everything is good, Roddy will start and print the help.
 .. code-block:: bash
 
     Roddy is supposed to be a rapid development and management platform for cluster based workflows.
-    The current supported ways of execution are:
+    The currently supported ways of execution are:
      - job submission using qsub with PBS or SGE
      - monolithic, direct execution of jobs via Roddy
      - submission or execution on the local machine or via SSH
@@ -71,12 +71,10 @@ The ini files are explained in detail in :doc:`../config/applicationProperties`.
 
 .. code-block:: ini
 
-    [COMMON]
-    useRoddyVersion=current                     # Use the most current version for tests
-
     [DIRECTORIES]
     configurationDirectories=[FOLDER_WITH_CONFIGURATION_FILES]
     pluginDirectories=[FOLDER_WITH_PLUGINS]
+    scratchBaseDirectory=[FOLDER_ON_EXECUTION_HOSTS]
 
     [COMMANDS]
     jobManagerClass=de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
@@ -123,6 +121,8 @@ Usually, you just need to change the following settings:
    SSH and no keyfiles
 -  CLI.executionServiceStorePassword - If you want to store the
    password, put in true, however, the password is stored in plain-text!
+-  scratchBaseDirectory - A path to a preferably fast local storage on the
+   execution hosts. E.g. /local/$USER
 
 You might remember or store away the above options for future usage
 as its likely, that they won't change too often. For you the more important
@@ -156,7 +156,7 @@ level of configurations and subconfigurations in one file
              imports="baseProject"
              usedresourcessize="m">
         <availableAnalyses>
-            <analysis id='testWorkflow' configuration='TestAnalysis' useplugin="DefaultPlugin:current"/>
+            <analysis id='testWorkflow' configuration='TestAnalysis' useplugin="DefaultPlugin:develop"/>
             <analysis id='qualityControl' configuration='QualityControlAnalysis' useplugin="QualityControlPlugin:1.0.10"/>
         </availableAnalyses>
         <configurationvalues>
@@ -219,7 +219,7 @@ workflows for your project.
 .. code-block:: XML
 
         <availableAnalyses>
-            <analysis id='testWorkflow' configuration='TestAnalysis' useplugin="DefaultPlugin:current"/>
+            <analysis id='testWorkflow' configuration='TestAnalysis' useplugin="DefaultPlugin:develop"/>
             <analysis id='qualityControl' configuration='QualityControlAnalysis' useplugin="QualityControlPlugin:1.0.10"/>
         </availableAnalyses>
 
@@ -278,7 +278,7 @@ command.
 
 .. code-block:: bash
 
-    bash roddy.sh prepareprojectconfig create [targetprojectfolder] --useRoddyVersion=current
+    bash roddy.sh prepareprojectconfig create [targetprojectfolder] --useRoddyVersion=develop
 
 The command will:
 

@@ -23,7 +23,7 @@ class PluginInfoMap {
      * mapOfPlugins[plugin id][plugin version]
      *
      * Contents are e.g.:
-     * [ "BasePlugin" : [ "1.0.1", "1.0.2", "current" ]
+     * [ "BasePlugin" : [ "1.0.1", "1.0.2", "develop" ]
      */
     Map<String, Map<String, PluginInfo>> mapOfPlugins
 
@@ -54,14 +54,14 @@ class PluginInfoMap {
      * Get an object based on a plugin string like:
      * BasePlugin:1.0.12 or so...
      *
-     * If no plugin is set "current" will be returned.
+     * If no plugin is set "develop" will be returned.
      */
     public PluginInfo getPluginInfoWithPluginString(String pluginString) {
         String[] split = pluginString.split(StringConstants.SPLIT_COLON);
         if (split.size() > 2)
             throw new RuntimeException("The plugin string ${pluginString} is malformed.")
         String pluginID = split[0];
-        String pluginVersion = split.size() > 1 ? split[1] : "current";
+        String pluginVersion = split.size() > 1 ? split[1] : "develop";
         return getPluginInfo(pluginID, pluginVersion);
     }
 
@@ -72,8 +72,8 @@ class PluginInfoMap {
      * @return
      */
     public PluginInfo getPluginInfo(String pluginID, String version) {
-        if (!version) version = "current";
-        String additionalMessage = "\nPlease check, if you have proper access to all plugin directories. Roddy tries to load plugins from the following directories:\n\t"
+        if (!version) version = LibrariesFactory.PLUGIN_VERSION_DEVELOP;
+        String additionalMessage = "\nPlease check whether you have proper access to all plugin directories. Roddy tries to load plugins from the following directories:\n\t"
         additionalMessage += Roddy.getPluginDirectories().collect { it.getAbsolutePath() }.join("\n\t") +"\n"
         if (!mapOfPlugins[pluginID]) //Can this case occur?
             throw new PluginLoaderException("Plugin '${pluginID}' is not available, available are:\n\t" + mapOfPlugins.keySet().join("\n\t") + additionalMessage)
@@ -85,7 +85,7 @@ class PluginInfoMap {
     }
 
     public boolean checkExistence(String pluginID, String version) {
-        if (!version) version = "current";
+        if (!version) version = LibrariesFactory.PLUGIN_VERSION_DEVELOP
         if (!mapOfPlugins[pluginID]) //Can this case occur?
             return false;
         if (!mapOfPlugins[pluginID][version])
