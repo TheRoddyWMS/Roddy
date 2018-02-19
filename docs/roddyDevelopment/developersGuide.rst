@@ -112,7 +112,7 @@ Repository Structure
     docs/                                             Documentation
     dist/
         bin/
-            current/
+            develop/
             $major.$minor.$build/
         plugins/
             DefaultPlugin
@@ -133,7 +133,7 @@ The preferred way to build Roddy is via Gradle. Please run
 
     ./gradlew build
 
-This will download all necessary dependencies into the dist/bin/current/lib directory and create the Roddy.jar in dist/bin/current.
+This will download all necessary dependencies into the dist/bin/develop/lib directory and create the Roddy.jar in dist/bin/develop.
 
 If you want to develop Roddy and additionally want to work on the RoddyToolLib or BatchEuphoria you can clone these libraries into neighbouring
 directories and execute gradle with composite build parameters
@@ -183,6 +183,6 @@ After you cloned the Roddy repository, please navigate into the folder and:
 
 Both commands will install the necessary submodules.
 =======
-The "roddyDistZip" target will produce a zip with the content of the "dist/bin/current" directory. For deployment you should unzip it in that
-directory and copy its content into an appropriately named dist/bin/ subdirectory, e.g. "current" for testing purposes or the version number, such as
+The "roddyDistZip" target will produce a zip with the content of the "dist/bin/develop" directory. For deployment you should unzip it in that
+directory and copy its content into an appropriately named dist/bin/ subdirectory, e.g. "develop" for testing purposes or the version number, such as
 2.4.10.

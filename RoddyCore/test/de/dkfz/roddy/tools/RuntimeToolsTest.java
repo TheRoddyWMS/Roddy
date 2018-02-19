@@ -30,15 +30,15 @@ public class RuntimeToolsTest {
     @Test
     public void testGetBuildinfoFile() {
         String buildinfoTextFile = RuntimeTools.getBuildinfoFile().getAbsolutePath();
-        String estimatedBuildInfoTextFile = RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current", "buildinfo.txt").getAbsolutePath();
+        String estimatedBuildInfoTextFile = RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "develop", "buildinfo.txt").getAbsolutePath();
         assertEquals(estimatedBuildInfoTextFile, buildinfoTextFile);
     }
 
     @Test
-    public void testGetCurrentDistFolder() {
+    public void testGetDevelopmentDistFolder() {
         assertEquals(
-                RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "current").getAbsolutePath(),
-                RuntimeTools.getCurrentDistFolder().getAbsolutePath());
+                RoddyIOHelperMethods.assembleLocalPath(Roddy.getApplicationDirectory(), "dist", "bin", "develop").getAbsolutePath(),
+                RuntimeTools.getDevelopmentDistFolder().getAbsolutePath());
     }
 
 }

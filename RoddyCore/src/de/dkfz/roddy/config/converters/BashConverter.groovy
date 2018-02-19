@@ -450,9 +450,9 @@ class BashConverter extends ConfigurationConverter {
      * #imports anotherConfig
      * #description aConfig
      * #usedresourcessize m
-     * #analysis A,aAnalysis,TestPlugin:current
-     * #analysis B,bAnalysis,TestPlugin:current
-     * #analysis C,aAnalysis,TestPlugin:current
+     * #analysis A,aAnalysis,TestPlugin:develop
+     * #analysis B,bAnalysis,TestPlugin:develop
+     * #analysis C,aAnalysis,TestPlugin:develop
      *
      * outputBaseDirectory=/data/michael/temp/roddyLocalTest/testproject/rpp
      * preventJobExecution=false
