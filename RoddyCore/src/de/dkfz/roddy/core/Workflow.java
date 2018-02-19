@@ -88,6 +88,13 @@ public abstract class Workflow {
         return GenericMethod.callGenericToolWithFileGroupOutput(toolName, input, indices, additionalInput);
     }
 
+    /**
+     * Call the tool toolID with parameters synchronously and using the wrapInScript.
+     * @param context
+     * @param toolID
+     * @param parameters
+     * @return
+     */
     public List<String> callSynchronized(ExecutionContext context, String toolID, Map<String, Object> parameters) {
         return ExecutionService.getInstance().callSynchronized(context, toolID, parameters);
     }
@@ -115,11 +122,11 @@ public abstract class Workflow {
     }
 
     /**
-     * To "load" a source file from storage
+     * Instantiate a source file object representing a file on storage.
      * Will call getSourceFile with context, path and BaseFile.STANDARD_FILE_CLASS
      *
      * @param context The context to which the file belongs
-     * @param path Path to the file (remote or local)
+     * @param path Pathname string to the file (remote or local)
      * @return
      */
     protected BaseFile getSourceFile(ExecutionContext context, String path) {
@@ -127,29 +134,59 @@ public abstract class Workflow {
     }
 
     /**
-     * To "load" a source file from storage
+     * Instantiate a source file object representing a file on storage.
      *
      * @param context The context to which the file belongs
-     * @param path Path to the file (remote or local)
-     * @param _class The class of the new file object. This may be an existing or a new class (which will then be created)
+     * @param path Pathname string to the file (remote or local)
+     * @param _class The class name of the new file object. This may be an existing or a new class (which will then be created)
      * @return
      */
     protected BaseFile getSourceFile(ExecutionContext context, String path, String _class) {
         return BaseFile.fromStorage(context, path, _class);
     }
 
+    /**
+     * Instantiate a source file object representing a file on storage.
+     *
+     * @param context The context to which the file belongs
+     * @param toolID String representing a tool ID.
+     * @return
+     */
     protected BaseFile getSourceFileUsingTool(ExecutionContext context, String toolID) {
         return getSourceFileUsingTool(context, toolID, BaseFile.STANDARD_FILE_CLASS);
     }
 
+    /**
+     * Instantiate a single source file object representing a file on storage.
+     *
+     * @param context The context to which the file belongs
+     * @param toolID String representing a tool ID.
+     * @param _class The class name of the file object to return.
+     * @return
+     */
     protected BaseFile getSourceFileUsingTool(ExecutionContext context, String toolID, String _class) {
         return BaseFile.getSourceFileUsingTool(context, toolID, _class);
     }
 
+    /**
+     * Like getSourceFileUsingTool(ExecutionContext, String) but returning multiple file objects.
+     *
+     * @param context
+     * @param toolID
+     * @return
+     */
     protected List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID) {
         return getSourceFilesUsingTool(context, toolID, BaseFile.STANDARD_FILE_CLASS);
     }
 
+    /**
+     * Like getSourceFileUsingToo(ExecutionContext, String, String) but returning multiple file objects.
+     *
+     * @param context
+     * @param toolID
+     * @param _class
+     * @return
+     */
     protected List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID, String _class) {
         return BaseFile.getSourceFilesUsingTool(context, toolID, _class);
     }
