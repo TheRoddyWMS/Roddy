@@ -417,6 +417,8 @@ public class Analysis {
                     if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) { //Clean up
                         //Query file validity of all files
                         FileSystemAccessProvider.getInstance().validateAllFilesInContext(context);
+                        if (context.getExecutionDirectory().getName().contains(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX))
+                            FileSystemAccessProvider.getInstance().removeDirectory(context.getExecutionDirectory());
                     } else {
                         if (!successfullyExecuted)
                             maybeAbortStartedJobsOfContext(context);

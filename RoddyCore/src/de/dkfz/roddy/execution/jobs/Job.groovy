@@ -424,8 +424,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
      *
      * @param job
      */
+    @CompileDynamic
     void appendToJobStateLogfile(BatchEuphoriaJobManager jobManager, ExecutionContext executionContext, BEJobResult res, OutputStream out = null) {
-        if (res.wasExecuted) {
+        if (res.successful) {
             def job = res.command.getJob()
             String jobInfoLine
             String millis = "" + System.currentTimeMillis()
@@ -470,7 +471,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
 //
 //            FileSystemAccessProvider.getInstance().moveFile(tmpFile2, logFile)
 //        } else {
-        if (res.wasExecuted) {
+        if (res.successful) {
             String millis = "" + System.currentTimeMillis()
             millis = millis.substring(0, millis.length() - 3)
             String code = "255"
