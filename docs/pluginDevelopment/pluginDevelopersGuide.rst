@@ -1,15 +1,14 @@
 Plugin developers guide
 =======================
 
-This page should give you an idea and proper knowledge to start your own
-Roddy based workflows.
-
-Initially you should at least read the “Where to start” section.
-Afterwards you can decide if you either want:
-
-Please read the `installationGuide` if you do not have a readily installed version.
+This page should give you an idea how to start your own Roddy based workflows. We describe, how you need to setup
+a fresh workflow and how to populate it initially. Depending on the workflow type, you can then go on and dig deeper
+into the individual manuals. The JVM plugins page will also feature a list of various techniques about how to work
+with Roddy and (e.g. how to get a file from storage).
 
 If you just need a quickstart or a short repetition, you can read :doc:`10MinutesWalkthrough`
+
+
 
 Select the workflow type
 ------------------------

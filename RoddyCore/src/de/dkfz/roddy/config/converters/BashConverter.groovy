@@ -18,6 +18,8 @@ import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import groovy.transform.CompileStatic
 
 import java.util.logging.Level
+import static Constants.RODDY_CONFIGURATION_MAGICSTRING
+
 
 /**
  * Converts a configuration object to bash script.
@@ -118,14 +120,25 @@ class BashConverter extends ConfigurationConverter {
         StringBuilder text = new StringBuilder()
         text << separator << separator
 
+        String wrappedScriptDebugOptions = ""
+
         for (List bashFlag in [
-                [ConfigurationConstants.DEBUG_OPTIONS_USE_PIPEFAIL, true, "set -o pipefail"],
-                [ConfigurationConstants.DEBUG_OPTIONS_USE_VERBOSE_OUTPUT, true, "set -v"],
-                [ConfigurationConstants.DEBUG_OPTIONS_USE_EXECUTE_OUTPUT, true, "set -x"],
+                [ConfigurationConstants.DEBUG_OPTIONS_USE_VERBOSE_OUTPUT, true, "-v"],
+                [ConfigurationConstants.DEBUG_OPTIONS_USE_EXECUTE_OUTPUT, true, "-x"],
+                [ConfigurationConstants.DEBUG_OPTIONS_USE_UNDEFINED_VARIABLE_BREAK, false, "-u"],
+                [ConfigurationConstants.DEBUG_OPTIONS_USE_EXIT_ON_ERROR, false, "-e"],
+                [ConfigurationConstants.DEBUG_OPTIONS_PARSE_SCRIPTS, false, "-n"],
+                [ConfigurationConstants.DEBUG_OPTIONS_USE_PIPEFAIL, true, "-o pipefail"],
+                ]) {
+            boolean val = cfg.getConfigurationValues().getBoolean(bashFlag[0] as String, bashFlag[1] as Boolean)
+            if(val)
+                wrappedScriptDebugOptions += "${bashFlag[2]} "
+        }
+
+        text << separator << "declare -x WRAPPED_SCRIPT_DEBUG_OPTIONS=\"$wrappedScriptDebugOptions\"" << separator
+
+        for (List bashFlag in [
                 [ConfigurationConstants.DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT, false, "export PS4='+(\${BASH_SOURCE}:\${LINENO}): \${FUNCNAME[0]: +\$ { FUNCNAME[0] }():}'"],
-                [ConfigurationConstants.DEBUG_OPTIONS_USE_UNDEFINED_VARIABLE_BREAK, false, "set -u"],
-                [ConfigurationConstants.DEBUG_OPTIONS_USE_EXIT_ON_ERROR, false, "set -e"],
-                [ConfigurationConstants.DEBUG_OPTIONS_PARSE_SCRIPTS, false, "set -n"],
                 [ConfigurationConstants.CVALUE_PROCESS_OPTIONS_QUERY_ENV, false, "env"],
                 [ConfigurationConstants.CVALUE_PROCESS_OPTIONS_QUERY_ID, false, "id"],
         ]) {
@@ -425,6 +438,23 @@ class BashConverter extends ConfigurationConverter {
     }
 
     /**
+     * Check if the first or second line in a file starts with /^#\s*Roddy\sconfiguration\s*$/.
+     * @param file
+     * @return
+     */
+    boolean isBashConfigFile(File file) {
+        def lines = file.readLines()
+        if (!lines) return false
+
+        // First line should be the pattern.
+        if (lines[0] && lines[0] =~ /^#\s*${RODDY_CONFIGURATION_MAGICSTRING}\s*$/) return true
+
+        // If the first line is a shebang line, try matching the second line.
+        if (lines.size() > 1 && lines[1] && lines[1] =~ /^#\s*${RODDY_CONFIGURATION_MAGICSTRING}\s*$/) return true
+        return false
+    }
+
+    /**
      * The easy Bash config format.
      *
      * This is a very generic helper script which just converts a bash cfg to xml.
@@ -435,6 +465,8 @@ class BashConverter extends ConfigurationConverter {
      * Basically a file which contains some info in the header and only config values.
      *
      * Example:
+     * #!/shebang...
+     * # Roddy configuration
      * #name aConfig
      * #imports anotherConfig
      * #description aConfig
@@ -448,10 +480,17 @@ class BashConverter extends ConfigurationConverter {
      * UNZIPTOOL=gunzip
      * ZIPTOOL_OPTIONS="-c"
      * sampleDirectory=/data/michael/temp/roddyLocalTest/testproject/vbp/A100/${sample}/${SEQUENCER_PROTOCOL}*
+     *
+     * Note, that Roddy Bash files need at least the line "# Roddy configuration" as either the first or second line
+     * of the file! Otherwise Roddy will not load the file.
+     *
      * @param file
-     * @return
+     * @return An xml string ready to be converted by Roddys XML converter OR an empty string.
      */
     String convertToXML(File file) {
+        if (!isBashConfigFile(file))
+            return ""
+
         String previousLine = ""
         List<String> allLines = file.readLines()
         List<String> header = extractHeader(allLines)

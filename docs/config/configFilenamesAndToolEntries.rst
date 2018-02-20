@@ -282,6 +282,11 @@ syntax for input objects, so we'll skip explanations for known attributes. Valid
         <output type="file" typeof="" scriptparameter="BAM3"/>
       </output>
 
+- File groups with indices:
+
+  .. code-block:: XML
+      <output type="filegroup" passas="array" filename="somefile_${fgindex}.out" />
+
 
 
 Filename patterns

@@ -11,7 +11,7 @@ done
 
 set -xuv
 
-sleepCnt=${SLEEP_COUNT-5}
+sleepCnt=${SLEEP_COUNT-1}
 sleep ${sleepCnt}
 
 echo "Got an infile ${FILENAME_IN}"

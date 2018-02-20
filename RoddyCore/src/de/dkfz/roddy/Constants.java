@@ -81,4 +81,10 @@ public class Constants {
     public static final String PARAMETER_FILE_SUFFIX = ".parameters";
     public static final String PID_CAP = "PID";
     public static final String PID = "pid";
+
+    /////////////////////////
+    // Bash configs
+    /////////////////////////
+
+    public static final String RODDY_CONFIGURATION_MAGICSTRING = "Roddy configuration";
 }
