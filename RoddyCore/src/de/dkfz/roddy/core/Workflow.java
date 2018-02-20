@@ -8,6 +8,7 @@ package de.dkfz.roddy.core;
 
 import de.dkfz.roddy.config.Configuration;
 import de.dkfz.roddy.config.ConfigurationError;
+import de.dkfz.roddy.execution.UnexpectedExecutionResultException;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.knowledge.files.FileGroup;
@@ -17,6 +18,7 @@ import de.dkfz.roddy.knowledge.methods.GenericMethod;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * A worklow can be created and executed to process a set of data.
@@ -152,7 +154,8 @@ public abstract class Workflow {
      * @param toolID String representing a tool ID.
      * @return
      */
-    protected BaseFile getSourceFileUsingTool(ExecutionContext context, String toolID) {
+    protected BaseFile getSourceFileUsingTool(ExecutionContext context, String toolID)
+        throws ExecutionException, UnexpectedExecutionResultException {
         return getSourceFileUsingTool(context, toolID, BaseFile.STANDARD_FILE_CLASS);
     }
 
@@ -164,7 +167,8 @@ public abstract class Workflow {
      * @param _class The class name of the file object to return.
      * @return
      */
-    protected BaseFile getSourceFileUsingTool(ExecutionContext context, String toolID, String _class) {
+    protected BaseFile getSourceFileUsingTool(ExecutionContext context, String toolID, String _class)
+        throws ExecutionException, UnexpectedExecutionResultException {
         return BaseFile.getSourceFileUsingTool(context, toolID, _class);
     }
 
@@ -175,7 +179,8 @@ public abstract class Workflow {
      * @param toolID
      * @return
      */
-    protected List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID) {
+    protected List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID)
+        throws ExecutionException {
         return getSourceFilesUsingTool(context, toolID, BaseFile.STANDARD_FILE_CLASS);
     }
 
@@ -187,7 +192,8 @@ public abstract class Workflow {
      * @param _class
      * @return
      */
-    protected List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID, String _class) {
+    protected List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID, String _class)
+        throws ExecutionException {
         return BaseFile.getSourceFilesUsingTool(context, toolID, _class);
     }
 

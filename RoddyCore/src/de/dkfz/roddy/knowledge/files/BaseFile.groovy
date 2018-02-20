@@ -258,7 +258,8 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
 
     /** Run a tool to returns a list of filenames that will be instantiated as file objects of STANDARD_FILE_CLASS by default.
      *  The tool should return an arbitary number of lines with filenames. If no line is returned, an empty list is returned. */
-    static List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID, String _class = STANDARD_FILE_CLASS) {
+    static List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID, String _class = STANDARD_FILE_CLASS)
+        throws ExecutionException {
         return ExecutionService.instance.callSynchronized(context, toolID).collect {
             getSourceFile(context, it, _class)
         } as List<BaseFile>

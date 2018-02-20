@@ -135,17 +135,14 @@ class BashConverterTest {
         assert new BashConverter().
                appendDebugVariables(configuration).
                toString().
-               trim() ==  ["set -o pipefail",
-                           "set -v",
-                           "set -x"].join("\n")
+               trim() ==  "declare -x WRAPPED_SCRIPT_DEBUG_OPTIONS=\"-v -x -o pipefail \""
 
         configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT, "true", "boolean")
         assert new BashConverter().
                appendDebugVariables(configuration).
                toString().
-               trim() == ["set -o pipefail",
-                          "set -v",
-                          "set -x",
+               trim() == ["declare -x WRAPPED_SCRIPT_DEBUG_OPTIONS=\"-v -x -o pipefail \"",
+                          "",
                           "export PS4='+(\${BASH_SOURCE}:\${LINENO}): \${FUNCNAME[0]: +\$ { FUNCNAME[0] }():}'"].join("\n")
 
         configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXECUTE_OUTPUT, "false", "boolean")
@@ -153,8 +150,7 @@ class BashConverterTest {
         assert new BashConverter().
                        appendDebugVariables(configuration).
                        toString().
-                       trim() == ["set -o pipefail",
-                                  "set -v"].join("\n")
+                       trim() == "declare -x WRAPPED_SCRIPT_DEBUG_OPTIONS=\"-v -o pipefail \""
     }
 //
 //    @Test
