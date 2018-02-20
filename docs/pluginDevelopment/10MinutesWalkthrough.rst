@@ -168,7 +168,7 @@ Only one thing is missing, before you try out your new workflow.
 -----------------------------------------
 
 There is a skeleton application properties file in your Roddy folder.
-Copy the file [RODDY]/dist/bin/current/helperScripts/skeletonAppProperties.ini
+Copy the file [RODDY]/dist/bin/develop/helperScripts/skeletonAppProperties.ini
 to a location of your choice. Open it and add the folder ~/RoddyPlugins to the
 pluginDirectories entry. Also change the jobManager class to
 *DirectSynchronousExecutedJobManager*. Just comment the currently active line
@@ -192,7 +192,7 @@ you can call it.
 
 .. code-block:: Bash
 
-    [RODDY_DIRECTORY]/roddy.sh testrun NewPlugin_current:test --c=[YOUR_INI_FILE]
+    [RODDY_DIRECTORY]/roddy.sh testrun NewPlugin_develop:test --c=[YOUR_INI_FILE]
 
 
 

@@ -4,7 +4,7 @@
 # IMPORTANT: The file needs to be called by roddy.sh to work as designed
 
 BASE_DIR=`dirname $0`
-SCRIPTS_DIR=$BASE_DIR/dist/bin/current/helperScripts
+SCRIPTS_DIR=$BASE_DIR/dist/bin/develop/helperScripts
 customconfigfile=applicationProperties.ini
 autoSelectRoddy=false
 foundPluginID=none
@@ -32,7 +32,7 @@ function grepFromConfigFile() {
 
 function tryExtractRoddyVersionFromPlugin() {
   if [[ $parm1 == compile* ]]; then
-    echo "current" # Output current in case of compilation
+    echo "develop" # Output 'develop' in case of compilation
   else
     echo $( getValueFromConfigOrCommandLine useRoddyVersion useRoddyVersion rv )
   fi
@@ -46,7 +46,7 @@ function tryExtractPluginIDFromConfig() {
 function setRoddyBinaryVariables() {
   local useRoddyVersion="${1:?No Roddy version}"
   if [[ "$useRoddyVersion" == auto ]]; then
-    useRoddyVersion=current
+    useRoddyVersion=develop
     autoSelectRoddy=true
   fi
   local numberOfDots=$(grep -o "[.]" <<< "$useRoddyVersion" | wc -l)    # Try find out, if we got an api level input like 2.2 or 2.3
@@ -145,15 +145,15 @@ done
 if [[ -z ${RODDY_BINARY_DIR-} ]]
 then
     # Find the latest version available
-    setRoddyBinaryVariables $(cd dist/bin; ls -d *.*.* current | grep -v ".zip" | sort -V | tail -n 1)
+    setRoddyBinaryVariables $(cd dist/bin; ls -d *.*.* develop | grep -v ".zip" | sort -V | tail -n 1)
 fi
 
 # If auto selection is enabled, the script tries to identify the proper version from the buildinfo text file of the called plugin.
 # If the plugin is known via ini or via parameter, we can use a fast Bash version to load the roddy version.
 # If it is set in xml... we'll have to call a current Roddy version and see what happens.
 if [[ $autoSelectRoddy == true && ! $parm1 == autoselect ]]; then
-    echo "Roddy auto selection is active! Using 'current' to determine the version."
-    if [[ ${foundPluginID:-none} != "none" && ${foundPluginID} != "current" ]]; then
+    echo "Roddy auto selection is active! Using 'develop' to determine the version."
+    if [[ ${foundPluginID:-none} != "none" && ${foundPluginID} != "develop" ]]; then
         echo "A plugin '$foundPluginID' was set with usePluginVersion, will try to figure out the Roddy version from the plugin's buildinfo.txt."
         pluginDirectories=$(getValueFromConfigOrCommandLine pluginDirectories pluginDirectories)
 
@@ -168,8 +168,8 @@ if [[ $autoSelectRoddy == true && ! $parm1 == autoselect ]]; then
 
     else
         echo "Going the long way and figure out the Roddy version with the core application."
-        setRoddyBinaryVariables current
-        foundAPIVersion=$(source $SCRIPTS_DIR/setupRuntimeEnvironment.sh &>/dev/null; 2>&1  ${BASE_DIR}/roddy.sh autoselect $projectAnalysisParameter --useconfig=$customconfigfile --useRoddyVersion=current | grep "Roddy API level" | tail -n 1 | cut -d ":" -f 2 | sed -e 's/ //g')
+        setRoddyBinaryVariables develop
+        foundAPIVersion=$(source $SCRIPTS_DIR/setupRuntimeEnvironment.sh &>/dev/null; 2>&1  ${BASE_DIR}/roddy.sh autoselect $projectAnalysisParameter --useconfig=$customconfigfile --useRoddyVersion=develop | grep "Roddy API level" | tail -n 1 | cut -d ":" -f 2 | sed -e 's/ //g')
     fi
 
     # Fall back to 2.2 (the version before RoddyAPIVersion was introduced), if necessary
@@ -209,7 +209,7 @@ fi
 
 GROOVY_VERSION=$( basename `ls $RODDY_BINARY_DIR/lib/groovy-*.jar` | cut -d "-" -f 3  | cut -d "." -f 1-2 )
 RODDY_API=$( basename $RODDY_BINARY_DIR  | cut -d "." -f 1-2 )
-if [[ $RODDY_API != *.* || $RODDY_API == "current" ]]; then
+if [[ $RODDY_API != *.* || $RODDY_API == "develop" ]]; then
   [[ -f $RODDY_BINARY_DIR/buildinfo.txt ]] && RODDY_API=`grep RoddyAPIVersion $RODDY_BINARY_DIR/buildinfo.txt | cut -d "=" -f 2`
   [[ ! -f $RODDY_BINARY_DIR/buildinfo.txt ]] && RODDY_API=`head RoddyCore/buildversion.txt -n 1`
 fi

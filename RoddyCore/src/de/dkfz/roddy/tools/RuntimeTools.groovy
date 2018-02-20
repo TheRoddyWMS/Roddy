@@ -41,11 +41,11 @@ final class RuntimeTools {
     }
 
     static File getBuildinfoFile() {
-        return new File(getCurrentDistFolder(), LibrariesFactory.BUILDINFO_TEXTFILE);
+        return new File(getDevelopmentDistFolder(), LibrariesFactory.BUILDINFO_TEXTFILE);
     }
 
-    static File getCurrentDistFolder() {
-        return new File(System.getProperty("user.dir"), "dist/bin/current")
+    static File getDevelopmentDistFolder() {
+        return new File(System.getProperty("user.dir"), "dist/bin/develop")
     }
 
     static File getGroovyLibrary() {

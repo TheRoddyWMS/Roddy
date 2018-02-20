@@ -1,15 +1,14 @@
 Plugin developers guide
 =======================
 
-This page should give you an idea and proper knowledge to start your own
-Roddy based workflows.
-
-Initially you should at least read the “Where to start” section.
-Afterwards you can decide if you either want:
-
-Please read the `installationGuide` if you do not have a readily installed version.
+This page should give you an idea how to start your own Roddy based workflows. We describe, how you need to setup
+a fresh workflow and how to populate it initially. Depending on the workflow type, you can then go on and dig deeper
+into the individual manuals. The JVM plugins page will also feature a list of various techniques about how to work
+with Roddy and (e.g. how to get a file from storage).
 
 If you just need a quickstart or a short repetition, you can read :doc:`10MinutesWalkthrough`
+
+
 
 Select the workflow type
 ------------------------
@@ -50,14 +49,14 @@ where:
 - PluginName is the name of the plugin
 
 - _1.0.111 is the version of the plugin, this is not necessarily the same as the entry in the buildversion.txt file.
-  If you omit this entry, the plugin version is current by default!
+  If you omit this entry, the plugin version is 'develop' by default!
 
 - -1 is the revision of the plugin. if you only have smaller changes, you can increase the revision number of the new plugin
   and Roddy is able to select the revised plugin instead of the former revision. You can omit this entry and Roddy will set
   the revision to -0 internally. Please be aware:
-  * The revision is only valid, if you set the version! It is not valid for plugins marked as current.
+  * The revision is only valid, if you set the version! It is not valid for plugins marked as 'develop'.
 
-  * You are also not allowed to set current as the plugin version!
+  * You are also not allowed to set 'develop' as the plugin version!
 
 There are some main components for any plugin and files for the contained workflows.
 

@@ -32,7 +32,6 @@ group = "com.github.eilslabs"
 
 /**
  * -PignoreFailedTests                  Continue despite failed tests.
- * -PreleaseLevel={major,minor,patch}   When releasing, increase the major.minor.patch number. The build number is always increased.
  * -PallowDirtyRepo=true                Continue release despite dirty repo.
  * -Pchecked=false                      Turn off -F Xlint:unchecked
  */
@@ -52,7 +51,7 @@ targetCompatibility = langLevel
 compileJava.options.fork = true
 
 // Set -Pchecked={true,false} on the command line to change this compiler parameter. Default: unchecked
-if (!project.hasProperty("checked") || !project.checked) {
+if (project.hasProperty("checked") && !project.checked) {
     compileJava.options.compilerArgs = ["-Xlint:unchecked"]
     compileGroovy.options.compilerArgs = ["-Xlint:unchecked"]
 }
@@ -131,8 +130,8 @@ dependencies {
     testCompile 'org.spockframework:spock-core:1.1-groovy-2.4'  // Apache 2.0
 }
 
-project.ext.currentDistributionDir = new File(rootProject.projectDir, "dist/bin/current")
-convention.add("releaseDir", new File(project.ext.currentDistributionDir, "../" + rootProject.version).absoluteFile)
+project.ext.developmentDistributionDir = new File(rootProject.projectDir, "dist/bin/develop")
+convention.add("releaseDir", new File(project.ext.developmentDistributionDir, "../" + rootProject.version).absoluteFile)
 
 sourceSets {
     main {
@@ -149,7 +148,7 @@ sourceSets {
 
 mainClassName = "de.dkfz.roddy.Roddy"
 
-project.ext.librariesDirectory = new File(project.ext.currentDistributionDir, "lib")
+project.ext.librariesDirectory = new File(project.ext.developmentDistributionDir, "lib")
 
 task cleanRuntimeLibs(type: Delete) {
     delete fileTree(dir: librariesDirectory, exclude: ".keep")
@@ -168,7 +167,7 @@ jar {
     classifier = null
     version = null
     // version = rootProject.version  // toggle to get a versioned jar name
-    setDestinationDir(project.ext.currentDistributionDir)
+    setDestinationDir(project.ext.developmentDistributionDir)
     manifest {
         attributes("Implementation-Vendor": "German Cancer Research Center (DKFZ)")
         attributes 'Main-Class': mainClassName
@@ -180,7 +179,7 @@ jar {
 
 /** Produce 2 distribution packages:
  *
- *  * Roddy-*.zip with everything that belongs into the dist/bin/current directory & some other smaller files.
+ *  * Roddy-*.zip with everything that belongs into the dist/bin/develop directory & some other smaller files.
  *  * RoddyEnv-*.zip with the runtime environment, starter script, etc.
  */
 distributions {
@@ -189,7 +188,7 @@ distributions {
         baseName = "Roddy"
         contents {
             into(rootProject.version)
-            from("dist/bin/current/") {
+            from(project.ext.developmentDistributionDir) {
                 include("**")
             }
             from("./") {

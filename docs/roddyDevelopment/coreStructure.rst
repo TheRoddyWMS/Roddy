@@ -7,7 +7,7 @@ Application structure
     roddy.sh                                          Top-level script
     dist/
         bin/
-            current/
+            develop/
             $major.$minor.$build/
         plugins/
             DefaultPlugin

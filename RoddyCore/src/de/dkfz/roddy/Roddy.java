@@ -40,7 +40,6 @@ import java.net.URISyntaxException;
 import java.util.*;
 
 import static de.dkfz.roddy.RunMode.CLI;
-import static de.dkfz.roddy.StringConstants.FALSE;
 import static de.dkfz.roddy.config.ConfigurationConstants.*;
 
 /**
@@ -791,7 +790,7 @@ public class Roddy {
         applicationProperties = new RoddyAppConfig(file);
 
         // Load some default properties
-        applicationProperties.getOrSetApplicationProperty(RoddyStartupOptions.useRoddyVersion.toString(), LibrariesFactory.PLUGIN_VERSION_CURRENT);
+        applicationProperties.getOrSetApplicationProperty(RoddyStartupOptions.useRoddyVersion.toString(), LibrariesFactory.PLUGIN_VERSION_DEVELOP);
         applicationProperties.getOrSetApplicationProperty("usePluginVersion");
         applicationProperties.getOrSetApplicationProperty("pluginDirectories");
         applicationProperties.getOrSetApplicationProperty("configurationDirectories");
@@ -960,7 +959,7 @@ public class Roddy {
                 result = clc.getOptionValue(opt);
         }
         if (!RoddyConversionHelperMethods.isNullOrEmpty(result)) return result;
-        return applicationProperties.getOrSetApplicationProperty(RoddyStartupOptions.useRoddyVersion.toString(), LibrariesFactory.PLUGIN_VERSION_CURRENT);
+        return applicationProperties.getOrSetApplicationProperty(RoddyStartupOptions.useRoddyVersion.toString(), LibrariesFactory.PLUGIN_VERSION_DEVELOP);
     }
 
     public static File getRoddyBinaryFolder() {
@@ -987,7 +986,7 @@ public class Roddy {
         }
         if (pluginVersions.containsKey(pluginID))
             return pluginVersions.get(pluginID);
-        return LibrariesFactory.PLUGIN_VERSION_CURRENT;
+        return LibrariesFactory.PLUGIN_VERSION_DEVELOP;
     }
 
     public static FileSystemAccessProvider getLocalFileSystemAccessProvider() {

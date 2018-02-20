@@ -154,9 +154,9 @@ enum RoddyStartupModes {
 
         println("== Advanced developer options ==\n")
         printCommands([
-                [RoddyStartupModes.compile, "", "Compiles the roddy library / application."],
-                [RoddyStartupModes.pack, "", "Creates a copy of the current version and puts the version number to the file name."],
-                [RoddyStartupModes.compileplugin, "(plugin ID) [--useconfig={file}]", "Compiles a plugin ."],
+                [RoddyStartupModes.compile, "", "Compiles the roddy library / application and updates the dist/bin/develop directory."],
+                [RoddyStartupModes.pack, "", "Creates a copy of the development version and puts the version number to the file name."],
+                [RoddyStartupModes.compileplugin, "(plugin ID) [--useconfig={file}]", "Compiles a plugin."],
                 [RoddyStartupModes.packplugin, "(plugin ID) [--useconfig={file}]", "Packages the compiled plugin in dist/plugins and creates a version number for it.", "Please note that you can indeed override contents of a zip file if you do not update / compile the plugin jar!"]
         ])
 

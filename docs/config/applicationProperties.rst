@@ -16,7 +16,7 @@ Let's have a brief look at it:
 .. code-block:: Bash
 
     [COMMON]
-    useRoddyVersion=current                     # Use the most current version for tests
+    useRoddyVersion=develop                     # Use the most development version for tests
     passEnvironment=false
     baseEnvironmentScript=[ENVIRONMENT_FILE]
 
@@ -40,6 +40,7 @@ Let's have a brief look at it:
     #executionServiceClass=de.dkfz.roddy.execution.io.SSHExecutionService
     executionServiceHost=[YOURHOST]
     executionServiceAuth=keyfile
+    #executionServiceKeyfileLocation=[keyfile path]   # use $HOME/.ssh/id_rsa by default
     #executionServiceAuth=password
     executionServicePasswd=
     executionServiceStorePassword=false

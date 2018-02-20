@@ -14,6 +14,8 @@ public class ConfigurationConstants {
     public static final String RODDY_EXEC_CACHE_FILE = ".roddyExecCache.txt";
     public static final String RODDY_JOBSTATE_LOGFILE = "jobStateLogfile.txt";
 
+
+    public static final String DISABLE_DEBUG_OPTIONS_FOR_TOOLSCRIPT = "disableDebugOptionsForToolscript";
     public static final String DEBUG_OPTIONS_USE_PIPEFAIL = "debugOptionsUsePipefail";
     public static final String DEBUG_OPTIONS_USE_VERBOSE_OUTPUT = "debugOptionsUseVerboseOutput";
     public static final String DEBUG_OPTIONS_USE_EXECUTE_OUTPUT = "debugOptionsUseExecuteOutput";

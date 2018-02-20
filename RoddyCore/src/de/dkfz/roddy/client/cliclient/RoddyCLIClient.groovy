@@ -495,7 +495,7 @@ public class RoddyCLIClient {
         if (apiLevel == null) {
             def version = Version.fromString(Constants.APP_CURRENT_VERSION_STRING)
             apiLevel = version.major + '.' + version.minor
-            logger.postAlwaysInfo("Using the current Roddy API level: ${apiLevel}")
+            logger.postAlwaysInfo("Using the Roddy API level: ${apiLevel}")
         } else
             logger.postAlwaysInfo("Roddy API level for ${clc.getAnalysisID()}: ${apiLevel}")
     }
@@ -542,7 +542,7 @@ public class RoddyCLIClient {
             StringBuilder sb = new StringBuilder();
 
 
-            Collection<Job> collectedJobs = ec.getExecutedJobs().findAll { Job job -> job.getJobID() != null && (rerun ? job.runResult?.wasExecuted : true) }
+            Collection<Job> collectedJobs = ec.getExecutedJobs().findAll { Job job -> job.getJobID() != null && (rerun ? job.runResult?.successful : true) }
             def numberOfJobs = collectedJobs.size()
 
             if (numberOfJobs > 0) {
