@@ -438,15 +438,19 @@ class BashConverter extends ConfigurationConverter {
     }
 
     /**
-     * Check if the first or second line in a file starts with #Roddy configuration
+     * Check if the first or second line in a file starts with /^#\s*Roddy\sconfiguration\s*$/.
      * @param file
      * @return
      */
     boolean isBashConfigFile(File file) {
         def lines = file.readLines()
         if (!lines) return false
-        if (lines[0] && lines[0][1..-1].trim() == RODDY_CONFIGURATION_MAGICSTRING) return true
-        if (lines.size() > 1 && lines[1] && lines[1][1..-1].trim() == RODDY_CONFIGURATION_MAGICSTRING) return true
+
+        // First line should be the pattern.
+        if (lines[0] && lines[0] =~ /^#\s*${RODDY_CONFIGURATION_MAGICSTRING}\s*$/) return true
+
+        // If the first line is a shebang line, try matching the second line.
+        if (lines.size() > 1 && lines[1] && lines[1] =~ /^#\s*${RODDY_CONFIGURATION_MAGICSTRING}\s*$/) return true
         return false
     }
 
@@ -477,7 +481,7 @@ class BashConverter extends ConfigurationConverter {
      * ZIPTOOL_OPTIONS="-c"
      * sampleDirectory=/data/michael/temp/roddyLocalTest/testproject/vbp/A100/${sample}/${SEQUENCER_PROTOCOL}*
      *
-     * Note, that Roddy Bash files need at least the line Roddy Bash configuration file as either the first or second line
+     * Note, that Roddy Bash files need at least the line "# Roddy configuration" as either the first or second line
      * of the file! Otherwise Roddy will not load the file.
      *
      * @param file
