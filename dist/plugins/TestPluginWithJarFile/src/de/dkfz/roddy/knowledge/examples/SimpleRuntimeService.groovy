@@ -62,7 +62,7 @@ class SimpleRuntimeService extends RuntimeService {
 
         try {
             //Was freshly created?
-            if (baseFile.creatingJobsResult != null && baseFile.creatingJobsResult.wasExecuted) {
+            if (baseFile.creatingJobsResult != null && baseFile.creatingJobsResult.successful) {
                 result = false
             }
         } catch (Exception ex) {

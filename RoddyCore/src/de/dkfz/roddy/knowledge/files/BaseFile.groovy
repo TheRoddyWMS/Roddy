@@ -20,6 +20,7 @@ import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.Workflow
+import de.dkfz.roddy.execution.UnexpectedExecutionResultException
 import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -34,6 +35,8 @@ import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.Tuple2
+
+import java.util.concurrent.ExecutionException
 
 /**
  * Basic class for all processed files. Contains information about the storage
@@ -230,7 +233,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
     }
 
     /**
-     * Derive a file from another file. Effectively call getFile, but enforce parentFile to be non null
+     * Derive a file from another file. Effectively call getFile, but enforce parentFile to be non-null.
      * @param parentFile
      * @param _class
      * @return
@@ -240,11 +243,21 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         getFile(parentFile, _class)
     }
 
-    static BaseFile getSourceFileUsingTool(ExecutionContext context, String toolID, String _class = STANDARD_FILE_CLASS) {
-        def listOfStrings = ExecutionService.instance.callSynchronized(context, toolID)
-        return getSourceFile(context, listOfStrings[0], _class)
+    /** Run a tool to return a filename that will be instantiated as file object of STANDARD_FILE_CLASS by default.
+     *  The tool should return exactly one line with the path to the file. Otherwise the method throws an UnexpectedExecutionResultException.
+     *  If the command could not get successfully executed an ExecutionException is propagated. */
+    static BaseFile getSourceFileUsingTool(ExecutionContext context, String toolID, String _class = STANDARD_FILE_CLASS)
+        throws UnexpectedExecutionResultException, ExecutionException {
+        List<String> executionOutput = ExecutionService.instance.callSynchronized(context, toolID)
+        if (executionOutput.size() != 1) {
+            throw new UnexpectedExecutionResultException("SourceFile instantiation from tool output failed", executionOutput)
+        } else {
+            return getSourceFile(context, executionOutput[0], _class)
+        }
     }
 
+    /** Run a tool to returns a list of filenames that will be instantiated as file objects of STANDARD_FILE_CLASS by default.
+     *  The tool should return an arbitary number of lines with filenames. If no line is returned, an empty list is returned. */
     static List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID, String _class = STANDARD_FILE_CLASS) {
         return ExecutionService.instance.callSynchronized(context, toolID).collect {
             getSourceFile(context, it, _class)

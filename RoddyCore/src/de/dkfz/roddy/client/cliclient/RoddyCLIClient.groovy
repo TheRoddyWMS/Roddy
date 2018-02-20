@@ -542,7 +542,7 @@ public class RoddyCLIClient {
             StringBuilder sb = new StringBuilder();
 
 
-            Collection<Job> collectedJobs = ec.getExecutedJobs().findAll { Job job -> job.getJobID() != null && (rerun ? job.runResult?.wasExecuted : true) }
+            Collection<Job> collectedJobs = ec.getExecutedJobs().findAll { Job job -> job.getJobID() != null && (rerun ? job.runResult?.successful : true) }
             def numberOfJobs = collectedJobs.size()
 
             if (numberOfJobs > 0) {
