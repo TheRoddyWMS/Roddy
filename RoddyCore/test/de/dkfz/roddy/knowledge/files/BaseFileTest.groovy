@@ -26,7 +26,7 @@ import java.lang.reflect.Method
  * Created by heinold on 20.01.16.
  */
 @groovy.transform.CompileStatic
-public class BaseFileTest {
+class BaseFileTest {
     private static Class<BaseFile> syntheticTestFileClass;
 
     public static ExecutionContext mockedContext;

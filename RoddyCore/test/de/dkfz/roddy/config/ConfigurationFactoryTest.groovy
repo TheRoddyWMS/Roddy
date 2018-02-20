@@ -52,9 +52,8 @@ public class ConfigurationFactoryTest {
     private static File testFolder4
 
     @BeforeClass
-    public static void setupClass() {
-
-        ExecutionService.initializeService(LocalExecutionService, RunMode.CLI);
+    static void setupClass() {
+        ExecutionService.initializeService(LocalExecutionService, RunMode.CLI)
 
         FileSystemAccessProvider.initializeProvider(true)
 

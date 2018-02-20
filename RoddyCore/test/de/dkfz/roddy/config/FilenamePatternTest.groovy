@@ -184,6 +184,10 @@ class FilenamePatternTest {
 
             @Override
             FilenamePatternDependency getFilenamePatternDependency() { return null }
+
+            @Override
+            protected BaseFile getSourceFile(BaseFile[] baseFiles) { return null }
+
         }
         fpattern
     }
