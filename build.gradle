@@ -59,6 +59,17 @@ if (project.hasProperty("checked") && !project.checked) {
 // The following keeps the Gradle build files separate from the ones build by IntelliJ (usually in build/).
 buildDir = "${projectDir}/gradleBuild"
 
+/*
+ * Gets the version name from the current Git tag. If the current commit is not tagged,
+ * this returned string will indicate that. Also if the repository is dirty
+ */
+def getVersionName() {
+    def dirtySuffix = grgit.status().isClean() ? '' : '-dirty'
+    return grgit.describe() + dirtySuffix
+}
+
+rootProject.version = getVersionName()
+
 test {
     workingDir = System.getProperty("user.dir")
     ignoreFailures = project.hasProperty("ignoreFailedTests")
@@ -85,10 +96,10 @@ configurations.all {
 }
 
 dependencies {
-    // compile 'com.github.eilslabs:RoddyToolLib:0.0.2'            // MIT
-    compile 'com.github.eilslabs:RoddyToolLib:develop-SNAPSHOT'    // MIT
-    // compile 'com.github.eilslabs:BatchEuphoria:'                // MIT
-    compile 'com.github.eilslabs:BatchEuphoria:develop-SNAPSHOT'   // MIT
+    compile 'com.github.eilslabs:RoddyToolLib:0.0.3'            // MIT
+    // compile 'com.github.eilslabs:RoddyToolLib:develop-SNAPSHOT'    // MIT
+    compile 'com.github.eilslabs:BatchEuphoria:0.0.1'           // MIT
+    // compile 'com.github.eilslabs:BatchEuphoria:develop-SNAPSHOT'   // MIT
     compile 'org.codehaus.groovy:groovy-all:2.4.9'              // Apache 2.0
 
     compile 'org.bouncycastle:bcpg-jdk15on:1.51'                // MIT
@@ -166,12 +177,11 @@ jar {
     baseName = "Roddy"
     classifier = null
     version = null
-    // version = rootProject.version  // toggle to get a versioned jar name
     setDestinationDir(project.ext.developmentDistributionDir)
     manifest {
         attributes("Implementation-Vendor": "German Cancer Research Center (DKFZ)")
         attributes 'Main-Class': mainClassName
-        attributes("Implementation-Title": name)
+        attributes("Implementation-Title": baseName)
         attributes 'Implementation-Version': rootProject.version
     }
     dependsOn cleanRuntimeLibs, copyRuntimeLibs
