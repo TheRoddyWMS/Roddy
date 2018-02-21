@@ -697,7 +697,7 @@ class LibrariesFactory extends Initializable {
         }
         if (incompatiblePlugins) {
             logger.severe("Could not load plugins, runtime API versions mismatch! Required are JDK ${RuntimeTools.javaRuntimeVersion} and Roddy ${RuntimeTools.getRoddyRuntimeVersion()}.\n"
-                    + incompatiblePlugins.collect { PluginInfo pi -> "JDK ${pi.jdkVersion}, Roddy ${pi.roddyAPIVersion} required by ${pi.fullID}"}.join("\n\t")
+                    + incompatiblePlugins.collect { PluginInfo pi -> "\tJDK ${pi.jdkVersion}, Roddy ${pi.roddyAPIVersion} required by ${pi.fullID}"}.join("\n")
             )
         }
         return !incompatiblePlugins
