@@ -270,7 +270,7 @@ class GenericMethod {
                 //Take a group and store all files in that group.
                 allInputValues << (FileGroup) entry
             } else if (entry instanceof Map) {
-                entry.forEach { k, v ->
+                (entry as Map).forEach { k, v ->
                     parameters[k.toString()] = v.toString()
                 }
             } else {               // Catch-all, in case one still wants to use a string with '=' to define a parameter (deprecated).
