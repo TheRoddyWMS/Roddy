@@ -16,7 +16,6 @@ import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.cluster.ClusterJobManager
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.knowledge.files.BaseFile
@@ -448,7 +447,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 jobInfoLine = null
             }
             if (jobInfoLine != null)
-                FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getNameOfJobStateLogFile(executionContext), jobInfoLine, false)
+                FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getJobStateLogFile(executionContext), jobInfoLine, false)
         }
     }
 
@@ -488,7 +487,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 // That is indeed funny here: on our cluster, the following line did not work without the forced toString(), however
                 // on our local machine it always worked! Don't know why it worked for PBS... Now we force-convert the parameters.
                 String jobInfoLine = jobStateInfoLine("" + res.job.getJobID(), code, millis, toolID)
-                FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getNameOfJobStateLogFile(executionContext), jobInfoLine, false)
+                FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getJobStateLogFile(executionContext), jobInfoLine, false)
             } else {
                 logger.postSometimesInfo("Did not store info for job " + res.job.getJobName() + ", job id was null.")
             }

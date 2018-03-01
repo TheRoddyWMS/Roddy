@@ -84,17 +84,17 @@ class RuntimeServiceTest {
         return new Analysis("Test", new Project(null, null, null, null), null, new RuntimeService() {
 
             @Override
-            File getInputFolderForAnalysis(Analysis analysis) {
+            File getInputFolder(Analysis analysis) {
                 return folderOfPids
             }
 
             @Override
-            File getOutputFolderForAnalysis(Analysis analysis) {
+            File getOutputFolder(Analysis analysis) {
                 return folderOfPids
             }
 
             @Override
-            File getOutputFolderForDataSetAndAnalysis(DataSet dataSet, Analysis analysis) {
+            File getOutputAnalysisFolder(DataSet dataSet, Analysis analysis) {
                 return new File(folderOfPids, dataSet.id);
             }
         }, null);

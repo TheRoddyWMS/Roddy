@@ -622,7 +622,7 @@ public class FileSystemAccessProvider {
                 return ExecutionService.getInstance().execute(commandSet.getReadOutTextFileCommand(file), true).resultLines.toArray(new String[0]);
             }
         } catch (Exception ex) {
-            logger.postAlwaysInfo("There was an error while trying to load file " + file);
+            logger.postAlwaysInfo("There was an error while trying to load file " + file)
         }
     }
 

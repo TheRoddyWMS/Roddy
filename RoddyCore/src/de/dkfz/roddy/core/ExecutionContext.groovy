@@ -545,15 +545,6 @@ class ExecutionContext {
         return new LinkedList<>(errors)
     }
 
-    /**
-     * Execute the stored dataset with the stored analysis.
-     *
-     * @return
-     */
-    boolean checkExecutability() {
-        return analysis.getWorkflow().checkExecutability(this)
-    }
-
     boolean valueIsEmpty(Object value, String variableName = null) {
         if (value == null || value.toString() == "") {
             if (variableName)

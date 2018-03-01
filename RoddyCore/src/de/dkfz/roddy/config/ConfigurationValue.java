@@ -158,13 +158,18 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         String userID = analysis.getUsername();
         String groupID = analysis.getUsergroup();
 
-        if (userID != null)
+        if (userID != null) {
             temp = replaceString(temp, "$USERNAME", userID);
-        if (groupID != null)
+            temp = replaceString(temp, "${USERNAME}", userID);
+        }
+        if (groupID != null) {
             temp = replaceString(temp, "$USERGROUP", groupID);
+            temp = replaceString(temp, "${USERGROUP}", groupID);
+        }
 
         String ud = FileSystemAccessProvider.getInstance().getUserDirectory().getAbsolutePath();
         temp = replaceString(temp, "$USERHOME", ud);
+        temp = replaceString(temp, "${USERHOME}", ud);
         temp = checkAndCorrectPath(temp);
 
         return new File(temp);

@@ -317,7 +317,7 @@ abstract class ExecutionService implements BEExecutionService {
         File outputBaseDirectory = analysis.getOutputBaseDirectory()    //Project output directory with i.e. ../results_per_pid
         File outputDirectory = context.getOutputDirectory()             //Output with dataset id
 
-        File projectExecCacheFile = context.getRuntimeService().getNameOfExecCacheFile(context.getAnalysis())   // .roddyExecCache.txt containing the list of executed runs in the project output folder
+        File projectExecCacheFile = context.getRuntimeService().getExecCacheFile(context.getAnalysis())   // .roddyExecCache.txt containing the list of executed runs in the project output folder
         File projectExecutionDirectory = context.getCommonExecutionDirectory()  // .roddyExecutionStore in outputBaseDirectory
         File projectToolsMD5SumFile = context.getFileForAnalysisToolsArchiveOverview()  // The md5 sum file in .roddyExecutionStore
         File baseContextExecutionDirectory = context.getRuntimeService().getBaseExecutionDirectory(context) //roddyExecutionStore in the dataset folder
@@ -391,7 +391,7 @@ abstract class ExecutionService implements BEExecutionService {
 
         String analysisID = context.getAnalysis().getName()
 
-        File execCacheFile = context.getRuntimeService().getNameOfExecCacheFile(context.getAnalysis())
+        File execCacheFile = context.getRuntimeService().getExecCacheFile(context.getAnalysis())
         String execCacheFileLock = new File(execCacheFile.getAbsolutePath() + TILDE).getAbsolutePath()
         File executionBaseDirectory = context.getRuntimeService().getBaseExecutionDirectory(context)
         File executionDirectory = context.getExecutionDirectory()
@@ -432,7 +432,7 @@ abstract class ExecutionService implements BEExecutionService {
         final boolean BLOCKING = true
         final boolean NON_BLOCKING = false
 
-        provider.createFileWithDefaultAccessRights(ATOMIC, context.getRuntimeService().getNameOfJobStateLogFile(context), context, BLOCKING)
+        provider.createFileWithDefaultAccessRights(ATOMIC, context.getRuntimeService().getJobStateLogFile(context), context, BLOCKING)
         provider.checkFile(execCacheFile, true, context)
         provider.appendLineToFile(ATOMIC, execCacheFile, String.format("%s,%s,%s", executionDirectory.getAbsolutePath(), analysisID, provider.callWhoAmI()), NON_BLOCKING)
 
@@ -443,11 +443,11 @@ abstract class ExecutionService implements BEExecutionService {
 
         //Current version info strings.
         String versionInfo = "Roddy version: " + Roddy.getUsedRoddyVersion() + "\nLibrary info:\n" + LibrariesFactory.getInstance().getLoadedLibrariesInfoList().join("\n") + "\n"
-        provider.writeTextFile(context.getRuntimeService().getNameOfRuntimeFile(context), versionInfo, context)
+        provider.writeTextFile(context.getRuntimeService().getRuntimeFile(context), versionInfo, context)
 
         //Current config
         String configText = ConfigurationConverter.convertAutomatically(context, cfg)
-        provider.writeTextFile(context.getRuntimeService().getNameOfConfigurationFile(context), configText, context)
+        provider.writeTextFile(context.getRuntimeService().getConfigurationFile(context), configText, context)
 
         //The application ini
         provider.copyFile(Roddy.getPropertiesFilePath(), new File(executionDirectory, Constants.APP_PROPERTIES_FILENAME), context)
@@ -455,7 +455,7 @@ abstract class ExecutionService implements BEExecutionService {
 
         //Current configs xml files (default, user, pipeline config file)
         String configXML = new XMLConverter().convert(context, cfg)
-        provider.writeTextFile(context.getRuntimeService().getNameOfXMLConfigurationFile(context), configXML, context)
+        provider.writeTextFile(context.getRuntimeService().getXMLConfigurationFile(context), configXML, context)
         context.setDetailedExecutionContextLevel(ExecutionContextSubLevel.RUN_RUN)
     }
 
@@ -485,14 +485,14 @@ abstract class ExecutionService implements BEExecutionService {
             if (!context.directoryIsAccessible(it)) inaccessibleNecessaryFiles << it.absolutePath
         }
 
-        if (!context.fileIsAccessible(runtimeService.getNameOfJobStateLogFile(context))) inaccessibleNecessaryFiles << "JobState logfile"
-        if (!context.fileIsAccessible(runtimeService.getNameOfConfigurationFile(context))) inaccessibleNecessaryFiles << "Runtime configuration file"
+        if (!context.fileIsAccessible(runtimeService.getJobStateLogFile(context))) inaccessibleNecessaryFiles << "JobState logfile"
+        if (!context.fileIsAccessible(runtimeService.getConfigurationFile(context))) inaccessibleNecessaryFiles << "Runtime configuration file"
 
         // Check the ignorable files. It is still nice to see whether they are there
-        if (!context.fileIsAccessible(runtimeService.getNameOfExecCacheFile(context.getAnalysis()))) inaccessibleIgnorableFiles << "Execution cache file"
-        if (!context.fileIsAccessible(runtimeService.getNameOfRuntimeFile(context))) inaccessibleIgnorableFiles << "Runtime information file"
+        if (!context.fileIsAccessible(runtimeService.getExecCacheFile(context.getAnalysis()))) inaccessibleIgnorableFiles << "Execution cache file"
+        if (!context.fileIsAccessible(runtimeService.getRuntimeFile(context))) inaccessibleIgnorableFiles << "Runtime information file"
         if (!context.fileIsAccessible(new File(context.getExecutionDirectory(), Constants.APP_PROPERTIES_FILENAME))) inaccessibleIgnorableFiles << "Copy of application.ini file"
-        if (!context.fileIsAccessible(runtimeService.getNameOfXMLConfigurationFile(context))) inaccessibleIgnorableFiles << "XML configuration file"
+        if (!context.fileIsAccessible(runtimeService.getXMLConfigurationFile(context))) inaccessibleIgnorableFiles << "XML configuration file"
 
         // Return true, if the neccessary files are there and if strict mode is enabled and in this case all ignorable files exist
         return inaccessibleNecessaryFiles + (strict ? [] as List<String> : inaccessibleIgnorableFiles)
@@ -803,8 +803,8 @@ abstract class ExecutionService implements BEExecutionService {
         context.setDetailedExecutionContextLevel(ExecutionContextSubLevel.RUN_FINALIZE_CREATE_BINARYFILES)
 
         RuntimeService rService = context.getRuntimeService()
-        final File realCallFile = rService.getNameOfRealCallsFile(context)
-        final File repeatCallFile = rService.getNameOfRepeatableJobCallsFile(context)
+        final File realCallFile = rService.getRealCallsFile(context)
+        final File repeatCallFile = rService.getRepeatableJobCallsFile(context)
         provider.writeTextFile(realCallFile, realCalls.toString(), context)
         provider.writeTextFile(repeatCallFile, repeatCalls.toString(), context)
         rService.writeJobInfoFile(context)
