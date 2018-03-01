@@ -6,8 +6,8 @@
 
 <configuration configurationType='project' name='TestProjectForUnitTests' description='Like the name says' runtimeServiceClass='de.dkfz.roddy.knowledge.examples.SimpleRuntimeService' imports="testProjectImportLvl0">
     <availableAnalyses>
-        <analysis id='test' configuration='testAnalysis' useplugin="TestPluginWithJarFile:current" />
-        <analysis id='testWithoutJar' configuration='testAnalysis' useplugin="TestPluginWithoutJarFile:current" />
+        <analysis id='test' configuration='testAnalysis' useplugin="TestPluginWithJarFile:develop" />
+        <analysis id='testWithoutJar' configuration='testAnalysis' useplugin="TestPluginWithoutJarFile:develop" />
         <analysis id="testnative" configuration="testAnalysisNative" />
     </availableAnalyses>
     <configurationvalues>

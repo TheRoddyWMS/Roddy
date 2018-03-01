@@ -14,6 +14,8 @@ public class ConfigurationConstants {
     public static final String RODDY_EXEC_CACHE_FILE = ".roddyExecCache.txt";
     public static final String RODDY_JOBSTATE_LOGFILE = "jobStateLogfile.txt";
 
+
+    public static final String DISABLE_DEBUG_OPTIONS_FOR_TOOLSCRIPT = "disableDebugOptionsForToolscript";
     public static final String DEBUG_OPTIONS_USE_PIPEFAIL = "debugOptionsUsePipefail";
     public static final String DEBUG_OPTIONS_USE_VERBOSE_OUTPUT = "debugOptionsUseVerboseOutput";
     public static final String DEBUG_OPTIONS_USE_EXECUTE_OUTPUT = "debugOptionsUseExecuteOutput";
@@ -25,12 +27,9 @@ public class ConfigurationConstants {
 
     public static final String CVALUE_PLACEHOLDER_EXECUTION_DIRECTORY = "$PWD";
     public static final String CVALUE_PLACEHOLDER_RODDY_JOBID = "${RODDY_JOBID}";
-    public static final String CVALUE_PLACEHOLDER_RODDY_JOBARRAYINDEX = "${RODDY_JOBARRAYINDEX}";
-    public static final String CVALUE_PLACEHOLDER_RODDY_SCRATCH = "${RODDY_SCRATCH}";
     public static final String CVALUE_PLACEHOLDER_RODDY_JOBID_RAW = "RODDY_JOBID";
     public static final String CVALUE_PLACEHOLDER_RODDY_JOBNAME_RAW = "RODDY_JOBNAME";
     public static final String CVALUE_PLACEHOLDER_RODDY_QUEUE_RAW = "RODDY_QUEUE";
-    public static final String CVALUE_PLACEHOLDER_RODDY_JOBARRAYINDEX_RAW = "RODDY_JOBARRAYINDEX";
     public static final String CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW = "RODDY_SCRATCH";
     public static final String CVALUE_DEFAULT_SCRATCH_DIR = "defaultScratchDir";
     public static final String CVALUE_TYPE_BASH_ARRAY = "bashArray";

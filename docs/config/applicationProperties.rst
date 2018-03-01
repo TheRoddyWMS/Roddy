@@ -16,11 +16,14 @@ Let's have a brief look at it:
 .. code-block:: Bash
 
     [COMMON]
-    useRoddyVersion=current                     # Use the most current version for tests
+    useRoddyVersion=develop                     # Use the most development version for tests
+    passEnvironment=false
+    baseEnvironmentScript=[ENVIRONMENT_FILE]
 
     [DIRECTORIES]
     configurationDirectories=[FOLDER_WITH_CONFIGURATION_FILES]
     pluginDirectories=[FOLDER_WITH_PLUGINS]
+    scratchBaseDirectory=[FOLDER_ON_EXECUTION_HOSTS]
 
     [JOB_PROCESSING]
     jobManagerClass=de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
@@ -37,6 +40,7 @@ Let's have a brief look at it:
     #executionServiceClass=de.dkfz.roddy.execution.io.SSHExecutionService
     executionServiceHost=[YOURHOST]
     executionServiceAuth=keyfile
+    #executionServiceKeyfileLocation=[keyfile path]   # use $HOME/.ssh/id_rsa by default
     #executionServiceAuth=password
     executionServicePasswd=
     executionServiceStorePassword=false
@@ -66,6 +70,17 @@ Usually, you just need to change the following settings:
    SSH and no keyfiles
 -  CLI.executionServiceStorePassword - If you want to store the
    password, put in true, however, the password is stored in plain-text!
+
+
+By default the environment local to the submission host, on which the job
+submission commands like qsub or bsub are executed -- i.e. not necessarily the
+system on which Roddy is executed (!), is not passed to the execution hosts,
+to ensure a defined environment for maximum reproducibility. If you want to pass
+the local environment, you can set `passEnvironment` to `true`. The
+`baseEnvironmentScript` variable can be used to ensure that e.g. /etc/profile is
+sourced, because this may not be per se the case, depending on whether your
+scheduling system uses interactive or login shells to execute job. Alternatively,
+you may source such base environments in your ~/.profile or ~/.bashrc.
 
 You might remember or store away the above options for future usage
 as its likely, that they won't change too often. For you the more important

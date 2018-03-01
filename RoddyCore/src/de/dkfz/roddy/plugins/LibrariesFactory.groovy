@@ -35,7 +35,7 @@ class LibrariesFactory extends Initializable {
     public static GroovyClassLoader centralGroovyClassLoader;
 
 
-    public static final String PLUGIN_VERSION_CURRENT = "current";
+    public static final String PLUGIN_VERSION_DEVELOP = "develop";
     public static final String PLUGIN_DEFAULT = "DefaultPlugin";
     public static final String PLUGIN_BASEPLUGIN = "PluginBase";
     public static final String BUILDINFO_DEPENDENCY = "dependson";
@@ -83,7 +83,7 @@ class LibrariesFactory extends Initializable {
     }
 
     private LibrariesFactory() {
-        synthetic = new SyntheticPluginInfo("Synthetic", null, null, null, "current", [:]);
+        synthetic = new SyntheticPluginInfo("Synthetic", null, null, null, LibrariesFactory.PLUGIN_VERSION_DEVELOP, [:])
     }
 
     static List<String> getErrorsForPlugin(String plugin) {
@@ -444,7 +444,7 @@ class LibrariesFactory extends Initializable {
             String pluginVersion = pluginVersionInfo[0];
             String pluginRevision = pluginVersionInfo.length > 1 ? pluginVersionInfo[1] : "0";
             String pluginFullVersion = pluginVersion + "-" + pluginRevision;
-            if (pluginVersion == PLUGIN_VERSION_CURRENT) pluginFullVersion = PLUGIN_VERSION_CURRENT;
+            if (pluginVersion == PLUGIN_VERSION_DEVELOP) pluginFullVersion = PLUGIN_VERSION_DEVELOP;
 
             if (!pluginRevision.isInteger()) {
                 throw new PluginLoaderException("Could not parse revision number from plugin-directory '${directory.absolutePath}'")
@@ -516,9 +516,9 @@ class LibrariesFactory extends Initializable {
         List<Tuple2<String, String>> pluginsToCheck = usedPlugins.collect { String requestedPlugin ->
             List<String> pSplit = requestedPlugin.split("[:-]") as List;
             String id = pSplit[0];
-            String version = pSplit[1] ?: PLUGIN_VERSION_CURRENT;
+            String version = pSplit[1] ?: PLUGIN_VERSION_DEVELOP;
             String revision = pSplit[2] ?: "0"
-            String fullVersion = version + (version != PLUGIN_VERSION_CURRENT ? "-" + revision : "")
+            String fullVersion = version + (version != PLUGIN_VERSION_DEVELOP ? "-" + revision : "")
 
             usedPluginsCorrected << [id, fullVersion].join(":");
             return new Tuple2(id, fullVersion);
@@ -531,7 +531,7 @@ class LibrariesFactory extends Initializable {
             final String id = pluginsToCheck[0].x;
             String version = pluginsToCheck[0].y;
             //There are now some  "as String" conversions which are just there for the Idea code view... They'll be shown as faulty otherwise.
-            if (version != PLUGIN_VERSION_CURRENT && !(version as String).contains("-")) version += "-0";
+            if (version != PLUGIN_VERSION_DEVELOP && !(version as String).contains("-")) version += "-0";
 
             if (!mapOfPlugins.checkExistence(id as String, version as String)) {
                 if (id) { // Skip empty entries and reduce one message.
@@ -557,7 +557,7 @@ class LibrariesFactory extends Initializable {
             }
 
             if (pInfo == null)
-                pInfo = mapOfPlugins.getPluginInfo(id as String, PLUGIN_VERSION_CURRENT);
+                pInfo = mapOfPlugins.getPluginInfo(id as String, PLUGIN_VERSION_DEVELOP);
             if (pInfo == null)
                 continue;
             if (pluginsToActivate[id as String] != null) {
@@ -571,7 +571,7 @@ class LibrariesFactory extends Initializable {
             } else {
                 Map<String, String> dependencies = pInfo.getDependencies()
                 dependencies.each { String k, String v ->
-                    if (v != PLUGIN_VERSION_CURRENT && !v.contains("-")) v += "-0";
+                    if (v != PLUGIN_VERSION_DEVELOP && !v.contains("-")) v += "-0";
                     pluginsToCheck << new Tuple2(k, v);
                 }
                 pluginsToActivate[id as String] = pInfo;
@@ -579,10 +579,10 @@ class LibrariesFactory extends Initializable {
             //Load default plugins, if necessary.
             if (!pluginsToCheck) {
                 if (!pluginsToActivate.containsKey(PLUGIN_DEFAULT)) {
-                    pluginsToActivate[PLUGIN_DEFAULT] = mapOfPlugins.getPluginInfo(PLUGIN_DEFAULT, PLUGIN_VERSION_CURRENT);
+                    pluginsToActivate[PLUGIN_DEFAULT] = mapOfPlugins.getPluginInfo(PLUGIN_DEFAULT, PLUGIN_VERSION_DEVELOP);
                 }
                 if (!pluginsToActivate.containsKey(PLUGIN_BASEPLUGIN)) {
-                    pluginsToActivate[PLUGIN_BASEPLUGIN] = mapOfPlugins.getPluginInfo(PLUGIN_BASEPLUGIN, PLUGIN_VERSION_CURRENT);
+                    pluginsToActivate[PLUGIN_BASEPLUGIN] = mapOfPlugins.getPluginInfo(PLUGIN_BASEPLUGIN, PLUGIN_VERSION_DEVELOP);
                 }
             }
         }
@@ -689,18 +689,18 @@ class LibrariesFactory extends Initializable {
      * Perform checks, if all API versions match the current runtime setup.
      * Includes Groovy, Java and Roddy.
      */
-    public static boolean performAPIChecks(List<PluginInfo> pluginInfos) {
+    static boolean performAPIChecks(List<PluginInfo> pluginInfos) {
         List<PluginInfo> incompatiblePlugins = []
         for (pi in pluginInfos) {
             if (!pi.isCompatibleToRuntimeSystem())
                 incompatiblePlugins << pi
         }
         if (incompatiblePlugins) {
-            logger.severe("Could not load plugins, runtime API versions mismatch! (JDK ${RuntimeTools.javaRuntimeVersion}, Roddy ${RuntimeTools.getRoddyRuntimeVersion()})\n"
-                    + incompatiblePlugins.collect { PluginInfo pi -> pi.fullID }.join("\n\t")
+            logger.severe("Could not load plugins, runtime API versions mismatch! Required are JDK ${RuntimeTools.javaRuntimeVersion} and Roddy ${RuntimeTools.getRoddyRuntimeVersion()}.\n"
+                    + incompatiblePlugins.collect { PluginInfo pi -> "\tJDK ${pi.jdkVersion}, Roddy ${pi.roddyAPIVersion} required by ${pi.fullID}"}.join("\n")
             )
         }
-        return !incompatiblePlugins;
+        return !incompatiblePlugins
     }
 
     public List<String> getLoadedLibrariesInfoList() {
@@ -708,34 +708,34 @@ class LibrariesFactory extends Initializable {
     }
 
     public static boolean isVersionStringValid(String s) {
-        Pattern patternOfPluginIdentifier = ~/([0-9]*[.][0-9]*[.][0-9]*([-][0-9]){0,}|[:]current)/
+        Pattern patternOfPluginIdentifier = ~/([0-9]*[.][0-9]*[.][0-9]*([-][0-9]){0,}|[:]develop)/
         return s ==~ patternOfPluginIdentifier;
     }
 
     /**
      * A helper method to identify whether a workflow identification string is valid, e.g.:
-     *       "COWorkflows:1.0.1-0:current": false,
+     *       "COWorkflows:1.0.1-0:develop": false,
      *       "COWorkflows:1.0.1-0"        : true,
      *       "COWorkflows:1.0.1-3"        : true,
      *       "COWorkflows"                : true,
-     *       "COWorkflows:current"        : true
+     *       "COWorkflows:develop"        : true
      * @param s
      * @return
      */
     public static boolean isPluginIdentifierValid(String s) {
-        //Pattern patternOfPluginIdentifier = ~/[a-zA-Z]*[:]{1,1}[0-9]*[.][0-9]*[.][0-9]*([-][0-9]){0,}|[a-zA-Z]*[:]current|[a-zA-Z]*/
-        Pattern patternOfPluginIdentifier = ~/([a-zA-Z]*)([:]{1,1}[0-9]*[.][0-9]*[.][0-9]*([-][0-9]){0,}|[:]current|$)/
+        //Pattern patternOfPluginIdentifier = ~/[a-zA-Z]*[:]{1,1}[0-9]*[.][0-9]*[.][0-9]*([-][0-9]){0,}|[a-zA-Z]*[:]develop|[a-zA-Z]*/
+        Pattern patternOfPluginIdentifier = ~/([a-zA-Z]*)([:]{1,1}[0-9]*[.][0-9]*[.][0-9]*([-][0-9]){0,}|[:]develop|$)/
         return s ==~ patternOfPluginIdentifier;
     }
 
     /**
      * A helper method to identify whether a plugin directory name is valid, e.g.:
-     *        "COWorkflows_1.0.1-0:current": false,
+     *        "COWorkflows_1.0.1-0:develop": false,
      *        "COWorkflows:1.0.1-r"        : false,
      *        "COWorkflows:1.0.1-3"        : false,
      *        "COWorkflows_1.0.1-3"        : true,
      *        "COWorkflows"                : true,
-     *        "COWorkflows_current"        : false
+     *        "COWorkflows_develop"        : false
      * @param s
      * @return
      */

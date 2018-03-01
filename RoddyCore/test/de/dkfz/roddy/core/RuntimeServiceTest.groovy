@@ -113,7 +113,6 @@ class RuntimeServiceTest {
         def result = new RuntimeService().getDefaultJobParameters(context, "aTool")
         assert result["pid"] == context.getDataSet().getId()
         assert result["PID"] == context.getDataSet().getId()
-        assert result[Constants.CONFIG_FILE]
         assert result["ANALYSIS_DIR"]
     }
 

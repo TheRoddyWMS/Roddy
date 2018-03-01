@@ -5,19 +5,17 @@
 .. _`Groovy 2.4.*`: http://groovy-lang.org/download.html
 .. _`Maven Groovy repository`: http://repo1.maven.org/maven2/org/codehaus/groovy/groovy-binary/
 .. _`GroovyServ` : https://kobo.github.io/groovyserv/
+.. _`SDKMan` : http://sdkman.io/
+.. _`Github Releases` : https://github.com/eilslabs/Roddy/releases
 
 .. Document
 
 Installation guide
 ==================
 
-There are several minor versions of Roddy. They can be downloaded and installed in the same directory.
-Minor versions mark changes in the Roddy API. This may or may not lead to incompatibilies of Roddy and Roddy plugins.
+There are several minor versions of Roddy, which can be downloaded and installed in the same directory.
+Minor versions mark changes in the Roddy API. Usually Roddy plugins are only compatible to a specific minor version.
 Installations for the different versions differ a bit, so we list all versions here.
-
-Roddy uses Groovy, however, Groovy is a bit slow to start. So Roddy 2.4+ supports GroovyServ, which can be used by you to speed things up.
-Roddy will try to install `GroovyServ`_ on its own. However, if that fails, you can still try to set it up on your own.
-If it still does not work, you can also disable it.
 
 Premises
 --------
@@ -31,20 +29,20 @@ To install and run Roddy the following programs need to be installed on your com
 
 - lockfile (part of procmail mail-processing-package (v3.22), only needed on job execution hosts)
 
-- A recent JDK (e.g. 1.8.0_121)
+- A recent JDK (e.g. 1.8.0_121), Oracle JDK or OpenJDK and variants are working.
 
 - Groovy (e.g. 2.4.7)
 
 - The DefaultPlugin and the PluginBase (see below)
 
 As Roddy is Linux based, you will be able to find them in your package manager. For the JDK and Groovy, which are both required on the host on which
-you run Roddy, you may alternativel want to use [sdkman](http://sdkman.io/). The following will get you going:
+you run Roddy, you may want to use `SDKMan`_. The following will get you going:
 
-```bash
-curl -s "https://get.sdkman.io" | bash
-sdk install groovy 2.4.13
-sdk install java 8u151-oracle
-```
+.. code-block:: Bash
+
+    curl -s "https://get.sdkman.io" | bash
+    sdk install groovy 2.4.13
+    sdk install java 8u151-oracle
 
 Specific workflows you execute may require additional software.
 
@@ -81,18 +79,19 @@ Roddy 2.3
 
 3. Optionally unpack one or more of the release zips in *dist/bin/* directory.
 
-Please see `Roddy version mix`_ for information about how to mix different versions of Roddy in the same directory.
+Please see `Versioning`_ for information about how to mix different versions of Roddy in the same directory.
 
-Roddy 2.4
+Roddy 3.0
 ---------
 
-For Roddy version 2.4 zips are deployed to Github releases (continuous deployment via Travis). The thus installed Roddy will contain all dependencies
+For Roddy version 3.0 zips are deployed to Github releases (continuous deployment via Travis). The thus installed Roddy will contain all dependencies
 except the JDK and Groovy. Additionally, there is an automatic downloader for the JRE / JDK.
 
-1. Release ZIPs for Roddy and the Roddy environment are available via [Github Releases](https://github.com/eilslabs/Roddy/releases). Download the latest release of the RoddyEnv ZIP and unpack it and change into the Roddy environment directory (e.g. "Roddy").
+1. Release ZIPs for Roddy and the Roddy environment are available via `Github Releases`_. Download the latest release of the RoddyEnv ZIP and unpack it and change into the Roddy environment directory (e.g. "Roddy").
 2. After that you can install arbitrary releases of the Roddy ZIP into `dist/bin/$major.$minor.$patch` directories.
 3. The default and base plugin repositories need to be cloned into the `dist/plugins/` directory.
-   .. code-block:: Bash
+
+.. code-block:: Bash
 
    pushd dist/plugins
    git clone https://github.com/eilslabs/Roddy-Default-Plugin.git DefaultPlugin
@@ -114,6 +113,7 @@ Other plugins may be installed in arbitrary plugin directories using the same na
 [Optional] Setup GroovyServ
 ---------------------------
 
+Roddy uses Groovy, however, Groovy is a bit slow to start. So Roddy 3.0+ supports `GroovyServ`_, which can be used by you to speed things up.
 GroovyServ tremendously decreases the startup time of Groovy applications and Roddy will try to download and set it up automatically. If that fails or
 if you want to set it up by yourself, do the following in your Roddy directory:
 
@@ -150,7 +150,7 @@ Test your installation
 
 Head over to the Roddy directory and do
 
-::
+.. code-block:: Bash
 
   ./roddy.sh
 

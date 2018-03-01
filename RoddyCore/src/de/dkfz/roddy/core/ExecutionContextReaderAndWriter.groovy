@@ -9,6 +9,7 @@ package de.dkfz.roddy.core
 import de.dkfz.roddy.execution.jobs.BEJobID
 import de.dkfz.roddy.execution.jobs.GenericJobInfo
 import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.JobConstants
 import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -190,8 +191,8 @@ class ExecutionContextReaderAndWriter {
                     String value = parameter.@value.text()
                     jobsParameters[name] = value
                 }
-                if(jobsParameters.containsKey("TOOL_ID"))
-                    jobToolID = jobsParameters["TOOL_ID"]  // Override with safe value!
+                if(jobsParameters.containsKey(JobConstants.PRM_TOOL_ID))
+                    jobToolID = jobsParameters[JobConstants.PRM_TOOL_ID]  // Override with safe value!
 
                 for (file in job.filesbyjob.file) {
                     String fileid = file.@id.text()
@@ -303,13 +304,14 @@ class ExecutionContextReaderAndWriter {
                 //TODO. How can we recognize different command factories? i.e. for other cluster systems?
                 GenericJobInfo jobInfo = Roddy.getJobManager().parseGenericJobInfo(call)
                 if(jobInfo == null){
-                    logger.severe("Skipped read in of job call: ${call}")
-                    continue;
+                    logger.severe("Skipped read-in of job call: ${call}")
+                    continue
                 }
                 // Try to find the tool id in the context. If it is not available, set "UNKNOWN"
                 String toolID = allToolsByResourcePath[jobInfo.tool.parentFile.name + "/" + jobInfo.tool.name] ?: Constants.UNKNOWN
 
-                Job job = new Job(context, jobInfo.jobName, toolID, jobInfo.parameters as Map<String, Object>, new LinkedList<BaseFile>(), new LinkedList<BaseFile>())
+                Job job = new Job(context, jobInfo.jobName, Constants.UNKNOWN, jobInfo.parameters as Map<String, Object>,
+                        new LinkedList<BaseFile>(), new LinkedList<BaseFile>())
                 jobsStartedInContext.add(job)
             }
         }

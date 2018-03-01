@@ -2,8 +2,8 @@ Workflow development primer
 ===========================
 
 Following the instructions on this page, you should be able to setup and run a basic workflow within ten minutes.
-At the end of this page you'll find all commands in one code block. This guide estimates, that you will be developing for
-Roddy version 2.4.x and that you will create a JVM based workflow.
+At the end of this page you'll find all commands in one code block. This guide assumes that you will be developing for
+Roddy version 3.0.x and that you will create a JVM based workflow.
 
 1. Setup a plugins folder
 -------------------------
@@ -41,7 +41,7 @@ We are
 
     echo "dependson=PluginBase:1.0.29" > buildversion.txt
     echo "dependson=DefaultPlugin:1.0.34" > buildversion.txt
-    echo "RoddyAPIVersion=2.4" > buildversion.txt
+    echo "RoddyAPIVersion=3.0" > buildversion.txt
     echo "JDKVersion=1.8" >> buildversion.txt
     echo "GroovyVersion=2.4" >> buildversion.txt
 
@@ -168,7 +168,7 @@ Only one thing is missing, before you try out your new workflow.
 -----------------------------------------
 
 There is a skeleton application properties file in your Roddy folder.
-Copy the file [RODDY]/dist/bin/current/helperScripts/skeletonAppProperties.ini
+Copy the file [RODDY]/dist/bin/develop/helperScripts/skeletonAppProperties.ini
 to a location of your choice. Open it and add the folder ~/RoddyPlugins to the
 pluginDirectories entry. Also change the jobManager class to
 *DirectSynchronousExecutedJobManager*. Just comment the currently active line
@@ -192,7 +192,7 @@ you can call it.
 
 .. code-block:: Bash
 
-    [RODDY_DIRECTORY]/roddy.sh testrun NewPlugin_current:test --c=[YOUR_INI_FILE]
+    [RODDY_DIRECTORY]/roddy.sh testrun NewPlugin_develop:test --c=[YOUR_INI_FILE]
 
 
 

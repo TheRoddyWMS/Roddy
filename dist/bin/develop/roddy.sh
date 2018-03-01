@@ -40,11 +40,11 @@ elif [[ "$parm1" == "pack" ]]; then
 
     packedRoddyDir=${RODDY_DIRECTORY}/dist/bin/${major}.${minor}
     packedZip=${RODDY_DIRECTORY}/dist/bin/Roddy_${major}.${minor}.zip
-    currentRoddyDir=${RODDY_DIRECTORY}/dist/bin/current
+    developmentRoddyDir=${RODDY_DIRECTORY}/dist/bin/develop
     mkdir -p $packedRoddyDir
 
     nfoFile=${packedRoddyDir}/Roddy.jar.nfo
-    cp -r $currentRoddyDir/* $packedRoddyDir
+    cp -r $developmentRoddyDir/* $packedRoddyDir
 
     git status > ${filename}.nfo
     svn info > ${filename}.nfo
@@ -79,7 +79,7 @@ elif [[ "$parm1" == "packplugin" || "$parm1" == "testpackplugin" ]]; then
     minor=`tail ${pluginDirectory}/buildversion.txt -n 1`
     filename=${pluginID}_${major}.${minor}
     cd ${pluginDirectory}/..
-    echo "Copying current to ${filename} ..."
+    echo "Copying 'develop' to ${filename} ..."
     [[ ! -d ${filename} ]] && mkdir ${filename}
     cp -r $pluginID/* ${filename}
     cd $filename
@@ -123,7 +123,7 @@ elif [[ "$parm1" == "createworkflow" ]]; then
     exit 0
 fi
 
-export RODDY_HELPERSCRIPTS_FOLDER=`readlink -f dist/bin/current/helperScripts`
+export RODDY_HELPERSCRIPTS_FOLDER=`readlink -f dist/bin/develop/helperScripts`
 
 source ${RODDY_HELPERSCRIPTS_FOLDER}/networkFunctions.sh
 

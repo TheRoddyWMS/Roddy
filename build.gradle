@@ -15,6 +15,11 @@ buildscript {
         maven {
             url "https://plugins.gradle.org/m2/"
         }
+        mavenLocal()
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'kr.motd.gradle', name: 'sphinx-gradle-plugin', version: '1.0.6'
     }
 }
 
@@ -26,17 +31,7 @@ plugins {
 group = "com.github.eilslabs"
 
 /**
- * Gets the version name from the current Git tag. If the current commit is not tagged,
- * this returned string will indicate that. Also if the repository is dirty.
- */
-String getVersionName() {
-    def dirtySuffix = grgit.status().isClean() ? '' : '-dirty'
-    return grgit.describe() + dirtySuffix
-}
-
-/**
  * -PignoreFailedTests                  Continue despite failed tests.
- * -PreleaseLevel={major,minor,patch}   When releasing, increase the major.minor.patch number. The build number is always increased.
  * -PallowDirtyRepo=true                Continue release despite dirty repo.
  * -Pchecked=false                      Turn off -F Xlint:unchecked
  */
@@ -47,6 +42,7 @@ apply plugin: "java"
 apply plugin: 'application'
 apply plugin: 'distribution'
 apply plugin: 'groovy'
+apply plugin: 'kr.motd.sphinx'  // Apache 2.0
 
 // Java settings
 ext.langLevel = "1.8"
@@ -54,15 +50,25 @@ sourceCompatibility = langLevel
 targetCompatibility = langLevel
 compileJava.options.fork = true
 
-ext.buildVersion = getVersionName()
-
-// Set -Pchecked on the command line to change this compiler parameter.
-if (!project.hasProperty("checked") || !project.checked) {
-    compileJava.options.compilerArgs = ["-F Xlint:unchecked"]
+// Set -Pchecked={true,false} on the command line to change this compiler parameter. Default: unchecked
+if (project.hasProperty("checked") && !project.checked) {
+    compileJava.options.compilerArgs = ["-Xlint:unchecked"]
+    compileGroovy.options.compilerArgs = ["-Xlint:unchecked"]
 }
 
 // The following keeps the Gradle build files separate from the ones build by IntelliJ (usually in build/).
 buildDir = "${projectDir}/gradleBuild"
+
+/*
+ * Gets the version name from the current Git tag. If the current commit is not tagged,
+ * this returned string will indicate that. Also if the repository is dirty
+ */
+def getVersionName() {
+    def dirtySuffix = grgit.status().isClean() ? '' : '-dirty'
+    return grgit.describe() + dirtySuffix
+}
+
+rootProject.version = getVersionName()
 
 test {
     workingDir = System.getProperty("user.dir")
@@ -90,10 +96,10 @@ configurations.all {
 }
 
 dependencies {
-    // compile 'com.github.eilslabs:RoddyToolLib:0.0.2'            // MIT
-    compile 'com.github.eilslabs:RoddyToolLib:develop-SNAPSHOT'    // MIT
-    // compile 'com.github.eilslabs:BatchEuphoria:'                // MIT
-    compile 'com.github.eilslabs:BatchEuphoria:develop-SNAPSHOT'   // MIT
+    compile 'com.github.eilslabs:RoddyToolLib:0.0.3'            // MIT
+    // compile 'com.github.eilslabs:RoddyToolLib:develop-SNAPSHOT'    // MIT
+    compile 'com.github.eilslabs:BatchEuphoria:0.0.1'           // MIT
+    // compile 'com.github.eilslabs:BatchEuphoria:develop-SNAPSHOT'   // MIT
     compile 'org.codehaus.groovy:groovy-all:2.4.9'              // Apache 2.0
 
     compile 'org.bouncycastle:bcpg-jdk15on:1.51'                // MIT
@@ -135,8 +141,8 @@ dependencies {
     testCompile 'org.spockframework:spock-core:1.1-groovy-2.4'  // Apache 2.0
 }
 
-project.ext.currentDistributionDir = new File(rootProject.projectDir, "dist/bin/current")
-convention.add("releaseDir", new File(project.ext.currentDistributionDir, "../" + getVersionName()).absoluteFile)
+project.ext.developmentDistributionDir = new File(rootProject.projectDir, "dist/bin/develop")
+convention.add("releaseDir", new File(project.ext.developmentDistributionDir, "../" + rootProject.version).absoluteFile)
 
 sourceSets {
     main {
@@ -153,7 +159,7 @@ sourceSets {
 
 mainClassName = "de.dkfz.roddy.Roddy"
 
-project.ext.librariesDirectory = new File(project.ext.currentDistributionDir, "lib")
+project.ext.librariesDirectory = new File(project.ext.developmentDistributionDir, "lib")
 
 task cleanRuntimeLibs(type: Delete) {
     delete fileTree(dir: librariesDirectory, exclude: ".keep")
@@ -171,29 +177,28 @@ jar {
     baseName = "Roddy"
     classifier = null
     version = null
-    // version = getVersionName()  // toggle to get a versioned jar name
-    setDestinationDir(project.ext.currentDistributionDir)
+    setDestinationDir(project.ext.developmentDistributionDir)
     manifest {
         attributes("Implementation-Vendor": "German Cancer Research Center (DKFZ)")
         attributes 'Main-Class': mainClassName
-        attributes("Implementation-Title": name)
-        attributes 'Implementation-Version': getVersionName()
+        attributes("Implementation-Title": baseName)
+        attributes 'Implementation-Version': rootProject.version
     }
     dependsOn cleanRuntimeLibs, copyRuntimeLibs
 }
 
 /** Produce 2 distribution packages:
  *
- *  * Roddy.zip with everything that belongs into the dist/bin/current directory & some other smaller files.
- *  * RoddyEnv.zip with the runtime environment, starter script, etc.
+ *  * Roddy-*.zip with everything that belongs into the dist/bin/develop directory & some other smaller files.
+ *  * RoddyEnv-*.zip with the runtime environment, starter script, etc.
  */
 distributions {
 
     roddy {
-        baseName = "Roddy-" + getVersionName()
+        baseName = "Roddy"
         contents {
-            into(getVersionName())
-            from("dist/bin/current/") {
+            into(rootProject.version)
+            from(project.ext.developmentDistributionDir) {
                 include("**")
             }
             from("./") {
@@ -210,7 +215,7 @@ distributions {
     }
 
     roddyEnvironment {
-        baseName = "RoddyEnv-" + getVersionName()
+        baseName = "RoddyEnv"
         contents {
             from("./") {
                 include("roddy.sh")
@@ -245,6 +250,8 @@ task wrapper(type: Wrapper) {
     gradleVersion = '4.2.1'
 }
 
-
+sphinx {
+    sourceDirectory = "${project.projectDir}/docs/"
+}
 
 // end of build.gradle

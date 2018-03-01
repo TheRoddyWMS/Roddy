@@ -62,7 +62,7 @@ public class ProjectConfiguration extends Configuration {
         if (super.getConfiguredClass() != null)
             return super.getConfiguredClass();
         String projectClass = null;
-        for (Configuration c : getContainerParents())
+        for (Configuration c : getParents())
             if (c instanceof ProjectConfiguration) {
                 projectClass = ((ProjectConfiguration) c).getProjectClass();
                 if (projectClass != null)
@@ -96,9 +96,9 @@ public class ProjectConfiguration extends Configuration {
      * @return
      */
     public String getRuntimeServiceClass() {
-        if ((runtimeServiceClass == null || runtimeServiceClass.trim().length() == 0) && getContainerParents().size() > 0) {
+        if ((runtimeServiceClass == null || runtimeServiceClass.trim().length() == 0) && getParents().size() > 0) {
             String rsc;
-            for (Configuration c : getContainerParents()) {
+            for (Configuration c : getParents()) {
                 if ((c instanceof ProjectConfiguration))
                     rsc = ((ProjectConfiguration) c).getRuntimeServiceClass();
                 else if(c instanceof  AnalysisConfiguration)

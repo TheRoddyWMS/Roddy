@@ -6,9 +6,7 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
@@ -18,13 +16,9 @@ import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.BaseMetadataTable
 import de.dkfz.roddy.execution.io.MetadataTableFactory
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.cluster.lsf.LSFJobManager
-import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSJobManager
-import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.commons.io.filefilter.WildcardFileFilter
 
@@ -547,7 +541,6 @@ public class RuntimeService {
         Map<String, Object> parameters = [
                 (Constants.PID)          : (Object) dataset,
                 (Constants.PID_CAP)      : dataset,
-                (Constants.CONFIG_FILE)  : fs.getNameOfConfigurationFile(context).getAbsolutePath(),
                 (Constants.ANALYSIS_DIR) : context.getOutputDirectory().getParentFile().getParent()
         ]
         return parameters;
@@ -601,7 +594,7 @@ public class RuntimeService {
 
         try {
             //Was freshly created?
-            if (baseFile.creatingJobsResult != null && baseFile.creatingJobsResult.wasExecuted) {
+            if (baseFile.creatingJobsResult != null && baseFile.creatingJobsResult.successful) {
                 result = false;
             }
         } catch (Exception ex) {

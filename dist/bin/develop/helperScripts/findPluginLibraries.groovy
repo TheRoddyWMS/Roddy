@@ -26,19 +26,19 @@ List<String> extractDependenciesFromBuildinfoFile(String pluginDir) {
 	}
 }
 
-/** Given a plugin name with version, if the version is not 'current' then the plugin jar may be called $id_$version.jar or $id.jar.
- *  If the searched plugin version is 'current', the jar must be called $id.jar.
+/** Given a plugin name with version, if the version is not 'develop' then the plugin jar may be called $id_$version.jar or $id.jar.
+ *  If the searched plugin version is 'develop', the jar must be called $id.jar.
  *  This allows to compile against plugin directories renamed to versioned directories, but still containing older jars compiled while they were
- *  'current'.
+ *  'develop'.
  */
 List<File> findPossibleJarsForDependency(List<String> pluginDirectories, String pluginNameAndVersion) {
 	String path = pluginNameAndVersion.replace(":", "_")
 	def (id, version) = pluginNameAndVersion.split("[:]")
-	path = path.replace("_current", "")
+	path = path.replace("_develop", "")
 
 	return pluginDirectories.collect { String line ->
 		def jar = new File(new File(line, path), "${id}.jar")
-		if (version != "current")
+		if (version != "develop")
 			[new File(new File(line, path), "${id}_${version}.jar"), jar]
 		else
 			[jar]

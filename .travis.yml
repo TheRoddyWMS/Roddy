@@ -17,8 +17,8 @@ deploy:
   api_key:
     secure: hUho+7TfYXa4AQXlR6RuaeB9NBDX9VG3CwPoxvxU4pzIKBq6nwKkcOIwYi3WihxRZ/79qcyLv519L2/Nz0aDO7ZNvU7auvdNz612AgcvlPbvm+q00fQXpgaNl9owHDmgukmfZhMg2P0gcSQIUa/rdlU6CTlfUFxgEcXXiYA5RfoxYLpL12rsGYbPw7CjCWHoo34Z0i24lE3KjwYYxwBVpB7ytlArY1xe9bRPLXSFrEcfx3D8+PfoktVxuJTC3zeXJj1TUEPoupA7KyC1MUFvXKAOprJH4b2XfYBJlF2loionyo3ynqCp5KQK2HQpirEI5aFUAFZ1FO7/7luHWdySP3pIYXV9I39kOGwTERAaETcHlQw0Rla7ZD19ailySPIL3ajTrSxzY6+CeROpt9efolbl22hyJTnVTUod7LEobYHoUZ4wjTD6wp11byqHzYjJekHajo6GCpZGWX6JFlLoNkixTtlmcrz6yGJhE02G1mtO/wM0nBDuAE8o1Mbp7Rj7qMW8QAMnAXzH5qRslrigOEDPPf8YUpyBLhFzVyH3owDQpk889+s76y1dzRA88v8xxdBYkh2byYoBEt8DLDuM/njPeoZjcsTGATDi2TmCk0mDYrJRR+w52Df8s4JLNuP1c1b9r0Yi7/10quGIVNBzc08b40NtF92yHHQB3zxxq4k=
   file:
-    - gradleBuild/distributions/RoddyEnv-*
-    - gradleBuild/distributions/Roddy-*
+    - gradleBuild/distributions/RoddyEnv-*.zip
+    - gradleBuild/distributions/Roddy-*.zip
   file_glob: true
   on:
     repo: eilslabs/Roddy

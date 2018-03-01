@@ -29,12 +29,14 @@ def pluginVersion = pluginInfo.size() > 1 ? pluginInfo[1] : null
 def pluginLine = ["${workingDirectory}/dist/plugins",
                   "${workingDirectory}/dist/plugins_2.49plus",
                   "${workingDirectory}/dist/plugins_R2.3",
-                  "${workingDirectory}/dist/plugins_R2.4"]
+                  "${workingDirectory}/dist/plugins_R2.4",
+                  "${workingDirectory}/dist/plugins_R3.0",
+                  "${workingDirectory}/dist/plugins_3.0"]
 List<File> pluginFolders = []
 
 if (splitPlugin.size() > 1) pluginLine.addAll(splitPlugin[1].split("[,]"))
 pluginLine.each { pl -> pluginFolders.addAll(new File(pl).listFiles().findAll { dir -> dir.isDirectory() }) }
-sourceDirectory = pluginFolders.find { it.name.endsWith(pluginID + ( (pluginVersion && !pluginVersion.equals("current"))? "_$pluginVersion" : "")); }
+sourceDirectory = pluginFolders.find { it.name.endsWith(pluginID + ( (pluginVersion && !pluginVersion.equals("develop"))? "_$pluginVersion" : "")); }
 
 if (sourceDirectory == null) {
     System.err.println("Could not find source directory among ${pluginFolders}")

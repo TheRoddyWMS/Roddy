@@ -237,8 +237,8 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
-    public List<Configuration> getContainerParents() {
-        return checkAnalysisConfig().getContainerParents();
+    public List<Configuration> getParents() {
+        return checkAnalysisConfig().getParents();
     }
 
     @Override

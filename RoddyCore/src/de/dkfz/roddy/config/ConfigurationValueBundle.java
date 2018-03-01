@@ -15,20 +15,19 @@ import java.util.Map;
  */
 public class ConfigurationValueBundle implements RecursiveOverridableMapContainer.Identifiable {
 
-    private static int cvbIDs = 0;
-
     private final Map<String, ConfigurationValue> values = new HashMap<>();
 
-    private final int id = cvbIDs++;
+    private final String id;
 
-    public ConfigurationValueBundle(Map<String, ConfigurationValue> values) {
+    public ConfigurationValueBundle(String id, Map<String, ConfigurationValue> values) {
+        this.id = id;
         if (values != null)
             this.values.putAll(values);
     }
 
     @Override
     public String getID() {
-        return "" + id;
+        return id;
     }
 
     public List<String> getKeys() {
@@ -38,10 +37,6 @@ public class ConfigurationValueBundle implements RecursiveOverridableMapContaine
     public List<ConfigurationValue> getValues() {
         return new LinkedList<>(values.values());
     }
-
-//    public ConfigurationValue get(String key) {
-//        return values.get(key);
-//    }
 
     public ConfigurationValue getAt(String key) {
         return values.get(key);

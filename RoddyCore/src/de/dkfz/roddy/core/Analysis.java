@@ -6,22 +6,25 @@
 
 package de.dkfz.roddy.core;
 
+import de.dkfz.roddy.AvailableFeatureToggles;
 import de.dkfz.roddy.BEException;
 import de.dkfz.roddy.Constants;
-import de.dkfz.roddy.execution.jobs.Job;
-import de.dkfz.roddy.execution.jobs.JobState;
-import de.dkfz.roddy.AvailableFeatureToggles;
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.client.RoddyStartupOptions;
+import de.dkfz.roddy.config.*;
 import de.dkfz.roddy.config.loader.ConfigurationLoadError;
 import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
+import de.dkfz.roddy.execution.jobs.Job;
+import de.dkfz.roddy.execution.jobs.JobState;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
-import de.dkfz.roddy.config.*;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import java.io.File;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 
 
@@ -200,7 +203,10 @@ public class Analysis {
         long creationCheckPoint = System.nanoTime();
 
         for (DataSet ds : selectedDatasets) {
-            if (level.isOrWasAllowedToSubmitJobs && !checkJobStartability(ds)) continue;
+            if (level.isOrWasAllowedToSubmitJobs && !canStartJobs(ds)) {
+                logger.postAlwaysInfo("The " + Constants.PID + " " + ds.getId() + " is still running and will be skipped for the process.");
+                continue;
+            }
 
             ExecutionContext ec = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, level, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null, creationCheckPoint);
 
@@ -222,7 +228,10 @@ public class Analysis {
         LinkedList<ExecutionContext> newRuns = new LinkedList<>();
         for (ExecutionContext oldContext : contexts) {
             DataSet ds = oldContext.getDataSet();
-            if (!test && !checkJobStartability(ds)) continue;
+            if (!test && !canStartJobs(ds)) {
+                logger.postAlwaysInfo("The " + Constants.PID + " " + ds.getId() + " is still running and will be skipped for the process.");
+                continue;
+            }
 
             ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, oldContext.getDataSet(), test ? ExecutionContextLevel.TESTRERUN : ExecutionContextLevel.RERUN, oldContext.getOutputDirectory(), oldContext.getInputDirectory(), null, creationCheckPoint);
 
@@ -233,16 +242,11 @@ public class Analysis {
         return newRuns;
     }
 
-    private boolean checkJobStartability(DataSet ds) {
-        String datasetID = ds.getId();
-        if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning) && checkStatusForDataset(ds)) {
-            logger.postAlwaysInfo("The " + Constants.PID + " " + datasetID + " is still running and will be skipped for the process.");
-            return false;
-        }
-        return true;
+    private boolean canStartJobs(DataSet ds) {
+        return !Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning) || !hasKnownRunningJobs(ds);
     }
 
-    public boolean checkStatusForDataset(DataSet ds) {
+    public boolean hasKnownRunningJobs(DataSet ds) {
         AnalysisProcessingInformation api = ds.getLatestValidProcessingInformation(this);
         ExecutionContext detailedProcessingInfo = api != null ? api.getDetailedProcessingInfo() : null;
         return detailedProcessingInfo != null && detailedProcessingInfo.hasRunningJobs();
@@ -256,7 +260,7 @@ public class Analysis {
         List<DataSet> dataSets = getRuntimeService().loadDatasetsWithFilter(this, pids, suppressInfo);
         Map<DataSet, Boolean> results = new LinkedHashMap<>();
         dataSets.parallelStream().forEach(ds -> {
-            boolean result = checkStatusForDataset(ds);
+            boolean result = hasKnownRunningJobs(ds);
             synchronized (results) {
                 results.put(ds, result);
             }
@@ -371,7 +375,7 @@ public class Analysis {
                 StringBuilder message = new StringBuilder("The workflow does not seem to be executable for dataset " + datasetID);
                 if (!contextRightsSettings) message.append("\n\tContext access rights settings could not be validated.");
                 if (!contextPermissions) message.append("\n\tContext permissions could not be validated.");
-                if (!contextExecutability) message.append("\n\tContext and workflow is not considered executable.");
+                if (!contextExecutability) message.append("\n\tContext and workflow are not considered executable.");
                 if (!configurationValidity) message.append("\n\tContext configuration has errors.");
                 logger.severe(message.toString());
             } else {
@@ -387,7 +391,7 @@ public class Analysis {
                             StringBuilder message = new StringBuilder("There were errors after preparing the workflow run for dataset " + datasetID);
                             if (invalidPreparedFiles.size() > 0)
                                 message.append("\n\tSome files could not be written. Workflow will not execute.\n\t"
-                                    + RoddyIOHelperMethods.joinArray(invalidPreparedFiles.toArray(), "\t\n"));
+                                    + String.join("\t\n", invalidPreparedFiles));
                             if (!copiedAnalysisToolsAreExecutable)
                                 message.append("\n\tSome declared tools are not executable. Workflow will not execute.");
                             if (ignoreFileChecks) {
@@ -413,6 +417,8 @@ public class Analysis {
                     if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) { //Clean up
                         //Query file validity of all files
                         FileSystemAccessProvider.getInstance().validateAllFilesInContext(context);
+                        if (context.getExecutionDirectory().getName().contains(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX))
+                            FileSystemAccessProvider.getInstance().removeDirectory(context.getExecutionDirectory());
                     } else {
                         if (!successfullyExecuted)
                             maybeAbortStartedJobsOfContext(context);

@@ -62,6 +62,14 @@ public abstract class FileGroup<F extends BaseFile> extends FileObject {
             file.addFileGroup(this);
     }
 
+    public final F getAt(int index) {
+        return filesInGroup.get(index);
+    }
+
+    public final F get(int index) {
+        return filesInGroup.get(index);
+    }
+
     public List<F> getFilesInGroup() {
         return new LinkedList<F>(filesInGroup);
     }

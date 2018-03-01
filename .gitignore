@@ -1,20 +1,37 @@
-.idea/workspace.xml
-out
-RoddyCore/build
-dist/bin/2*
-dist/build
-dist/plugins/DefaultPlugin_*
-dist/plugins/*/build
-dist/plugins/PluginBase_1.0.28
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
-build
 .nfo
 .gradle
+
+# IntelliJ Idea files
 .idea/encodings.xml
-manifest.tmp
-*~
-gradleBuild
-coverage/
+.idea/workspace.xml
 .idea/codeStyleSettings.xml
 .idea/gradle.xml
+*.ipr
+*.iws
+*.jar
+
+# Build directories
+out
+build
+gradleBuild
+dist/bin/develop/lib/
+
+# Most plugins in dist/plugins
+dist/plugins/*
+!dist/plugins/Template
+!dist/plugins/NativeWorkflowTestPlugin
+!dist/plugins/TestPluginWithJarFile
+!dist/plugins/TestPluginWithoutJarFile
+
+# All versioned Roddy directories (except 'develop')
+dist/bin/*
+!dist/bin/develop
+
+# Other files
+manifest.tmp
+*~
+coverage/
+
+

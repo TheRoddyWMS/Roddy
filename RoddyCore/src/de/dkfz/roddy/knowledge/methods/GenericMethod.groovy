@@ -11,7 +11,10 @@ import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.execution.jobs.BEJobResult
 import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.knowledge.files.*
+import de.dkfz.roddy.knowledge.files.BaseFile
+import de.dkfz.roddy.knowledge.files.FileGroup
+import de.dkfz.roddy.knowledge.files.FileObject
+import de.dkfz.roddy.knowledge.files.FileObjectTupleFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
@@ -171,21 +174,16 @@ class GenericMethod {
         if (outputFileGroupIndices != null && outputFileGroupIndices.size() == 0)
             throw new RuntimeException("It is not allowed to call GenericMethod with an empty non null list of file group indices.")
 
-        this.context = inputObject.getExecutionContext();
+        this.context = inputObject.getExecutionContext()
         this.toolName = toolName
-        this.configuration = context.getConfiguration();
-        this.calledTool = configuration.getTools().getValue(toolName);
-        if(calledTool.usesAutoCheckpoint()) {
-            context.runtimeService.calculateAutoCheckpointFilename(calledTool, ([inputObject] as List<Object>) + additionalInput as List<Object>)
-
-            logger.info("Create an automatic checkpoint for tool ${toolName}")
-        }
+        this.configuration = context.getConfiguration()
+        this.calledTool = configuration.getTools().getValue(toolName)
 
         this.additionalInput = additionalInput
         this.inputObject = inputObject
-        this.allInputValues << inputObject;
+        this.allInputValues << inputObject
         if (inputObject instanceof FileGroup) {
-            this.firstInputFile = (inputObject as FileGroup).getFilesInGroup().get(0); // Might be null at some point... Should we throw something?
+            this.firstInputFile = (inputObject as FileGroup).getFilesInGroup().get(0) // Might be null at some point... Should we throw something?
         } else if (inputObject instanceof BaseFile) {
             this.firstInputFile = inputObject as BaseFile
         } else {
@@ -259,27 +257,27 @@ class GenericMethod {
         // Assemble initial parameters
         parameters[PRM_WORKFLOW_ID] = context.analysis.configuration.getName()
         if (toolName) {
-            parameters[PRM_TOOL_ID] = toolName;
-            parameters[PRM_TOOLS_DIR] = configuration.getProcessingToolPath(context, toolName).getParent();
+            parameters[PRM_TOOL_ID] = toolName
+            parameters[PRM_TOOLS_DIR] = configuration.getProcessingToolPath(context, toolName).getParent()
         }
 
         // Assemble additional parameters
         for (Object entry in additionalInput) {
             if (entry instanceof BaseFile)
                 // assert(((BaseFile) entry).isEvaluated)
-                allInputValues << (BaseFile) entry;
+                allInputValues << (BaseFile) entry
             else if (entry instanceof FileGroup) {
                 //Take a group and store all files in that group.
-                allInputValues << (FileGroup) entry;
-            } else if (entry instanceof Map<String, String>) {
-                (entry as Map<String, String>).forEach { String k, String v ->
-                    parameters[k] = v
+                allInputValues << (FileGroup) entry
+            } else if (entry instanceof Map) {
+                (entry as Map).forEach { k, v ->
+                    parameters[k.toString()] = v.toString()
                 }
             } else {               // Catch-all, in case one still wants to use a string with '=' to define a parameter (deprecated).
-                String[] split = entry.toString().split("=");
+                String[] split = entry.toString().split("=")
                 if (split.length != 2)
-                    throw new RuntimeException("Not able to convert entry ${entry.toString()} to parameter.")
-                parameters[split[0]] = split[1];
+                    throw new RuntimeException("Unable to convert entry ${entry.toString()} to parameter.")
+                parameters[split[0]] = split[1]
             }
         }
     }
@@ -364,16 +362,6 @@ class GenericMethod {
             }
         }
 
-        if (arrayIndex != null) {
-            for (FileObject fo in allCreatedObjects) {
-                if (!(fo instanceof BaseFile))
-                    continue;
-
-                BaseFile bf = (BaseFile) fo;
-                String newPath = bf.getAbsolutePath().replace(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBARRAYINDEX, arrayIndex);
-                bf.setPath(new File(newPath));
-            }
-        }
         return outputObject;
     }
 

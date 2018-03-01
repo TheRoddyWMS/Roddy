@@ -6,11 +6,12 @@
 
 package de.dkfz.roddy.execution.io
 
-import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.execution.BEExecutionService
+import de.dkfz.roddy.execution.jobs.BEJobResult
 import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.JobManagerOptions
 import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.execution.jobs.DummyCommand
 import de.dkfz.roddy.AvailableFeatureToggles
@@ -29,12 +30,14 @@ import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.BEJobID
+import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
 
+import java.util.concurrent.ExecutionException
 import java.util.logging.Level
 
 import static de.dkfz.roddy.StringConstants.TILDE
@@ -76,8 +79,8 @@ abstract class ExecutionService implements BEExecutionService {
             if (!isConnected) {
                 int queryCount = 0
                 //If password is not stored, ask once for the password only, increase queryCount.
-                if (!Boolean.parseBoolean(Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_STORE_PWD, Boolean.FALSE.toString()))) {
-                    Roddy.setApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD)
+                if (!Boolean.parseBoolean(Roddy.applicationConfiguration.getOrSetApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_STORE_PWD, Boolean.FALSE.toString()))) {
+                    Roddy.applicationConfiguration.setApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD)
                     RoddyCLIClient.askForPassword()
                     isConnected = executionService.tryInitialize(true)
                     queryCount++
@@ -104,7 +107,7 @@ abstract class ExecutionService implements BEExecutionService {
         ClassLoader classLoader = LibrariesFactory.getGroovyClassLoader()
 
         RunMode runMode = Roddy.getRunMode()
-        String executionServiceClassID = Roddy.getApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, SSHExecutionService.class.getName())
+        String executionServiceClassID = Roddy.applicationConfiguration.getOrSetApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, SSHExecutionService.class.getName())
         try {
             Class executionServiceClass = classLoader.loadClass(executionServiceClassID)
             initializeService(executionServiceClass, runMode)
@@ -155,6 +158,57 @@ abstract class ExecutionService implements BEExecutionService {
 
     protected abstract ExecutionResult _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream)
 
+    /**
+     * The original function is in ExecutionService, but this one takes parameters and passes them to the execution.
+     * @param context
+     * @param toolID
+     * @param parameters
+     * @param jobNameExtension
+     * @return
+     */
+    List<String> callSynchronized(ExecutionContext context, String toolID, Map<String, Object> parameters = null) {
+
+        if (!parameters) parameters = [:]
+        parameters[ConfigurationConstants.DISABLE_DEBUG_OPTIONS_FOR_TOOLSCRIPT] = "true"
+
+        Job wrapperJob = new Job(context, context.getTimestampString() + "_directTool:" + toolID, toolID, parameters)
+        DirectSynchronousExecutionJobManager jobManager =
+                new DirectSynchronousExecutionJobManager(ExecutionService.getInstance(), JobManagerOptions.create().setStrictMode(false).build())
+        wrapperJob.setJobManager(jobManager)
+        BEJobResult result = wrapperJob.run()
+
+        // Getting complicated from here on. We need to replicate some code.
+
+        // If QUERY_STATUS is set as the context status, some parts of the above .run() will not be executed and need to be mimicked (for now).
+        if (!context.executionContextLevel.isOrWasAllowedToSubmitJobs) {
+            wrapperJob.storeJobConfigurationFile(wrapperJob.createJobConfiguration())
+            wrapperJob.keepOnlyEssentialParameters()
+
+            result = jobManager.submitJob(wrapperJob)
+        }
+        def lines = FileSystemAccessProvider.instance.loadTextFile(new File(wrapperJob.jobLog.getOut(wrapperJob.jobID.toString())))
+
+        if (!result.successful)
+            throw new ExecutionException("Execution failed. Output was: '" + result.resultLines.orElse([]).join("\n") + "'", null)
+
+        // Depending on which debug options are set, it is possible (set -v), that "Wrapped script ended"
+        // is found before "Starting wrapped script". It is however safe to compare the whole "Starting wrapped script"
+        // string to find the beginning of the output block of the executed wrapped script. Therefore we
+        // use this to cut away misleading trailing output and then find the end block afterwards.
+        // The end block can contain a "+ " at the beginning (again depending on the debug options), so we use
+        // the find method to identify the first upcoming line.
+        int index = lines.findIndexOf {
+            it == "######################################################### Starting wrapped script ###########################################################"
+        }
+        lines = lines[1 + index..-1]
+        index = lines.findIndexOf { String it ->
+            it.contains("######################################################### Wrapped script ended ##############################################################")
+        }
+        lines = lines[0..index - 1]
+
+        return lines as List<String>
+    }
+
     List<String> executeTool(ExecutionContext context, String toolID, String jobNameExtension = "_executedScript:") {
         File path = context.getConfiguration().getProcessingToolPath(context, toolID)
         String cmd = FileSystemAccessProvider.getInstance().commandSet.getExecuteScriptCommand(path)
@@ -172,7 +226,7 @@ abstract class ExecutionService implements BEExecutionService {
     @Override
     ExecutionResult execute(Command command, boolean waitFor = true) {
         ExecutionContext context = ((Job) command.getJob()).getExecutionContext()
-        boolean configurationDisallowsJobSubmission = Roddy.getApplicationProperty(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAGS, "").contains(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAG_NOJOBSUBMISSION)
+        boolean configurationDisallowsJobSubmission = Roddy.applicationConfiguration.getOrSetApplicationProperty(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAGS, "").contains(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAG_NOJOBSUBMISSION)
         boolean preventCalls = context.getConfiguration().getPreventJobExecution()
         boolean pidIsBlocked = blockedPIDsForJobExecution.contains(context.getDataSet())
         boolean isDummyCommand = Command instanceof DummyCommand
@@ -181,7 +235,7 @@ abstract class ExecutionService implements BEExecutionService {
         String cmdString
         if (!configurationDisallowsJobSubmission && !allJobsBlocked && !pidIsBlocked && !preventCalls && !isDummyCommand) {
             try {
-                cmdString = command.toString()
+                cmdString = command.toBashCommandString()
 
                 OutputStream outputStream = createServiceBasedOutputStream(command, waitFor)
 
@@ -350,11 +404,9 @@ abstract class ExecutionService implements BEExecutionService {
         //Base path for the application. This path might not be available on the target system (i.e. because of ssh calls).
         File roddyBundledFilesDirectory = Roddy.getBundledFilesDirectory()
 
-        if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) {
-            provider.checkDirectories([executionBaseDirectory, executionDirectory, temporaryDirectory, lockFilesDirectory], context, true)
-            logger.always("Creating the following execution directory to store information about this process:")
-            logger.always("\t${executionDirectory.getAbsolutePath()}")
-        }
+        provider.checkDirectories([executionBaseDirectory, executionDirectory, temporaryDirectory, lockFilesDirectory], context, true)
+        logger.always("Creating the following execution directory to store information about this process:")
+        logger.always("\t${executionDirectory.getAbsolutePath()}")
 
         Configuration cfg = context.getConfiguration()
         def configurationValues = cfg.getConfigurationValues()
@@ -376,8 +428,6 @@ abstract class ExecutionService implements BEExecutionService {
         configurationValues.put(RODDY_CVALUE_DIRECTORY_ANALYSIS_TOOLS, analysisToolsDirectory.getAbsolutePath(), CVALUE_TYPE_PATH)
         configurationValues.put(RODDY_CVALUE_JOBSTATE_LOGFILE, executionDirectory.getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + RODDY_JOBSTATE_LOGFILE, CVALUE_TYPE_STRING)
 
-        if (!context.getExecutionContextLevel().canSubmitJobs) return
-
         final boolean ATOMIC = true
         final boolean BLOCKING = true
         final boolean NON_BLOCKING = false
@@ -392,7 +442,7 @@ abstract class ExecutionService implements BEExecutionService {
         context.setDetailedExecutionContextLevel(ExecutionContextSubLevel.RUN_SETUP_COPY_CONFIG)
 
         //Current version info strings.
-        String versionInfo = "Roddy version: " + Roddy.getUsedRoddyVersion() + "\nLibrary info:\n" + LibrariesFactory.getInstance().getLoadedLibrariesInfoList().join("\n")
+        String versionInfo = "Roddy version: " + Roddy.getUsedRoddyVersion() + "\nLibrary info:\n" + LibrariesFactory.getInstance().getLoadedLibrariesInfoList().join("\n") + "\n"
         provider.writeTextFile(context.getRuntimeService().getNameOfRuntimeFile(context), versionInfo, context)
 
         //Current config
@@ -436,7 +486,6 @@ abstract class ExecutionService implements BEExecutionService {
         }
 
         if (!context.fileIsAccessible(runtimeService.getNameOfJobStateLogFile(context))) inaccessibleNecessaryFiles << "JobState logfile"
-//        if(!context.fileIsAccessible(runtimeService.getNameOfXMLConfigurationFile(context))) neccessaryFilesExist << "XML configuration copy"
         if (!context.fileIsAccessible(runtimeService.getNameOfConfigurationFile(context))) inaccessibleNecessaryFiles << "Runtime configuration file"
 
         // Check the ignorable files. It is still nice to see whether they are there

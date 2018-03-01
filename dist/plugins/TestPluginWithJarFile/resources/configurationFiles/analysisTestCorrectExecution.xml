@@ -27,6 +27,10 @@
             <!--</resourcesets>-->
         <!--</tool>-->
         <!--<basepath name='develAnalysisDirectory' value='$PWD/analysisTools/devel'/>-->
+
+        <tool name="fileLoaderTool" value="fileLoaderTool.sh" basepath="roddyTests" />
+        <tool name="fileListLoaderTool" value="fileListLoaderTool.sh" basepath="roddyTests" />
+
         <tool name='testScript' value='testScriptSleep.sh' basepath='roddyTests'>
             <resourcesets>
                 <rset size="l" memory="1" cores="1" nodes="1" walltime="5"/>

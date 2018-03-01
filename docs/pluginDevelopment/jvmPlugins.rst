@@ -54,9 +54,58 @@ What you have to do here is to set:
 
 - The workflowClass attribute -> This is the workflow class which we created above.
 
-- And finally the runtimeServiceClass -> This class
+- And finally the runtimeServiceClass -> This class and its descendants is used to handle file and directory name issues.
 
 That's it! This workflow could already be run though it would not produce any files.
+
+
+Load a source file from storage
+-------------------------------
+
+Before you are able to start a job, You will need to load a file from storage. Roddy does not feature file loading by
+a pattern or wildcards, but you have several other ways to get files from storage. While we say "load" or "get" a file,
+we mean, that we do create a file object of the type *BaseFile*. The actual content of the files are not loaded! The
+file does not even need to exist! Checking files is done in a separate step.
+
+So which possibilities do you have:
+- Construct the file manually (not recommended)
+- Call Workflow.getSourceFile or BaseFile.getSourceFile / BaseFile.fromStorage
+- Call Workflow.getSourceFilesUsingTool (or ExecutionService.getInstance().executeTool() and do the
+
+.. code-block:: Java
+
+    package de.dkfz.roddy.knowledge.examples;
+
+    import de.dkfz.roddy.core.ExecutionContext;
+    import de.dkfz.roddy.core.Workflow;
+    import de.dkfz.roddy.knowledge.files.Tuple4;
+
+    /**
+     */
+    public class TestWorkflow extends Workflow {
+        @Override
+        public boolean execute(ExecutionContext context) {
+            SimpleRuntimeService srs = (SimpleRuntimeService) context.getRuntimeService();
+            SimpleTestTextFile initialTextFile = srs.createInitialTextFile(context);
+            SimpleTestTextFile textFile1 = initialTextFile.test1();
+            FileWithChildren fileWithChildren = initialTextFile.testFWChildren();
+            SimpleTestTextFile textFile2 = textFile1.test2();
+            SimpleTestTextFile textFile3 = textFile2.test3();
+            Tuple4 mout = (Tuple4) call("testScriptWithMultiOut", textFile3);
+            return true;
+        }
+    }
+
+
+Call a tool
+-----------
+
+Tool definition
+===============
+
+
+Actual call
+===========
 
 Now, let's extend the workflow to call a tool.
 At first we need to get some files from storage with which we can work. Roddy works
@@ -90,30 +139,3 @@ so we need to get at least one from storage.
 
     }
   }
-
-
-
-
-.. code-block:: Java
-
-    package de.dkfz.roddy.knowledge.examples;
-
-    import de.dkfz.roddy.core.ExecutionContext;
-    import de.dkfz.roddy.core.Workflow;
-    import de.dkfz.roddy.knowledge.files.Tuple4;
-
-    /**
-     */
-    public class TestWorkflow extends Workflow {
-        @Override
-        public boolean execute(ExecutionContext context) {
-            SimpleRuntimeService srs = (SimpleRuntimeService) context.getRuntimeService();
-            SimpleTestTextFile initialTextFile = srs.createInitialTextFile(context);
-            SimpleTestTextFile textFile1 = initialTextFile.test1();
-            FileWithChildren fileWithChildren = initialTextFile.testFWChildren();
-            SimpleTestTextFile textFile2 = textFile1.test2();
-            SimpleTestTextFile textFile3 = textFile2.test3();
-            Tuple4 mout = (Tuple4) call("testScriptWithMultiOut", textFile3);
-            return true;
-        }
-    }

@@ -27,6 +27,8 @@ import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import java.lang.reflect.InvocationTargetException
 import java.nio.channels.FileLock
 
+import static de.dkfz.roddy.Constants.RODDY_CONFIGURATION_MAGICSTRING
+
 /**
  * The project factory converts a configuration to a project/analysis. It stores a reference to already loaded projects and reuses them if possible.
  * A project can have multiple analyses
@@ -242,6 +244,7 @@ class ProjectLoader {
         String pluginID = projectID.replaceFirst(StringConstants.SPLIT_UNDERSCORE, StringConstants.COLON)
         String analysisImport = analysisID + "," + (analysisID.endsWith("Analysis") ? analysisID : analysisID + "Analysis") + "," + pluginID
         List<String> lines = []
+        lines << "# " + RODDY_CONFIGURATION_MAGICSTRING
         lines << "#name " + newProjectID
         lines << "#analysis " + analysisImport
         if (Roddy.isOptionSet(RoddyStartupOptions.baseconfig)) lines << "#imports " + Roddy.commandLineCall.getOptionValue(RoddyStartupOptions.baseconfig)

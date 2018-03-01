@@ -40,6 +40,7 @@ import org.apache.commons.io.filefilter.WildcardFileFilter
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import java.text.ParseException
 import java.util.logging.Level
 
 import static de.dkfz.roddy.StringConstants.*
@@ -118,6 +119,7 @@ class ConfigurationFactory {
         for (File file in allFiles) {
             try {
                 def icc = loadInformationalConfigurationContent(file)
+
                 pathsForCfgs.get(icc.name, []) << icc.file.absolutePath
                 if (availableConfigurations.containsKey(icc.name)) {
                     duplicateConfigurationIDs << icc.name
@@ -131,6 +133,8 @@ class ConfigurationFactory {
                     availableConfigurations[iccSub.id] = iccSub
                 }
 
+            } catch (ParseException ex) {
+                logger.rare("File '${file}' is not a valid Roddy configuration file. Skipped!")
             } catch (UnknownConfigurationFileTypeException ex) {
                 logger.severe("The file ${file.absolutePath} does not appear to be a valid Bash configuration file:\n\t ${ex.message}")
             } catch (Exception ex) {
@@ -162,10 +166,11 @@ class ConfigurationFactory {
             }
         }
 
-        for (File it in allFiles) {
+        for (File file in allFiles) {
             try {
-                def icc = loadInformationalConfigurationContent(it)
-                File readmeFile = RoddyIOHelperMethods.assembleLocalPath(pluginsByFile[it].directory, "README." + icc.id + ".txt")
+                def icc = loadInformationalConfigurationContent(file)
+
+                File readmeFile = RoddyIOHelperMethods.assembleLocalPath(pluginsByFile[file].directory, "README." + icc.id + ".txt")
                 if (readmeFile.exists())
                     icc.setReadmeFile(readmeFile)
 
@@ -182,10 +187,13 @@ class ConfigurationFactory {
                     if (availableConfigurations[icc.name].file != icc.file)
                         throw new ProjectLoaderException("Configuration with name ${icc.name} already exists! Names must be unique.")
                 }
+
+            } catch (ParseException ex) {
+                logger.rare("File ${file} is not a valid Roddy configuration file. Skipped!")
             } catch (org.xml.sax.SAXParseException ex) {
-                throw new ProjectLoaderException("The validation of a configuration file ${it.absolutePath} failed.")
+                throw new ProjectLoaderException("The validation of a configuration file ${file.absolutePath} failed.")
             } catch (Exception ex) {
-                logger.severe("An unknown exception occured during the attempt to load a configuration file:\n\t${it.absolutePath} cannot be loaded.\n\t${ex.toString()}")
+                logger.severe("An unknown exception occured during the attempt to load a configuration file:\n\t${file.absolutePath} cannot be loaded.\n\t${ex.toString()}")
                 logger.sometimes(RoddyIOHelperMethods.getStackTraceAsString(ex))
                 throw ex
             }
@@ -248,10 +256,14 @@ class ConfigurationFactory {
      * @see PreloadedConfiguration
      *
      * @param file The config file.
-     * @return An object containing basic information about a configuration.
+     * @return An object containing basic information about a configuration OR null, if the no preloaded config could be loaded.
      */
     PreloadedConfiguration loadInformationalConfigurationContent(File file) {
         String text = loadAndPreprocessTextFromFile(file)
+        if (!text) {
+            throw new ParseException("Could not identify file '${file.absolutePath}' as a Roddy configuration file." as String, 0)
+        }
+
         NodeChild xml = (NodeChild) new XmlSlurper().parseText(text)
         return _preloadConfiguration(file, text, xml, null)
     }
@@ -265,9 +277,8 @@ class ConfigurationFactory {
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     private PreloadedConfiguration _preloadConfiguration(File file, String text, NodeChild configurationNode, PreloadedConfiguration parent) {
         NodeChild.metaClass.extract = { String id, String defaultValue -> return extractAttributeText((NodeChild) delegate, id, defaultValue) }
-        Map<String, Configuration> subConfigurations = [:]
         List<PreloadedConfiguration> subConf = new LinkedList<PreloadedConfiguration>()
-        PreloadedConfiguration icc = null
+        PreloadedConfiguration icc
 
         Configuration.ConfigurationType type = extractAttributeText(configurationNode, "configurationType", parent != null ? parent.type.name().toUpperCase() : Configuration.ConfigurationType.OTHER.name()).toUpperCase()
         String cls = extractAttributeText(configurationNode, "class", Project.class.name)
@@ -334,7 +345,7 @@ class ConfigurationFactory {
      * @return
      */
     @Deprecated
-    static List<String> convertMapToFormattedTable(Map<String,?> map, int cntOfTabs, String tabSep, Closure closureForValue) {
+    static List<String> convertMapToFormattedTable(Map<String, ?> map, int cntOfTabs, String tabSep, Closure closureForValue) {
         final int keyWidth = map.keySet().collect { it.size() }.max()
         map.collect {
             def k, def v ->
@@ -488,7 +499,8 @@ class ConfigurationFactory {
                 ConfigurationValue _cvalue = readConfigurationValue(cvalue, config)
                 bundleValues[_cvalue.id] = _cvalue
             }
-            cvBundles[cbundle.@name.text()] = bundleValues
+            def cBundleID = cbundle.@name.text()
+            cvBundles[cBundleID] = new ConfigurationValueBundle(cBundleID, bundleValues)
         }
     }
 

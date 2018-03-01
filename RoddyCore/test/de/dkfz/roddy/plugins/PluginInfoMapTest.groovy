@@ -21,12 +21,12 @@ public class PluginInfoMapTest {
                 "BasePlugin": [
                         "1.0.1"  : new PluginInfo("BasePlugin", null, null, null, "1.0.1", "2.3", "1.8", null),
                         "1.0.2"  : new PluginInfo("BasePlugin", null, null, null, "1.0.2", "2.3", "1.8", null),
-                        "current": new PluginInfo("BasePlugin", null, null, null, "current", "2.3", "1.8", null),
+                        "develop": new PluginInfo("BasePlugin", null, null, null, "develop", "2.3", "1.8", null),
                 ] as Map<String, List<PluginInfo>>,
                 "TestPlugin": [
                         "1.0.1"  : new PluginInfo("TestPlugin", null, null, null, "1.0.1", "2.3", "1.8", null),
                         "1.0.2"  : new PluginInfo("TestPlugin", null, null, null, "1.0.2", "2.3", "1.8", null),
-                        "current": new PluginInfo("TestPlugin", null, null, null, "current", "2.3", "1.8", null),
+                        "develop": new PluginInfo("TestPlugin", null, null, null, "develop", "2.3", "1.8", null),
                 ] as Map<String, List<PluginInfo>>
         ] );
     }
@@ -41,8 +41,8 @@ public class PluginInfoMapTest {
     public void testGetPluginInfoByPluginString() {
         PluginInfoMap pim = assemblePluginInfoMap();
         assert null != pim.getPluginInfoWithPluginString("BasePlugin:1.0.1")
-        assert null != pim.getPluginInfoWithPluginString("BasePlugin:current")
-        assert null != pim.getPluginInfoWithPluginString("BasePlugin") && pim.getPluginInfoWithPluginString("BasePlugin").getProdVersion() == "current"
+        assert null != pim.getPluginInfoWithPluginString("BasePlugin:develop")
+        assert null != pim.getPluginInfoWithPluginString("BasePlugin") && pim.getPluginInfoWithPluginString("BasePlugin").getProdVersion() == "develop"
     }
 
     @Test(expected = PluginLoaderException)
@@ -62,8 +62,9 @@ public class PluginInfoMapTest {
         PluginInfoMap pim = assemblePluginInfoMap();
         assert null != pim.getPluginInfo("BasePlugin", "1.0.1")
         assert null != pim.getPluginInfo("BasePlugin", "1.0.2")
-        assert null != pim.getPluginInfo("BasePlugin", "current")
-        assert null != pim.getPluginInfo("BasePlugin", null) && pim.getPluginInfo("BasePlugin", null).getProdVersion() == "current"
+        assert null != pim.getPluginInfo("BasePlugin", "develop")
+        assert null != pim.getPluginInfo("BasePlugin", null)
+        assert pim.getPluginInfo("BasePlugin", null).getProdVersion() == "develop"
     }
 
     @Test
