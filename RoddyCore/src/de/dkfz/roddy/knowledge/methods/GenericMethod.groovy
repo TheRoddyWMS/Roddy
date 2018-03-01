@@ -257,27 +257,27 @@ class GenericMethod {
         // Assemble initial parameters
         parameters[PRM_WORKFLOW_ID] = context.analysis.configuration.getName()
         if (toolName) {
-            parameters[PRM_TOOL_ID] = toolName;
-            parameters[PRM_TOOLS_DIR] = configuration.getProcessingToolPath(context, toolName).getParent();
+            parameters[PRM_TOOL_ID] = toolName
+            parameters[PRM_TOOLS_DIR] = configuration.getProcessingToolPath(context, toolName).getParent()
         }
 
         // Assemble additional parameters
         for (Object entry in additionalInput) {
             if (entry instanceof BaseFile)
                 // assert(((BaseFile) entry).isEvaluated)
-                allInputValues << (BaseFile) entry;
+                allInputValues << (BaseFile) entry
             else if (entry instanceof FileGroup) {
                 //Take a group and store all files in that group.
-                allInputValues << (FileGroup) entry;
-            } else if (entry instanceof Map<String, String>) {
-                (entry as Map<String, String>).forEach { String k, String v ->
-                    parameters[k] = v
+                allInputValues << (FileGroup) entry
+            } else if (entry instanceof Map) {
+                (entry as Map).forEach { k, v ->
+                    parameters[k.toString()] = v.toString()
                 }
             } else {               // Catch-all, in case one still wants to use a string with '=' to define a parameter (deprecated).
-                String[] split = entry.toString().split("=");
+                String[] split = entry.toString().split("=")
                 if (split.length != 2)
-                    throw new RuntimeException("Not able to convert entry ${entry.toString()} to parameter.")
-                parameters[split[0]] = split[1];
+                    throw new RuntimeException("Unable to convert entry ${entry.toString()} to parameter.")
+                parameters[split[0]] = split[1]
             }
         }
     }

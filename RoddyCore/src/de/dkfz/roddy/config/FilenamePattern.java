@@ -14,11 +14,14 @@ import de.dkfz.roddy.knowledge.files.FileStageSettings;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 import de.dkfz.roddy.config.FilenamePatternHelper.Command;
 import de.dkfz.roddy.config.FilenamePatternHelper.CommandAttribute;
+import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 
 import static de.dkfz.roddy.StringConstants.EMPTY;
 
@@ -76,9 +79,7 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
 
     public abstract FilenamePatternDependency getFilenamePatternDependency();
 
-    protected BaseFile getSourceFile(BaseFile[] baseFiles) {
-        return null;
-    }
+    protected abstract BaseFile getSourceFile(BaseFile[] baseFiles);
 
     /**
      * Fills special values collected from the first parent file.
@@ -97,10 +98,12 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
      * @throws Exception
      */
     String fillValuesFromSourceFile(String temp, BaseFile[] baseFiles) throws Exception {
-        BaseFile baseFile = baseFiles[0];
         BaseFile sourceFile = getSourceFile(baseFiles);
         if (sourceFile != null) {
             File sourcepath = sourceFile.getPath();
+            if (null == sourcepath) {
+                throw new ConfigurationError("Path for source-file unknown. BaseFiles = " + RoddyIOHelperMethods.joinArray(baseFiles, ", "), (String) null);
+            }
             temp = temp.replace("${sourcefile}", sourcepath.getAbsolutePath());
             temp = temp.replace("${sourcefileAtomic}", sourcepath.getName());
             if (temp.contains(PLACEHOLDER_SOURCEFILE_PROPERTY)) { //Replace the string with a property value
@@ -316,7 +319,7 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
             temp = fillVariablesFromSourceFileArrayValues(baseFiles, temp);
         } catch (Exception e) {
             logger.severe("Could not apply filename pattern " + pattern + " for file " + baseFiles[0]);
-            e.printStackTrace();
+            logger.rare(RoddyIOHelperMethods.getStackTraceAsString(e));
         }
         return temp;
     }

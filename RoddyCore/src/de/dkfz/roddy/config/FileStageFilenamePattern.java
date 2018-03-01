@@ -33,4 +33,10 @@ public class FileStageFilenamePattern extends FilenamePattern {
     public FilenamePatternDependency getFilenamePatternDependency() {
         return FilenamePatternDependency.FileStage;
     }
+
+    @Override
+    protected BaseFile getSourceFile(BaseFile[] baseFiles) {
+        return null;
+    }
+
 }

@@ -81,10 +81,10 @@ Roddy 2.3
 
 Please see `Versioning`_ for information about how to mix different versions of Roddy in the same directory.
 
-Roddy 2.4
+Roddy 3.0
 ---------
 
-For Roddy version 2.4 zips are deployed to Github releases (continuous deployment via Travis). The thus installed Roddy will contain all dependencies
+For Roddy version 3.0 zips are deployed to Github releases (continuous deployment via Travis). The thus installed Roddy will contain all dependencies
 except the JDK and Groovy. Additionally, there is an automatic downloader for the JRE / JDK.
 
 1. Release ZIPs for Roddy and the Roddy environment are available via `Github Releases`_. Download the latest release of the RoddyEnv ZIP and unpack it and change into the Roddy environment directory (e.g. "Roddy").
@@ -113,7 +113,7 @@ Other plugins may be installed in arbitrary plugin directories using the same na
 [Optional] Setup GroovyServ
 ---------------------------
 
-Roddy uses Groovy, however, Groovy is a bit slow to start. So Roddy 2.4+ supports `GroovyServ`_, which can be used by you to speed things up.
+Roddy uses Groovy, however, Groovy is a bit slow to start. So Roddy 3.0+ supports `GroovyServ`_, which can be used by you to speed things up.
 GroovyServ tremendously decreases the startup time of Groovy applications and Roddy will try to download and set it up automatically. If that fails or
 if you want to set it up by yourself, do the following in your Roddy directory:
 

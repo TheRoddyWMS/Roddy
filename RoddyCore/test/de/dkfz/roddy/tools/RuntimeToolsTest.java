@@ -19,7 +19,7 @@ import static org.junit.Assert.assertEquals;
 public class RuntimeToolsTest {
     @Test
     public void getRoddyRuntimeVersion() throws Exception {
-        assertEquals("2.4", RuntimeTools.getRoddyRuntimeVersion());
+        assertEquals("3.0", RuntimeTools.getRoddyRuntimeVersion());
     }
 
     @Test

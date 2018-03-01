@@ -30,4 +30,9 @@ public class OnToolFilenamePattern extends FilenamePattern {
     public FilenamePatternDependency getFilenamePatternDependency() {
         return FilenamePatternDependency.onTool;
     }
+
+    protected BaseFile getSourceFile(BaseFile[] baseFiles) {
+        return null;
+    }
+
 }

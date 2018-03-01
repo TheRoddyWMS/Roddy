@@ -86,15 +86,14 @@ There are some main components for any plugin and files for the contained workfl
   One example:
   ::
 
-      dependson=PluginBase:1.0.29
-      dependson=COWorkflows:1.1.20-1
-      dependson=DefaultPlugin:1.0.34
+      dependson=PluginBase:1.2.0
+      dependson=COWorkflows:1.2.20
       JDKVersion=1.8
       GroovyVersion=2.4
-      RoddyAPIVersion=2.4
+      RoddyAPIVersion=3.0
 
   This plugin depends on three other plugins with specific version. For development, it is possible to set current for the version number.
-  The plugin also depends on JDK version 1.8.*/8.*, Groovy version 2.4.* and the Roddy version 2.4.*. If you do not develop a Java based
+  The plugin also depends on JDK version 1.8.*/8.*, Groovy version 2.4.* and the Roddy version 3.0.*. If you do not develop a Java based
   plugin, you can omit JDKVersion and GroovyVersion.
 
 3. The resources directory which contains:

@@ -29,7 +29,9 @@ def pluginVersion = pluginInfo.size() > 1 ? pluginInfo[1] : null
 def pluginLine = ["${workingDirectory}/dist/plugins",
                   "${workingDirectory}/dist/plugins_2.49plus",
                   "${workingDirectory}/dist/plugins_R2.3",
-                  "${workingDirectory}/dist/plugins_R2.4"]
+                  "${workingDirectory}/dist/plugins_R2.4",
+                  "${workingDirectory}/dist/plugins_R3.0",
+                  "${workingDirectory}/dist/plugins_3.0"]
 List<File> pluginFolders = []
 
 if (splitPlugin.size() > 1) pluginLine.addAll(splitPlugin[1].split("[,]"))

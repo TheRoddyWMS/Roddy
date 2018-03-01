@@ -12,7 +12,7 @@ import de.dkfz.roddy.knowledge.files.BaseFile
 import groovy.transform.CompileStatic
 
 /**
- * (Proxy) Compatibility class for 2.3.x until 2.4
+ * (Proxy) Compatibility class for 2.3.x until 3.0
  * Created by heinold on 06.03.17.
  */
 @Deprecated()
