@@ -10,6 +10,7 @@ public class ConfigurationConstants {
     public static final String CFG_INPUT_BASE_DIRECTORY = "inputBaseDirectory";
     public static final String CFG_OUTPUT_BASE_DIRECTORY = "outputBaseDirectory";
     public static final String CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY = "outputAnalysisBaseDirectory";
+    public static final String CFG_INPUT_ANALYSIS_BASE_DIRECTORY = "inputAnalysisBaseDirectory";
     public static final String RODDY_EXEC_DIR_PREFIX = "exec_";
     public static final String RODDY_EXEC_CACHE_FILE = ".roddyExecCache.txt";
     public static final String RODDY_JOBSTATE_LOGFILE = "jobStateLogfile.txt";

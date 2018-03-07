@@ -519,14 +519,20 @@ public class RuntimeService {
     }
 
     public File getInputFolderForDataSetAndAnalysis(DataSet dataSet, Analysis analysis) {
-        File analysisInFolder = new File(getInputFolderForAnalysis(analysis).absolutePath + FileSystemAccessProvider.instance.getPathSeparator() + dataSet.getId());
-        return analysisInFolder;
+        // The default value was set to a value resulting in the same results as the previous version of this method, even if the
+        // new inputAnalysisBaseDirectory variable is not defined.
+        File analysisInFolder = analysis.getConfiguration().getConfigurationValues().
+                get(ConfigurationConstants.CFG_INPUT_ANALYSIS_BASE_DIRECTORY,'${inputBaseDirectory}/${dataSet}').
+                toFile(analysis, dataSet)
+        return analysisInFolder
     }
 
     public File getOutputFolderForDataSetAndAnalysis(DataSet dataSet, Analysis analysis) {
-        getOutputFolderForAnalysis(analysis);
-        File analysisOutFolder = analysis.getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY).toFile(analysis, dataSet);
-        return analysisOutFolder;
+        // The default values was set to the old default as used in the XMLs. This has partially been done for symmetry reasons with the input method.
+        File analysisOutFolder = analysis.getConfiguration().getConfigurationValues().
+                get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY, '${outputBaseDirectory}/${dataSet}').
+                toFile(analysis, dataSet)
+        return analysisOutFolder
     }
 
     public File getAnalysisToolsDirectory(ExecutionContext executionContext) {

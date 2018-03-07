@@ -30,8 +30,8 @@ class RuntimeServiceTest {
     final static File baseTestDirectory = new File("/tmp/roddyCentralDirectory")
     final static File outputBaseDirectory = new File(baseTestDirectory, "output/\${projectName}")
     static File inputBaseDirectory
-    final static String analysisBaseDirectoryComponent = "outputAnalysisBase"
-    final static String outputAnalysisBaseDirectory = "\${outputBaseDirectory}/${analysisBaseDirectoryComponent}"
+    final static String outputAnalysisBaseDirectory = "\${outputBaseDirectory}/\${dataSet}"
+    final static String inputAnalysisBaseDirectory = "\${inputBaseDirectory}/\${dataSet}"
 
     private static ExecutionContext mockedContext
 
@@ -43,10 +43,11 @@ class RuntimeServiceTest {
 
     public <T extends Configuration> T setDirectories(T config) {
         inputBaseDirectory= new File(getClass().classLoader.getResource("testpids").path)
-        config.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, outputBaseDirectory.toString()))
         config.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, inputBaseDirectory.toString()))
+        //config.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_INPUT_ANALYSIS_BASE_DIRECTORY, inputAnalysisBaseDirectory))
+        config.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, outputBaseDirectory.toString()))
+        //config.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY, outputAnalysisBaseDirectory))
         config.configurationValues.add(new ConfigurationValue(RuntimeService.RODDY_CENTRAL_EXECUTION_DIRECTORY, baseTestDirectory.toString()))
-        config.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY, outputAnalysisBaseDirectory))
         return config
     }
 
@@ -98,15 +99,20 @@ class RuntimeServiceTest {
     @Test
     void testGetInputFolderForDataSetAndAnalysis() {
         assert mockedContext.runtimeService.getInputFolderForDataSetAndAnalysis(mockedContext.dataSet, mockedContext.analysis).toString() ==
-                inputBaseDirectory.toString().replace('${projectName}', mockedContext.project.name) +
-                FileSystemAccessProvider.instance.pathSeparator + mockedContext.dataSet.id
+                inputAnalysisBaseDirectory.toString().
+                        replace('${inputBaseDirectory}', inputBaseDirectory.toString()).
+                        replace('${projectName}', mockedContext.project.name).
+                        replace('${dataSet}', mockedContext.dataSet.id)
+
     }
 
     @Test
     void testGetOutputFolderForDataSetAndAnalysis() {
         assert mockedContext.runtimeService.getOutputFolderForDataSetAndAnalysis(mockedContext.dataSet, mockedContext.analysis).toString() ==
-                outputBaseDirectory.toString().replace('${projectName}', mockedContext.project.name) +
-                FileSystemAccessProvider.instance.pathSeparator + analysisBaseDirectoryComponent
+                outputAnalysisBaseDirectory.toString().
+                        replace('${outputBaseDirectory}', outputBaseDirectory.toString()).
+                        replace('${projectName}', mockedContext.project.name).
+                        replace('${dataSet}', mockedContext.dataSet.id)
     }
 
     @Test
