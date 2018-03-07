@@ -6,17 +6,14 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.Constants
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.StringConstants
-import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.knowledge.files.BaseFile
-import de.dkfz.roddy.plugins.LibrariesFactory
 import groovy.transform.CompileStatic
+import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Ignore
 import org.junit.Test
@@ -27,89 +24,66 @@ import org.junit.Test
 @CompileStatic
 class RuntimeServiceTest {
 
-    private static RuntimeService mockedService
+    final static File baseTestDirectory = new File("/tmp/roddyCentralDirectory")
+    final static File outputBaseDirectory = new File(baseTestDirectory, "output/\${projectName}")
+    static File inputBaseDirectory
+    final static String outputAnalysisBaseDirectory = "\${outputAnalysisBaseDirectory}/outputAnalysisBase"
 
     private static ExecutionContext mockedContext
 
-    static File folderOfPids
-
     @BeforeClass
-    static void setupClass() {
-        // Mock a runtime service instance
+    static void initialize() {
+        ExecutionService.initializeService(LocalExecutionService, RunMode.CLI)
+        FileSystemAccessProvider.initializeProvider(true)
+    }
 
-        mockedService = new RuntimeService() {
-            @Override
-            Map<String, Object> getDefaultJobParameters(ExecutionContext context, String TOOLID) {
-                return null
-            }
+    public <T extends Configuration> T setDirectories(T config) {
+        inputBaseDirectory= new File(getClass().classLoader.getResource("testpids").path)
+        config.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, outputBaseDirectory.toString()))
+        config.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, inputBaseDirectory.toString()))
+        config.configurationValues.add(new ConfigurationValue(RuntimeService.RODDY_CENTRAL_EXECUTION_DIRECTORY, baseTestDirectory.toString()))
+        config.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY, outputAnalysisBaseDirectory))
+        return config
+    }
 
-            @Override
-            String createJobName(ExecutionContext executionContext, BaseFile file, String TOOLID, boolean reduceLevel) {
-                return null
-            }
-
-            @Override
-            boolean isFileValid(BaseFile baseFile) {
-                return false
-            }
-
-        }
-
+    @Before
+    void setup() {
         final Configuration mockupConfig = new Configuration(new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null))
-
-        mockupConfig.getConfigurationValues().add(new ConfigurationValue(RuntimeService.RODDY_CENTRAL_EXECUTION_DIRECTORY, "/tmp/roddyCentralDirectory"))
-
-        mockedContext = MockupExecutionContextBuilder.createSimpleContext(RuntimeServiceTest.class, mockupConfig, mockedService)
-
+        mockedContext = MockupExecutionContextBuilder.createSimpleContext(RuntimeServiceTest.class, setDirectories(mockupConfig), new RuntimeService())
     }
 
     @Test
     void testGetCommonExecutionDirectory() throws Exception {
-        assert mockedService.getCommonExecutionDirectory(mockedContext).getAbsolutePath() == "/tmp/roddyCentralDirectory"
+        assert mockedContext.runtimeService.getCommonExecutionDirectory(mockedContext).getAbsolutePath() == baseTestDirectory.toString()
     }
 
     @Test
     void testGetAnalysedMD5OverviewFile() throws Exception {
-        assert mockedService.getAnalysedMD5OverviewFile(mockedContext).getAbsolutePath() == "/tmp/roddyCentralDirectory/zippedAnalysesMD5.txt"
+        assert mockedContext.runtimeService.getAnalysedMD5OverviewFile(mockedContext).getAbsolutePath() == new File(baseTestDirectory,"zippedAnalysesMD5.txt").toString()
     }
 
-    @BeforeClass
-    public static void initialize() {
-        ExecutionService.initializeService(LocalExecutionService, RunMode.CLI)
-        FileSystemAccessProvider.initializeProvider(true)
-        folderOfPids = new File("./test/resources/testpids")
-    }
-
-    public static Analysis getTestAnalysis() {
-        return new Analysis("Test", new Project(null, null, null, null), null, new RuntimeService() {
-
-            @Override
-            File getInputFolderForAnalysis(Analysis analysis) {
-                return folderOfPids
-            }
-
-            @Override
-            File getOutputFolderForAnalysis(Analysis analysis) {
-                return folderOfPids
-            }
-
-            @Override
-            File getOutputFolderForDataSetAndAnalysis(DataSet dataSet, Analysis analysis) {
-                return new File(folderOfPids, dataSet.id);
-            }
-        }, null);
+    Analysis getTestAnalysis() {
+        return new Analysis("Test", new Project(setDirectories(new ProjectConfiguration(new PreloadedConfiguration(null, Configuration.ConfigurationType.PROJECT,                 "theProjectName", "", "", null, "", ResourceSetSize.l, null, [], null, ""), "", [:], null)), null, null, null), null,
+                new RuntimeService(), new AnalysisConfiguration(null, null,
+                mockedContext.runtimeService.getClass().toString(), null, [], [], ""))
     }
 
     @Test
-    public void testGetTestAnalysis() {
+    void testGetTestAnalysis() {
         def a = getTestAnalysis()
-        assert a.getInputBaseDirectory() == folderOfPids
-        assert a.getOutputBaseDirectory() == folderOfPids
+        assert a.getInputBaseDirectory().toString() == inputBaseDirectory.toString().replace('${projectName}', "theProjectName")
+        assert a.getOutputBaseDirectory().toString() == outputBaseDirectory.toString().replace('${projectName}', "theProjectName")
     }
 
     @Test
-    public void getDefaultJobParameters() throws Exception {
-        def context = MockupExecutionContextBuilder.createSimpleContext(RuntimeService);
+    void testGetOutputFolderForAnalysis() {
+        def analysis = getTestAnalysis()
+        assert analysis.runtimeService.getOutputFolderForAnalysis(analysis).toString() == outputBaseDirectory.toString().replace('${projectName}', "theProjectName")
+    }
+
+    @Test
+    void getDefaultJobParameters() throws Exception {
+        def context = MockupExecutionContextBuilder.createSimpleContext(RuntimeService)
         def result = new RuntimeService().getDefaultJobParameters(context, "aTool")
         assert result["pid"] == context.getDataSet().getId()
         assert result["PID"] == context.getDataSet().getId()
@@ -117,7 +91,7 @@ class RuntimeServiceTest {
     }
 
     @Test
-    public void testValidateDataSetLoadingString() {
+    void testValidateDataSetLoadingString() {
         def rs = new RuntimeService()
 
         assert rs.validateCohortDataSetLoadingString("s[c:ADDD]")
@@ -134,7 +108,7 @@ class RuntimeServiceTest {
 
     @Test
     @Ignore("Analysis configuration needs to be non-null! Fix!")
-    public void loadDatasetsWithFilter() throws Exception {
+    void loadDatasetsWithFilter() throws Exception {
 
         Analysis a = getTestAnalysis()
 
@@ -158,7 +132,7 @@ class RuntimeServiceTest {
 
     @Test
     @Ignore("Analysis configuration needs to be non-null! Fix!")
-    public void loadInproperDatasetsWithFilterAndFail() throws Exception {
+    void loadInproperDatasetsWithFilterAndFail() throws Exception {
 
         Analysis a = getTestAnalysis()
 
