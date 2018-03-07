@@ -6,9 +6,11 @@
 
 package de.dkfz.roddy.core
 
+import de.dkfz.roddy.config.AnalysisConfiguration
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationError
 import de.dkfz.roddy.config.ConfigurationValue
+import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -521,17 +523,37 @@ class RuntimeService {
         return outputBaseDirectory
     }
 
+    @Deprecated
+    File getInputFolderForDataSetAndAnalysis(DataSet dataSet, Analysis analysis) {
+        return getInputFolder(dataSet, analysis)
+    }
+
     File getInputFolder(DataSet dataSet, Analysis analysis) {
         File analysisInFolder = new File(getInputFolder(analysis).absolutePath + FileSystemAccessProvider.instance.getPathSeparator() + dataSet.getId())
         return analysisInFolder
+    }
+
+    @Deprecated
+    File getInputFolderForAnalysis(Analysis analysis) {
+        return getInputFolder(analysis)
     }
 
     File getInputFolder(Analysis analysis) {
         return getInputBaseDirectory(analysis.configuration).toFile(analysis)
     }
 
+    @Deprecated
+    File getOutputFolderForProject(ExecutionContext context) {
+        return getOutputFolder(context)
+    }
+
     File getOutputFolder(ExecutionContext context) {
         return getOutputBaseDirectory(context.configuration).toFile(context)
+    }
+
+    @Deprecated
+    File getOutputFolderForProject(Analysis analysis) {
+        return getOutputFolder(analysis)
     }
 
     File getOutputFolder(Analysis analysis) {
@@ -548,6 +570,12 @@ class RuntimeService {
         def outputBaseDirectory = getOutputFolder(context.analysis)
         return context.getConfiguration().getConfigurationValues().
                 get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY, outputBaseDirectory.toString()).toFile(context)
+    }
+
+
+    @Deprecated
+    File getOutputFolderForDataSetAndAnalysis(DataSet dataSet, Analysis analysis) {
+        return getOutputAnalysisFolder(dataSet, analysis)
     }
 
     File getOutputAnalysisFolder(DataSet dataSet, Analysis analysis) {

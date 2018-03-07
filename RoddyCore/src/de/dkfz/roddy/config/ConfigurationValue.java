@@ -112,12 +112,14 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         return src;
     }
 
-    private String checkAndCorrectPath(String temp) {
+    private String checkAndCorrectPath(String temp) throws ConfigurationError {
         String curUserPath = (new File("")).getAbsolutePath();
         String applicationDirectory = Roddy.getApplicationDirectory().getAbsolutePath();
         //TODO Make something like a blacklist. This is not properly handled now. Initially this was done because Java sometimes puts something in front of the file paths.
         if (value.startsWith("${") || value.startsWith("$") || value.startsWith("~") || !value.startsWith("/")) {
-            if (temp.startsWith(applicationDirectory)) {
+            if (temp == applicationDirectory) {
+                throw new ConfigurationError(id + " configuration value is empty", configuration);
+            } else if (temp.startsWith(applicationDirectory)) {
                 temp = temp.substring(applicationDirectory.length() + 1);
             } else if (temp.startsWith(curUserPath)) {
                 temp = temp.substring(curUserPath.length() + 1);
@@ -137,7 +139,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
      * @param dataSet
      * @return
      */
-    public File toFile(Analysis analysis, DataSet dataSet) {
+    public File toFile(Analysis analysis, DataSet dataSet) throws ConfigurationError {
         File f = toFile(analysis);
 
         String temp = f.getAbsolutePath();
@@ -147,7 +149,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         return new File(temp);
     }
 
-    public File toFile(Analysis analysis) {
+    public File toFile(Analysis analysis) throws ConfigurationError {
         if (analysis == null) return toFile();
 
         String temp = toFile().getAbsolutePath();
