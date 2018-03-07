@@ -18,6 +18,9 @@ import org.junit.BeforeClass
 import org.junit.Ignore
 import org.junit.Test
 
+import static junit.framework.TestCase.assertEquals
+import static junit.framework.TestCase.fail
+
 /**
  * Created by heinold on 09.11.15.
  */
@@ -27,7 +30,8 @@ class RuntimeServiceTest {
     final static File baseTestDirectory = new File("/tmp/roddyCentralDirectory")
     final static File outputBaseDirectory = new File(baseTestDirectory, "output/\${projectName}")
     static File inputBaseDirectory
-    final static String outputAnalysisBaseDirectory = "\${outputAnalysisBaseDirectory}/outputAnalysisBase"
+    final static String analysisBaseDirectoryComponent = "outputAnalysisBase"
+    final static String outputAnalysisBaseDirectory = "\${outputBaseDirectory}/${analysisBaseDirectoryComponent}"
 
     private static ExecutionContext mockedContext
 
@@ -62,28 +66,52 @@ class RuntimeServiceTest {
         assert mockedContext.runtimeService.getAnalysedMD5OverviewFile(mockedContext).getAbsolutePath() == new File(baseTestDirectory,"zippedAnalysesMD5.txt").toString()
     }
 
-    Analysis getTestAnalysis() {
-        return new Analysis("Test", new Project(setDirectories(new ProjectConfiguration(new PreloadedConfiguration(null, Configuration.ConfigurationType.PROJECT,                 "theProjectName", "", "", null, "", ResourceSetSize.l, null, [], null, ""), "", [:], null)), null, null, null), null,
-                new RuntimeService(), new AnalysisConfiguration(null, null,
-                mockedContext.runtimeService.getClass().toString(), null, [], [], ""))
+    @Test
+    void testGetTestAnalysis() {
+        def a = mockedContext.analysis
+        assert a.getInputBaseDirectory().toString() ==
+                inputBaseDirectory.toString().replace('${projectName}', mockedContext.project.name)
+        assert a.getOutputBaseDirectory().toString() ==
+                outputBaseDirectory.toString().replace('${projectName}', mockedContext.project.name)
     }
 
     @Test
-    void testGetTestAnalysis() {
-        def a = getTestAnalysis()
-        assert a.getInputBaseDirectory().toString() == inputBaseDirectory.toString().replace('${projectName}', "theProjectName")
-        assert a.getOutputBaseDirectory().toString() == outputBaseDirectory.toString().replace('${projectName}', "theProjectName")
+    void testGetInputFolderForAnalysis() {
+        def analysis = mockedContext.analysis
+        assert analysis.runtimeService.getInputFolderForAnalysis(analysis).toString() ==
+                inputBaseDirectory.toString().replace('${projectName}', mockedContext.project.name)
     }
 
     @Test
     void testGetOutputFolderForAnalysis() {
-        def analysis = getTestAnalysis()
-        assert analysis.runtimeService.getOutputFolderForAnalysis(analysis).toString() == outputBaseDirectory.toString().replace('${projectName}', "theProjectName")
+        def analysis = mockedContext.analysis
+        assert analysis.runtimeService.getOutputFolderForAnalysis(analysis).toString() ==
+                outputBaseDirectory.toString().replace('${projectName}', mockedContext.project.name)
+    }
+
+    @Test
+    void testGetOutputFolderForProject() {
+        assert mockedContext.runtimeService.getOutputFolderForProject(mockedContext).toString() ==
+                outputBaseDirectory.toString().replace('${projectName}', mockedContext.project.name)
+    }
+
+    @Test
+    void testGetInputFolderForDataSetAndAnalysis() {
+        assert mockedContext.runtimeService.getInputFolderForDataSetAndAnalysis(mockedContext.dataSet, mockedContext.analysis).toString() ==
+                inputBaseDirectory.toString().replace('${projectName}', mockedContext.project.name) +
+                FileSystemAccessProvider.instance.pathSeparator + mockedContext.dataSet.id
+    }
+
+    @Test
+    void testGetOutputFolderForDataSetAndAnalysis() {
+        assert mockedContext.runtimeService.getOutputFolderForDataSetAndAnalysis(mockedContext.dataSet, mockedContext.analysis).toString() ==
+                outputBaseDirectory.toString().replace('${projectName}', mockedContext.project.name) +
+                FileSystemAccessProvider.instance.pathSeparator + analysisBaseDirectoryComponent
     }
 
     @Test
     void getDefaultJobParameters() throws Exception {
-        def context = MockupExecutionContextBuilder.createSimpleContext(RuntimeService)
+        def context = mockedContext
         def result = new RuntimeService().getDefaultJobParameters(context, "aTool")
         assert result["pid"] == context.getDataSet().getId()
         assert result["PID"] == context.getDataSet().getId()
@@ -110,7 +138,7 @@ class RuntimeServiceTest {
     @Ignore("Analysis configuration needs to be non-null! Fix!")
     void loadDatasetsWithFilter() throws Exception {
 
-        Analysis a = getTestAnalysis()
+        Analysis a = mockedContext.analysis
 
         // Try good cases
         assert a.getRuntimeService().loadDatasetsWithFilter(a, ["s[c:ADDD]"]).size() == 1
@@ -134,7 +162,7 @@ class RuntimeServiceTest {
     @Ignore("Analysis configuration needs to be non-null! Fix!")
     void loadInproperDatasetsWithFilterAndFail() throws Exception {
 
-        Analysis a = getTestAnalysis()
+        Analysis a = mockedContext.analysis
 
         // Try erroneous cases first.
         assert !a.getRuntimeService().loadDatasetsWithFilter(a, ["ADDD;ADDD"]) // Missing prefix
