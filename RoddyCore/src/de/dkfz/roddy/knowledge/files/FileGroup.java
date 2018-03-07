@@ -45,11 +45,6 @@ public abstract class FileGroup<F extends BaseFile> extends FileObject implement
         filesInGroup.forEach(action);
     }
 
-    @Override
-    public Spliterator<F> spliterator() {
-        return filesInGroup.spliterator();
-    }
-
     /**
      * Calls runDefaultOperations on the contained files.
      */
@@ -77,12 +72,14 @@ public abstract class FileGroup<F extends BaseFile> extends FileObject implement
         addFile(file);
     }
 
-    public final void plus(F file) {
+    public final FileGroup<F> plus(F file) {
         addFile(file);
+        return this;
     }
 
-    public final void plus(FileGroup<F> filegroup) {
+    public final FileGroup<F> plus(FileGroup<F> filegroup) {
         addFiles(filegroup.filesInGroup);
+        return this;
     }
 
     public final void addFile(F file) {
