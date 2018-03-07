@@ -592,7 +592,7 @@ public class RoddyUIController extends BorderPane implements Initializable, Proj
 
                 String string = UIConstants.ERRSTR_PATHNOTFOUND;
 //                Analysis activeAnalysis = currentProject.getAnalysis(currentAnalysis);
-//                fillTextFieldWithObjectValue(txtAnalysisOutputDirectory, activeAnalysis.getOutputAnalysisFolder(), string);
+//                fillTextFieldWithObjectValue(txtAnalysisOutputDirectory, activeAnalysis.getOutputAnalysisBaseDirectory(), string);
 //                fillTextFieldWithObjectValue(txtAnalysisInputDirectory, activeAnalysis.getInputBaseDirectory(), string);
 //                fillTextFieldWithObjectValue(txtProjectBaseOutputDirectory, activeAnalysis.getOutputBaseDirectory(), string);
 //

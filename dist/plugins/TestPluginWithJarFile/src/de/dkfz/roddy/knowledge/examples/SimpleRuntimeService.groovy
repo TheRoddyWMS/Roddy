@@ -95,7 +95,7 @@ class SimpleRuntimeService extends RuntimeService {
     }
 
     SimpleTestTextFile createInitialTextFile(ExecutionContext ec) {
-        SimpleTestTextFile tf = new SimpleTestTextFile(new ConstructionHelperForSourceFiles(new File(getOutputAnalysisFolder(ec.getDataSet(), ec.getAnalysis()).getAbsolutePath(), "textBase.txt"), ec, new SimpleFileStageSettings(ec.getDataSet(), "100", "R001"), null))
+        SimpleTestTextFile tf = new SimpleTestTextFile(new ConstructionHelperForSourceFiles(new File(getOutputAnalysisBaseDirectory(ec.getDataSet(), ec.getAnalysis()).getAbsolutePath(), "textBase.txt"), ec, new SimpleFileStageSettings(ec.getDataSet(), "100", "R001"), null))
         if (!FileSystemAccessProvider.getInstance().checkFile(tf.getPath()))
             FileSystemAccessProvider.getInstance().createFileWithDefaultAccessRights(true, tf.getPath(), ec, true)
         return tf

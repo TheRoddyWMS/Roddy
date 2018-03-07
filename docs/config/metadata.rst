@@ -14,13 +14,14 @@ The filesystem-based approach uses of the filename-patterns with specific variab
 
 * outputBaseDirectory: The top-level directory beneath which filename-patterns for input and output files are matched or generated, respectively.
 * inputBaseDirectory: Often the same as the outputBaseDirectory, but Roddy can also have a separate input directory in which filename patterns are matched
-* outputAnalysisBaseDirectory: defaults to outputBaseDirectory
+* outputAnalysisBaseDirectory: defaults to outputBaseDirectory/datasetId
+* inputAnalysisBaseDirectory: defaults to inputBaseDirectory/datasetId
 
 The following metadata variables are matched or filled into the filename patterns. Note that the Roddy matches the pattern '${' + varname + '}'. Variables
 not enclosed by curly braces are not substituted!
 
-* dataset
-* pid (= patient id, synonymous for dataset)
+* dataSet
+* pid (= patient id, synonymous for dataSet)
 * projectName
 * USERNAME: The user's username on the submission host (on which the qsub, etc. are executed).
 * USERGROUP: The user's primary group on the submission host.

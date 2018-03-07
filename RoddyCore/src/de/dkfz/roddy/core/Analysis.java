@@ -141,7 +141,7 @@ public class Analysis {
      */
     public File getInputBaseDirectory() {
         if (inputBaseDirectory == null)
-            inputBaseDirectory = getRuntimeService().getInputFolder(this);
+            inputBaseDirectory = getRuntimeService().getInputBaseDirectory(this);
         assert (inputBaseDirectory != null);
         return inputBaseDirectory;
     }
@@ -152,7 +152,7 @@ public class Analysis {
      * @return
      */
     public File getOutputBaseDirectory() {
-        File outputBaseDirectory = getRuntimeService().getOutputFolder(this);
+        File outputBaseDirectory = getRuntimeService().getOutputBaseDirectory(this);
         assert (outputBaseDirectory != null);
         return outputBaseDirectory;
     }
@@ -163,7 +163,7 @@ public class Analysis {
      * @return
      */
     public File getOutputAnalysisBaseDirectory() {
-        return getRuntimeService().getOutputFolder(this);
+        return getRuntimeService().getOutputBaseDirectory(this);
     }
 
     public List<DataSet> getListOfDataSets() {

@@ -6,11 +6,9 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.config.AnalysisConfiguration
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationError
 import de.dkfz.roddy.config.ConfigurationValue
-import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -294,7 +292,7 @@ class RuntimeService {
         List<DataSet> selectedDatasets = new LinkedList<>()
         WildcardFileFilter wff = new WildcardFileFilter(pidFilters)
         for (DataSet ds : listOfDataSets) {
-            File inputFolder = ds.getInputFolderForAnalysis(analysis)
+            File inputFolder = getInputAnalysisBaseDirectory(ds, analysis)
             if (!wff.accept(inputFolder))
                 continue
             if (!suppressInfo) logger.info(String.format("Selected dataset %s for processing.", ds.getId()))
@@ -329,12 +327,12 @@ class RuntimeService {
     }
 
     File getDirectory(String dirName, ExecutionContext context) {
-        return new File(getOutputAnalysisFolder(context), dirName)
+        return new File(getOutputAnalysisBaseDirectory(context), dirName)
     }
 
 
     File getBaseExecutionDirectory(ExecutionContext context) {
-        String outPath = getOutputAnalysisFolder(context.getDataSet(), context.getAnalysis()).absolutePath
+        String outPath = getOutputAnalysisBaseDirectory(context.getDataSet(), context.getAnalysis()).absolutePath
         String sep = FileSystemAccessProvider.getInstance().getPathSeparator()
         return new File("${outPath}${sep}roddyExecutionStore")
     }
@@ -343,7 +341,7 @@ class RuntimeService {
         if (context.hasExecutionDirectory())
             return context.getExecutionDirectory()
 
-        String outPath = getOutputAnalysisFolder(context.getDataSet(), context.getAnalysis()).absolutePath
+        String outPath = getOutputAnalysisBaseDirectory(context.getDataSet(), context.getAnalysis()).absolutePath
         String sep = FileSystemAccessProvider.getInstance().getPathSeparator()
 
         String dirPath = "${outPath}${sep}roddyExecutionStore${sep}${ConfigurationConstants.RODDY_EXEC_DIR_PREFIX}${context.getTimestampString()}_${context.getExecutingUser()}_${context.getAnalysis().getName()}"
@@ -364,7 +362,7 @@ class RuntimeService {
         } catch (Exception ex) {
             logger.severe("There was an error in toFile for cvalue ${RODDY_CENTRAL_EXECUTION_DIRECTORY} in RuntimeService:getCommonExecutionDirectory()")
         }
-        return new File(getOutputFolder(context).getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + DIRECTORY_RODDY_COMMON_EXECUTION)
+        return new File(getOutputBaseDirectory(context).getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + DIRECTORY_RODDY_COMMON_EXECUTION)
     }
 
     File getAnalysedMD5OverviewFile(ExecutionContext context) {
@@ -505,7 +503,7 @@ class RuntimeService {
         return files
     }
 
-    private static ConfigurationValue getInputBaseDirectory(Configuration configuration) {
+    private static ConfigurationValue getInputBaseDirectoryVariable(Configuration configuration) {
         ConfigurationValue inputBaseDirectory = configuration.getConfigurationValues().
                 get(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY)
         if (inputBaseDirectory.toString() == "")
@@ -514,7 +512,7 @@ class RuntimeService {
         return inputBaseDirectory
     }
 
-    private static ConfigurationValue getOutputBaseDirectory(Configuration configuration) {
+    private static ConfigurationValue getOutputBaseDirectoryVariable(Configuration configuration) {
         ConfigurationValue outputBaseDirectory = configuration.getConfigurationValues().
                 get(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY)
         if (outputBaseDirectory.toString() == "")
@@ -523,42 +521,43 @@ class RuntimeService {
         return outputBaseDirectory
     }
 
-    @Deprecated
-    File getInputFolderForDataSetAndAnalysis(DataSet dataSet, Analysis analysis) {
-        return getInputFolder(dataSet, analysis)
+    File getInputBaseDirectory(ExecutionContext context) {
+        return getInputBaseDirectoryVariable(context.configuration).toFile(context)
     }
 
-    File getInputFolder(DataSet dataSet, Analysis analysis) {
-        File analysisInFolder = new File(getInputFolder(analysis).absolutePath + FileSystemAccessProvider.instance.getPathSeparator() + dataSet.getId())
+    File getInputBaseDirectory(DataSet dataset, Analysis analysis) {
+        return getInputBaseDirectoryVariable(analysis.configuration).toFile(analysis, dataset)
+    }
+
+    File getInputBaseDirectory(Analysis analysis) {
+        return getInputBaseDirectoryVariable(analysis.configuration).toFile(analysis)
+    }
+
+    File getOutputBaseDirectory(ExecutionContext context) {
+        return getOutputBaseDirectoryVariable(context.configuration).toFile(context)
+    }
+
+    File getOutputBaseDirectory(Analysis analysis) {
+        return getOutputBaseDirectoryVariable(analysis.configuration).toFile(analysis)
+    }
+
+    File getOutputBaseDirectory(DataSet dataSet, Analysis analysis) {
+        return getOutputBaseDirectoryVariable(analysis.configuration).toFile(analysis, dataSet)
+    }
+
+    File getInputAnalysisBaseDirectory(ExecutionContext context) {
+        return getInputAnalysisBaseDirectory(context.dataSet, context.analysis)
+    }
+
+    File getInputAnalysisBaseDirectory(DataSet dataSet, Analysis analysis) {
+        // The default value was set to a value resulting in the same results as the previous version of this method, even if the
+        // new inputAnalysisBaseDirectory variable is not defined.
+        File analysisInFolder = analysis.getConfiguration().getConfigurationValues().
+                get(ConfigurationConstants.CFG_INPUT_ANALYSIS_BASE_DIRECTORY,'${inputBaseDirectory}/${dataSet}').
+                toFile(analysis, dataSet)
         return analysisInFolder
     }
 
-    @Deprecated
-    File getInputFolderForAnalysis(Analysis analysis) {
-        return getInputFolder(analysis)
-    }
-
-    File getInputFolder(Analysis analysis) {
-        return getInputBaseDirectory(analysis.configuration).toFile(analysis)
-    }
-
-    @Deprecated
-    File getOutputFolderForProject(ExecutionContext context) {
-        return getOutputFolder(context)
-    }
-
-    File getOutputFolder(ExecutionContext context) {
-        return getOutputBaseDirectory(context.configuration).toFile(context)
-    }
-
-    @Deprecated
-    File getOutputFolderForProject(Analysis analysis) {
-        return getOutputFolder(analysis)
-    }
-
-    File getOutputFolder(Analysis analysis) {
-        return getOutputBaseDirectory(analysis.configuration).toFile(analysis)
-    }
 
     /** Get the value of the outputAnalysisBaseDirectory variable given the ExecutionContext. If that variable is not defined fall back to
      *  outputBaseDirectory. In both cases context variables (e.g. "${dataset}") are substituted if possible.
@@ -566,23 +565,16 @@ class RuntimeService {
      * @param context
      * @return
      */
-    File getOutputAnalysisFolder(ExecutionContext context) {
-        def outputBaseDirectory = getOutputFolder(context.analysis)
-        return context.getConfiguration().getConfigurationValues().
-                get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY, outputBaseDirectory.toString()).toFile(context)
+    File getOutputAnalysisBaseDirectory(ExecutionContext context) {
+        return getOutputAnalysisBaseDirectory(context.dataSet, context.analysis)
     }
 
-
-    @Deprecated
-    File getOutputFolderForDataSetAndAnalysis(DataSet dataSet, Analysis analysis) {
-        return getOutputAnalysisFolder(dataSet, analysis)
-    }
-
-    File getOutputAnalysisFolder(DataSet dataSet, Analysis analysis) {
-        def outputBaseDirectory = getOutputFolder(analysis)
-        ConfigurationValue outputAnalysisBaseDirectory = analysis.getConfiguration().getConfigurationValues().
-                get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY, outputBaseDirectory.toString())
-        return outputAnalysisBaseDirectory.toFile(analysis, dataSet)
+    File getOutputAnalysisBaseDirectory(DataSet dataSet, Analysis analysis) {
+        // The default values was set to the old default as used in the XMLs. This has partially been done for symmetry reasons with the input method.
+        File analysisOutFolder = analysis.getConfiguration().getConfigurationValues().
+                get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY, '${outputBaseDirectory}/${dataSet}').
+                toFile(analysis, dataSet)
+        return analysisOutFolder
     }
 
     File getAnalysisToolsDirectory(ExecutionContext executionContext) {
