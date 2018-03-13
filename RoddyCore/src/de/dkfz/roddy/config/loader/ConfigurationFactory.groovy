@@ -16,7 +16,7 @@ import de.dkfz.roddy.config.converters.YAMLConverter
 import de.dkfz.roddy.core.Project
 import de.dkfz.roddy.core.ProjectLoaderException
 import de.dkfz.roddy.core.Workflow
-import de.dkfz.roddy.knowledge.brawlworkflows.BrawlWorkflow
+import de.dkfz.roddy.knowledge.brawlworkflows.JBrawlWorkflow
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.FileStage
@@ -29,7 +29,6 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.Tuple3
-import groovy.transform.CompileDynamic
 import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.NodeChild
 import groovy.util.slurpersupport.NodeChildren
@@ -464,7 +463,7 @@ class ConfigurationFactory {
             if (workflowTool && jobManagerClass) {
                 workflowClass = NativeWorkflow.class.name
             } else if (brawlWorkflow) {
-                workflowClass = BrawlWorkflow.class.name
+                workflowClass = JBrawlWorkflow.class.name
             }
             String cleanupScript = extractAttributeText(configurationNode, "cleanupScript", "cleanupScript")
             String[] _listOfUsedTools = extractAttributeText(configurationNode, "listOfUsedTools").split(SPLIT_COMMA)

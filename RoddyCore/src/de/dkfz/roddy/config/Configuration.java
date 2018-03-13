@@ -306,11 +306,22 @@ public class Configuration implements ContainerParent<Configuration> {
     }
 
     public File getSourceBrawlWorkflow(String brawlName) {
+        // Brawl workflows can have the ending .brawl OR .groovy (better for e.g. Idea)
+        File wf = getBrawlWorkflowFile(brawlName, ".brawl");
+        if(wf == null) wf = getBrawlWorkflowFile(brawlName, ".groovy");
+        return wf;
+    }
+
+    public File getSourceJBrawlWorkflow(String brawlName) {
+        return getBrawlWorkflowFile(brawlName, ".jbrawl");
+    }
+
+    private File getBrawlWorkflowFile(String brawlName, String suffix) {
         List<PluginInfo> pluginInfos = LibrariesFactory.getInstance().getLoadedPlugins();
         Map<String, File> availableBasePaths = new LinkedHashMap<>();
         List<File> allFiles = new LinkedList<>();
         for (PluginInfo pluginInfo : pluginInfos) {
-            File[] files = pluginInfo.getBrawlWorkflowDirectory().listFiles((FileFilter) new WildcardFileFilter(brawlName + ".brawl"));
+            File[] files = pluginInfo.getBrawlWorkflowDirectory().listFiles((FileFilter) new WildcardFileFilter(brawlName + suffix));
             if(files != null && files.length > 0)
             allFiles.addAll(Arrays.asList(files));
         }
