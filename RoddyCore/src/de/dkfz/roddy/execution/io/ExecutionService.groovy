@@ -405,8 +405,10 @@ abstract class ExecutionService implements BEExecutionService {
         File roddyBundledFilesDirectory = Roddy.getBundledFilesDirectory()
 
         provider.checkDirectories([executionBaseDirectory, executionDirectory, temporaryDirectory, lockFilesDirectory], context, true)
-        logger.always("Creating the following execution directory to store information about this process:")
-        logger.always("\t${executionDirectory.getAbsolutePath()}")
+        if(context.executionContextLevel.isOrWasAllowedToSubmitJobs){
+            logger.always("Creating the following execution directory to store information about this process:")
+            logger.always("\t${executionDirectory.getAbsolutePath()}")
+        }
 
         Configuration cfg = context.getConfiguration()
         def configurationValues = cfg.getConfigurationValues()
