@@ -41,6 +41,7 @@ public class Constants {
     public static final String APP_PROPERTY_NET_PROXY_USR = "netProxyUser";
     public static final String APP_PROPERTY_SCRATCH_BASE_DIRECTORY = "scratchBaseDirectory";
     public static final String APP_PROPERTY_JOB_MANAGER_PASS_ENVIRONMENT = "jobManagerPassEnvironment";
+    public static final String APP_PROPERTY_JOB_MANAGER_HOLDJOBS_ON_SUBMISSION = "jobManagerHoldJobsOnSubmission";
     public static final String APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT = "baseEnvironmentScript";
 
     /////////////////////////
