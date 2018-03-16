@@ -426,6 +426,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
      */
     @CompileDynamic
     void appendToJobStateLogfile(BatchEuphoriaJobManager jobManager, ExecutionContext executionContext, BEJobResult res, OutputStream out = null) {
+        if (!jobManager.isHoldJobsEnabled() && !jobManager instanceof DirectSynchronousExecutionJobManager) {
+            throw new RuntimeException("Appending to ${ConfigurationConstants.RODDY_JOBSTATE_LOGFILE} not supported when JobManager that does not submit jobs on hold.")
+        }
         if (res.successful) {
             def job = res.command.getJob()
             String jobInfoLine
@@ -437,8 +440,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
                     jobInfoLine = jobStateInfoLine(jobId, "UNSTARTED", millis, toolID)
                 else if (job.getJobState() == JobState.ABORTED)
                     jobInfoLine = jobStateInfoLine(jobId, "ABORTED", millis, toolID)
-                else if (job.getJobState() == JobState.COMPLETED_SUCCESSFUL)
-                    jobInfoLine = jobStateInfoLine(jobId, "0", millis, toolID)
+                // TODO Issue 222: COMPLETED_SUCCESSFUL is set by BE.ExecutionService, when the execution result is successful, i.e. the qsub, not when the job finished successfully on the cluster!
+//                else if (job.getJobState() == JobState.COMPLETED_SUCCESSFUL)
+//                    jobInfoLine = jobStateInfoLine(jobId, "0", millis, toolID)
                 else if (job.getJobState() == JobState.FAILED)
                     jobInfoLine = jobStateInfoLine(jobId, "" + res.executionResult.exitCode, millis, toolID)
                 else
