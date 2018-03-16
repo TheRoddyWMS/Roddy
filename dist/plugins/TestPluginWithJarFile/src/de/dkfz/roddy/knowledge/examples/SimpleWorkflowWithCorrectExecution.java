@@ -23,9 +23,9 @@ public class SimpleWorkflowWithCorrectExecution extends Workflow {
 
         BaseFile directFile = getSourceFile(context, "/tmp/test.txt");
 
-        BaseFile fileFromTool = getSourceFileUsingTool(context, "fileLoaderTool");
-
-        List<BaseFile> fileListFromTool = getSourceFilesUsingTool(context, "fileListLoaderTool");
+//        BaseFile fileFromTool = getSourceFileUsingTool(context, "fileLoaderTool");
+//
+//        List<BaseFile> fileListFromTool = getSourceFilesUsingTool(context, "fileListLoaderTool");
 
         SimpleTestTextFile initialTextFile = srs.createInitialTextFile(context);
         SimpleTestTextFile textFile1 = initialTextFile.test1(); //(TextFile) GenericMethod.callGenericTool("testScript", initialTextFile);
