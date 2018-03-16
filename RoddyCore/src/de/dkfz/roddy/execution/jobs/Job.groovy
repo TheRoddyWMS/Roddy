@@ -511,7 +511,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         parameters.keySet().removeAll(nonEssentialParameters)
     }
 
-    BEJobResult run() {
+    BEJobResult run(boolean appendToJobStateLogfile = true) {
         if (runResult != null)
             throw new RuntimeException(ERR_MSG_ONLY_ONE_JOB_ALLOWED)
 
@@ -555,7 +555,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
             storeJobConfigurationFile(createJobConfiguration())
             keepOnlyEssentialParameters()
             runResult = jobManager.submitJob(this)
-            appendToJobStateLogfile(jobManager, executionContext, runResult, null)
+            if (appendToJobStateLogfile)
+                this.appendToJobStateLogfile(jobManager, executionContext, runResult, null)
             Command cmd = runResult.command
             jobDetailsLine << " => " + cmd.job.getJobID().toString().padRight(10) // If we have os process id attached, we'll need some space, so pad the output.
 
