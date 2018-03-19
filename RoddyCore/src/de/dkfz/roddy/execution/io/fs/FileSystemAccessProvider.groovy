@@ -8,7 +8,6 @@ package de.dkfz.roddy.execution.io.fs
 
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.config.RoddyAppConfig
 import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.ComplexLine
@@ -623,6 +622,7 @@ public class FileSystemAccessProvider {
             }
         } catch (Exception ex) {
             logger.postAlwaysInfo("There was an error while trying to load file " + file)
+            return null
         }
     }
 
@@ -669,15 +669,21 @@ public class FileSystemAccessProvider {
     boolean appendLineToFile(boolean atomic, File filename, String line, boolean blocking) {
         try {
             ExecutionService eService = ExecutionService.getInstance()
-            if (eService.canWriteFiles()) {
-                return eService.appendLineToFile(atomic, filename, line, blocking);
-            } else {
-                if (eService.isLocalService())
-                    synchronized (_appendLineToFileLock) {
-                        return RoddyIOHelperMethods.appendLineToFile(filename, line)
-                    }
-                else
-                    throw new RuntimeException("Not implemented yet!");
+            if(atomic) { // Work very safe and use a lockfile
+                // TODO This also needs the lockfile command from the configuration.
+                // TODO As we always used lockfile, we'll do it here as well for now
+                eService.execute(commandSet.getLockedAppendLineToFileCommand(filename, line))
+            } else { // Use possibly faster methods
+                if (eService.canWriteFiles()) {
+                    return eService.appendLineToFile(atomic, filename, line, blocking);
+                } else {
+                    if (eService.isLocalService())
+                        synchronized (_appendLineToFileLock) {
+                            return RoddyIOHelperMethods.appendLineToFile(filename, line)
+                        }
+                    else
+                        throw new RuntimeException("Not implemented yet!");
+                }
             }
         } catch (Exception ex) {
             logger.postAlwaysInfo("There was an error during the attempt to append to file " + filename);

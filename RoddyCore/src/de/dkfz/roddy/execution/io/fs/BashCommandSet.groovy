@@ -254,6 +254,11 @@ public class BashCommandSet extends ShellCommandSet {
     String getMoveFileCommand(File _in, File _out) { return "mv ${_in.getAbsolutePath()} ${_out.getAbsolutePath()}"; }
 
     @Override
+    String getLockedAppendLineToFileCommand(File file, String line) {
+        return "lockfile ${file}~; echo \"${line}\" >> ${file}; rm -rf ${file}~"
+    }
+
+    @Override
     String getDefaultUMask() {
         return "007";
     }

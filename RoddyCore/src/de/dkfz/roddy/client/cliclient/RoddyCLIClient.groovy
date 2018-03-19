@@ -301,7 +301,7 @@ public class RoddyCLIClient {
     }
 
     public static void printReducedRuntimeConfiguration(CommandLineCall commandLineCall) {
-        Analysis analysis = loadAnalysisOrFail(commandLineCall)
+        Analysis analysis = loadAnalysisOrFail(commandLineCall.analysisID)
 
         ExecutionContext context = new ExecutionContext("DUMMY", analysis, null, ExecutionContextLevel.QUERY_STATUS, null, null, new File("/tmp/Roddy_DUMMY_Directory")) {
             @Override

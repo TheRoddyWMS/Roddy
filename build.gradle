@@ -98,7 +98,7 @@ configurations.all {
 dependencies {
     compile 'com.github.eilslabs:RoddyToolLib:0.0.3'            // MIT
     // compile 'com.github.eilslabs:RoddyToolLib:develop-SNAPSHOT'    // MIT
-    compile 'com.github.eilslabs:BatchEuphoria:0.0.1'           // MIT
+    compile 'com.github.eilslabs:BatchEuphoria:0.0.2'           // MIT
     // compile 'com.github.eilslabs:BatchEuphoria:develop-SNAPSHOT'   // MIT
     compile 'org.codehaus.groovy:groovy-all:2.4.9'              // Apache 2.0
 
