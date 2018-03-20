@@ -1,7 +1,7 @@
 /*
- * copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016 eilslabs.
  *
- * distributed under the mit license (license terms are at https://www.github.com/eilslabs/roddy/license.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.execution.io.fs

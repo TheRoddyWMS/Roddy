@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.core
 
+import de.dkfz.roddy.Constants
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.*
@@ -64,51 +65,53 @@ class RuntimeServiceTest {
         assert mockedContext.runtimeService.getAnalysedMD5OverviewFile(mockedContext).getAbsolutePath() == new File(baseTestDirectory,"zippedAnalysesMD5.txt").toString()
     }
 
+    private String substituteVariables(String value) {
+        return value.
+                replace("\${${ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY}}", outputBaseDirectory.toString()).
+                replace("\${${ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY}}", inputBaseDirectory.toString()).
+                replace("\${${Constants.PROJECT_NAME}}", mockedContext.project.name).
+                replace("\${${Constants.DATASET}}", mockedContext.dataSet.id)
+    }
+
     @Test
     void testGetTestAnalysis() {
         def a = mockedContext.analysis
         assert a.getInputBaseDirectory().toString() ==
-                inputBaseDirectory.toString().replace('${projectName}', mockedContext.project.name)
+                substituteVariables(inputBaseDirectory.toString())
         assert a.getOutputBaseDirectory().toString() ==
-                outputBaseDirectory.toString().replace('${projectName}', mockedContext.project.name)
+                substituteVariables(outputBaseDirectory.toString())
     }
 
     @Test
     void testGetInputFolderForAnalysis() {
         def analysis = mockedContext.analysis
         assert analysis.runtimeService.getInputBaseDirectory(analysis).toString() ==
-                inputBaseDirectory.toString().replace('${projectName}', mockedContext.project.name)
+                substituteVariables(inputBaseDirectory.toString())
     }
 
     @Test
     void testGetOutputFolderForAnalysis() {
         def analysis = mockedContext.analysis
         assert analysis.runtimeService.getOutputBaseDirectory(analysis).toString() ==
-                outputBaseDirectory.toString().replace('${projectName}', mockedContext.project.name)
+                substituteVariables(outputBaseDirectory.toString())
     }
 
     @Test
     void testGetOutputFolderForProject() {
         assert mockedContext.runtimeService.getOutputBaseDirectory(mockedContext).toString() ==
-                outputBaseDirectory.toString().replace('${projectName}', mockedContext.project.name)
+                substituteVariables(outputBaseDirectory.toString())
     }
 
     @Test
     void testGetInputFolderForDataSetAndAnalysis() {
         assert mockedContext.runtimeService.getInputAnalysisBaseDirectory(mockedContext.dataSet, mockedContext.analysis).toString() ==
-                inputAnalysisBaseDirectory.toString().
-                        replace('${inputBaseDirectory}', inputBaseDirectory.toString()).
-                        replace('${projectName}', mockedContext.project.name).
-                        replace('${dataSet}', mockedContext.dataSet.id)
+                substituteVariables(inputAnalysisBaseDirectory.toString())
     }
 
     @Test
     void testGetOutputFolderForDataSetAndAnalysis() {
         assert mockedContext.runtimeService.getOutputAnalysisBaseDirectory(mockedContext.dataSet, mockedContext.analysis).toString() ==
-                outputAnalysisBaseDirectory.toString().
-                        replace('${outputBaseDirectory}', outputBaseDirectory.toString()).
-                        replace('${projectName}', mockedContext.project.name).
-                        replace('${dataSet}', mockedContext.dataSet.id)
+                substituteVariables(outputAnalysisBaseDirectory.toString())
     }
 
     @Test

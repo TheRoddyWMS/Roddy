@@ -597,6 +597,7 @@ class RuntimeService {
                 (Constants.PID)          : (Object) dataset,
                 (Constants.PID_CAP)      : dataset,
                 (Constants.DATASET)      : dataset,
+                (Constants.DATASET_CAP)  : dataset,
                 (Constants.ANALYSIS_DIR) : context.getOutputDirectory().getParentFile().getParent()
         ]
         return parameters

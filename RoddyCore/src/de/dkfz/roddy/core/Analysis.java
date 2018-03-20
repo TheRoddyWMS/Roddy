@@ -368,7 +368,6 @@ public class Analysis {
             boolean setupExecutionStatus = context.analysis.getWorkflow().setupExecution(context);
             boolean contextRightsSettings = ExecutionService.getInstance().checkAccessRightsSettings(context);
             boolean contextPermissions = ExecutionService.getInstance().checkContextDirectoriesAndFiles(context);
-            context.analysis.getWorkflow().setupExecution(context);
             boolean contextExecutability = context.analysis.getWorkflow().checkExecutability(context);
             boolean configurationValidity = Roddy.isStrictModeEnabled() && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors) ? !getConfiguration().hasErrors() : true;
             isExecutable = setupExecutionStatus && contextRightsSettings && contextPermissions && contextExecutability && configurationValidity;
