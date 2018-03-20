@@ -510,7 +510,7 @@ class RuntimeService {
         ConfigurationValue inputBaseDirectory = configuration.getConfigurationValues().
                 get(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY)
         if (inputBaseDirectory.toString() == "")
-            throw new ConfigurationError("inputBaseDirectory not set. Consider --useiodir command-line option.",
+            throw new ConfigurationError("${ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY} not set. Consider --useiodir command-line option.",
                     configuration, ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, null)
         return inputBaseDirectory
     }
@@ -531,7 +531,8 @@ class RuntimeService {
         // The default value was set to a value resulting in the same results as the previous version of this method, even if the
         // new inputAnalysisBaseDirectory variable is not defined.
         return analysis.getConfiguration().getConfigurationValues().
-                get(ConfigurationConstants.CFG_INPUT_ANALYSIS_BASE_DIRECTORY,'${inputBaseDirectory}/${dataSet}').
+                get(ConfigurationConstants.CFG_INPUT_ANALYSIS_BASE_DIRECTORY,
+                        "\${${ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY}}/\${${Constants.DATASET}}").
                 toFile(analysis, dataSet)
     }
 
@@ -545,7 +546,7 @@ class RuntimeService {
         ConfigurationValue outputBaseDirectory = configuration.getConfigurationValues().
                 get(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY)
         if (outputBaseDirectory.toString() == "")
-            throw new ConfigurationError("outputBaseDirectory not set. Consider --useiodir command-line option.",
+            throw new ConfigurationError("${ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY} not set. Consider --useiodir command-line option.",
                     configuration, ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, null)
         return outputBaseDirectory
     }
@@ -595,6 +596,7 @@ class RuntimeService {
         Map<String, Object> parameters = [
                 (Constants.PID)          : (Object) dataset,
                 (Constants.PID_CAP)      : dataset,
+                (Constants.DATASET)      : dataset,
                 (Constants.ANALYSIS_DIR) : context.getOutputDirectory().getParentFile().getParent()
         ]
         return parameters

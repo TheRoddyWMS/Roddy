@@ -31,12 +31,6 @@ public class OnScriptParameterFilenamePattern extends FilenamePattern {
     }
 
     //@Override
-    /** By default, the source file for this filename pattern is the first base file. However, if the filename pattern has the sourcefilename attribute
-     *  set, the base file is the one with the matching scriptparametername attribute. If no matching basefile is found, an exception is thrown.
-     *
-     * @param baseFiles
-     * @return
-     */
     protected BaseFile getSourceFile(BaseFile[] baseFiles) {
         BaseFile baseFile = baseFiles[0]
         if (baseFile.getParentFiles() != null && baseFile.getParentFiles().size() > 0)
