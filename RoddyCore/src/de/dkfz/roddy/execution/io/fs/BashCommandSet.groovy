@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * copyright (c) 2016 eilslabs.
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * distributed under the mit license (license terms are at https://www.github.com/eilslabs/roddy/license.txt).
  */
 
 package de.dkfz.roddy.execution.io.fs
@@ -307,5 +307,10 @@ public class BashCommandSet extends ShellCommandSet {
     boolean validate() {
         def file = new File("/bin/bash")
         return file.exists() && file.canExecute();
+    }
+
+    @Override
+    String getFileSizeCommand(File file) {
+        return "stat --printf='%s' '${file}'"
     }
 }

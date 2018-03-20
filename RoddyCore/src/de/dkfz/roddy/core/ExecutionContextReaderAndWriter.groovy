@@ -170,6 +170,8 @@ class ExecutionContextReaderAndWriter {
         List<Job> jobList = []
         final File jobInfoFile = context.getRuntimeService().getJobInfoFile(context)
         String[] _text = FileSystemAccessProvider.getInstance().loadTextFile(jobInfoFile)
+        if (_text == null)
+            _text = new String[0]
         String text = _text.join(EMPTY)
         if (!text)
             return jobList

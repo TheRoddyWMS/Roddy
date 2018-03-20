@@ -80,6 +80,7 @@ public class Constants {
     public static final String PARAMETER_FILE = "PARAMETER_FILE";
     public static final String ANALYSIS_DIR = "ANALYSIS_DIR";
     public static final String PARAMETER_FILE_SUFFIX = ".parameters";
+    public static final String DATASET = "dataSet";
     public static final String PID_CAP = "PID";
     public static final String PID = "pid";
 

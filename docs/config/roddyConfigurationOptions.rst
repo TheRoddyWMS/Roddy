@@ -9,8 +9,15 @@ Path Configuration
 The following variables describe paths and may contain metadata-variable references such as '${dataset}' that are filled in during the identification
 of input data during start up or filled with metadata values during submission.
 
-* outputBaseDirectory: This option is also set by the --useiodir=$outputBaseDirectory[,$inputBaseDirectory] command-line option
-* inputBaseDirectory:  This option is also set by the --useiodir=$outputBaseDirectory,$inputBaseDirectory command-line option
+* inputBaseDirectory:  This option is also set by the --useiodir=$outputBaseDirectory,$inputBaseDirectory command-line option.
+* outputBaseDirectory: This option is also set by the --useiodir=$outputBaseDirectory[,$inputBaseDirectory] command-line option. Usually, this directory contains
+    * one subdirectory per dataset (e.g. patient).
+    * the "execution cache file" (.roddyExecCache.txt) which containing the list of executed runs
+    * the global "execution store" (.roddyExecutionStore) with the decompressed plugins used for the analyses.
+* outputDirectory: Usually set to "$outputBaseDirectory/${dataset}".
+* outputAnalysisBaseDirectory: This is usually a subdirectory of the outputDirectory and contains the actual output of the workflow. Usually, the filename patterns in the plugins use the outputAnalysisBaseDirectory as base directory for the full paths to output files. This directory also contains the "roddyExecutionStore" with the logs of the workflow execution.
+
+
 
 Debugging Options
 -----------------

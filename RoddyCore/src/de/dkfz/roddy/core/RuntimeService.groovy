@@ -436,8 +436,8 @@ class RuntimeService {
      * @return
      */
     String extractDataSetIDFromPath(File path, Analysis analysis) {
-        String pattern = analysis.getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY).toFile(analysis).getAbsolutePath()
-        RoddyIOHelperMethods.getPatternVariableFromPath(pattern, "dataSet", path.getAbsolutePath()).
+        String pattern = getOutputAnalysisBaseCV(analysis).toFile(analysis).getAbsolutePath()
+        RoddyIOHelperMethods.getPatternVariableFromPath(pattern, Constants.DATASET, path.getAbsolutePath()).
                 orElse(RoddyIOHelperMethods.getPatternVariableFromPath(pattern, Constants.PID, path.getAbsolutePath()).
                         orElse(Constants.UNKNOWN))
     }
@@ -449,6 +449,8 @@ class RuntimeService {
     List<AnalysisProcessingInformation> readoutExecCacheFile(Analysis analysis) {
         File cacheFile = getExecCacheFile(analysis)
         String[] execCache = FileSystemAccessProvider.getInstance().loadTextFile(cacheFile)
+        if (execCache == null)
+            execCache = new String[0]
         List<AnalysisProcessingInformation> processInfo = []
         List<File> execDirectories = []
         Arrays.asList(execCache).parallelStream().each {
@@ -503,7 +505,8 @@ class RuntimeService {
         return files
     }
 
-    private static ConfigurationValue getInputBaseDirectoryVariable(Configuration configuration) {
+
+    private static ConfigurationValue getInputBaseDirectoryCV(Configuration configuration) {
         ConfigurationValue inputBaseDirectory = configuration.getConfigurationValues().
                 get(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY)
         if (inputBaseDirectory.toString() == "")
@@ -512,7 +515,33 @@ class RuntimeService {
         return inputBaseDirectory
     }
 
-    private static ConfigurationValue getOutputBaseDirectoryVariable(Configuration configuration) {
+    File getInputBaseDirectory(ExecutionContext context) {
+        return getInputBaseDirectoryCV(context.configuration).toFile(context)
+    }
+
+    File getInputBaseDirectory(Analysis analysis) {
+        return getInputBaseDirectoryCV(analysis.configuration).toFile(analysis)
+    }
+
+    File getInputBaseDirectory(DataSet dataset, Analysis analysis) {
+        return getInputBaseDirectoryCV(analysis.configuration).toFile(analysis, dataset)
+    }
+
+    File getInputAnalysisBaseDirectory(DataSet dataSet, Analysis analysis) {
+        // The default value was set to a value resulting in the same results as the previous version of this method, even if the
+        // new inputAnalysisBaseDirectory variable is not defined.
+        return analysis.getConfiguration().getConfigurationValues().
+                get(ConfigurationConstants.CFG_INPUT_ANALYSIS_BASE_DIRECTORY,'${inputBaseDirectory}/${dataSet}').
+                toFile(analysis, dataSet)
+    }
+
+    File getInputAnalysisBaseDirectory(ExecutionContext context) {
+        return getInputAnalysisBaseDirectory(context.dataSet, context.analysis)
+    }
+
+
+
+    private static ConfigurationValue getOutputBaseDirectoryCV(Configuration configuration) {
         ConfigurationValue outputBaseDirectory = configuration.getConfigurationValues().
                 get(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY)
         if (outputBaseDirectory.toString() == "")
@@ -521,43 +550,17 @@ class RuntimeService {
         return outputBaseDirectory
     }
 
-    File getInputBaseDirectory(ExecutionContext context) {
-        return getInputBaseDirectoryVariable(context.configuration).toFile(context)
-    }
-
-    File getInputBaseDirectory(DataSet dataset, Analysis analysis) {
-        return getInputBaseDirectoryVariable(analysis.configuration).toFile(analysis, dataset)
-    }
-
-    File getInputBaseDirectory(Analysis analysis) {
-        return getInputBaseDirectoryVariable(analysis.configuration).toFile(analysis)
-    }
-
     File getOutputBaseDirectory(ExecutionContext context) {
-        return getOutputBaseDirectoryVariable(context.configuration).toFile(context)
+        return getOutputBaseDirectoryCV(context.configuration).toFile(context)
     }
 
     File getOutputBaseDirectory(Analysis analysis) {
-        return getOutputBaseDirectoryVariable(analysis.configuration).toFile(analysis)
+        return getOutputBaseDirectoryCV(analysis.configuration).toFile(analysis)
     }
 
     File getOutputBaseDirectory(DataSet dataSet, Analysis analysis) {
-        return getOutputBaseDirectoryVariable(analysis.configuration).toFile(analysis, dataSet)
+        return getOutputBaseDirectoryCV(analysis.configuration).toFile(analysis, dataSet)
     }
-
-    File getInputAnalysisBaseDirectory(ExecutionContext context) {
-        return getInputAnalysisBaseDirectory(context.dataSet, context.analysis)
-    }
-
-    File getInputAnalysisBaseDirectory(DataSet dataSet, Analysis analysis) {
-        // The default value was set to a value resulting in the same results as the previous version of this method, even if the
-        // new inputAnalysisBaseDirectory variable is not defined.
-        File analysisInFolder = analysis.getConfiguration().getConfigurationValues().
-                get(ConfigurationConstants.CFG_INPUT_ANALYSIS_BASE_DIRECTORY,'${inputBaseDirectory}/${dataSet}').
-                toFile(analysis, dataSet)
-        return analysisInFolder
-    }
-
 
     /** Get the value of the outputAnalysisBaseDirectory variable given the ExecutionContext. If that variable is not defined fall back to
      *  outputBaseDirectory. In both cases context variables (e.g. "${dataset}") are substituted if possible.
@@ -565,17 +568,22 @@ class RuntimeService {
      * @param context
      * @return
      */
+    private ConfigurationValue getOutputAnalysisBaseCV(Analysis analysis) {
+        return analysis.getConfiguration().getConfigurationValues().
+                get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY,
+                        getOutputBaseDirectory(analysis).toString())
+    }
+
+    File getOutputAnalysisBaseDirectory(DataSet dataSet, Analysis analysis) {
+        return getOutputAnalysisBaseCV(analysis).toFile(analysis, dataSet)
+    }
+
     File getOutputAnalysisBaseDirectory(ExecutionContext context) {
         return getOutputAnalysisBaseDirectory(context.dataSet, context.analysis)
     }
 
-    File getOutputAnalysisBaseDirectory(DataSet dataSet, Analysis analysis) {
-        // The default values was set to the old default as used in the XMLs. This has partially been done for symmetry reasons with the input method.
-        File analysisOutFolder = analysis.getConfiguration().getConfigurationValues().
-                get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY, '${outputBaseDirectory}/${dataSet}').
-                toFile(analysis, dataSet)
-        return analysisOutFolder
-    }
+
+
 
     File getAnalysisToolsDirectory(ExecutionContext executionContext) {
         File analysisToolsDirectory = new File(getExecutionDirectory(executionContext), DIRNAME_ANALYSIS_TOOLS)

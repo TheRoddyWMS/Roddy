@@ -202,7 +202,7 @@ public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
         if (!analysesById.containsKey(analysisId)) {
             // We correct the analysisId and load it a bit differently than usual
             String project = Roddy.getCommandLineCall().getArguments()[1].split("[@]")[0]
-            analysesById[analysisId] =RoddyCLIClient.loadAnalysisOrFail("${project}@${analysisId}");
+            analysesById[analysisId] = RoddyCLIClient.loadAnalysisOrFail("${project}@${analysisId}");
         }
         return analysesById[analysisId];
     }
@@ -317,6 +317,6 @@ public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
 
     @Override
     List<String> readRemoteFile(String path) throws RemoteException {
-        return withServer([], { Arrays.asList(FileSystemAccessProvider.getInstance().loadTextFile(new File(path))) }) as List<String>;
+        return withServer([], { Arrays.asList(FileSystemAccessProvider.getInstance().loadTextFile(new File(path))) ?: new String[0] }) as List<String>;
     }
 }

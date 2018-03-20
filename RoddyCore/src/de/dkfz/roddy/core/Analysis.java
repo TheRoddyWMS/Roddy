@@ -365,12 +365,13 @@ public class Analysis {
         Exception eCopy = null;
         try {
 
-            context.analysis.getWorkflow().setupExecution(context);
+            boolean setupExecutionStatus = context.analysis.getWorkflow().setupExecution(context);
             boolean contextRightsSettings = ExecutionService.getInstance().checkAccessRightsSettings(context);
             boolean contextPermissions = ExecutionService.getInstance().checkContextDirectoriesAndFiles(context);
+            context.analysis.getWorkflow().setupExecution(context);
             boolean contextExecutability = context.analysis.getWorkflow().checkExecutability(context);
             boolean configurationValidity = Roddy.isStrictModeEnabled() && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors) ? !getConfiguration().hasErrors() : true;
-            isExecutable = contextRightsSettings && contextPermissions && contextExecutability && configurationValidity;
+            isExecutable = setupExecutionStatus && contextRightsSettings && contextPermissions && contextExecutability && configurationValidity;
             boolean successfullyExecuted = false;
 
             if (!isExecutable) {

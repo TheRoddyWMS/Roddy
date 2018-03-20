@@ -71,7 +71,7 @@ class BashConverter extends ConfigurationConverter {
         text << separator << separator << new BashCommandSet().getCheckForInteractiveConsoleCommand() << separator << separator
         text << separator << "fi" << separator << separator
 
-        if (processSetUserMask) text << "\t umask " << umask << separator
+        if (processSetUserMask) text << "umask " << umask << separator
         return text
     }
 

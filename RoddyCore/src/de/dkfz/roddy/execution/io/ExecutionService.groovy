@@ -37,6 +37,7 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
 
+import java.text.ParseException
 import java.util.concurrent.ExecutionException
 import java.util.logging.Level
 
@@ -170,6 +171,7 @@ abstract class ExecutionService implements BEExecutionService {
 
         if (!parameters) parameters = [:]
         parameters[ConfigurationConstants.DISABLE_DEBUG_OPTIONS_FOR_TOOLSCRIPT] = "true"
+        parameters[ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW] = context.getTemporaryDirectory()
 
         Job wrapperJob = new Job(context, context.getTimestampString() + "_directTool:" + toolID, toolID, parameters)
         DirectSynchronousExecutionJobManager jobManager =
@@ -186,27 +188,48 @@ abstract class ExecutionService implements BEExecutionService {
 
             result = jobManager.submitJob(wrapperJob)
         }
-        def lines = FileSystemAccessProvider.instance.loadTextFile(new File(wrapperJob.jobLog.getOut(wrapperJob.jobID.toString())))
 
-        if (!result.successful)
-            throw new ExecutionException("Execution failed. Output was: '" + result.resultLines.orElse([]).join("\n") + "'", null)
+        File jobLog = new File(wrapperJob.jobLog.getOut(wrapperJob.jobID.toString()))
+        if (!FileSystemAccessProvider.instance.fileExists(jobLog))
+            throw new IOException("Job log file ${jobLog} does not exist")
 
-        // Depending on which debug options are set, it is possible (set -v), that "Wrapped script ended"
-        // is found before "Starting wrapped script". It is however safe to compare the whole "Starting wrapped script"
-        // string to find the beginning of the output block of the executed wrapped script. Therefore we
-        // use this to cut away misleading trailing output and then find the end block afterwards.
-        // The end block can contain a "+ " at the beginning (again depending on the debug options), so we use
-        // the find method to identify the first upcoming line.
-        int index = lines.findIndexOf {
-            it == "######################################################### Starting wrapped script ###########################################################"
+        Long jobLogSize = FileSystemAccessProvider.instance.fileSize(jobLog)
+        Long maximumJobLogSize = context.configurationValues.get("maximumJobLogSize", (1024*1024*10).toString()).toLong()
+        if (jobLogSize > maximumJobLogSize)
+            throw new IOException("Job log file of ${jobLogSize} byte is larger than permitted size ${maximumJobLogSize}")
+
+
+        def lines = FileSystemAccessProvider.instance.loadTextFile(jobLog)
+
+        if (lines != null) {
+
+            if (!result.successful)
+                throw new ExecutionException("Execution failed. Output was: '" + result.resultLines.orElse([]).join("\n") + "'", null)
+
+            // Depending on which debug options are set, it is possible (set -v), that "Wrapped script ended"
+            // is found before "Starting wrapped script". It is however safe to compare the whole "Starting wrapped script"
+            // string to find the beginning of the output block of the executed wrapped script. Therefore we
+            // use this to cut away misleading trailing output and then find the end block afterwards.
+            // The end block can contain a "+ " at the beginning (again depending on the debug options), so we use
+            // the find method to identify the first upcoming line.
+            int index = lines.findIndexOf {
+                it == "######################################################### Starting wrapped script ###########################################################"
+            }
+            if (index < 0)
+                new ParseException("Could not find '#+ Starting wrapped script #+' in job log '${jobLog}' during synchronous script execution", -1)
+            lines = lines[1 + index..-1]
+            index = lines.findIndexOf { String it ->
+                it.contains("######################################################### Wrapped script ended ##############################################################")
+            }
+            if (index < 0)
+                new ParseException("Could not find '#+ Wrapped script ended #+' in job log '${jobLog}' during synchronous script execution", -1)
+            lines = lines[0..index - 1]
+
+            return lines as List<String>
+        } else {
+            return []
         }
-        lines = lines[1 + index..-1]
-        index = lines.findIndexOf { String it ->
-            it.contains("######################################################### Wrapped script ended ##############################################################")
-        }
-        lines = lines[0..index - 1]
 
-        return lines as List<String>
     }
 
     List<String> executeTool(ExecutionContext context, String toolID, String jobNameExtension = "_executedScript:") {
@@ -308,56 +331,76 @@ abstract class ExecutionService implements BEExecutionService {
      * @return
      */
     boolean checkContextDirectoriesAndFiles(ExecutionContext context) {
-        FileSystemAccessProvider fis = FileSystemAccessProvider.getInstance()
+        FileSystemAccessProvider fsap = FileSystemAccessProvider.getInstance()
         Analysis analysis = context.getAnalysis()
 
         //First check in and output directories for accessibility
 
-        File inputBaseDirectory = analysis.getInputBaseDirectory()      //Project input directory with i.e. ../view-by-pid
-        File outputBaseDirectory = analysis.getOutputBaseDirectory()    //Project output directory with i.e. ../results_per_pid
-        File outputDirectory = context.getOutputDirectory()             //Output with dataset id
+        //Project input directory with i.e. ../view-by-pid
+        File inputBaseDirectory = analysis.getInputBaseDirectory()
+        Boolean inputIsReadable = fsap.isReadable(inputBaseDirectory)
+        if (!inputIsReadable)
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("The input dir is not readable: ${inputBaseDirectory}, please check access rights and ownership.", Level.SEVERE))
 
-        File projectExecCacheFile = context.getRuntimeService().getExecCacheFile(context.getAnalysis())   // .roddyExecCache.txt containing the list of executed runs in the project output folder
-        File projectExecutionDirectory = context.getCommonExecutionDirectory()  // .roddyExecutionStore in outputBaseDirectory
-        File projectToolsMD5SumFile = context.getFileForAnalysisToolsArchiveOverview()  // The md5 sum file in .roddyExecutionStore
-        File baseContextExecutionDirectory = context.getRuntimeService().getBaseExecutionDirectory(context) //roddyExecutionStore in the dataset folder
-        File contextExecutionDirectory = context.getExecutionDirectory()        // the exec_... folder int he base context exec dir. (NOT CHECKED, created later!)
-
-        Boolean inputIsReadable = fis.isReadable(inputBaseDirectory)
-        Boolean outputIsWriteable = fis.directoryExists(outputBaseDirectory) ? fis.isReadable(outputBaseDirectory) && fis.isWritable(outputBaseDirectory) : null
-        Boolean datasetDirIsWritable = fis.directoryExists(outputDirectory) ? fis.isReadable(outputDirectory) && fis.isWritable(outputDirectory) : null
-
-        Boolean projectExecCacheFileIsWritable = outputIsWriteable && fis.fileExists(projectExecCacheFile) ? fis.isReadable(projectExecCacheFile) && fis.isWritable(projectExecCacheFile) : null
-        Boolean projectExecutionContextDirIsWritable = fis.directoryExists(projectExecutionDirectory) ? fis.isReadable(projectExecutionDirectory) && fis.directoryExists(projectExecutionDirectory) : null
-        Boolean projectToolsMD5SumFileIsWritable = fis.fileExists(projectToolsMD5SumFile) ? fis.isReadable(projectToolsMD5SumFile) && fis.isWritable(projectToolsMD5SumFile) : projectExecutionContextDirIsWritable
-        Boolean baseContextDirIsWritable = fis.directoryExists(baseContextExecutionDirectory) ? fis.isReadable(baseContextExecutionDirectory) && fis.isWritable(baseContextExecutionDirectory) : null
-
-        int countErrors = context.getErrors().sum(0) { ExecutionContextError ece -> ece.getErrorLevel() == Level.SEVERE ? 1 : 0 } as Integer
-
-
+        //Project output directory with i.e. ../results_per_pid
+        File outputBaseDirectory = analysis.getOutputBaseDirectory()
+        Boolean outputIsWriteable =
+                fsap.directoryExists(outputBaseDirectory) ? fsap.isReadable(outputBaseDirectory) && fsap.isWritable(outputBaseDirectory) : null
         if (outputIsWriteable == null)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${outputBaseDirectory}, please create with proper access rights and ownership.", Level.SEVERE))
-        else if (outputIsWriteable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("Output dir is not writable: ${outputBaseDirectory}, please change access rights and ownership."))
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.
+                    expand("Output dir is missing: ${outputBaseDirectory}, please create with proper access rights and ownership.", Level.SEVERE))
+        else if (outputIsWriteable == Boolean.FALSE) //Do an else if because groovy might evaluate null to false.
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
+                    expand("Output dir is not writable: ${outputBaseDirectory}, please change access rights and ownership."))
 
+        //Output with dataset id
+        File outputDirectory = context.getOutputDirectory()
+        Boolean datasetDirIsWritable =
+                fsap.directoryExists(outputDirectory) ? fsap.isReadable(outputDirectory) && fsap.isWritable(outputDirectory) : null
         if (datasetDirIsWritable == null)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("Output dir is missing: ${outputDirectory}", Level.INFO))
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.
+                    expand("Output dir is missing: ${outputDirectory}", Level.INFO))
         else if (datasetDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("Output dir is not writable: ${outputDirectory}"))
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
+                    expand("Output dir is not writable: ${outputDirectory}"))
 
-        if (projectExecCacheFileIsWritable == Boolean.FALSE)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("The projects exec cache file is not writable: ${projectExecCacheFile}"))
-
-        if (projectExecutionContextDirIsWritable == Boolean.FALSE)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("The project execution store is not writable: ${projectExecutionDirectory}"))
-
-        if (projectToolsMD5SumFileIsWritable == Boolean.FALSE)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("The project md5sum file is not writable: ${projectToolsMD5SumFile}"))
-
+        // roddyExecutionStore in the dataset folder
+        File baseContextExecutionDirectory = context.getRuntimeService().getBaseExecutionDirectory(context)
+        Boolean baseContextDirIsWritable =
+                fsap.directoryExists(baseContextExecutionDirectory) ? fsap.isReadable(baseContextExecutionDirectory) && fsap.isWritable(baseContextExecutionDirectory) : null
         if (baseContextDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evaluate null to false.
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.expand("The datasets execution storeage folder is not writable: ${baseContextExecutionDirectory}"))
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
+                    expand("The datasets execution storeage folder is not writable: ${baseContextExecutionDirectory}"))
+
+        // the exec_... folder int the base context exec dir. (NOT CHECKED, created later!)
+        File contextExecutionDirectory = context.getExecutionDirectory()
+
+        // .roddyExecutionStore in outputBaseDirectory
+        File projectExecutionDirectory = context.getCommonExecutionDirectory()
+        Boolean projectExecutionContextDirIsWritable =
+                fsap.directoryExists(projectExecutionDirectory) ? fsap.isReadable(projectExecutionDirectory) && fsap.directoryExists(projectExecutionDirectory) : null
+        if (projectExecutionContextDirIsWritable == Boolean.FALSE)
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
+                    expand("The project execution store is not writable: ${projectExecutionDirectory}"))
+
+        // .roddyExecCache.txt containing the list of executed runs in the project output folder
+        File projectExecCacheFile = context.getRuntimeService().getExecCacheFile(context.getAnalysis())
+        Boolean projectExecCacheFileIsWritable =
+                outputIsWriteable && fsap.fileExists(projectExecCacheFile) ? fsap.isReadable(projectExecCacheFile) && fsap.isWritable(projectExecCacheFile) : null
+        if (projectExecCacheFileIsWritable == Boolean.FALSE)
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
+                    expand("The projects exec cache file is not writable: ${projectExecCacheFile}"))
+
+        // The md5 sum file in .roddyExecutionStore
+        File projectToolsMD5SumFile = context.getFileForAnalysisToolsArchiveOverview()
+        Boolean projectToolsMD5SumFileIsWritable =
+                fsap.fileExists(projectToolsMD5SumFile) ? fsap.isReadable(projectToolsMD5SumFile) && fsap.isWritable(projectToolsMD5SumFile) : projectExecutionContextDirIsWritable
+        if (projectToolsMD5SumFileIsWritable == Boolean.FALSE)
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
+                    expand("The project md5sum file is not writable: ${projectToolsMD5SumFile}"))
 
         //Just check, if there were new errors.
+        int countErrors = context.getErrors().sum(0) { ExecutionContextError ece -> ece.getErrorLevel() == Level.SEVERE ? 1 : 0 } as Integer
         return (context.getErrors().sum(0) { ExecutionContextError ece -> ece.getErrorLevel() == Level.SEVERE ? 1 : 0 } as Integer) - countErrors == 0
     }
 
@@ -547,6 +590,8 @@ abstract class ExecutionService implements BEExecutionService {
         provider.checkDirectory(dstExecutionDirectory, context, true)
 
         String[] existingArchives = provider.loadTextFile(context.getFileForAnalysisToolsArchiveOverview())
+        if (existingArchives == null)
+            existingArchives = new String[0]
         Roddy.getCompressedAnalysisToolsDirectory().mkdir()
 
         Map<File, PluginInfo> listOfFolders = sourcePaths.findAll { File it, PluginInfo pInfo -> !it.getName().contains(".svn") }

@@ -41,9 +41,9 @@ class RuntimeServiceTest {
     public <T extends Configuration> T setDirectories(T config) {
         inputBaseDirectory= new File(getClass().classLoader.getResource("testpids").path)
         config.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, inputBaseDirectory.toString()))
-        //config.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_INPUT_ANALYSIS_BASE_DIRECTORY, inputAnalysisBaseDirectory))
+        config.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_INPUT_ANALYSIS_BASE_DIRECTORY, inputAnalysisBaseDirectory))
         config.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, outputBaseDirectory.toString()))
-        //config.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY, outputAnalysisBaseDirectory))
+        config.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY, outputAnalysisBaseDirectory))
         config.configurationValues.add(new ConfigurationValue(RuntimeService.RODDY_CENTRAL_EXECUTION_DIRECTORY, baseTestDirectory.toString()))
         return config
     }

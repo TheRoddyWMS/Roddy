@@ -269,6 +269,10 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         return Double.parseDouble(value);
     }
 
+    public long toLong() {
+        return Long.parseLong(value);
+    }
+
     Pattern variableDetection = Pattern.compile("[$][{][a-zA-Z0-9_]*[}]");
 
     @Override

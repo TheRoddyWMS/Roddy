@@ -176,6 +176,14 @@ public class FileSystemAccessProvider {
         return runFileTestCommand(commandSet.getFileExistsTestCommand(f));
     }
 
+    Long fileSize(File f) {
+        def res = ExecutionService.instance.execute(commandSet.getFileSizeCommand(f))
+        if (res.successful)
+            return Long.parseLong(res.firstLine)
+        else
+            return -1
+    }
+
     public boolean directoryExists(File f) {
         if (ExecutionService.getInstance().canQueryFileAttributes()) {
             return ExecutionService.getInstance().directoryExists(f);
@@ -604,21 +612,16 @@ public class FileSystemAccessProvider {
         }
     }
 
-    public String[] loadTextFile(File file) {
+    String[] loadTextFile(File file) {
         try {
             if (ExecutionService.getInstance().canReadFiles()) { //Let the execution service do this.
-                return ExecutionService.getInstance().loadTextFile(file);
+                return ExecutionService.getInstance().loadTextFile(file)
             }
 
             if (ExecutionService.getInstance().isLocalService()) {
-
-                try {
-                    return file.readLines().toArray(new String[0]);
-                } catch (Exception ex) {
-                    return new String[0];
-                }
+                return file.readLines().toArray(new String[0])
             } else {
-                return ExecutionService.getInstance().execute(commandSet.getReadOutTextFileCommand(file), true).resultLines.toArray(new String[0]);
+                return ExecutionService.getInstance().execute(commandSet.getReadOutTextFileCommand(file), true).resultLines.toArray(new String[0])
             }
         } catch (Exception ex) {
             logger.postAlwaysInfo("There was an error while trying to load file " + file)

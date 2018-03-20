@@ -38,7 +38,8 @@ public abstract class Workflow {
      * Workflow specific setups can be created here.
      * This includes i.e. the creation of paths.
      */
-    public void setupExecution(ExecutionContext context) {
+    public boolean setupExecution(ExecutionContext context) {
+        return true;
     }
 
     public void finalizeExecution(ExecutionContext context) {

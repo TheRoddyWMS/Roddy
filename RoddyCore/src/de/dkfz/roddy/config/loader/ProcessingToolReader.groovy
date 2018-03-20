@@ -248,6 +248,7 @@ class ProcessingToolReader {
             return parseFileGroup(child, toolID)
         } else if (type == "string") {
             ToolStringParameter.ParameterSetbyOptions setby = Enum.valueOf(ToolStringParameter.ParameterSetbyOptions.class, extractAttributeText(child, "setby", ToolStringParameter.ParameterSetbyOptions.callingCode.name()))
+
             String pName = readAttribute(child, "scriptparameter")
             ToolStringParameter tsp
             if (setby == ToolStringParameter.ParameterSetbyOptions.callingCode) {
@@ -255,6 +256,7 @@ class ProcessingToolReader {
             } else {
                 tsp = new ToolStringParameter(pName, extractAttributeText(child, "cValueID"))
             }
+
             return tsp
         } else {
             addLoadErr("The type attribute of a parameter was invalid (${type}) for tool ${toolID}\n" + ConfigurationFactory.ERROR_PRINTOUT_XML_LINEPREFIX + RoddyConversionHelperMethods.toFormattedXML(child, "\n" + ConfigurationFactory.ERROR_PRINTOUT_XML_LINEPREFIX))
