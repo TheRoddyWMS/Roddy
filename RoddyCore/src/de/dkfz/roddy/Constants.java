@@ -16,8 +16,8 @@ public class Constants {
     // Application constants
     /////////////////////////
 
-    public static final String APP_CURRENT_VERSION_STRING = "3.0.4";
-    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Tue Mar 13 08:44:58 CET 2018";
+    public static final String APP_CURRENT_VERSION_STRING = "3.0.6";
+    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Fri Mar 16 17:53:48 CET 2018";
     public static final String APP_PROPERTY_JOB_MANAGER_CLASS = "jobManagerClass";
     public static final String APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS = "fileSystemAccessManagerClass";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_CLASS = "executionServiceClass";
@@ -41,6 +41,7 @@ public class Constants {
     public static final String APP_PROPERTY_NET_PROXY_USR = "netProxyUser";
     public static final String APP_PROPERTY_SCRATCH_BASE_DIRECTORY = "scratchBaseDirectory";
     public static final String APP_PROPERTY_JOB_MANAGER_PASS_ENVIRONMENT = "jobManagerPassEnvironment";
+    public static final String APP_PROPERTY_JOB_MANAGER_HOLDJOBS_ON_SUBMISSION = "jobManagerHoldJobsOnSubmission";
     public static final String APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT = "baseEnvironmentScript";
 
     /////////////////////////
