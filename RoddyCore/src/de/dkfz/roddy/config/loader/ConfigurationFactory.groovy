@@ -237,6 +237,9 @@ class ConfigurationFactory {
         if (file.name.endsWith(".sh")) // Easy Bash importer
             return loadAndPreprocessBashFile(file)
 
+        if (file.name.endsWith(".groovy") || file.name.endsWith(".brawl"))
+            return loadAndPreprocessBrawlFile(file)
+
         throw new UnknownConfigurationFileTypeException("Unknown file type ${file.name} for a configuration file.")
     }
 
@@ -246,6 +249,21 @@ class ConfigurationFactory {
 
     static String loadAndPreprocessBashFile(File s) {
         return new BashConverter().convertToXML(s)
+    }
+
+    static String loadAndPreprocessBrawlFile(File s) {
+        String name = s.name.replace(".groovy", "").replace(".brawl", "")
+        return """
+            <configuration  configurationType='analysis' name='${name}' 
+                            class='de.dkfz.roddy.core.Analysis' 
+                            workflowClass='de.dkfz.roddy.knowledge.brawlworkflows.BrawlCallingWorkflow' 
+                            usedToolFolders='roddyTools,inlineScripts' 
+                            runtimeServiceClass='de.dkfz.roddy.core.RuntimeService'>
+                <configurationvalues>
+                    <cvalue name='activeBrawlWorkflow' value='${name}' type="string"/>
+                </configurationvalues>
+            </configuration>
+        """
     }
 
     /**

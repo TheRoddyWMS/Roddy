@@ -4,21 +4,21 @@
 // Configuration
 String variable = "abc"
 
-// Explicit workflow ?
+// Explicit workflow. Implicit might follow later
 explicit {
-    def files = getSourceFile("/tmp")
-    def a = call
+    def file = getSourceFile("/tmp", "TextFile")
+    def a = run "ToolA", file
 }
-
-// Or implicit like Snakemake? Later maybe
 
 // Tool / Rule section
 rule "ToolA", {
-    input "aClass", "parameter", "abc"
-    output "aClass", "parameter", "abc"
+    input "TextFile", "parameterA"
+    output "aClass", "parameterB", "/tmp/someoutputfile"
     shell """
                 #!/bin/bash
-
+                echo "\$parameterA"
+                echo "\$parameterB"
+                touch \$parameterB
 
             """
 }

@@ -32,8 +32,8 @@ class BrawlCallingWorkflow extends Workflow {
             def se = new GroovyScriptEngine(temporaryScript.getAbsolutePath(), cl)
             Binding bind = new Binding()
             bind.setVariable("context", context)
-            def obj = se.run(temporaryScript.absolutePath, bind)
-
+            BrawlWorkflow brawlWorkflow = se.run(temporaryScript.absolutePath, bind) as BrawlWorkflow
+            brawlWorkflow.execute(context)
             return true
         } finally {
             temporaryScript.delete()

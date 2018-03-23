@@ -36,14 +36,15 @@ class BrawlWorkflowToolCall {
     }
 
     void input(String fileclass, String parameter, String pattern = "") {
-        getToolFileParameter(fileclass, parameter)
+        inputParameters << getToolFileParameter(fileclass, parameter)
         // For later...
         //        new OnScriptParameterFilenamePattern(loadedFileClass, toolID, parameter, pattern)
     }
 
     void output(String fileclass, String parameter, String pattern) {
         def fileParameter = getToolFileParameter(fileclass, parameter)
-        new OnScriptParameterFilenamePattern(fileParameter.fileClass as Class<BaseFile>, toolID, parameter, pattern)
+        outputParameters << fileParameter
+        workflow.context.configuration.filenamePatterns << new OnScriptParameterFilenamePattern(fileParameter.fileClass as Class<BaseFile>, toolID, parameter, pattern)
     }
 
     void threads(int threads) {
@@ -65,7 +66,7 @@ class BrawlWorkflowToolCall {
     }
 
     ToolEntry toToolEntry() {
-        ToolEntry entry = new ToolEntry(toolID, "brawlTools", "")
+        ToolEntry entry = new ToolEntry(toolID, "inlineScripts", "")
         entry.setInlineScript(script)
         entry.getResourceSets().add(new ResourceSet(ResourceSetSize.l, new BufferValue(memory), threads, 1, timeUnit, null, null, null))
         entry.inputParameters.addAll(inputParameters)
