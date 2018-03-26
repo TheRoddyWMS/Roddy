@@ -4,6 +4,11 @@
 // Configuration
 String variable = "abc"
 
+cvalue "valueString", "a text", "string"
+cvalue "valueInteger", 1
+cvalue "valueDouble", 1.0
+cvalue "aBooleanValue", true
+
 // Explicit workflow. Implicit might follow later
 explicit {
     def file = getSourceFile("/tmp", "TextFile")

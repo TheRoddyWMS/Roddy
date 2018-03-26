@@ -40,15 +40,20 @@ class BrawlCallingWorkflowTest {
                 // Configuration
                 String variable = "abc"
                 
+                cvalue "valueString", "a text", "string"
+                cvalue "valueInteger", 1
+                cvalue "valueDouble", 1.0
+                cvalue "aBooleanValue", true
+                
                 // Explicit workflow ?
                 explicit {
                     def file = getSourceFileUsingTool("ToolA")
                     println("Got a file " + file)
-                    def outfile = call("ToolB", file)
+                    def outfile = run "ToolB", file
                 }
                 
                 // Tool / Rule section
-                rule "ToolA", {
+                tool "ToolA", {
                     shell """
                         #!/bin/bash
                         echo /tmp/aFile               
@@ -56,7 +61,7 @@ class BrawlCallingWorkflowTest {
                 }
                 
                 // Tool / Rule section
-                rule "ToolB", {
+                tool "ToolB", {
                     input "TextFile", "IN_FILE"
                     output "TextFile", "OUT_FILE", "/tmp/abc"
                     shell """

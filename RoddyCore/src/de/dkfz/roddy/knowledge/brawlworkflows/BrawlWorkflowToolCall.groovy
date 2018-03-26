@@ -1,5 +1,6 @@
 package de.dkfz.roddy.knowledge.brawlworkflows
 
+import de.dkfz.roddy.config.ConfigurationError
 import de.dkfz.roddy.config.OnScriptParameterFilenamePattern
 import de.dkfz.roddy.config.ResourceSet
 import de.dkfz.roddy.config.ResourceSetSize
@@ -19,13 +20,14 @@ class BrawlWorkflowToolCall {
     private BrawlWorkflow workflow
     private TimeUnit timeUnit
     private String script
-    private int memory
+    private float memory
     private int threads
     private String toolID
+    private String basePath
     private List<ToolFileParameter> inputParameters = []
     private List<ToolFileParameter> outputParameters = []
 
-    BrawlWorkflowToolCall(BrawlWorkflow wf, String toolID) {
+    BrawlWorkflowToolCall(BrawlWorkflow wf, String toolID, String path = null) {
         workflow = wf
         this.toolID = toolID
     }
@@ -52,7 +54,11 @@ class BrawlWorkflowToolCall {
         this.threads = threads
     }
 
-    void memory(int memory) {
+    void cores(int cores) {
+        this.threads(cores)
+    }
+
+    void memory(float memory) {
 
         this.memory = memory
     }
@@ -61,17 +67,33 @@ class BrawlWorkflowToolCall {
         timeUnit = new TimeUnit(walltime)
     }
 
+    void path(String path) {
+        basePath = path
+    }
+
     void shell(String script) {
         this.script = script
     }
 
+    void file(String file) {
+
+    }
+
     ToolEntry toToolEntry() {
-        ToolEntry entry = new ToolEntry(toolID, "inlineScripts", toolID)
-        entry.setInlineScript(script)
-        entry.setInlineScriptName(toolID)
-        entry.getResourceSets().add(new ResourceSet(ResourceSetSize.l, new BufferValue(memory), threads, 1, timeUnit, null, null, null))
-        entry.inputParameters.addAll(inputParameters)
-        entry.outputParameters.addAll(outputParameters)
-        return entry
+
+        if (basePath == null && script == null)
+            throw new ConfigurationError("The rule ${toolID} in your workflow script needs either a reference to a file OR inline code.", "BRAWLWORKFLOW")
+
+        if(script) { // Inline code
+            ToolEntry entry = new ToolEntry(toolID, "inlineScripts", toolID)
+            entry.setInlineScript(script)
+            entry.setInlineScriptName(toolID)
+            entry.getResourceSets().add(new ResourceSet(ResourceSetSize.l, new BufferValue(memory), threads, 1, timeUnit, null, null, null))
+            entry.inputParameters.addAll(inputParameters)
+            entry.outputParameters.addAll(outputParameters)
+            return entry
+        } else { // No inline code
+            ToolEntry entry = new ToolEntry(toolID, basePath, toolID)
+        }
     }
 }

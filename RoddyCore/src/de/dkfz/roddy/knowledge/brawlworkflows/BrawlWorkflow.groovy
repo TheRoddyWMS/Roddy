@@ -1,6 +1,7 @@
 package de.dkfz.roddy.knowledge.brawlworkflows;
 
 import de.dkfz.roddy.config.ConfigurationError
+import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.Workflow
@@ -60,12 +61,20 @@ class BrawlWorkflow extends Workflow {
             String name,
             @DelegatesTo(strategy = Closure.DELEGATE_FIRST, value = BrawlWorkflowToolCall) Closure script
     ) {
+        if (name == null)
+            throw new ConfigurationError("A rule in your workflow script does not have a name.", "BRAWLWORKFLOW")
+
         def rule = new BrawlWorkflowToolCall(THIS, name)
         script.resolveStrategy = Closure.DELEGATE_FIRST
         script.delegate = rule
         script()
         context.configuration.tools << rule.toToolEntry()
         rule
+    }
+
+    BrawlWorkflowToolCall tool(String name, @DelegatesTo(strategy = Closure.DELEGATE_FIRST, value = BrawlWorkflowToolCall) Closure script
+    ) {
+        rule(name, script)
     }
 
     /**
@@ -76,7 +85,7 @@ class BrawlWorkflow extends Workflow {
      */
     @Override
     boolean execute(ExecutionContext context) throws ConfigurationError {
-        if(explicitWorkflow)
+        if (explicitWorkflow)
             explicitWorkflow.call()
         else {
             context.addErrorEntry(ExecutionContextError.EXECUTION_SCRIPT_INVALID.expand("Implicit Brawl workflows are not yet supported. You have to use the explicit method to create the workflow.", Level.SEVERE))
@@ -90,6 +99,52 @@ class BrawlWorkflow extends Workflow {
      */
     void explicit(Closure script) {
         explicitWorkflow = script
+    }
+
+    /**
+     * Add a "generic" configuration value.
+     * @param id
+     * @param value
+     * @param type
+     */
+    void cvalue(String id, String value, String type) {
+        context.configurationValues << new ConfigurationValue(context.configuration, id, value, type)
+    }
+
+    /**
+     * Add an integer configuration value
+     * @param id
+     * @param value
+     */
+    void cvalue(String id, int value) {
+        context.configurationValues << new ConfigurationValue(context.configuration, id, value.toString(), "integer")
+    }
+
+    /**
+     * Add a float configuration value
+     * @param id
+     * @param value
+     */
+    void cvalue(String id, float value) {
+        context.configurationValues << new ConfigurationValue(context.configuration, id, value.toString(), "float")
+    }
+
+    /**
+     * Add a double configuration value
+     * @param id
+     * @param value
+     */
+    void cvalue(String id, double value) {
+        context.configurationValues << new ConfigurationValue(context.configuration, id, value.toString(), "double")
+    }
+
+    /**
+     * Add a boolean configuration value
+     * @param id
+     * @param value
+     */
+    void cvalue(String id, boolean value) {
+        context.configurationValues << new ConfigurationValue(context.configuration, id, value.toString(), "boolean")
     }
 
     /**
