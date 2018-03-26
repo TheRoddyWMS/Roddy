@@ -532,7 +532,7 @@ abstract class ExecutionService implements BEExecutionService {
      * However this is not enforced.
      * @param context
      */
-    private void copyAnalysisToolsForContext(ExecutionContext context) {
+    void copyAnalysisToolsForContext(ExecutionContext context) {
         FileSystemAccessProvider provider = FileSystemAccessProvider.getInstance()
         Configuration cfg = context.getConfiguration()
         File dstExecutionDirectory = context.getExecutionDirectory()

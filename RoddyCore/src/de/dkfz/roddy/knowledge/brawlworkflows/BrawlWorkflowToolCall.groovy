@@ -66,8 +66,9 @@ class BrawlWorkflowToolCall {
     }
 
     ToolEntry toToolEntry() {
-        ToolEntry entry = new ToolEntry(toolID, "inlineScripts", "")
+        ToolEntry entry = new ToolEntry(toolID, "inlineScripts", toolID)
         entry.setInlineScript(script)
+        entry.setInlineScriptName(toolID)
         entry.getResourceSets().add(new ResourceSet(ResourceSetSize.l, new BufferValue(memory), threads, 1, timeUnit, null, null, null))
         entry.inputParameters.addAll(inputParameters)
         entry.outputParameters.addAll(outputParameters)
