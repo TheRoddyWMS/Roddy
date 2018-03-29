@@ -147,7 +147,7 @@ class ExecutionContext {
         this.creationCheckPoint = creationCheckPoint
         this.project = analysis?.getProject()
         this.analysis = analysis
-        this.workflow = createContextWorkflowObject(analysis)
+        this.workflow = createContextWorkflowObject(analysis, this)
         this.executionContextLevel = executionContextLevel
         this.dataSet = dataSet
 
@@ -166,7 +166,7 @@ class ExecutionContext {
         this.dataSet = api.getDataSet()
         this.project = analysis?.getProject()
         this.analysis = api.getAnalysis()
-        this.workflow = createContextWorkflowObject(analysis)
+        this.workflow = createContextWorkflowObject(analysis, this)
         this.executionContextLevel = ExecutionContextLevel.READOUT
         this.inputDirectory = dataSet.getInputFolderForAnalysis(analysis)
         this.outputDirectory = dataSet.getOutputFolderForAnalysis(analysis)
@@ -234,8 +234,9 @@ class ExecutionContext {
         }
 
         workflow = (Workflow) workflowClass.getConstructor().newInstance();
-        if(context)
-            workflow.context
+        if (context)
+            workflow.setContext(context)
+        return workflow
     }
 
     Workflow getWorkflow() {

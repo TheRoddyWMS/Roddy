@@ -8,10 +8,13 @@ cvalue "valueString", "a text", "string"
 cvalue "valueInteger", 1
 cvalue "valueDouble", 1.0
 cvalue "aBooleanValue", true
+cvalue "runEverything", true
 
 // Explicit workflow. Implicit might follow later
 explicit {
     def file = getSourceFile("/tmp", "TextFile")
+    def flag = getflag "runEverything"
+    println flag
     def a = run "ToolA", file
 }
 

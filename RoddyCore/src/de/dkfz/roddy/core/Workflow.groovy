@@ -13,6 +13,7 @@ import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.methods.GenericMethod
+import groovy.transform.CompileDynamic
 
 import java.lang.reflect.Method
 import java.util.concurrent.ExecutionException
@@ -37,9 +38,9 @@ abstract class Workflow {
     }
 
     void setContext(ExecutionContext context) {
-        if (context == null)
+        if (this.context == null)
             this.context = context
-        else
+        else if (this.context != context)
             throw new RuntimeException("It is not allowed to reset the context object of a workflow.") // This is a programming error
     }
 
@@ -111,116 +112,90 @@ abstract class Workflow {
     }
 
     /**
-     * Convenience method to get a boolean runflag from the context config, defaults to true
-     *
-     * @param flagID
-     * @return
+     * Introduced in BrawlWorkflow because of some issues with Groovy and the call method. Just for code completeness
      */
-    protected boolean getflag(String flagID) {
-        return getflag(flagID, true)
+    protected FileObject run(String toolName, BaseFile input, Object... additionalInput) {
+        return GenericMethod.callGenericTool(toolName, input, additionalInput);
     }
 
+    /**
+     * Introduced in BrawlWorkflow because of some issues with Groovy and the call method. Just for code completeness
+     */
+    protected FileGroup runWithOutputFileGroup(String toolName, BaseFile input, int numericCount, Object... additionalInput) {
+        return GenericMethod.callGenericToolWithFileGroupOutput(toolName, input, numericCount, additionalInput);
+    }
+
+    /**
+     * Introduced in BrawlWorkflow because of some issues with Groovy and the call method. Just for code completeness
+     */
+    protected FileGroup runWithOutputFileGroup(String toolName, BaseFile input, List<String> indices, Object... additionalInput) {
+        return GenericMethod.callGenericToolWithFileGroupOutput(toolName, input, indices, additionalInput);
+    }
+
+    /**
+     * Introduced in BrawlWorkflow because of some issues with Groovy and the call method. Just for code completeness
+     */
+    List<String> runSynchronized(String toolID, Map<String, Object> parameters) {
+        return ExecutionService.getInstance().callSynchronized(context, toolID, parameters);
+    }
 
     /**
      * Convenience method to get a boolean runflag from the context config, defaults to defaultValue
      *
      * @param flagID
+     * @param defaultValue Defaults to true
      * @return
      */
-    protected boolean getflag(String flagID, boolean defaultValue) {
+    protected boolean getflag(String flagID, boolean defaultValue = true) {
         return context.getConfiguration().getConfigurationValues().getBoolean(flagID, defaultValue)
     }
 
     /**
      * Instantiate a source file object representing a file on storage.
-     * Will call getSourceFile with context, path and BaseFile.STANDARD_FILE_CLASS
      *
      * @param path Pathname string to the file (remote or local)
+     * @param _class The class name of the new file object. This may be an existing or a new class (which will then be created).
+     *               Defaults to BaseFile.STANDARD_FILE_CLASS
      * @return
      */
-    protected BaseFile getSourceFile(String path) {
-        return getSourceFile(context, path, BaseFile.STANDARD_FILE_CLASS)
-    }
-    /**
-     * Instantiate a source file object representing a file on storage.
-     *
-     * @param path   Pathname string to the file (remote or local)
-     * @param _class The class name of the new file object. This may be an existing or a new class (which will then be created)
-     * @return
-     */
-    protected BaseFile getSourceFile(String path, String _class) {
+    protected BaseFile getSourceFile(String path, String _class = BaseFile.STANDARD_FILE_CLASS) {
         return BaseFile.fromStorage(context, path, _class)
-    }
-
-    /**
-     * Instantiate a source file object representing a file on storage.
-     *
-     * @param toolID String representing a tool ID.
-     * @return
-     */
-    protected BaseFile getSourceFileUsingTool(String toolID)
-            throws ExecutionException, UnexpectedExecutionResultException {
-        return getSourceFileUsingTool(toolID, BaseFile.STANDARD_FILE_CLASS)
     }
 
     /**
      * Instantiate a single source file object representing a file on storage.
      *
      * @param toolID String representing a tool ID.
-     * @param _class The class name of the file object to return.
+     * @param _class The class name of the file object to return. Defaults to BaseFile.STANDARD_FILE_CLASS
      * @return
      */
-    protected BaseFile getSourceFileUsingTool(String toolID, String _class)
+    protected BaseFile getSourceFileUsingTool(String toolID, String _class = BaseFile.STANDARD_FILE_CLASS)
             throws ExecutionException, UnexpectedExecutionResultException {
         return BaseFile.getSourceFileUsingTool(context, toolID, _class)
-    }
-
-    /**
-     * Like getSourceFileUsingTool(ExecutionContext, String) but returning multiple file objects.
-     *
-     * @param toolID
-     * @return
-     */
-    protected List<BaseFile> getSourceFilesUsingTool(String toolID)
-            throws ExecutionException {
-        return getSourceFilesUsingTool(toolID, BaseFile.STANDARD_FILE_CLASS)
     }
 
     /**
      * Like getSourceFileUsingToo(ExecutionContext, String, String) but returning multiple file objects.
      *
      * @param toolID
-     * @param _class
+     * @param _class Defaults to BaseFile.STANDARD_FILE_CLASS
      * @return
      */
-    protected List<BaseFile> getSourceFilesUsingTool(String toolID, String _class)
+    protected List<BaseFile> getSourceFilesUsingTool(String toolID, String _class = BaseFile.STANDARD_FILE_CLASS)
             throws ExecutionException {
         return BaseFile.getSourceFilesUsingTool(context, toolID, _class)
     }
 
-
-    /**
-     * Easily create a file which inherits from another file.
-     * Will call getDerivedFile with parent and BaseFile.STANDARD_FILE_CLASS
-     *
-     * @param parent The file from which the new file object inherits
-     * @return
-     */
-    protected BaseFile getDerivedFile(BaseFile parent) {
-        return getDerivedFile(parent, BaseFile.STANDARD_FILE_CLASS)
-    }
-
     /**
      * Easily create a file which inherits from another file.
      *
      * @param parent The file from which the new file object inherits
-     * @param _class The class of the new file object. This may be an existing or a new class (which will then be created)
+     * @param _class The class of the new file object. This may be an existing or a new class (which will then be created) Defaults to BaseFile.STANDARD_FILE_CLASS
      * @return
      */
-    protected BaseFile getDerivedFile(BaseFile parent, String _class) {
+    protected BaseFile getDerivedFile(BaseFile parent, String _class = BaseFile.STANDARD_FILE_CLASS) {
         return BaseFile.deriveFrom(parent, _class)
     }
-
 
     //////////////////////////////////////////////////
     // Methods will be removed at some point. With 4.0

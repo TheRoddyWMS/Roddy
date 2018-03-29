@@ -276,7 +276,8 @@ public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
     boolean queryDataSetExecutability(String id, String analysisId) {
         return withServer(false, {
             if (queryDataSetState(id, analysisId) == JobState.RUNNING) return false
-            return ExecutionContext.createContextWorkflowObject(loadAnalysis(analysisId).getWorkflow().checkExecutability(loadAnalysis(analysisId).run([id], ExecutionContextLevel.QUERY_STATUS)[0]);
+            def analysis = loadAnalysis(analysisId)
+            return ExecutionContext.createAnalysisWorkflowObject(analysis).checkExecutability(analysis.run([id], ExecutionContextLevel.QUERY_STATUS)[0]);
         });
     }
 

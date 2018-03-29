@@ -27,11 +27,6 @@ class BrawlWorkflow extends Workflow {
     final BrawlWorkflow THIS = this
 
     /**
-     * The context in which this Brawl workflow will run.
-     */
-    ExecutionContext context
-
-    /**
      * This is more or less the execute method of a normal workflow. It is set by the DSL method explicit.
      * Additionally we might implement implicit workflows, which will then be used to run things automatically.
      * Currently, however, we only support the strict explicit syntax. (aka you tell Roddy what to do)
@@ -44,7 +39,7 @@ class BrawlWorkflow extends Workflow {
             @DelegatesTo(strategy = Closure.DELEGATE_FIRST, value = BrawlWorkflow) Closure script
     ) {
         def workflow = new BrawlWorkflow()
-        workflow.context = context
+        workflow.setContext(context)
         script.resolveStrategy = Closure.DELEGATE_FIRST
         script.delegate = workflow
         script()
@@ -147,6 +142,7 @@ class BrawlWorkflow extends Workflow {
         context.configurationValues << new ConfigurationValue(context.configuration, id, value.toString(), "boolean")
     }
 
+    ////////////////////////////////////////
     /**
      * Directly copied from Workflow class... Seems Idea or Groovy does not like direct calls of the methods from super
      * Ok, to make things easier, "ExecutionContext context, " was removed from all the method headers.
@@ -157,6 +153,8 @@ class BrawlWorkflow extends Workflow {
      * This error always popped up when I tried to test the workflow using call(). _call(), run() etc. all worked.
      *
      */
+    ////////////////////////////////////////
+
     @CompileDynamic
     protected FileObject run(String toolName, BaseFile input, Object... additionalInput) {
         return GenericMethod.callGenericTool(toolName, input, additionalInput);
@@ -172,51 +170,29 @@ class BrawlWorkflow extends Workflow {
         return GenericMethod.callGenericToolWithFileGroupOutput(toolName, input, indices, additionalInput);
     }
 
-    public List<String> runSynchronized(String toolID, Map<String, Object> parameters) {
+    List<String> runSynchronized(String toolID, Map<String, Object> parameters) {
         return ExecutionService.getInstance().callSynchronized(context, toolID, parameters);
     }
 
-    protected boolean getflag(String flagID) {
-        return getflag(context, flagID, true);
-    }
-
-    protected boolean getflag(String flagID, boolean defaultValue) {
+    protected boolean getflag(String flagID, boolean defaultValue = true) {
         return context.getConfiguration().getConfigurationValues().getBoolean(flagID, defaultValue);
     }
 
-    protected BaseFile getSourceFile(String path) {
-        return getSourceFile(context, path, BaseFile.STANDARD_FILE_CLASS);
-    }
-
-    protected BaseFile getSourceFile(String path, String _class) {
+    protected BaseFile getSourceFile(String path, String _class = BaseFile.STANDARD_FILE_CLASS) {
         return BaseFile.fromStorage(context, path, _class);
     }
 
-    protected BaseFile getSourceFileUsingTool(String toolID)
-            throws ExecutionException, UnexpectedExecutionResultException {
-        return getSourceFileUsingTool(context, toolID, BaseFile.STANDARD_FILE_CLASS);
-    }
-
-    protected BaseFile getSourceFileUsingTool(String toolID, String _class)
+    protected BaseFile getSourceFileUsingTool(String toolID, String _class = BaseFile.STANDARD_FILE_CLASS)
             throws ExecutionException, UnexpectedExecutionResultException {
         return BaseFile.getSourceFileUsingTool(context, toolID, _class);
     }
 
-    protected List<BaseFile> getSourceFilesUsingTool(String toolID)
-            throws ExecutionException {
-        return getSourceFilesUsingTool(context, toolID, BaseFile.STANDARD_FILE_CLASS);
-    }
-
-    protected List<BaseFile> getSourceFilesUsingTool(String toolID, String _class)
+    protected List<BaseFile> getSourceFilesUsingTool(String toolID, String _class = BaseFile.STANDARD_FILE_CLASS)
             throws ExecutionException {
         return BaseFile.getSourceFilesUsingTool(context, toolID, _class);
     }
 
-    protected BaseFile getDerivedFile(BaseFile parent) {
-        return getDerivedFile(parent, BaseFile.STANDARD_FILE_CLASS);
-    }
-
-    protected BaseFile getDerivedFile(BaseFile parent, String _class) {
+    protected BaseFile getDerivedFile(BaseFile parent, String _class = BaseFile.STANDARD_FILE_CLASS) {
         return BaseFile.deriveFrom(parent, _class);
     }
 }

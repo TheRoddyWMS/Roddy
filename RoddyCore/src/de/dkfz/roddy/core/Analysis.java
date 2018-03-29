@@ -538,7 +538,7 @@ public class Analysis {
      * @param pidList
      */
     public void cleanup(List<String> pidList) {
-        if (!((AnalysisConfiguration) getConfiguration()).hasCleanupScript() && !ExecutionContext.createContextWorkflowObject(this).hasCleanupMethod())
+        if (!((AnalysisConfiguration) getConfiguration()).hasCleanupScript() && !ExecutionContext.createAnalysisWorkflowObject(this).hasCleanupMethod())
             logger.postAlwaysInfo("There is neither a configured cleanup script or a native workflow cleanup method available for this analysis.");
 
         List<DataSet> dataSets = getRuntimeService().loadDatasetsWithFilter(this, pidList, true);
