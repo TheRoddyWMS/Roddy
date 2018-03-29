@@ -4,56 +4,53 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.core;
+package de.dkfz.roddy.core
 
-import de.dkfz.roddy.config.Configuration;
-import de.dkfz.roddy.config.ConfigurationError;
-import de.dkfz.roddy.execution.UnexpectedExecutionResultException;
-import de.dkfz.roddy.execution.io.ExecutionService;
-import de.dkfz.roddy.knowledge.files.BaseFile;
-import de.dkfz.roddy.knowledge.files.FileGroup;
-import de.dkfz.roddy.knowledge.files.FileObject;
-import de.dkfz.roddy.knowledge.methods.GenericMethod;
+import de.dkfz.roddy.config.ConfigurationError
+import de.dkfz.roddy.execution.UnexpectedExecutionResultException
+import de.dkfz.roddy.execution.io.ExecutionService
+import de.dkfz.roddy.knowledge.files.BaseFile
+import de.dkfz.roddy.knowledge.files.FileGroup
+import de.dkfz.roddy.knowledge.files.FileObject
+import de.dkfz.roddy.knowledge.methods.GenericMethod
 
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
+import java.lang.reflect.Method
+import java.util.concurrent.ExecutionException
 
 /**
  * A worklow can be created and executed to process a set of data.
  *
  * @author michael
  */
-public abstract class Workflow {
+abstract class Workflow {
 
     /**
      * Keep this private so it cannot be overriden. Setter allows to set it ONCE.
      */
-    private ExecutionContext context;
+    private ExecutionContext context
 
-    public Workflow() {
+    Workflow() {
     }
 
-    public ExecutionContext getContext() {
-        return context;
+    ExecutionContext getContext() {
+        return context
     }
 
-    public void setContext(ExecutionContext context) {
+    void setContext(ExecutionContext context) {
         if (context == null)
-            this.context = context;
+            this.context = context
         else
-            throw new RuntimeException("It is not allowed to reset the context object of a workflow."); // This is a programming error
+            throw new RuntimeException("It is not allowed to reset the context object of a workflow.") // This is a programming error
     }
 
     /**
      * Workflow specific setups can be created here.
      * This includes i.e. the creation of paths.
      */
-    public void setupExecution(ExecutionContext context) {
+    void setupExecution(ExecutionContext context) {
     }
 
-    public void finalizeExecution(ExecutionContext context) {
+    void finalizeExecution(ExecutionContext context) {
     }
 
     /**
@@ -63,23 +60,23 @@ public abstract class Workflow {
      * @param context
      * @return
      */
-    public boolean checkExecutability(ExecutionContext context) {
-        return true;
+    boolean checkExecutability(ExecutionContext context) {
+        return true
     }
 
-    public abstract boolean execute(ExecutionContext context) throws ConfigurationError;
+    abstract boolean execute(ExecutionContext context) throws ConfigurationError
 
-    public boolean hasCleanupMethod() {
+    boolean hasCleanupMethod() {
         for (Method m : this.getClass().getMethods()) {
             if (m.getName().equals("cleanup") && m.getDeclaringClass() == this.getClass()) {
-                return true;
+                return true
             }
         }
-        return false;
+        return false
     }
 
-    public boolean cleanup(DataSet dataset) {
-        return false;
+    boolean cleanup(DataSet dataset) {
+        return false
     }
 
     /**
@@ -91,15 +88,15 @@ public abstract class Workflow {
      * @return
      */
     protected FileObject call(String toolName, BaseFile input, Object... additionalInput) {
-        return GenericMethod.callGenericTool(toolName, input, additionalInput);
+        return GenericMethod.callGenericTool(toolName, input, additionalInput)
     }
 
     protected FileGroup callWithOutputFileGroup(String toolName, BaseFile input, int numericCount, Object... additionalInput) {
-        return GenericMethod.callGenericToolWithFileGroupOutput(toolName, input, numericCount, additionalInput);
+        return GenericMethod.callGenericToolWithFileGroupOutput(toolName, input, numericCount, additionalInput)
     }
 
     protected FileGroup callWithOutputFileGroup(String toolName, BaseFile input, List<String> indices, Object... additionalInput) {
-        return GenericMethod.callGenericToolWithFileGroupOutput(toolName, input, indices, additionalInput);
+        return GenericMethod.callGenericToolWithFileGroupOutput(toolName, input, indices, additionalInput)
     }
 
     /**
@@ -109,8 +106,8 @@ public abstract class Workflow {
      * @param parameters
      * @return
      */
-    public List<String> callSynchronized(String toolID, Map<String, Object> parameters) {
-        return ExecutionService.getInstance().callSynchronized(context, toolID, parameters);
+    List<String> callSynchronized(String toolID, Map<String, Object> parameters) {
+        return ExecutionService.getInstance().callSynchronized(context, toolID, parameters)
     }
 
     /**
@@ -120,7 +117,7 @@ public abstract class Workflow {
      * @return
      */
     protected boolean getflag(String flagID) {
-        return getflag(flagID, true);
+        return getflag(flagID, true)
     }
 
 
@@ -131,7 +128,7 @@ public abstract class Workflow {
      * @return
      */
     protected boolean getflag(String flagID, boolean defaultValue) {
-        return context.getConfiguration().getConfigurationValues().getBoolean(flagID, defaultValue);
+        return context.getConfiguration().getConfigurationValues().getBoolean(flagID, defaultValue)
     }
 
     /**
@@ -142,7 +139,7 @@ public abstract class Workflow {
      * @return
      */
     protected BaseFile getSourceFile(String path) {
-        return getSourceFile(context, path, BaseFile.STANDARD_FILE_CLASS);
+        return getSourceFile(context, path, BaseFile.STANDARD_FILE_CLASS)
     }
     /**
      * Instantiate a source file object representing a file on storage.
@@ -152,7 +149,7 @@ public abstract class Workflow {
      * @return
      */
     protected BaseFile getSourceFile(String path, String _class) {
-        return BaseFile.fromStorage(context, path, _class);
+        return BaseFile.fromStorage(context, path, _class)
     }
 
     /**
@@ -163,7 +160,7 @@ public abstract class Workflow {
      */
     protected BaseFile getSourceFileUsingTool(String toolID)
             throws ExecutionException, UnexpectedExecutionResultException {
-        return getSourceFileUsingTool(toolID, BaseFile.STANDARD_FILE_CLASS);
+        return getSourceFileUsingTool(toolID, BaseFile.STANDARD_FILE_CLASS)
     }
 
     /**
@@ -175,7 +172,7 @@ public abstract class Workflow {
      */
     protected BaseFile getSourceFileUsingTool(String toolID, String _class)
             throws ExecutionException, UnexpectedExecutionResultException {
-        return BaseFile.getSourceFileUsingTool(context, toolID, _class);
+        return BaseFile.getSourceFileUsingTool(context, toolID, _class)
     }
 
     /**
@@ -186,7 +183,7 @@ public abstract class Workflow {
      */
     protected List<BaseFile> getSourceFilesUsingTool(String toolID)
             throws ExecutionException {
-        return getSourceFilesUsingTool(toolID, BaseFile.STANDARD_FILE_CLASS);
+        return getSourceFilesUsingTool(toolID, BaseFile.STANDARD_FILE_CLASS)
     }
 
     /**
@@ -198,7 +195,7 @@ public abstract class Workflow {
      */
     protected List<BaseFile> getSourceFilesUsingTool(String toolID, String _class)
             throws ExecutionException {
-        return BaseFile.getSourceFilesUsingTool(context, toolID, _class);
+        return BaseFile.getSourceFilesUsingTool(context, toolID, _class)
     }
 
 
@@ -210,7 +207,7 @@ public abstract class Workflow {
      * @return
      */
     protected BaseFile getDerivedFile(BaseFile parent) {
-        return getDerivedFile(parent, BaseFile.STANDARD_FILE_CLASS);
+        return getDerivedFile(parent, BaseFile.STANDARD_FILE_CLASS)
     }
 
     /**
@@ -221,7 +218,7 @@ public abstract class Workflow {
      * @return
      */
     protected BaseFile getDerivedFile(BaseFile parent, String _class) {
-        return BaseFile.deriveFrom(parent, _class);
+        return BaseFile.deriveFrom(parent, _class)
     }
 
 
@@ -231,45 +228,45 @@ public abstract class Workflow {
 
     @Deprecated
     protected BaseFile getSourceFile(ExecutionContext context, String path, String _class) {
-        return BaseFile.fromStorage(context, path, _class);
+        return BaseFile.fromStorage(context, path, _class)
     }
 
     @Deprecated
     protected BaseFile getSourceFile(ExecutionContext context, String path) {
-        return getSourceFile(context, path, BaseFile.STANDARD_FILE_CLASS);
+        return getSourceFile(context, path, BaseFile.STANDARD_FILE_CLASS)
     }
 
     @Deprecated
     protected boolean getflag(ExecutionContext context, String flagID) {
-        return getflag(context, flagID, true);
+        return getflag(context, flagID, true)
     }
 
     @Deprecated
     protected boolean getflag(ExecutionContext context, String flagID, boolean defaultValue) {
-        return context.getConfiguration().getConfigurationValues().getBoolean(flagID, defaultValue);
+        return context.getConfiguration().getConfigurationValues().getBoolean(flagID, defaultValue)
     }
 
     @Deprecated
     protected BaseFile getSourceFileUsingTool(ExecutionContext context, String toolID)
             throws ExecutionException, UnexpectedExecutionResultException {
-        return getSourceFileUsingTool(context, toolID, BaseFile.STANDARD_FILE_CLASS);
+        return getSourceFileUsingTool(context, toolID, BaseFile.STANDARD_FILE_CLASS)
     }
 
     @Deprecated
     protected BaseFile getSourceFileUsingTool(ExecutionContext context, String toolID, String _class)
             throws ExecutionException, UnexpectedExecutionResultException {
-        return BaseFile.getSourceFileUsingTool(context, toolID, _class);
+        return BaseFile.getSourceFileUsingTool(context, toolID, _class)
     }
 
     @Deprecated
     protected List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID, String _class)
             throws ExecutionException {
-        return BaseFile.getSourceFilesUsingTool(context, toolID, _class);
+        return BaseFile.getSourceFilesUsingTool(context, toolID, _class)
     }
 
     @Deprecated
     protected List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID)
             throws ExecutionException {
-        return getSourceFilesUsingTool(context, toolID, BaseFile.STANDARD_FILE_CLASS);
+        return getSourceFilesUsingTool(context, toolID, BaseFile.STANDARD_FILE_CLASS)
     }
 }
