@@ -81,7 +81,7 @@ class RuntimeServiceTest {
     }
 
     public static Analysis getTestAnalysis() {
-        return new Analysis("Test", new Project(null, null, null, null), null, new RuntimeService() {
+        return new Analysis("Test", new Project(null, null, null, null), new RuntimeService() {
 
             @Override
             File getInputFolderForAnalysis(Analysis analysis) {
