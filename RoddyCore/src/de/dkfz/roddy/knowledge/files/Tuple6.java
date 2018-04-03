@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2018 German Cancer Research Center (DKFZ).
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -7,7 +7,7 @@
 package de.dkfz.roddy.knowledge.files;
 
 /**
- * A file object tuple designed for (generic) job calls with 5 entries
+ * A file object tuple designed for (generic) job calls with 6 entries
  */
 public class Tuple6<
         X extends FileObject,
