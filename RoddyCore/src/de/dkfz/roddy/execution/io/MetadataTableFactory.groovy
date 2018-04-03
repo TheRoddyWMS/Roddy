@@ -38,7 +38,7 @@ final class MetadataTableFactory {
 
     /**
      * This method constructs the Metadata table valid for the current Roddy execution!
-     * It will lookup implementataion
+     * It will lookup implementation.
      */
     static BaseMetadataTable getTable(Analysis analysis) {
         if (!Roddy.isMetadataCLOptionSet()) {
