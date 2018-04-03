@@ -35,8 +35,14 @@ public class FileObjectTupleFactory {
             return  new Tuple6<> (fileObjects[0], fileObjects[1], fileObjects[2], fileObjects[3], fileObjects[4], fileObjects[5]);
         } else if (fileObjects.size() == 7) {
             return  new Tuple7<> (fileObjects[0], fileObjects[1], fileObjects[2], fileObjects[3], fileObjects[4], fileObjects[5], fileObjects[6]);
+        } else if (fileObjects.size() == 8) {
+            return  new Tuple8<> (fileObjects[0], fileObjects[1], fileObjects[2], fileObjects[3], fileObjects[4], fileObjects[5], fileObjects[6], fileObjects[7]);
+        } else if (fileObjects.size() == 9) {
+            return  new Tuple9<> (fileObjects[0], fileObjects[1], fileObjects[2], fileObjects[3], fileObjects[4], fileObjects[5], fileObjects[6], fileObjects[7], fileObjects[8]);
+        } else if (fileObjects.size() == 10) {
+            return new Tuple10<> (fileObjects[0], fileObjects[1], fileObjects[2], fileObjects[3], fileObjects[4], fileObjects[5], fileObjects[6], fileObjects[7], fileObjects[8], fileObjects[9]);
         } else if (fileObjects.size() == 13) {
-            return new Tuple13<>(fileObjects[0], fileObjects[1], fileObjects[2], fileObjects[3], fileObjects[4], fileObjects[5], fileObjects[6], fileObjects[7], fileObjects[8], fileObjects[9], fileObjects[10], fileObjects[11], fileObjects[12]
+            return new Tuple13<> (fileObjects[0], fileObjects[1], fileObjects[2], fileObjects[3], fileObjects[4], fileObjects[5], fileObjects[6], fileObjects[7], fileObjects[8], fileObjects[9], fileObjects[10], fileObjects[11], fileObjects[12]
             );
         }
     }
