@@ -278,6 +278,9 @@ class GenericMethod {
                 if (split.length != 2)
                     throw new RuntimeException("Unable to convert entry ${entry.toString()} to parameter.")
                 parameters[split[0]] = split[1]
+                // Put null for things which are treated as "normal" parameters (parameter file).
+                // The null entry is a placeholder and will be ignored in followup steps.
+                allInputValues << null
             }
         }
     }
@@ -294,18 +297,15 @@ class GenericMethod {
             ToolEntry.ToolParameter toolParameter = calledTool.getInputParameters(context)[i];
             if (toolParameter instanceof ToolFileParameter) {
                 ToolFileParameter _tp = (ToolFileParameter) toolParameter;
-                //TODO Check if input and output parameters match and also check for array indices and item count. Throw a proper error message.
                 if(allInputValues.size() <= i ) {
-                    logger.severe("Not all input parameters were set for ${calledTool.id}. Expected ${calledTool.getInputParameters(context).size()}. Breaking loop and trying to go on.")
-                    continue
+                    throw new ConfigurationError("Not all input parameters were set for ${calledTool.id}. Expected ${calledTool.getInputParameters(context).size()}. Breaking loop and trying to go on.", "GenericMethod")
                 }
                 if(allInputValues[i] == null){
                     logger.severe("There is an input mismatch for the tool ${calledTool.id}. Expected ${_tp.fileClass} but got null. Trying to go on.")
                     continue
                 }
                 if (!allInputValues[i].class == _tp.fileClass){
-                    logger.severe("Class mismatch for " + allInputValues[i] + " should be of class " + _tp.fileClass + '. Trying to go on.');
-                    continue
+                    throw new ConfigurationError("Class mismatch for ${allInputValues[i]} should be of class ${_tp.fileClass}.", "GenericMethod");
                 }
                 if (_tp.scriptParameterName) {
                     parameters[_tp.scriptParameterName] = ((BaseFile) allInputValues[i]);
