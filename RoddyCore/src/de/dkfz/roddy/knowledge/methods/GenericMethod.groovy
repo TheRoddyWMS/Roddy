@@ -7,6 +7,7 @@
 package de.dkfz.roddy.knowledge.methods
 
 import de.dkfz.roddy.config.*
+import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.execution.jobs.BEJobResult
@@ -237,6 +238,7 @@ class GenericMethod {
 
         updateParameters()
 
+        // TODO Allow for (multiple) groups in tuples.
         F outputObject = createOutputObject()
 
         List<BaseFile> filesToVerify = fillListOfCreatedObjects(outputObject)
@@ -271,7 +273,12 @@ class GenericMethod {
                 allInputValues << (FileGroup) entry
             } else if (entry instanceof Map) {
                 (entry as Map).forEach { k, v ->
-                    parameters[k.toString()] = v.toString()
+                    if (v instanceof List)
+                        parameters[k.toString()] = BashConverter.convertListToBashArrayString(v)
+                    else if (v instanceof Map)
+                        parameters[k.toString()] = BashConverter.convertMapToBashMapString(v)
+                    else
+                        parameters[k.toString()] = v.toString()
                 }
             } else {               // Catch-all, in case one still wants to use a string with '=' to define a parameter (deprecated).
                 String[] split = entry.toString().split("=")
@@ -501,7 +508,6 @@ class GenericMethod {
 
                 //TODO URGENT
                 //The underlying error is that a configuration file has e.g. a typo, or not? Such kind of errors are user errors, where there is a clear cause (line X in file Y contains garbage Z). Ideally we would just display an error message with as much information possible to allow the user to fix the error, but no stack trace.
-                //Do you think it would make sense to separate out two groups of Exceptions, one that shows only the error message containing all information required to fix the input problem caused by the user, and the othor more fatal class of exceptions raised by the workflow or RoddyCore, that indicates real programming errors and are displayed with a full stack trace?
 
                 context.addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_NOCONSTRUCTOR.expand("File object of type ${fileParameter?.fileClass} with input ${firstInputFile?.class} needs a constructor which takes a ConstuctionHelper object."));
                 throw new RuntimeException("Could not find valid constructor for type  ${fileParameter?.fileClass} with input ${firstInputFile?.class}.");
@@ -532,7 +538,7 @@ class GenericMethod {
      * @param classToSearch
      * @return
      */
-    public static Constructor<BaseFile> searchBaseFileConstructorForConstructionHelperObject(Class classToSearch) {
+    static Constructor<BaseFile> searchBaseFileConstructorForConstructionHelperObject(Class classToSearch) {
         try {
             return classToSearch.getConstructor(BaseFile.ConstructionHelperForBaseFiles);
         } catch (Exception e) {

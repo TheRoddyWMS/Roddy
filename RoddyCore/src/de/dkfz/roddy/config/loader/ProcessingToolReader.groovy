@@ -161,13 +161,6 @@ class ProcessingToolReader {
                 if (noOfOutputParameters != outputParameters.size())
                     addLoadErr("The number of read output parameters does not match to the output parameters in the configuration.", null)
 
-                if ((inputParameters && !outputParameters) || (!inputParameters && outputParameters)) {
-                    if (!inputParameters)
-                        addLoadErr("Output parameters are set but input parameters are not. You need to set both or none.", null)
-                    if (!outputParameters)
-                        addLoadErr("Input parameters are set but output parameters are not. You need to set both or none.", null)
-                }
-
                 def allparameters = (inputParameters + outputParameters).collect {
                     if (!it) // Error is already catched in parseToolParameter, just skip it here.
                         return
