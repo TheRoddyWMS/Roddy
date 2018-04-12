@@ -372,7 +372,7 @@ abstract class ExecutionService implements BEExecutionService {
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
                     expand("The datasets execution storeage folder is not writable: ${baseContextExecutionDirectory}"))
 
-        // the exec_... folder int the base context exec dir. (NOT CHECKED, created later!)
+        // the exec_... folder in the base context exec dir. (NOT CHECKED, created later!)
         File contextExecutionDirectory = context.getExecutionDirectory()
 
         // .roddyExecutionStore in outputBaseDirectory

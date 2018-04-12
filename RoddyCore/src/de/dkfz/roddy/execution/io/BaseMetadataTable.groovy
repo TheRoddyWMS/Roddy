@@ -10,10 +10,8 @@ import groovy.transform.CompileStatic
 
 /**
  * The basic input table class for data input in table format instead of files.
- * Initially the class was created by Philip Kensche and created for our workflows.
- * But it turned out to be useful in general. So to get the full power of the class,
- * create a custom class in your workflow extends this one and add all the stuff you
- * need.
+ * To get the full power of the class, create a custom class in your workflow
+ * extends this one and add all the stuff you need.
  */
 @CompileStatic
 class BaseMetadataTable {

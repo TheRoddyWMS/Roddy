@@ -240,8 +240,12 @@ class BashConverter extends ConfigurationConverter {
             return '"' + value + '"'
     }
 
-    static String convertListToBashArray(List list) {
+    static String convertListToBashArrayString(List list) {
         "(${list.collect { it.toString() }.join(" ")})" as String
+    }
+
+    static String convertMapToBashMapString(Map map) {
+        "(${map.collect { k, v -> "[$k]=$v"}.join(" ")})" as String
     }
 
     /** To convert a simple Map of String keys to String values (possibly pre-converted!), this method should be used.
@@ -252,8 +256,8 @@ class BashConverter extends ConfigurationConverter {
      * @param doQuote
      * @return
      */
-    static List<String> convertStringMapToList(Map<String, String> map, Boolean doDeclare = true,
-                                               Boolean quoteSomeScalarConfigValues = true, Boolean doQuote = true) {
+    static List<String> convertStringMapToDeclarationList(Map<String, String> map, Boolean doDeclare = true,
+                                                          Boolean quoteSomeScalarConfigValues = true, Boolean doQuote = true) {
         String declareString = ""
         if (doDeclare) {
             declareString = "declare -x   "
@@ -279,9 +283,9 @@ class BashConverter extends ConfigurationConverter {
      * @param doQuote
      * @return
      */
-    static String convertStringMap(Map<String, String> map, Boolean doDeclare = true,
-                                   Boolean quoteSomeScalarConfigValues = true, Boolean doQuote = true) {
-        return convertStringMapToList(map, doDeclare, quoteSomeScalarConfigValues, doQuote).join("")
+    static String convertStringMapToDeclarations(Map<String, String> map, Boolean doDeclare = true,
+                                                 Boolean quoteSomeScalarConfigValues = true, Boolean doQuote = true) {
+        return convertStringMapToDeclarationList(map, doDeclare, quoteSomeScalarConfigValues, doQuote).join("")
     }
 
     /** ConfigurationValue provides meta-data about types for the values. To exploit this specialized conversion function exists.

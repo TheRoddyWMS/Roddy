@@ -208,10 +208,12 @@ public class Analysis {
                 continue;
             }
 
-            ExecutionContext ec = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, level, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null, creationCheckPoint);
+            ExecutionContext context =
+                    new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, level,
+                            ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null, creationCheckPoint);
 
-            executeRun(ec, preventLoggingOnQueryStatus);
-            runs.add(ec);
+            executeRun(context, preventLoggingOnQueryStatus);
+            runs.add(context);
         }
         return runs;
     }
@@ -225,7 +227,7 @@ public class Analysis {
      */
     public List<ExecutionContext> rerun(List<ExecutionContext> contexts, boolean test) {
         long creationCheckPoint = System.nanoTime();
-        LinkedList<ExecutionContext> newRuns = new LinkedList<>();
+        LinkedList<ExecutionContext> newRunContexts = new LinkedList<>();
         for (ExecutionContext oldContext : contexts) {
             DataSet ds = oldContext.getDataSet();
             if (!test && !canStartJobs(ds)) {
@@ -233,13 +235,16 @@ public class Analysis {
                 continue;
             }
 
-            ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, oldContext.getDataSet(), test ? ExecutionContextLevel.TESTRERUN : ExecutionContextLevel.RERUN, oldContext.getOutputDirectory(), oldContext.getInputDirectory(), null, creationCheckPoint);
+            ExecutionContext context =
+                    new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, oldContext.getDataSet(),
+                            test ? ExecutionContextLevel.TESTRERUN : ExecutionContextLevel.RERUN,
+                            oldContext.getOutputDirectory(), oldContext.getInputDirectory(), null, creationCheckPoint);
 
             context.getAllFilesInRun().addAll(oldContext.getAllFilesInRun());
             executeRun(context);
-            newRuns.add(context);
+            newRunContexts.add(context);
         }
-        return newRuns;
+        return newRunContexts;
     }
 
     private boolean canStartJobs(DataSet ds) {
@@ -365,13 +370,21 @@ public class Analysis {
         Exception eCopy = null;
         try {
 
-            boolean setupExecutionStatus = context.analysis.getWorkflow().setupExecution(context);
             boolean contextRightsSettings = ExecutionService.getInstance().checkAccessRightsSettings(context);
             boolean contextPermissions = ExecutionService.getInstance().checkContextDirectoriesAndFiles(context);
+            boolean configurationValidity =
+                    Roddy.isStrictModeEnabled() && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors)
+                            ? !getConfiguration().hasErrors()
+                            : true;
+
+            // The setup of the workflow and the executability check may require the execution store, e.g. for synchronously called jobs
+            // to gather data from the remote side.
+            ExecutionService.getInstance().writeFilesForExecution(context);
+
+            boolean setupExecutionStatus = context.analysis.getWorkflow().setupExecution(context);
             boolean contextExecutability = context.analysis.getWorkflow().checkExecutability(context);
-            boolean configurationValidity = Roddy.isStrictModeEnabled() && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors) ? !getConfiguration().hasErrors() : true;
+
             isExecutable = setupExecutionStatus && contextRightsSettings && contextPermissions && contextExecutability && configurationValidity;
-            boolean successfullyExecuted = false;
 
             if (!isExecutable) {
                 StringBuilder message = new StringBuilder("The workflow does not seem to be executable for dataset " + datasetID);
@@ -381,8 +394,8 @@ public class Analysis {
                 if (!configurationValidity) message.append("\n\tContext configuration has errors.");
                 logger.severe(message.toString());
             } else {
+                boolean successfullyExecuted = false;
                 try {
-                    ExecutionService.getInstance().writeFilesForExecution(context);
                     boolean execute = true;
                     if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) { // Only do these checks, if we are not in query mode!
                         List<String> invalidPreparedFiles = ExecutionService.getInstance().checkForInaccessiblePreparedFiles(context);
@@ -431,7 +444,7 @@ public class Analysis {
             }
         } catch (Exception e) {
             eCopy = e;
-            context.addErrorEntry(ExecutionContextError.EXECUTION_UNCATCHEDERROR.expand(e));
+            context.addErrorEntry(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e));
 
         } finally {
             if (eCopy != null) {

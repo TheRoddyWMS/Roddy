@@ -330,7 +330,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             } else
                 convertedParameters.add(o.toString())
         }
-        return BashConverter.convertListToBashArray(convertedParameters)
+        return BashConverter.convertListToBashArrayString(convertedParameters)
     }
 
 
@@ -524,7 +524,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         this.parameters[RODDY_PARENT_JOBS] = parameterObjectToString(RODDY_PARENT_JOBS, parentJobIDs.unique()*.id)
         this.parameters[PARAMETER_FILE] = parameterObjectToString(PARAMETER_FILE, parameterFile)
         // The CONFIG_FILE variable is set to the same value as the PARAMETER_FILE to keep older scripts working with job-specific only environments.
-        this.parameters[CONFIG_FILE] = this.parameters[PARAMETER_FILE]
+        this.parameters[CONFIG_FILE] = this.parameters[PARAMETER_FILE]  // TODO Deprecated. Remove this line in Roddy 4.0.
 
         boolean debugWrapInScript = false
         if (configuration.configurationValues.hasValue(DEBUG_WRAP_IN_SCRIPT)) {
