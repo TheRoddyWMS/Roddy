@@ -51,11 +51,6 @@ public class Analysis {
     private final Project project;
 
     /**
-     * An analysis has a single link to a workflow but a workflow can be used by multiple workflows.
-     */
-    private final Workflow workflow;
-
-    /**
      * An analysis is directly linked to a configuration
      */
     private final Configuration configuration;
@@ -71,10 +66,9 @@ public class Analysis {
      */
     private RuntimeService runtimeService;
 
-    public Analysis(String name, Project project, Workflow workflow, RuntimeService runtimeService, AnalysisConfiguration configuration) {
+    public Analysis(String name, Project project, RuntimeService runtimeService, AnalysisConfiguration configuration) {
         this.name = name;
         this.project = project;
-        this.workflow = workflow;
         this.configuration = configuration;
         this.runtimeService = runtimeService;
     }
@@ -85,10 +79,6 @@ public class Analysis {
 
     public Project getProject() {
         return project;
-    }
-
-    public Workflow getWorkflow() {
-        return workflow;
     }
 
     public String getUsername() {
@@ -122,7 +112,7 @@ public class Analysis {
     @Deprecated
     private ContextConfiguration _contextConfiguration = null;
 
-    public Configuration getConfiguration() {
+    public AnalysisConfiguration getConfiguration() {
         if (_contextConfiguration == null)
             _contextConfiguration = new ContextConfiguration((AnalysisConfiguration) this.configuration, (ProjectConfiguration) this.project.getConfiguration());
         return _contextConfiguration;
@@ -391,7 +381,7 @@ public class Analysis {
                             StringBuilder message = new StringBuilder("There were errors after preparing the workflow run for dataset " + datasetID);
                             if (invalidPreparedFiles.size() > 0)
                                 message.append("\n\tSome files could not be written. Workflow will not execute.\n\t"
-                                    + String.join("\t\n", invalidPreparedFiles));
+                                        + String.join("\t\n", invalidPreparedFiles));
                             if (!copiedAnalysisToolsAreExecutable)
                                 message.append("\n\tSome declared tools are not executable. Workflow will not execute.");
                             if (ignoreFileChecks) {
@@ -548,14 +538,15 @@ public class Analysis {
      * @param pidList
      */
     public void cleanup(List<String> pidList) {
-        if (!((AnalysisConfiguration) getConfiguration()).hasCleanupScript() && !getWorkflow().hasCleanupMethod())
+        if (!((AnalysisConfiguration) getConfiguration()).hasCleanupScript() && !ExecutionContext.createAnalysisWorkflowObject(this).hasCleanupMethod())
             logger.postAlwaysInfo("There is neither a configured cleanup script or a native workflow cleanup method available for this analysis.");
+
         List<DataSet> dataSets = getRuntimeService().loadDatasetsWithFilter(this, pidList, true);
         for (DataSet ds : dataSets) {
             // Call a custom cleanup shell script.
+            ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, ExecutionContextLevel.CLEANUP, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null);
             if (((AnalysisConfiguration) getConfiguration()).hasCleanupScript()) {
                 //TODO Think hard if this could be generified and simplified! This is also used in other places in a similar way right?
-                ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, ExecutionContextLevel.CLEANUP, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null);
                 Job cleanupJob = new Job(context, "cleanup", ((AnalysisConfiguration) getConfiguration()).getCleanupScript(), null);
 //                Command cleanupCmd = Roddy.getJobManager().createCommand(cleanupJob, cleanupJob.getToolPath(), new LinkedList<>());
                 try {
@@ -569,8 +560,8 @@ public class Analysis {
             }
 
             // Call the workflows cleanup java method.
-            if (getWorkflow().hasCleanupMethod())
-                getWorkflow().cleanup(ds);
+            if (context.getWorkflow().hasCleanupMethod())
+                context.getWorkflow().cleanup(ds);
         }
     }
 

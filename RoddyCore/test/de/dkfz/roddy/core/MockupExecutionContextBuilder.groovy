@@ -99,7 +99,7 @@ public class MockupExecutionContextBuilder {
                 return "TestProject";
             }
         }
-        final Analysis analysis = new Analysis("Test", project, null, null, new AnalysisConfiguration(null, "", "", null, null, null, null))
+        final Analysis analysis = new Analysis("Test", project, null, new AnalysisConfiguration(null, "", "", null, null, null, null))
 
         return new ExecutionContext(System.getProperty("user.name"), analysis, null, ExecutionContextLevel.UNSET, testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime(), true) {
             @Override
