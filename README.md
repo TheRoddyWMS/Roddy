@@ -25,6 +25,7 @@ During the start-up a Groovy interpreter is used. Then, as Roddy is a JVM-based 
 
 ```bash
 curl -s "https://get.sdkman.io" | bash
+source "$HOME/.sdkman/bin/sdkman-init.sh"
 sdk install groovy 2.4.7
 sdk install java 8u151-oracle
 ```
