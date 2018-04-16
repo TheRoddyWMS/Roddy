@@ -17,7 +17,7 @@ To run Roddy you need at least
 * the base plugin
 * zip/unzip
 * bash
-* the tool `lockfile` (usually in the procmail)
+* the tool `lockfile` (usually in the "procmail" package)
 
 ## Java and Groovy
 
