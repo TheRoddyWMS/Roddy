@@ -105,22 +105,22 @@ public class PluginInfo {
         toolsBaseDir = getToolsDirectory();
 
         if (toolsBaseDir != null && toolsBaseDir.exists() && toolsBaseDir.isDirectory()) { //Search through the default folders, if possible.
-                for (File file : toolsBaseDir.listFiles()) {
-                    PosixFileAttributes attr;
-                    try {
-                        attr = Files.readAttributes(file.toPath(), PosixFileAttributes.class);
-                    } catch (IOException ex) {
-                        errors.add("An IOException occurred while accessing '" + file.getAbsolutePath() + "': " + ex.getMessage());
-                        continue;
-                    }
-
-                    if (!attr.isDirectory() || file.isHidden()) {
-                        continue;
-                    }
-
-                    String toolsDir = file.getName();
-                    listOfToolDirectories.put(toolsDir, file);
+            for (File file : toolsBaseDir.listFiles()) {
+                PosixFileAttributes attr;
+                try {
+                    attr = Files.readAttributes(file.toPath(), PosixFileAttributes.class);
+                } catch (IOException ex) {
+                    errors.add("An IOException occurred while accessing '" + file.getAbsolutePath() + "': " + ex.getMessage());
+                    continue;
                 }
+
+                if (!attr.isDirectory() || file.isHidden()) {
+                    continue;
+                }
+
+                String toolsDir = file.getName();
+                listOfToolDirectories.put(toolsDir, file);
+            }
         }
     }
 
@@ -146,7 +146,13 @@ public class PluginInfo {
 
     public List<File> getConfigurationFiles() {
         File configPath = getConfigurationDirectory();
-        return Arrays.asList(configPath.listFiles((FileFilter) new WildcardFileFilter(new String[]{"*.sh", "*.xml"})));
+        List<File> configurationFiles = new LinkedList<>();
+        configurationFiles.addAll(Arrays.asList(configPath.listFiles((FileFilter) new WildcardFileFilter(new String[]{"*.sh", "*.xml"}))));
+        if (getBrawlWorkflowDirectory().exists() && getBrawlWorkflowDirectory().canRead()) {
+            File[] files = getBrawlWorkflowDirectory().listFiles((FileFilter) new WildcardFileFilter(new String[]{"*.brawl", "*.groovy"}));
+            configurationFiles.addAll(Arrays.asList(files));
+        }
+        return configurationFiles;
     }
 
     public String getName() {

@@ -60,10 +60,6 @@ class MockupExecutionContextBuilderTest extends GroovyTestCase {
         MockupExecutionContextBuilder.createSimpleContext(MockupExecutionContextBuilderTest.name)
     }
 
-    void testCreateSimpleContextWithClassNameAndNulls() {
-        MockupExecutionContextBuilder.createSimpleContext(MockupExecutionContextBuilderTest.name, null, null)
-    }
-
     void testCreateSimpleContextWithClassNameAndCustomConfig() {
         Configuration configuration = new Configuration(null);
         MockupExecutionContextBuilder.createSimpleContext(MockupExecutionContextBuilderTest.name, configuration);

@@ -31,6 +31,8 @@ import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobManagerOptionsBuilder
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
+import de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForBaseFiles
+import de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForGenericCreation
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
@@ -323,10 +325,10 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
             ConstructionHelperForGenericCreation _helper = helper as ConstructionHelperForGenericCreation;
             if (_helper.parentObject instanceof FileGroup) {
                 parentFiles.addAll((_helper.parentObject as FileGroup).getFilesInGroup());
-                this.fileStageSettings = _helper.fileStageSettings
+                this.fileStageSettings = (FS) _helper.fileStageSettings
             } else if (_helper.parentObject instanceof BaseFile) {
                 parentFiles.add(_helper.parentObject as BaseFile);
-                this.fileStageSettings = _helper.fileStageSettings ?: (FS) (_helper.parentObject as BaseFile)?.fileStageSettings ?: null;
+                this.fileStageSettings = (FS) (_helper.fileStageSettings ?: (_helper.parentObject as BaseFile)?.fileStageSettings ?: null);
             }
             Tuple2<File, FilenamePattern> fnresult = getFilename(this, _helper.selectionTag);
             if (fnresult) {
@@ -336,7 +338,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         } else if (helper instanceof ConstructionHelperForSourceFiles) {
             ConstructionHelperForSourceFiles _helper = helper as ConstructionHelperForSourceFiles;
 
-            this.fileStageSettings = _helper.fileStageSettings;
+            this.fileStageSettings = (FS) _helper.fileStageSettings;
             this.path = _helper.getPath();
             setAsSourceFile();
         } else {
@@ -659,7 +661,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
 
                 sb << ["The following patterns are available for this file class:\n"]
                 sb << availablePatterns.findAll { it }.collect {
-                    FilenamePatternDependency k, List v ->
+                    FilenamePatternDependency k, List<FilenamePattern> v ->
                         v.collect {
                             FilenamePattern value ->
                                 "${k.name()} : ${value}"

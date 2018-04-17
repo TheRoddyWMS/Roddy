@@ -8,6 +8,7 @@ package de.dkfz.roddy.core
 
 import de.dkfz.roddy.config.AnalysisConfiguration
 import de.dkfz.roddy.config.Configuration
+import de.dkfz.roddy.config.ConfigurationError
 import de.dkfz.roddy.config.PreloadedConfiguration
 import de.dkfz.roddy.config.ProjectConfiguration
 import de.dkfz.roddy.config.ResourceSet
@@ -16,6 +17,7 @@ import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.NoNoExecutionService
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
+import groovy.transform.CompileStatic
 
 import java.util.concurrent.TimeoutException
 
@@ -23,6 +25,16 @@ import java.util.concurrent.TimeoutException
  * Created by heinold on 01.07.16.
  */
 @groovy.transform.CompileStatic
+class TestWorkflow extends Workflow {
+
+    @Override
+    boolean execute(ExecutionContext context) throws ConfigurationError {
+        return true
+    }
+
+}
+
+@CompileStatic
 public class MockupExecutionContextBuilder {
 
     public static final String DIR_PREFIX = "RoddyTests_"
@@ -111,10 +123,11 @@ public class MockupExecutionContextBuilder {
                     new PreloadedConfiguration(null, Configuration.ConfigurationType.ANALYSIS, "TestAnalysis", "",
                             "", null, "", ResourceSetSize.l, null, [], null, "")
 
-            final AnalysisConfiguration analysisConfig = new AnalysisConfiguration(analysisPreloadConfig, null,
+            final AnalysisConfiguration analysisConfig = new AnalysisConfiguration(analysisPreloadConfig,
+                    "de.dkfz.roddy.core.TestWorkflow",
                     testRuntimeService.getClass().toString(), null, [], [], "")
 
-            final Analysis analysis = new Analysis("Test", project, null, new RuntimeService(), analysisConfig)
+            final Analysis analysis = new Analysis("Test", project, new RuntimeService(), analysisConfig)
 
             final DataSet dataSet = new DataSet(analysis, "TEST_PID", getTestOutputDirectory("TEST_PID"))
 
@@ -123,7 +136,7 @@ public class MockupExecutionContextBuilder {
 
         } else {
             return new ExecutionContext(System.getProperty("user.name"), null, null, ExecutionContextLevel.UNSET,
-            testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime(), true)
+                                        testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime(), true)
         }
     }
 

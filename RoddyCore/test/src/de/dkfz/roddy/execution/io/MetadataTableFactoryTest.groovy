@@ -38,7 +38,11 @@ public class MetadataTableFactoryTest {
     public void getTable() throws Exception {
 
         // Create mockup project and analysis.
-        Analysis analysis = new Analysis("Test", new Project(new ProjectConfiguration(null, "", null, null), null, null, null), null, null, new AnalysisConfiguration(null, null, null, null, null, null, ""));
+        Analysis analysis = new Analysis("Test",
+                new Project(new ProjectConfiguration(null, "", null, null), null, null, null),
+                null,
+                new AnalysisConfiguration(null, null, null, null, null, null, "")
+        )
 
         def configuration = analysis.getConfiguration()
         RecursiveOverridableMapContainerForConfigurationValues configurationValues = configuration.getConfigurationValues();

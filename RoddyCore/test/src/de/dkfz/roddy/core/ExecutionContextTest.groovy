@@ -21,7 +21,8 @@ import static org.junit.Assert.*;
 public class ExecutionContextTest {
 
     private ExecutionContext createEmptyContext() {
-        new ExecutionContext(null, null, null, null, null, null, null)
+        //new ExecutionContext(null, null, null, null, null, null, null)
+        MockupExecutionContextBuilder.createSimpleContext(this.getClass())
     }
 
     @BeforeClass
