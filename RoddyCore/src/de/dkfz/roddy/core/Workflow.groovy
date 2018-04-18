@@ -14,7 +14,6 @@ import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.methods.GenericMethod
-import groovy.transform.CompileDynamic
 
 import java.lang.reflect.Method
 import java.util.concurrent.ExecutionException
@@ -192,7 +191,12 @@ abstract class Workflow {
      * @param additionalInput
      * @return
      */
+    @Deprecated
     final FileObject call(String toolName, BaseFile input, Object... additionalInput) {
+        return GenericMethod.callGenericTool(toolName, input, additionalInput)
+    }
+
+    final FileObject call(String toolName, FileObject input, Object... additionalInput) {
         return GenericMethod.callGenericTool(toolName, input, additionalInput)
     }
 
@@ -211,8 +215,8 @@ abstract class Workflow {
      * @param parameters
      * @return
      */
-    final List<String> callSynchronized(String toolID, Map<String, Object> parameters) {
-        return ExecutionService.getInstance().callSynchronized(context, toolID, parameters)
+    final List<String> callDirect(String toolID, Map<String, Object> parameters) {
+        return ExecutionService.getInstance().callDirect(context, toolID, parameters)
     }
 
     /**
@@ -239,8 +243,8 @@ abstract class Workflow {
     /**
      * Introduced in BrawlWorkflow because of some issues with Groovy and the call method. Just for code completeness
      */
-    final List<String> runSynchronized(String toolID, Map<String, Object> parameters) {
-        return ExecutionService.getInstance().callSynchronized(context, toolID, parameters);
+    final List<String> runDirect(String toolID, Map<String, Object> parameters) {
+        return ExecutionService.getInstance().callDirect(context, toolID, parameters);
     }
     
     final BaseFile file(String path, String _class = BaseFile.STANDARD_FILE_CLASS) {

@@ -483,7 +483,7 @@ class ConfigurationFactory {
             } else if (brawlWorkflow) {
                 workflowClass = JBrawlWorkflow.class.name
             }
-            String cleanupScript = extractAttributeText(configurationNode, "cleanupScript", "cleanupScript")
+            String cleanupScript = extractAttributeText(configurationNode, "cleanupScript", "")
             String[] _listOfUsedTools = extractAttributeText(configurationNode, "listOfUsedTools").split(SPLIT_COMMA)
             String[] _usedToolFolders = extractAttributeText(configurationNode, "usedToolFolders").split(SPLIT_COMMA)
             List<String> listOfUsedTools = _listOfUsedTools.size() > 0 && _listOfUsedTools[0] ? Arrays.asList(_listOfUsedTools) : null

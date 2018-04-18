@@ -167,7 +167,7 @@ abstract class ExecutionService implements BEExecutionService {
      * @param jobNameExtension
      * @return
      */
-    List<String> callSynchronized(ExecutionContext context, String toolID, Map<String, Object> parameters = null) {
+    List<String> callDirect(ExecutionContext context, String toolID, Map<String, Object> parameters = null) {
 
         if (!parameters) parameters = [:]
         parameters[ConfigurationConstants.DISABLE_DEBUG_OPTIONS_FOR_TOOLSCRIPT] = "true"

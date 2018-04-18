@@ -47,7 +47,13 @@ class GenericMethod {
      * @param additionalInput Any additional input to the job. The input must fit the tool i/o specs in your xml file.
      * @return
      */
+    @Deprecated
     static <F extends FileObject> F callGenericTool(String toolName, BaseFile input, Object... additionalInput) {
+        F result = new GenericMethod(toolName, null, input, null, additionalInput)._callGenericToolOrToolArray();
+        return result;
+    }
+
+    static <F extends FileObject> F callGenericTool(String toolName, FileObject input, Object... additionalInput) {
         F result = new GenericMethod(toolName, null, input, null, additionalInput)._callGenericToolOrToolArray();
         return result;
     }

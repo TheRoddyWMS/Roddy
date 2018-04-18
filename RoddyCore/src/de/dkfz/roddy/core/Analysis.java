@@ -558,25 +558,29 @@ public class Analysis {
 
         List<DataSet> dataSets = getRuntimeService().loadDatasetsWithFilter(this, pidList, true);
         for (DataSet ds : dataSets) {
-            // Call a custom cleanup shell script.
-            ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, ExecutionContextLevel.CLEANUP, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null);
+
+            ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this,
+                    ds, ExecutionContextLevel.QUERY_STATUS, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null);
+
             if (((AnalysisConfiguration) getConfiguration()).hasCleanupScript()) {
-                //TODO Think hard if this could be generified and simplified! This is also used in other places in a similar way right?
-                Job cleanupJob = new Job(context, "cleanup", ((AnalysisConfiguration) getConfiguration()).getCleanupScript(), null);
-//                Command cleanupCmd = Roddy.getJobManager().createCommand(cleanupJob, cleanupJob.getToolPath(), new LinkedList<>());
-                try {
-                    ExecutionService.getInstance().writeFilesForExecution(context);
-                    cleanupJob.run();
-                } catch (Exception ex) {
-                    // Philip: We don't want to see any cleanup errors?
-                } finally {
-                    ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context);
+                String cleanupScript = ((AnalysisConfiguration) getConfiguration()).getCleanupScript();
+                if (cleanupScript != null && cleanupScript != "") {
+                    //TODO Think hard if this could be generified and simplified! This is also used in other places in a similar way right?
+                    Job cleanupJob = new Job(context, "cleanupScript", cleanupScript, null);
+//                  Command cleanupCmd = Roddy.getJobManager().createCommand(cleanupJob, cleanupJob.getToolPath(), new LinkedList<>());
+                    try {
+                        ExecutionService.getInstance().writeFilesForExecution(context);
+                        cleanupJob.run();
+                    } finally {
+                        ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context);
+                    }
                 }
             }
 
             // Call the workflows cleanup java method.
-            if (context.getWorkflow().hasCleanupMethod())
+            if (context.getWorkflow().hasCleanupMethod()) {
                 context.getWorkflow().cleanup(ds);
+            }
         }
     }
 

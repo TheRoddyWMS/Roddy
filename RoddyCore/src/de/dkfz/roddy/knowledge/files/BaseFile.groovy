@@ -6,7 +6,6 @@
 
 package de.dkfz.roddy.knowledge.files
 
-import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationError
 import de.dkfz.roddy.config.DerivedFromFilenamePattern
@@ -21,16 +20,10 @@ import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.Workflow
 import de.dkfz.roddy.execution.UnexpectedExecutionResultException
-import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.BEJobResult
-import de.dkfz.roddy.execution.jobs.Command
-import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.JobManagerOptionsBuilder
-import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
-import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForBaseFiles
 import de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForGenericCreation
 import de.dkfz.roddy.plugins.LibrariesFactory
@@ -250,7 +243,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
      *  If the command could not get successfully executed an ExecutionException is propagated. */
     static BaseFile getSourceFileUsingTool(ExecutionContext context, String toolID, String _class = STANDARD_FILE_CLASS)
         throws UnexpectedExecutionResultException, ExecutionException {
-        List<String> executionOutput = ExecutionService.instance.callSynchronized(context, toolID)
+        List<String> executionOutput = ExecutionService.instance.callDirect(context, toolID)
         if (executionOutput.size() != 1) {
             throw new UnexpectedExecutionResultException("SourceFile instantiation from tool output failed", executionOutput)
         } else {
@@ -262,7 +255,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
      *  The tool should return an arbitary number of lines with filenames. If no line is returned, an empty list is returned. */
     static List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID, String _class = STANDARD_FILE_CLASS)
         throws ExecutionException {
-        return ExecutionService.instance.callSynchronized(context, toolID).collect {
+        return ExecutionService.instance.callDirect(context, toolID).collect {
             getSourceFile(context, it, _class)
         } as List<BaseFile>
     }
