@@ -15,6 +15,7 @@ import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.config.converters.YAMLConverter
 import de.dkfz.roddy.core.Project
 import de.dkfz.roddy.core.ProjectLoaderException
+import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.core.Workflow
 import de.dkfz.roddy.knowledge.brawlworkflows.JBrawlWorkflow
 import de.dkfz.roddy.knowledge.files.BaseFile
@@ -457,7 +458,7 @@ class ConfigurationFactory {
         Configuration config
         if (icc.type >= ConfigurationType.PROJECT) {
             Map<String, AnalysisConfiguration> availableAnalyses = [:]
-            String runtimeServiceClass = extractAttributeText(configurationNode, "runtimeServiceClass", null)
+            String runtimeServiceClass = extractAttributeText(configurationNode, "runtimeServiceClass", RuntimeService.class.name)
             config = new ProjectConfiguration(icc, runtimeServiceClass, availableAnalyses, parentConfig)
             boolean inheritAnalyses = Boolean.parseBoolean(extractAttributeText(configurationNode, XMLTAG_ATTRIBUTE_INHERITANALYSES, "false"))
             if (!inheritAnalyses) {

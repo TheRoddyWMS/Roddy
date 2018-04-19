@@ -358,8 +358,8 @@ public class Analysis {
         // to gather data from the remote side.
         ExecutionService.getInstance().writeFilesForExecution(context);
 
-        boolean setupExecutionStatus = context.getWorkflow().setupExecution(context);
-        boolean contextExecutability = context.getWorkflow().checkExecutability(context);
+        boolean setupExecutionStatus = context.getWorkflow().setupExecution();
+        boolean contextExecutability = context.getWorkflow().checkExecutability();
 
         isExecutable = setupExecutionStatus && contextRightsSettings && contextPermissions && contextExecutability && configurationValidity;
 
