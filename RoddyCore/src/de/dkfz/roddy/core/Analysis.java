@@ -573,7 +573,7 @@ public class Analysis {
         for (DataSet ds : dataSets) {
 
             ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this,
-                    ds, ExecutionContextLevel.QUERY_STATUS, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null);
+                    ds, ExecutionContextLevel.CLEANUP, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null);
 
             if (((AnalysisConfiguration) getConfiguration()).hasCleanupScript()) {
                 String cleanupScript = ((AnalysisConfiguration) getConfiguration()).getCleanupScript();
@@ -600,7 +600,15 @@ public class Analysis {
                                     append("\n\tSetup for cleanup failed.").
                                     toString());
                 } else {
-                    wf.cleanup();
+                    try {
+                        boolean successfullyExecuted = wf.cleanup();
+                        if (successfullyExecuted)
+                            finallyStartJobsOfContext(context);
+                    } catch (BEException e) {
+                        context.addErrorEntry(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e));
+                    } finally {
+                        ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context);
+                    }
                 }
             }
         }
