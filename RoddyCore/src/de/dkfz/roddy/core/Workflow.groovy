@@ -52,6 +52,10 @@ abstract class Workflow {
         true
     }
 
+    boolean setupExecution() {
+        return setupExecution(context)
+    }
+
     boolean finalizeExecution(ExecutionContext context) {
         true
     }
@@ -67,6 +71,10 @@ abstract class Workflow {
         return true
     }
 
+    boolean checkExecutability() {
+        return checkExecutability(context)
+    }
+
     abstract boolean execute(ExecutionContext context) throws ConfigurationError
 
     boolean hasCleanupMethod() {
@@ -80,6 +88,10 @@ abstract class Workflow {
 
     boolean cleanup(DataSet dataset) {
         return false
+    }
+
+    boolean cleanup() {
+        return cleanup(context.dataSet)
     }
 
     @Deprecated

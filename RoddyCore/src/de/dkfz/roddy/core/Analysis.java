@@ -341,6 +341,41 @@ public class Analysis {
         executeRun(context, false);
     }
 
+
+    protected boolean prepareExecution(ExecutionContext context) {
+        logger.rare("" + context.getExecutionContextLevel());
+        boolean isExecutable;
+        String datasetID = context.getDataSet().getId();
+        Exception eCopy = null;
+        boolean contextRightsSettings = ExecutionService.getInstance().checkAccessRightsSettings(context);
+        boolean contextPermissions = ExecutionService.getInstance().checkContextDirectoriesAndFiles(context);
+        boolean configurationValidity =
+                Roddy.isStrictModeEnabled() && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors)
+                        ? !getConfiguration().hasErrors()
+                        : true;
+
+        // The setup of the workflow and the executability check may require the execution store, e.g. for synchronously called jobs
+        // to gather data from the remote side.
+        ExecutionService.getInstance().writeFilesForExecution(context);
+
+        boolean setupExecutionStatus = context.getWorkflow().setupExecution(context);
+        boolean contextExecutability = context.getWorkflow().checkExecutability(context);
+
+        isExecutable = setupExecutionStatus && contextRightsSettings && contextPermissions && contextExecutability && configurationValidity;
+
+        if (!isExecutable) {
+            StringBuilder message = new StringBuilder("The workflow does not seem to be executable for dataset " + datasetID);
+            if (!contextRightsSettings) message.append("\n\tContext access rights settings could not be validated.");
+            if (!contextPermissions) message.append("\n\tContext permissions could not be validated.");
+            if (!contextExecutability) message.append("\n\tContext and workflow are not considered executable.");
+            if (!configurationValidity) message.append("\n\tContext configuration has errors.");
+            logger.severe(message.toString());
+        }
+
+        return isExecutable;
+    }
+
+
     /**
      * Executes the context object.
      * If the contexts level is QUERY_STATUS:
@@ -355,35 +390,13 @@ public class Analysis {
      */
     protected void executeRun(ExecutionContext context, boolean preventLoggingOnQueryStatus) {
         logger.rare("" + context.getExecutionContextLevel());
-        boolean isExecutable;
         String datasetID = context.getDataSet().getId();
         Exception eCopy = null;
         try {
 
-            boolean contextRightsSettings = ExecutionService.getInstance().checkAccessRightsSettings(context);
-            boolean contextPermissions = ExecutionService.getInstance().checkContextDirectoriesAndFiles(context);
-            boolean configurationValidity =
-                    Roddy.isStrictModeEnabled() && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors)
-                            ? !getConfiguration().hasErrors()
-                            : true;
+            boolean isExecutable = prepareExecution(context);
 
-            // The setup of the workflow and the executability check may require the execution store, e.g. for synchronously called jobs
-            // to gather data from the remote side.
-            ExecutionService.getInstance().writeFilesForExecution(context);
-
-            boolean setupExecutionStatus = context.getWorkflow().setupExecution(context);
-            boolean contextExecutability = context.getWorkflow().checkExecutability(context);
-
-            isExecutable = setupExecutionStatus && contextRightsSettings && contextPermissions && contextExecutability && configurationValidity;
-
-            if (!isExecutable) {
-                StringBuilder message = new StringBuilder("The workflow does not seem to be executable for dataset " + datasetID);
-                if (!contextRightsSettings) message.append("\n\tContext access rights settings could not be validated.");
-                if (!contextPermissions) message.append("\n\tContext permissions could not be validated.");
-                if (!contextExecutability) message.append("\n\tContext and workflow are not considered executable.");
-                if (!configurationValidity) message.append("\n\tContext configuration has errors.");
-                logger.severe(message.toString());
-            } else {
+            if (isExecutable) {
                 boolean successfullyExecuted = false;
                 try {
                     boolean execute = true;
@@ -579,7 +592,16 @@ public class Analysis {
 
             // Call the workflows cleanup java method.
             if (context.getWorkflow().hasCleanupMethod()) {
-                context.getWorkflow().cleanup(ds);
+                Workflow wf = context.getWorkflow();
+                boolean isExecutable = prepareExecution(context);
+                if (!isExecutable) {
+                    logger.severe(
+                            new StringBuilder("The workflow does not seem to be executable for dataset " + context.dataSet.getId()).
+                                    append("\n\tSetup for cleanup failed.").
+                                    toString());
+                } else {
+                    wf.cleanup();
+                }
             }
         }
     }
