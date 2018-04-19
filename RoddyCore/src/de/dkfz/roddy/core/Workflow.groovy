@@ -203,20 +203,22 @@ abstract class Workflow {
      * @param additionalInput
      * @return
      */
+    // TODO: Roddy 4: Change to FileObject input. Currently this change would break bytecode compatibility.
     @Deprecated
     final FileObject call(String toolName, BaseFile input, Object... additionalInput) {
-        return GenericMethod.callGenericTool(toolName, input, additionalInput)
+        return GenericMethod.callGenericTool_fileObject(toolName, input, additionalInput)
     }
 
-    final FileObject call(String toolName, FileObject input, Object... additionalInput) {
-        return GenericMethod.callGenericTool(toolName, input, additionalInput)
+    // TODO: This is a temporary solution. Rename to just call. See above.
+    final FileObject call_fileObject(String toolName, FileObject input, Object... additionalInput) {
+        return GenericMethod.callGenericTool_fileObject(toolName, input, additionalInput)
     }
 
-    final FileGroup callWithOutputFileGroup(String toolName, BaseFile input, int numericCount, Object... additionalInput) {
+    final FileGroup callWithOutputFileGroup(String toolName, FileObject input, int numericCount, Object... additionalInput) {
         return GenericMethod.callGenericToolWithFileGroupOutput(toolName, input, numericCount, additionalInput)
     }
 
-    final FileGroup callWithOutputFileGroup(String toolName, BaseFile input, List<String> indices, Object... additionalInput) {
+    final FileGroup callWithOutputFileGroup(String toolName, FileObject input, List<String> indices, Object... additionalInput) {
         return GenericMethod.callGenericToolWithFileGroupOutput(toolName, input, indices, additionalInput)
     }
 
@@ -234,21 +236,21 @@ abstract class Workflow {
     /**
      * Introduced in BrawlWorkflow because of some issues with Groovy and the call method. Just for code completeness
      */
-    final FileObject run(String toolName, BaseFile input, Object... additionalInput) {
-        return GenericMethod.callGenericTool(toolName, input, additionalInput);
+    final FileObject run(String toolName, FileObject input, Object... additionalInput) {
+        return GenericMethod.callGenericTool_fileObject(toolName, input, additionalInput);
     }
 
     /**
      * Introduced in BrawlWorkflow because of some issues with Groovy and the call method. Just for code completeness
      */
-    final FileGroup runWithOutputFileGroup(String toolName, BaseFile input, int numericCount, Object... additionalInput) {
+    final FileGroup runWithOutputFileGroup(String toolName, FileObject input, int numericCount, Object... additionalInput) {
         return GenericMethod.callGenericToolWithFileGroupOutput(toolName, input, numericCount, additionalInput);
     }
 
     /**
      * Introduced in BrawlWorkflow because of some issues with Groovy and the call method. Just for code completeness
      */
-    final FileGroup runWithOutputFileGroup(String toolName, BaseFile input, List<String> indices, Object... additionalInput) {
+    final FileGroup runWithOutputFileGroup(String toolName, FileObject input, List<String> indices, Object... additionalInput) {
         return GenericMethod.callGenericToolWithFileGroupOutput(toolName, input, indices, additionalInput);
     }
 

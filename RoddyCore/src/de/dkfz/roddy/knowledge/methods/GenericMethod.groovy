@@ -47,13 +47,15 @@ class GenericMethod {
      * @param additionalInput Any additional input to the job. The input must fit the tool i/o specs in your xml file.
      * @return
      */
+    // TODO: Roddy 4: Change the interface to use FileObject as input. Currently the method is used throughout plugins. Change now breaks bytecode compatibility.
     @Deprecated
     static <F extends FileObject> F callGenericTool(String toolName, BaseFile input, Object... additionalInput) {
         F result = new GenericMethod(toolName, null, input, null, additionalInput)._callGenericToolOrToolArray();
         return result;
     }
 
-    static <F extends FileObject> F callGenericTool(String toolName, FileObject input, Object... additionalInput) {
+    // TODO: This is a temporary solution. Rename to just call. See above.
+    static <F extends FileObject> F callGenericTool_fileObject(String toolName, FileObject input, Object... additionalInput) {
         F result = new GenericMethod(toolName, null, input, null, additionalInput)._callGenericToolOrToolArray();
         return result;
     }
@@ -62,7 +64,7 @@ class GenericMethod {
      * If you need a file group output and the files in the group need an index, then this is the right method to call!
      * @return
      */
-    static <F extends FileGroup> F callGenericToolWithFileGroupOutput(String toolName, BaseFile input, List<String> indices, Object... additionalInput) {
+    static <F extends FileGroup> F callGenericToolWithFileGroupOutput(String toolName, FileObject input, List<String> indices, Object... additionalInput) {
         F result = new GenericMethod(toolName, null, input, indices, additionalInput)._callGenericToolOrToolArray() as F
         return result
     }
@@ -71,7 +73,7 @@ class GenericMethod {
      * If you need a file group output and the files in the group need an index, then this is the right method to call! This one works with number for the files from 0 .. n -1
      * @return
      */
-    static <F extends FileGroup> F callGenericToolWithFileGroupOutput(String toolName, BaseFile input, int numericCount, Object... additionalInput) {
+    static <F extends FileGroup> F callGenericToolWithFileGroupOutput(String toolName, FileObject input, int numericCount, Object... additionalInput) {
         F result = new GenericMethod(toolName, null, input, numericCount, additionalInput)._callGenericToolOrToolArray() as F
         return result
     }
@@ -80,7 +82,7 @@ class GenericMethod {
      * If you need a file group output and the files are already set in the cfg, then this is the right method to call.
      * @return
      */
-    static <F extends FileGroup> F callGenericToolWithFileGroupOutput(String toolName, BaseFile input, Object... additionalInput) {
+    static <F extends FileGroup> F callGenericToolWithFileGroupOutput(String toolName, FileObject input, Object... additionalInput) {
         F result = new GenericMethod(toolName, null, input, null, additionalInput)._callGenericToolOrToolArray() as F
         return result
     }
@@ -96,7 +98,7 @@ class GenericMethod {
      * @param additionalInput Any additional input to the job. The input must fit the tool i/o specs in your xml file.
      * @return
      */
-    public static <F extends FileObject> F callGenericToolOrToolArray(String toolName, List<String> arrayIndices, BaseFile input, Object... additionalInput) {
+    public static <F extends FileObject> F callGenericToolOrToolArray(String toolName, List<String> arrayIndices, FileObject input, Object... additionalInput) {
         new GenericMethod(toolName, arrayIndices, input, null, additionalInput)._callGenericToolOrToolArray();
     }
 
