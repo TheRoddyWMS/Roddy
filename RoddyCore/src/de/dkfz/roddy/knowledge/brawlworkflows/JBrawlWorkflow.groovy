@@ -50,7 +50,7 @@ public class JBrawlWorkflow extends Workflow {
         String brawlWorkflow = aCfg.getBrawlWorkflow();
 
         //Load the file and convert to a synthetic Java workfow
-        File f = context.getConfiguration().getSourceJBrawlWorkflow(brawlWorkflow);
+        File f = context.getConfiguration().getJBrawlWorkflowSourceFile(brawlWorkflow);
         if (!convertedWorkflows[f]) {
 
             // Find all lines which are not a comment and not empty

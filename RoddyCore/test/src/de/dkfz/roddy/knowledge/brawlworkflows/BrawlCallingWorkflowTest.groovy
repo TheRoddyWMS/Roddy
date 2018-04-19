@@ -84,7 +84,7 @@ class BrawlCallingWorkflowTest {
             }
 
             @Override
-            File getSourceBrawlWorkflow(String brawlName) {
+            File getBrawlWorkflowSourceFile(String brawlName) {
                 return temp
             }
 

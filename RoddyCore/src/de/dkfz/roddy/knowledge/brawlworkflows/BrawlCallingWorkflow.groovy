@@ -22,7 +22,7 @@ class BrawlCallingWorkflow extends Workflow {
         if (!brawlID)
             return false
 
-        File brawlFile = context.configuration.getSourceBrawlWorkflow(brawlID)
+        File brawlFile = context.configuration.getBrawlWorkflowSourceFile(brawlID)
         List<String> brawlCode = Roddy.getLocalFileSystemAccessProvider().loadTextFile(brawlFile) as List<String>
         brawlCode.add(0, "def wf = BrawlWorkflow.create context, {")
         brawlCode.add(0, "import de.dkfz.roddy.knowledge.brawlworkflows.*")

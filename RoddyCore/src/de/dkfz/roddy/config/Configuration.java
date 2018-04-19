@@ -307,13 +307,13 @@ public class Configuration implements ContainerParent<Configuration> {
         return new LinkedList<Configuration>(subConfigurations.values());
     }
 
-    public File getSourceBrawlWorkflow(String brawlName) {
+    public File getBrawlWorkflowSourceFile(String brawlName) {
         // Brawl workflows can have the ending .brawl OR .groovy (better for e.g. Idea)
         File wf = getBrawlWorkflowFile(brawlName, Arrays.asList(".brawl", ".groovy"));
         return wf;
     }
 
-    public File getSourceJBrawlWorkflow(String brawlName) {
+    public File getJBrawlWorkflowSourceFile(String brawlName) {
         return getBrawlWorkflowFile(brawlName, Arrays.asList(".jbrawl"));
     }
 
