@@ -35,6 +35,7 @@ As Roddy is Linux based, you will be able to find moste of these in your OS pack
 .. code-block:: Bash
 
     curl -s "https://get.sdkman.io" | bash
+    source "$HOME/.sdkman/bin/sdkman-init.sh"
     sdk install groovy 2.4.13
     sdk install java 8u151-oracle
 
@@ -162,12 +163,12 @@ If you want to build Roddy yourself, clone the repository. The repository alread
 
 .. code-block:: bash
 
-    git clone https://github.com/TheRoddyWMS/Roddy.git
+    git clone https://github.com/eilslabs/Roddy.git
     cd Roddy
     git checkout develop
     pushd dist/plugins
-    git clone https://github.com/TheRoddyWMS/Roddy-Default-Plugin.git DefaultPlugin
-    git clone https://github.com/TheRoddyWMS/Roddy-Base-Plugin PluginBase
+    git clone https://github.com/eilslabs/Roddy-Default-Plugin.git DefaultPlugin
+    git clone https://github.com/eilslabs/Roddy-Base-Plugin PluginBase
     popd
     ./gradlew build
 
