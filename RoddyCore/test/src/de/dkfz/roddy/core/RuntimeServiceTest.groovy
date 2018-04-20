@@ -118,8 +118,8 @@ class RuntimeServiceTest {
     void getDefaultJobParameters() throws Exception {
         def context = mockedContext
         def result = new RuntimeService().getDefaultJobParameters(context, "aTool")
-        assert result["pid"] == context.getDataSet().getId()
-        assert result["PID"] == context.getDataSet().getId()
+        assert result["pid"] == context.dataSet.id
+        assert result["PID"] == context.dataSet.id
         assert result["ANALYSIS_DIR"]
     }
 

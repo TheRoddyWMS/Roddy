@@ -578,7 +578,6 @@ public class Analysis {
             if (((AnalysisConfiguration) getConfiguration()).hasCleanupScript()) {
                 String cleanupScript = ((AnalysisConfiguration) getConfiguration()).getCleanupScript();
                 if (cleanupScript != null && cleanupScript != "") {
-                    //TODO Think hard if this could be generified and simplified! This is also used in other places in a similar way right?
                     Job cleanupJob = new Job(context, "cleanupScript", cleanupScript, null);
 //                  Command cleanupCmd = Roddy.getJobManager().createCommand(cleanupJob, cleanupJob.getToolPath(), new LinkedList<>());
                     try {

@@ -27,7 +27,7 @@ Structure
 Brawl workflows are Groovy workflows, so the basic Groovy / Java syntax applies. See the TestWorkflow.groovy,
 which is located in the Roddy repository.
 
-.. code-block:: java
+.. code-block:: groovy
 
     // Java variables
     String variable = "abc"
@@ -93,7 +93,7 @@ So which options do you have?
 
 **Simple tool registration:**
 
-.. code-block:: java
+.. code-block:: groovy
 
     rule "ToolA", "myWorkflowTools/scriptName.sh"
 
@@ -101,7 +101,7 @@ This will tell Roddy, that the script *scriptname.sh* exists in the *resources/a
 
 **Tool with inline (Bash / Shell) code**
 
-.. code-block:: java
+.. code-block:: groovy
 
     rule "ToolA", {
         shell """
@@ -119,7 +119,7 @@ These are the two basic types of tools: inline and external. But what about inpu
 to your definition. If the rule does is inline or references an external script does not matter. The same also applies
 for resources.
 
-.. code-block:: java
+.. code-block:: groovy
 
     rule "ToolA", {
         file "myWorkflowTools/scriptName.sh"
@@ -136,7 +136,7 @@ please read the filename pattern section to get more information about this.
 
 Like in XML tool definitions, it is of course possible to have more than one input or output parameter:
 
-.. code-block:: java
+.. code-block:: groovy
 
     rule "ToolA", {
         file "myWorkflowTools/scriptName.sh"
@@ -162,7 +162,7 @@ We'll see later, how you can access it.
 As rules can be submitted to a compute cluster, you should make sure, that they don't consume too many resources. Therefore,
 it is possible to configure them:
 
-.. code-block:: java
+.. code-block:: groovy
 
     rule "ToolA", {
         file        "myWorkflowTools/scriptName.sh"
@@ -184,7 +184,7 @@ closure. However, we offer a shortcut and convenience methods, which might help 
 
 **Get a file where you know the path**
 
-.. code-block:: java
+.. code-block:: groovy
 
     explicit {
         def file = getSourceFile("/tmp", "TextFile")
@@ -200,7 +200,7 @@ the rules, sets the type of the file. The type, again, will be used by Roddy for
 This is different from the previous approach. Using the methods *getSourceFileUsingTool* or *getSourceFileUsingTool*
 will allow you to run a tool on the target system which will then return a single file or a list of file objects.
 
-.. code-block:: java
+.. code-block:: groovy
 
     explicit {
         def file = getSourceFileUsingTool("ToolForSingleFile", "TextFile")

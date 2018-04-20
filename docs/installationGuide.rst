@@ -30,7 +30,7 @@ To run Roddy you need at least
 - bash
 - the tool `lockfile` (usually in the procmail mail-processing-package (v3.22), only needed on job execution hosts)
 
-As Roddy is Linux based, you will be able to find moste of these in your OS package manager. For the JDK and Groovy, -- both required on the host on which you run Roddy -- you may want to use `SDKMan`_. The following will get you going:
+As Roddy is Linux based, you will be able to find most of these in your OS package manager. For the JDK and Groovy, -- both required on the host on which you run Roddy -- you may want to use `SDKMan`_. The following will get you going:
 
 .. code-block:: Bash
 
@@ -105,7 +105,7 @@ be selected during Roddy invocations using the "--useRoddyVersion" parameter.
 
 Additionally, Roddy is capable of handling multiple versions of the same workflow plugin. Therefore, if you install specific plugins, such as the `ACEseq plugin <https://github.com/eilslabs/ACEseqWorkflow>`_, you will need specific versions of e.g. the default and base plugins. The way to progress here is to first check in the plugin of interest in the "buildinfo.txt", which plugins and their versions are needed, and then progress in this way from plugin to plugin recursively.
 
-The installation ogf specific plugin version needs to be done in directories named after the scheme `$pluginName_$major.$minor.$patch[-$revision]` (the revision is optional). Usually you can get specific versions -- official releases of plugins -- in the Github Releases of the plugin. Alternatively you clone the repository into an appropriately named directory and then check out the tag with the version of interest.
+The installation of specific plugin version needs to be done in directories named after the scheme `$pluginName_$major.$minor.$patch[-$revision]` (the revision is optional). Usually you can get specific versions -- official releases of plugins -- in the Github Releases of the plugin. Alternatively you clone the repository into an appropriately named directory and then check out the tag with the version of interest.
 
 On the long run, this manual plugin installation mechanism may get automatized.
 

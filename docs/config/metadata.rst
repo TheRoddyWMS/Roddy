@@ -17,8 +17,7 @@ The filesystem-based approach uses of the filename-patterns with specific variab
 * outputAnalysisBaseDirectory: defaults to outputBaseDirectory/datasetId
 * inputAnalysisBaseDirectory: defaults to inputBaseDirectory/datasetId
 
-The following metadata variables are matched or filled into the filename patterns. Note that the Roddy matches the pattern '${' + varname + '}'. Variables
-not enclosed by curly braces are not substituted!
+The following metadata variables are matched or filled into the filename patterns:
 
 * dataSet
 * pid (= patient id, synonymous for dataSet)
@@ -29,7 +28,12 @@ not enclosed by curly braces are not substituted!
 * DIR_BUNDLED_FILES, DIR_RODDY: Only valid at the beginning of the path. The absolute path to Roddy' application directory.
 * PWD: The execution directory.
 
-Additional values variables can be defined in plugins. Furthermore, all configuration values can be referenced.
+Note that Roddy matches variables by the pattern '${' + varname + '}'. Variables that contain references to other variables are written into the job
+parameter file, which is later sourced by the Bash-based wrapper that sets up the environment for the actual tool script. At this stage, variables
+that are not enclosed by braces, and therefore not considered by Roddy during the ordering of variable assignments in the parameter file, may or may
+not be bound. So better use braces!
+
+Additional variables can be defined in plugins. Furthermore, all configuration values can be referenced.
 
 Table-based Metadata
 --------------------

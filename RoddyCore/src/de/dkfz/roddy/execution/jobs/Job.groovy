@@ -426,7 +426,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
     @CompileDynamic
     void appendToJobStateLogfile(BatchEuphoriaJobManager jobManager, ExecutionContext executionContext, BEJobResult res, OutputStream out = null) {
         if (!jobManager.isHoldJobsEnabled() && !jobManager instanceof DirectSynchronousExecutionJobManager) {
-            throw new RuntimeException("JobManager that does not submit jobs on hold and appending to ${ConfigurationConstants.RODDY_JOBSTATE_LOGFILE} not supported.")
+            throw new RuntimeException("Appending to JobManager ${ConfigurationConstants.RODDY_JOBSTATE_LOGFILE} not supported when JobManager does not submit on hold: '${jobManager.class.name}")
         }
         if (res.successful) {
             def job = res.command.getJob()
