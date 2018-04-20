@@ -22,15 +22,18 @@ of input data during start up or filled with metadata values during submission.
 Debugging Options
 -----------------
 
-* disableDebugOptionsForToolscript
-* debugWrapInScript: Turn on extended debugging of the wrap in script that calls the top-level job scripts.
-* debugOptionsUsePipefail: Put `set -o pipefail`
-* debugOptionsUseVerboseOutput: Put `set -v`
-* debugOptionsUseExecuteOutput:
-* debugOptionsUseExtendedExecuteOutput:
-* debugOptionsUseUndefinedVariableBreak:
-* debugOptionsUseExitOnError: Put `set -e`
-* debugOptionsParseScripts:
+* debugWrapInScript: Turn on extended debugging of the wrap in script that sets up the stage for the actual top-level job/tool script.
+* disableDebugOptionsForToolscript: Mainly for internal usage. Turn off all debugging for the top-level job/tool script.
+
+The following options set specific debugging options for Bash
+
+* debugOptionsUsePipefail: `set -o pipefail`
+* debugOptionsUseVerboseOutput: `set -v`
+* debugOptionsUseExecuteOutput: `set -x`
+* debugOptionsUseUndefinedVariableBreak: `set -u`
+* debugOptionsUseExitOnError: `set -e`
+* debugOptionsParseScripts: `set -n`
+* debugOptionsUseExtendedExecuteOutput: This turns on additional debugging in Bash by setting the `PS4` variable. Each line starts with information about the executed script, the line-number in the script, and the function calls. `export PS4='+(\${BASH_SOURCE}:\${LINENO}): \${FUNCNAME[0]: +\$ { FUNCNAME[0] }():}'"`
 
 Exposed to Jobs
 ---------------
