@@ -18,6 +18,7 @@ import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
+import org.junit.Ignore
 import org.junit.Test
 
 import java.lang.reflect.Field
@@ -27,7 +28,7 @@ import static org.junit.Assert.*
 @CompileStatic
 class BrawlCallingWorkflowTest {
 
-    @Test
+    @Ignore @Test
     void testExecute() {
         ExecutionService.initializeService(LocalExecutionService, RunMode.CLI)
         FileSystemAccessProvider.initializeProvider(true)
