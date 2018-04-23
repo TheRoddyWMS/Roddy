@@ -25,7 +25,7 @@ The following metadata variables are matched or filled into the filename pattern
 * USERNAME: The user's username on the submission host (on which the qsub, etc. are executed).
 * USERGROUP: The user's primary group on the submission host.
 * USERHOME: The user's home directory on the submission host.
-* DIR_BUNDLED_FILES, DIR_RODDY: Only valid at the beginning of the path. The absolute path to Roddy' application directory.
+* DIR_BUNDLED_FILES, DIR_RODDY: Only valid at the beginning of the path. The absolute path to Roddy's application directory.
 * PWD: The execution directory.
 
 Note that Roddy matches variables by the pattern '${' + varname + '}'. Variables that contain references to other variables are written into the job
