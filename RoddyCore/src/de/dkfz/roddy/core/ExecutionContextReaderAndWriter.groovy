@@ -168,8 +168,10 @@ class ExecutionContextReaderAndWriter {
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     List<Job> readJobInfoFile(ExecutionContext context) {
         List<Job> jobList = []
-        final File jobInfoFile = context.getRuntimeService().getNameOfJobInfoFile(context)
+        final File jobInfoFile = context.getRuntimeService().getJobInfoFile(context)
         String[] _text = FileSystemAccessProvider.getInstance().loadTextFile(jobInfoFile)
+        if (_text == null)
+            _text = new String[0]
         String text = _text.join(EMPTY)
         if (!text)
             return jobList
@@ -225,7 +227,7 @@ class ExecutionContextReaderAndWriter {
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     String writeJobInfoFile(ExecutionContext context) {
-        final File jobInfoFile = context.getRuntimeService().getNameOfJobInfoFile(context)
+        final File jobInfoFile = context.getRuntimeService().getJobInfoFile(context)
         final List<BEJob> executedJobs = context.getExecutedJobs()
 
         def writer = new StringWriter()
@@ -284,7 +286,7 @@ class ExecutionContextReaderAndWriter {
      */
     List<Job> readJobsFromRealJobCallsFile(ExecutionContext context) {
         FileSystemAccessProvider fip = FileSystemAccessProvider.getInstance()
-        String[] jobCalls = fip.loadTextFile(runtimeService.getNameOfRealCallsFile(context))
+        String[] jobCalls = fip.loadTextFile(runtimeService.getRealCallsFile(context))
         List<Job> jobsStartedInContext = []
         if (jobCalls == null || jobCalls.size() == 0) {
             context.addErrorEntry(ExecutionContextError.READBACK_NOREALJOBCALLSFILE)
@@ -325,7 +327,7 @@ class ExecutionContextReaderAndWriter {
      */
     Map<String, JobState> readInJobStateLogFile(ExecutionContext context) {
         FileSystemAccessProvider fip = FileSystemAccessProvider.getInstance()
-        File jobStatesLogFile = context.getRuntimeService().getNameOfJobStateLogFile(context)
+        File jobStatesLogFile = context.getRuntimeService().getJobStateLogFile(context)
         String[] jobStateList = fip.loadTextFile(jobStatesLogFile)
 
         if (jobStateList == null || jobStateList.size() == 0) {

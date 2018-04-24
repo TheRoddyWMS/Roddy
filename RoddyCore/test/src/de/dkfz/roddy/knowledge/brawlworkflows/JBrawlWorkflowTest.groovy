@@ -26,14 +26,14 @@ import java.lang.reflect.Method
  * Created by heinold on 18.11.15.
  */
 @groovy.transform.CompileStatic
-public class BrawlWorkflowTest {
+public class JBrawlWorkflowTest {
 
 
     public static final String LOAD_FASTQ_FILES = "loadFastqFiles"
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     private String callPrepareAndFormatLine(String line) {
-        Method prepareAndReformatLine = BrawlWorkflow.getDeclaredMethod("prepareAndReformatLine", String);
+        Method prepareAndReformatLine = JBrawlWorkflow.getDeclaredMethod("prepareAndReformatLine", String);
         prepareAndReformatLine.setAccessible(true);
         return prepareAndReformatLine.invoke(null, line)
     }
@@ -58,7 +58,7 @@ public class BrawlWorkflowTest {
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     private String callAssembleCall(String[] _l, int indexOfCallee, StringBuilder temp, ContextConfiguration configuration, LinkedHashMap<String, String> knownObjects) {
-        Method assembleCall = BrawlWorkflow.class.getDeclaredMethod("_assembleCall", String[], int, StringBuilder, ContextConfiguration, LinkedHashMap);
+        Method assembleCall = JBrawlWorkflow.class.getDeclaredMethod("_assembleCall", String[], int, StringBuilder, ContextConfiguration, LinkedHashMap);
         assembleCall.setAccessible(true);
 
         return (String) assembleCall.invoke(null, _l, indexOfCallee, temp, configuration, knownObjects);
@@ -73,7 +73,7 @@ public class BrawlWorkflowTest {
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     private String callAssembleLoadFilesCall(String[] _l, int indexOfCallee, StringBuilder temp, ContextConfiguration configuration, LinkedHashMap<String, String> knownObjects) {
-        Method assembleLoadFilesCall = BrawlWorkflow.class.getDeclaredMethod("_assembleLoadFilesCall", String[], int, StringBuilder, ContextConfiguration, LinkedHashMap);
+        Method assembleLoadFilesCall = JBrawlWorkflow.class.getDeclaredMethod("_assembleLoadFilesCall", String[], int, StringBuilder, ContextConfiguration, LinkedHashMap);
         assembleLoadFilesCall.setAccessible(true);
         String result = assembleLoadFilesCall.invoke(null, _l, indexOfCallee, temp, configuration, knownObjects);
 

@@ -15,8 +15,9 @@ import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.config.converters.YAMLConverter
 import de.dkfz.roddy.core.Project
 import de.dkfz.roddy.core.ProjectLoaderException
+import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.core.Workflow
-import de.dkfz.roddy.knowledge.brawlworkflows.BrawlWorkflow
+import de.dkfz.roddy.knowledge.brawlworkflows.JBrawlWorkflow
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.FileStage
@@ -29,7 +30,6 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.Tuple3
-import groovy.transform.CompileDynamic
 import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.NodeChild
 import groovy.util.slurpersupport.NodeChildren
@@ -238,6 +238,9 @@ class ConfigurationFactory {
         if (file.name.endsWith(".sh")) // Easy Bash importer
             return loadAndPreprocessBashFile(file)
 
+        if (file.name.endsWith(".groovy") || file.name.endsWith(".brawl"))
+            return loadAndPreprocessBrawlFile(file)
+
         throw new UnknownConfigurationFileTypeException("Unknown file type ${file.name} for a configuration file.")
     }
 
@@ -247,6 +250,21 @@ class ConfigurationFactory {
 
     static String loadAndPreprocessBashFile(File s) {
         return new BashConverter().convertToXML(s)
+    }
+
+    static String loadAndPreprocessBrawlFile(File s) {
+        String name = s.name.replace(".groovy", "").replace(".brawl", "")
+        return """
+            <configuration  configurationType='analysis' name='${name}' 
+                            class='de.dkfz.roddy.core.Analysis' 
+                            workflowClass='de.dkfz.roddy.knowledge.brawlworkflows.BrawlCallingWorkflow' 
+                            usedToolFolders='roddyTools,inlineScripts' 
+                            runtimeServiceClass='de.dkfz.roddy.core.RuntimeService'>
+                <configurationvalues>
+                    <cvalue name='activeBrawlWorkflow' value='${name}' type="string"/>
+                </configurationvalues>
+            </configuration>
+        """
     }
 
     /**
@@ -440,7 +458,7 @@ class ConfigurationFactory {
         Configuration config
         if (icc.type >= ConfigurationType.PROJECT) {
             Map<String, AnalysisConfiguration> availableAnalyses = [:]
-            String runtimeServiceClass = extractAttributeText(configurationNode, "runtimeServiceClass", null)
+            String runtimeServiceClass = extractAttributeText(configurationNode, "runtimeServiceClass", RuntimeService.class.name)
             config = new ProjectConfiguration(icc, runtimeServiceClass, availableAnalyses, parentConfig)
             boolean inheritAnalyses = Boolean.parseBoolean(extractAttributeText(configurationNode, XMLTAG_ATTRIBUTE_INHERITANALYSES, "false"))
             if (!inheritAnalyses) {
@@ -464,9 +482,9 @@ class ConfigurationFactory {
             if (workflowTool && jobManagerClass) {
                 workflowClass = NativeWorkflow.class.name
             } else if (brawlWorkflow) {
-                workflowClass = BrawlWorkflow.class.name
+                workflowClass = JBrawlWorkflow.class.name
             }
-            String cleanupScript = extractAttributeText(configurationNode, "cleanupScript", "cleanupScript")
+            String cleanupScript = extractAttributeText(configurationNode, "cleanupScript", "")
             String[] _listOfUsedTools = extractAttributeText(configurationNode, "listOfUsedTools").split(SPLIT_COMMA)
             String[] _usedToolFolders = extractAttributeText(configurationNode, "usedToolFolders").split(SPLIT_COMMA)
             List<String> listOfUsedTools = _listOfUsedTools.size() > 0 && _listOfUsedTools[0] ? Arrays.asList(_listOfUsedTools) : null

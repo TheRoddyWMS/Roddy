@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.config;
 
+import de.dkfz.roddy.Constants;
 import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.config.loader.ConfigurationLoadError;
 import de.dkfz.roddy.core.Analysis;
@@ -112,12 +113,16 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         return src;
     }
 
-    private String checkAndCorrectPath(String temp) {
+
+
+    private String checkAndCorrectPathThrow(String temp) throws ConfigurationError {
         String curUserPath = (new File("")).getAbsolutePath();
         String applicationDirectory = Roddy.getApplicationDirectory().getAbsolutePath();
         //TODO Make something like a blacklist. This is not properly handled now. Initially this was done because Java sometimes puts something in front of the file paths.
         if (value.startsWith("${") || value.startsWith("$") || value.startsWith("~") || !value.startsWith("/")) {
-            if (temp.startsWith(applicationDirectory)) {
+            if (temp == applicationDirectory) {
+                throw new ConfigurationError(id + " configuration value is empty", configuration);
+            } else if (temp.startsWith(applicationDirectory)) {
                 temp = temp.substring(applicationDirectory.length() + 1);
             } else if (temp.startsWith(curUserPath)) {
                 temp = temp.substring(curUserPath.length() + 1);
@@ -125,6 +130,15 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
         }
 
         return temp;
+    }
+
+    @Deprecated
+    private String checkAndCorrectPath(String temp) {
+        try {
+            return checkAndCorrectPathThrow(temp);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private ExecutionContext _toFileExecutionContext;
@@ -137,12 +151,14 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
      * @param dataSet
      * @return
      */
-    public File toFile(Analysis analysis, DataSet dataSet) {
+    public File toFile(Analysis analysis, DataSet dataSet) throws ConfigurationError {
         File f = toFile(analysis);
 
         String temp = f.getAbsolutePath();
-        temp = temp.contains("${pid}") ? replaceString(temp, "${pid}", dataSet.getId()) : temp;
-        temp = temp.contains("${dataSet}") ? replaceString(temp, "${dataSet}", dataSet.getId()) : temp;
+        temp = temp.contains("${" + Constants.PID + "}") ? replaceString(temp, "${" + Constants.PID + "}", dataSet.getId()) : temp;
+        temp = temp.contains("${" + Constants.PID_CAP + "}") ? replaceString(temp, "${" + Constants.PID_CAP + "}", dataSet.getId()) : temp;
+        temp = temp.contains("${" + Constants.DATASET + "}") ? replaceString(temp, "${" + Constants.DATASET + "}", dataSet.getId()) : temp;
+        temp = temp.contains("${" + Constants.DATASET_CAP + "}") ? replaceString(temp, "${" + Constants.DATASET_CAP + "}", dataSet.getId()) : temp;
 
         return new File(temp);
     }
@@ -152,19 +168,24 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
 
         String temp = toFile().getAbsolutePath();
         temp = replaceConfigurationBasedValues(temp, analysis.getConfiguration());
-        temp = replaceString(temp, "${projectName}", analysis.getProject().getName());
+        temp = replaceString(temp, "${" + Constants.PROJECT_NAME + "}", analysis.getProject().getName());
         temp = checkAndCorrectPath(temp);
 
         String userID = analysis.getUsername();
         String groupID = analysis.getUsergroup();
 
-        if (userID != null)
+        if (userID != null) {
             temp = replaceString(temp, "$USERNAME", userID);
-        if (groupID != null)
+            temp = replaceString(temp, "${USERNAME}", userID);
+        }
+        if (groupID != null) {
             temp = replaceString(temp, "$USERGROUP", groupID);
+            temp = replaceString(temp, "${USERGROUP}", groupID);
+        }
 
         String ud = FileSystemAccessProvider.getInstance().getUserDirectory().getAbsolutePath();
         temp = replaceString(temp, "$USERHOME", ud);
+        temp = replaceString(temp, "${USERHOME}", ud);
         temp = checkAndCorrectPath(temp);
 
         return new File(temp);
@@ -260,6 +281,10 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
 
     public double toDouble() {
         return Double.parseDouble(value);
+    }
+
+    public long toLong() {
+        return Long.parseLong(value);
     }
 
     Pattern variableDetection = Pattern.compile("[$][{][a-zA-Z0-9_]*[}]");

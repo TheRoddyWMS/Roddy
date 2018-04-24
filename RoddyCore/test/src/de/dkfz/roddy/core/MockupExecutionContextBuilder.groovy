@@ -8,12 +8,16 @@ package de.dkfz.roddy.core
 
 import de.dkfz.roddy.config.AnalysisConfiguration
 import de.dkfz.roddy.config.Configuration
+import de.dkfz.roddy.config.ConfigurationError
+import de.dkfz.roddy.config.PreloadedConfiguration
 import de.dkfz.roddy.config.ProjectConfiguration
 import de.dkfz.roddy.config.ResourceSet
+import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.NoNoExecutionService
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
+import groovy.transform.CompileStatic
 
 import java.util.concurrent.TimeoutException
 
@@ -21,6 +25,16 @@ import java.util.concurrent.TimeoutException
  * Created by heinold on 01.07.16.
  */
 @groovy.transform.CompileStatic
+class TestWorkflow extends Workflow {
+
+    @Override
+    boolean execute(ExecutionContext context) throws ConfigurationError {
+        return true
+    }
+
+}
+
+@CompileStatic
 public class MockupExecutionContextBuilder {
 
     public static final String DIR_PREFIX = "RoddyTests_"
@@ -80,7 +94,7 @@ public class MockupExecutionContextBuilder {
     }
 
     public static ExecutionContext createSimpleContext(final Class testClass, final Configuration testConfig = new Configuration(null), final RuntimeService testRuntimeService = createSimpleRuntimeService(testClass.name)) {
-        return createSimpleContext(testClass.name, testConfig, testRuntimeService);
+        return createSimpleContext(testClass.name, testConfig, testRuntimeService)
     }
 
     public static ExecutionContext createSimpleContext(final String testID, final Configuration testConfig = new Configuration(null), final RuntimeService testRuntimeService = createSimpleRuntimeService(testID)) {
@@ -91,51 +105,42 @@ public class MockupExecutionContextBuilder {
         final File testLoggingDirectory = getTestLoggingDirectory(testID)
 
         for (File f : [testInputDirectory, testOutputDirectory, testExecutionDirectory, testLoggingDirectory]) {
-            if (!f.exists()) f.mkdirs();
+            if (!f.exists()) f.mkdirs()
         }
-        final Project project = new Project(new ProjectConfiguration(null, null, null, testConfig), testRuntimeService, null, null) {
-            @Override
-            String getName() {
-                return "TestProject";
-            }
+
+        if (testConfig) {
+
+            final PreloadedConfiguration projectPreloadConfig =
+                    new PreloadedConfiguration(null, Configuration.ConfigurationType.PROJECT, "TestProject", "",
+                            "", null, "", ResourceSetSize.l, null, [], null, "")
+
+            final ProjectConfiguration projectConfig =
+                    new ProjectConfiguration(projectPreloadConfig, testRuntimeService.getClass().toString(), [:], testConfig)
+
+            final Project project = new Project(projectConfig, testRuntimeService, null, null)
+
+            final PreloadedConfiguration analysisPreloadConfig =
+                    new PreloadedConfiguration(null, Configuration.ConfigurationType.ANALYSIS, "TestAnalysis", "",
+                            "", null, "", ResourceSetSize.l, null, [], null, "")
+
+            final AnalysisConfiguration analysisConfig = new AnalysisConfiguration(analysisPreloadConfig,
+                    "de.dkfz.roddy.core.TestWorkflow",
+                    testRuntimeService.getClass().toString(), null, [], [], "")
+
+            final Analysis analysis = new Analysis("Test", project, new RuntimeService(), analysisConfig)
+
+            final DataSet dataSet = new DataSet(analysis, "TEST_PID", getTestOutputDirectory("TEST_PID"))
+
+            return new ExecutionContext(System.getProperty("user.name"), analysis, dataSet, ExecutionContextLevel.UNSET,
+                    testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime(), true)
+
+        } else {
+            return new ExecutionContext(System.getProperty("user.name"), null, null, ExecutionContextLevel.UNSET,
+                                        testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime(), true)
         }
-        final Analysis analysis = new Analysis("Test", project, null, null, new AnalysisConfiguration(null, "", "", null, null, null, null))
-
-        return new ExecutionContext(System.getProperty("user.name"), analysis, null, ExecutionContextLevel.UNSET, testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime(), true) {
-            @Override
-            public Configuration getConfiguration() {
-                return testConfig;
-            }
-
-            @Override
-            public RuntimeService getRuntimeService() {
-                return testRuntimeService;
-            }
-
-            @Override
-            DataSet getDataSet() {
-                DataSet ds = new DataSet(getAnalysis(), "TEST_PID", new File(getOutputDirectory(), "TEST_PID"));
-                return ds;
-            }
-
-            @Override
-            Map<String, Object> getDefaultJobParameters(String TOOLID) {
-                return [:];
-            }
-
-            @Override
-            File getLoggingDirectory() {
-                return testLoggingDirectory
-            }
-
-            @Override
-            public String toString() {
-                return "TestContext";
-            }
-        };
     }
 
-    public static BatchEuphoriaJobManager createMockupJobManager() {
+    static BatchEuphoriaJobManager createMockupJobManager() {
         new BatchEuphoriaJobManager(new NoNoExecutionService(), JobManagerOptions.create().setStrictMode(false).build()) {
 
             @Override

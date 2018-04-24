@@ -16,7 +16,6 @@ import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.cluster.ClusterJobManager
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.knowledge.files.BaseFile
@@ -331,7 +330,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             } else
                 convertedParameters.add(o.toString())
         }
-        return BashConverter.convertListToBashArray(convertedParameters)
+        return BashConverter.convertListToBashArrayString(convertedParameters)
     }
 
 
@@ -427,7 +426,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
     @CompileDynamic
     void appendToJobStateLogfile(BatchEuphoriaJobManager jobManager, ExecutionContext executionContext, BEJobResult res, OutputStream out = null) {
         if (!jobManager.isHoldJobsEnabled() && !jobManager instanceof DirectSynchronousExecutionJobManager) {
-            throw new RuntimeException("Appending to ${ConfigurationConstants.RODDY_JOBSTATE_LOGFILE} not supported when JobManager that does not submit jobs on hold.")
+            throw new RuntimeException("Appending to JobManager ${ConfigurationConstants.RODDY_JOBSTATE_LOGFILE} not supported when JobManager does not submit on hold: '${jobManager.class.name}")
         }
         if (res.successful) {
             def job = res.command.getJob()
@@ -452,7 +451,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 jobInfoLine = null
             }
             if (jobInfoLine != null)
-                FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getNameOfJobStateLogFile(executionContext), jobInfoLine, false)
+                FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getJobStateLogFile(executionContext), jobInfoLine, false)
         }
     }
 
@@ -492,7 +491,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 // That is indeed funny here: on our cluster, the following line did not work without the forced toString(), however
                 // on our local machine it always worked! Don't know why it worked for PBS... Now we force-convert the parameters.
                 String jobInfoLine = jobStateInfoLine("" + res.job.getJobID(), code, millis, toolID)
-                FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getNameOfJobStateLogFile(executionContext), jobInfoLine, false)
+                FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getJobStateLogFile(executionContext), jobInfoLine, false)
             } else {
                 logger.postSometimesInfo("Did not store info for job " + res.job.getJobName() + ", job id was null.")
             }
@@ -525,7 +524,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         this.parameters[RODDY_PARENT_JOBS] = parameterObjectToString(RODDY_PARENT_JOBS, parentJobIDs.unique()*.id)
         this.parameters[PARAMETER_FILE] = parameterObjectToString(PARAMETER_FILE, parameterFile)
         // The CONFIG_FILE variable is set to the same value as the PARAMETER_FILE to keep older scripts working with job-specific only environments.
-        this.parameters[CONFIG_FILE] = this.parameters[PARAMETER_FILE]
+        this.parameters[CONFIG_FILE] = this.parameters[PARAMETER_FILE]  // TODO Deprecated. Remove this line in Roddy 4.0.
 
         boolean debugWrapInScript = false
         if (configuration.configurationValues.hasValue(DEBUG_WRAP_IN_SCRIPT)) {

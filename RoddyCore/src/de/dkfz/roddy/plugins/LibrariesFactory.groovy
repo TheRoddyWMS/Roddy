@@ -103,7 +103,7 @@ class LibrariesFactory extends Initializable {
      * TODO Leave this static? Or make it a libraries factory based thing?
      * @return
      */
-    public static GroovyClassLoader getGroovyClassLoader() {
+    static GroovyClassLoader getGroovyClassLoader() {
         if (centralGroovyClassLoader == null) {
             centralGroovyClassLoader = new GroovyClassLoader(ClassLoader.getSystemClassLoader())
             urlClassLoader = centralGroovyClassLoader;
@@ -147,7 +147,7 @@ class LibrariesFactory extends Initializable {
      * @return
      */
     @Deprecated
-    public Class forceLoadSyntheticClassOrFail(String classOfFileObject, Class<FileObject> constructorClass = BaseFile.class) {
+    Class forceLoadSyntheticClassOrFail(String classOfFileObject, Class<BaseFile> constructor = BaseFile.class) {
         Class<BaseFile> _cls = classLoaderHelper.searchForClass(classOfFileObject);
         if (_cls && _cls.package.name.startsWith(SyntheticPluginInfo.SYNTHETIC_PACKAGE)) {
             return _cls
@@ -168,7 +168,7 @@ class LibrariesFactory extends Initializable {
      * Resolve all used / necessary plugins and also look for miscrepancies.
      * @param usedPlugins
      */
-    public boolean resolveAndLoadPlugins(String[] usedPlugins) {
+    boolean resolveAndLoadPlugins(String[] usedPlugins) {
         if (!usedPlugins.join("").trim()) {
             logger.info("Call of resolveAndLoadPlugins was aborted, usedPlugins is empty.")
             return false
@@ -281,7 +281,7 @@ class LibrariesFactory extends Initializable {
                 Map<String, List<String>> errors = [
                         PRIMARY_ERRORS  : [],
                         SECONDARY_ERRORS: []
-                ]
+                ] as LinkedHashMap
                 def workflowType = determinePluginType(pEntry, errors)
                 mapOfErrorsForPluginEntries[pEntry.path] = (errors[PRIMARY_ERRORS] + errors[SECONDARY_ERRORS])
 
@@ -522,7 +522,7 @@ class LibrariesFactory extends Initializable {
 
             usedPluginsCorrected << [id, fullVersion].join(":");
             return new Tuple2(id, fullVersion);
-        }
+        } as List<Tuple2<String, String>>;
         usedPlugins = usedPluginsCorrected;
 
         Map<String, PluginInfo> pluginsToActivate = [:];
@@ -535,7 +535,7 @@ class LibrariesFactory extends Initializable {
 
             if (!mapOfPlugins.checkExistence(id as String, version as String)) {
                 if (id) { // Skip empty entries and reduce one message.
-                    mapOfErrorsForPluginEntries.get(id, []) << ("The plugin ${id}:${version} could not be found, are the plugin paths properly set?").toString();
+                    mapOfErrorsForPluginEntries.get(id as String, []) << ("The plugin ${id}:${version} could not be found, are the plugin paths properly set?").toString();
                 }
             }
             pluginsToCheck.remove(0);

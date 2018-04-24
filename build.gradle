@@ -28,7 +28,7 @@ plugins {
     id 'idea'
 }
 
-group = "com.github.eilslabs"
+group = "com.github.dkfz"
 
 /**
  * -PignoreFailedTests                  Continue despite failed tests.
@@ -38,7 +38,7 @@ group = "com.github.eilslabs"
 
 ext.allowDirtyRepo = (project.hasProperty("allowDirty") && project.allowDirty == "true")
 
-apply plugin: "java"
+// apply plugin: "java"
 apply plugin: 'application'
 apply plugin: 'distribution'
 apply plugin: 'groovy'
@@ -152,7 +152,10 @@ sourceSets {
     }
     test {
         groovy {
-            srcDirs = ["${projectDir}/RoddyCore/test"]
+            srcDirs = ["${projectDir}/RoddyCore/test/src"]
+        }
+        resources {
+            srcDirs = ["${projectDir}/RoddyCore/test/resources"]
         }
     }
 }

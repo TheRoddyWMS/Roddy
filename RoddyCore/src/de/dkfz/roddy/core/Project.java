@@ -68,8 +68,8 @@ public class Project implements Serializable {
         return configuration;
     }
 //
-//    public File getNameOfExecCacheFile() {
-//        return runtimeService.getNameOfExecCacheFile(this);
+//    public File getExecCacheFile() {
+//        return runtimeService.getExecCacheFile(this);
 //    }
 //
 //    public File getInputBaseDirectory() {

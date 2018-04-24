@@ -308,4 +308,9 @@ public class BashCommandSet extends ShellCommandSet {
         def file = new File("/bin/bash")
         return file.exists() && file.canExecute();
     }
+
+    @Override
+    String getFileSizeCommand(File file) {
+        return "stat --printf='%s' '${file}'"
+    }
 }
