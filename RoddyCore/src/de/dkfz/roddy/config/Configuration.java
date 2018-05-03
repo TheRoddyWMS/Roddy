@@ -382,14 +382,6 @@ public class Configuration implements ContainerParent<Configuration> {
         return RoddyIOHelperMethods.getMD5OfFile(sourceToolPath);
     }
 
-    public boolean getPreventJobExecution() {
-        return configurationValues.getBoolean(ConfigurationConstants.CFG_PREVENT_JOB_EXECUTION);
-    }
-
-    public void disableJobExecution() {
-        configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_PREVENT_JOB_EXECUTION, "true"));
-    }
-
     public String getSSHExecutionUser() {
         return configurationValues.get(ConfigurationFactory.XMLTAG_EXECUTIONSERVICE_SSHUSER).toString();
     }

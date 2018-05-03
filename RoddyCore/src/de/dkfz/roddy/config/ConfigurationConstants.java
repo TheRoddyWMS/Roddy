@@ -70,7 +70,6 @@ public class ConfigurationConstants {
     public static final String CFG_OUTPUT_ACCESS_RIGHTS = "outputAccessRights";
     public static final String CFG_OUTPUT_FILE_GROUP = "outputFileGroup";
 
-    public static final String CFG_PREVENT_JOB_EXECUTION = "preventJobExecution";
     public static final String CFG_OUTPUT_UMASK = "outputUMask";
 
     public static final String CFG_USED_RESOURCES_SIZE = "usedResourcesSize";

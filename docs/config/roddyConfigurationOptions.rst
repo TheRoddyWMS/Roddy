@@ -61,5 +61,4 @@ Access Rights
 Other Variables
 ---------------
 
-* preventJobExecution
 * usedResourcesSize

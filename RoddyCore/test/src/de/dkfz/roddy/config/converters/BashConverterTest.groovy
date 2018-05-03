@@ -50,7 +50,6 @@ class BashConverterTest {
             "#analysis C,aAnalysis,TestPlugin:current",
 
             "outputBaseDirectory=/data/michael/temp/roddyLocalTest/testproject/rpp",
-            "preventJobExecution=false",
             "UNZIPTOOL=gunzip",
             'ZIPTOOL_OPTIONS="-c"',
             'sampleDirectory=/data/michael/temp/roddyLocalTest/testproject/vbp/A100/${sample}/${SEQUENCER_PROTOCOL}'
@@ -68,7 +67,6 @@ class BashConverterTest {
             "  </availableAnalyses>",
             "  <configurationvalues>",
             "    <cvalue name='outputBaseDirectory' value='/data/michael/temp/roddyLocalTest/testproject/rpp' type='string' />",
-            "    <cvalue name='preventJobExecution' value='false' type='string' />",
             "    <cvalue name='UNZIPTOOL' value='gunzip' type='string' />",
             "    <cvalue name='ZIPTOOL_OPTIONS' value='\"-c\"' type='string' />",
             '    <cvalue name=\'sampleDirectory\' value=\'/data/michael/temp/roddyLocalTest/testproject/vbp/A100/${sample}/${SEQUENCER_PROTOCOL}\' type=\'string\' />',
