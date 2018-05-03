@@ -132,11 +132,11 @@ public class MockupExecutionContextBuilder {
             final DataSet dataSet = new DataSet(analysis, "TEST_PID", getTestOutputDirectory("TEST_PID"))
 
             return new ExecutionContext(System.getProperty("user.name"), analysis, dataSet, ExecutionContextLevel.UNSET,
-                    testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime(), true)
+                    testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime())
 
         } else {
             return new ExecutionContext(System.getProperty("user.name"), null, null, ExecutionContextLevel.UNSET,
-                                        testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime(), true)
+                                        testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime())
         }
     }
 

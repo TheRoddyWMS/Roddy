@@ -19,6 +19,8 @@ import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 
+import java.util.logging.Level
+
 /**
  * An ExecutionContect is the runtime context for an analysis and a DataSet.<br />
  * It keeps track of context relevant information like:<br />
@@ -138,7 +140,7 @@ class ExecutionContext {
         this(userID, analysis, dataSet, executionContextLevel, outputDirectory, inputDirectory, executionDirectory, -1)
     }
 
-    ExecutionContext(String userID, Analysis analysis, DataSet dataSet, ExecutionContextLevel executionContextLevel, File outputDirectory, File inputDirectory, File executionDirectory, long creationCheckPoint, boolean dontRaise) {
+    ExecutionContext(String userID, Analysis analysis, DataSet dataSet, ExecutionContextLevel executionContextLevel, File outputDirectory, File inputDirectory, File executionDirectory, long creationCheckPoint) {
         this.executionDirectory = executionDirectory
         this.outputDirectory = outputDirectory
         this.inputDirectory = inputDirectory
@@ -150,10 +152,6 @@ class ExecutionContext {
         this.dataSet = dataSet
 
         setExecutingUser(userID)
-    }
-
-    ExecutionContext(String userID, Analysis analysis, DataSet dataSet, ExecutionContextLevel executionContextLevel, File outputDirectory, File inputDirectory, File executionDirectory, long creationCheckPoint) {
-        this(userID, analysis, dataSet, executionContextLevel, outputDirectory, inputDirectory, executionDirectory, creationCheckPoint, false)
     }
 
     /**
@@ -403,7 +401,8 @@ class ExecutionContext {
             checkedIfAccessRightsCanBeSet = FileSystemAccessProvider.getInstance().checkIfAccessRightsCanBeSet(this)
             if (!checkedIfAccessRightsCanBeSet) {
                 modAllowed = false
-                addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("Access rights modification was disabled. The test on the file system raised an error."))
+                addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.
+                        expand("Access rights modification was disabled. The test on the file system raised an error.", Level.WARNING))
             }
         }
         return modAllowed
