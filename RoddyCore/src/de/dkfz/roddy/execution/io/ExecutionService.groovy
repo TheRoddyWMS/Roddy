@@ -68,11 +68,6 @@ abstract class ExecutionService implements BEExecutionService {
      */
     protected final LinkedList<String> blockedPIDsForJobExecution = new LinkedList<String>()
 
-    /**
-     * Specifies, that the execution service must not execute any further jobs.
-     */
-    protected boolean allJobsBlocked = false
-
     static void initializeService(Class executionServiceClass, RunMode runMode) {
         executionService = (ExecutionService) executionServiceClass.getConstructors()[0].newInstance()
         if (runMode == RunMode.CLI) {
@@ -160,7 +155,15 @@ abstract class ExecutionService implements BEExecutionService {
     protected abstract ExecutionResult _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream)
 
     /**
-     * The original function is in ExecutionService, but this one takes parameters and passes them to the execution.
+     * Directly pass parameters to a tool script to be executed remotely. Use this method if you have a script in your plugin
+     * whose execution is required during the workflow set-up. E.g. if you need the number of read-groups in the input BAM
+     * during submission time.
+     *
+     * The tool is executed just like a normal tool but using the DirectSynchronousExecutionJobManager (so no PBS, GE, or LSF).
+     *
+     * Note that this tool may be executed both in the initial phase and the final phase during a testrerun. If you want to avoid
+     * double execution, use some sort of caching in the calling code.
+     *
      * @param context
      * @param toolID
      * @param parameters
@@ -182,7 +185,7 @@ abstract class ExecutionService implements BEExecutionService {
         // Getting complicated from here on. We need to replicate some code.
 
         // If QUERY_STATUS is set as the context status, some parts of the above .run() will not be executed and need to be mimicked (for now).
-        if (!context.executionContextLevel.isOrWasAllowedToSubmitJobs) {
+        if (!context.executionContextLevel.allowedToSubmitJobs) {
             wrapperJob.storeJobConfigurationFile(wrapperJob.createJobConfiguration())
             wrapperJob.keepOnlyEssentialParameters()
 
@@ -255,7 +258,7 @@ abstract class ExecutionService implements BEExecutionService {
         ExecutionResult res
 
         String cmdString
-        if (!configurationDisallowsJobSubmission && !allJobsBlocked && !datasetIsBlocked && !isDummyCommand) {
+        if (!configurationDisallowsJobSubmission && !datasetIsBlocked && !isDummyCommand) {
             try {
                 cmdString = command.toBashCommandString()
 
@@ -280,7 +283,6 @@ abstract class ExecutionService implements BEExecutionService {
             StringBuilder reason = new StringBuilder()
             reason << configurationDisallowsJobSubmission ? "Application writeConfigurationFile does not allow job submission. " : ""
             reason << datasetIsBlocked ? "The execution of jobs for this DataSet is stopped. " : ""
-            reason << allJobsBlocked ? "The execution service is no longer allowed to execute commands. " : ""
             logger.postSometimesInfo("Skipping command " + command + " for reason: " + reason)
         }
         return res
@@ -447,7 +449,7 @@ abstract class ExecutionService implements BEExecutionService {
         File roddyBundledFilesDirectory = Roddy.getBundledFilesDirectory()
 
         provider.checkDirectories([executionBaseDirectory, executionDirectory, temporaryDirectory, lockFilesDirectory], context, true)
-        if(context.executionContextLevel.isOrWasAllowedToSubmitJobs){
+        if(context.executionContextLevel.allowedToSubmitJobs){
             logger.always("Creating the following execution directory to store information about this process:")
             logger.always("\t${executionDirectory.getAbsolutePath()}")
         }
@@ -510,7 +512,7 @@ abstract class ExecutionService implements BEExecutionService {
      * @return A descriptive list of missing files
      */
     List<String> checkForInaccessiblePreparedFiles(ExecutionContext context) {
-        if (!context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) return []
+        if (!context.getExecutionContextLevel().allowedToSubmitJobs) return []
         boolean strict = Roddy.isStrictModeEnabled()
         def runtimeService = context.getRuntimeService()
 
@@ -809,7 +811,7 @@ abstract class ExecutionService implements BEExecutionService {
      * @param context
      */
     void writeAdditionalFilesAfterExecution(ExecutionContext context) {
-        if (!context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) return
+        if (!context.getExecutionContextLevel().allowedToSubmitJobs) return
 
         context.setDetailedExecutionContextLevel(ExecutionContextSubLevel.RUN_FINALIZE_CREATE_JOBFILES)
 
@@ -933,24 +935,6 @@ abstract class ExecutionService implements BEExecutionService {
             readability[file] = allFiles.contains(file)
 
         return readability
-    }
-
-    /**
-     * Tries to stop the execution of jobs for a specific dataSet
-     *
-     * @param dataSet
-     */
-    synchronized void stopExecution(DataSet dataSet) {
-//        MARK:
-//        if (!blockedPIDsForJobExecution.contains(dataSet))
-//            blockedPIDsForJobExecution.add(dataSet);
-    }
-
-    /**
-     * Tries to stop the execution of all pending jobs.
-     */
-    synchronized void stopExecution() {
-        allJobsBlocked = true
     }
 
     boolean needsPassword() { return false }

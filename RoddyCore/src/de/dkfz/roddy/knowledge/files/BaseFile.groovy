@@ -662,7 +662,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
                 throw new ConfigurationError(sb.toString(), baseFile.executionContext.configuration);
             } else {
                 //Check if the path exists and create it if necessary.
-                if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs && !FileSystemAccessProvider.getInstance().checkDirectory(patternResult.x.getParentFile(), context, true)) {
+                if (context.getExecutionContextLevel().allowedToSubmitJobs && !FileSystemAccessProvider.getInstance().checkDirectory(patternResult.x.getParentFile(), context, true)) {
                     throw new IOException("Output path could not be created for file: " + baseFile);
                 }
             }
