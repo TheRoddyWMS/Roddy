@@ -458,7 +458,7 @@ class ConfigurationFactory {
         Configuration config
         if (icc.type >= ConfigurationType.PROJECT) {
             Map<String, AnalysisConfiguration> availableAnalyses = [:]
-            String runtimeServiceClass = extractAttributeText(configurationNode, "runtimeServiceClass", RuntimeService.class.name)
+            String runtimeServiceClass = extractAttributeText(configurationNode, "runtimeServiceClass", null)
             config = new ProjectConfiguration(icc, runtimeServiceClass, availableAnalyses, parentConfig)
             boolean inheritAnalyses = Boolean.parseBoolean(extractAttributeText(configurationNode, XMLTAG_ATTRIBUTE_INHERITANALYSES, "false"))
             if (!inheritAnalyses) {
