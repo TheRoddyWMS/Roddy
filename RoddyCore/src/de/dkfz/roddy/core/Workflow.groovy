@@ -230,7 +230,7 @@ abstract class Workflow {
      * @return
      */
     final List<String> callDirect(String toolID, Map<String, Object> parameters) {
-        return ExecutionService.getInstance().callDirect(context, toolID, parameters)
+        return ExecutionService.getInstance().runDirect(context, toolID, parameters)
     }
 
     /**
@@ -258,7 +258,7 @@ abstract class Workflow {
      * Introduced in BrawlWorkflow because of some issues with Groovy and the call method. Just for code completeness
      */
     final List<String> runDirect(String toolID, Map<String, Object> parameters) {
-        return ExecutionService.getInstance().callDirect(context, toolID, parameters);
+        return ExecutionService.getInstance().runDirect(context, toolID, parameters);
     }
     
     final BaseFile file(String path, String _class = BaseFile.STANDARD_FILE_CLASS) {

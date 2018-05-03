@@ -24,8 +24,6 @@ import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.BEJobResult
-import de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForBaseFiles
-import de.dkfz.roddy.knowledge.files.BaseFile.ConstructionHelperForGenericCreation
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
@@ -243,7 +241,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
      *  If the command could not get successfully executed an ExecutionException is propagated. */
     static BaseFile getSourceFileUsingTool(ExecutionContext context, String toolID, String _class = STANDARD_FILE_CLASS)
         throws UnexpectedExecutionResultException, ExecutionException {
-        List<String> executionOutput = ExecutionService.instance.callDirect(context, toolID)
+        List<String> executionOutput = ExecutionService.instance.runDirect(context, toolID)
         if (executionOutput.size() != 1) {
             throw new UnexpectedExecutionResultException("SourceFile instantiation from tool output failed", executionOutput)
         } else {
@@ -255,7 +253,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
      *  The tool should return an arbitary number of lines with filenames. If no line is returned, an empty list is returned. */
     static List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID, String _class = STANDARD_FILE_CLASS)
         throws ExecutionException {
-        return ExecutionService.instance.callDirect(context, toolID).collect {
+        return ExecutionService.instance.runDirect(context, toolID).collect {
             getSourceFile(context, it, _class)
         } as List<BaseFile>
     }
