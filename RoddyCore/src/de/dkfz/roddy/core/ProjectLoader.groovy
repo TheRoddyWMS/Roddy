@@ -494,11 +494,8 @@ class ProjectLoader {
         List<String> errors = []
 
         // Earliest check for valid input and output directories. If they are not accessible or writeable.
-
-        // Check if the configuration values are both set, print out warning if one was set empty.
-        // If one is empty, fill with the other value, if both are empty, abort!
-        // Checks are done before the readability tests because we need to check for the raw configuration values. The next
-        // check will already use translated value
+        // The checks are done before the readability tests because we need to check for the raw configuration values
+        // as the next check will already use translated value
 
         String valueInDir = analysis.configuration.configurationValues.get(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, "").value
         String valueOutDir = analysis.configuration.configurationValues.get(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, "").value
@@ -510,12 +507,12 @@ class ProjectLoader {
 
             // Fill variable, if it is missing. Log a warning.
             if(!valueInDir) {
-                logger.always("The input base directory is not set, take the path of the output base directory for it.")
+                logger.always("The input base directory is not set. Taking the path of the output base directory instead.")
                 analysis.configuration.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, valueOutDir, "path"))
             }
 
             if(!valueOutDir) {
-                logger.always("The output base directory is not set, take the path of the input base directory for it.")
+                logger.always("The output base directory is not set. Taking the path of the output base directory instead.")
                 analysis.configuration.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, valueInDir, "path"))
             }
 
