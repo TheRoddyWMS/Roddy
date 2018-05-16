@@ -13,7 +13,6 @@ import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobManagerOptions
 import de.dkfz.roddy.execution.jobs.JobState
-import de.dkfz.roddy.execution.jobs.DummyCommand
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -30,6 +29,9 @@ import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.BEJobID
+import de.dkfz.roddy.execution.jobs.cluster.lsf.LSFCommand
+import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommand
+import de.dkfz.roddy.execution.jobs.cluster.sge.SGECommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
@@ -62,11 +64,6 @@ abstract class ExecutionService implements BEExecutionService {
     public static final String RODDY_CVALUE_DIRECTORY_BUNDLED_FILES = "DIR_BUNDLED_FILES"
     public static final String RODDY_CVALUE_DIRECTORY_ANALYSIS_TOOLS = "DIR_ANALYSIS_TOOLS"
     public static final String RODDY_CVALUE_JOBSTATE_LOGFILE = "jobStateLogFile"
-
-    /**
-     * Specifies a list of dataSet's for which the creation of jobs is not allowed.
-     */
-    protected final LinkedList<String> blockedPIDsForJobExecution = new LinkedList<String>()
 
     static void initializeService(Class executionServiceClass, RunMode runMode) {
         executionService = (ExecutionService) executionServiceClass.getConstructors()[0].newInstance()
@@ -249,41 +246,48 @@ abstract class ExecutionService implements BEExecutionService {
         }
     }
 
+    /** Create somehow valid submission IDs.
+     *
+     * @param command
+     * @return
+     */
+    String validSubmissionCommandOutputWithRandomJobId(Command command) {
+        if (command instanceof LSFCommand) {
+            return String.format("<0%04d>", System.nanoTime() % 10000)
+        } else if (command instanceof PBSCommand) {
+            return String.format("0x%04X", System.nanoTime() % 10000)
+        } else if (command instanceof SGECommand) {
+            return String.format("dummy dummy 0%04d", System.nanoTime() % 10000)
+        } else {
+            throw new RuntimeException("Don't know how to create a valid dummy output for a '${command.getClass()}'")
+        }
+    }
+
     @Override
     ExecutionResult execute(Command command, boolean waitFor = true) {
         ExecutionContext context = ((Job) command.getJob()).getExecutionContext()
-        boolean configurationDisallowsJobSubmission = Roddy.applicationConfiguration.getOrSetApplicationProperty(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAGS, "").contains(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAG_NOJOBSUBMISSION)
-        boolean datasetIsBlocked = blockedPIDsForJobExecution.contains(context.getDataSet())
-        boolean isDummyCommand = Command instanceof DummyCommand
         ExecutionResult res
 
         String cmdString
-        if (!configurationDisallowsJobSubmission && !datasetIsBlocked && !isDummyCommand) {
-            try {
-                cmdString = command.toBashCommandString()
+        try {
+            cmdString = command.toBashCommandString()
 
-                OutputStream outputStream = createServiceBasedOutputStream(command, waitFor)
+            OutputStream outputStream = createServiceBasedOutputStream(command, waitFor)
 
-                if (context.getExecutionContextLevel() == ExecutionContextLevel.TESTRERUN) {
-                    String pid = String.format("0x%08X", System.nanoTime())
-                    res = new ExecutionResult(true, 0, [pid], pid)
-                } else {
-                    res = execute(cmdString, waitFor, outputStream)
-                }
-                command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.COMPLETED_SUCCESSFUL)
-
-                if (outputStream)
-                    finalizeServiceBasedOutputStream(command, outputStream)
-
-                context.addCalledCommand(command)
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, ex.toString())
+            if (context.getExecutionContextLevel() == ExecutionContextLevel.TESTRERUN) {
+                String pid = validSubmissionCommandOutputWithRandomJobId(command)
+                res = new ExecutionResult(true, 0, [pid], pid)
+            } else {
+                res = execute(cmdString, waitFor, outputStream)
             }
-        } else {
-            StringBuilder reason = new StringBuilder()
-            reason << configurationDisallowsJobSubmission ? "Application writeConfigurationFile does not allow job submission. " : ""
-            reason << datasetIsBlocked ? "The execution of jobs for this DataSet is stopped. " : ""
-            logger.postSometimesInfo("Skipping command " + command + " for reason: " + reason)
+            command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.COMPLETED_SUCCESSFUL)
+
+            if (outputStream)
+                finalizeServiceBasedOutputStream(command, outputStream)
+
+            context.addCalledCommand(command)
+        } catch (Exception ex) {
+            logger.log(Level.SEVERE, ex.toString())
         }
         return res
     }

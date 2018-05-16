@@ -33,7 +33,6 @@ public class Constants {
     public static final String APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE_LOCATION = "executionServiceKeyfileLocation";
     public static final String APP_PROPERTY_CONFIGURATION_DIRECTORIES = "configurationDirectories";
     public static final String APP_PROPERTY_PLUGIN_DIRECTORIES = "pluginDirectories";
-    public static final String APP_PROPERTY_APPLICATION_DEBUG_TAGS = "applicationDebugTags";
     public static final String APP_PROPERTIES_FILENAME = "applicationProperties.ini";
     public static final String APP_PROPERTY_APPLICATION_DEBUG_TAG_NOJOBSUBMISSION = "NOJOBSUBMISSION";
     public static final String APP_PROPERTY_NET_USEPROXY = "netUseProxy";
