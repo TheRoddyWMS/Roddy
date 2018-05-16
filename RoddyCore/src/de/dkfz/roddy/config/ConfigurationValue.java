@@ -249,25 +249,29 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
     }
 
     public File toFile() {
-        String temp = value;
-//        String[] allValues = value.split(File.separator);
-//        for (int i = 0; i < allValues.length; i++) {
-//            if (!allValues[i].startsWith("$")) continue;
-//            String cValName = allValues[i].substring(2, allValues[i].length() - 1);
-//            if (!configuration.hasConfigurationValue(cValName))
-//                continue;
-//            String val = configuration.getConfigurationValue(cValName).toString();
-//            temp = temp.replace(allValues[i], val);
-//        }
-        return new File(temp);
+        return new File(value);
     }
 
     public Boolean toBoolean() {
         String v = value != null ? value.toLowerCase() : "f";
-        if (v.startsWith("y") || v.startsWith("j") || v.startsWith("t"))
+        if (v.startsWith("y") || v.startsWith("j") || v.startsWith("t") || v.equals("1")) {
+            if (!v.equals("true")) {
+                logger.warning("Boolean configuration value '" + id + "' must be 'true' or 'false'. Found: " + v);
+            }
+            if (v.equals("1")) {
+                logger.warning("Boolean configuration value '" + id + "' is '1'. Since Roddy 3.0.8 interpreted as 'true'.");
+            }
             return true;
-        if (v.startsWith("n") || v.startsWith("f"))
+        }
+        if (v.startsWith("n") || v.startsWith("f") || v.equals("0")) {
+            if (!v.equals("false")) {
+                logger.warning("Boolean configuration value '" + id + "' must be 'true' or 'false'. Found: " + v);
+            }
+            if (v.equals("0")) {
+                logger.warning("Boolean configuration value '" + id + "' is '0'. Since Roddy 3.0.8 interpreted as 'true'.");
+            }
             return false;
+        }
         return false;
     }
 
