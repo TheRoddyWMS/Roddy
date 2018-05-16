@@ -19,7 +19,7 @@ List<String> extractDependenciesFromBuildinfoFile(String pluginDir) {
 	if (!pluginPath.canExecute())
 		throw new FileNotFoundException("Cannot access directory ${pluginPath.absolutePath}")
 	File buildInfo = new File(pluginPath, "buildinfo.txt")
-	if (!buildInfo.readable)
+	if (!buildInfo.canRead())
 		throw new AccessDeniedException("Cannot access '${buildInfo.absolutePath}'")
 	return (buildInfo).
 			readLines().
@@ -44,12 +44,12 @@ List<File> findPossibleJarsForDependency(List<String> pluginDirectories, String 
 		def jar = new File(searchPath, "${id}.jar")
 		def versionedJar = new File(searchPath, "${id}_${version}.jar")
 		if (version != "develop") {
-			if (jar.readable && versionedJar.readable)  {
+			if (jar.canRead() && versionedJar.canRead())  {
 				System.err.println("WARNING: Directory '${searchPath.absolutePath}' contains two the readable JARs '${jar.name}' and '${versionedJar.name}'. Using versioned JAR.")
 				[versionedJar]
-			} else if (jar.readable) {
+			} else if (jar.canRead()) {
 				[jar]
-			} else if (versionedJar.readable) {
+			} else if (versionedJar.canRead()) {
 				[versionedJar]
 			} else {
 				[]
@@ -68,10 +68,6 @@ List<File> collectAllJars(List<String> pluginSearchDirectories, String pluginDir
 	List<File> possibleJars = findPossibleJarsForDependencies(pluginSearchDirectories, dependencies)
 
 	def jars = possibleJars.findAll() { it.exists()  }
-	if(jars.size() != dependencies.size()) {
-		System.err.println("Number of JARs didn't match the number of dependencies: dependencies=${dependencies.size()}, jars=${jars.size()}, pluginDirectory=${pluginDirectory}")
-		System.exit(5)
-	}
 
 	// Now search recursively for the dependencies of the newly found JARs.
 	return jars.collect {
