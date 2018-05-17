@@ -78,8 +78,8 @@ List<File> collectAllJars(List<String> pluginSearchDirectories, String pluginDir
 }
 
 
-// This script is used to the JARs for plugins on which a query plugin depends. Multiple plugin directories, configured in, e.g., the
-// applicationProperties.ini, are being searched. The dependencies are stored within the buildinfo.txt files for the specified query plugin.
+// This script is used to find the JARs on which a query plugin depends. Multiple plugin directories, configured in, e.g., the
+// applicationProperties.ini, are being searched. The dependency information that is used is from the buildinfo.txt files.
 //
 // The script needs several parameters:
 // - The plugin line from the configuration file starting with "pluginDirectories="
@@ -87,13 +87,13 @@ List<File> collectAllJars(List<String> pluginSearchDirectories, String pluginDir
 // - The working directory for the query plugin
 
 if (args.size() != 3) {
-	System.err.println('Given a list of pluginDirectories (search paths), a roddyDirectory, and a pluginDirectory to find all plugin jars in the plugins dependencies.')
-	System.err.println('Usage: findPluginLibraries pluginDirectories=pluginDirectoryA,pluginDirectoryB roddyDirectory/ pluginDirectory/')
+	System.err.println('Given a list of pluginDirectories (search paths), a roddyDirectory, and a queryPluginDirectory to find all plugin jars in the plugins dependencies.')
+	System.err.println('Usage: findPluginLibraries pluginDirectories=pluginDirectoryA,pluginDirectoryB roddyDirectory/ queryPluginDirectory/')
 	System.exit(1)
 }
 def pluginDirectoryParameter = args[0]
 def roddyDirectory = args[1]
-def pluginDirectory = args[2]
+def queryPluginDirectory = args[2]
 
 if (!pluginDirectoryParameter.startsWith("pluginDirectories=")) {
 	System.err.println("First parameter should start with 'pluginDirectories='")
@@ -101,7 +101,7 @@ if (!pluginDirectoryParameter.startsWith("pluginDirectories=")) {
 }
 
 List<String> pluginDirectories = parsePluginDirectoriesParameter(roddyDirectory, pluginDirectoryParameter)
-List<File> jars = collectAllJars(pluginDirectories, pluginDirectory).reverse()
+List<File> jars = collectAllJars(pluginDirectories, queryPluginDirectory).reverse()
 System.out.println(jars.join(":"))
 
 

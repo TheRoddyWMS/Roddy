@@ -362,7 +362,7 @@ public class Configuration implements ContainerParent<Configuration> {
         return toolPath;
     }
 
-    /** The the actual path to the copy of the tool on the execution host (which can be local or remote). */
+    /** The actual path to the copy of the tool on the execution host (which can be local or remote). */
     public File getProcessingToolPath(ExecutionContext context, String tool) throws ConfigurationError {
         ToolEntry te = null;
         try {
