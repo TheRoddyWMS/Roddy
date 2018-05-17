@@ -230,6 +230,21 @@ public class MockupExecutionContextBuilder {
             Map<BEJobID, GenericJobInfo> queryExtendedJobStateById(List list) {
                 return null
             }
+
+            @Override
+            protected JobState parseJobState(String s) {
+                return JobState.DUMMY
+            }
+
+            @Override
+            String getQueryJobStatesCommand() {
+                return null
+            }
+
+            @Override
+            String getExtendedQueryJobStatesCommand() {
+                return null
+            }
         }
     }
 }
