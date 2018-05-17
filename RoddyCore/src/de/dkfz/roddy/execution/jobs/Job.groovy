@@ -537,16 +537,14 @@ class Job extends BEJob<BEJob, BEJobResult> {
                     Roddy.applicationConfiguration.getOrSetApplicationProperty(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT, ""))
         }
 
-        //See if the job should be executed
+        // See if the job should be executed
         boolean runJob
         if (contextLevel == ExecutionContextLevel.RUN || contextLevel == ExecutionContextLevel.CLEANUP) {
-            runJob = true //The job is always executed if run is selected
+            runJob = true
             jobDetailsLine << "  Running job " + jobName
         } else if (contextLevel == ExecutionContextLevel.RERUN || contextLevel == ExecutionContextLevel.TESTRERUN) {
             runJob = checkIfJobShouldRerun(dbgMessage)
             jobDetailsLine << "  Rerun job " + jobName
-        } else {
-            return handleDifferentJobRun(dbgMessage)
         }
 
         //Execute the job or create a dummy command.
@@ -573,26 +571,26 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 }
             }
             lastCommand = cmd
-        } else {
-            // The Job is not actually executed. Therefore, create a DummyCommand that creates a dummy JobID which in turn is used to create a dummy JobResult.
-            Command command = new DummyCommand(jobManager, this, jobName, false)
-            jobState = JobState.DUMMY
-            resetJobID(command.jobID)
-            runResult = new BEJobResult(command, new BEJob(command.jobID, jobManager), null, this.tool, parameters, parentJobs as List<BEJob>)
-        }
 
-        //For auto filenames. Get the job id and push propagate it to all filenames.
+            // For auto filenames. Get the job id and push propagate it to all filenames.
+            if (runResult?.jobID?.shortID) {
+                allRawInputParameters.each { String k, Object o ->
+                    BaseFile bf = o instanceof BaseFile ? (BaseFile) o : null
+                    if (!bf) return
 
-        if (runResult?.jobID?.shortID) {
-            allRawInputParameters.each { String k, Object o ->
-                BaseFile bf = o instanceof BaseFile ? (BaseFile) o : null
-                if (!bf) return
-
-                String absolutePath = bf.getPath().getAbsolutePath()
-                if (absolutePath.contains(CVALUE_PLACEHOLDER_RODDY_JOBID)) {
-                    bf.setPath(new File(absolutePath.replace(CVALUE_PLACEHOLDER_RODDY_JOBID, runResult.jobID.shortID)))
+                    String absolutePath = bf.getPath().getAbsolutePath()
+                    if (absolutePath.contains(CVALUE_PLACEHOLDER_RODDY_JOBID)) {
+                        bf.setPath(new File(absolutePath.replace(CVALUE_PLACEHOLDER_RODDY_JOBID, runResult.jobID.shortID)))
+                    }
                 }
             }
+
+        } else {
+            dbgMessage << "\tdummy job created." + ENV_LINESEPARATOR
+            File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
+            resetJobID(new BEFakeJobID(BEFakeJobID.FakeJobReason.NOT_EXECUTED))
+            runResult = new BEJobResult((Command) null, this, null, tool, parameters, parentFiles.collect { it.getCreatingJobsResult()?.getJob() }.findAll { it })
+            jobState = JobState.DUMMY
         }
 
         return runResult
@@ -617,15 +615,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
     void storeJobConfigurationFile(Configuration cfg) {
         String configText = ConfigurationConverter.convertAutomatically(context, cfg)
         FileSystemAccessProvider.getInstance().writeTextFile(getParameterFile(), configText, context)
-    }
-
-    private BEJobResult handleDifferentJobRun(StringBuilder dbgMessage) {
-        dbgMessage << "\tdummy job created." + ENV_LINESEPARATOR
-        File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
-        this.resetJobID(new BEFakeJobID(BEFakeJobID.FakeJobReason.NOT_EXECUTED))
-        runResult = new BEJobResult((Command) null, this, null, tool, parameters, parentFiles.collect { it.getCreatingJobsResult()?.getJob() }.findAll { it })
-        this.setJobState(JobState.DUMMY)
-        return runResult
     }
 
     /**

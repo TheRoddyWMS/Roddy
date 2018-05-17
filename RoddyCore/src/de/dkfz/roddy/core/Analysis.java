@@ -193,7 +193,7 @@ public class Analysis {
         long creationCheckPoint = System.nanoTime();
 
         for (DataSet ds : selectedDatasets) {
-            if (level.isOrWasAllowedToSubmitJobs && !canStartJobs(ds)) {
+            if (level.allowedToSubmitJobs && !canStartJobs(ds)) {
                 logger.postAlwaysInfo("The " + Constants.PID + " " + ds.getId() + " is still running and will be skipped for the process.");
                 continue;
             }
@@ -238,6 +238,9 @@ public class Analysis {
     }
 
     private boolean canStartJobs(DataSet ds) {
+        if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning)) {
+            throw new RuntimeException("Feature toggle forbidSubmissionOnRunning is currently unsupported due to lack of use by users. If you need it contact the developers.");
+        }
         return !Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning) || !hasKnownRunningJobs(ds);
     }
 
@@ -400,7 +403,7 @@ public class Analysis {
                 boolean successfullyExecuted = false;
                 try {
                     boolean execute = true;
-                    if (context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) { // Only do these checks, if we are not in query mode!
+                    if (context.getExecutionContextLevel().allowedToSubmitJobs) { // Only do these checks, if we are not in query mode!
                         List<String> invalidPreparedFiles = ExecutionService.getInstance().checkForInaccessiblePreparedFiles(context);
                         boolean copiedAnalysisToolsAreExecutable = ExecutionService.getInstance().checkCopiedAnalysisTools(context);
                         boolean ignoreFileChecks = Roddy.isOptionSet(RoddyStartupOptions.disablestrictfilechecks);

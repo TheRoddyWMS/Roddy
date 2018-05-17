@@ -480,7 +480,6 @@ class BashConverter extends ConfigurationConverter {
      * #analysis C,aAnalysis,TestPlugin:develop
      *
      * outputBaseDirectory=/data/michael/temp/roddyLocalTest/testproject/rpp
-     * preventJobExecution=false
      * UNZIPTOOL=gunzip
      * ZIPTOOL_OPTIONS="-c"
      * sampleDirectory=/data/michael/temp/roddyLocalTest/testproject/vbp/A100/${sample}/${SEQUENCER_PROTOCOL}*

@@ -13,7 +13,6 @@ import de.dkfz.roddy.execution.jobs.Command
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobManagerOptions
 import de.dkfz.roddy.execution.jobs.JobState
-import de.dkfz.roddy.execution.jobs.DummyCommand
 import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -30,6 +29,9 @@ import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.BEJobID
+import de.dkfz.roddy.execution.jobs.cluster.lsf.LSFCommand
+import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommand
+import de.dkfz.roddy.execution.jobs.cluster.sge.SGECommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
@@ -62,16 +64,6 @@ abstract class ExecutionService implements BEExecutionService {
     public static final String RODDY_CVALUE_DIRECTORY_BUNDLED_FILES = "DIR_BUNDLED_FILES"
     public static final String RODDY_CVALUE_DIRECTORY_ANALYSIS_TOOLS = "DIR_ANALYSIS_TOOLS"
     public static final String RODDY_CVALUE_JOBSTATE_LOGFILE = "jobStateLogFile"
-
-    /**
-     * Specifies a list of dataSet's for which the creation of jobs is not allowed.
-     */
-    protected final LinkedList<String> blockedPIDsForJobExecution = new LinkedList<String>()
-
-    /**
-     * Specifies, that the execution service must not execute any further jobs.
-     */
-    protected boolean allJobsBlocked = false
 
     static void initializeService(Class executionServiceClass, RunMode runMode) {
         executionService = (ExecutionService) executionServiceClass.getConstructors()[0].newInstance()
@@ -160,29 +152,37 @@ abstract class ExecutionService implements BEExecutionService {
     protected abstract ExecutionResult _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream)
 
     /**
-     * The original function is in ExecutionService, but this one takes parameters and passes them to the execution.
+     * Directly pass parameters to a tool script to be executed remotely. Use this method if you have a script in your plugin
+     * whose execution is required during the workflow set-up. E.g. if you need the number of read-groups in the input BAM
+     * during submission time.
+     *
+     * The tool is executed just like a normal tool but using the DirectSynchronousExecutionJobManager (so no PBS, GE, or LSF).
+     *
+     * Note that this tool may be executed both in the initial phase and the final phase during a testrerun. If you want to avoid
+     * double execution, use some sort of caching in the calling code.
+     *
      * @param context
      * @param toolID
      * @param parameters
      * @param jobNameExtension
      * @return
      */
-    List<String> callDirect(ExecutionContext context, String toolID, Map<String, Object> parameters = null) {
+    List<String> runDirect(ExecutionContext context, String toolID, Map<String, Object> parameters = null) {
 
         if (!parameters) parameters = [:]
-        parameters[ConfigurationConstants.DISABLE_DEBUG_OPTIONS_FOR_TOOLSCRIPT] = "true"
-        parameters[ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW] = context.getTemporaryDirectory()
+        parameters[DISABLE_DEBUG_OPTIONS_FOR_TOOLSCRIPT] = "true"
+        parameters[CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW] = context.getTemporaryDirectory()
 
         Job wrapperJob = new Job(context, context.getTimestampString() + "_directTool:" + toolID, toolID, parameters)
         DirectSynchronousExecutionJobManager jobManager =
-                new DirectSynchronousExecutionJobManager(ExecutionService.getInstance(), JobManagerOptions.create().setStrictMode(false).build())
+                new DirectSynchronousExecutionJobManager(getInstance(), JobManagerOptions.create().setStrictMode(false).build())
         wrapperJob.setJobManager(jobManager)
         BEJobResult result = wrapperJob.run(false)
 
         // Getting complicated from here on. We need to replicate some code.
 
         // If QUERY_STATUS is set as the context status, some parts of the above .run() will not be executed and need to be mimicked (for now).
-        if (!context.executionContextLevel.isOrWasAllowedToSubmitJobs) {
+        if (!context.executionContextLevel.allowedToSubmitJobs) {
             wrapperJob.storeJobConfigurationFile(wrapperJob.createJobConfiguration())
             wrapperJob.keepOnlyEssentialParameters()
 
@@ -246,44 +246,48 @@ abstract class ExecutionService implements BEExecutionService {
         }
     }
 
+    /** Create somehow valid submission IDs.
+     *
+     * @param command
+     * @return
+     */
+    String validSubmissionCommandOutputWithRandomJobId(Command command) {
+        if (command instanceof LSFCommand) {
+            return String.format("<0%04d>", System.nanoTime() % 10000)
+        } else if (command instanceof PBSCommand) {
+            return String.format("0x%04X", System.nanoTime() % 10000)
+        } else if (command instanceof SGECommand) {
+            return String.format("dummy dummy 0%04d", System.nanoTime() % 10000)
+        } else {
+            throw new RuntimeException("Don't know how to create a valid dummy output for a '${command.getClass()}'")
+        }
+    }
+
     @Override
     ExecutionResult execute(Command command, boolean waitFor = true) {
         ExecutionContext context = ((Job) command.getJob()).getExecutionContext()
-        boolean configurationDisallowsJobSubmission = Roddy.applicationConfiguration.getOrSetApplicationProperty(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAGS, "").contains(Constants.APP_PROPERTY_APPLICATION_DEBUG_TAG_NOJOBSUBMISSION)
-        boolean preventCalls = context.getConfiguration().getPreventJobExecution()
-        boolean pidIsBlocked = blockedPIDsForJobExecution.contains(context.getDataSet())
-        boolean isDummyCommand = Command instanceof DummyCommand
         ExecutionResult res
 
         String cmdString
-        if (!configurationDisallowsJobSubmission && !allJobsBlocked && !pidIsBlocked && !preventCalls && !isDummyCommand) {
-            try {
-                cmdString = command.toBashCommandString()
+        try {
+            cmdString = command.toBashCommandString()
 
-                OutputStream outputStream = createServiceBasedOutputStream(command, waitFor)
+            OutputStream outputStream = createServiceBasedOutputStream(command, waitFor)
 
-                if (context.getExecutionContextLevel() == ExecutionContextLevel.TESTRERUN) {
-                    String pid = String.format("0x%08X", System.nanoTime())
-                    res = new ExecutionResult(true, 0, [pid], pid)
-                } else {
-                    res = execute(cmdString, waitFor, outputStream)
-                }
-                command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.COMPLETED_SUCCESSFUL)
-
-                if (outputStream)
-                    finalizeServiceBasedOutputStream(command, outputStream)
-
-                context.addCalledCommand(command)
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, ex.toString())
+            if (context.getExecutionContextLevel() == ExecutionContextLevel.TESTRERUN) {
+                String pid = validSubmissionCommandOutputWithRandomJobId(command)
+                res = new ExecutionResult(true, 0, [pid], pid)
+            } else {
+                res = execute(cmdString, waitFor, outputStream)
             }
-        } else {
-            StringBuilder reason = new StringBuilder()
-            reason << configurationDisallowsJobSubmission ? "Application writeConfigurationFile does not allow job submission. " : ""
-            reason << preventCalls ? "Configuration does not allow the execution of commands. " : ""
-            reason << pidIsBlocked ? "The execution of jobs for this DataSet is stopped. " : ""
-            reason << allJobsBlocked ? "The execution service is no longer allowed to execute commands. " : ""
-            logger.postSometimesInfo("Skipping command " + command + " for reason: " + reason)
+            command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.COMPLETED_SUCCESSFUL)
+
+            if (outputStream)
+                finalizeServiceBasedOutputStream(command, outputStream)
+
+            context.addCalledCommand(command)
+        } catch (Exception ex) {
+            logger.log(Level.SEVERE, ex.toString())
         }
         return res
     }
@@ -334,35 +338,36 @@ abstract class ExecutionService implements BEExecutionService {
         FileSystemAccessProvider fsap = FileSystemAccessProvider.getInstance()
         Analysis analysis = context.getAnalysis()
 
-        //First check in and output directories for accessibility
+        // First check in and output directories for accessibility
 
-        //Project input directory with i.e. ../view-by-pid
+        // Project input directory with i.e. ../view-by-pid
         File inputBaseDirectory = analysis.getInputBaseDirectory()
         Boolean inputIsReadable = fsap.isReadable(inputBaseDirectory)
         if (!inputIsReadable)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.expand("The input dir is not readable: ${inputBaseDirectory}, please check access rights and ownership.", Level.SEVERE))
+            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.
+                    expand("The input base directory is not readable: ${inputBaseDirectory}, please check access rights and ownership.", Level.SEVERE))
 
-        //Project output directory with i.e. ../results_per_pid
+        // Project output base directory with i.e. ../results_per_pid
         File outputBaseDirectory = analysis.getOutputBaseDirectory()
         Boolean outputIsWriteable =
                 fsap.directoryExists(outputBaseDirectory) ? fsap.isReadable(outputBaseDirectory) && fsap.isWritable(outputBaseDirectory) : null
         if (outputIsWriteable == null)
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.
-                    expand("Output dir is missing: ${outputBaseDirectory}, please create with proper access rights and ownership.", Level.SEVERE))
+                    expand("Output base directory is missing: ${outputBaseDirectory}, please create with proper access rights and ownership.", Level.SEVERE))
         else if (outputIsWriteable == Boolean.FALSE) //Do an else if because groovy might evaluate null to false.
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
-                    expand("Output dir is not writable: ${outputBaseDirectory}, please change access rights and ownership."))
+                    expand("Output base directory is not writable: ${outputBaseDirectory}, please change access rights and ownership."))
 
-        //Output with dataset id
+        // Output with dataset id
         File outputDirectory = context.getOutputDirectory()
         Boolean datasetDirIsWritable =
                 fsap.directoryExists(outputDirectory) ? fsap.isReadable(outputDirectory) && fsap.isWritable(outputDirectory) : null
         if (datasetDirIsWritable == null)
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.
-                    expand("Output dir is missing: ${outputDirectory}", Level.INFO))
+                    expand("Creating output directory: ${outputDirectory}", Level.INFO))
         else if (datasetDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
-                    expand("Output dir is not writable: ${outputDirectory}"))
+                    expand("Output directory is not writable: ${outputDirectory}"))
 
         // roddyExecutionStore in the dataset folder
         File baseContextExecutionDirectory = context.getRuntimeService().getBaseExecutionDirectory(context)
@@ -370,7 +375,7 @@ abstract class ExecutionService implements BEExecutionService {
                 fsap.directoryExists(baseContextExecutionDirectory) ? fsap.isReadable(baseContextExecutionDirectory) && fsap.isWritable(baseContextExecutionDirectory) : null
         if (baseContextDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evaluate null to false.
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
-                    expand("The datasets execution storeage folder is not writable: ${baseContextExecutionDirectory}"))
+                    expand("The datasets execution storage folder is not writable: ${baseContextExecutionDirectory}"))
 
         // the exec_... folder in the base context exec dir. (NOT CHECKED, created later!)
         File contextExecutionDirectory = context.getExecutionDirectory()
@@ -389,7 +394,7 @@ abstract class ExecutionService implements BEExecutionService {
                 outputIsWriteable && fsap.fileExists(projectExecCacheFile) ? fsap.isReadable(projectExecCacheFile) && fsap.isWritable(projectExecCacheFile) : null
         if (projectExecCacheFileIsWritable == Boolean.FALSE)
             context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
-                    expand("The projects exec cache file is not writable: ${projectExecCacheFile}"))
+                    expand("The projects execution cache file is not writable: ${projectExecCacheFile}"))
 
         // The md5 sum file in .roddyExecutionStore
         File projectToolsMD5SumFile = context.getFileForAnalysisToolsArchiveOverview()
@@ -448,7 +453,7 @@ abstract class ExecutionService implements BEExecutionService {
         File roddyBundledFilesDirectory = Roddy.getBundledFilesDirectory()
 
         provider.checkDirectories([executionBaseDirectory, executionDirectory, temporaryDirectory, lockFilesDirectory], context, true)
-        if(context.executionContextLevel.isOrWasAllowedToSubmitJobs){
+        if(context.executionContextLevel.allowedToSubmitJobs){
             logger.always("Creating the following execution directory to store information about this process:")
             logger.always("\t${executionDirectory.getAbsolutePath()}")
         }
@@ -511,7 +516,7 @@ abstract class ExecutionService implements BEExecutionService {
      * @return A descriptive list of missing files
      */
     List<String> checkForInaccessiblePreparedFiles(ExecutionContext context) {
-        if (!context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) return []
+        if (!context.getExecutionContextLevel().allowedToSubmitJobs) return []
         boolean strict = Roddy.isStrictModeEnabled()
         def runtimeService = context.getRuntimeService()
 
@@ -810,7 +815,7 @@ abstract class ExecutionService implements BEExecutionService {
      * @param context
      */
     void writeAdditionalFilesAfterExecution(ExecutionContext context) {
-        if (!context.getExecutionContextLevel().isOrWasAllowedToSubmitJobs) return
+        if (!context.getExecutionContextLevel().allowedToSubmitJobs) return
 
         context.setDetailedExecutionContextLevel(ExecutionContextSubLevel.RUN_FINALIZE_CREATE_JOBFILES)
 
@@ -934,24 +939,6 @@ abstract class ExecutionService implements BEExecutionService {
             readability[file] = allFiles.contains(file)
 
         return readability
-    }
-
-    /**
-     * Tries to stop the execution of jobs for a specific dataSet
-     *
-     * @param dataSet
-     */
-    synchronized void stopExecution(DataSet dataSet) {
-//        MARK:
-//        if (!blockedPIDsForJobExecution.contains(dataSet))
-//            blockedPIDsForJobExecution.add(dataSet);
-    }
-
-    /**
-     * Tries to stop the execution of all pending jobs.
-     */
-    synchronized void stopExecution() {
-        allJobsBlocked = true
     }
 
     boolean needsPassword() { return false }

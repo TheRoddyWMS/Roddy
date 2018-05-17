@@ -362,6 +362,7 @@ public class Configuration implements ContainerParent<Configuration> {
         return toolPath;
     }
 
+    /** The actual path to the copy of the tool on the execution host (which can be local or remote). */
     public File getProcessingToolPath(ExecutionContext context, String tool) throws ConfigurationError {
         ToolEntry te = null;
         try {
@@ -380,14 +381,6 @@ public class Configuration implements ContainerParent<Configuration> {
         }
         File sourceToolPath = getSourceToolPath(tool);
         return RoddyIOHelperMethods.getMD5OfFile(sourceToolPath);
-    }
-
-    public boolean getPreventJobExecution() {
-        return configurationValues.getBoolean(ConfigurationConstants.CFG_PREVENT_JOB_EXECUTION);
-    }
-
-    public void disableJobExecution() {
-        configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_PREVENT_JOB_EXECUTION, "true"));
     }
 
     public String getSSHExecutionUser() {
