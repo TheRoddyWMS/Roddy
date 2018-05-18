@@ -4,4 +4,4 @@ Roddy is a framework for development and management of script based workflows on
 
 # Documentation
 
-You can find the documentation under [Read the Docs](http://roddy-documentation.readthedocs.io). Please see there for the [detailed installation instructions](http://roddy-documentation.readthedocs.io/html/installationGuide.html).
+You can find the documentation under [Read the Docs](http://roddy-documentation.readthedocs.io). Please see there for the [detailed installation instructions](http://roddy-documentation.readthedocs.io/installationGuide.html).
