@@ -127,7 +127,7 @@ public class BashCommandSet extends ShellCommandSet {
         if (onCreateAccessRights && onCreateFileGroup)
             return "sg ${onCreateFileGroup} -c \"${checkExistence} && umask ${onCreateAccessRights} && mkdir -p ${f.absolutePath}\"";
         else
-            return "${checkExistence} && install -d ${f.absolutePath}";
+            return "${checkExistence} && install -d \"${f.absolutePath}\" || echo ''";
     }
 
     @Override
