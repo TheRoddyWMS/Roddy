@@ -13,6 +13,7 @@ import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.Configuration.ConfigurationType
 import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.config.converters.YAMLConverter
+import de.dkfz.roddy.config.validation.XSDValidator
 import de.dkfz.roddy.core.Project
 import de.dkfz.roddy.core.ProjectLoaderException
 import de.dkfz.roddy.core.RuntimeService
@@ -36,6 +37,7 @@ import groovy.util.slurpersupport.NodeChildren
 import groovy.xml.StreamingMarkupBuilder
 import groovy.xml.XmlUtil
 import org.apache.commons.io.filefilter.WildcardFileFilter
+import org.xml.sax.SAXParseException
 
 import java.lang.reflect.Field
 import java.lang.reflect.Method
@@ -282,7 +284,12 @@ class ConfigurationFactory {
             throw new ParseException("Could not identify file '${file.absolutePath}' as a Roddy configuration file." as String, 0)
         }
 
-        NodeChild xml = (NodeChild) new XmlSlurper().parseText(text)
+        NodeChild xml
+        try {
+            xml = (NodeChild) new XmlSlurper().parseText(text)
+        } catch (SAXParseException ex) {
+            throw new ConfigurationLoaderException("Project configuration file ${file} could not be loaded, see message(s) above.");
+        }
         return _preloadConfiguration(file, text, xml, null)
     }
 
