@@ -16,14 +16,6 @@ import groovy.transform.CompileStatic
 @CompileStatic
 class BaseMetadataTable {
 
-    /**
-     * Type of input table. Can be a file or a database (but this is not supported yet)
-     */
-    static enum InputTableType {
-        File,
-        Database,
-    }
-
     // A map translating "external" table column ids to "internal" ones.
     // The mapping is via standard values from some xml files.
     protected Map<String, String> internal2CustomIDMap = [:]
@@ -97,7 +89,7 @@ class BaseMetadataTable {
         return internal2CustomIDMap.keySet() - mandatoryColumns as List<String>
     }
 
-    private void assertValidRecord(Map<String, String> record) {
+    protected void assertValidRecord(Map<String, String> record) {
         if (!record.keySet().equals(internal2CustomIDMap.keySet())) {
             throw new RuntimeException("Record has columns inconsistent with header: ${record}")
         }
@@ -111,7 +103,7 @@ class BaseMetadataTable {
         }
     }
 
-    private void assertHeader() {
+    protected void assertHeader() {
         mandatoryColumnNames.each {
             if (!headerMap.containsKey(internal2CustomIDMap[it])) {
                 throw new RuntimeException("Field '${it}' is missing")
