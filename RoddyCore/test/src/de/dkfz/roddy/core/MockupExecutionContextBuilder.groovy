@@ -93,11 +93,11 @@ public class MockupExecutionContextBuilder {
         }
     }
 
-    public static ExecutionContext createSimpleContext(final Class testClass, final Configuration testConfig = new Configuration(null), final RuntimeService testRuntimeService = createSimpleRuntimeService(testClass.name)) {
+    static ExecutionContext createSimpleContext(final Class testClass, final Configuration testConfig = new Configuration(null), final RuntimeService testRuntimeService = createSimpleRuntimeService(testClass.name)) {
         return createSimpleContext(testClass.name, testConfig, testRuntimeService)
     }
 
-    public static ExecutionContext createSimpleContext(final String testID, final Configuration testConfig = new Configuration(null), final RuntimeService testRuntimeService = createSimpleRuntimeService(testID)) {
+    static ExecutionContext createSimpleContext(final String testID, final Configuration testConfig = new Configuration(null), final RuntimeService testRuntimeService = createSimpleRuntimeService(testID)) {
 
         final File testInputDirectory = getTestInputDirectory(testID)
         final File testOutputDirectory = getTestOutputDirectory(testID)

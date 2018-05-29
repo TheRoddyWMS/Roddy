@@ -26,6 +26,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException
  * <p>
  * Created by heinold on 14.04.16.
  */
+@Deprecated   // See Issue #255.
 @CompileStatic
 final class MetadataTableFactory {
 

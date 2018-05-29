@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.config.converters
 
+import de.dkfz.roddy.Constants
+import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
@@ -17,7 +19,9 @@ import de.dkfz.roddy.execution.io.NoNoExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import org.junit.BeforeClass
 import org.junit.Ignore
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 
 /**
  * Created by heinold on 30.06.16.
@@ -25,6 +29,8 @@ import org.junit.Test
 @groovy.transform.CompileStatic
 class BashConverterTest {
 
+    @Rule
+    public TemporaryFolder testFolder = new TemporaryFolder()
 
     public static final String CVAL_TEST_OUTPUT_DIRECTORY = "testOutputDirectory"
     public static final String CVAL_OUTPUT_BASE_DIRECTORY = "outputBaseDirectory"
@@ -75,7 +81,7 @@ class BashConverterTest {
     ].join("\n")
 
     @BeforeClass
-    public static final void setup() {
+    static final void setup() {
         ExecutionService.initializeService(NoNoExecutionService, RunMode.UI)
         FileSystemAccessProvider.initializeProvider(true)
     }
@@ -83,7 +89,6 @@ class BashConverterTest {
     private Configuration createTestConfiguration() {
         Configuration configuration = new Configuration(null);
         configuration.getConfigurationValues().addAll([
-                new ConfigurationValue(configuration, CVAL_OUTPUT_BASE_DIRECTORY, "/tmp", "path"),
                 new ConfigurationValue(configuration, CVAL_OUTPUT_ANALYSIS_BASE_DIRECTORY, '${outputBaseDirectory}/Dideldum', "path"),
                 new ConfigurationValue(configuration, CVAL_TEST_OUTPUT_DIRECTORY, "testvalue", "path"),
                 new ConfigurationValue(configuration, CVAL_TEST_BASHARRAY, "( a b c d )", "bashArray"),
@@ -97,7 +102,7 @@ class BashConverterTest {
                 new ConfigurationValue(configuration, CVAL_TEST_SPACE_NQUOTE_ALREADY_QUOTED, "\"text with spaces\""),
                 new ConfigurationValue(configuration, CVAL_TEST_EQUALITY_SIGN, "--par1=val1 --par2=val2"),
         ] as List<ConfigurationValue>)
-        return configuration;
+        return configuration
     }
 
     // Too much of an integration test.
@@ -162,8 +167,13 @@ class BashConverterTest {
 //    }
 
     @Test
-    public void convertConfigurationValueToShellScriptLine() throws Exception {
+    void convertConfigurationValueToShellScriptLine() throws Exception {
         def configuration = createTestConfiguration()
+
+        File tmpDir = testFolder.newFile()
+        configuration.configurationValues.put(CVAL_OUTPUT_BASE_DIRECTORY, tmpDir.absolutePath, "path")
+        Roddy.applicationConfiguration.getOrSetApplicationProperty(Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY, tmpDir.absolutePath)
+
         Map<String, String> listWiAutoQuoting = [
                 (CVAL_TEST_OUTPUT_DIRECTORY)           : "declare -x    testOutputDirectory=testvalue",
                 (CVAL_TEST_BASHARRAY)                  : "declare -x    testBashArray=\"( a b c d )\"",
@@ -172,8 +182,8 @@ class BashConverterTest {
                 (CVAL_TEST_FLOAT)                      : "declare -x    testFloat=1.0",
                 (CVAL_TEST_DOUBLE)                     : "declare -x    testDouble=1.0",
                 // These tests here fail, if you only start this test. Leave them at the end, so we can at least test the other tests.
-                (CVAL_OUTPUT_BASE_DIRECTORY)           : "declare -x    ${CVAL_OUTPUT_BASE_DIRECTORY}=/tmp".toString(),
-                (CVAL_OUTPUT_ANALYSIS_BASE_DIRECTORY)  : "declare -x    ${CVAL_OUTPUT_ANALYSIS_BASE_DIRECTORY}=/tmp/Dideldum".toString(),
+                (CVAL_OUTPUT_BASE_DIRECTORY)           : "declare -x    ${CVAL_OUTPUT_BASE_DIRECTORY}=$tmpDir".toString(),
+                (CVAL_OUTPUT_ANALYSIS_BASE_DIRECTORY)  : "declare -x    ${CVAL_OUTPUT_ANALYSIS_BASE_DIRECTORY}=$tmpDir/Dideldum".toString(),
                 (CVAL_TEST_SPACE_QUOTES)               : "declare -x    ${CVAL_TEST_SPACE_QUOTES}=\"text with spaces\"".toString(),
                 (CVAL_TEST_TAB_QUOTES)                 : "declare -x    ${CVAL_TEST_TAB_QUOTES}=\"text\twith\ttabs\"".toString(),
                 (CVAL_TEST_NEWLINE_QUOTES)             : "declare -x    ${CVAL_TEST_NEWLINE_QUOTES}=\"text\nwith\nnewlines\"".toString(),
