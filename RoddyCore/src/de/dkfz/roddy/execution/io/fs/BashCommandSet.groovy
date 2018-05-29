@@ -125,7 +125,7 @@ public class BashCommandSet extends ShellCommandSet {
         String path = f.absolutePath
         String checkExistence = "[[ ! -e ${path} ]]"
         if (onCreateAccessRights && onCreateFileGroup)
-            return "sg ${onCreateFileGroup} -c \"${checkExistence} && umask ${onCreateAccessRights} && mkdir -p ${f.absolutePath}\"";
+            return "sg ${onCreateFileGroup} -c \"${checkExistence} && umask ${onCreateAccessRights} && mkdir -p ${path}\"";
         else
             return "${checkExistence} && install -d \"${f.absolutePath}\" || echo ''";
     }
