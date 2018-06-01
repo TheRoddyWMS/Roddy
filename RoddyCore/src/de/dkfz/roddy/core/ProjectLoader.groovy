@@ -143,7 +143,7 @@ class ProjectLoader {
     Analysis loadAnalysisAndProject(String configurationIdentifier) {
         try {
             if (_analysisCache.containsKey(configurationIdentifier))
-                return _analysisCache[configurationIdentifier];
+                return _analysisCache[configurationIdentifier]
 
             extractProjectIDAndAnalysisIDOrFail(configurationIdentifier)
 
@@ -163,19 +163,19 @@ class ProjectLoader {
 
             // Also a failed analysis object should go to cache.
             // Put into cache
-            _analysisCache[configurationIdentifier] = analysis;
+            _analysisCache[configurationIdentifier] = analysis
 
             performFinalChecksOrFail(analysis, configurationIdentifier, projectConfiguration, projectID)
 
             // Try to build up the metadata table from here on. Project and analysis are ready.
-            MetadataTableFactory.getTable(analysis);
-            return analysis;
+            MetadataTableFactory.getTable(analysis)
+            return analysis
         } catch (ConfigurationLoaderException ex) {
             logger.severe(ex.message)
             return null
         } catch (ProjectLoaderException ex) {
             logger.severe(ex.message)
-            return null;
+            return null
         } catch (PluginLoaderException ex) {
             logger.severe(ex.message)
             return null
@@ -383,8 +383,8 @@ class ProjectLoader {
         extractKillSwitchesFromAnalysisConfiguration(analysisConfiguration)
 
         if (analysisConfiguration != null)
-            analysis = loadAnalysisConfiguration(analysisID, project, analysisConfiguration);
-        project.getAnalyses().add(analysis);
+            analysis = loadAnalysisConfiguration(analysisID, project, analysisConfiguration)
+        project.getAnalyses().add(analysis)
 
         if (analysis == null)
             throw new ProjectLoaderException("Could not load analysis ${analysisID}")
