@@ -17,8 +17,10 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RuntimeTools
 import de.dkfz.roddy.tools.Tuple2
 import de.dkfz.roddy.tools.Tuple5
+import de.dkfz.roddy.tools.versions.Version
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
+import de.dkfz.roddy.tools.versions.CompatibilityChecker
 
 import java.util.regex.Pattern
 
@@ -219,7 +221,7 @@ class LibrariesFactory extends Initializable {
         };
 
         librariesAreLoaded = loadLibraries(queue.values() as List);
-        return librariesAreLoaded;
+        return librariesAreLoaded
     }
 
     public boolean areLibrariesLoaded() {
@@ -680,14 +682,14 @@ class LibrariesFactory extends Initializable {
         logger.always("\n" + ConfigurationFactory.convertMapToFormattedTable(loadedPluginsPrintout, 0, " ", { String v -> v }).join("\n"))
 
         if (errors) {
-            logger.severe("Some plugins were not loaded:\n\t" + errors.join("\n\t"));
+            logger.severe("Some plugins were not loaded:\n\t" + errors.join("\n\t"))
         }
-        return !errors;
+        return !errors
     }
 
     /**
      * Perform checks, if all API versions match the current runtime setup.
-     * Includes Groovy, Java and Roddy.
+     * Only Roddy version is checked (Groovy is bundled with Roddy; JDK version is inforced by Roddy).
      */
     static boolean performAPIChecks(List<PluginInfo> pluginInfos) {
         List<PluginInfo> incompatiblePlugins = []
@@ -703,13 +705,13 @@ class LibrariesFactory extends Initializable {
         return !incompatiblePlugins
     }
 
-    public List<String> getLoadedLibrariesInfoList() {
-        return loadedLibrariesInfo;
+    List<String> getLoadedLibrariesInfoList() {
+        return loadedLibrariesInfo
     }
 
-    public static boolean isVersionStringValid(String s) {
+    static boolean isVersionStringValid(String s) {
         Pattern patternOfPluginIdentifier = ~/([0-9]*[.][0-9]*[.][0-9]*([-][0-9]){0,}|[:]develop)/
-        return s ==~ patternOfPluginIdentifier;
+        return s ==~ patternOfPluginIdentifier
     }
 
     /**
@@ -722,7 +724,7 @@ class LibrariesFactory extends Initializable {
      * @param s
      * @return
      */
-    public static boolean isPluginIdentifierValid(String s) {
+    static boolean isPluginIdentifierValid(String s) {
         //Pattern patternOfPluginIdentifier = ~/[a-zA-Z]*[:]{1,1}[0-9]*[.][0-9]*[.][0-9]*([-][0-9]){0,}|[a-zA-Z]*[:]develop|[a-zA-Z]*/
         Pattern patternOfPluginIdentifier = ~/([a-zA-Z]*)([:]{1,1}[0-9]*[.][0-9]*[.][0-9]*([-][0-9]){0,}|[:]develop|$)/
         return s ==~ patternOfPluginIdentifier;

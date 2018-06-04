@@ -12,6 +12,8 @@ import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.tools.RuntimeTools;
+import de.dkfz.roddy.tools.versions.CompatibilityChecker;
+import de.dkfz.roddy.tools.versions.Version;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import java.io.File;
@@ -228,9 +230,9 @@ public class PluginInfo {
     }
 
     public boolean isCompatibleToRuntimeSystem() {
-        boolean jdkEquals = jdkVersion.equals(RuntimeTools.getJavaRuntimeVersion());
-        boolean apiEquals = roddyAPIVersion.equals(RuntimeTools.getRoddyRuntimeVersion());
-        return jdkEquals && apiEquals;
+        return CompatibilityChecker.isBackwardsCompatibleTo(
+                Version.fromString(RuntimeTools.getRoddyRuntimeVersion()),
+                Version.fromString(getRoddyAPIVersion()));
     }
 
     public int getRevision() {
