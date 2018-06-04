@@ -122,10 +122,12 @@ public class BashCommandSet extends ShellCommandSet {
 
     @Override
     String getCheckAndCreateDirectoryCommand(File f, String onCreateAccessRights, String onCreateFileGroup) {
+        String path = f.absolutePath
+        String checkExistence = "[[ ! -e ${path} ]]"
         if (onCreateAccessRights && onCreateFileGroup)
-            return "sg ${onCreateFileGroup} -c \"umask ${onCreateAccessRights} && mkdir -p ${f.absolutePath}\"";
+            return "sg ${onCreateFileGroup} -c \"${checkExistence} && umask ${onCreateAccessRights} && mkdir -p ${path}\"";
         else
-            return "install -d ${f.absolutePath}";
+            return "${checkExistence} && install -d \"${path}\" || echo ''";
     }
 
     @Override
