@@ -15,7 +15,7 @@ import de.dkfz.roddy.config.PreloadedConfiguration
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.config.ToolFileGroupParameter
 import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import de.dkfz.roddy.core.ContextResource
 import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.knowledge.files.BaseFile
@@ -25,6 +25,7 @@ import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.LibrariesFactoryTest
 import groovy.transform.CompileStatic
 import org.junit.BeforeClass
+import org.junit.ClassRule
 import org.junit.Ignore;
 import org.junit.Test
 
@@ -34,6 +35,10 @@ import org.junit.Test
 @CompileStatic
 @Ignore("setupContext fails")
 public class BEExecutionServiceTest {
+
+    @ClassRule
+    final static ContextResource contextResource = new ContextResource()
+
     public static ExecutionContext mockedContext;
 
     @BeforeClass
@@ -54,7 +59,7 @@ public class BEExecutionServiceTest {
 
         mockupConfig.getConfigurationValues().add(new ConfigurationValue(RuntimeService.RODDY_CENTRAL_EXECUTION_DIRECTORY, "/tmp/roddyCentralDirectory"));
 
-        mockedContext = MockupExecutionContextBuilder.createSimpleContext(BEExecutionServiceTest, mockupConfig);
+        mockedContext = contextResource.createSimpleContext(BEExecutionServiceTest, mockupConfig);
     }
 
     @Test

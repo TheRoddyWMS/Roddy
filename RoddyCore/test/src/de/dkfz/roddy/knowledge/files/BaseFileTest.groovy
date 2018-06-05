@@ -9,7 +9,7 @@ package de.dkfz.roddy.knowledge.files
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import de.dkfz.roddy.core.ContextResource
 import de.dkfz.roddy.execution.jobs.BEJobResult
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.LibrariesFactoryTest
@@ -18,6 +18,7 @@ import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.NodeChild
 import org.junit.Before
 import org.junit.Ignore
+import org.junit.Rule
 import org.junit.Test
 
 import java.lang.reflect.Method
@@ -27,6 +28,10 @@ import java.lang.reflect.Method
  */
 @groovy.transform.CompileStatic
 class BaseFileTest {
+
+    @Rule
+    final public ContextResource contextResource = new ContextResource()
+
     private static Class<BaseFile> syntheticTestFileClass;
 
     public static ExecutionContext mockedContext;
@@ -74,7 +79,7 @@ class BaseFileTest {
         toolEntry.getOutputParameters(mockupConfig).add(new ToolFileParameter(syntheticTestFileClass, null, "TEST", new ToolFileParameterCheckCondition(true)))
 
         mockupConfig.getTools().add(toolEntry);
-        mockedContext = MockupExecutionContextBuilder.createSimpleContext(BaseFileTest, mockupConfig);
+        mockedContext = contextResource.createSimpleContext(BaseFileTest, mockupConfig);
         filenamePatternsInMockupContext = mockedContext.getConfiguration().getFilenamePatterns()
     }
 

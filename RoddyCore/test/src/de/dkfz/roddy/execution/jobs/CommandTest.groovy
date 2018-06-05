@@ -6,21 +6,25 @@
 
 package de.dkfz.roddy.execution.jobs
 
-import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import de.dkfz.roddy.core.ContextResource
 import groovy.transform.CompileStatic
 import org.junit.Ignore
+import org.junit.Rule
 import org.junit.Test
 
 /**
  * Created by heinold on 14.07.16.
  */
 @CompileStatic
-class CommandTest extends GroovyTestCase {
+class CommandTest {
+
+    @Rule
+    final public ContextResource contextResource = new ContextResource()
 
     @Test
     @Ignore("Test to create")
     void testGetParametersForParameterFile() {
-        def context = MockupExecutionContextBuilder.createSimpleContext(CommandTest)
+        def context = contextResource.createSimpleContext(CommandTest)
 //        Command mock = new Command(new FakeBEJob(context), context, "MockupCommand", [
 //                "ParmA": "Value",
 //                "arr"  : "(a b c )",

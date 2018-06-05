@@ -13,18 +13,20 @@ import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import groovy.transform.CompileStatic
 import org.junit.Ignore
+import org.junit.Rule
 import org.junit.Test
 
-import java.io.File
 import java.lang.reflect.Field
-
-import static org.junit.Assert.*
 
 /**
  * Created by heinold on 04.04.17.
  */
 @CompileStatic
 class ExecutionContextReaderAndWriterTest {
+
+    @Rule
+    final public ContextResource contextResource = new ContextResource()
+
     @Test
     void readInExecutionContext() throws Exception {
 
@@ -37,9 +39,9 @@ class ExecutionContextReaderAndWriterTest {
         ExecutionService.initializeService(LocalExecutionService, RunMode.CLI)
         Field f = Roddy.class.getDeclaredField("jobManager")
         f.setAccessible(true)
-        f.set(null, MockupExecutionContextBuilder.createMockupJobManager())
+        f.set(null, contextResource.createMockupJobManager())
 
-        ExecutionContext context = MockupExecutionContextBuilder.createSimpleContext(ExecutionContextReaderAndWriterTest.class)
+        ExecutionContext context = contextResource.createSimpleContext(ExecutionContextReaderAndWriterTest.class)
         Analysis analysis = context.getAnalysis()
         DataSet ds = new DataSet(analysis, "TEST", new File(analysis.getOutputAnalysisBaseDirectory(), "TEST")) {
             @Override

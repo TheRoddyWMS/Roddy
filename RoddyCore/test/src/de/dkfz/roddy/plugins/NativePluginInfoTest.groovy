@@ -8,11 +8,12 @@ package de.dkfz.roddy.plugins
 
 import de.dkfz.roddy.AvailableClusterSystems
 import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import de.dkfz.roddy.core.ContextResource
 import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflowConverter
 import groovy.transform.CompileStatic
 import org.junit.BeforeClass
+import org.junit.ClassRule
 import org.junit.Test
 
 /**
@@ -20,6 +21,9 @@ import org.junit.Test
  */
 @CompileStatic
 class NativePluginInfoTest {
+
+    @ClassRule
+    final public static ContextResource contextResource = new ContextResource()
 
     static File pluginDirIncomplete
 
@@ -36,7 +40,7 @@ class NativePluginInfoTest {
 
     @BeforeClass
     static void setup() {
-        testBaseDirectory = MockupExecutionContextBuilder.getDirectory(NativePluginInfoTest.class.name, "variousTests")
+        testBaseDirectory = contextResource.getDirectory(NativePluginInfoTest.class.name, "variousTests")
         pluginDirIncomplete = new File(testBaseDirectory, "${PLUGIN_INCOMPLETE}_1.0.0")
         pluginDirComplete = new File(testBaseDirectory, PLUGIN_COMPLETE_WITH_VERSION)
 

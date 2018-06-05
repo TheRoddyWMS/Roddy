@@ -10,19 +10,22 @@ import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+import groovy.transform.CompileStatic
+import org.junit.BeforeClass
+import org.junit.Rule;
+import org.junit.Test
 
 /**
  * Created by heinold on 01.02.17.
  */
+@CompileStatic
 public class ExecutionContextTest {
 
+    @Rule
+    final public ContextResource contextResource = new ContextResource()
+
     private ExecutionContext createEmptyContext() {
-        //new ExecutionContext(null, null, null, null, null, null, null)
-        MockupExecutionContextBuilder.createSimpleContext(this.getClass())
+        contextResource.createSimpleContext(this.getClass())
     }
 
     @BeforeClass

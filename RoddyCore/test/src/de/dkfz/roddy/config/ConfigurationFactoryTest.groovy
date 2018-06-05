@@ -10,6 +10,7 @@ import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.config.loader.ProcessingToolReader
+import de.dkfz.roddy.core.ContextResource
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -21,12 +22,8 @@ import de.dkfz.roddy.tools.TimeUnit
 import de.dkfz.roddy.tools.Tuple3
 import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.NodeChild
-import org.junit.BeforeClass
-import org.junit.Ignore
-import org.junit.Rule
-import org.junit.Test
+import org.junit.*
 import org.junit.rules.ExpectedException
-import org.junit.rules.TemporaryFolder
 
 import java.lang.reflect.Method
 
@@ -36,12 +33,13 @@ import static de.dkfz.roddy.config.ResourceSetSize.*
  * Tests for ConfigurationFactory
  */
 @groovy.transform.CompileStatic
-public class ConfigurationFactoryTest {
+class ConfigurationFactoryTest {
+
+    @ClassRule
+    final public static ContextResource contextResource = new ContextResource()
 
     @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
-    public static TemporaryFolder tempFolder = new TemporaryFolder();
+    public ExpectedException thrown = ExpectedException.none()
 
     private static File testFolder1
 
@@ -57,17 +55,13 @@ public class ConfigurationFactoryTest {
 
         FileSystemAccessProvider.initializeProvider(true)
 
-        LibrariesFactory.initializeFactory(true);
-        LibrariesFactory.getInstance().loadLibraries(LibrariesFactory.buildupPluginQueue(LibrariesFactoryTest.callLoadMapOfAvailablePlugins(), "DefaultPlugin").values() as List);
+        LibrariesFactory.initializeFactory(true)
+        LibrariesFactory.getInstance().loadLibraries(LibrariesFactory.buildupPluginQueue(LibrariesFactoryTest.callLoadMapOfAvailablePlugins(), "DefaultPlugin").values() as List)
 
-        // Create buggy directories first.
-        tempFolder.create();
-
-        testFolder1 = tempFolder.newFolder("normalFolder1");
-        testFolder2 = tempFolder.newFolder("normalFolder2");
-        testFolder3 = tempFolder.newFolder("buggyCfgFolder1");
-        testFolder4 = tempFolder.newFolder("buggyCfgFolder2");
-
+        testFolder1 = contextResource.tempFolder.newFolder("normalFolder1")
+        testFolder2 = contextResource.tempFolder.newFolder("normalFolder2")
+        testFolder3 = contextResource.tempFolder.newFolder("buggyCfgFolder1")
+        testFolder4 = contextResource.tempFolder.newFolder("buggyCfgFolder2")
 
         LinkedHashMap<String, File> configurationFiles = [
                 "project_A"  : testFolder1,
@@ -92,13 +86,13 @@ public class ConfigurationFactoryTest {
         configurationFiles.each {
             String k, File f ->
                 if (k.startsWith("project")) {
-                    new File(f, "${k}.xml") << "<configuration configurationType='project' name='project_${k}'></configuration>";
+                    new File(f, "${k}.xml") << "<configuration configurationType='project' name='project_${k}'></configuration>"
                 } else if (k.startsWith("something")) {
-                    new File(f, "${k}.xml") << "<configuration name='standard_${k}'></configuration>";
+                    new File(f, "${k}.xml") << "<configuration name='standard_${k}'></configuration>"
                 }
         }
-        testFolder3.setReadable(false);
-        testFolder4.setReadable(true, true);
+        testFolder3.setReadable(false)
+        testFolder4.setReadable(true, true)
     }
 
     @Test
@@ -114,7 +108,7 @@ public class ConfigurationFactoryTest {
     }
 
     @Test
-    public void testLoadValidConfigurationDirectories() {
+    void testLoadValidConfigurationDirectories() {
         // Load context from valid directories and see, if the step fails.
         ConfigurationFactory.initialize([testFolder1, testFolder2])
 
@@ -123,7 +117,7 @@ public class ConfigurationFactoryTest {
     }
 
     private NodeChild asNodeChild(String text) {
-        return (NodeChild) new XmlSlurper().parseText(text);
+        return (NodeChild) new XmlSlurper().parseText(text)
     }
 
     @Test
@@ -141,8 +135,8 @@ public class ConfigurationFactoryTest {
                         <rset size="xl" memory="2T" cores="2" nodes="1" walltime="180h"/>
                     </resourcesetsample>
                 """
-        );
-        return xml;
+        )
+        return xml
     }
 
     private NodeChild getToolEntryWithInlineScript() {
@@ -161,18 +155,18 @@ public class ConfigurationFactoryTest {
                         </script>
                     </tool>
                 """
-        );
+        )
         return xml
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     private Collection<NodeChild> getNodeChildsOfValidResourceEntries() {
         def resourceSetNodeChild = getValidToolResourceSetNodeChild()
-        return resourceSetNodeChild.rset as Collection<NodeChild>;
+        return resourceSetNodeChild.rset as Collection<NodeChild>
     }
 
     @Test
-    public void testReadInlineScript() {
+    void testReadInlineScript() {
         def toolEntry = new ProcessingToolReader(getToolEntryWithInlineScript(), null).readProcessingTool()
         assert toolEntry.hasInlineScript()
         assert toolEntry.getInlineScript().equals("echo 'test'")
@@ -181,41 +175,41 @@ public class ConfigurationFactoryTest {
 
     @Test
     @Ignore("The factory does not have that methode anymore. ProcessingToolReader has one, but it returns a NullPointerException in this test.")
-    public void testParseToolResourceSet() {
-        Method parseToolResourceSet = ConfigurationFactory.getDeclaredMethod("parseToolResourceSet", NodeChild, Configuration);
-        parseToolResourceSet.setAccessible(true);
+    void testParseToolResourceSet() {
+        Method parseToolResourceSet = ConfigurationFactory.getDeclaredMethod("parseToolResourceSet", NodeChild, Configuration)
+        parseToolResourceSet.setAccessible(true)
 
-        Map<ResourceSetSize, ResourceSet> rsets = [:];
+        Map<ResourceSetSize, ResourceSet> rsets = [:]
 
         getNodeChildsOfValidResourceEntries().each { rset ->
-            ResourceSet result = (ResourceSet) parseToolResourceSet.invoke(null, rset, null);
-            assert result;
+            ResourceSet result = (ResourceSet) parseToolResourceSet.invoke(null, rset, null)
+            assert result
             assert result.size; //Check if the size has a valid value.
 
-            rsets[result.size] = result;
+            rsets[result.size] = result
         }
 
         // Check the example datasets and see, if all necessary values were set and converted properly.
 
         assert rsets[s].mem instanceof BufferValue && rsets[s].mem.toString() == "3072M"; // Check 3 gigabyte
-        assert rsets[s].cores instanceof Integer && rsets[s].cores == 2;
-        assert rsets[s].walltime instanceof TimeUnit && rsets[s].walltime.toString() == "00:00:00:04";
-        assert rsets[s].queue instanceof String && rsets[s].queue == "ultrafast";
-//        assert rsets[s].queue instanceof TimeUnit && rsets[s].queue == "testweise";
+        assert rsets[s].cores instanceof Integer && rsets[s].cores == 2
+        assert rsets[s].walltime instanceof TimeUnit && rsets[s].walltime.toString() == "00:00:00:04"
+        assert rsets[s].queue instanceof String && rsets[s].queue == "ultrafast"
+//        assert rsets[s].queue instanceof TimeUnit && rsets[s].queue == "testweise"
 
         assert rsets[m].mem instanceof BufferValue && rsets[m].mem.toString() == "3072M"; // Check 3 gigabyte
-        assert rsets[m].cores instanceof Integer && rsets[m].cores == 1;
-        assert rsets[m].nodes instanceof Integer && rsets[m].nodes == 1;
-        assert rsets[m].walltime instanceof TimeUnit && rsets[m].walltime.toString() == "00:12:00:00";
+        assert rsets[m].cores instanceof Integer && rsets[m].cores == 1
+        assert rsets[m].nodes instanceof Integer && rsets[m].nodes == 1
+        assert rsets[m].walltime instanceof TimeUnit && rsets[m].walltime.toString() == "00:12:00:00"
 
         assert rsets[l].mem instanceof BufferValue && rsets[l].mem.toString() == "300M"; // 300 megabyte
-        assert rsets[l].cores instanceof Integer && rsets[l].cores == 2;
-        assert rsets[l].nodes instanceof Integer && rsets[l].nodes == 1;
+        assert rsets[l].cores instanceof Integer && rsets[l].cores == 2
+        assert rsets[l].nodes instanceof Integer && rsets[l].nodes == 1
         assert rsets[l].walltime instanceof TimeUnit && rsets[l].walltime.toString() == "00:02:00:00"; // 120m == 2h
 
         assert rsets[xl].mem instanceof BufferValue && rsets[xl].mem.toString() == "2097152M"; // 300 megabyte
-        assert rsets[xl].cores instanceof Integer && rsets[xl].cores == 2;
-        assert rsets[xl].nodes instanceof Integer && rsets[xl].nodes == 1;
+        assert rsets[xl].cores instanceof Integer && rsets[xl].cores == 2
+        assert rsets[xl].nodes instanceof Integer && rsets[xl].nodes == 1
         assert rsets[xl].walltime instanceof TimeUnit && rsets[xl].walltime.toString() == "07:12:00:00"; // 180h
     }
 
@@ -236,7 +230,7 @@ public class ConfigurationFactoryTest {
     private static final String STR_VALID_ONSCRIPTPARAMETER_WITHOUT_CLASS = "<filename onScriptParameter='testScript:BAM_INDEX_FILE6' pattern='/tmp/onScript' />"
 
     private static NodeChild parseXML(String xml) {
-        return (NodeChild) new XmlSlurper().parseText(xml);
+        return (NodeChild) new XmlSlurper().parseText(xml)
     }
 
     private NodeChild getValidFilenamePatternsNodeChild() {
@@ -260,7 +254,7 @@ public class ConfigurationFactoryTest {
                         </filenames>
                     </xml>
                 """
-        );
+        )
     }
 
     private NodeChild getInvalidFilenamePatternsNodeChild() {
@@ -273,46 +267,46 @@ public class ConfigurationFactoryTest {
                         </filenames>
                     </xml>
                 """
-        );
+        )
     }
 
     private NodeChild getParsedFilenamePattern(String filenamePattern) { return parseXML("<filenames filestagesbase='de.dkfz.roddy.knowledge.files.FileStage'>${filenamePattern}</filenames>"); }
 
     @Test
-    public void testLoadPatternClassWithNullAndSyntheticClass() {
-        Tuple3<Class, Boolean, Integer> loadPatternClassResult = ConfigurationFactory.loadPatternClass((String) null, "ASyntheticTestClass", (Class) null);
-        assert loadPatternClassResult != null;
+    void testLoadPatternClassWithNullAndSyntheticClass() {
+        Tuple3<Class, Boolean, Integer> loadPatternClassResult = ConfigurationFactory.loadPatternClass((String) null, "ASyntheticTestClass", (Class) null)
+        assert loadPatternClassResult != null
         assert ((Class) loadPatternClassResult.x).getName().endsWith("ASyntheticTestClass")
     }
 
     private Map<String, FilenamePattern> readFilenamePatterns(NodeChild nodeChild) {
-        Method m = ConfigurationFactory.class.getDeclaredMethod("readFilenamePatterns", NodeChild);
-        m.setAccessible(true);
-        return m.invoke(null, nodeChild) as Map<String, FilenamePattern>;
+        Method m = ConfigurationFactory.class.getDeclaredMethod("readFilenamePatterns", NodeChild)
+        m.setAccessible(true)
+        return m.invoke(null, nodeChild) as Map<String, FilenamePattern>
     }
 
     @Test
-    public void testReadInvalidFilenamePatternDefinition() {
-        Map<String, FilenamePattern> filenamePatterns = readFilenamePatterns(getInvalidFilenamePatternsNodeChild());
-        assert filenamePatterns.size() == 1;
-        assert filenamePatterns.values()[0].pattern == "/tmp/onMethodwithClassName";
+    void testReadInvalidFilenamePatternDefinition() {
+        Map<String, FilenamePattern> filenamePatterns = readFilenamePatterns(getInvalidFilenamePatternsNodeChild())
+        assert filenamePatterns.size() == 1
+        assert filenamePatterns.values()[0].pattern == "/tmp/onMethodwithClassName"
 
     }
 
     @Test
-    public void testReadValidFilenamePatternDefinition() {
-        Map<String, FilenamePattern> filenamePatterns = readFilenamePatterns(getValidFilenamePatternsNodeChild());
-        assert filenamePatterns.size() == 9;
+    void testReadValidFilenamePatternDefinition() {
+        Map<String, FilenamePattern> filenamePatterns = readFilenamePatterns(getValidFilenamePatternsNodeChild())
+        assert filenamePatterns.size() == 9
     }
 
     @Test
-    public void testReadFilenamePatternsForDerivedFromPatternType() {
+    void testReadFilenamePatternsForDerivedFromPatternType() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_DERIVEDFROM_PATTERN)
         testReadFilenamePatternsForDerivedFromPatternType_base(xml, "TestFileWithParent")
     }
 
     @Test
-    public void testReadFilenamePatternsForDerivedFromPatternType_WithArr() {
+    void testReadFilenamePatternsForDerivedFromPatternType_WithArr() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_DERIVEDFROM_PATTERN_WITH_ARR)
         DerivedFromFilenamePattern fpattern = testReadFilenamePatternsForDerivedFromPatternType_base(xml, "TestFileWithParentArr")
         assert fpattern.acceptsFileArrays == true
@@ -320,60 +314,60 @@ public class ConfigurationFactoryTest {
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    public DerivedFromFilenamePattern testReadFilenamePatternsForDerivedFromPatternType_base(NodeChild xml, String testfileEnding) {
-        DerivedFromFilenamePattern fpattern = ConfigurationFactory.readDerivedFromFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as DerivedFromFilenamePattern;
-        assert fpattern.filenamePatternDependency == FilenamePatternDependency.derivedFrom;
-        assert fpattern.derivedFromCls.name.endsWith("TestParentFile");
-        assert fpattern.cls.name.endsWith(testfileEnding);
-        return fpattern;
+    DerivedFromFilenamePattern testReadFilenamePatternsForDerivedFromPatternType_base(NodeChild xml, String testfileEnding) {
+        DerivedFromFilenamePattern fpattern = ConfigurationFactory.readDerivedFromFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as DerivedFromFilenamePattern
+        assert fpattern.filenamePatternDependency == FilenamePatternDependency.derivedFrom
+        assert fpattern.derivedFromCls.name.endsWith("TestParentFile")
+        assert fpattern.cls.name.endsWith(testfileEnding)
+        return fpattern
     }
 
     @Test
-    public void testReadFilenamePatternsForOnMethodPatternType() {
+    void testReadFilenamePatternsForOnMethodPatternType() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONMETHOD_PATTERN_FQN)
         testReadFilenamePatternsForOnMethodPatternType_base(xml)
     }
 
     @Test
-    public void testReadFilenamePatternsForOnMethodPatternType_WithBaseFile() {
+    void testReadFilenamePatternsForOnMethodPatternType_WithBaseFile() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONMETHOD_PATTERN_WITH_CLASSNAME)
         testReadFilenamePatternsForOnMethodPatternType_base(xml)
     }
 
     @Test
-    public void testReadFilenamePatternsForOnMethodPatternType_WithFileName() {
+    void testReadFilenamePatternsForOnMethodPatternType_WithFileName() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONMETHOD_PATTERN_WITH_METHODNAME)
         testReadFilenamePatternsForOnMethodPatternType_base(xml)
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    public void testReadFilenamePatternsForOnMethodPatternType_base(NodeChild xml) {
-        OnMethodFilenamePattern fpattern = ConfigurationFactory.readOnMethodFilenamePattern("de.dkfz.roddy.knowledge.files", xml.filename.getAt(0)) as OnMethodFilenamePattern;
-        assert fpattern.filenamePatternDependency == FilenamePatternDependency.onMethod;
-        assert fpattern.cls.name.endsWith("TestFileOnMethod");
+    void testReadFilenamePatternsForOnMethodPatternType_base(NodeChild xml) {
+        OnMethodFilenamePattern fpattern = ConfigurationFactory.readOnMethodFilenamePattern("de.dkfz.roddy.knowledge.files", xml.filename.getAt(0)) as OnMethodFilenamePattern
+        assert fpattern.filenamePatternDependency == FilenamePatternDependency.onMethod
+        assert fpattern.cls.name.endsWith("TestFileOnMethod")
     }
 
     @Test
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    public void testReadFilenamePatternsForOnToolPatternType() {
+    void testReadFilenamePatternsForOnToolPatternType() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONTOOL_PATTERN)
-        OnToolFilenamePattern fpattern = ConfigurationFactory.readOnToolFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as OnToolFilenamePattern;
-        assert fpattern.filenamePatternDependency == FilenamePatternDependency.onTool;
-        assert fpattern.cls.name.endsWith("TestFileOnTool");
+        OnToolFilenamePattern fpattern = ConfigurationFactory.readOnToolFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as OnToolFilenamePattern
+        assert fpattern.filenamePatternDependency == FilenamePatternDependency.onTool
+        assert fpattern.cls.name.endsWith("TestFileOnTool")
     }
 
     @Test
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    public void testReadFilenamePatternsForFileStageBasedPatternType() {
+    void testReadFilenamePatternsForFileStageBasedPatternType() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_FILESTAGE_PATTERN)
-        FileStageFilenamePattern fpattern = ConfigurationFactory.readFileStageFilenamePattern(null, "de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0));
-        assert fpattern.filenamePatternDependency == FilenamePatternDependency.FileStage;
-        assert fpattern.cls.name.endsWith("FileWithFileStage");
+        FileStageFilenamePattern fpattern = ConfigurationFactory.readFileStageFilenamePattern(null, "de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0))
+        assert fpattern.filenamePatternDependency == FilenamePatternDependency.FileStage
+        assert fpattern.cls.name.endsWith("FileWithFileStage")
     }
 
 
     @Test
-    public void testReadFilenamePatternForOnScriptParameterPatternType_Failed() {
+    void testReadFilenamePatternForOnScriptParameterPatternType_Failed() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_FAILED)
         try {
             testReadFilenamePatternForOnScriptParameterPatternType_base(xml)
@@ -384,7 +378,7 @@ public class ConfigurationFactoryTest {
 
 
     @Test
-    public void testReadFilenamePatternForOnScriptParameterPatternType_WithoutClass() {
+    void testReadFilenamePatternForOnScriptParameterPatternType_WithoutClass() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_WITHOUT_CLASS)
         try {
             testReadFilenamePatternForOnScriptParameterPatternType_base(xml)
@@ -394,36 +388,36 @@ public class ConfigurationFactoryTest {
     }
 
     @Test
-    public void testReadFilenamePatternForOnScriptParameterPatternType_OnlyColonAndParamName() {
+    void testReadFilenamePatternForOnScriptParameterPatternType_OnlyColonAndParamName() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_ONLY_COLON_AND_PARAMNAME)
         testReadFilenamePatternForOnScriptParameterPatternType_base(xml)
     }
 
     @Test
-    public void testReadFilenamePatternForOnScriptParameterPatternType_OnlyParamName() {
+    void testReadFilenamePatternForOnScriptParameterPatternType_OnlyParamName() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_ONLY_PARAMNAME)
         testReadFilenamePatternForOnScriptParameterPatternType_base(xml)
     }
 
 
     @Test
-    public void testReadFilenamePatternForOnScriptParameterPatternType_WithToolAndParamName() {
+    void testReadFilenamePatternForOnScriptParameterPatternType_WithToolAndParamName() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_WITH_TOOL_AND_PARAMNAME)
         testReadFilenamePatternForOnScriptParameterPatternType_base(xml)
     }
 
     @Test
-    public void testReadFilenamePatternForOnScriptParameterPatternType_WithAnyAndParamName() {
+    void testReadFilenamePatternForOnScriptParameterPatternType_WithAnyAndParamName() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONSCRIPTPARAMETER_WITH_ANY_AND_PARAMNAME)
         testReadFilenamePatternForOnScriptParameterPatternType_base(xml)
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     private void testReadFilenamePatternForOnScriptParameterPatternType_base(NodeChild xml) {
-        OnScriptParameterFilenamePattern fpattern = ConfigurationFactory.readOnScriptParameterFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as OnScriptParameterFilenamePattern;
-        assert fpattern.filenamePatternDependency == FilenamePatternDependency.onScriptParameter;
+        OnScriptParameterFilenamePattern fpattern = ConfigurationFactory.readOnScriptParameterFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as OnScriptParameterFilenamePattern
+        assert fpattern.filenamePatternDependency == FilenamePatternDependency.onScriptParameter
         assert fpattern.pattern == "/tmp/onScript"
-        assert fpattern.cls.name.endsWith("TestOnScriptParameter");
+        assert fpattern.cls.name.endsWith("TestOnScriptParameter")
     }
 
     @Test
@@ -462,7 +456,7 @@ public class ConfigurationFactoryTest {
     }
 
     @Test
-    public void testParseFileGroupWithMinimalDefinition() {
+    void testParseFileGroupWithMinimalDefinition() {
         NodeChild nc = asNodeChild("""<output type="filegroup" fileclass="TestFile" scriptparameter="APARM"/>""")
         ToolFileGroupParameter tparm = new ProcessingToolReader(null, null).parseFileGroup(nc, "testTool")
         assert tparm.isGeneric()
@@ -473,9 +467,9 @@ public class ConfigurationFactoryTest {
 
     @Test(expected = RuntimeException)
     @Ignore("TODO: Should this throw, or return null? Currently, the latter is happening!")
-    public void testParseFileGroupWithMissingOptions() {
+    void testParseFileGroupWithMissingOptions() {
         String xml = """<output type="filegroup" />"""
-        NodeChild nc = (NodeChild) new XmlSlurper().parseText(xml);
+        NodeChild nc = (NodeChild) new XmlSlurper().parseText(xml)
         new ProcessingToolReader(null, null).parseFileGroup(nc, "testTool")
     }
 

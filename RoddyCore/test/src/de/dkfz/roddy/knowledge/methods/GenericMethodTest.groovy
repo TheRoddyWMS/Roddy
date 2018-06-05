@@ -6,21 +6,17 @@
 
 package de.dkfz.roddy.knowledge.methods
 
-import de.dkfz.roddy.config.DerivedFromFilenamePattern
-import de.dkfz.roddy.config.ToolEntry
-import de.dkfz.roddy.config.ToolFileGroupParameter
-import de.dkfz.roddy.config.ToolFileParameter
-import de.dkfz.roddy.config.ToolFileParameterCheckCondition
+import de.dkfz.roddy.config.*
 import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import de.dkfz.roddy.core.ContextResource
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.plugins.LibrariesFactory
-import de.dkfz.roddy.plugins.LibrariesFactoryTest
 import groovy.transform.CompileStatic
 import org.junit.BeforeClass
+import org.junit.ClassRule
 import org.junit.Test
 
 import java.lang.reflect.Constructor
@@ -31,7 +27,10 @@ import java.lang.reflect.Constructor
 @CompileStatic
 class GenericMethodTest {
 
-    public static final List<String> stringIndices = ["A", "B", "C", "D"]
+    @ClassRule
+    final public static ContextResource contextResource = new ContextResource()
+
+    static final List<String> stringIndices = ["A", "B", "C", "D"]
 
     static Class<BaseFile> fileBaseClass
     static Class<BaseFile> derivedFileClass
@@ -44,7 +43,7 @@ class GenericMethodTest {
         fileBaseClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass("FileBaseClass", BaseFile.name)
         derivedFileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass("DerivedFileClass", BaseFile.name)
 
-        mockupContext = MockupExecutionContextBuilder.createSimpleContext(GenericMethodTest)
+        mockupContext = contextResource.createSimpleContext(GenericMethodTest)
         def cfg = mockupContext.getConfiguration()
         cfg.getTools().add(new ToolEntry("testTool", "testTools", "/tmp/testTool"))
         cfg.getFilenamePatterns().add(new DerivedFromFilenamePattern(derivedFileClass, fileBaseClass, '/tmp/anoutputfile_${fgindex}.txt', "default"))

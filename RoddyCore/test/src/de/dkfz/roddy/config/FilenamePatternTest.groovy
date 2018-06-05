@@ -8,7 +8,7 @@ package de.dkfz.roddy.config
 
 import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import de.dkfz.roddy.core.ContextResource
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.GenericFile
@@ -16,10 +16,8 @@ import de.dkfz.roddy.knowledge.methods.GenericMethod
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.LibrariesFactoryTest
 import org.junit.BeforeClass
+import org.junit.ClassRule
 import org.junit.Ignore
-
-import java.io.*
-
 import org.junit.After
 import org.junit.Test
 
@@ -28,6 +26,10 @@ import org.junit.Test
  */
 @groovy.transform.CompileStatic
 class FilenamePatternTest {
+
+    @ClassRule
+    final public static ContextResource contextResource = new ContextResource()
+
     public static ExecutionContext mockedContext
 
     private static Class testClass
@@ -48,7 +50,7 @@ class FilenamePatternTest {
             }
         }
 
-        mockedContext = MockupExecutionContextBuilder.createSimpleContext(FilenamePatternTest, mockupConfig)
+        mockedContext = contextResource.createSimpleContext(FilenamePatternTest, mockupConfig)
 
         testClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass("FilenamePatternTest_testFilenamePatternWithSelectionByToolID", BaseFile.class as Class<FileObject>)
 
@@ -110,7 +112,7 @@ class FilenamePatternTest {
     @Test
     @Ignore("Fix. Use true temp dirs. NullPointerException.")
     public void testJobCreationWithFileUsingToolIDForNamePattern() {
-        MockupExecutionContextBuilder.createMockupJobManager()
+        contextResource.createMockupJobManager()
 
         FilenamePattern fp = new OnToolFilenamePattern(testClass, "RoddyTests", "/tmp/RoddyTests/testFileResult.sh", "default")
         mockedContext.getConfiguration().getFilenamePatterns().add(fp)
@@ -196,7 +198,7 @@ class FilenamePatternTest {
         Configuration cfg = new Configuration(null);
         cfg.configurationValues << new ConfigurationValue(cfg, "avalue", "abc")
         cfg.configurationValues << new ConfigurationValue(cfg, "anothervalue", "abc")
-        def context = MockupExecutionContextBuilder.createSimpleContext(getClass(), cfg)
+        def context = contextResource.createSimpleContext(getClass(), cfg)
         context
     }
 }

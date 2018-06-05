@@ -9,62 +9,75 @@ package de.dkfz.roddy.core
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.knowledge.files.BaseFile
 import groovy.transform.CompileStatic
+import org.junit.Rule
+import org.junit.Test
 
-/**
- * Created by heinold on 05.07.16.
- */
 @CompileStatic
-class MockupExecutionContextBuilderTest extends GroovyTestCase {
+class ContextResourceTest {
+    
+    @Rule
+    public ContextResource contextResource = new ContextResource()
 
+    @Test
     void testGetTestBaseDirectory() {
-        String testDir = MockupExecutionContextBuilder.getTestBaseDirectory(MockupExecutionContextBuilderTest.name).absolutePath
-        assert testDir.startsWith("/tmp/" + MockupExecutionContextBuilder.DIR_PREFIX)
-        assert testDir.endsWith("_" + MockupExecutionContextBuilderTest.name)
+        String testDir = contextResource.getTestBaseDirectory(ContextResourceTest.name).absolutePath
+        assert testDir =~ /^\/tmp\/junit\d+\/${contextResource.DIR_PREFIX}\//
+        assert testDir.endsWith(ContextResourceTest.name)
     }
 
+    @Test
     void testGetDirectory() {
-        File file = MockupExecutionContextBuilder.getDirectory(MockupExecutionContextBuilderTest.class.name, "verification");
+        File file = contextResource.getDirectory(ContextResourceTest.class.name, "verification")
         assert file.exists() && file.name.endsWith("verification")
     }
 
+    @Test
     void testGetLoggingDirectory() {
-        assert MockupExecutionContextBuilder.getTestLoggingDirectory(MockupExecutionContextBuilder.name).name == "logdir"
+        assert contextResource.getTestLoggingDirectory(ContextResource.name).name == "logdir"
     }
 
+    @Test
     void testGetExecDirectory() {
-        assert MockupExecutionContextBuilder.getTestExecutionDirectory(MockupExecutionContextBuilder.name).name == "exec_dir"
+        assert contextResource.getTestExecutionDirectory(ContextResource.name).name == "exec_dir"
     }
 
+    @Test
     void testGetInputDirectory() {
-        assert MockupExecutionContextBuilder.getTestInputDirectory(MockupExecutionContextBuilder.name).name == "input"
+        assert contextResource.getTestInputDirectory(ContextResource.name).name == "input"
     }
 
+    @Test
     void testGetOutputDirectory() {
-        assert MockupExecutionContextBuilder.getTestOutputDirectory(MockupExecutionContextBuilder.name).name == "output"
+        assert contextResource.getTestOutputDirectory(ContextResource.name).name == "output"
     }
 
+    @Test
     void testCreateSimpleRuntimeService() {
-        def rs = MockupExecutionContextBuilder.createSimpleRuntimeService(MockupExecutionContextBuilderTest.class.name);
+        def rs = contextResource.createSimpleRuntimeService(ContextResourceTest.class.name)
         // The following test will fail, because a new temporary file is created when accessing getTestLoggingDirectory.
         // We'll have to do that differently.
-//        assert rs.getLoggingDirectory(null) == MockupExecutionContextBuilder.getTestLoggingDirectory(MockupExecutionContextBuilderTest.class.name)
+//        assert rs.getLoggingDirectory(null) == contextResource.getTestLoggingDirectory(ContextResourceTest.class.name)
         String logDir = rs.getLoggingDirectory(null).getAbsolutePath()
-        assert logDir.startsWith("/tmp/RoddyTests_") && logDir.endsWith("_" + MockupExecutionContextBuilderTest.class.name + "/logdir")
+        assert logDir =~ /^\/tmp\/junit\d+\/RoddyTests\// && logDir.endsWith(ContextResourceTest.class.name + "/logdir")
     }
 
+    @Test
     void testCreateSimpleContextWithClass() {
-        MockupExecutionContextBuilder.createSimpleContext(MockupExecutionContextBuilderTest);
+        contextResource.createSimpleContext(ContextResourceTest);
     }
 
+    @Test
     void testCreateSimpleContextWithClassName() {
-        MockupExecutionContextBuilder.createSimpleContext(MockupExecutionContextBuilderTest.name)
+        contextResource.createSimpleContext(ContextResourceTest.name)
     }
 
+    @Test
     void testCreateSimpleContextWithClassNameAndCustomConfig() {
         Configuration configuration = new Configuration(null);
-        MockupExecutionContextBuilder.createSimpleContext(MockupExecutionContextBuilderTest.name, configuration);
+        contextResource.createSimpleContext(ContextResourceTest.name, configuration);
     }
 
+    @Test
     void testCreateSimpleContextWithClassNameCustomConfigAndRuntimeService() {
         Configuration configuration = new Configuration(null);
         def rs = new RuntimeService() {
@@ -84,7 +97,7 @@ class MockupExecutionContextBuilderTest extends GroovyTestCase {
             }
 
         }
-        MockupExecutionContextBuilder.createSimpleContext(MockupExecutionContextBuilderTest.name, configuration, rs);
+        contextResource.createSimpleContext(ContextResourceTest.name, configuration, rs);
     }
 
 }

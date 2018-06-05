@@ -6,12 +6,11 @@
 
 package de.dkfz.roddy.execution.io
 
-import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import de.dkfz.roddy.core.ContextResource
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.LibrariesFactoryTest
@@ -24,7 +23,7 @@ import org.junit.Test
 /**
  * Created by kaercher on 05.07.16.
  */
-public class BEExecutionServiceTestInlineScript {
+public class BEExecutionServiceTestInlineScript extends ContextResource {
 
     public static ExecutionContext mockedContext;
     public static Map<File, PluginInfo> listOfFolders = [:]
@@ -37,7 +36,7 @@ public class BEExecutionServiceTestInlineScript {
         ConfigurationFactory.initialize(LibrariesFactory.getInstance().getLoadedPlugins().collect { it -> it.getConfigurationDirectory() })
 
         final Configuration mockupConfig = new Configuration(new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null), ConfigurationFactory.getInstance().getConfiguration("default"))
-        mockedContext = MockupExecutionContextBuilder.createSimpleContext(BEExecutionServiceTest, mockupConfig);
+        mockedContext = ContextResource.createSimpleContext(BEExecutionServiceTest, mockupConfig);
 
         ExecutionService.initializeService(LocalExecutionService.class, RunMode.CLI);
 
