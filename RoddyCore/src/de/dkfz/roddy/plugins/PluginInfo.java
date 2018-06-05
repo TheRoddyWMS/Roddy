@@ -6,11 +6,9 @@
 
 package de.dkfz.roddy.plugins;
 
-import de.dkfz.roddy.StringConstants;
 import de.dkfz.roddy.core.RuntimeService;
 import de.dkfz.roddy.tools.LoggerWrapper;
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
-import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import de.dkfz.roddy.tools.RuntimeTools;
 import de.dkfz.roddy.tools.versions.CompatibilityChecker;
 import de.dkfz.roddy.tools.versions.Version;
@@ -20,11 +18,8 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 
 /**

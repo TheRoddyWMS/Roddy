@@ -460,7 +460,6 @@ class LibrariesFactory extends Initializable {
             PluginInfo previousPlugin = pluginMap.values().size() > 0 ? pluginMap.values().last() : null;
             boolean isRevisionOfPlugin = previousPlugin?.getMajorAndMinor() == pluginVersion && previousPlugin?.getRevision() == revisionNumber - 1;
             boolean isCompatible = biHelper.isCompatibleTo(previousPlugin);
-            boolean isBetaPlugin = biHelper.isBetaPlugin();
 
             //Create a helper object which parses the buildinfo text file
             PluginInfo newPluginInfo
@@ -486,10 +485,6 @@ class LibrariesFactory extends Initializable {
                 newPluginInfo.previousInChainConnectionType = PluginInfo.PluginInfoConnection.REVISION;
             else if (isCompatible)
                 newPluginInfo.previousInChainConnectionType = PluginInfo.PluginInfoConnection.EXTENSION;
-
-            if (isBetaPlugin)
-                newPluginInfo.isBetaPlugin = true;
-
 
             if (newPluginInfo.errors)
                 mapOfErrorsForPluginEntries.get(newPluginInfo.directory.path, []).addAll(newPluginInfo.getErrors())

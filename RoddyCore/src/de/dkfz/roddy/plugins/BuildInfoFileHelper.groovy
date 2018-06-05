@@ -90,10 +90,14 @@ class BuildInfoFileHelper {
         return dependencies;
     }
 
+    /**
+     * Not revision but compatible. Check, if the former plugin id (excluding the revision number) is set as compatible.
+     * Ignore malformed entries!! Use a regex for that.
+     *
+     * @param previousPlugin
+     * @return
+     */
     boolean isCompatibleTo(PluginInfo previousPlugin) {
-        // Not revision but compatible. Check, if the former plugin id (excluding the revision number) is
-        // set as compatible.
-        // Ignore malformed entries!! Use a regex for that.
 
         if(previousPlugin == null) return false // The value is not set
 
@@ -120,11 +124,10 @@ class BuildInfoFileHelper {
     }
 
     boolean checkMatchingAPIVersions(PluginInfo pluginInfo) {
-        return pluginInfo.getJdkVersion() == getJDKVersion() &&
-                CompatibilityChecker.isBackwardsCompatibleTo(
-                        Version.fromString(pluginInfo.getRoddyAPIVersion()),
-                        Version.fromString(getRoddyAPIVersion()),
-                        VersionLevel.MINOR)
+        return CompatibilityChecker.isBackwardsCompatibleTo(
+                Version.fromString(pluginInfo.getRoddyAPIVersion()),
+                Version.fromString(getRoddyAPIVersion()),
+                VersionLevel.MINOR)
     }
 
     String getJDKVersion() {
@@ -135,7 +138,4 @@ class BuildInfoFileHelper {
         return entries.get(BUILDINFO_RUNTIME_APIVERSION, [DEFAULT_RODDY_VERSION])[0].split(StringConstants.SPLIT_STOP)[0..1].join(".")
     }
 
-    boolean isBetaPlugin() {
-        return entries.get(BUILDINFO_STATUS_BETA, ["false"])[0].toBoolean()
-    }
 }
