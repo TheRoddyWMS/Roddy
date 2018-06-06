@@ -116,18 +116,7 @@ class BuildInfoFileHelper {
             logger.postSometimesInfo("The compatibility entry ${entry} points to a not existing version for ${pluginName}, the last known entry is ${previousPlugin?.getProdVersion()}")
             return false
         }
-        if(!checkMatchingAPIVersions(previousPlugin)) {
-            logger.postSometimesInfo("The plugin version ${pluginVersion} for ${pluginName} is incompatible to ${previousPlugin?.getProdVersion()}, because of mismatching API versions.")
-            return false
-        }
         return true
-    }
-
-    boolean checkMatchingAPIVersions(PluginInfo pluginInfo) {
-        return CompatibilityChecker.isBackwardsCompatibleTo(
-                Version.fromString(pluginInfo.getRoddyAPIVersion()),
-                Version.fromString(getRoddyAPIVersion()),
-                VersionLevel.MINOR)
     }
 
     String getJDKVersion() {

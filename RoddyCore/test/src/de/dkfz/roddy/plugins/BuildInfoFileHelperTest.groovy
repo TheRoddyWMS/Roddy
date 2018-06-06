@@ -6,12 +6,14 @@
 
 package de.dkfz.roddy.plugins
 
+import groovy.transform.CompileStatic
 import org.junit.Test
 
 /**
  * Test class for the BuildInfoFile Helper class
  * Created by heinold on 01.03.16.
  */
+@CompileStatic
 class BuildInfoFileHelperTest {
 
     static BuildInfoFileHelper setupValidHelperObject() {
@@ -27,7 +29,7 @@ class BuildInfoFileHelperTest {
 
     @Test
     void constructObjectWithNullInput() {
-        BuildInfoFileHelper buildInfoFileHelper = new BuildInfoFileHelper("Maximaxi", "1.0.11", null);
+        BuildInfoFileHelper buildInfoFileHelper = new BuildInfoFileHelper("Maximaxi", "1.0.11", null as List);
     }
 
     @Test
@@ -54,15 +56,6 @@ class BuildInfoFileHelperTest {
         //assert setupValidHelperObject().isCompatibleTo(new PluginInfo("MasterMax", null, null, null, "1.0.10-0", "2.3", "1.7", "2.4.5", null));
         assert setupValidHelperObject().isCompatibleTo(new PluginInfo("MasterMax3", null, null, null,
                 "1.0.10-0", "2.3", "1.7", null))
-    }
-
-    @Test
-    void testCheckMatchingAPIVersions() {
-        assert setupValidHelperObject().checkMatchingAPIVersions(new PluginInfo("MasterMax2", null, null,
-                null, "1.0.10-0", "2.3", "1.7", null))
-
-        assert setupValidHelperObject().checkMatchingAPIVersions(new PluginInfo("MasterMax3", null, null,
-                null, "1.0.9-0", "2.3", "1.7", null))
     }
 
     @Test

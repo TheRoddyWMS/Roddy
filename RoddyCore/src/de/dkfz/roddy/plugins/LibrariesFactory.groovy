@@ -684,7 +684,7 @@ class LibrariesFactory extends Initializable {
 
     /**
      * Perform checks, if all API versions match the current runtime setup.
-     * Only Roddy version is checked (Groovy is bundled with Roddy; JDK version is inforced by Roddy).
+     * Only Roddy version is checked (Groovy is bundled with Roddy; JDK version is enforced by Roddy).
      */
     static boolean performAPIChecks(List<PluginInfo> pluginInfos) {
         List<PluginInfo> incompatiblePlugins = []
@@ -693,8 +693,8 @@ class LibrariesFactory extends Initializable {
                 incompatiblePlugins << pi
         }
         if (incompatiblePlugins) {
-            logger.severe("Could not load plugins, runtime API versions mismatch! Required are JDK ${RuntimeTools.javaRuntimeVersion} and Roddy ${RuntimeTools.getRoddyRuntimeVersion()}.\n"
-                    + incompatiblePlugins.collect { PluginInfo pi -> "\tJDK ${pi.jdkVersion}, Roddy ${pi.roddyAPIVersion} required by ${pi.fullID}"}.join("\n")
+            logger.severe("Could not load plugins, runtime API versions mismatch! Provided is Roddy ${RuntimeTools.getRoddyRuntimeVersion()}.\n"
+                    + incompatiblePlugins.collect { PluginInfo pi -> "\tRoddy ${pi.roddyAPIVersion} required by ${pi.fullID}"}.join("\n")
             )
         }
         return !incompatiblePlugins
