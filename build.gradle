@@ -95,15 +95,15 @@ configurations.all {
     resolutionStrategy.cacheDynamicVersionsFor(0, 'seconds')
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         if (details.requested.name == "RoddyToolLib") {
-            details.useVersion "master-SNAPSHOT"
+            details.useVersion "1.0.0"
             details.because 'BatchEuphoria not affected by RoddyToolLib 1.0.0 API changes.'
         }
     }
 }
 
 dependencies {
-    // compile 'com.github.theroddywms:RoddyToolLib:0.0.4'            // MIT
-    compile 'com.github.theroddywms:RoddyToolLib:master-SNAPSHOT'    // MIT
+    compile 'com.github.theroddywms:RoddyToolLib:1.0.0'         // MIT
+    // compile 'com.github.theroddywms:RoddyToolLib:master-SNAPSHOT'    // MIT
     compile 'com.github.theroddywms:BatchEuphoria:0.0.3'           // MIT
     // compile 'com.github.theroddywms:BatchEuphoria:master-SNAPSHOT'   // MIT
     compile 'org.codehaus.groovy:groovy-all:2.4.9'              // Apache 2.0
@@ -252,11 +252,6 @@ idea {
         setJdkName(langLevel)
         languageLevel = langLevel
     }
-}
-
-// Gradle Wrapper
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.8'
 }
 
 sphinx {
