@@ -23,7 +23,7 @@ import org.junit.Test
 /**
  * Created by kaercher on 05.07.16.
  */
-public class BEExecutionServiceTestInlineScript extends ContextResource {
+class BEExecutionServiceTestInlineScript {
 
     public static ExecutionContext mockedContext;
     public static Map<File, PluginInfo> listOfFolders = [:]
