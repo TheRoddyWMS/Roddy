@@ -7,9 +7,10 @@
 package de.dkfz.roddy.config
 
 import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import de.dkfz.roddy.core.ContextResource
 import groovy.transform.CompileStatic
 import org.junit.BeforeClass
+import org.junit.ClassRule
 import org.junit.Test
 
 /**
@@ -18,11 +19,14 @@ import org.junit.Test
 @CompileStatic
 class FilenamePatternHelperTest {
 
+    @ClassRule
+    final public static ContextResource contextResource = new ContextResource()
+
     static ExecutionContext mockupContext
 
     @BeforeClass
     static void setup() {
-        mockupContext = MockupExecutionContextBuilder.createSimpleContext(FilenamePatternHelperTest)
+        mockupContext = contextResource.createSimpleContext(FilenamePatternHelperTest)
     }
 
     @Test

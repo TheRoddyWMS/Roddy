@@ -1,12 +1,9 @@
 /*
- * Copyright (c) 2017 eilslabs.
+ * Copyright (c) 2017 German Cancer Research Center (DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/theroddywms/Roddy/LICENSE.txt).
  */
 
-// Gradle Migration TODOs
-// TODO Document changes to IntelliJ
-// TODO Add travis config
 // TODO Put git short hash into manifests
 // TODO How to compile plugins? Can this be done with gradle as well?
 
@@ -91,15 +88,24 @@ repositories {
     maven { url "http://central.maven.org/maven2/" }      // Some of the remaining dependencies
 }
 
+
+
 configurations.all {
-    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+    resolutionStrategy.cacheChangingModulesFor(0, 'seconds')
+    resolutionStrategy.cacheDynamicVersionsFor(0, 'seconds')
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if (details.requested.name == "RoddyToolLib") {
+            details.useVersion "1.0.0"
+            details.because 'BatchEuphoria not affected by RoddyToolLib 1.0.0 API changes.'
+        }
+    }
 }
 
 dependencies {
-    compile 'com.github.theroddywms:RoddyToolLib:0.0.4'            // MIT
-    // compile 'com.github.theroddywms:RoddyToolLib:develop-SNAPSHOT'    // MIT
+    compile 'com.github.theroddywms:RoddyToolLib:1.0.0'         // MIT
+    // compile 'com.github.theroddywms:RoddyToolLib:master-SNAPSHOT'    // MIT
     compile 'com.github.theroddywms:BatchEuphoria:0.0.3'           // MIT
-    // compile 'com.github.theroddywms:BatchEuphoria:develop-SNAPSHOT'   // MIT
+    // compile 'com.github.theroddywms:BatchEuphoria:master-SNAPSHOT'   // MIT
     compile 'org.codehaus.groovy:groovy-all:2.4.9'              // Apache 2.0
 
     compile 'org.bouncycastle:bcpg-jdk15on:1.51'                // MIT
@@ -246,11 +252,6 @@ idea {
         setJdkName(langLevel)
         languageLevel = langLevel
     }
-}
-
-// Gradle Wrapper
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.2.1'
 }
 
 sphinx {

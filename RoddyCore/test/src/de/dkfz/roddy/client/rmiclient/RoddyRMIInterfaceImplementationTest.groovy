@@ -8,7 +8,7 @@ package de.dkfz.roddy.client.rmiclient;
 
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.RoddyTest
-import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import de.dkfz.roddy.core.ContextResource
 import de.dkfz.roddy.execution.io.LocalExecutionHelper
 import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.ExecutionService
@@ -17,7 +17,9 @@ import de.dkfz.roddy.execution.jobs.JobState;
 import de.dkfz.roddy.plugins.LibrariesFactory
 import groovy.transform.CompileStatic
 import org.junit.AfterClass
-import org.junit.BeforeClass;
+import org.junit.BeforeClass
+import org.junit.ClassRule
+import org.junit.Rule;
 import org.junit.Test
 
 /**
@@ -27,6 +29,9 @@ import org.junit.Test
  */
 @CompileStatic
 public class RoddyRMIInterfaceImplementationTest {
+
+    @ClassRule
+    final public static ContextResource contextResource = new ContextResource()
 
     public static class FakeExecService extends LocalExecutionService {
 
@@ -60,13 +65,13 @@ public class RoddyRMIInterfaceImplementationTest {
      * TODO The following code should be transformed into a general integration test code for e.g. submisssion etc.
      */
     @BeforeClass
-    public static void createTestProjectAndConfig() {
+    static void createTestProjectAndConfig() {
         runIntegrationTests = RoddyTest.runIntegrationTests()
 
         if(!runIntegrationTests) return
 
         testSource = new File(LibrariesFactory.groovyClassLoader.getResource("exampleProject").file)
-        testBase = MockupExecutionContextBuilder.getDirectory(RoddyRMIInterfaceImplementationTest.name, "exampleProject");
+        testBase = contextResource.getDirectory(RoddyRMIInterfaceImplementationTest.name, "exampleProject");
 
         LocalExecutionHelper.executeSingleCommand("mkdir -p ${testBase.parent}; cp -r ${testSource}/* ${testBase}");
 

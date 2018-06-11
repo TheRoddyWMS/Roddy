@@ -173,6 +173,7 @@ enum RoddyStartupModes {
                 "                                       format can be: tsv, csv or excel",
                 "    --usemetadatatable={file},[format]",
                 "                                    - Tell Roddy to use an input table to load metadata and input data and available datasets.",
+                "                                      Format can be 'tsv', 'csv' or 'excel'. By default 'tsv' is assumed.",
                 "    --waitforjobs                   - Let Roddy wait for all submitted jobs to finish.",
                 "    --disabletrackonlyuserjobs      - By default, Roddy will only track jobs of the current user. The switch tells Roddy to track all jobs.",
                 "    --disablestrictfilechecks       - Tell Roddy to ignore missing files. By default, Roddy checks if all necessary files exist.",

@@ -1,27 +1,31 @@
 package de.dkfz.roddy.knowledge.files
 
-import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.core.MockupExecutionContextBuilder
-import de.dkfz.roddy.core.RuntimeService
+import de.dkfz.roddy.core.ContextResource
 import groovy.transform.CompileStatic
 import org.junit.BeforeClass
+import org.junit.ClassRule
 import org.junit.Test
-
-import static org.junit.Assert.*
 
 @CompileStatic
 class FileGroupTest {
 
-    static ExecutionContext mockupContext = MockupExecutionContextBuilder.createSimpleContext(FileGroupTest.class.name)
-    static List<BaseFile> listOfFiles = [
-            createFileObject("a"),
-            createFileObject("b"),
-            createFileObject("c"),
-            createFileObject("d"),
-    ]
+    @ClassRule
+    final public static ContextResource contextResource = new ContextResource()
+
+    static List<BaseFile> listOfFiles
+
+    @BeforeClass
+    static void setup() {
+        listOfFiles = [
+                createFileObject("a"),
+                createFileObject("b"),
+                createFileObject("c"),
+                createFileObject("d"),
+        ]
+    }
 
     static BaseFile createFileObject(String suffix) {
-        BaseFile.getSourceFile(mockupContext, "/tmp/somefile_${suffix}")
+        BaseFile.getSourceFile(contextResource.createSimpleContext(FileGroupTest.class.name), "/tmp/somefile_${suffix}")
     }
 
     FileGroup<BaseFile> getTestFileGroup() {

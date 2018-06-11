@@ -17,6 +17,7 @@ import groovy.transform.CompileStatic
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Ignore
+import org.junit.Rule
 import org.junit.Test
 
 /**
@@ -24,6 +25,9 @@ import org.junit.Test
  */
 @CompileStatic
 class RuntimeServiceTest {
+
+    @Rule
+    final public ContextResource contextResource = new ContextResource()
 
     final static File baseTestDirectory = new File("/tmp/roddyCentralDirectory")
     final static File outputBaseDirectory = new File(baseTestDirectory, "output/\${projectName}")
@@ -52,7 +56,7 @@ class RuntimeServiceTest {
     @Before
     void setup() {
         final Configuration mockupConfig = new Configuration(new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null))
-        mockedContext = MockupExecutionContextBuilder.createSimpleContext(RuntimeServiceTest.class, setDirectories(mockupConfig), new RuntimeService())
+        mockedContext = contextResource.createSimpleContext(RuntimeServiceTest.class, setDirectories(mockupConfig), new RuntimeService())
     }
 
     @Test

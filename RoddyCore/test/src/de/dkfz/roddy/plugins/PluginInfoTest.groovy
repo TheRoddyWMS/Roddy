@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.plugins
 
-import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import de.dkfz.roddy.core.ContextResource
 import de.dkfz.roddy.core.RuntimeService
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import org.junit.BeforeClass
@@ -24,7 +24,7 @@ class PluginInfoTest extends GroovyTestCase {
 
     @BeforeClass
     static void setupTestDirs() {
-        testdir = MockupExecutionContextBuilder.getDirectory(PluginInfoTest.name, "data")
+        testdir = ContextResource.getDirectory(PluginInfoTest.name, "data")
         validPlugin = RoddyIOHelperMethods.assembleLocalPath(testdir, "Valid")
         badPlugin = RoddyIOHelperMethods.assembleLocalPath(testdir, "Invalid")
         ["1", "2"].each {

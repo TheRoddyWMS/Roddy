@@ -13,7 +13,7 @@ import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import de.dkfz.roddy.core.ContextResource
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.NoNoExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -30,7 +30,7 @@ import org.junit.rules.TemporaryFolder
 class BashConverterTest {
 
     @Rule
-    public TemporaryFolder testFolder = new TemporaryFolder()
+    public final ContextResource contextResource = new ContextResource()
 
     public static final String CVAL_TEST_OUTPUT_DIRECTORY = "testOutputDirectory"
     public static final String CVAL_OUTPUT_BASE_DIRECTORY = "outputBaseDirectory"
@@ -170,7 +170,7 @@ class BashConverterTest {
     void convertConfigurationValueToShellScriptLine() throws Exception {
         def configuration = createTestConfiguration()
 
-        File tmpDir = testFolder.newFile()
+        File tmpDir = contextResource.tempFolder.newFile()
         configuration.configurationValues.put(CVAL_OUTPUT_BASE_DIRECTORY, tmpDir.absolutePath, "path")
         Roddy.applicationConfiguration.getOrSetApplicationProperty(Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY, tmpDir.absolutePath)
 
@@ -195,7 +195,7 @@ class BashConverterTest {
                 (CVAL_TEST_BASHARRAY)                  : "declare -x    testBashArray=( a b c d )",
         ]
 
-        ExecutionContext context = MockupExecutionContextBuilder.createSimpleContext(BashConverterTest, configuration)
+        ExecutionContext context = contextResource.createSimpleContext(BashConverterTest, configuration)
 
         listWiAutoQuoting.each { String id, String expected ->
             def val = new BashConverter().

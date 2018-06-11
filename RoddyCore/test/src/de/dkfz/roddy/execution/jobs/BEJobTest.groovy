@@ -7,9 +7,10 @@
 package de.dkfz.roddy.execution.jobs
 
 import de.dkfz.roddy.config.TestFileStageSettings
-import de.dkfz.roddy.core.MockupExecutionContextBuilder;
+import de.dkfz.roddy.core.ContextResource;
 import de.dkfz.roddy.knowledge.files.BaseFile
-import groovy.transform.CompileStatic;
+import groovy.transform.CompileStatic
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -17,6 +18,10 @@ import org.junit.Test;
  */
 @CompileStatic
 public class BEJobTest {
+
+    @Rule
+    final public ContextResource contextResource = new ContextResource()
+
     @CompileStatic
     public static class TestFile extends BaseFile {
 
@@ -32,7 +37,8 @@ public class BEJobTest {
 
     @Test
     public void replaceParametersInFilePath() throws Exception {
-        BaseFile bf = new TestFile(new BaseFile.ConstructionHelperForSourceFiles(new File("/invalid"), MockupExecutionContextBuilder.createSimpleContext(BEJobTest.name), new TestFileStageSettings<>(), null))
+        BaseFile bf = new TestFile(new BaseFile.ConstructionHelperForSourceFiles(new File("/invalid"),
+                contextResource.createSimpleContext(BEJobTest.name), new TestFileStageSettings<>(), null))
         def parm = ["abc": "avalue",
                     "def": "anothervalue"
         ] as Map<String, Object>

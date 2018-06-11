@@ -11,7 +11,7 @@ import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.config.RoddyAppConfig
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.core.MockupExecutionContextBuilder
+import de.dkfz.roddy.core.ContextResource
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -19,14 +19,16 @@ import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
 import org.junit.Ignore
+import org.junit.Rule
 import org.junit.Test
 
 import java.lang.reflect.Field
 
-import static org.junit.Assert.*
-
 @CompileStatic
 class BrawlCallingWorkflowTest {
+
+    @Rule
+    final public ContextResource contextResource = new ContextResource()
 
     @Ignore @Test
     void testExecute() {
@@ -104,7 +106,7 @@ class BrawlCallingWorkflowTest {
                 return ResourceSetSize.l
             }
         }
-        def context = MockupExecutionContextBuilder.createSimpleContext(BrawlCallingWorkflowTest, cfg)
+        def context = contextResource.createSimpleContext(BrawlCallingWorkflowTest, cfg)
 
         def toolsDir = new File(context.getAnalysisToolsDirectory(), "brawlWorkflow")
         toolsDir.mkdirs()
