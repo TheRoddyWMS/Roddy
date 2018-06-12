@@ -86,24 +86,16 @@ class ProjectLoader {
 
         try {
             Class analysisClass = LibrariesFactory.getInstance().loadClass(configuration.getConfiguredClass());
-            Class workflowClass = LibrariesFactory.getInstance().loadClass(configuration.getWorkflowClass());
             String _runtimeServiceClass = configuration.getRuntimeServiceClass();
-            Workflow workflow
-            if (workflowClass.name.endsWith('$py')) {
-                // Jython creates a class called Workflow$py with a constructor with a single (unused) String parameter.
-                workflow = (Workflow) workflowClass.getConstructor(String).newInstance("dummy")
-            } else {
-                workflow = (Workflow) workflowClass.getConstructor().newInstance();
-            }
             RuntimeService runtimeService
 
             if (_runtimeServiceClass) {
                 Class runtimeServiceClass = LibrariesFactory.getInstance().loadClass(_runtimeServiceClass);
                 runtimeService = (RuntimeService) runtimeServiceClass.getConstructor().newInstance();
             }
-            def constructor = analysisClass.getConstructor(String.class, Project.class, Workflow.class, RuntimeService.class, AnalysisConfiguration.class)
-            analysis = (Analysis) constructor.newInstance(analysisName, project, workflow, runtimeService, configuration);
-            logger.sometimes("Created an analysis object of class ${analysis.class.name} with workflow class ${workflow.class.name}.")
+            def constructor = analysisClass.getConstructor(String.class, Project.class, RuntimeService.class, AnalysisConfiguration.class)
+            analysis = (Analysis) constructor.newInstance(analysisName, project, runtimeService, configuration);
+            logger.sometimes("Created an analysis object of class ${analysis.class.name}.")
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (InstantiationException e) {
@@ -151,7 +143,7 @@ class ProjectLoader {
     Analysis loadAnalysisAndProject(String configurationIdentifier) {
         try {
             if (_analysisCache.containsKey(configurationIdentifier))
-                return _analysisCache[configurationIdentifier];
+                return _analysisCache[configurationIdentifier]
 
             extractProjectIDAndAnalysisIDOrFail(configurationIdentifier)
 
@@ -171,19 +163,19 @@ class ProjectLoader {
 
             // Also a failed analysis object should go to cache.
             // Put into cache
-            _analysisCache[configurationIdentifier] = analysis;
+            _analysisCache[configurationIdentifier] = analysis
 
             performFinalChecksOrFail(analysis, configurationIdentifier, projectConfiguration, projectID)
 
             // Try to build up the metadata table from here on. Project and analysis are ready.
-            MetadataTableFactory.getTable(analysis);
-            return analysis;
+            MetadataTableFactory.getTable(analysis)
+            return analysis
         } catch (ConfigurationLoaderException ex) {
             logger.severe(ex.message)
             return null
         } catch (ProjectLoaderException ex) {
             logger.severe(ex.message)
-            return null;
+            return null
         } catch (PluginLoaderException ex) {
             logger.severe(ex.message)
             return null
@@ -391,8 +383,8 @@ class ProjectLoader {
         extractKillSwitchesFromAnalysisConfiguration(analysisConfiguration)
 
         if (analysisConfiguration != null)
-            analysis = loadAnalysisConfiguration(analysisID, project, analysisConfiguration);
-        project.getAnalyses().add(analysis);
+            analysis = loadAnalysisConfiguration(analysisID, project, analysisConfiguration)
+        project.getAnalyses().add(analysis)
 
         if (analysis == null)
             throw new ProjectLoaderException("Could not load analysis ${analysisID}")

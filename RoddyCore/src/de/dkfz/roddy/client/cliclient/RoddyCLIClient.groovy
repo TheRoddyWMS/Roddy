@@ -517,13 +517,12 @@ public class RoddyCLIClient {
      * Performs a dry run and prints out information about jobs and files which would normally be run or created.
      * @param args
      */
-    public static void testrun(CommandLineCall clc, boolean testrerun = false) {
+    public static void testrun(CommandLineCall clc) {
         Analysis analysis = loadAnalysisOrFail(clc)
+        List<ExecutionContext> executionContexts =
+                analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.QUERY_STATUS, false)
 
-        List<ExecutionContext> executionContexts = analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.QUERY_STATUS, testrerun)
-        if (testrerun) executionContexts = analysis.rerun(executionContexts, true)
-
-        outputRerunResult(executionContexts, testrerun)
+        outputTestrunResult(executionContexts, false)
     }
 
     /**
@@ -531,10 +530,16 @@ public class RoddyCLIClient {
      * @param args
      */
     public static void testrerun(CommandLineCall clc) {
-        RoddyCLIClient.testrun(clc, true);
+        Analysis analysis = loadAnalysisOrFail(clc)
+        List<ExecutionContext> executionContexts =
+                analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.QUERY_STATUS, true)
+
+        if (testrerun) executionContexts = analysis.rerun(executionContexts, true)
+
+        outputTestrunResult(executionContexts, true)
     }
 
-    private static void outputRerunResult(List<ExecutionContext> executionContexts, boolean rerun) {
+    private static void outputTestrunResult(List<ExecutionContext> executionContexts, boolean rerun) {
         final String separator = Constants.ENV_LINESEPARATOR;
         for (ExecutionContext ec : executionContexts) {
             Configuration configuration = ec.getConfiguration()
