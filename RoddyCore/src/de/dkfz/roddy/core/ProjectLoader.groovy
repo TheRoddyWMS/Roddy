@@ -504,7 +504,7 @@ class ProjectLoader {
             }
 
             if(!valueOutDir) {
-                logger.always("The output base directory is not set. Taking the path of the output base directory instead.")
+                logger.always("The output base directory is not set. Taking the path of the input base directory instead.")
                 analysis.configuration.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, valueInDir, "path"))
             }
 
