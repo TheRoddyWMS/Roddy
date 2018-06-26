@@ -1,8 +1,9 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2018 German Cancer Research Center (DKFZ).
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
+
 
 package de.dkfz.roddy.core
 
@@ -125,46 +126,6 @@ class RuntimeServiceTest {
         assert result["pid"] == context.dataSet.id
         assert result["PID"] == context.dataSet.id
         assert result["ANALYSIS_DIR"]
-    }
-
-    @Test
-    void testValidateDataSetLoadingString() {
-        def rs = new RuntimeService()
-
-        assert rs.validateCohortDataSetLoadingString("s[c:ADDD]")
-        assert rs.validateCohortDataSetLoadingString("s[c:PID_0]")
-        assert rs.validateCohortDataSetLoadingString("s[c:PID_0;PID_1;Pid-1]")
-        assert rs.validateCohortDataSetLoadingString("s[c:PID_0;PID_1]")
-        assert rs.validateCohortDataSetLoadingString("s[c:PID_0;PID_1;Pid-1|c:PID_0;Pid1]")
-        assert rs.validateCohortDataSetLoadingString("s[c:PID_0;PID_1;Pid-1|c:PID_0;Pid1|c:PID-2;p?*]")
-
-        assert !rs.validateCohortDataSetLoadingString("s[c:PID_0;]")
-        assert !rs.validateCohortDataSetLoadingString("c:PID_0")
-        assert !rs.validateCohortDataSetLoadingString("PID_0;PID_1")
-    }
-
-    @Test
-    @Ignore("Analysis configuration needs to be non-null! Fix!")
-    void loadDatasetsWithFilter() throws Exception {
-
-        Analysis a = mockedContext.analysis
-
-        // Try good cases
-        assert a.getRuntimeService().loadDatasetsWithFilter(a, ["s[c:ADDD]"]).size() == 1
-        assert a.getRuntimeService().loadDatasetsWithFilter(a, ["s[c:ADDD;BDDD]"]).size() == 1
-        assert a.getRuntimeService().loadDatasetsWithFilter(a, ["s[c:CD*]"]).size() == 1
-        assert a.getRuntimeService().loadDatasetsWithFilter(a, ["s[c:*DDD]"]).size() == 1
-
-        // Two super cohorts
-        assert a.getRuntimeService().loadDatasetsWithFilter(a, "s[c:ADDD;BDDD|c:ADDD|c:CD*],s[c:ADDD;BDDD|c:ADDD|c:CD*]".split(StringConstants.SPLIT_COMMA) as List<String>).size() == 2
-
-        // Check one result.
-        List<SuperCohortDataSet> result = a.getRuntimeService().loadDatasetsWithFilter(a, ["s[c:ADDD;BDDD;ACCD]"]) as List<SuperCohortDataSet>
-        assert result[0].allCohorts.size() == 1 && result[0].allCohorts[0] instanceof CohortDataSet
-        assert result[0].allCohorts[0].allCohortDatasets.size() == 3
-        assert result[0].allCohorts[0].primarySet.id == "ADDD" // Make sure, sort order is right!
-        assert result[0].allCohorts[0].allCohortDatasets[1].id == "ACCD" // Make sure, sort order is right!
-        assert result[0].allCohorts[0].allCohortDatasets[2].id == "BDDD" // Make sure, sort order is right!
     }
 
     @Test
