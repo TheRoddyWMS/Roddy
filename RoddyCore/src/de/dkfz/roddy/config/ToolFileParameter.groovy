@@ -4,12 +4,10 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.config;
+package de.dkfz.roddy.config
 
-import de.dkfz.roddy.knowledge.files.BaseFile;
-
-import java.util.LinkedList;
-import java.util.List;
+import de.dkfz.roddy.Constants;
+import de.dkfz.roddy.knowledge.files.BaseFile
 
 /**
  * Parameters for generic tools (tools which are not programmatically set!).
@@ -28,7 +26,7 @@ public class ToolFileParameter extends ToolEntry.ToolParameterOfFiles {
     private List<ToolFileParameter> childFiles
 
     public ToolFileParameter(Class<BaseFile> fileClass, List<ToolEntry.ToolConstraint> constraints, String scriptParameterName, ToolFileParameterCheckCondition checkFile) {
-        this(fileClass, constraints, scriptParameterName, checkFile, FilenamePattern.DEFAULT_SELECTION_TAG, null, null)
+        this(fileClass, constraints, scriptParameterName, checkFile, Constants.DEFAULT, null, null)
     }
 
         public ToolFileParameter(Class<BaseFile> fileClass, List<ToolEntry.ToolConstraint> constraints, String scriptParameterName, ToolFileParameterCheckCondition checkFile, String filenamePatternSelectionTag, List<ToolFileParameter> childFiles, String parentVariable) {
@@ -94,7 +92,7 @@ public class ToolFileParameter extends ToolEntry.ToolParameterOfFiles {
 
     @Override
     public boolean hasSelectionTag() {
-        return !filenamePatternSelectionTag.equals(FilenamePattern.DEFAULT_SELECTION_TAG)
+        return !filenamePatternSelectionTag.equals(Constants.DEFAULT)
     }
 
 }

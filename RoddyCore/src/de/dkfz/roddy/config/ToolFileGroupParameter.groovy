@@ -91,17 +91,19 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameterOfFiles {
         if (groupClass != that.groupClass) return false
         if (indexOptions != that.indexOptions) return false
         if (passOptions != that.passOptions) return false
+        if (selectiontag != that.selectiontag) return false
 
         return true
     }
 
     int hashCode() {
-        int result
-        result = (groupClass != null ? groupClass.hashCode() : 0)
+        int result = super.hashCode()
+        result = 31 * result + (groupClass != null ? groupClass.hashCode() : 0)
         result = 31 * result + (genericFileClass != null ? genericFileClass.hashCode() : 0)
+        result = 31 * result + (files != null ? files.hashCode() : 0)
         result = 31 * result + (passOptions != null ? passOptions.hashCode() : 0)
         result = 31 * result + (indexOptions != null ? indexOptions.hashCode() : 0)
-        result = 31 * result + (files != null ? files.hashCode() : 0)
+        result = 31 * result + (selectiontag != null ? selectiontag.hashCode() : 0)
         return result
     }
 

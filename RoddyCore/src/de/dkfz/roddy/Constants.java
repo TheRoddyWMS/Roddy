@@ -73,6 +73,7 @@ public class Constants {
     public static final String UNKNOWN_USER = "UNKNOWN";
     public static final String UNKNOWN = "UNKNOWN";
     public static final String NO_VALUE = "<NO_VALUE>";
+    public static final String DEFAULT = "default";
 
     public static final String RODDY_PARENT_JOBS = "RODDY_PARENT_JOBS";
     public static final String CONFIG_FILE = "CONFIG_FILE";

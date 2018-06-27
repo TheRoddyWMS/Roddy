@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.config.loader
 
+import de.dkfz.roddy.Constants
 import de.dkfz.roddy.config.OnScriptParameterFilenamePattern
 import de.dkfz.roddy.config.ResourceSet
 import de.dkfz.roddy.config.ResourceSetSize
@@ -263,7 +264,7 @@ class ProcessingToolReader {
 
         String pName = readAttribute(child, "scriptparameter")
         String fnPattern = readAttributeOrDefault(child, "filename")
-        String fnpSelTag = extractAttributeText(child, "selectiontag", extractAttributeText(child, "fnpatternselectiontag", FilenamePattern.DEFAULT_SELECTION_TAG))
+        String fnpSelTag = extractAttributeText(child, "selectiontag", extractAttributeText(child, "fnpatternselectiontag", Constants.DEFAULT))
         String parentFileVariable = extractAttributeText(child, "variable", null) //This is only the case for child files.
         ToolFileParameterCheckCondition check = new ToolFileParameterCheckCondition(extractAttributeText(child, "check", "true"))
 
@@ -313,7 +314,7 @@ class ProcessingToolReader {
 
         ToolFileGroupParameter.PassOptions passas = Enum.valueOf(ToolFileGroupParameter.PassOptions.class, extractAttributeText(groupNode, "passas", ToolFileGroupParameter.PassOptions.parameters.name()))
         ToolFileGroupParameter.IndexOptions indexOptions = Enum.valueOf(ToolFileGroupParameter.IndexOptions.class, extractAttributeText(groupNode, "indices", ToolFileGroupParameter.IndexOptions.numeric.name()))
-        String selectiontag = extractAttributeText(groupNode, "selectiontag", extractAttributeText(groupNode, "fnpatternselectiontag", FilenamePattern.DEFAULT_SELECTION_TAG))
+        String selectiontag = extractAttributeText(groupNode, "selectiontag", extractAttributeText(groupNode, "fnpatternselectiontag", Constants.DEFAULT))
 
         String fileclass = extractAttributeText(groupNode, "fileclass", null)
         int childCount = groupNode.children().size()

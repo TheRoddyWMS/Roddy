@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.config
 
+import de.dkfz.roddy.Constants
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.loader.ConfigurationLoaderException
@@ -27,6 +28,7 @@ import org.junit.rules.ExpectedException
 
 import java.lang.reflect.Method
 
+import static de.dkfz.roddy.Constants.DEFAULT
 import static de.dkfz.roddy.config.ResourceSetSize.*
 
 /**
@@ -463,7 +465,7 @@ class ConfigurationFactoryTest {
         assert tparm.getGenericClassString() == "de.dkfz.roddy.knowledge.files.GenericFileGroup<de.dkfz.roddy.synthetic.files.TestFile>"
         assert tparm.passOptions == ToolFileGroupParameter.PassOptions.parameters
         assert tparm.indexOptions == ToolFileGroupParameter.IndexOptions.numeric
-        assert tparm.selectiontag == "default"
+        assert tparm.selectiontag == DEFAULT
     }
 
     @Test(expected = RuntimeException)
