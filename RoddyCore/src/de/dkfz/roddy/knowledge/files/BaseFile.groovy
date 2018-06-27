@@ -28,6 +28,7 @@ import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.Tuple2
+import static de.dkfz.roddy.config.FilenamePatternDependency.*
 
 import java.util.concurrent.ExecutionException
 
@@ -241,7 +242,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
      *  The tool should return exactly one line with the path to the file. Otherwise the method throws an UnexpectedExecutionResultException.
      *  If the command could not get successfully executed an ExecutionException is propagated. */
     static BaseFile getSourceFileUsingTool(ExecutionContext context, String toolID, String _class = STANDARD_FILE_CLASS)
-        throws UnexpectedExecutionResultException, ExecutionException {
+            throws UnexpectedExecutionResultException, ExecutionException {
         List<String> executionOutput = ExecutionService.instance.runDirect(context, toolID)
         if (executionOutput.size() != 1) {
             throw new UnexpectedExecutionResultException("SourceFile instantiation from tool output failed", executionOutput)
@@ -253,7 +254,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
     /** Run a tool to returns a list of filenames that will be instantiated as file objects of STANDARD_FILE_CLASS by default.
      *  The tool should return an arbitary number of lines with filenames. If no line is returned, an empty list is returned. */
     static List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID, String _class = STANDARD_FILE_CLASS)
-        throws ExecutionException {
+            throws ExecutionException {
         return ExecutionService.instance.runDirect(context, toolID).collect {
             getSourceFile(context, it, _class)
         } as List<BaseFile>
@@ -639,12 +640,14 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
             ExecutionContext context = baseFile.getExecutionContext();
             LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>> availablePatterns = loadAvailableFilenamePatterns(baseFile, context);
 
-            patternResult = findFilenameFromOnScriptParameterPatterns(baseFile, availablePatterns[FilenamePatternDependency.onScriptParameter], selectionTag) ?:
-                    findFilenameFromOnMethodPatterns(baseFile, availablePatterns[FilenamePatternDependency.onMethod], selectionTag) ?:
-                            findFilenameFromOnToolIDPatterns(baseFile, availablePatterns[FilenamePatternDependency.onTool], selectionTag) ?:
-                                    findFilenameFromSourcefilePatterns(baseFile, availablePatterns[FilenamePatternDependency.derivedFrom], selectionTag) ?:
-                                            findFilenameFromGenericPatterns(baseFile, availablePatterns[FilenamePatternDependency.FileStage], selectionTag);
+            Map<FilenamePatternDependency, Tuple2<File, FilenamePattern>> results = [:]
+            results[onScriptParameter] = findFilenameFromOnScriptParameterPatterns(baseFile, availablePatterns[onScriptParameter], selectionTag)
+            results[onMethod] = findFilenameFromOnMethodPatterns(baseFile, availablePatterns[onMethod], selectionTag)
+            results[onTool] = findFilenameFromOnToolIDPatterns(baseFile, availablePatterns[onTool], selectionTag)
+            results[derivedFrom] = findFilenameFromSourcefilePatterns(baseFile, availablePatterns[derivedFrom], selectionTag)
+            results[FilenamePatternDependency.FileStage] = findFilenameFromGenericPatterns(baseFile, availablePatterns[FilenamePatternDependency.FileStage], selectionTag)
 
+            patternResult = results[onScriptParameter] ?: results[onMethod] ?: results[onTool] ?: results[derivedFrom] ?: results[FilenamePatternDependency.FileStage]
             // Do some further checks for selection tags.
             // Two cases. If the selectiontag is default and if it is not. If the selectiontag is not null
             if ((selectionTag.equals("default") && (!patternResult || patternResult.x == null)) || patternResult.x == null) {
@@ -823,10 +826,11 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
 
                 return parameterFound && scriptValid
         }
+        if (!appliedPattern) return null
         File filename = new File(appliedPattern.apply(baseFile))
 
-        if (!filename || !appliedPattern) return null;
-        return new Tuple2<>(filename, appliedPattern);
+        if (!filename) return null
+        return new Tuple2<>(filename, appliedPattern)
     }
 
     /**

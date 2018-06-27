@@ -463,6 +463,7 @@ class ConfigurationFactoryTest {
         assert tparm.getGenericClassString() == "de.dkfz.roddy.knowledge.files.GenericFileGroup<de.dkfz.roddy.synthetic.files.TestFile>"
         assert tparm.passOptions == ToolFileGroupParameter.PassOptions.parameters
         assert tparm.indexOptions == ToolFileGroupParameter.IndexOptions.numeric
+        assert tparm.selectiontag == "default"
     }
 
     @Test(expected = RuntimeException)
@@ -485,13 +486,14 @@ class ConfigurationFactoryTest {
 
     @Test
     void testParseFileGroupForOutputFileGroupPassasParametersAndDefaultFileIndex() {
-        NodeChild nc = asNodeChild("<output type='filegroup' typeof='de.dkfz.roddy.knowledge.files.GenericFileGroup' fileclass='ASyntheticClass' passas='parameters' scriptparameter='APARM' />")
+        NodeChild nc = asNodeChild("<output type='filegroup' typeof='de.dkfz.roddy.knowledge.files.GenericFileGroup' fileclass='ASyntheticClass' passas='parameters' scriptparameter='APARM' selectiontag='abs' />")
         ToolFileGroupParameter res = new ProcessingToolReader(null, null).parseFileGroup(nc, "EMPTY")
         assert res
         assert res.groupClass == GenericFileGroup.class
         assert res.genericFileClass.name.endsWith("ASyntheticClass")
         assert res.passOptions == ToolFileGroupParameter.PassOptions.parameters
         assert res.indexOptions == ToolFileGroupParameter.IndexOptions.numeric
+        assert res.selectiontag == "abs"
     }
 
 
