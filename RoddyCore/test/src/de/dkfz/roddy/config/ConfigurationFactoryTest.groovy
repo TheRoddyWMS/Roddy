@@ -39,6 +39,7 @@ class ConfigurationFactoryTest {
 
     @ClassRule
     final public static ContextResource contextResource = new ContextResource()
+    public static final String EMPTY = "EMPTY"
 
     @Rule
     public ExpectedException thrown = ExpectedException.none()
@@ -435,7 +436,7 @@ class ConfigurationFactoryTest {
             """)
         ToolFileGroupParameter tparm = new ProcessingToolReader(null, null).parseFileGroup(nc, "testTool")
         assert tparm.files.size() == 3
-        assert tparm.files.collect { ToolFileParameter tfp -> tfp.fileClass.simpleName } == ["AFile", "BFile", "CFile"]
+        assert tparm.files.collect { ToolEntry.ToolParameterOfFiles tfp -> ((ToolFileParameter)tfp).fileClass.simpleName } == ["AFile", "BFile", "CFile"]
         assert tparm.scriptParameterName == "APARM"
         assert tparm.passOptions == ToolFileGroupParameter.PassOptions.parameters
         assert tparm.indexOptions == ToolFileGroupParameter.IndexOptions.numeric
@@ -479,7 +480,7 @@ class ConfigurationFactoryTest {
     @Test
     void testParseFileGroupForInputFileGroupPassasParameters() {
         NodeChild nc = asNodeChild("<input type='filegroup' typeof='GenericFileGroup' fileclass='ASyntheticTestClass' passas='parameters' scriptparameter='APARM' />")
-        ToolFileGroupParameter res = new ProcessingToolReader(null, null).parseFileGroup(nc, "EMPTY")
+        ToolFileGroupParameter res = new ProcessingToolReader(null, null).parseFileGroup(nc, EMPTY)
         assert res
         assert res.groupClass == GenericFileGroup.class
         assert res.genericFileClass.name.endsWith("ASyntheticTestClass")
@@ -489,7 +490,7 @@ class ConfigurationFactoryTest {
     @Test
     void testParseFileGroupForOutputFileGroupPassasParametersAndDefaultFileIndex() {
         NodeChild nc = asNodeChild("<output type='filegroup' typeof='de.dkfz.roddy.knowledge.files.GenericFileGroup' fileclass='ASyntheticClass' passas='parameters' scriptparameter='APARM' selectiontag='abs' />")
-        ToolFileGroupParameter res = new ProcessingToolReader(null, null).parseFileGroup(nc, "EMPTY")
+        ToolFileGroupParameter res = new ProcessingToolReader(null, null).parseFileGroup(nc, EMPTY)
         assert res
         assert res.groupClass == GenericFileGroup.class
         assert res.genericFileClass.name.endsWith("ASyntheticClass")
@@ -502,12 +503,45 @@ class ConfigurationFactoryTest {
     @Test
     void testParseFileGroupForOutputFileGroupPassasParametersWithStringIndexForFilenames() {
         NodeChild nc = asNodeChild("<output type='filegroup' typeof='de.dkfz.roddy.knowledge.files.GenericFileGroup' fileclass='ASyntheticClass' passas='parameters' indices='strings' scriptparameter='APARM'/>")
-        ToolFileGroupParameter res = new ProcessingToolReader(null, null).parseFileGroup(nc, "EMPTY")
+        ToolFileGroupParameter res = new ProcessingToolReader(null, null).parseFileGroup(nc, EMPTY)
         assert res
         assert res.groupClass == GenericFileGroup.class
         assert res.genericFileClass.name.endsWith("ASyntheticClass")
         assert res.passOptions == ToolFileGroupParameter.PassOptions.parameters
         assert res.indexOptions == ToolFileGroupParameter.IndexOptions.strings
+    }
+
+    @Test
+    void testParseTupleWithChildFiles() {
+        NodeChild nc = asNodeChild("""
+                <output type="tuple">
+                    <output type="file" typeof="AFile" scriptparameter="FA"/>
+                    <output type="file" typeof="BFile" scriptparameter="FB"/>
+                    <output type="file" typeof="CFile" scriptparameter="FC"/>
+                </output>
+            """)
+        ToolTupleParameter res = new ProcessingToolReader(null, null).parseTuple(nc, EMPTY)
+        assert res
+        assert res.allFiles.size() == 3
+        assert res.allFiles[0] instanceof ToolFileParameter
+        assert res.allFiles[1] instanceof ToolFileParameter
+        assert res.allFiles[2] instanceof ToolFileParameter
+
+    }
+
+    @Test
+    void testParseTupleWithChildFileAndGroup() {
+        NodeChild nc = asNodeChild("""
+                <output type="tuple">
+                    <output type="file" typeof="AFile" scriptparameter="FA"/>
+                    <output type="filegroup" typeof="GenericFileGroup" fileclass="TextFile" scriptparameter="FC"/>
+                </output>
+            """)
+        ToolTupleParameter res = new ProcessingToolReader(null, null).parseTuple(nc, EMPTY)
+        assert res
+        assert res.allFiles.size() == 2
+        assert res.allFiles[0] instanceof ToolFileParameter
+        assert res.allFiles[1] instanceof ToolFileGroupParameter
     }
 }
 

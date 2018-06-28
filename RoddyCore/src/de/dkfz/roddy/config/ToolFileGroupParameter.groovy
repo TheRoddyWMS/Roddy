@@ -125,13 +125,13 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameterOfFiles {
     }
 
     @Override
-    public List<ToolFileParameter> getAllFiles() {
-        return files.collect { it.getAllFiles() }.flatten() as List<ToolFileParameter>
+    public List<ToolEntry.ToolParameterOfFiles> getAllFiles() {
+        return files.collect { it.getAllFiles() }.flatten() as List<ToolEntry.ToolParameterOfFiles>
     }
 
     @Override
-    public List<ToolFileParameter> getFiles() {
-        return files
+    public List<ToolEntry.ToolParameterOfFiles> getFiles() {
+        return files as List<ToolEntry.ToolParameterOfFiles>
     }
 
 

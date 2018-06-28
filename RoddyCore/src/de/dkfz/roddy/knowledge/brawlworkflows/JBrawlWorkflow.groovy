@@ -347,7 +347,13 @@ public class JBrawlWorkflow extends Workflow {
             if (outputParameters[0] instanceof ToolTupleParameter) {
 
                 ToolTupleParameter tupleParameter = (ToolTupleParameter) outputParameters[0]
-                String generics = tupleParameter.files.collect { ToolFileParameter tfp -> return tfp.fileClass }.join(", ")
+                String generics = tupleParameter.files.collect {
+                    ToolEntry.ToolParameterOfFiles tfp ->
+                        if (tfp instanceof ToolFileParameter)
+                            return ((ToolFileParameter)tfp).fileClass
+                        else if(tfp instanceof ToolFileGroupParameter)
+                            return ((ToolFileGroupParameter)tfp).genericFileClass
+                }.join(", ")
                 classOfFileObject = "de.dkfz.roddy.knowledge.files.Tuple" + tupleParameter.files.size() + "<$generics>";
             }
         }

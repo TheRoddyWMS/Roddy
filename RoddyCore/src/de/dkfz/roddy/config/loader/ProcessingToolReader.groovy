@@ -294,9 +294,9 @@ class ProcessingToolReader {
         if (!FileObjectTupleFactory.isValidSize(tupleSize)) {
             logger.severe("Tuple is of wrong size for tool ${toolID}.")
         }
-        List<ToolFileParameter> subParameters = new LinkedList<ToolFileParameter>()
+        List<ToolEntry.ToolParameterOfFiles> subParameters = []
         for (NodeChild fileChild in (child.children() as List<NodeChild>)) {
-            subParameters << (ToolFileParameter) parseToolParameter(toolID, fileChild)
+            subParameters << (ToolEntry.ToolParameterOfFiles)parseToolParameter(toolID, fileChild)
         }
         return new ToolTupleParameter(subParameters)
     }

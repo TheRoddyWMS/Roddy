@@ -81,12 +81,12 @@ public class ToolFileParameter extends ToolEntry.ToolParameterOfFiles {
     }
 
     @Override
-    public List<ToolFileParameter> getFiles() {
+    public List<ToolEntry.ToolParameterOfFiles> getFiles() {
         return childFiles
     }
 
     @Override
-    public List<ToolFileParameter> getAllFiles() {
+    public List<ToolEntry.ToolParameterOfFiles> getAllFiles() {
         return (files.collect { it.getAllFiles() }.flatten() + [this]) as List<ToolFileParameter>
     }
 
