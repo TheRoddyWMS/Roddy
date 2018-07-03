@@ -590,10 +590,9 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         return getFilename(baseFile, DEFAULT)
     }
 
-    private
-    static Map<Class, LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>>> _classPatternsCache = new LinkedHashMap<>()
+    private static Map<Class, LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>>> _classPatternsCache = new LinkedHashMap<>()
 
-    static LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>> loadAvailableFilenamePatterns(BaseFile baseFile, ExecutionContext context) {
+    static synchronized LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>> loadAvailableFilenamePatterns(BaseFile baseFile, ExecutionContext context) {
         Configuration cfg = context.getConfiguration()
         LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>> availablePatterns = new LinkedHashMap<>()
         if (!_classPatternsCache.containsKey(baseFile.getClass())) {
