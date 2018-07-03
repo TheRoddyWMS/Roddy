@@ -264,6 +264,14 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         } as List<BaseFile>
     }
 
+    static List<BaseFile> getSourceFileUsingPattern(ExecutionContext context, File searchPath, String pattern, String _class = STANDARD_FILE_CLASS) {
+        ExecutionService.instance.execute()
+    }
+
+    static List<BaseFile> getSourceFileUsingRegex(ExecutionContext context, File searchPath, String pattern, String _class = STANDARD_FILE_CLASS) {
+
+    }
+
     protected File path
 
     protected final List<BaseFile> parentFiles = new LinkedList<>()

@@ -73,6 +73,10 @@ abstract class ShellCommandSet {
 
     abstract String getListFullDirectoryContentRecursivelyCommand(List<File> directories, List<Integer> depth, boolean onlyDirectories)
 
+    abstract String getFindFilesUsingWildcardsCommand(File baseFolder, String wildcards)
+
+    abstract String getFindFilesUsingRegexCommand(File baseFolder, String regex)
+
     abstract FileSystemInfoObject parseDetailedDirectoryEntry(String line)
 
     abstract String getPathSeparator()

@@ -293,6 +293,10 @@ public class FileSystemAccessProvider {
         }
     }
 
+    List<File> listFilesUsingWildcards(File baseFolder, String wildcards) {
+        ExecutionService.instance.execute(commandSet.getFindFilesUsingWildcardsCommand(baseFolder, wildcards))
+    }
+
     public boolean checkDirectories(List<File> files, ExecutionContext context, boolean createMissing) {
         boolean result = true;
         for (File f in files) {
