@@ -222,7 +222,8 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
      */
     static BaseFile getFile(BaseFile parentFile, String _class = STANDARD_FILE_CLASS) {
         if (RoddyConversionHelperMethods.isNullOrEmpty(_class)) _class = STANDARD_FILE_CLASS
-        return constructManual(_class as Class<? extends BaseFile>, parentFile)
+        Class<BaseFile> fileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(_class, BaseFile as Class<FileObject>) as Class<BaseFile>
+        return constructManual(fileClass, parentFile)
     }
 
     /**

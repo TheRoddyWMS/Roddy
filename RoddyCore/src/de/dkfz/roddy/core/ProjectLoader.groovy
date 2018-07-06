@@ -486,13 +486,36 @@ class ProjectLoader {
         List<String> errors = []
 
         // Earliest check for valid input and output directories. If they are not accessible or writeable.
-        // Start with the input directory
-        errors += checkDirForReadabilityAndExecutability(analysis.getInputBaseDirectory(), "input")
-        errors += checkDirForReadabilityAndExecutability(analysis.getOutputBaseDirectory(), "output")
+        // The checks are done before the readability tests because we need to check for the raw configuration values
+        // as the next check will already use translated value
 
-        // Out dir needs to be writable
-        if (!FileSystemAccessProvider.instance.isWritable(analysis.getOutputBaseDirectory()))
-            errors << (String) "The output was not writeable at path ${analysis.getOutputBaseDirectory()}."
+        String valueInDir = analysis.configuration.configurationValues.get(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, "").value
+        String valueOutDir = analysis.configuration.configurationValues.get(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, "").value
+        
+        if (!valueInDir && !valueOutDir) {
+            errors << "Both the input and output base directories are not set. You must set at least inputBaseDirectory or outputBaseDirectory."
+
+        } else {
+
+            // Fill variable, if it is missing. Log a warning.
+            if(!valueInDir) {
+                logger.always("The input base directory is not set. Taking the path of the output base directory instead.")
+                analysis.configuration.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, valueOutDir, "path"))
+            }
+
+            if(!valueOutDir) {
+                logger.always("The output base directory is not set. Taking the path of the input base directory instead.")
+                analysis.configuration.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, valueInDir, "path"))
+            }
+
+            // Now start with the input directory
+            errors += checkDirForReadabilityAndExecutability(analysis.getInputBaseDirectory(), "input")
+            errors += checkDirForReadabilityAndExecutability(analysis.getOutputBaseDirectory(), "output")
+
+            // Out dir needs to be writable
+            if (!FileSystemAccessProvider.instance.isWritable(analysis.getOutputBaseDirectory()))
+                errors << (String) "The output was not writeable at path ${analysis.getOutputBaseDirectory()}."
+        }
 
         if (!errors)
             return
