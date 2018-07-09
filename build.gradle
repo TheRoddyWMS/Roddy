@@ -256,6 +256,7 @@ idea {
 
 sphinx {
     sourceDirectory = "${project.projectDir}/docs/"
+    outputDirectory = "${project.buildDir}/site/"
     warningsAsErrors = true
 }
 
