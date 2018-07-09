@@ -13,4 +13,4 @@ Configuration topics
     config/xmlConfigurationFiles
     config/configFilenamesAndToolEntries
     config/metadata
-    config/roddyConfigurationOptions
+    config/roddyConfigurationValues

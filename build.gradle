@@ -258,6 +258,12 @@ sphinx {
     sourceDirectory = "${project.projectDir}/docs/"
     outputDirectory = "${project.buildDir}/site/"
     warningsAsErrors = true
+    dependsOn(groovydoc)
 }
+
+groovydoc {
+    destinationDir = new File("${project.buildDir}/site/groovydoc/")
+}
+
 
 // end of build.gradle
