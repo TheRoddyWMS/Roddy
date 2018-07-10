@@ -23,6 +23,7 @@ import de.dkfz.roddy.core.Workflow
 import de.dkfz.roddy.execution.UnexpectedExecutionResultException
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider.RegexScope
 import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.BEJobResult
 import de.dkfz.roddy.plugins.LibrariesFactory
@@ -264,12 +265,20 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         } as List<BaseFile>
     }
 
-    static List<BaseFile> getSourceFileUsingPattern(ExecutionContext context, File searchPath, String pattern, String _class = STANDARD_FILE_CLASS) {
-        ExecutionService.instance.execute()
+    /**
+     * API Level 3.2+
+     */
+    static List<BaseFile> getSourceFilesUsingWildcards(ExecutionContext context, File baseFolder, String wildcards, String _class = STANDARD_FILE_CLASS) {
+        List<File> files = FileSystemAccessProvider.instance.listFilesUsingWildcards(baseFolder, wildcards)
+        files.collect { getSourceFile(context, it.absolutePath, _class) }
     }
 
-    static List<BaseFile> getSourceFileUsingRegex(ExecutionContext context, File searchPath, String pattern, String _class = STANDARD_FILE_CLASS) {
-
+    /**
+     * API Level 3.2+
+     */
+    static List<BaseFile> getSourceFilesUsingRegex(ExecutionContext context, File baseFolder, String regex, RegexScope scope, String _class = STANDARD_FILE_CLASS) {
+        List<File> files = FileSystemAccessProvider.instance.listFilesUsingRegex(baseFolder, regex, scope)
+        files.collect { getSourceFile(context, it.absolutePath, _class) }
     }
 
     protected File path

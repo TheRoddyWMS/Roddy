@@ -10,6 +10,7 @@ import de.dkfz.roddy.config.ConfigurationError
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.execution.UnexpectedExecutionResultException
 import de.dkfz.roddy.execution.io.ExecutionService
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.knowledge.files.FileObject
@@ -110,7 +111,7 @@ abstract class Workflow {
         return context.getConfiguration().getConfigurationValues().getBoolean(flagID, defaultValue)
     }
 
-    final void setEnv(String id, String value, String type) { cvalue(id, value, type)  }
+    final void setEnv(String id, String value, String type) { cvalue(id, value, type) }
 
     final void setEnvInt(String id, int value) { cvalue(id, value) }
 
@@ -124,17 +125,17 @@ abstract class Workflow {
 
     def getEnv(String id) {
         ConfigurationValue value = context.configuration.configurationValues[id]
-        if(value.type == "integer") {
+        if (value.type == "integer") {
             return value.toInt()
-        } else if(value.type == "float") {
+        } else if (value.type == "float") {
             return value.toFloat()
-        } else if(value.type == "double") {
+        } else if (value.type == "double") {
             return value.toDouble()
-        } else if(value.type == "boolean") {
+        } else if (value.type == "boolean") {
             return value.toBoolean()
-        } else if(value.type == "bashArray") {
+        } else if (value.type == "bashArray") {
             return value.toStringList()
-        } else  {
+        } else {
             return value.toString()
         }
     }
@@ -260,7 +261,7 @@ abstract class Workflow {
     final List<String> runDirect(String toolID, Map<String, Object> parameters) {
         return ExecutionService.getInstance().runDirect(context, toolID, parameters);
     }
-    
+
     final BaseFile file(String path, String _class = BaseFile.STANDARD_FILE_CLASS) {
         return getSourceFile(path, _class)
     }
@@ -279,6 +280,20 @@ abstract class Workflow {
      */
     final BaseFile getSourceFile(String path, String _class = BaseFile.STANDARD_FILE_CLASS) {
         return BaseFile.fromStorage(context, path, _class)
+    }
+
+    /**
+     * API Level 3.2+
+     */
+    final List<BaseFile> getSourceFilesUsingWildcards(File path, String wildcards, String _class = BaseFile.STANDARD_FILE_CLASS) {
+        BaseFile.getSourceFilesUsingWildcards(context, path, wildcards, _class)
+    }
+
+    /**
+     * API Level 3.2+
+     */
+    final List<BaseFile> getSourceFilesUsingRegex(File path, String regex, FileSystemAccessProvider.RegexScope scope, String _class = BaseFile.STANDARD_FILE_CLASS) {
+        BaseFile.getSourceFilesUsingRegex(context, path, regex, scope, _class)
     }
 
     /**

@@ -18,6 +18,7 @@ import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.FileAttributes
 import de.dkfz.roddy.knowledge.files.BaseFile
+import groovy.io.FileType
 import org.apache.commons.io.filefilter.WildcardFileFilter
 
 import java.util.concurrent.locks.ReentrantLock
@@ -294,7 +295,36 @@ public class FileSystemAccessProvider {
     }
 
     List<File> listFilesUsingWildcards(File baseFolder, String wildcards) {
-        ExecutionService.instance.execute(commandSet.getFindFilesUsingWildcardsCommand(baseFolder, wildcards))
+        ExecutionResult result = ExecutionService.instance.execute(commandSet.getFindFilesUsingWildcardsCommand(baseFolder, wildcards))
+        result.resultLines.collect {
+            new File(it)
+        } as List<File>
+    }
+
+    /**
+     * Scope for regular expressions. Used in listFilesUsingRegex
+     */
+    enum RegexScope {
+        FullPath,
+        RelativePath,
+        Filename
+    }
+
+    List<File> listFilesUsingRegex(File baseFolder, String regex, RegexScope scope) {
+        ExecutionResult result = ExecutionService.instance.execute(commandSet.getListFullDirectoryContentRecursivelyCommand(baseFolder, -1, FileType.FILES, false))
+
+        List<File> foundFiles = result.resultLines.collect { new File(it) } as List<File>
+
+        foundFiles.findAll {
+            String comparable
+            if (scope == RegexScope.FullPath) {
+                comparable = it.absolutePath
+            } else if (scope == RegexScope.RelativePath) {
+                comparable = it.absolutePath[baseFolder.absolutePath.length() + 1..-1]
+            } else if (scope ==RegexScope.Filename)
+                comparable = it.name
+            comparable ==~ regex
+        }
     }
 
     public boolean checkDirectories(List<File> files, ExecutionContext context, boolean createMissing) {
@@ -676,7 +706,7 @@ public class FileSystemAccessProvider {
     boolean appendLineToFile(boolean atomic, File filename, String line, boolean blocking) {
         try {
             ExecutionService eService = ExecutionService.getInstance()
-            if(atomic) { // Work very safe and use a lockfile
+            if (atomic) { // Work very safe and use a lockfile
                 // TODO This also needs the lockfile command from the configuration.
                 // TODO As we always used lockfile, we'll do it here as well for now
                 eService.execute(commandSet.getLockedAppendLineToFileCommand(filename, line))

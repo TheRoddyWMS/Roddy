@@ -8,6 +8,8 @@ package de.dkfz.roddy.execution.io.fs
 
 import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.config.converters.ConfigurationConverter
+import groovy.io.FileType
+import org.apache.commons.io.filefilter.WildcardFileFilter
 
 /**
  * Provides a command generator for linux file systems / bash
@@ -194,38 +196,37 @@ class BashCommandSet extends ShellCommandSet {
     }
 
     @Override
-    String getListFullDirectoryContentRecursivelyCommand(File f, int depth, boolean onlyDirectories) {
-        String depthString = depth > 0 ? " -maxdepth ${depth}" : ""
-        String dirString = onlyDirectories ? " -type d" : ""
-        return "find ${f.absolutePath} ${depthString} ${dirString} -ls"
+    String getListFullDirectoryContentRecursivelyCommand(File f, int depth, FileType selectedType, boolean complexList) {
+        StringBuilder sb = new StringBuilder("find ")
+        sb << "\"" << f.absolutePath << "\""
+
+        if (depth > 0) sb << " -maxdepth ${depth}"
+        if (selectedType == FileType.DIRECTORIES) sb << " -type d"
+        if (selectedType == FileType.FILES) sb << " -type f"
+        if (complexList) sb << " -ls"
+
+        return sb.toString()
     }
 
     @Override
-    String getListFullDirectoryContentRecursivelyCommand(List<File> directories, List<Integer> depth, boolean onlyDirectories) {
+    String getListFullDirectoriesContentRecursivelyCommand(List<File> directories, List<Integer> depth, FileType selectedType, boolean complexList) {
         List<String> commands = []
+        directories = directories.sort().unique()
         if (depth.size() != directories.size()) {
-            depth = []
-            for (File f : directories) {
-                depth << -1
-            }
+            depth = directories.collect { -1 } as List<Integer>
         }
         for (int i = 0; i < directories.size(); i++) {
             File f = directories[i]
             int d = depth[i]
 
-            commands << getListFullDirectoryContentRecursivelyCommand(f, d, onlyDirectories)
+            commands << getListFullDirectoryContentRecursivelyCommand(f, d, selectedType, complexList)
         }
         return commands.join(" && ")
     }
 
     @Override
     String getFindFilesUsingWildcardsCommand(File baseFolder, String wildcards) {
-        return "ls \"${baseFolder}/${wildcards}\" | sort"
-    }
-
-    @Override
-    String getFindFilesUsingRegexCommand(File baseFolder, String regex) {
-        return "find \"${baseFolder?.absolutePath}\" -regextype posix-extended -regex ${regex} | sort"
+        return "for f in `ls \"${baseFolder}/\"${wildcards} | sort`; do echo \"\${f}\"; done"
     }
 
     @Override

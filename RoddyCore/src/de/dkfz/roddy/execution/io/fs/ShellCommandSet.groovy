@@ -7,6 +7,7 @@
 package de.dkfz.roddy.execution.io.fs
 
 import de.dkfz.roddy.config.converters.ConfigurationConverter
+import groovy.io.FileType
 
 /**
  */
@@ -69,13 +70,40 @@ abstract class ShellCommandSet {
 
     abstract String getListFilesInDirectoryCommand(File file, List<String> filters)
 
-    abstract String getListFullDirectoryContentRecursivelyCommand(File f, int depth, boolean onlyDirectories)
+    @Deprecated
+    String getListFullDirectoryContentRecursivelyCommand(File f, int depth, boolean onlyDirectories) {
+        this.getListFullDirectoryContentRecursivelyCommand(f, depth, onlyDirectories ? FileType.DIRECTORIES : FileType.ANY, true)
+    }
 
-    abstract String getListFullDirectoryContentRecursivelyCommand(List<File> directories, List<Integer> depth, boolean onlyDirectories)
+    /**
+     * API Level 3.2+
+     * Return a command to create a tree of files and / or directories for a given directory
+     * @param directory     The base folder to look into
+     * @param depth         The maximum depth to go into
+     * @param selectedType  ANY, FILES or DIRECTORIES
+     * @param complexList   Get more info than the filename (e.g. size, owner etc.). Highly dependent on the backend!
+     * @return A list of files and directories or a detailed list of files and directories. Paths are fully set.
+     */
+    abstract String getListFullDirectoryContentRecursivelyCommand(File directory, int depth, FileType selectedType, boolean complexList)
+
+    @Deprecated
+    String getListFullDirectoriesContentRecursivelyCommand(List<File> directories, List<Integer> depth, boolean onlyDirectories) {
+        this.getListFullDirectoriesContentRecursivelyCommand(directories, depth, onlyDirectories ? FileType.DIRECTORIES : FileType.ANY, true)
+    }
+
+    /**
+     * API Level 3.2+
+     * Return a command to create a tree of files and / or directories for a range of directories.
+     * @param directories   The base folders to look into
+     * @param depth         The maximum depth to go into for each directory
+     *                      Be careful: If depth is not set properly, -1 (no depth) will be used for every directory!
+     * @param selectedType  ANY, FILES or DIRECTORIES
+     * @param complexList   Get more info than the filename (e.g. size, owner etc.). Highly dependent on the backend!
+     * @return A list of files and directories or a detailed list of files and directories. Paths are fully set.
+     */
+    abstract String getListFullDirectoriesContentRecursivelyCommand(List<File> directories, List<Integer> depth, FileType selectedType, boolean complexList)
 
     abstract String getFindFilesUsingWildcardsCommand(File baseFolder, String wildcards)
-
-    abstract String getFindFilesUsingRegexCommand(File baseFolder, String regex)
 
     abstract FileSystemInfoObject parseDetailedDirectoryEntry(String line)
 

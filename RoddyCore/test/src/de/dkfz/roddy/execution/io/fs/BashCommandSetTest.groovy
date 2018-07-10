@@ -24,18 +24,6 @@ class BashCommandSetTest {
     }
 
     @Test
-    void testGetFindFilesUsingWildcardsCommand(File baseFolder, String wildcards) {
-        assert new BashCommandSet().getFindFilesUsingWildcardsCommand(new File("/tmp"), '*.png') == 'ls "/tmp/*.png"'
-
-    }
-
-    @Test
-    void getFindFilesUsingRegexCommand(File baseFolder, String regex) {
-        def command = new BashCommandSet().getFindFilesUsingRegexCommand(new File("/tmp"), '"temp[/]vpn[0-9]\\.png"')
-        assert command == 'find "/tmp" -regextype posix-extended -regex "temp[/]vpn[0-9]\\.png" | sort'
-    }
-
-    @Test
     void testSingleQuote() {
         assert new BashCommandSet().singleQuote("Text") == "'Text'"
     }
