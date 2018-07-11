@@ -609,7 +609,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
                 logger.sometimes("Found ${allFoundPatterns.size()} filename patterns for file class ${baseFile.class.name}")
                 logger.rare("\t\n" + allFoundPatterns.collect { it.class.simpleName + ": " + it.pattern }.join("\t\n"))
             } else {
-                logger.severe("Could not find any matching filename patterns for file class ${baseFile.class.name}")
+                logger.severe("Could not find any matching filename patterns for file class ${baseFile.class.name}. Please check your configuration.")
             }
         } else {
             availablePatterns = _classPatternsCache.get(baseFile.getClass())
