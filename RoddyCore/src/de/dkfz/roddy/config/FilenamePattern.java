@@ -6,21 +6,20 @@
 
 package de.dkfz.roddy.config;
 
-import de.dkfz.roddy.Constants;
 import de.dkfz.roddy.Roddy;
-import de.dkfz.roddy.knowledge.files.BaseFile;
+import de.dkfz.roddy.config.FilenamePatternHelper.Command;
+import de.dkfz.roddy.config.FilenamePatternHelper.CommandAttribute;
 import de.dkfz.roddy.core.ExecutionContext;
+import de.dkfz.roddy.knowledge.files.BaseFile;
 import de.dkfz.roddy.knowledge.files.FileStageSettings;
-
+import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
-
-import de.dkfz.roddy.config.FilenamePatternHelper.Command;
-import de.dkfz.roddy.config.FilenamePatternHelper.CommandAttribute;
-import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 
 import static de.dkfz.roddy.Constants.DEFAULT;
 import static de.dkfz.roddy.StringConstants.EMPTY;

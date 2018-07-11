@@ -216,7 +216,7 @@ public class RoddyCLIClient {
     }
 
     public static void checkConfigurationErrorsAndMaybePrintAndFail(Configuration configuration) {
-        if (configuration.hasErrors()) {
+        if (configuration.hasLoadErrors()) {
             StringBuilder sb = new StringBuilder();
             printConfigurationLoadErrors(configuration, sb, 0, Constants.ENV_LINESEPARATOR)
             String errorText = ConsoleStringFormatter.getFormatter().formatAll(sb.toString())

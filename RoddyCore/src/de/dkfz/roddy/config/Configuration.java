@@ -18,7 +18,6 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FilenameFilter;
 import java.util.*;
 
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA;
@@ -431,11 +430,11 @@ public class Configuration implements ContainerParent<Configuration> {
     }
 
 
-    public boolean hasErrors() {
+    public boolean hasLoadErrors() {
         boolean hasErrors = listOfLoadErrors.size() > 0;
         if (parents != null) {
             for (Configuration parent : parents) {
-                hasErrors |= parent.hasErrors();
+                hasErrors |= parent.hasLoadErrors();
             }
         }
         return hasErrors;

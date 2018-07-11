@@ -311,8 +311,8 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
-    public boolean hasErrors() {
-        return checkAnalysisConfig().hasErrors();
+    public boolean hasLoadErrors() {
+        return checkAnalysisConfig().hasLoadErrors();
     }
 
     @Override
