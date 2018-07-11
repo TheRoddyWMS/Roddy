@@ -21,6 +21,7 @@ import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
 import static de.dkfz.roddy.execution.jobs.JobConstants.*
@@ -412,8 +413,8 @@ class GenericMethod {
                     _field.set(bf, childFile);
                 else
                     _method.invoke(bf, childFile);
-            } catch (Exception ex) {
-                logger.warning(ex as String)
+            } catch (ConfigurationError ex) {
+                context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand(ex.message))
             }
         }
         return fileParameter.fileClass.cast(bf) as FileObject;
@@ -527,12 +528,11 @@ class GenericMethod {
                 throw new RuntimeException("Could not find valid constructor for type  ${fileParameter?.fileClass} with input ${firstInputFile?.class}.");
             } else {
                 BaseFile.ConstructionHelperForGenericCreation helper = new BaseFile.ConstructionHelperForGenericCreation(firstInputFile, allInputFiles as List<FileObject>, calledTool, toolName, fileParameter.scriptParameterName, fileParameter.filenamePatternSelectionTag, fileGroupIndexValue, firstInputFile.fileStage, null);
-                if(jobConfiguration) helper.setJobConfiguration(jobConfiguration)
+                if (jobConfiguration) helper.setJobConfiguration(jobConfiguration)
                 bf = c.newInstance(helper);
             }
-        } catch (Exception ex) {
-            context.addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_NOCONSTRUCTOR.expand("Error during constructor call."));
-            throw (ex);
+        } catch (InvocationTargetException ex) {
+            throw(ex.targetException)
         }
 
         if (!fileParameter.checkFile.evaluate(context))

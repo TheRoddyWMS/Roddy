@@ -6,23 +6,20 @@
 
 package de.dkfz.roddy.config;
 
-import de.dkfz.roddy.knowledge.files.BaseFile;
-
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
+import de.dkfz.roddy.knowledge.files.BaseFile
 
 /**
  * Created by kaercher on 24.02.16.
  */
 public class OnScriptParameterFilenamePattern extends FilenamePattern {
 
-    private final String toolName;
-    private final String calledParameterId;
+    private final String toolID;
+    private final String calledParameterID;
 
-    public OnScriptParameterFilenamePattern(Class<BaseFile> cls, String toolName, String parameter, String pattern) {
+    public OnScriptParameterFilenamePattern(Class<BaseFile> cls, String toolID, String parameter, String pattern) {
         super(cls, pattern, "default");
-        this.toolName = toolName;
-        this.calledParameterId = parameter;
+        this.toolID = toolID;
+        this.calledParameterID = parameter;
     }
 
     @Override
@@ -40,14 +37,14 @@ public class OnScriptParameterFilenamePattern extends FilenamePattern {
 
     @Override
     public String getID() {
-        return String.format("SCRIPTPARM::onParm_%s:%s[%s]", toolName?:"[ANY]", calledParameterId, selectionTag);
+        return String.format("SCRIPTPARM::onParm_%s:%s[%s]", toolID?:"[ANY]", calledParameterID, selectionTag);
     }
 
-    public String getCalledParameterId() {
-        return calledParameterId;
+    public String getCalledParameterID() {
+        return calledParameterID;
     }
 
-    public String getToolName(){
-        return toolName;
+    public String getToolID(){
+        return toolID;
     }
 }

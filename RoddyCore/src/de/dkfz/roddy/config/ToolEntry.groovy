@@ -6,7 +6,6 @@
 
 package de.dkfz.roddy.config
 
-import de.dkfz.roddy.config.ToolEntry.ToolParameter
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.knowledge.files.BaseFile
 import groovy.transform.CompileStatic

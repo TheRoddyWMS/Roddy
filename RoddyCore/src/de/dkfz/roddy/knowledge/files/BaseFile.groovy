@@ -6,17 +6,10 @@
 
 package de.dkfz.roddy.knowledge.files
 
-import de.dkfz.roddy.Constants
-import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationError
-import de.dkfz.roddy.config.DerivedFromFilenamePattern
-import de.dkfz.roddy.config.FileStageFilenamePattern
-import de.dkfz.roddy.config.FilenamePattern
-import de.dkfz.roddy.config.FilenamePatternDependency
-import de.dkfz.roddy.config.OnMethodFilenamePattern
-import de.dkfz.roddy.config.OnScriptParameterFilenamePattern
-import de.dkfz.roddy.config.OnToolFilenamePattern
-import de.dkfz.roddy.config.ToolEntry
+import static de.dkfz.roddy.Constants.DEFAULT
+import static de.dkfz.roddy.config.FilenamePatternDependency.*
+
+import de.dkfz.roddy.config.*
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.Workflow
@@ -30,11 +23,8 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.Tuple2
 
-import static de.dkfz.roddy.Constants.DEFAULT
-import static de.dkfz.roddy.Constants.DEFAULT
-import static de.dkfz.roddy.config.FilenamePatternDependency.*
-
 import java.util.concurrent.ExecutionException
+
 
 /**
  * Basic class for all processed files. Contains information about the storage
@@ -106,50 +96,50 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         public final FileObject parentObject
         public final ToolEntry creatingTool
         public final String toolID
-        public final String slotID
+        public final String parameterID
         public final List<FileObject> parentFiles
 
         @Deprecated
         ConstructionHelperForGenericCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID,
-                                             String slotID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
-            this(parentObject, parentFiles, creatingTool, toolID, slotID, selectionTag, null, fileStageSettings, jobResult)
+                                             String parameterID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
+            this(parentObject, parentFiles, creatingTool, toolID, parameterID, selectionTag, null, fileStageSettings, jobResult)
         }
 
         ConstructionHelperForGenericCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID,
-                                             String slotID, String selectionTag, String indexInFileGroup, FileStageSettings fileStageSettings,
+                                             String parameterID, String selectionTag, String indexInFileGroup, FileStageSettings fileStageSettings,
                                              BEJobResult jobResult) {
             super(parentObject.getExecutionContext(), fileStageSettings, selectionTag, indexInFileGroup, jobResult)
             this.parentFiles = parentFiles
-            this.slotID = slotID
+            this.parameterID = parameterID
             this.toolID = toolID
             this.creatingTool = creatingTool
             this.parentObject = parentObject
         }
 
-        ConstructionHelperForGenericCreation(ExecutionContext context, ToolEntry creatingTool, String toolID, String slotID, String selectionTag,
+        ConstructionHelperForGenericCreation(ExecutionContext context, ToolEntry creatingTool, String toolID, String parameterID, String selectionTag,
                                              FileStageSettings fileStageSettings, BEJobResult jobResult) {
             super(context, fileStageSettings, selectionTag, null, jobResult)
-            this.slotID = slotID
+            this.parameterID = parameterID
             this.toolID = toolID
             this.creatingTool = creatingTool
         }
     }
 
     static class ConstructionHelperForManualCreation extends ConstructionHelperForGenericCreation<ConstructionHelperForManualCreation> {
-        ConstructionHelperForManualCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID,
-                                            String slotID, String selectionTag, String indexInFileGroup, FileStageSettings fileStageSettings,
+        ConstructionHelperForManualCreation(FileObject parentObject, List<? extends FileObject> parentFiles, ToolEntry creatingTool, String toolID,
+                                            String parameterID, String selectionTag, String indexInFileGroup, FileStageSettings fileStageSettings,
                                             BEJobResult jobResult) {
-            super(parentObject, parentFiles, creatingTool, toolID, slotID, selectionTag, indexInFileGroup, fileStageSettings, jobResult)
+            super(parentObject, parentFiles, creatingTool, toolID, parameterID, selectionTag, indexInFileGroup, fileStageSettings, jobResult)
         }
 
         ConstructionHelperForManualCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID,
-                                            String slotID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
-            super(parentObject, parentFiles, creatingTool, toolID, slotID, selectionTag, null, fileStageSettings, jobResult)
+                                            String parameterID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
+            super(parentObject, parentFiles, creatingTool, toolID, parameterID, selectionTag, null, fileStageSettings, jobResult)
         }
 
-        ConstructionHelperForManualCreation(ExecutionContext context, ToolEntry creatingTool, String toolID, String slotID, String selectionTag,
+        ConstructionHelperForManualCreation(ExecutionContext context, ToolEntry creatingTool, String toolID, String parameterID, String selectionTag,
                                             FileStageSettings fileStageSettings, BEJobResult jobResult) {
-            super(context, creatingTool, toolID, slotID, selectionTag, fileStageSettings, jobResult)
+            super(context, creatingTool, toolID, parameterID, selectionTag, fileStageSettings, jobResult)
         }
     }
 
@@ -160,35 +150,35 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
     }
 
     static BaseFile constructGeneric(Class<? extends BaseFile> classToConstruct, FileObject parentObject, List<FileObject> parentFiles,
-                                     ToolEntry creatingTool, String toolID, String slotID, String selectionTag, String indexInFileGroup,
+                                     ToolEntry creatingTool, String toolID, String parameterID, String selectionTag, String indexInFileGroup,
                                      FileStageSettings fileStageSettings, BEJobResult jobResult) {
-        return classToConstruct.newInstance(new ConstructionHelperForGenericCreation(parentObject, parentFiles, creatingTool, toolID, slotID,
+        return classToConstruct.newInstance(new ConstructionHelperForGenericCreation(parentObject, parentFiles, creatingTool, toolID, parameterID,
                 selectionTag, indexInFileGroup, fileStageSettings, jobResult))
     }
 
     static BaseFile constructGeneric(Class<? extends BaseFile> classToConstruct, FileObject parentObject, List<FileObject> parentFiles, ToolEntry
-            creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
-        return classToConstruct.newInstance(new ConstructionHelperForGenericCreation(parentObject, parentFiles, creatingTool, toolID, slotID,
+            creatingTool, String toolID, String parameterID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
+        return classToConstruct.newInstance(new ConstructionHelperForGenericCreation(parentObject, parentFiles, creatingTool, toolID, parameterID,
                 selectionTag, null, fileStageSettings, jobResult))
     }
 
     static BaseFile constructGeneric(Class<? extends BaseFile> classToConstruct, ExecutionContext context, ToolEntry creatingTool, String toolID,
-                                     String slotID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
-        return classToConstruct.newInstance(new ConstructionHelperForGenericCreation(context, creatingTool, toolID, slotID, selectionTag,
+                                     String parameterID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
+        return classToConstruct.newInstance(new ConstructionHelperForGenericCreation(context, creatingTool, toolID, parameterID, selectionTag,
                 fileStageSettings, jobResult))
     }
 
     static BaseFile constructManual(Class<? extends BaseFile> classToConstruct, FileObject parentObject, List<FileObject> parentFiles,
-                                    ToolEntry creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings,
+                                    ToolEntry creatingTool, String toolID, String parameterID, String selectionTag, FileStageSettings fileStageSettings,
                                     BEJobResult jobResult) {
         return classToConstruct.newInstance(new ConstructionHelperForManualCreation(parentObject, parentFiles,
-                creatingTool, toolID, slotID, selectionTag, fileStageSettings, jobResult))
+                creatingTool, toolID, parameterID, selectionTag, fileStageSettings, jobResult))
     }
 
     static BaseFile constructManual(Class<? extends BaseFile> classToConstruct, ExecutionContext context,
-                                    ToolEntry creatingTool, String toolID, String slotID, String selectionTag, FileStageSettings fileStageSettings,
+                                    ToolEntry creatingTool, String toolID, String parameterID, String selectionTag, FileStageSettings fileStageSettings,
                                     BEJobResult jobResult) {
-        return classToConstruct.newInstance(new ConstructionHelperForManualCreation(context, creatingTool, toolID, slotID, selectionTag,
+        return classToConstruct.newInstance(new ConstructionHelperForManualCreation(context, creatingTool, toolID, parameterID, selectionTag,
                 fileStageSettings, jobResult))
     }
 
@@ -520,6 +510,10 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         return new LinkedList<BaseFile>(parentFiles)
     }
 
+    void addParentFile(BaseFile baseFile) {
+        parentFiles.add(baseFile)
+    }
+
     void setParentFiles(List<BaseFile> parentfiles) {
         setParentFiles(parentfiles, false)
     }
@@ -590,30 +584,35 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         return getFilename(baseFile, DEFAULT)
     }
 
-    private static Map<Class, LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>>> _classPatternsCache = new LinkedHashMap<>()
-
-    static synchronized LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>> loadAvailableFilenamePatterns(BaseFile baseFile, ExecutionContext context) {
+    /** Get a map of the filename pattern type (onScriptParameter, etc.) mapped to all filename patterns of that type _filtered for those patterns
+     *  that are of the same type as the BaseFile_. Note that this list may also contain filename patterns that are specific to certain tools.
+     *
+     * @param baseFile
+     * @param context
+     * @return
+     */
+    static synchronized LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>> loadAvailableFilenamePatternsForBaseFileClass(
+            BaseFile baseFile,
+            ExecutionContext context) {
         Configuration cfg = context.getConfiguration()
         LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>> availablePatterns = new LinkedHashMap<>()
-        if (!_classPatternsCache.containsKey(baseFile.getClass())) {
-            availablePatterns = new LinkedHashMap<>()
-            _classPatternsCache.put(baseFile.getClass(), availablePatterns)
-            FilenamePatternDependency.values().each { FilenamePatternDependency it -> availablePatterns[it] = new LinkedList<FilenamePattern>() }
-            for (FilenamePattern fp : cfg.getFilenamePatterns().getAllValuesAsList()) {
-                if (fp.getCls() == baseFile.getClass()) {
-                    availablePatterns[fp.getFilenamePatternDependency()] << fp
-                }
+
+        FilenamePatternDependency.values().each { FilenamePatternDependency it -> availablePatterns[it] = new LinkedList<FilenamePattern>() }
+        for (FilenamePattern fp : cfg.filenamePatterns.allValuesAsList) {
+            if (fp.getCls() == baseFile.getClass()) {
+                availablePatterns[fp.getFilenamePatternDependency()] << fp
             }
-            Collection<FilenamePattern> allFoundPatterns = availablePatterns.values().sum() as Collection<FilenamePattern>
-            if (allFoundPatterns.size() > 0) {
-                logger.sometimes("Found ${allFoundPatterns.size()} filename patterns for file class ${baseFile.class.name}")
-                logger.rare("\t\n" + allFoundPatterns.collect { it.class.simpleName + ": " + it.pattern }.join("\t\n"))
-            } else {
-                logger.severe("Could not find any matching filename patterns for file class ${baseFile.class.name}. Please check your configuration.")
-            }
-        } else {
-            availablePatterns = _classPatternsCache.get(baseFile.getClass())
         }
+
+        Collection<FilenamePattern> allFoundPatterns = availablePatterns.values().sum() as Collection<FilenamePattern>
+        if (allFoundPatterns.size() > 0) {
+            logger.sometimes("Found ${allFoundPatterns.size()} filename patterns for file class ${baseFile.class.name}")
+            logger.rare("\t\n" + allFoundPatterns.collect { it.class.name + ": " + it.pattern }.join("\t\n"))
+        } else {
+            logger.severe("Could not find any matching filename patterns for file class ${baseFile.class.name}. Please check your configuration." +
+                    " Tried matching against:\n\t" + cfg.filenamePatterns.allValuesAsList.collect { it.cls }.join("\t\n"))
+        }
+
         return availablePatterns
     }
 
@@ -633,52 +632,49 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         if (!selectionTag)
             selectionTag = DEFAULT
         Tuple2<File, FilenamePattern> patternResult = new Tuple2<>(null, null)
-        try {
 
-            //Find the correct pattern:
-            // Look if filename patterns for this class are available
-            // If not throw an exception
-            // Look if there is only one available: Easy, use this
-            // onMethod, sourcefile, filestage
-            ExecutionContext context = baseFile.getExecutionContext()
-            LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>> availablePatterns = loadAvailableFilenamePatterns(baseFile, context)
+        //Find the correct pattern:
+        // Look if filename patterns for this class are available
+        // If not throw an exception
+        // Look if there is only one available: Easy, use this
+        // onMethod, sourcefile, filestage
+        ExecutionContext context = baseFile.getExecutionContext()
+        LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>> availablePatterns =
+                loadAvailableFilenamePatternsForBaseFileClass(baseFile, context)
 
-            Map<FilenamePatternDependency, Tuple2<File, FilenamePattern>> results = [:]
-            results[onScriptParameter] = findFilenameFromOnScriptParameterPatterns(baseFile, availablePatterns[onScriptParameter], selectionTag)
-            results[onMethod] = findFilenameFromOnMethodPatterns(baseFile, availablePatterns[onMethod], selectionTag)
-            results[onTool] = findFilenameFromOnToolIDPatterns(baseFile, availablePatterns[onTool], selectionTag)
-            results[derivedFrom] = findFilenameFromSourcefilePatterns(baseFile, availablePatterns[derivedFrom], selectionTag)
-            results[FilenamePatternDependency.FileStage] = findFilenameFromGenericPatterns(baseFile, availablePatterns[FilenamePatternDependency.FileStage], selectionTag)
+        Map<FilenamePatternDependency, Tuple2<File, FilenamePattern>> results = [:]
+        results[onScriptParameter] = findFilenameFromOnScriptParameterPatterns(baseFile, availablePatterns[onScriptParameter], selectionTag)
+        results[onMethod] = findFilenameFromOnMethodPatterns(baseFile, availablePatterns[onMethod], selectionTag)
+        results[onTool] = findFilenameFromOnToolIDPatterns(baseFile, availablePatterns[onTool], selectionTag)
+        results[derivedFrom] = findFilenameFromSourcefilePatterns(baseFile, availablePatterns[derivedFrom], selectionTag)
+        results[FilenamePatternDependency.FileStage] = findFilenameFromGenericPatterns(baseFile, availablePatterns[FilenamePatternDependency.FileStage], selectionTag)
 
-            patternResult = results[onScriptParameter] ?: results[onMethod] ?: results[onTool] ?: results[derivedFrom] ?: results[FilenamePatternDependency.FileStage]
-            // Do some further checks for selection tags.
-            // Two cases. If the selectiontag is default and if it is not. If the selectiontag is not null
-            if ((selectionTag == DEFAULT && (!patternResult || patternResult.x == null)) || patternResult.x == null) {
+        patternResult = results[onScriptParameter] ?: results[onMethod] ?: results[onTool] ?: results[derivedFrom] ?: results[FilenamePatternDependency.FileStage]
+        // Do some further checks for selection tags.
+        // Two cases. If the selectiontag is default and if it is not. If the selectiontag is not null
+        if ((selectionTag == DEFAULT && (!patternResult || patternResult.x == null)) || patternResult.x == null) {
 
-                StringBuilder sb = new StringBuilder("Could not find any filename pattern for a file object of class ${baseFile.class.simpleName}\n")
+            StringBuilder sb = new StringBuilder("Could not find any filename pattern for a file object of class ${baseFile.class.name}\n")
 
-                sb << ["The following patterns are available for this file class:\n"]
-                sb << availablePatterns.findAll { it }.collect {
-                    FilenamePatternDependency k, List<FilenamePattern> v ->
-                        v.collect {
-                            FilenamePattern value ->
-                                "${k.name()} : ${value}"
-                        }
-                }.flatten().join("\n\t")
+            sb << "The following patterns are available for this file class:\n\t"
+            sb << availablePatterns.findAll { it }.collect {
+                FilenamePatternDependency k, List<FilenamePattern> v ->
+                    v.collect {
+                        FilenamePattern value ->
+                            "${k.name()} : type=${value.cls.name}, pattern=${value.pattern}"
+                    }
+            }.flatten().join("\n\t")
+            sb << "\nNote these may not have matched because they may be specific for a tool!"
 
-                throw new ConfigurationError(sb.toString(), baseFile.executionContext.configuration)
-            } else {
-                //Check if the path exists and create it if necessary.
-                if (context.getExecutionContextLevel().allowedToSubmitJobs && !FileSystemAccessProvider.getInstance().checkDirectory(patternResult.x.getParentFile(), context, true)) {
-                    throw new IOException("Output path could not be created for file: " + baseFile)
-                }
+            throw new ConfigurationError(sb.toString(), baseFile.executionContext.configuration)
+        } else {
+            // Check whether the path exists and create it if necessary.
+            if (context.getExecutionContextLevel().allowedToSubmitJobs && !FileSystemAccessProvider.getInstance().checkDirectory(patternResult.x.getParentFile(), context, true)) {
+                throw new IOException("Output path could not be created for file: " + baseFile)
             }
-        } catch (IOException ex) {
-            // baseFile.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_PATH_INACCESSIBLE.expand(baseFile.absolutePath))
-            // } catch (RuntimeException ex) {
-        } finally {
-            return patternResult
         }
+
+        return patternResult
     }
 
     private
@@ -790,10 +786,10 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         //Find the called basefile method, if on_method patterns are available.
         if (!availablePatterns) return result
 
-        String id = baseFile.getExecutionContext().getCurrentExecutedTool().getID()
+        String id = baseFile.executionContext.currentExecutedTool.ID
         for (FilenamePattern _fp : availablePatterns) {
             OnToolFilenamePattern fp = _fp as OnToolFilenamePattern
-            if (fp.getCalledScriptID().equals(id) && fp.selectionTag == selectionTag) {
+            if (fp.getToolID().equals(id) && fp.selectionTag == selectionTag) {
                 appliedPattern = fp
                 filename = new File(fp.apply(baseFile))
                 break
@@ -824,8 +820,8 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         FilenamePattern appliedPattern = availablePatterns.find {
             FilenamePattern _fp ->
                 OnScriptParameterFilenamePattern fp = _fp as OnScriptParameterFilenamePattern
-                boolean parameterFound = fp.calledParameterId == helper.slotID
-                boolean scriptValid = fp.toolName ? fp.toolName == helper.toolID : true
+                boolean parameterFound = fp.calledParameterID == helper.parameterID
+                boolean scriptValid = fp.toolID ? fp.toolID == helper.toolID : true
 
                 return parameterFound && scriptValid
         }
