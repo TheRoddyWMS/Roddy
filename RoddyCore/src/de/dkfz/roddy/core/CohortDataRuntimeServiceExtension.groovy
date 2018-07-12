@@ -190,10 +190,11 @@ class CohortDataRuntimeServiceExtension {
             throw new ConfigurationError("One or more cohort cvalues are not present in the configuration:\n" + missingCohorts, "Cohort description missing")
 
         // 4. Check for all cohort cvalues, if they are valid.
+        String cohortValidationString = "${PID_IDENTIFIER}([,]${PID_IDENTIFIER}){0,}".toString()
         String malformedPIDIDs = scIdentifiers.collect { String sc ->
             cohortStrings[sc].split(StringConstants.SPLIT_COMMA).collect {
                 String cohortID ->
-                    if (!values[cohortID].value ==~ "${PID_IDENTIFIER}([,]${PID_IDENTIFIER}){0,}")
+                    if (!(values[cohortID].value ==~ cohortValidationString))
                         return "\t$sc, $cohortID => ${values[cohortID]?.value} is malformed"
                     return ""
             }.findAll().join("\n")

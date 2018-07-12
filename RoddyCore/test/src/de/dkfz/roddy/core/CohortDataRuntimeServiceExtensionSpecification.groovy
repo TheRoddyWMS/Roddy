@@ -17,7 +17,7 @@ class CohortDataRuntimeServiceExtensionSpecification extends Specification {
 
     def setupSpec() {
         configuration.configurationValues.put("sc1", "c1,c2,c3")
-        configuration.configurationValues.put("c1", "d01,d02,d03,d04")
+        configuration.configurationValues.put("c1", "d1,d2,d3,d4")
         configuration.configurationValues.put("c2", "d11,d12,d13,d14")
         configuration.configurationValues.put("c3", "d21,d22,d23,d24")
         configuration.configurationValues.put("sc2", "c4")
@@ -105,9 +105,9 @@ class CohortDataRuntimeServiceExtensionSpecification extends Specification {
 
         where:
         supercohortIdentifiers | result
-        ["sc1"]                | ["s:sc1:[c:c1:d01;d02;d03;d04|c:c2:d11;d12;d13;d14|c:c3:d21;d22;d23;d24]"]
+        ["sc1"]                | ["s:sc1:[c:c1:d1;d2;d3;d4|c:c2:d11;d12;d13;d14|c:c3:d21;d22;d23;d24]"]
         ["sc2"]                | ["s:sc2:[c:c4:d31;d32;d33;d34]"]
-        ["sc1", "sc2"]         | ["s:sc1:[c:c1:d01;d02;d03;d04|c:c2:d11;d12;d13;d14|c:c3:d21;d22;d23;d24]", "s:sc2:[c:c4:d31;d32;d33;d34]"]
+        ["sc1", "sc2"]         | ["s:sc1:[c:c1:d1;d2;d3;d4|c:c2:d11;d12;d13;d14|c:c3:d21;d22;d23;d24]", "s:sc2:[c:c4:d31;d32;d33;d34]"]
     }
 
 }
