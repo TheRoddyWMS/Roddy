@@ -10,7 +10,6 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationError
-import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.Tuple2
 import groovy.transform.CompileStatic
@@ -24,9 +23,9 @@ class CohortDataRuntimeServiceExtension {
 
     private static LoggerWrapper logger = LoggerWrapper.getLogger(CohortDataRuntimeServiceExtension.class.getSimpleName())
 
-    static final String PID_IDENTIFIER = '[\\w*?_-]+'
+    static final String DATASET_IDENTIFIER = '[\\w*?_-]+'
     static final String COHORT_IDENTIFIER = "[\\w_-]+"
-    static final String SCOHORT_IDENTIFIER = "([:]${COHORT_IDENTIFIER}[:]){0,1}"
+    static final String SUPERCOHORT_IDENTIFIER = "([:]${COHORT_IDENTIFIER}[:]){0,1}"
 
     /**
      * The runtime service object to which this object belongs.
@@ -40,10 +39,10 @@ class CohortDataRuntimeServiceExtension {
     boolean validateCohortDataSetLoadingString(String s) {
 
         // First part PID, followed by 0 to n ;PID
-        String COHORT = "c([:]${COHORT_IDENTIFIER}){0,1}[:]${PID_IDENTIFIER}(;${PID_IDENTIFIER}){0,}"
+        String COHORT = "c([:]${COHORT_IDENTIFIER}){0,1}[:]${DATASET_IDENTIFIER}(;${DATASET_IDENTIFIER}){0,}"
 
         // First part COHORT, followed by 0 to n |COHORT
-        String regex = "s${SCOHORT_IDENTIFIER}\\[${COHORT}(\\|$COHORT){0,}\\]"
+        String regex = "s${SUPERCOHORT_IDENTIFIER}\\[${COHORT}(\\|$COHORT){0,}\\]"
 
         return s ==~ regex
     }
@@ -118,8 +117,8 @@ class CohortDataRuntimeServiceExtension {
     List<DataSet> loadCohortDatasetsWithFilter(Analysis analysis, List<String> pidFilters) {
         List<DataSet> listOfDataSets = runtimeService.getListOfPossibleDataSets(analysis)
 
-        if (checkIfListOnlyContainsSCIdentifiers(pidFilters)) {
-            validateSuperCohortCValuesOrFail(analysis.configuration, pidFilters)
+        if (containsOnlySupercohortIds(pidFilters)) {
+            assertValidSuperCohortCValues(analysis.configuration, pidFilters)
             // Reset pid filters to readable super cohort code.
             pidFilters = convertListPidFiltersToParseable(analysis.configuration, pidFilters)
         }
@@ -148,7 +147,7 @@ class CohortDataRuntimeServiceExtension {
      * Returns true, if all filters are valid super cohort identifiers.
      * @return
      */
-    boolean checkIfListOnlyContainsSCIdentifiers(List<String> pidFilters) {
+    boolean containsOnlySupercohortIds(List<String> pidFilters) {
         // We use the COHORT_IDENTIFIER. Rules for it also apply for the super cohort identifier.
         pidFilters.every { it ==~ COHORT_IDENTIFIER }
     }
@@ -161,24 +160,45 @@ class CohortDataRuntimeServiceExtension {
      * @param configuration
      * @param scIdentifiers
      */
-    void validateSuperCohortCValuesOrFail(Configuration configuration, List<String> scIdentifiers) {
+    void assertValidSuperCohortCValues(Configuration configuration, List<String> scIdentifiers) {
+        assertSuperCohortIdentifiersAreConfigured(scIdentifiers, configuration)
+
+        Map<String, String> cohortStrings = assertSuperCohortIdentifierValidity(scIdentifiers, configuration)
+
+        assertCohortIdentifiersAreConfigured(scIdentifiers, cohortStrings, configuration)
+
+        assertValidCohortCValues(scIdentifiers, cohortStrings, configuration)
+    }
+
+    /**
+     * 1. Check, if super cohort cvalue is present.
+     */
+    void assertSuperCohortIdentifiersAreConfigured(List<String> scIdentifiers, Configuration configuration) {
+        def unconfiguredSupercohorts = scIdentifiers.findAll() { !configuration.configurationValues.hasValue(it) }
+        if (unconfiguredSupercohorts)
+            throw new ConfigurationError((["One or more super cohorts strings are not present in the configuration:"] + unconfiguredSupercohorts).join("\n\t"), "Super cohort description not present in configuration")
+    }
+
+    /**
+     * 2. Check, if super cohort cvalue is valid.
+     */
+    Map<String, String> assertSuperCohortIdentifierValidity(List<String> scIdentifiers, Configuration configuration) {
         def values = configuration.configurationValues.allValues
-
-        // 1. Check, if super cohort cvalue is present.
-        def unavailableSuperCohorts = scIdentifiers.findAll() { !configuration.configurationValues.hasValue(it) }
-        if (unavailableSuperCohorts)
-            throw new ConfigurationError((["One or more requested super cohorts are not present in the configuration:"] + unavailableSuperCohorts).join("\n\t"), "Super cohort description missing")
-
-        // 2. Check, if super cohort cvalue is valid.
         Map<String, String> cohortStrings = scIdentifiers.collectEntries { [it, values[it]?.value] }
         List<String> invalidCohortListMessages = cohortStrings.collect { String sc, String list ->
             boolean match = list ==~ "${COHORT_IDENTIFIER}([,]${COHORT_IDENTIFIER}){0,}"
             return match ? "" : "\t${sc} => ${list}".toString()
         }.findAll()
         if (invalidCohortListMessages)
-            throw new ConfigurationError((["One or more cohort strings are invalid:"] + invalidCohortListMessages).join("\n"), "Invalid cohort descriptor")
+            throw new ConfigurationError((["One or more super cohort strings in the configuration are invalid:"] + invalidCohortListMessages).join("\n"), "Invalid cohort descriptor")
+        cohortStrings
+    }
 
-        // 3. Check for all cohort identifiers in a super cohort cvalue, if they are present.
+    /**
+     * 3. Check for all cohort identifiers in a super cohort cvalue, if they are present.
+     */
+    void assertCohortIdentifiersAreConfigured(List<String> scIdentifiers, Map<String, String> cohortStrings, Configuration configuration) {
+        def values = configuration.configurationValues.allValues
         String missingCohorts = scIdentifiers.collect { String sc ->
             cohortStrings[sc].split(StringConstants.SPLIT_COMMA).collect { String cohortID ->
                 if (!configuration.configurationValues.hasValue(cohortID))
@@ -187,10 +207,18 @@ class CohortDataRuntimeServiceExtension {
             }.findAll().join("\n")
         }.findAll().join("\n")
         if (missingCohorts)
-            throw new ConfigurationError("One or more cohort cvalues are not present in the configuration:\n" + missingCohorts, "Cohort description missing")
+            throw new ConfigurationError("One or more cohort strings are not present in the configuration:\n" + missingCohorts, "Cohort description not present in configuration")
+    }
 
-        // 4. Check for all cohort cvalues, if they are valid.
-        String cohortValidationString = "${PID_IDENTIFIER}([,]${PID_IDENTIFIER}){0,}".toString()
+    /**
+     * 4. Check for all cohort cvalues, if they are valid.
+     * @param scIdentifiers
+     * @param cohortStrings
+     * @param values
+     */
+    void assertValidCohortCValues(List<String> scIdentifiers, Map<String, String> cohortStrings, Configuration configuration) {
+        def values = configuration.configurationValues.allValues
+        String cohortValidationString = "${DATASET_IDENTIFIER}([,]${DATASET_IDENTIFIER}){0,}".toString()
         String malformedPIDIDs = scIdentifiers.collect { String sc ->
             cohortStrings[sc].split(StringConstants.SPLIT_COMMA).collect {
                 String cohortID ->
@@ -200,7 +228,7 @@ class CohortDataRuntimeServiceExtension {
             }.findAll().join("\n")
         }.findAll().join("\n")
         if (malformedPIDIDs)
-            throw new ConfigurationError("One or more cohort cvalues are malformed:\n" + malformedPIDIDs, "Cohort cvalue malformed")
+            throw new ConfigurationError("One or more cohort configuration values are malformed:\n" + malformedPIDIDs, "Cohort cvalue malformed")
     }
 
     /**
@@ -209,7 +237,6 @@ class CohortDataRuntimeServiceExtension {
      */
     List<String> convertListPidFiltersToParseable(Configuration configuration, List<String> scIdentifiers) {
         def values = configuration.configurationValues.allValues
-        Map<String, String> cohortStrings = scIdentifiers.collectEntries { [it, values[it].value] }
 
         scIdentifiers.collect {
             String sc ->
@@ -218,7 +245,6 @@ class CohortDataRuntimeServiceExtension {
                     String cohortID ->
                         "c:${cohortID}:${values[cohortID].value.replaceAll("[,]", ";")}"
                 }.join("|")
-
 
                 "s:${sc}:[${cohortDescription}]"
         } as List<String>

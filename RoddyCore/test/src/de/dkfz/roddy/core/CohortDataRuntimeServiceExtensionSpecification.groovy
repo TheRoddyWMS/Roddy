@@ -1,12 +1,8 @@
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationError
 import de.dkfz.roddy.tools.Tuple2
-import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
-import org.junit.Test
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -83,7 +79,7 @@ class CohortDataRuntimeServiceExtensionSpecification extends Specification {
     def "test invalid super cohort cvalues or fail"() {
 
         when:
-        new CohortDataRuntimeServiceExtension(null).validateSuperCohortCValuesOrFail(configuration, supercohortIdentifiers)
+        new CohortDataRuntimeServiceExtension(null).assertValidSuperCohortCValues(configuration, supercohortIdentifiers)
 
         then:
         def error = thrown(expectedException)
