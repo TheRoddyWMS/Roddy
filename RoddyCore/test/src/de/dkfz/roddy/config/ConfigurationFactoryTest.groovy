@@ -98,6 +98,15 @@ class ConfigurationFactoryTest {
         testFolder4.setReadable(true, true)
     }
 
+    @AfterClass
+    static void tearDown() {
+        // Make all folders readable again, otherwise they won't get deleted automatically!
+        testFolder1.setReadable(true)
+        testFolder2.setReadable(true)
+        testFolder3.setReadable(true)
+        testFolder4.setReadable(true)
+    }
+
     @Test
     void testLoadInvalidConfigurationDirectories() {
         testFolder3.setReadable(false)
