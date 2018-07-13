@@ -577,11 +577,11 @@ public class RoddyCLIClient {
 
                 sb << "    #FYELLOW#${job.getJobID()}:#CLEAR# ${job.getToolID()} [${resources}]" << separator;
 
-                for (k in job.parameters.keySet()) {
+                for (k in job.allFinalParameters.keySet()) {
                     String _k = k;
                     if (k.length() > 25)
                         _k = k.substring(0, 23) + ".."
-                    String parm = job.parameters.get(k, "").replace(ec.getExecutionDirectory().getAbsolutePath(), "[ exDir]");
+                    String parm = job.allFinalParameters.get(k, "").replace(ec.getExecutionDirectory().getAbsolutePath(), "[ exDir]");
                     parm = parm.replace(ec.getOutputDirectory().getAbsolutePath(), "[outDir]");
                     parm = parm.replace(ec.getInputDirectory().getAbsolutePath(), "[ inDir]");
                     if (parm.startsWith("parameterArray") && parm != "parameterArray=()") {
