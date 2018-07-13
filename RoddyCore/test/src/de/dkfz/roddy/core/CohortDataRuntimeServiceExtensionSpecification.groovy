@@ -1,12 +1,9 @@
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationError
 import de.dkfz.roddy.tools.Tuple2
 import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
-import org.junit.Test
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -70,9 +67,9 @@ class CohortDataRuntimeServiceExtensionSpecification extends Specification {
         's[c:CohortName:ADDD]'       | new Tuple2<>("CohortName", ["CohortName": ["ADDD"]])
     }
 
-    def "test checkIfListOnlyContainsSCIdentifiers"() {
+    def "test checkIfListOnlyContainsSCIdentifiers"(List<String> superCohortIdentifiers, boolean result) {
         expect:
-        new CohortDataRuntimeServiceExtension(null).checkIfListOnlyContainsSCIdentifiers(superCohortIdentifiers) == result
+        new CohortDataRuntimeServiceExtension(null).containsOnlySupercohortIds(superCohortIdentifiers) == result
 
         where:
         superCohortIdentifiers | result
@@ -80,10 +77,10 @@ class CohortDataRuntimeServiceExtensionSpecification extends Specification {
         ["sc1", "sc2"]         | true
     }
 
-    def "test invalid super cohort cvalues or fail"() {
+    def "test invalid super cohort cvalues or fail"(List<String> supercohortIdentifiers, Class<Throwable> expectedException, String expectedMessage) {
 
         when:
-        new CohortDataRuntimeServiceExtension(null).validateSuperCohortCValuesOrFail(configuration, supercohortIdentifiers)
+        new CohortDataRuntimeServiceExtension(null).assertValidSuperCohortCValues(configuration, supercohortIdentifiers)
 
         then:
         def error = thrown(expectedException)
@@ -91,10 +88,10 @@ class CohortDataRuntimeServiceExtensionSpecification extends Specification {
 
         where:
         supercohortIdentifiers | expectedException  | expectedMessage
-        ["sc4"]                | ConfigurationError | "One or more requested super cohorts are not present in the configuration:\n\tsc4"
-        ["sc5"]                | ConfigurationError | "One or more cohort strings are invalid:\n\tsc5 => UNGUELTIG;UNGUELTIG;"
-        ["sc6"]                | ConfigurationError | "One or more cohort cvalues are not present in the configuration:\n\tCohort cvalue c5 is missing"
-        ["sc7"]                | ConfigurationError | "One or more cohort cvalues are malformed:\n\tsc7, c6 => #349jf#;9849# is malformed"
+        ["sc4"]                | ConfigurationError | "One or more super cohorts strings are not present in the configuration:\n\tsc4"
+        ["sc5"]                | ConfigurationError | "One or more super cohort strings in the configuration are invalid:\n\tsc5 => UNGUELTIG;UNGUELTIG;"
+        ["sc6"]                | ConfigurationError | "One or more cohort strings are not present in the configuration:\n\tCohort cvalue c5 is missing"
+        ["sc7"]                | ConfigurationError | "One or more cohort configuration values are malformed:\n\tsc7, c6 => #349jf#;9849# is malformed"
 
     }
 
