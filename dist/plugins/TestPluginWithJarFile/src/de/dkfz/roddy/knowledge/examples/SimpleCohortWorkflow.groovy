@@ -28,6 +28,10 @@ class SimpleCohortWorkflow extends Workflow {
             }
         }
 
+        context.configurationValues.put("a", '${b}')
+        context.configurationValues.put("b", '${a}')
+        context.configurationValues["a"].toString()
+
         return true
     }
 }
