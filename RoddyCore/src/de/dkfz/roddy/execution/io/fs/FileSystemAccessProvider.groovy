@@ -69,9 +69,9 @@ public class FileSystemAccessProvider {
     protected File _userHome;
 
     /**
-     * The cached "remote" umask
+     * The cached umask
      */
-    protected Integer _umask
+    protected Integer _default_umask
 
     protected Map<String, Integer> _groupIDsByGroup = [:];
 
@@ -774,11 +774,11 @@ public class FileSystemAccessProvider {
     }
 
     int getDefaultUserMask() {
-        if (!_umask) {
+        if (!_default_umask) {
             String command = commandSet.getGetUsermaskCommand();
             ExecutionResult executionResult = ExecutionService.getInstance().execute(command);
-            _umask = Integer.decode(executionResult.firstLine)
+            _default_umask = Integer.decode(executionResult.firstLine)
         }
-        return _umask
+        return _default_umask
     }
 }

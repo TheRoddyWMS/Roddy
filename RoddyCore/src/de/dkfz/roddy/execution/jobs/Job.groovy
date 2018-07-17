@@ -62,9 +62,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
     /**
      * Keeps a list of all parameters after conversion and before removing them from the final parameter list
-     * (See keepOnlyEssentialParameters)
+     * (See keepOnlyEssentialParameters). The value is used for testrun and testrerun output.
      */
-    final Map<String, String> allFinalParameters = [:]
+    final Map<String, String> reportedParameters = [:]
 
     /**
      * Provide a list of files if you want to generate job dependencies.
@@ -201,7 +201,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         }
 
         parameters.putAll(convertResourceSetToParameters())
-        allFinalParameters.putAll(parameters)
+        reportedParameters.putAll(parameters)
 
         this.parameters[PARM_WRAPPED_SCRIPT] = context.getConfiguration().getProcessingToolPath(context, toolID).getAbsolutePath()
         this.parameters[PARM_WRAPPED_SCRIPT_MD5] = getToolMD5(toolID, context)
