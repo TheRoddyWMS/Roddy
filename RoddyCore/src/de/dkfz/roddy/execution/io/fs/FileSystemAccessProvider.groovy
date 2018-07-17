@@ -68,6 +68,11 @@ public class FileSystemAccessProvider {
      */
     protected File _userHome;
 
+    /**
+     * The cached umask
+     */
+    protected Integer _default_umask
+
     protected Map<String, Integer> _groupIDsByGroup = [:];
 
     protected final Map<String, String> uidToUserCache = new HashMap<>();
@@ -321,7 +326,7 @@ public class FileSystemAccessProvider {
                 comparable = it.absolutePath
             } else if (scope == RegexScope.RelativePath) {
                 comparable = it.absolutePath[baseFolder.absolutePath.length() + 1..-1]
-            } else if (scope ==RegexScope.Filename)
+            } else if (scope == RegexScope.Filename)
                 comparable = it.name
             comparable ==~ regex
         }
@@ -769,8 +774,11 @@ public class FileSystemAccessProvider {
     }
 
     int getDefaultUserMask() {
-        String command = commandSet.getGetUsermaskCommand();
-        ExecutionResult executionResult = ExecutionService.getInstance().execute(command);
-        return Integer.decode(executionResult.firstLine);
+        if (!_default_umask) {
+            String command = commandSet.getGetUsermaskCommand();
+            ExecutionResult executionResult = ExecutionService.getInstance().execute(command);
+            _default_umask = Integer.decode(executionResult.firstLine)
+        }
+        return _default_umask
     }
 }
