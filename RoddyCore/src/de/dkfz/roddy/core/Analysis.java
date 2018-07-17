@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 
 
@@ -220,6 +221,12 @@ public class Analysis {
         LinkedList<ExecutionContext> newRunContexts = new LinkedList<>();
         for (ExecutionContext oldContext : contexts) {
             DataSet ds = oldContext.getDataSet();
+
+            if(oldContext.getErrors().size() > 0) {
+                logger.postAlwaysInfo("The test run for dataset " + ds.getId() + " failed and cannot be rerun (Neither as a test nor as a real run).");
+                continue;
+            }
+
             if (!test && !canStartJobs(ds)) {
                 logger.postAlwaysInfo("The " + Constants.PID + " " + ds.getId() + " is still running and will be skipped for the process.");
                 continue;
