@@ -6,9 +6,6 @@
 
 package de.dkfz.roddy.knowledge.files
 
-import static de.dkfz.roddy.Constants.DEFAULT
-import static de.dkfz.roddy.config.FilenamePatternDependency.*
-
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextLevel
@@ -16,6 +13,9 @@ import de.dkfz.roddy.core.Workflow
 import de.dkfz.roddy.execution.UnexpectedExecutionResultException
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider.RegexSearchDepth
+import de.dkfz.roddy.execution.io.fs.Regex
+import de.dkfz.roddy.execution.io.fs.Wildcard
 import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.BEJobResult
 import de.dkfz.roddy.plugins.LibrariesFactory
@@ -25,6 +25,8 @@ import de.dkfz.roddy.tools.Tuple2
 
 import java.util.concurrent.ExecutionException
 
+import static de.dkfz.roddy.Constants.DEFAULT
+import static de.dkfz.roddy.config.FilenamePatternDependency.*
 
 /**
  * Basic class for all processed files. Contains information about the storage
@@ -201,6 +203,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         return constructSourceFile(fileClass, new File(path), context)
     }
 
+
     /**
      * Just another name for getSourceFile()
      * @param context
@@ -252,6 +255,22 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         return ExecutionService.instance.runDirect(context, toolID).collect {
             getSourceFile(context, it, _class)
         } as List<BaseFile>
+    }
+
+    /**
+     * API Level 3.2+
+     */
+    static List<BaseFile> getSourceFiles(ExecutionContext context, File baseFolder, Wildcard wildcard, String _class = STANDARD_FILE_CLASS) {
+        List<File> files = FileSystemAccessProvider.instance.listFilesUsingWildcards(baseFolder, wildcard.wildcard)
+        files.collect { getSourceFile(context, it.absolutePath, _class) }
+    }
+
+    /**
+     * API Level 3.2+
+     */
+    static List<BaseFile> getSourceFiles(ExecutionContext context, File baseFolder, Regex regex, RegexSearchDepth depth, String _class = STANDARD_FILE_CLASS) {
+        List<File> files = FileSystemAccessProvider.instance.listFilesUsingRegex(baseFolder, regex.regex, depth)
+        files.collect { getSourceFile(context, it.absolutePath, _class) }
     }
 
     protected File path
