@@ -435,6 +435,9 @@ public class Analysis {
                         if (successfullyExecuted)
                             finallyStartJobsOfContext(context);
                     }
+                } catch(ConfigurationError cd) {
+                    successfullyExecuted = false;
+                    throw cd;
                 } catch (Exception ex) {
                     // (Maybe) abort jobs in strict mode
                     logger.warning(ex.getMessage());
@@ -455,6 +458,9 @@ public class Analysis {
                     }
                 }
             }
+        } catch (ConfigurationError ce) {
+            // Errors related to e.g. configuration mistakes which came up during runtime.
+//            eCopy = ce;
         } catch (Exception e) {
             eCopy = e;
             context.addErrorEntry(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e));
@@ -486,7 +492,7 @@ public class Analysis {
                 StringBuilder messages = new StringBuilder();
                 messages.append("There were configuration errors for dataset " + datasetID);
                 for (ConfigurationLoadError configurationLoadError : context.getConfiguration().getListOfLoadErrors()) {
-                    messages.append(configurationLoadError.toString());
+                    messages.append("\n\t" + configurationLoadError.toString());
                 }
                 logger.always(messages.toString());
             }

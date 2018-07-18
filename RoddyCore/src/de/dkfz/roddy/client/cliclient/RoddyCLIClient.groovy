@@ -543,9 +543,8 @@ public class RoddyCLIClient {
         final String separator = Constants.ENV_LINESEPARATOR;
         for (ExecutionContext ec : executionContexts) {
             Configuration configuration = ec.getConfiguration()
-            ConfigurationConverter.convertAutomatically(ec, configuration);
-            StringBuilder sb = new StringBuilder();
 
+            StringBuilder sb = new StringBuilder();
 
             Collection<Job> collectedJobs = ec.getExecutedJobs().findAll { Job job -> job.getJobID() != null && (rerun ? job.runResult?.successful : true) }
             def numberOfJobs = collectedJobs.size()
