@@ -11,6 +11,7 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
+import de.dkfz.roddy.config.ConfigurationError
 import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -636,7 +637,7 @@ class ExecutionContext {
      *
      * @return
      */
-    boolean execute() {
+    boolean execute() throws ConfigurationError {
         return workflow.execute(this)
     }
 

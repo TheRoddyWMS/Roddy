@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 
 
@@ -220,6 +221,12 @@ public class Analysis {
         LinkedList<ExecutionContext> newRunContexts = new LinkedList<>();
         for (ExecutionContext oldContext : contexts) {
             DataSet ds = oldContext.getDataSet();
+
+            if(oldContext.getErrors().size() > 0) {
+                logger.postAlwaysInfo("The test run for dataset " + ds.getId() + " failed and cannot be rerun (Neither as a test nor as a real run).");
+                continue;
+            }
+
             if (!test && !canStartJobs(ds)) {
                 logger.postAlwaysInfo("The " + Constants.PID + " " + ds.getId() + " is still running and will be skipped for the process.");
                 continue;
@@ -428,6 +435,9 @@ public class Analysis {
                         if (successfullyExecuted)
                             finallyStartJobsOfContext(context);
                     }
+                } catch(ConfigurationError cd) {
+                    successfullyExecuted = false;
+                    throw cd;
                 } catch (Exception ex) {
                     // (Maybe) abort jobs in strict mode
                     logger.warning(ex.getMessage());
@@ -448,6 +458,9 @@ public class Analysis {
                     }
                 }
             }
+        } catch (ConfigurationError ce) {
+            // Errors related to e.g. configuration mistakes which came up during runtime.
+//            eCopy = ce;
         } catch (Exception e) {
             eCopy = e;
             context.addErrorEntry(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e));
@@ -479,7 +492,7 @@ public class Analysis {
                 StringBuilder messages = new StringBuilder();
                 messages.append("There were configuration errors for dataset " + datasetID);
                 for (ConfigurationLoadError configurationLoadError : context.getConfiguration().getListOfLoadErrors()) {
-                    messages.append(configurationLoadError.toString());
+                    messages.append("\n\t" + configurationLoadError.toString());
                 }
                 logger.always(messages.toString());
             }
