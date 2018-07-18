@@ -8,11 +8,9 @@ import org.junit.ClassRule
 import spock.lang.Shared
 import spock.lang.Specification
 
-import static de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider.RegexScope.Filename
-import static de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider.RegexScope.FullPath
-import static de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider.RegexScope.RelativePath
-import static de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider.RegexScope.RelativePath
-import static de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider.RegexScope.RelativePath
+import static de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider.RegexSearchDepth.Filename
+import static de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider.RegexSearchDepth.AbsolutePath
+import static de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider.RegexSearchDepth.RelativeToSearchFolder
 
 class FileSystemAccessProviderSpecification extends Specification {
 
@@ -47,20 +45,20 @@ class FileSystemAccessProviderSpecification extends Specification {
         "*b*.png" | [files[0], files[1]]
     }
 
-    def listFilesUsingRegex(File folder, String regex, FileSystemAccessProvider.RegexScope regexOnWholePath, List<File> result) {
+    def listFilesUsingRegex(File folder, String regex, FileSystemAccessProvider.RegexSearchDepth regexOnWholePath, List<File> result) {
         expect:
         fsap.listFilesUsingRegex(folder, regex, regexOnWholePath).sort() == result.sort()
 
         where:
-        folder                          | regex                           | regexOnWholePath | result
-        baseFolder                      | "[a-z]*.png"                    | Filename         | [files[0], files[1], files[3]]
-        baseFolder                      | "[a-z]*.txt"                    | Filename         | [files[2]]
-        baseFolder                      | "[a-z]b[a-z].png"               | Filename         | [files[0], files[1]]
-        contextResource.tempFolder.root | "images/[a-z]*.png"             | RelativePath     | [files[0], files[1], files[3]]
-        contextResource.tempFolder.root | "images/[a-z]*.txt"             | RelativePath     | [files[2]]
-        contextResource.tempFolder.root | "images/[a-z]b[a-z].png"        | RelativePath     | [files[0], files[1]]
-        baseFolder                      | "${baseFolder}/[a-z]*.png"      | FullPath         | [files[0], files[1], files[3]]
-        baseFolder                      | "${baseFolder}/[a-z]*.txt"      | FullPath         | [files[2]]
-        baseFolder                      | "${baseFolder}/[a-z]b[a-z].png" | FullPath         | [files[0], files[1]]
+        folder                          | regex                           | regexOnWholePath       | result
+        baseFolder                      | "[a-z]*.png"                    | Filename               | [files[0], files[1], files[3]]
+        baseFolder                      | "[a-z]*.txt"                    | Filename               | [files[2]]
+        baseFolder                      | "[a-z]b[a-z].png"               | Filename               | [files[0], files[1]]
+        contextResource.tempFolder.root | "images/[a-z]*.png"             | RelativeToSearchFolder | [files[0], files[1], files[3]]
+        contextResource.tempFolder.root | "images/[a-z]*.txt"             | RelativeToSearchFolder | [files[2]]
+        contextResource.tempFolder.root | "images/[a-z]b[a-z].png"        | RelativeToSearchFolder | [files[0], files[1]]
+        baseFolder                      | "${baseFolder}/[a-z]*.png"      | AbsolutePath           | [files[0], files[1], files[3]]
+        baseFolder                      | "${baseFolder}/[a-z]*.txt"      | AbsolutePath           | [files[2]]
+        baseFolder                      | "${baseFolder}/[a-z]b[a-z].png" | AbsolutePath           | [files[0], files[1]]
     }
 }

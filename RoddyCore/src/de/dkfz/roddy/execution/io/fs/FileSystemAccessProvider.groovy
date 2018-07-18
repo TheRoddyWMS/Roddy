@@ -309,24 +309,24 @@ public class FileSystemAccessProvider {
     /**
      * Scope for regular expressions. Used in listFilesUsingRegex
      */
-    enum RegexScope {
-        FullPath,
-        RelativePath,
+    enum RegexSearchDepth {
+        AbsolutePath,
+        RelativeToSearchFolder,
         Filename
     }
 
-    List<File> listFilesUsingRegex(File baseFolder, String regex, RegexScope scope) {
+    List<File> listFilesUsingRegex(File baseFolder, String regex, RegexSearchDepth scope) {
         ExecutionResult result = ExecutionService.instance.execute(commandSet.getListFullDirectoryContentRecursivelyCommand(baseFolder, -1, FileType.FILES, false))
 
         List<File> foundFiles = result.resultLines.collect { new File(it) } as List<File>
 
         foundFiles.findAll {
             String comparable
-            if (scope == RegexScope.FullPath) {
+            if (scope == RegexSearchDepth.AbsolutePath) {
                 comparable = it.absolutePath
-            } else if (scope == RegexScope.RelativePath) {
+            } else if (scope == RegexSearchDepth.RelativeToSearchFolder) {
                 comparable = it.absolutePath[baseFolder.absolutePath.length() + 1..-1]
-            } else if (scope == RegexScope.Filename)
+            } else if (scope == RegexSearchDepth.Filename)
                 comparable = it.name
             comparable ==~ regex
         }

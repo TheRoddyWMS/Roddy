@@ -6,7 +6,6 @@
 
 package de.dkfz.roddy.knowledge.files
 
-import de.dkfz.roddy.Constants
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationError
 import de.dkfz.roddy.config.DerivedFromFilenamePattern
@@ -23,7 +22,9 @@ import de.dkfz.roddy.core.Workflow
 import de.dkfz.roddy.execution.UnexpectedExecutionResultException
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider.RegexScope
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider.RegexSearchDepth
+import de.dkfz.roddy.execution.io.fs.Regex
+import de.dkfz.roddy.execution.io.fs.Wildcard
 import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.BEJobResult
 import de.dkfz.roddy.plugins.LibrariesFactory
@@ -31,7 +32,6 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.Tuple2
 
-import static de.dkfz.roddy.Constants.DEFAULT
 import static de.dkfz.roddy.Constants.DEFAULT
 import static de.dkfz.roddy.config.FilenamePatternDependency.*
 
@@ -212,6 +212,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         return constructSourceFile(fileClass, new File(path), context)
     }
 
+
     /**
      * Just another name for getSourceFile()
      * @param context
@@ -268,16 +269,16 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
     /**
      * API Level 3.2+
      */
-    static List<BaseFile> getSourceFilesUsingWildcards(ExecutionContext context, File baseFolder, String wildcards, String _class = STANDARD_FILE_CLASS) {
-        List<File> files = FileSystemAccessProvider.instance.listFilesUsingWildcards(baseFolder, wildcards)
+    static List<BaseFile> getSourceFiles(ExecutionContext context, File baseFolder, Wildcard wildcard, String _class = STANDARD_FILE_CLASS) {
+        List<File> files = FileSystemAccessProvider.instance.listFilesUsingWildcards(baseFolder, wildcard.wildcard)
         files.collect { getSourceFile(context, it.absolutePath, _class) }
     }
 
     /**
      * API Level 3.2+
      */
-    static List<BaseFile> getSourceFilesUsingRegex(ExecutionContext context, File baseFolder, String regex, RegexScope scope, String _class = STANDARD_FILE_CLASS) {
-        List<File> files = FileSystemAccessProvider.instance.listFilesUsingRegex(baseFolder, regex, scope)
+    static List<BaseFile> getSourceFiles(ExecutionContext context, File baseFolder, Regex regex, RegexSearchDepth depth, String _class = STANDARD_FILE_CLASS) {
+        List<File> files = FileSystemAccessProvider.instance.listFilesUsingRegex(baseFolder, regex.regex, depth)
         files.collect { getSourceFile(context, it.absolutePath, _class) }
     }
 

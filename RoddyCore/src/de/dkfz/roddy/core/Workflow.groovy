@@ -11,10 +11,13 @@ import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.execution.UnexpectedExecutionResultException
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.execution.io.fs.Regex
+import de.dkfz.roddy.execution.io.fs.Wildcard
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.methods.GenericMethod
+import groovy.transform.CompileStatic
 
 import java.lang.reflect.Method
 import java.util.concurrent.ExecutionException
@@ -24,6 +27,7 @@ import java.util.concurrent.ExecutionException
  *
  * @author michael
  */
+@CompileStatic
 abstract class Workflow {
 
     /**
@@ -285,15 +289,29 @@ abstract class Workflow {
     /**
      * API Level 3.2+
      */
-    final List<BaseFile> getSourceFilesUsingWildcards(File path, String wildcards, String _class = BaseFile.STANDARD_FILE_CLASS) {
-        BaseFile.getSourceFilesUsingWildcards(context, path, wildcards, _class)
+    final List<BaseFile> getSourceFiles(String path, Regex regex, FileSystemAccessProvider.RegexSearchDepth depth, String _class = BaseFile.STANDARD_FILE_CLASS) {
+        getSourceFiles(new File(path), regex, depth, _class)
     }
 
     /**
      * API Level 3.2+
      */
-    final List<BaseFile> getSourceFilesUsingRegex(File path, String regex, FileSystemAccessProvider.RegexScope scope, String _class = BaseFile.STANDARD_FILE_CLASS) {
-        BaseFile.getSourceFilesUsingRegex(context, path, regex, scope, _class)
+    final List<BaseFile> getSourceFiles(File path, Regex regex, FileSystemAccessProvider.RegexSearchDepth depth, String _class = BaseFile.STANDARD_FILE_CLASS) {
+        BaseFile.getSourceFiles(context, path, regex, depth, _class)
+    }
+
+    /**
+     * API Level 3.2+
+     */
+    final List<BaseFile> getSourceFiles(String path, Wildcard wildcard, String _class = BaseFile.STANDARD_FILE_CLASS) {
+        getSourceFiles(new File(path), wildcard, _class)
+    }
+
+    /**
+     * API Level 3.2+
+     */
+    final List<BaseFile> getSourceFiles(File path, Wildcard wildcard, String _class = BaseFile.STANDARD_FILE_CLASS) {
+        BaseFile.getSourceFiles(context, path, wildcard, _class)
     }
 
     /**

@@ -196,20 +196,20 @@ class BashCommandSet extends ShellCommandSet {
     }
 
     @Override
-    String getListFullDirectoryContentRecursivelyCommand(File f, int depth, FileType selectedType, boolean complexList) {
+    String getListFullDirectoryContentRecursivelyCommand(File f, int depth, FileType selectedType, boolean detailed) {
         StringBuilder sb = new StringBuilder("find ")
         sb << "\"" << f.absolutePath << "\""
 
         if (depth > 0) sb << " -maxdepth ${depth}"
         if (selectedType == FileType.DIRECTORIES) sb << " -type d"
         if (selectedType == FileType.FILES) sb << " -type f"
-        if (complexList) sb << " -ls"
+        if (detailed) sb << " -ls"
 
         return sb.toString()
     }
 
     @Override
-    String getListFullDirectoriesContentRecursivelyCommand(List<File> directories, List<Integer> depth, FileType selectedType, boolean complexList) {
+    String getListFullDirectoriesContentRecursivelyCommand(List<File> directories, List<Integer> depth, FileType selectedType, boolean detailed) {
         List<String> commands = []
         directories = directories.sort().unique()
         if (depth.size() != directories.size()) {
@@ -219,14 +219,14 @@ class BashCommandSet extends ShellCommandSet {
             File f = directories[i]
             int d = depth[i]
 
-            commands << getListFullDirectoryContentRecursivelyCommand(f, d, selectedType, complexList)
+            commands << getListFullDirectoryContentRecursivelyCommand(f, d, selectedType, detailed)
         }
         return commands.join(" && ")
     }
 
     @Override
     String getFindFilesUsingWildcardsCommand(File baseFolder, String wildcards) {
-        return "for f in `ls \"${baseFolder}/\"${wildcards} | sort`; do echo \"\${f}\"; done"
+        return "for f in \$(ls \"${baseFolder}/\"${wildcards} | sort); do echo \"\${f}\"; done"
     }
 
     @Override

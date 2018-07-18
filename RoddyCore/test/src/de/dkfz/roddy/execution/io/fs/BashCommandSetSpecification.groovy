@@ -57,8 +57,8 @@ class BashCommandSetSpecification extends Specification {
 
         where:
         baseFolder | wildcards      | result
-        tmpa       | '*.png'        | 'for f in `ls "/tmp/a/"*.png | sort`; do echo "${f}"; done'
-        tmpb       | "*sub*/*.png"  | 'for f in `ls "/tmp/b/"*sub*/*.png | sort`; do echo "${f}"; done'
-        tmpc       | "??\\ abc.png" | 'for f in `ls "/tmp/c/"??\\ abc.png | sort`; do echo "${f}"; done'
+        tmpa       | '*.png'        | 'for f in $(ls "/tmp/a/"*.png | sort); do echo "${f}"; done'
+        tmpb       | "*sub*/*.png"  | 'for f in $(ls "/tmp/b/"*sub*/*.png | sort); do echo "${f}"; done'
+        tmpc       | "??\\ abc.png" | 'for f in $(ls "/tmp/c/"??\\ abc.png | sort); do echo "${f}"; done'
     }
 }

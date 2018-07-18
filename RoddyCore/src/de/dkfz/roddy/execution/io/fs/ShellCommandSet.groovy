@@ -80,11 +80,12 @@ abstract class ShellCommandSet {
      * Return a command to create a tree of files and / or directories for a given directory
      * @param directory     The base folder to look into
      * @param depth         The maximum depth to go into
-     * @param selectedType  ANY, FILES or DIRECTORIES
-     * @param complexList   Get more info than the filename (e.g. size, owner etc.). Highly dependent on the backend!
+     * @param selectedType  ANY, FILES or DIRECTORIES, where ANY == All files and directories
+     * @param detailed      Get more info than the filename (e.g. size, owner etc.). Highly dependent on the backend
+     *                      (e.g. the BashCommandSet uses find -ls for details), results need to be parsed accordingly.
      * @return A list of files and directories or a detailed list of files and directories. Paths are fully set.
      */
-    abstract String getListFullDirectoryContentRecursivelyCommand(File directory, int depth, FileType selectedType, boolean complexList)
+    abstract String getListFullDirectoryContentRecursivelyCommand(File directory, int depth, FileType selectedType, boolean detailed)
 
     @Deprecated
     String getListFullDirectoriesContentRecursivelyCommand(List<File> directories, List<Integer> depth, boolean onlyDirectories) {
@@ -97,11 +98,12 @@ abstract class ShellCommandSet {
      * @param directories   The base folders to look into
      * @param depth         The maximum depth to go into for each directory
      *                      Be careful: If depth is not set properly, -1 (no depth) will be used for every directory!
-     * @param selectedType  ANY, FILES or DIRECTORIES
-     * @param complexList   Get more info than the filename (e.g. size, owner etc.). Highly dependent on the backend!
+     * @param selectedType  ANY, FILES or DIRECTORIES, where ANY == All files and directories
+     * @param detailed      Get more info than the filename (e.g. size, owner etc.). Highly dependent on the backend
+     *                      (e.g. the BashCommandSet uses find -ls for details), results need to be parsed accordingly.
      * @return A list of files and directories or a detailed list of files and directories. Paths are fully set.
      */
-    abstract String getListFullDirectoriesContentRecursivelyCommand(List<File> directories, List<Integer> depth, FileType selectedType, boolean complexList)
+    abstract String getListFullDirectoriesContentRecursivelyCommand(List<File> directories, List<Integer> depth, FileType selectedType, boolean detailed)
 
     abstract String getFindFilesUsingWildcardsCommand(File baseFolder, String wildcards)
 
