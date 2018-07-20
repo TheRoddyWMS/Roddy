@@ -229,8 +229,8 @@ public class Analysis {
                 newRunContexts.add(oldContext);
                 logger.postAlwaysInfo("\nYour tried to start an analysis using rerun or testrerun.\n" +
                         " This is a two step process, where the first step is used to gather information about previous runs." +
-                        " However, this first step failed and Roddy will not continue." +
-                        " You can use the feature toggle 'FailOnErroneousDryRuns=false' to disable this behaviour." +
+                        " However, this first step failed and Roddy will not continue.\n" +
+                        " You can use the feature toggle 'FailOnErroneousDryRuns=false' to disable this behaviour.\n" +
                         " You can add it to the feature toggle file in ~/.roddy/featureToggles.ini");
                 continue;
             }
