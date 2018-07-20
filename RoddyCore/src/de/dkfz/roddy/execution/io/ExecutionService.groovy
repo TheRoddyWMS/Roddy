@@ -322,7 +322,7 @@ abstract class ExecutionService implements BEExecutionService {
             def userGroup = context.getOutputGroupString()
             boolean isGroupAvailable = FileSystemAccessProvider.getInstance().isGroupAvailable(userGroup)
             if (!isGroupAvailable) {
-                context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("The requested user group ${userGroup} is not available on the target system.\n\tDisable Roddys access rights managemd by setting outputAllowAccessRightsModification to true or\n\tSelect a proper group by setting outputFileGroup."))
+                context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("The requested user group ${userGroup} is not available on the target system.\n\t\tDisable Roddys access rights management by setting outputAllowAccessRightsModification to true or\n\t\tSelect a proper group by setting outputFileGroup."))
                 valid = false
             }
         }
