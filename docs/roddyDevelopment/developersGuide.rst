@@ -46,8 +46,8 @@ the object (this) itself, you can mark the affected methods with @CompileDynamic
 
 API documentation
 ~~~~~~~~~~~~~~~~~
-We are working on improving our API documentation. The current version can be found `here <../groovydoc/index.html>`_
-
+We are working on improving our API documentation. The current the API is not build automatically because of problems of groovydoc with Java lambda
+expressions..
 
 Roddy versioning scheme
 ~~~~~~~~~~~~~~~~~~~~~~~
