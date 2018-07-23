@@ -309,7 +309,7 @@ class ProjectLoader {
 
         projectConfiguration = fac.getProjectConfiguration(projectID);
 
-        if (projectConfiguration.hasLoadErrors()) {
+        if (projectConfiguration.hasErrors()) {
             RoddyCLIClient.checkConfigurationErrorsAndMaybePrintAndFail(projectConfiguration)
         }
 

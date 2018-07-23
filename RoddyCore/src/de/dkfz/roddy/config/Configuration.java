@@ -433,11 +433,11 @@ public class Configuration implements ContainerParent<Configuration> {
     }
 
 
-    public boolean hasLoadErrors() {
+    public boolean hasErrors() {
         boolean hasErrors = listOfLoadErrors.size() > 0;
         if (parents != null) {
             for (Configuration parent : parents) {
-                hasErrors |= parent.hasLoadErrors();
+                hasErrors |= parent.hasErrors();
             }
         }
         return hasErrors;

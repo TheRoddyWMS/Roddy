@@ -24,7 +24,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 
 import static de.dkfz.roddy.tools.RoddyIOHelperMethods.getStackTraceAsString;
@@ -357,7 +356,7 @@ public class Analysis {
         boolean contextPermissions = ExecutionService.getInstance().checkContextDirectoriesAndFiles(context);
         boolean configurationValidity =
                 Roddy.isStrictModeEnabled() && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors)
-                        ? !getConfiguration().hasLoadErrors()
+                        ? !getConfiguration().hasErrors()
                         : true;
 
         // The setup of the workflow and the executability check may require the execution store, e.g. for synchronously called jobs
@@ -468,7 +467,7 @@ public class Analysis {
 
             // Print out configuration errors (for context configuration! Not only for analysis)
             // Don't know, if this is the right place.
-            if (context.getConfiguration().hasLoadErrors())
+            if (context.getConfiguration().hasErrors())
                 logger.always(getLoadErrorText(context));
 
             // Print out informational messages like infos, warnings, errors
