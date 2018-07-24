@@ -734,7 +734,7 @@ public class Roddy {
         if (clc.startupMode == RoddyStartupModes.rmi)
             RoddyRMIServer.startServer(clc);
         else
-            RoddyCLIClient.parseStartupMode(clc);
+            RoddyCLIClient.startMode(clc);
     }
 
     private static void performCLIExit(RoddyStartupModes option) {
