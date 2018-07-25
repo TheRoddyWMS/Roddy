@@ -615,7 +615,7 @@ class ExecutionContext {
      * API Level 3.2+
      */
     void addWarning(ExecutionContextError warning) {
-        this.errors << warning
+        this.warnings << warning
     }
 
     /**
