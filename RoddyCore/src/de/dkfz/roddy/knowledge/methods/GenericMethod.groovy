@@ -381,13 +381,20 @@ class GenericMethod {
         return outputObject;
     }
 
-    private FileObject createOutputFile(ToolFileParameter tparm) {
-        ToolFileParameter fileParameter = tparm;
+    private FileObject createOutputFile(ToolFileParameter fileParameter) {
         BaseFile bf = convertToolFileParameterToBaseFile(fileParameter)
         for (ToolFileParameter childFileParameter in (fileParameter.getFiles() as List<ToolFileParameter>)) {
             try {
                 if (childFileParameter.parentVariable == null) {
-                    continue;
+                    throw new ConfigurationError(
+                            ["Children of a file parameters need a 'variable' field.",
+                             "tool name = ${toolName}",
+                             "file parameter class = ${fileParameter.fileClass}",
+                             "file class = ${childFileParameter.fileClass}",
+                             "script parameter name = ${childFileParameter.scriptParameterName}"
+                            ].join("\n\t"),
+                            null as String,
+                            null)
                 }
                 Field _field = null;
                 Method _method = null;
@@ -402,7 +409,8 @@ class GenericMethod {
                 }
                 if (_field == null && _method == null) {
                     try {
-                        context.addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_FIELDINACCESSIBLE.expand("Class ${bf.getClass().getName()} field ${childFileParameter.parentVariable}"));
+                        context.addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_FIELDINACCESSIBLE.
+                                expand("tool $toolName, class ${bf.getClass().getName()}, field ${childFileParameter.parentVariable}"));
                     } catch (Exception ex) {
                     }
                     continue;
@@ -455,7 +463,8 @@ class GenericMethod {
             if (!outputFileGroupIndices) {
                 throw new RuntimeException("A tool which outputs a filegroup with index values needs to be called properly! Pass index values in the call.")
             }
-            ToolFileParameter autoToolFileParameter = new ToolFileParameter(tfg.genericFileClass, [], tfg.scriptParameterName, new ToolFileParameterCheckCondition(true), tfg.selectiontag, null, null)
+            ToolFileParameter autoToolFileParameter =
+                    new ToolFileParameter(tfg.genericFileClass, [], tfg.scriptParameterName, new ToolFileParameterCheckCondition(true), tfg.selectiontag, null, null)
             for (Object index in outputFileGroupIndices) {
                 BaseFile bf = convertToolFileParameterToBaseFile(autoToolFileParameter, index.toString())
                 filesInGroup << bf

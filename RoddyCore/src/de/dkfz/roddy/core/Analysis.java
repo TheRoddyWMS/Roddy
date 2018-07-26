@@ -451,7 +451,8 @@ public class Analysis {
             logger.sometimes(e.getMessage() + "\n" + getStackTraceAsString(e));
             context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand(e.getMessage()));
         } catch (Exception e) {
-            logger.sometimes(e.getMessage() + "\n" + getStackTraceAsString(e));
+            logger.always("An unknown / unhandled exception occurred: '" + e.getLocalizedMessage() + "'");
+            logger.always(e.getMessage() + "\n" + getStackTraceAsString(e));
             context.addErrorEntry(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.getMessage()));
         } finally {
             // Look up errors when jobs are executed directly and when there were any started jobs.
@@ -475,11 +476,6 @@ public class Analysis {
             if ((!preventLoggingOnQueryStatus || (context.getExecutionContextLevel() != ExecutionContextLevel.QUERY_STATUS))) {
                 printMessagesForContext(context);
             }
-
-            // Only print them out if !QUERY_STATUS and the runmode is testrun or testrerun.
-            if (context.getErrors().size() > 0 && (!preventLoggingOnQueryStatus || (context.getExecutionContextLevel() != ExecutionContextLevel.QUERY_STATUS)))
-                logger.always(getContextErrorText(context));
-
         }
     }
 
@@ -487,7 +483,7 @@ public class Analysis {
         StringBuilder messages = new StringBuilder();
         messages.append("There were configuration errors for dataset " + context.dataSet.getId());
         for (ConfigurationLoadError configurationLoadError : context.getConfiguration().getListOfLoadErrors()) {
-            messages.append("\n\t" + configurationLoadError.toString());
+            messages.append("\n\t*" + configurationLoadError.toString());
         }
         return messages.toString();
     }
@@ -497,6 +493,9 @@ public class Analysis {
         if (context.hasInfos()) printMessages(context, datasetID, "infos");
         if (context.hasWarnings()) printMessages(context, datasetID, "warnings");
         if (context.hasErrors()) printMessages(context, datasetID, "errors");
+        if (context.hasWarnings() || context.hasErrors())
+            logger.always("\nPlease check extended logs in " + logger.getCentralLogFile() + " for more details.");
+
     }
 
     private void printMessages(ExecutionContext context, String datasetID, String title) {
@@ -507,29 +506,6 @@ public class Analysis {
         }
         logger.postAlwaysInfo(messages.toString());
     }
-
-    private static String getContextErrorText(ExecutionContext context) {
-        StringBuilder messages = new StringBuilder();
-        boolean warningsOnly = true;
-
-        for (ExecutionContextError executionContextError : context.getErrors()) {
-            if (executionContextError.getErrorLevel().intValue() > Level.WARNING.intValue())
-                warningsOnly = false;
-        }
-        if (warningsOnly) {
-            messages.append("\nThere were warnings for the execution context for dataset " + context.dataSet.getId());
-            messages.append("\nPlease check extended logs in " + logger.getCentralLogFile() + " for more details.");
-        } else {
-            messages.append("\nThere were errors for the execution context for dataset " + context.dataSet.getId());
-            messages.append("\nPlease check extended logs in " + logger.getCentralLogFile() + " for more details.");
-        }
-        for (ExecutionContextError executionContextError : context.getErrors()) {
-            messages.append("\n\t* ").append(executionContextError.toString());
-        }
-
-        return messages.toString();
-    }
-
 
     /**
      * Will start all the jobs in the context.

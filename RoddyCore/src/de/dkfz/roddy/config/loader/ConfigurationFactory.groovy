@@ -171,7 +171,7 @@ class ConfigurationFactory {
             try {
                 def icc = loadInformationalConfigurationContent(file)
 
-                File readmeFile = RoddyIOHelperMethods.assembleLocalPath(pluginsByFile[file].directory, "README.md")
+                File readmeFile = RoddyIOHelperMethods.assembleLocalPath(pluginsByFile[file].directory, "README." + icc.id + ".md")
                 if (readmeFile.exists())
                     icc.setReadmeFile(readmeFile)
 
