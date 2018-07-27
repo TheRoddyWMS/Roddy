@@ -11,7 +11,6 @@ import de.dkfz.roddy.config.OnScriptParameterFilenamePattern
 import de.dkfz.roddy.config.ResourceSet
 import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.FilenamePattern
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.config.ToolFileGroupParameter
 import de.dkfz.roddy.config.ToolFileParameter
@@ -140,11 +139,11 @@ class ProcessingToolReader {
                                 resourceSets << tempSet
                         }
                     } else if (cName == "input") {
-                        inputParameters << parseToolParameter(toolID, child)
+                        inputParameters << parseToolParameter(child, toolID)
                         noOfInputParameters++
                         allParametersValid &= inputParameters.last() != null
                     } else if (cName == "output") {
-                        outputParameters << parseToolParameter(toolID, child)
+                        outputParameters << parseToolParameter(child, toolID)
                         noOfOutputParameters++
                         allParametersValid &= outputParameters.last() != null
                     } else if (cName == "script") {
@@ -232,7 +231,7 @@ class ProcessingToolReader {
      * @param child
      * @return
      */
-    ToolEntry.ToolParameter parseToolParameter(String toolID, NodeChild child) {
+    ToolEntry.ToolParameter parseToolParameter(NodeChild child, String toolID) {
         String type = readAttribute(child, "type")
         if (type == "file") { //Load a file
             return parseFile(child, toolID)
@@ -258,7 +257,7 @@ class ProcessingToolReader {
         }
     }
 
-    ToolFileParameter parseFile(NodeChild child, String toolID) {
+    ToolFileParameter parseFile(NodeChild child, String toolID, ToolFileParameter parent = null) {
         String cls = readAttribute(child, "typeof")
         Class _cls = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, BaseFile.class.name)
 
@@ -267,6 +266,9 @@ class ProcessingToolReader {
         String fnpSelTag = extractAttributeText(child, "selectiontag", extractAttributeText(child, "fnpatternselectiontag", Constants.DEFAULT))
         String parentFileVariable = extractAttributeText(child, "variable", null) //This is only the case for child files.
         ToolFileParameterCheckCondition check = new ToolFileParameterCheckCondition(extractAttributeText(child, "check", "true"))
+
+        if (parent && !parentFileVariable)
+            addLoadErr("Tool file parameter with parent file parameter does not have 'variable' set")
 
         List<ToolEntry.ToolConstraint> constraints = new LinkedList<ToolEntry.ToolConstraint>()
         for (constraint in readCollection(child, "constraint")) {
@@ -277,16 +279,16 @@ class ProcessingToolReader {
 
         // A file can have several defined child files
         List<ToolFileParameter> subParameters = new LinkedList<ToolFileParameter>()
+        ToolFileParameter toolParameter = new ToolFileParameter(_cls, constraints, pName, check, fnpSelTag, subParameters, parentFileVariable)
         for (NodeChild fileChild in (child.children() as List<NodeChild>)) {
-            subParameters << (ToolFileParameter) parseToolParameter(toolID, fileChild)
+            subParameters << (ToolFileParameter) parseFile(fileChild, toolID, toolParameter)
         }
-        ToolFileParameter tp = new ToolFileParameter(_cls, constraints, pName, check, fnpSelTag, subParameters, parentFileVariable)
 
         if (fnPattern) {
             config.getFilenamePatterns().add(new OnScriptParameterFilenamePattern(_cls, toolID, pName, fnPattern))
         }
 
-        return tp
+        return toolParameter
     }
 
     ToolTupleParameter parseTuple(NodeChild child, String toolID) {
@@ -296,7 +298,7 @@ class ProcessingToolReader {
         }
         List<ToolEntry.ToolParameterOfFiles> subParameters = []
         for (NodeChild fileChild in (child.children() as List<NodeChild>)) {
-            subParameters << (ToolEntry.ToolParameterOfFiles)parseToolParameter(toolID, fileChild)
+            subParameters << (ToolEntry.ToolParameterOfFiles) parseToolParameter(fileChild, toolID)
         }
         return new ToolTupleParameter(subParameters)
     }
@@ -349,7 +351,7 @@ class ProcessingToolReader {
         if (childCount == 0 && passas != ToolFileGroupParameter.PassOptions.array)
             logger.severe("No files in the file group. Configuration is not valid.")
         for (Object fileChild in groupNode.children()) {
-            children << (parseToolParameter(toolID, fileChild as NodeChild) as ToolFileParameter)
+            children << (parseToolParameter(fileChild as NodeChild, toolID) as ToolFileParameter)
         }
         return new ToolFileGroupParameter(filegroupClass, children, pName, passas, indexOptions, selectiontag)
     }

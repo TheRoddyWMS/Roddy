@@ -13,6 +13,7 @@ import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.NoNoExecutionService
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
+import de.dkfz.roddy.knowledge.files.GenericFile
 import groovy.transform.CompileStatic
 import org.junit.rules.ExternalResource
 import org.junit.rules.TemporaryFolder
@@ -130,6 +131,7 @@ class ContextResource extends ExternalResource {
             if (!f.exists()) f.mkdirs()
         }
 
+        ExecutionContext result
         if (testConfig) {
 
             final PreloadedConfiguration projectPreloadConfig =
@@ -153,13 +155,14 @@ class ContextResource extends ExternalResource {
 
             final DataSet dataSet = new DataSet(analysis, "TEST_PID", getTestOutputDirectory("TEST_PID"))
 
-            return new ExecutionContext(System.getProperty("user.name"), analysis, dataSet, ExecutionContextLevel.UNSET,
+            result = new ExecutionContext(System.getProperty("user.name"), analysis, dataSet, ExecutionContextLevel.UNSET,
                     testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime())
 
         } else {
-            return new ExecutionContext(System.getProperty("user.name"), null, null, ExecutionContextLevel.UNSET,
+            result = new ExecutionContext(System.getProperty("user.name"), null, null, ExecutionContextLevel.UNSET,
                     testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime())
         }
+        return result
     }
 
     BatchEuphoriaJobManager createMockupJobManager() {
@@ -268,5 +271,30 @@ class ContextResource extends ExternalResource {
                 return null
             }
         }
+    }
+
+    static BaseFile makeTestBaseFileInstance(ExecutionContext context, String baseName) {
+
+        FilenamePattern fp =
+                new OnScriptParameterFilenamePattern(GenericFile as Class<BaseFile>, baseName, baseName,
+                        "/tmp/$baseName")
+        context.configuration.filenamePatterns.add(fp)
+        return new GenericFile(new BaseFile.ConstructionHelperForManualCreation(
+                context,
+                new ToolEntry(baseName, "/tmp", baseName),
+                baseName, baseName, null, null, null))
+    }
+
+    static BaseFile makeTestBaseFileInstance(String baseName, List<BaseFile> parentFiles) {
+        assert parentFiles.size() > 0
+        FilenamePattern fp =
+                new OnScriptParameterFilenamePattern(GenericFile as Class<BaseFile>, baseName, baseName,
+                        "/tmp/$baseName")
+        parentFiles[0].executionContext.configuration.filenamePatterns.add(fp)
+        return new GenericFile(new BaseFile.ConstructionHelperForManualCreation(
+                parentFiles[0],
+                parentFiles,
+                new ToolEntry(baseName, "/tmp", baseName),
+                baseName, baseName, null, "1", null, null))
     }
 }

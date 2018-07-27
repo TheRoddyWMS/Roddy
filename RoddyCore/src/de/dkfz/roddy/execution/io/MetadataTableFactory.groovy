@@ -10,6 +10,7 @@ import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.StringConstants;
 import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.config.ConfigurationValue
+import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.core.Analysis
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
@@ -68,8 +69,11 @@ final class MetadataTableFactory {
                     if (colVal.hasTag("mandatory")) mandatoryColumns << colVal.id;
                     return [(colVar.toString()): colVal?.toString()]
             }
-
-            _cachedTable = readTable(new File(file), format, columnIDMap, mandatoryColumns);
+            try {
+                _cachedTable = readTable(new File(file), format, columnIDMap, mandatoryColumns);
+            } catch (IOException e) {
+                throw new ConfigurationLoaderException("Could not load metadata table from '$file'.\nError was '$e.message'\nEnsure that the file is accessible from the Roddy-executing system and correctly formatted.")
+            }
         }
         return _cachedTable;
 

@@ -6,21 +6,16 @@
 
 package de.dkfz.roddy.config
 
-import de.dkfz.roddy.Constants
 import de.dkfz.roddy.config.loader.ConfigurationFactory
-import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ContextResource
+import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.GenericFile
 import de.dkfz.roddy.knowledge.methods.GenericMethod
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.LibrariesFactoryTest
-import org.junit.BeforeClass
-import org.junit.ClassRule
-import org.junit.Ignore
-import org.junit.After
-import org.junit.Test
+import org.junit.*
 
 import static de.dkfz.roddy.Constants.DEFAULT
 
@@ -44,7 +39,11 @@ class FilenamePatternTest {
         LibrariesFactory.getInstance().loadLibraries(LibrariesFactory.buildupPluginQueue(LibrariesFactoryTest.callLoadMapOfAvailablePlugins(), "DefaultPlugin").values() as List)
         ConfigurationFactory.initialize(LibrariesFactory.getInstance().getLoadedPlugins().collect { it -> it.getConfigurationDirectory() })
 
-        final Configuration mockupConfig = new Configuration(new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, DEFAULT, "", "", null, "", ResourceSetSize.l, null, null, null, null), ConfigurationFactory.getInstance().getConfiguration(DEFAULT)) {
+        final Configuration mockupConfig =
+                new Configuration(new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, DEFAULT, "",
+                        "", null, "", ResourceSetSize.l, null, null, null,
+                        null),
+                        ConfigurationFactory.getInstance().getConfiguration(DEFAULT)) {
             @Override
             File getSourceToolPath(String tool) {
                 if (tool == "wrapinScript")
@@ -71,7 +70,11 @@ class FilenamePatternTest {
     @Test
     void testFilenamePatternWithSelectionByToolID() {
         FilenamePattern fp = new OnToolFilenamePattern(testClass, "RoddyTests", "/tmp/RoddyTests/testFileResult.sh", DEFAULT)
-        BaseFile.ConstructionHelperForGenericCreation helper = new BaseFile.ConstructionHelperForGenericCreation(mockedContext, mockedContext.getConfiguration().getTools().getValue("RoddyTests"), "RoddyTests", null, null, new TestFileStageSettings(), null)
+        mockedContext.configuration.filenamePatterns.put(fp.getID(), fp)
+        mockedContext.currentExecutedTool = new ToolEntry("RoddyTests", "/tmp/RoddyTests", "testFileResult.sh")
+        BaseFile.ConstructionHelperForGenericCreation helper =
+                new BaseFile.ConstructionHelperForGenericCreation(mockedContext, mockedContext.getConfiguration().getTools().getValue("RoddyTests"),
+                        "RoddyTests", null, null, new TestFileStageSettings(), null)
         String filename = fp.apply((BaseFile) testClass.newInstance(helper))
         assert filename == "/tmp/RoddyTests/testFileResult.sh"
     }
@@ -142,9 +145,9 @@ class FilenamePatternTest {
     @Test
     void testFillFileGroupIndex() {
         String src = 'abc_${fgindex}_def'
-        def parentFile = new GenericFile(new BaseFile.ConstructionHelperForManualCreation(mockedContext, null, null, null, null, null, null));
-        def file = new GenericFile(new BaseFile.ConstructionHelperForManualCreation(parentFile, null, null, null, null, null, "1", null, null));
-        file.hasIndexInFileGroup()
+        def parentFile = ContextResource.makeTestBaseFileInstance(mockedContext, "test1")
+        def file = ContextResource.makeTestBaseFileInstance("test2", [parentFile] as List<BaseFile>)
+        file.addParentFile(parentFile)
         assert createFilenamePattern().fillFileGroupIndex(src, file) == 'abc_1_def'
     }
 

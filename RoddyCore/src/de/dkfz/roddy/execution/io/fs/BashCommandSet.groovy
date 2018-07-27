@@ -119,17 +119,17 @@ class BashCommandSet extends ShellCommandSet {
         if (!createMissing)
             return "[[ -e ${path} && -d ${path} && -r ${path} ]]" + TRUE_OR_FALSE
         else
-            return getCheckAndCreateDirectoryCommand(file, onCreateFileGroup, onCreateAccessRights)
+            return getCheckAndCreateDirectoryCommand(file, onCreateFileGroup, onCreateAccessRights) + TRUE_OR_FALSE;
     }
 
     @Override
     String getCheckAndCreateDirectoryCommand(File f, String onCreateAccessRights, String onCreateFileGroup) {
         String path = f.absolutePath
-        String checkExistence = "[[ ! -e ${path} ]]"
+        String checkExistence = "[[ -e ${path} ]]"
         if (onCreateAccessRights && onCreateFileGroup)
-            return "sg ${onCreateFileGroup} -c \"${checkExistence} && umask ${onCreateAccessRights} && mkdir -p ${path}\""
+            return "sg ${onCreateFileGroup} -c \"${checkExistence} || umask ${onCreateAccessRights} && mkdir -p ${path}\""
         else
-            return "${checkExistence} && install -d \"${path}\" || echo ''"
+            return "${checkExistence} || install -d \"${path}\" || echo ''"
     }
 
     @Override

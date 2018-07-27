@@ -16,32 +16,32 @@ import de.dkfz.roddy.knowledge.files.BaseFile
  * ToolFileParameter may contain one or multiple files. If there are "child"-files
  * these are dependent on the main file, like .bai files depend on the .bam file.
  */
-public class ToolFileParameter extends ToolEntry.ToolParameterOfFiles {
-    public final Class<BaseFile> fileClass
-    public final List<ToolEntry.ToolConstraint> constraints
-    public final String scriptParameterName
-    public final String filenamePatternSelectionTag
-    public final ToolFileParameterCheckCondition checkFile
-    public final String parentVariable
+class ToolFileParameter extends ToolEntry.ToolParameterOfFiles {
+    final Class<BaseFile> fileClass
+    final List<ToolEntry.ToolConstraint> constraints
+    final String scriptParameterName
+    final String filenamePatternSelectionTag
+    final ToolFileParameterCheckCondition checkFile
+    final String parentVariable
     private List<ToolFileParameter> childFiles
 
-    public ToolFileParameter(Class<BaseFile> fileClass, List<ToolEntry.ToolConstraint> constraints, String scriptParameterName, ToolFileParameterCheckCondition checkFile) {
+    ToolFileParameter(Class<BaseFile> fileClass, List<ToolEntry.ToolConstraint> constraints, String scriptParameterName, ToolFileParameterCheckCondition checkFile) {
         this(fileClass, constraints, scriptParameterName, checkFile, Constants.DEFAULT, null, null)
     }
 
-        public ToolFileParameter(Class<BaseFile> fileClass, List<ToolEntry.ToolConstraint> constraints, String scriptParameterName, ToolFileParameterCheckCondition checkFile, String filenamePatternSelectionTag, List<ToolFileParameter> childFiles, String parentVariable) {
-            super(scriptParameterName)
-            this.fileClass = fileClass
-            this.constraints = constraints != null ? constraints : new LinkedList<ToolEntry.ToolConstraint>()
-            this.scriptParameterName = scriptParameterName
-            this.checkFile = checkFile
-            this.filenamePatternSelectionTag = filenamePatternSelectionTag
-            this.childFiles = childFiles
-            if (this.childFiles == null) this.childFiles = new LinkedList<>()
-            this.parentVariable = parentVariable
-        }
+    ToolFileParameter(Class<BaseFile> fileClass, List<ToolEntry.ToolConstraint> constraints, String scriptParameterName, ToolFileParameterCheckCondition checkFile, String filenamePatternSelectionTag, List<ToolFileParameter> childFiles, String parentVariable) {
+        super(scriptParameterName)
+        this.fileClass = fileClass
+        this.constraints = constraints != null ? constraints : new LinkedList<ToolEntry.ToolConstraint>()
+        this.scriptParameterName = scriptParameterName
+        this.checkFile = checkFile
+        this.filenamePatternSelectionTag = filenamePatternSelectionTag
+        this.childFiles = childFiles
+        if (this.childFiles == null) this.childFiles = new LinkedList<>()
+        this.parentVariable = parentVariable
+    }
 
-    public ToolFileParameter clone() {
+    ToolFileParameter clone() {
         List<ToolEntry.ToolConstraint> _con = new LinkedList<ToolEntry.ToolConstraint>();
         for (ToolEntry.ToolConstraint tc : constraints) {
             _con.add(tc.clone())
@@ -50,7 +50,7 @@ public class ToolFileParameter extends ToolEntry.ToolParameterOfFiles {
     }
 
     @Override
-    public boolean equals(Object o) {
+    boolean equals(Object o) {
         //Backed by test
         if (this.is(o)) return true
         if (o == null || getClass() != o.getClass()) return false
@@ -81,17 +81,17 @@ public class ToolFileParameter extends ToolEntry.ToolParameterOfFiles {
     }
 
     @Override
-    public List<ToolEntry.ToolParameterOfFiles> getFiles() {
+    List<ToolEntry.ToolParameterOfFiles> getFiles() {
         return childFiles
     }
 
     @Override
-    public List<ToolEntry.ToolParameterOfFiles> getAllFiles() {
+    List<ToolEntry.ToolParameterOfFiles> getAllFiles() {
         return (files.collect { it.getAllFiles() }.flatten() + [this]) as List<ToolFileParameter>
     }
 
     @Override
-    public boolean hasSelectionTag() {
+    boolean hasSelectionTag() {
         return !filenamePatternSelectionTag.equals(Constants.DEFAULT)
     }
 

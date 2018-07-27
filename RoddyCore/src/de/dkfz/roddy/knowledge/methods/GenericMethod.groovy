@@ -21,6 +21,7 @@ import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
 import static de.dkfz.roddy.execution.jobs.JobConstants.*
@@ -380,13 +381,20 @@ class GenericMethod {
         return outputObject;
     }
 
-    private FileObject createOutputFile(ToolFileParameter tparm) {
-        ToolFileParameter fileParameter = tparm;
+    private FileObject createOutputFile(ToolFileParameter fileParameter) {
         BaseFile bf = convertToolFileParameterToBaseFile(fileParameter)
         for (ToolFileParameter childFileParameter in (fileParameter.getFiles() as List<ToolFileParameter>)) {
             try {
                 if (childFileParameter.parentVariable == null) {
-                    continue;
+                    throw new ConfigurationError(
+                            ["Children of a file parameters need a 'variable' field.",
+                             "tool name = ${toolName}",
+                             "file parameter class = ${fileParameter.fileClass}",
+                             "file class = ${childFileParameter.fileClass}",
+                             "script parameter name = ${childFileParameter.scriptParameterName}"
+                            ].join("\n\t"),
+                            null as String,
+                            null)
                 }
                 Field _field = null;
                 Method _method = null;
@@ -401,7 +409,8 @@ class GenericMethod {
                 }
                 if (_field == null && _method == null) {
                     try {
-                        context.addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_FIELDINACCESSIBLE.expand("Class ${bf.getClass().getName()} field ${childFileParameter.parentVariable}"));
+                        context.addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_FIELDINACCESSIBLE.
+                                expand("tool $toolName, class ${bf.getClass().getName()}, field ${childFileParameter.parentVariable}"));
                     } catch (Exception ex) {
                     }
                     continue;
@@ -412,8 +421,8 @@ class GenericMethod {
                     _field.set(bf, childFile);
                 else
                     _method.invoke(bf, childFile);
-            } catch (Exception ex) {
-                logger.warning(ex as String)
+            } catch (ConfigurationError ex) {
+                context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand(ex.message))
             }
         }
         return fileParameter.fileClass.cast(bf) as FileObject;
@@ -454,7 +463,8 @@ class GenericMethod {
             if (!outputFileGroupIndices) {
                 throw new RuntimeException("A tool which outputs a filegroup with index values needs to be called properly! Pass index values in the call.")
             }
-            ToolFileParameter autoToolFileParameter = new ToolFileParameter(tfg.genericFileClass, [], tfg.scriptParameterName, new ToolFileParameterCheckCondition(true), tfg.selectiontag, null, null)
+            ToolFileParameter autoToolFileParameter =
+                    new ToolFileParameter(tfg.genericFileClass, [], tfg.scriptParameterName, new ToolFileParameterCheckCondition(true), tfg.selectiontag, null, null)
             for (Object index in outputFileGroupIndices) {
                 BaseFile bf = convertToolFileParameterToBaseFile(autoToolFileParameter, index.toString())
                 filesInGroup << bf
@@ -527,12 +537,11 @@ class GenericMethod {
                 throw new RuntimeException("Could not find valid constructor for type  ${fileParameter?.fileClass} with input ${firstInputFile?.class}.");
             } else {
                 BaseFile.ConstructionHelperForGenericCreation helper = new BaseFile.ConstructionHelperForGenericCreation(firstInputFile, allInputFiles as List<FileObject>, calledTool, toolName, fileParameter.scriptParameterName, fileParameter.filenamePatternSelectionTag, fileGroupIndexValue, firstInputFile.fileStage, null);
-                if(jobConfiguration) helper.setJobConfiguration(jobConfiguration)
+                if (jobConfiguration) helper.setJobConfiguration(jobConfiguration)
                 bf = c.newInstance(helper);
             }
-        } catch (Exception ex) {
-            context.addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_NOCONSTRUCTOR.expand("Error during constructor call."));
-            throw (ex);
+        } catch (InvocationTargetException ex) {
+            throw(ex.targetException)
         }
 
         if (!fileParameter.checkFile.evaluate(context))

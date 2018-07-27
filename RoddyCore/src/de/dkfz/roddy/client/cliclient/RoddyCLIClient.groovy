@@ -66,7 +66,7 @@ public class RoddyCLIClient {
         }
     }
 
-    public static void parseStartupMode(CommandLineCall clc) {
+    static void startMode(CommandLineCall clc) {
         //TODO Convert to CommandLineCall
         String[] args = clc.getArguments();
         switch (clc.startupMode) {
@@ -198,7 +198,8 @@ public class RoddyCLIClient {
 
     static Analysis loadAnalysisOrFail(CommandLineCall commandLineCall) {
         if (commandLineCall.parameters.size() < 2) {
-            logger.postAlwaysInfo("There were no dataset identifiers set, cannot run workflow."); return null;
+            logger.postAlwaysInfo("There were no dataset identifiers set, cannot run workflow.")
+            return null
         }
         return loadAnalysisOrFail(commandLineCall.analysisID)
     }
@@ -215,23 +216,23 @@ public class RoddyCLIClient {
         return analysis
     }
 
-    public static void checkConfigurationErrorsAndMaybePrintAndFail(Configuration configuration) {
+    static void checkConfigurationErrorsAndMaybePrintAndFail(Configuration configuration) {
         if (configuration.hasErrors()) {
             StringBuilder sb = new StringBuilder();
             printConfigurationLoadErrors(configuration, sb, 0, Constants.ENV_LINESEPARATOR)
             String errorText = ConsoleStringFormatter.getFormatter().formatAll(sb.toString())
             if (Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors)) {
                 logger.severe("There were configuration errors, but they will be ignored (--${RoddyStartupOptions.ignoreconfigurationerrors.name()} is set)")
-                System.out.println(errorText)
+                System.err.println(errorText)
             } else {
                 logger.severe("There were configuration errors and Roddy will not start. Consider using --${RoddyStartupOptions.ignoreconfigurationerrors.name()} to ignore errors.")
-                System.out.println(errorText)
+                System.err.println(errorText)
                 Roddy.exit(1)
             }
         }
     }
 
-    public static void printPluginReadme(CommandLineCall commandLineCall) {
+    static void printPluginReadme(CommandLineCall commandLineCall) {
         Analysis analysis = loadAnalysisOrFail(commandLineCall)
 
         def text = analysis.getReadmeFile()?.text
@@ -241,7 +242,7 @@ public class RoddyCLIClient {
         }
     }
 
-    public static void printAnalysisXML(CommandLineCall commandLineCall) {
+    static void printAnalysisXML(CommandLineCall commandLineCall) {
         Analysis analysis = loadAnalysisOrFail(commandLineCall)
         def content = analysis.getConfiguration().getPreloadedConfiguration()
 

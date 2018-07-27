@@ -77,7 +77,7 @@
 //
 //    void testValidateConfiguration() {
 //        CommandLineCall properCall = new CommandLineCall([RoddyStartupModes.validateconfig.name(), TESTCONFIG] as List<String>);
-//        RoddyCLIClient.parseStartupMode(properCall);
+//        RoddyCLIClient.startMode(properCall);
 //    }
 //
 //    void testListWorkflows() {
@@ -85,9 +85,9 @@
 //        CommandLineCall properCallFiltered = new CommandLineCall([RoddyStartupModes.listworkflows.name(), "testProject"] as List<String>);
 //        CommandLineCall properCallFilteredShortlist = new CommandLineCall([RoddyStartupModes.listworkflows.name(), "--shortlist"] as List<String>);
 //        assert (properCall.startupMode == RoddyStartupModes.listworkflows);
-//        RoddyCLIClient.parseStartupMode(properCall);
-//        RoddyCLIClient.parseStartupMode(properCallFiltered);
-//        RoddyCLIClient.parseStartupMode(properCallFilteredShortlist);
+//        RoddyCLIClient.startMode(properCall);
+//        RoddyCLIClient.startMode(properCallFiltered);
+//        RoddyCLIClient.startMode(properCallFilteredShortlist);
 //    }
 //
 //    void testListDatasets() {

@@ -18,7 +18,6 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FilenameFilter;
 import java.util.*;
 
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA;

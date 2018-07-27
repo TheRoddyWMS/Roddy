@@ -59,11 +59,17 @@ class GenericMethodTest {
     @Test
     @Deprecated
     void testCreateOutputFileGroupWithSubFiles() {
+        Class<BaseFile> afileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass("AFile", BaseFile as Class<FileObject>)
         def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, [
-                new ToolFileParameter(LibrariesFactory.getInstance().loadRealOrSyntheticClass("AFile", BaseFile as Class<FileObject>), null, "PARMA", new ToolFileParameterCheckCondition(true)),
-                new ToolFileParameter(LibrariesFactory.getInstance().loadRealOrSyntheticClass("AFile", BaseFile as Class<FileObject>), null, "PARMB", new ToolFileParameterCheckCondition(true))
+                new ToolFileParameter(afileClass, null, "PARMA", new ToolFileParameterCheckCondition(true)),
+                new ToolFileParameter(afileClass, null, "PARMB", new ToolFileParameterCheckCondition(true))
         ], "APARM", DEFAULT)
-        FileGroup fg = new GenericMethod("testTool", null, getBaseFile(), null).createOutputFileGroup(tfg) as FileGroup
+        BaseFile baseFile = getBaseFile()
+        FilenamePattern aparmFp = new OnScriptParameterFilenamePattern(afileClass, "testTool", "PARMA", "blabla")
+        FilenamePattern bparmFp = new OnScriptParameterFilenamePattern(afileClass, "testTool", "PARMB", "blubbiblub")
+        baseFile.executionContext.configuration.filenamePatterns.add(aparmFp)
+        baseFile.executionContext.configuration.filenamePatterns.add(bparmFp)
+        FileGroup fg = new GenericMethod("testTool", null, baseFile, null).createOutputFileGroup(tfg) as FileGroup
         assert fg.filesInGroup.size() == 2
     }
 

@@ -17,7 +17,6 @@ import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.Job;
 import de.dkfz.roddy.execution.jobs.JobState;
-import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import java.io.File;
@@ -25,8 +24,9 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+
+import static de.dkfz.roddy.tools.RoddyIOHelperMethods.getStackTraceAsString;
 
 
 /**
@@ -157,10 +157,6 @@ public class Analysis {
         return getRuntimeService().getOutputBaseDirectory(this);
     }
 
-    public List<DataSet> getListOfDataSets() {
-        return getRuntimeService().getListOfPossibleDataSets(this);
-    }
-
     public DataSet getDataSet(String dataSetID) {
         // TODO: The avoidRecursion variable is more or less a hack. It work
         for (DataSet d : getRuntimeService().getListOfPossibleDataSets(this, true))
@@ -287,15 +283,6 @@ public class Analysis {
         return sortedMap;
     }
 
-    /**
-     * Convenience accessor to runtimeService
-     *
-     * @return
-     */
-    public List<DataSet> getListOfPossibleDataSets() {
-        return runtimeService.getListOfPossibleDataSets(this);
-    }
-
     @Deprecated
     public List<DataSet> loadDatasetsWithFilter(List<String> pidFilters) {
         return loadDatasetsWithFilter(pidFilters, false);
@@ -409,7 +396,6 @@ public class Analysis {
     protected void executeRun(ExecutionContext context, boolean preventLoggingOnQueryStatus) {
         logger.rare("" + context.getExecutionContextLevel());
         String datasetID = context.getDataSet().getId();
-        Exception eCopy = null;
         try {
 
             boolean isExecutable = prepareExecution(context);
@@ -443,18 +429,13 @@ public class Analysis {
                         if (successfullyExecuted)
                             finallyStartJobsOfContext(context);
                     }
-                } catch (ConfigurationError cd) {
-                    successfullyExecuted = false;
-                    throw cd;
                 } catch (Exception ex) {
-                    // (Maybe) abort jobs in strict mode
-                    logger.warning(ex.getMessage());
                     successfullyExecuted = false;
                     throw ex;
                 } finally {
 
-                    if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) { //Clean up
-                        //Query file validity of all files
+                    if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) { // Clean up
+                        // Query file validity of all files
                         FileSystemAccessProvider.getInstance().validateAllFilesInContext(context);
                         if (context.getExecutionDirectory().getName().contains(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX))
                             FileSystemAccessProvider.getInstance().removeDirectory(context.getExecutionDirectory());
@@ -466,20 +447,14 @@ public class Analysis {
                     }
                 }
             }
-        } catch (ConfigurationError ce) {
-            // Errors related to e.g. configuration mistakes which came up during runtime.
-//            eCopy = ce;
+        } catch (ConfigurationError e) {
+            logger.sometimes(e.getMessage() + "\n" + getStackTraceAsString(e));
+            context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand(e.getMessage()));
         } catch (Exception e) {
-            eCopy = e;
-            context.addErrorEntry(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e));
-
+            logger.always("An unknown / unhandled exception occurred: '" + e.getLocalizedMessage() + "'");
+            logger.always(e.getMessage() + "\n" + getStackTraceAsString(e));
+            context.addErrorEntry(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.getMessage()));
         } finally {
-            if (eCopy != null) {
-                logger.always("An unknown / unhandled exception occurred: '" + eCopy.getLocalizedMessage() + "'");
-                // This error should always be visible fully. We have a lot of known errors, which are properly catched. So unknown things should be visible.
-                logger.always(RoddyIOHelperMethods.getStackTraceAsString(eCopy));
-            }
-
             // Look up errors when jobs are executed directly and when there were any started jobs.
             if (context.getStartedJobs().size() > 0) {
                 String failedJobs = "";
@@ -488,22 +463,13 @@ public class Analysis {
                         failedJobs += "\n\t" + job.getJobID() + ",\t" + job.getJobName();
                 }
                 if (failedJobs.length() > 0)
-                    context.addErrorEntry(ExecutionContextError.EXECUTION_JOBFAILED.expand("One or more jobs failed to execute:" + failedJobs + "\n\tPlease check extended logs in ~/.roddy/logs to see more details."));
+                    context.addErrorEntry(ExecutionContextError.EXECUTION_JOBFAILED.expand("One or more jobs failed to execute:" + failedJobs));
             }
-
-            // It is very nice now, that a lot of error messages will be printed. But how about colours?
-            // Normally the CLI client takes care of it.
 
             // Print out configuration errors (for context configuration! Not only for analysis)
             // Don't know, if this is the right place.
-            if (context.getConfiguration().hasErrors()) {
-                StringBuilder messages = new StringBuilder();
-                messages.append("There were configuration errors for dataset " + datasetID);
-                for (ConfigurationLoadError configurationLoadError : context.getConfiguration().getListOfLoadErrors()) {
-                    messages.append("\n\t" + configurationLoadError.toString());
-                }
-                logger.always(messages.toString());
-            }
+            if (context.getConfiguration().hasErrors())
+                logger.always(getLoadErrorText(context));
 
             // Print out informational messages like infos, warnings, errors
             // Only print them out if !QUERY_STATUS and the runmode is testrun or testrerun.
@@ -513,11 +479,23 @@ public class Analysis {
         }
     }
 
+    private static String getLoadErrorText(ExecutionContext context) {
+        StringBuilder messages = new StringBuilder();
+        messages.append("There were configuration errors for dataset " + context.dataSet.getId());
+        for (ConfigurationLoadError configurationLoadError : context.getConfiguration().getListOfLoadErrors()) {
+            messages.append("\n\t*" + configurationLoadError.toString());
+        }
+        return messages.toString();
+    }
+
     private void printMessagesForContext(ExecutionContext context) {
         String datasetID = context.dataSet.getId();
         if (context.hasInfos()) printMessages(context, datasetID, "infos");
         if (context.hasWarnings()) printMessages(context, datasetID, "warnings");
         if (context.hasErrors()) printMessages(context, datasetID, "errors");
+        if (context.hasWarnings() || context.hasErrors())
+            logger.always("\nPlease check extended logs in " + logger.getCentralLogFile() + " for more details.");
+
     }
 
     private void printMessages(ExecutionContext context, String datasetID, String title) {
