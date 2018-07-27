@@ -1,9 +1,13 @@
+.. Links
+.. _`Github flow`: https://guides.github.com/introduction/flow/
+.. _`semantic versioning`: https://semver.org/
+
 Developers guide
 ----------------
 
 Code guidelines
 ~~~~~~~~~~~~~~~
-Roddy has no specific development or code style.
+Roddy has no specific development or code style (yet) .
 Here, we try to collect topics and settings, where we think that they might be important.
 
 Code Format
@@ -12,12 +16,10 @@ We are mainly using IntelliJ IDEA and use the default settings for code formatti
 
 Collections as return types
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 By default, we do not return a copy (neither shallow, nor deep) of the Collection object. Be careful, not to modify the collection, if you do not change the contents of the object.
 
 Keep it clean and simple
 ^^^^^^^^^^^^^^^^^^^^^^^^
-
 We do not really enforce rules, but we try to keep things simple and readable.
 
 - If a code block is not readable, try to make a method out of it.
@@ -31,10 +33,10 @@ We know, that we have a lot of issues in our codebase, but we listen to every im
 Development model
 ~~~~~~~~~~~~~~~~~
 
-For development we follow the standard git flow with feature branches
-getting merged into the develop branch and merge into master branch upon
-release. Currently we are discussing if we remove the development branch.
-Roddys versioning system makes it easy to go back to previous versions.
+For development we follow the standard `Github flow`_ with feature branches
+getting merged directly back into the master branch. Releasing in simply done
+by putting a tag on the master branch and let the continuous integration
+pipeline (Travis) deploy a release archive to Github releases
 
 Settings for Groovy classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,42 +44,48 @@ Settings for Groovy classes
 We will not accept Groovy classes without the @CompileStatic annotation. If you are in the rare situation that you need dynamic dispatch on more than
 the object (this) itself, you can mark the affected methods with @CompileDynamic.
 
+API documentation
+~~~~~~~~~~~~~~~~~
+We are working on improving our API documentation. The current the API is not build automatically because of problems of groovydoc with Java lambda
+expressions..
+
 Roddy versioning scheme
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. Note::
-
-    NOTE: The versioning scheme is under revision and may change in the future.
-    We consider using a versioning plugin for Gradle which calculates the
-    proper version from the commit messages and tags. E.g.
-
-    .. code-block:: Bash
-
-       ./gradlew printVersion
-
+We are using `semantic versioning`_.
 
 Roddy version numbers consist of three entries: $major.$minor.$build.
-The build number is also sometimes called patch number. Release numbers
-are added to the repository.
+The build number is also sometimes called patch number.
 
-The $major entry is used to mark huge changes in the Roddy core
-functions. Backward compatibility is most likely not granted and Roddy
+The $major entry is used to mark API-breaking changes in the Roddy core
+functions. Backward compatibility is not granted and Roddy
 will not execute plugins built with different $major versions.
 
-The $minor entry marks smaller changes which might affect your plugin.
-Backward compatibility might be affected and Roddy will warn you when a
-plugin was built with another $minor version. Only decrease this value,
-when you increase the $major version. Likewise, you should only decrease
-the build number, if you increase either the $major or $minor version.
+The $minor entry marks smaller changes which extend the Roddy API.
+Backward compatibility of Roddy to the plugin should not be affected, such
+that your old plugins should run with the newer Roddy version.
 
 The combination of $major.$minor can somehow be seen as the API level
 of Roddy. For a “full API level” the plugin versions of “PluginBase” and
 “DefaultPlugin” need to be considered as well.
 
-Basically the same versioning convention applies to the plugins, with
-some extension. If we have to maintain old plugin version with bugfixes or
-feature backports for specific projects in production, the we usually
-release version numbers with an additional "-$revision” suffix.
+Basically the same versioning convention applies to the plugins, but note
+that we advise authors to base the plugin versions not on the Roddy core
+versions, but only on the semantics of the analysis. The details have not
+yet been fully worked out, but basically this means,
+
+  * modified output files warrant a major level increase
+  * added output files warrant a minor level increase
+  * bug-fixes warrant a patch-level increase
+
+Bug-fixes must not change the output -- otherwise they represent major version
+bumps. Plugins also support a "revision" that is indicated as a "-number" suffix
+to the plugin version. The revisions usually contain the bug-fixes. If we have to maintain
+old plugin version just with bugfixes feature backports for specific projects in production,
+then we usually release version numbers with an additional "-$revision” suffix.
+Such revisions will therefore at most correspond to minor-level increases. Furthermore,
+note that specific plugins may not have followed the `semantic versioning`_ convention.
+In the end versioning is in the responsibility of the plugin maintainer.
 
 Importantly, if Roddy sees multiple plugin directories for the same plugin
 only differing in the revision number, Roddy may automatically upgrade

@@ -38,6 +38,12 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
+    'sphinxcontrib.plantuml',
+    'javasphinx',
+    # 'sphinxcontrib-seqdiag',
+    # 'sphinxcontrib-actdiag',
+    # 'sphinxcontrib-nwdiag',
+    # 'sphinxcontrib-blockdiag',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -55,7 +61,7 @@ master_doc = 'index'
 # General information about the project.
 project = u'Roddy'
 copyright = u'2017, DKFZ'
-author = u'Michael Heinold, Philip Kensche, Florian Kärcher'
+author = u'Michael Heinold, Philip R. Kensche, Florian Kärcher'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
