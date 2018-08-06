@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.knowledge.files
 
+import de.dkfz.roddy.AvailableFeatureToggles
+import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextLevel
@@ -202,7 +204,6 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         Class<BaseFile> fileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(_class, BaseFile as Class<FileObject>) as Class<BaseFile>
         return constructSourceFile(fileClass, new File(path), context)
     }
-
 
     /**
      * Just another name for getSourceFile()
@@ -685,11 +686,15 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
             }.flatten().join("\n\t")
             sb << "\nNote these may not have matched because they may be specific for a tool!"
 
-            throw new ConfigurationError(sb.toString(), baseFile.executionContext.configuration)
+            if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.FailOnAutoFilenames))
+                throw new ConfigurationError(sb.toString(), baseFile.executionContext.configuration)
+            else
+                logger.sometimes(sb.toString())
         } else {
             // Check whether the path exists and create it if necessary.
             if (context.getExecutionContextLevel().allowedToSubmitJobs && !FileSystemAccessProvider.getInstance().checkDirectory(patternResult.x.getParentFile(), context, true)) {
-                throw new IOException("Output path could not be created for file: " + baseFile)
+                if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.FailOnAutoFilenames))
+                    throw new IOException("Output path could not be created for file: " + baseFile)
             }
         }
 
