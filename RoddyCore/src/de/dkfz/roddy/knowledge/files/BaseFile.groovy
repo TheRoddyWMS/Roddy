@@ -688,6 +688,8 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
 
             if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.FailOnAutoFilenames))
                 throw new ConfigurationError(sb.toString(), baseFile.executionContext.configuration)
+            else
+                logger.sometimes(sb.toString())
         } else {
             // Check whether the path exists and create it if necessary.
             if (context.getExecutionContextLevel().allowedToSubmitJobs && !FileSystemAccessProvider.getInstance().checkDirectory(patternResult.x.getParentFile(), context, true)) {
