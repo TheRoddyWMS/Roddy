@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016, 2018 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
@@ -16,8 +16,8 @@ public class Constants {
     // Application constants
     /////////////////////////
 
-    public static final String APP_CURRENT_VERSION_STRING = "3.0.9";
-    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Tue Aug 21 15:41:18 CEST 2018";
+    public static final String APP_CURRENT_VERSION_STRING = "3.0.10";
+    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Tue Aug 21 18:22:05 CEST 2018";
     public static final String APP_PROPERTY_JOB_MANAGER_CLASS = "jobManagerClass";
     public static final String APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS = "fileSystemAccessManagerClass";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_CLASS = "executionServiceClass";
