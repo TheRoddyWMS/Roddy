@@ -91,7 +91,7 @@ class NativeWorkflow extends Workflow {
             ClassLoader classLoader = LibrariesFactory.getGroovyClassLoader()
             Class<?> targetJobManagerClass = classLoader.loadClass(clz)
             Constructor c = targetJobManagerClass.getConstructor(BEExecutionService.class, JobManagerOptions.class)
-            return (BatchEuphoriaJobManager) c.newInstance(ExecutionService.getInstance(), JobManagerOptions.create().setStrictMode(false).build())
+            return (BatchEuphoriaJobManager) c.newInstance(ExecutionService.getInstance(), JobManagerOptions.create().build())
         } catch (NullPointerException e) {
             context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("No command factory class is set."))
             return null
@@ -112,7 +112,7 @@ class NativeWorkflow extends Workflow {
         String nativeWorkflowScriptWrapper = configuration.getProcessingToolPath(context, nativeScriptID).absolutePath
         Job wrapperJob = new Job(context, context.getTimestampString() + "_nativeJobWrapper:" + toolID, toolID, null)
 
-        DirectSynchronousExecutionJobManager dcfac = new DirectSynchronousExecutionJobManager(ExecutionService.getInstance(), JobManagerOptions.create().setStrictMode(false).build())
+        DirectSynchronousExecutionJobManager dcfac = new DirectSynchronousExecutionJobManager(ExecutionService.getInstance(), JobManagerOptions.create().build())
         DirectCommand wrapperJobCommand = new DirectCommand(dcfac, wrapperJob, [], nativeWorkflowScriptWrapper)
         String submissionCommand = targetJobManager.getSubmissionCommand()
         if (submissionCommand == null) {
@@ -152,10 +152,10 @@ class NativeWorkflow extends Workflow {
         // Read in all calls and check if there is an inline script (and store that)
         for (String call : calls) {
             BEGenJI jInfo = targetJobManager.parseGenericJobInfo(call);
-            callsByID[jInfo.id] = jInfo;
-            virtualDependencies[jInfo.id] = jInfo.parentJobIDs
+            callsByID[jInfo.jobID.toString()] = jInfo;
+            virtualDependencies[jInfo.jobID.toString()] = jInfo.parentJobIDs
 
-            File iScript = inlineScripts.find { File file -> file.name.endsWith(jInfo.id) }
+            File iScript = inlineScripts.find { File file -> file.name.endsWith(jInfo.jobID.toString()) }
             if (!iScript) continue
 
             configuration.tools.add(new ToolEntry(iScript.name.replace(".", "_"), "inlineScripts", iScript.name))
@@ -172,7 +172,7 @@ class NativeWorkflow extends Workflow {
         for (BEGenJI jInfo : callsByID.values()) {
             def convertedJob = new NativeJob(new GenericJobInfo(context, jInfo).toJob())
             convertedJobs << convertedJob
-            jobsByVirtualID[jInfo.id] = convertedJob
+            jobsByVirtualID[jInfo.jobID.toString()] = convertedJob
             jInfoByJob[convertedJob] = jInfo
         }
 

@@ -175,7 +175,7 @@ abstract class ExecutionService implements BEExecutionService {
 
         Job wrapperJob = new Job(context, context.getTimestampString() + "_directTool:" + toolID, toolID, parameters)
         DirectSynchronousExecutionJobManager jobManager =
-                new DirectSynchronousExecutionJobManager(getInstance(), JobManagerOptions.create().setStrictMode(false).build())
+                new DirectSynchronousExecutionJobManager(getInstance(), JobManagerOptions.create().build())
         wrapperJob.setJobManager(jobManager)
         BEJobResult result = wrapperJob.run(false)
 

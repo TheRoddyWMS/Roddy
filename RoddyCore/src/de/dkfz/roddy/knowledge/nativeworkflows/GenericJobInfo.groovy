@@ -43,7 +43,7 @@ class GenericJobInfo {
     GenericJobInfo(ExecutionContext context, BEGenJI jInfo, String inlineScript = null, BufferUnit bufferUnit = BufferUnit.G) {
         executionContext = context
         jobName = jInfo.jobName
-        id = jInfo.id
+        id = jInfo.jobID
         parameters = jInfo.parameters
         parentJobIDs = jInfo.parentJobIDs
         walltime = TimeUnit.fromDuration(jInfo.usedResources.walltime)
