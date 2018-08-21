@@ -706,7 +706,7 @@ abstract class ExecutionService implements BEExecutionService {
                 if (createNew) {
                     RoddyIOHelperMethods.compressDirectory(subFolder, tempFile)
                     // See issue #286
-                    zipMD5File = md5sum
+                    zipMD5File.text = md5sum
                 }
 
                 String newArchiveMD5 = md5sum
