@@ -96,7 +96,7 @@ configurations.all {
 }
 
 dependencies {
-    compile 'com.github.theroddywms:RoddyToolLib:1.0.0'            // MIT
+    compile 'com.github.theroddywms:RoddyToolLib:2.0.0'            // MIT
     // compile 'com.github.theroddywms:RoddyToolLib:develop-SNAPSHOT'    // MIT
     compile 'com.github.theroddywms:BatchEuphoria:0.0.5'           // MIT
     // compile 'com.github.theroddywms:BatchEuphoria:develop-SNAPSHOT'   // MIT
