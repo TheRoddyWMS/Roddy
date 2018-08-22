@@ -166,7 +166,7 @@ class ContextResource extends ExternalResource {
     }
 
     BatchEuphoriaJobManager createMockupJobManager() {
-        new BatchEuphoriaJobManager(new NoNoExecutionService(), JobManagerOptions.create().setStrictMode(false).build()) {
+        new BatchEuphoriaJobManager(new NoNoExecutionService(), JobManagerOptions.create().build()) {
 
             @Override
             BEJobResult submitJob(BEJob job) throws TimeoutException {
