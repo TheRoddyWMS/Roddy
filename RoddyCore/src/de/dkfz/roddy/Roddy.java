@@ -716,8 +716,6 @@ public class Roddy {
         jobManager = (BatchEuphoriaJobManager) first.newInstance(ExecutionService.getInstance()
                 , JobManagerOptions.create()
                         .setCreateDaemon(true)
-                        .setStrictMode(false)
-                        .setTrackUserJobsOnly(trackUserJobsOnly)
                         .setPassEnvironment(applicationProperties.getOrSetBooleanApplicationProperty(Constants.APP_PROPERTY_JOB_MANAGER_PASS_ENVIRONMENT, false))
                         .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
                         .setHoldJobIsEnabled(applicationProperties.getOrSetBooleanApplicationProperty(Constants.APP_PROPERTY_JOB_MANAGER_HOLDJOBS_ON_SUBMISSION, true))
