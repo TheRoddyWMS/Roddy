@@ -20,7 +20,8 @@ import de.dkfz.roddy.config.validation.WholeConfigurationValidator
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.SSHExecutionService
-import de.dkfz.roddy.execution.jobs.BEJob as BEJob
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.execution.jobs.ProcessingParameters
@@ -37,7 +38,7 @@ import static de.dkfz.roddy.client.RoddyStartupModes.*
  * Offers methods for all the command line options (i.e. listworkflows, checkstatus)
  */
 @groovy.transform.CompileStatic
-public class RoddyCLIClient {
+class RoddyCLIClient {
 
     private static LoggerWrapper logger = LoggerWrapper.getLogger(RoddyCLIClient.class.getSimpleName());
 
@@ -66,7 +67,7 @@ public class RoddyCLIClient {
         }
     }
 
-    public static void parseStartupMode(CommandLineCall clc) {
+    static void parseStartupMode(CommandLineCall clc) {
         //TODO Convert to CommandLineCall
         String[] args = clc.getArguments();
         switch (clc.startupMode) {
@@ -196,6 +197,73 @@ public class RoddyCLIClient {
 //        }
     }
 
+    private static void assertIoDirectoryAccessibility(Analysis analysis) {
+        List<String> errors = []
+
+        // Earliest check for valid input and output directories. If they are not accessible or writeable.
+        // The checks are done before the readability tests because we need to check for the raw configuration values
+        // as the next check will already use translated value
+
+        String valueInDir = analysis.configuration.configurationValues.get(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, "").value
+        String valueOutDir = analysis.configuration.configurationValues.get(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, "").value
+
+        if (!valueInDir && !valueOutDir) {
+            errors << "Both the input and output base directories are not set. You must set at least inputBaseDirectory or outputBaseDirectory."
+
+        } else {
+
+            // Fill variable, if it is missing. Log a warning.
+            if (!valueInDir) {
+                logger.always("The input base directory is not set. Taking the path of the output base directory instead.")
+                analysis.configuration.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, valueOutDir, "path"))
+            }
+
+            if (!valueOutDir) {
+                logger.always("The output base directory is not set. Taking the path of the input base directory instead.")
+                analysis.configuration.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, valueInDir, "path"))
+            }
+
+            // Now start with the input directory
+            errors += collectErrorsForInaccessibleDirectory(analysis.getInputBaseDirectory(), "input")
+            errors += collectErrorsForInaccessibleDirectory(analysis.getOutputBaseDirectory(), "output")
+
+            // Out dir needs to be writable
+            if (!FileSystemAccessProvider.instance.isWritable(analysis.getOutputBaseDirectory()))
+                errors << (String) "The output was not writeable at path ${analysis.getOutputBaseDirectory()}."
+        }
+
+        if (errors)
+            throw new ProjectLoaderException((["There were errors in directory access checks:"] + errors).join("\n\t"))
+    }
+
+    private static List<String> collectErrorsForInaccessibleDirectory(File dirToCheck, String dirtype) {
+        List<String> errors = []
+        for (File _dir = dirToCheck; _dir; _dir = _dir.parentFile) {
+            boolean readable = FileSystemAccessProvider.instance.isReadable(_dir)
+            boolean executable = FileSystemAccessProvider.instance.isExecutable(_dir)
+            if (!readable || !executable) {
+                if (!readable && !executable)
+                    errors << (String) "The ${dirtype} directory was neither readable nor executable at path ${_dir}."
+                else if (!readable)
+                    errors << (String) "The ${dirtype} directory was not readable at path ${_dir}."
+                else if (!executable)
+                    errors << (String) "The ${dirtype} directory was not executable at path ${_dir}."
+                break
+            }
+        }
+        return errors
+    }
+
+    static Analysis loadAnalysisAndCheckIoDirectoriesOrFail(CommandLineCall commandLineCall) {
+        return loadAnalysisAndCheckIoDirectoriesOrFail(commandLineCall.analysisID)
+    }
+
+    static Analysis loadAnalysisAndCheckIoDirectoriesOrFail(String analysisID) {
+        Analysis analysis = loadAnalysisOrFail(analysisID)
+        assertIoDirectoryAccessibility(analysis)
+        return analysis
+    }
+
     static Analysis loadAnalysisOrFail(CommandLineCall commandLineCall) {
         if (commandLineCall.parameters.size() < 2) {
             logger.postAlwaysInfo("There were no dataset identifiers set, cannot run workflow."); return null;
@@ -204,18 +272,17 @@ public class RoddyCLIClient {
     }
 
     static Analysis loadAnalysisOrFail(String analysisID) {
-        Analysis analysis = new ProjectLoader().loadAnalysisAndProject(analysisID);
+        Analysis analysis = new ProjectLoader().loadAnalysisAndProject(analysisID)
         if (!analysis) {
             logger.severe("Could not load analysis ${analysisID}")
             Roddy.exit(1)
         }
-
         // This check only applies for analysis configuration files.
         checkConfigurationErrorsAndMaybePrintAndFail(analysis.configuration)
         return analysis
     }
 
-    public static void checkConfigurationErrorsAndMaybePrintAndFail(Configuration configuration) {
+    static void checkConfigurationErrorsAndMaybePrintAndFail(Configuration configuration) {
         if (configuration.hasErrors()) {
             StringBuilder sb = new StringBuilder();
             printConfigurationLoadErrors(configuration, sb, 0, Constants.ENV_LINESEPARATOR)
@@ -231,22 +298,20 @@ public class RoddyCLIClient {
         }
     }
 
-    public static void printPluginReadme(CommandLineCall commandLineCall) {
+    static void printPluginReadme(CommandLineCall commandLineCall) {
         Analysis analysis = loadAnalysisOrFail(commandLineCall)
-
         def text = analysis.getReadmeFile()?.text
         if (text) {
-            println("Print readme file for analysis ${analysis.getName()}: \n\t" + analysis.getReadmeFile());
-            println(text);
+            println("Print readme file for analysis ${analysis.getName()}: \n\t" + analysis.getReadmeFile())
+            println(text)
         }
     }
 
-    public static void printAnalysisXML(CommandLineCall commandLineCall) {
+    static void printAnalysisXML(CommandLineCall commandLineCall) {
         Analysis analysis = loadAnalysisOrFail(commandLineCall)
         def content = analysis.getConfiguration().getPreloadedConfiguration()
-
-        System.out.println("Print analysis XML file for analysis ${analysis.getName()}: \n\t" + content.file);
-        System.out.println(content.text);
+        System.out.println("Print analysis XML file for analysis ${analysis.getName()}: \n\t" + content.file)
+        System.out.println(content.text)
     }
 
     /**
@@ -255,12 +320,12 @@ public class RoddyCLIClient {
      * @param id
      * @return
      */
-    public static boolean validateConfiguration(String id) {
+    static boolean validateConfiguration(String id) {
         Analysis analysis = loadAnalysisOrFail(id)
 
         WholeConfigurationValidator wcv = new WholeConfigurationValidator(analysis.getConfiguration());
-        wcv.validate();
-        printValidationResult(id, analysis.getConfiguration(), wcv);
+        wcv.validate()
+        printValidationResult(id, analysis.getConfiguration(), wcv)
     }
 
     private static void printValidationResult(String id, Configuration configuration, WholeConfigurationValidator wcv) {
@@ -285,7 +350,7 @@ public class RoddyCLIClient {
         System.out.println(ConsoleStringFormatter.getFormatter().formatAll(sb.toString()));
     }
 
-    public static int printConfigurationLoadErrors(Configuration configuration, StringBuilder sb, int i, String separator) {
+    static int printConfigurationLoadErrors(Configuration configuration, StringBuilder sb, int i, String separator) {
         for (ConfigurationLoadError error : configuration.getListOfLoadErrors()) {
             String f = error.configuration?.preloadedConfiguration?.file?.absolutePath
             sb << "#FRED#" << "${i}: ".padLeft(6) << "Load error #CLEAR#"
@@ -300,7 +365,7 @@ public class RoddyCLIClient {
         i
     }
 
-    public static void printReducedRuntimeConfiguration(CommandLineCall commandLineCall) {
+    static void printReducedRuntimeConfiguration(CommandLineCall commandLineCall) {
         Analysis analysis = loadAnalysisOrFail(commandLineCall.analysisID)
 
         ExecutionContext context = new ExecutionContext("DUMMY", analysis, null, ExecutionContextLevel.QUERY_STATUS, null, null, new File("/tmp/Roddy_DUMMY_Directory")) {
@@ -308,14 +373,14 @@ public class RoddyCLIClient {
             String getOutputGroupString() {
                 return "NOGROUP"
             }
-        };
-        System.out.println(ConfigurationConverter.convertAutomatically(context, analysis.getConfiguration()));
+        }
+        System.out.println(ConfigurationConverter.convertAutomatically(context, analysis.getConfiguration()))
     }
 
-    public static void printRuntimeConfiguration(CommandLineCall commandLineCall) {
+    static void printRuntimeConfiguration(CommandLineCall commandLineCall) {
         Analysis analysis = loadAnalysisOrFail(commandLineCall)
 
-        List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(commandLineCall.getArguments()[2].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS);
+        List<ExecutionContext> executionContexts = analysis.run(Arrays.asList(commandLineCall.getArguments()[2].split(SPLIT_COMMA)), ExecutionContextLevel.QUERY_STATUS)
 
         if (commandLineCall.isOptionSet(RoddyStartupOptions.showentrysources)) {
             if (commandLineCall.isOptionSet(RoddyStartupOptions.extendedlist)) {
@@ -324,11 +389,11 @@ public class RoddyCLIClient {
                     def cvalues = it.getAnalysis().getConfiguration().getConfigurationValues()
                     cvalues.getAllValues().each {
                         String id, ConfigurationValue cvalue ->
-                            def inheritanceList = cvalues.getInheritanceList(id);
-                            boolean first = true;
-                            println(id);
+                            def inheritanceList = cvalues.getInheritanceList(id)
+                            boolean first = true
+                            println(id)
                             for (ConfigurationValue iValue : inheritanceList.reverse()) {
-                                println(((first ? "    " : "  * ") + "") + iValue.value.padRight(70).substring(0, 70) + " " + iValue?.getConfiguration()?.getPreloadedConfiguration().file);
+                                println(((first ? "    " : "  * ") + "") + iValue.value.padRight(70).substring(0, 70) + " " + iValue?.getConfiguration()?.getPreloadedConfiguration().file)
                                 first = false
                             }
                     }
@@ -342,9 +407,9 @@ public class RoddyCLIClient {
                             try {
                                 def path = cvalue?.getConfiguration()?.getPreloadedConfiguration()?.file
                                 if (!path) path = "[ Automatically generated by Roddy ]"
-                                println(id.padRight(50).substring(0, 50) + " " + cvalue.value.padRight(70).substring(0, 70) + " " + path);
+                                println(id.padRight(50).substring(0, 50) + " " + cvalue.value.padRight(70).substring(0, 70) + " " + path)
                             } catch (Exception ex) {
-                                println(ex);
+                                println(ex)
                             }
                     }
                 }
@@ -466,27 +531,26 @@ public class RoddyCLIClient {
     }
 
     private static boolean projectIDContains(ProjectTreeItem pti, String filter) {
-        if (!filter) return true;
-        if (pti.icc.id.toLowerCase().contains(filter.toLowerCase())) return true;
+        if (!filter) return true
+        if (pti.icc.id.toLowerCase().contains(filter.toLowerCase())) return true
 
-        boolean found = false;
+        boolean found = false
         if (pti.children.size() > 0)
             for (ProjectTreeItem child : pti.children) {
                 if (projectIDContains(child, filter))
-                    found = true;
+                    found = true
             }
 
         return found;
     }
 
-    public static List<DataSet> listDatasets(CommandLineCall commandLineCall) {
-        Analysis analysis = loadAnalysisOrFail(commandLineCall)
-
+    static List<DataSet> listDatasets(CommandLineCall commandLineCall) {
+        Analysis analysis = loadAnalysisAndCheckIoDirectoriesOrFail(commandLineCall)
         def datasets = analysis.getRuntimeService().getListOfPossibleDataSets(analysis)
         for (DataSet ds : datasets) {
-            System.out.println(String.format("\t%s", ds.getId()));
+            System.out.println(String.format("\t%s", ds.getId()))
         }
-        return datasets;
+        return datasets
     }
 
     static void autoselect(CommandLineCall clc) {
@@ -500,16 +564,14 @@ public class RoddyCLIClient {
             logger.postAlwaysInfo("Roddy API level for ${clc.getAnalysisID()}: ${apiLevel}")
     }
 
-    public static void run(CommandLineCall clc) {
-        Analysis analysis = loadAnalysisOrFail(clc)
-
-        analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.RUN);
+    static void run(CommandLineCall clc) {
+        Analysis analysis = loadAnalysisAndCheckIoDirectoriesOrFail(clc)
+        analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.RUN)
     }
 
-    public static List<ExecutionContext> rerun(CommandLineCall clc) {
-        Analysis analysis = loadAnalysisOrFail(clc)
-
-        List<ExecutionContext> executionContexts = analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.QUERY_STATUS, true);
+    static List<ExecutionContext> rerun(CommandLineCall clc) {
+        Analysis analysis = loadAnalysisAndCheckIoDirectoriesOrFail(clc)
+        List<ExecutionContext> executionContexts = analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.QUERY_STATUS, true)
         return analysis.rerun(executionContexts, false);
     }
 
@@ -517,11 +579,10 @@ public class RoddyCLIClient {
      * Performs a dry run and prints out information about jobs and files which would normally be run or created.
      * @param args
      */
-    public static void testrun(CommandLineCall clc) {
-        Analysis analysis = loadAnalysisOrFail(clc)
+    static void testrun(CommandLineCall clc) {
+        Analysis analysis = loadAnalysisAndCheckIoDirectoriesOrFail(clc)
         List<ExecutionContext> executionContexts =
                 analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.QUERY_STATUS, false)
-
         outputTestrunResult(executionContexts, false)
     }
 
@@ -529,13 +590,11 @@ public class RoddyCLIClient {
      * Performs a dry rerun and prints out information about jobs and files which would normally be run or created.
      * @param args
      */
-    public static void testrerun(CommandLineCall clc) {
-        Analysis analysis = loadAnalysisOrFail(clc)
+    static void testrerun(CommandLineCall clc) {
+        Analysis analysis = loadAnalysisAndCheckIoDirectoriesOrFail(clc)
         List<ExecutionContext> executionContexts =
                 analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.QUERY_STATUS, true)
-
         if (testrerun) executionContexts = analysis.rerun(executionContexts, true)
-
         outputTestrunResult(executionContexts, true)
     }
 
@@ -609,61 +668,61 @@ public class RoddyCLIClient {
      * Can be called in detailed mode to display information about the current execution context.
      * @param args
      */
-    public static void checkWorkflowStatus(CommandLineCall clc) {
-        final String separator = Constants.ENV_LINESEPARATOR;
+    static void checkWorkflowStatus(CommandLineCall clc) {
+        final String separator = Constants.ENV_LINESEPARATOR
 
-        Analysis analysis = loadAnalysisOrFail(clc)
+        Analysis analysis = loadAnalysisAndCheckIoDirectoriesOrFail(clc)
         def analysisID = clc.analysisID
 
         List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getParameters()[1].split(SPLIT_COMMA).toList() : null
         if (dFilter == null) {
             println("There were no valid pids specified.")
-            return;
+            return
         }
 
-        Map<DataSet, Boolean> dataSets = analysis.checkStatus(dFilter, true);
+        Map<DataSet, Boolean> dataSets = analysis.checkStatus(dFilter, true)
 
         String outputDirectory = analysis.getOutputBaseDirectory().getAbsolutePath()
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder()
         sb << "#FWHITE##BGBLUE#Listing datasets for analysis ${analysisID}:#CLEAR#" << Constants.ENV_LINESEPARATOR;
         sb << "Note, that only 'valid' information is processed and display. Empty execution folders and ";
-        sb << "folders containing no job information will be skipped." << Constants.ENV_LINESEPARATOR << Constants.ENV_LINESEPARATOR << "[outDir]: " << outputDirectory << Constants.ENV_LINESEPARATOR;
+        sb << "folders containing no job information will be skipped." << Constants.ENV_LINESEPARATOR << Constants.ENV_LINESEPARATOR << "[outDir]: " << outputDirectory << Constants.ENV_LINESEPARATOR
 
         if (!dataSets)
-            return;
+            return
 
         //Get padding length for pid.
         int padSize = dataSets.keySet().max { DataSet ds -> ds.id.length(); }.id.length() + 2
-        if (padSize < 10) padSize = 10;
+        if (padSize < 10) padSize = 10
 
-        sb << "Dataset".padRight(padSize) << "  State     " << "#    " << "OK   " << "ERR  " << "User      " << "Folder / Message" << separator;
+        sb << "Dataset".padRight(padSize) << "  State     " << "#    " << "OK   " << "ERR  " << "User      " << "Folder / Message" << separator
 
         for (DataSet ds in dataSets.keySet()) {
-            boolean running = dataSets.get(ds);
-            boolean datasetprinted = false;
-            List<AnalysisProcessingInformation> listOfAPIsToPrint = [];
+            boolean running = dataSets.get(ds)
+            boolean datasetprinted = false
+            List<AnalysisProcessingInformation> listOfAPIsToPrint = []
             if (clc.isOptionSet(RoddyStartupOptions.extendedlist)) {
-                listOfAPIsToPrint = ds.getProcessingInformation(analysis);
+                listOfAPIsToPrint = ds.getProcessingInformation(analysis)
             } else {
-                listOfAPIsToPrint << ds.getLatestValidProcessingInformation(analysis);
+                listOfAPIsToPrint << ds.getLatestValidProcessingInformation(analysis)
             }
             for (AnalysisProcessingInformation information : listOfAPIsToPrint) {
 
-                ExecutionContext context = null;
+                ExecutionContext context = null
                 if (information)
-                    context = information.getDetailedProcessingInfo();
+                    context = information.getDetailedProcessingInfo()
 
                 if (!datasetprinted) {
-                    sb << ds.getId().padRight(padSize) << "  ";
-                    datasetprinted = true;
+                    sb << ds.getId().padRight(padSize) << "  "
+                    datasetprinted = true
                 } else {
-                    sb << "".padRight(padSize) << "  ";
+                    sb << "".padRight(padSize) << "  "
                 }
 
                 if (context == null) {
-                    sb << "UNSTARTED 0    0    0".padRight(25) << "Not executed (or the Roddy log files were deleted).#CLEAR#" << separator;
-                    continue;
+                    sb << "UNSTARTED 0    0    0".padRight(25) << "Not executed (or the Roddy log files were deleted).#CLEAR#" << separator
+                    continue
                 }
 
                 def userID = context.getExecutingUser().padRight(10).substring(0, 9)
@@ -671,68 +730,65 @@ public class RoddyCLIClient {
                 if (clc.isOptionSet(RoddyStartupOptions.shortlist)) execFolder = execFolder.replace(outputDirectory, "[outDir]")
 
                 if (running) {
-                    sb << "RUNNING".padRight(25) << userID << " " << execFolder << separator;
+                    sb << "RUNNING".padRight(25) << userID << " " << execFolder << separator
                 } else {
                     //Check for errors in the last run.
                     //Check if there were errornous jobs
-                    List<Job> listOfJobs = context.getExecutedJobs();
-                    int failedJobs = 0;
-                    Map<JobState, Integer> counter = [:];
+                    List<Job> listOfJobs = context.getExecutedJobs()
+                    int failedJobs = 0
+                    Map<JobState, Integer> counter = [:]
                     for (it in listOfJobs) {
                         if (it.getJobState() == JobState.FAILED) {
-                            failedJobs++;
-                            counter[it.getJobState()] = counter.get(it.getJobState(), 0) + 1;
+                            failedJobs++
+                            counter[it.getJobState()] = counter.get(it.getJobState(), 0) + 1
                         }
                     }
-                    String state = failedJobs > 0 ? "FAILED" : "OK";
+                    String state = failedJobs > 0 ? "FAILED" : "OK"
 
                     int startedJobCnt = listOfJobs.size()
-                    sb << state.padRight(10) << ("" + startedJobCnt).padRight(5) << ("" + (startedJobCnt - failedJobs)).padRight(5) << ("" + failedJobs).padRight(5) << userID << " " << execFolder << separator;
+                    sb << state.padRight(10) << ("" + startedJobCnt).padRight(5) << ("" + (startedJobCnt - failedJobs)).padRight(5) << ("" + failedJobs).padRight(5) << userID << " " << execFolder << separator
                 }
             }
 
         }
-        sb << "#CLEAR#" << separator;
-        println(ConsoleStringFormatter.getFormatter().formatAll(sb.toString()));
-
+        sb << "#CLEAR#" << separator
+        println(ConsoleStringFormatter.getFormatter().formatAll(sb.toString()))
     }
 
     static void cleanupWorkflow(CommandLineCall clc) {
-        Analysis analysis = loadAnalysisOrFail(clc)
-
-        List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getDatasetSpecifications() : null;
+        Analysis analysis = loadAnalysisAndCheckIoDirectoriesOrFail(clc)
+        List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getDatasetSpecifications() : null
         if (dFilter == null) {
             println("There were no valid pids specified.")
-            return;
+            return
         }
-        analysis.cleanup(dFilter);
+        analysis.cleanup(dFilter)
     }
 
     static void abortWorkflow(CommandLineCall clc) {
-        Analysis analysis = loadAnalysisOrFail(clc)
-
-        List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getDatasetSpecifications() : null;
+        Analysis analysis = loadAnalysisAndCheckIoDirectoriesOrFail(clc)
+        List<String> dFilter = clc.getParameters().size() >= 2 ? clc.getDatasetSpecifications() : null
         if (dFilter == null) {
             println("There were no valid pids specified.")
-            return;
+            return
         }
 
-        Map<DataSet, Boolean> dataSets = analysis.checkStatus(dFilter);
+        Map<DataSet, Boolean> dataSets = analysis.checkStatus(dFilter)
         for (DataSet ds in dataSets.keySet()) {
-            List<AnalysisProcessingInformation> information = ds.getProcessingInformation(analysis);
-            ExecutionContext context = null;
-            List<Job> listOfJobs = null;
-            List<BEJob> listOfRunningJobs = [];
+            List<AnalysisProcessingInformation> information = ds.getProcessingInformation(analysis)
+            ExecutionContext context = null
+            List<Job> listOfJobs = null
+            List<BEJob> listOfRunningJobs = []
             if (information)
-                context = information.first().getDetailedProcessingInfo();
+                context = information.first().getDetailedProcessingInfo()
             if (context && context.hasRunningJobs())
                 listOfJobs = context.getExecutedJobs()
 
             if (listOfJobs)
                 for (job in listOfJobs) {
-                    if (job.isFakeJob()) continue;
+                    if (job.isFakeJob()) continue
                     if (job.getJobState().isPlannedOrRunning())
-                        listOfRunningJobs << job;
+                        listOfRunningJobs << job
                 }
             if (listOfRunningJobs)
                 Roddy.getJobManager().killJobs(listOfRunningJobs)
