@@ -6,73 +6,102 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.config.AnalysisConfiguration
-import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationError
-import de.dkfz.roddy.config.PreloadedConfiguration
-import de.dkfz.roddy.config.ProjectConfiguration
-import de.dkfz.roddy.config.ResourceSet
-import de.dkfz.roddy.config.ResourceSetSize
+import de.dkfz.roddy.Constants
+import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.config.*
 import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.NoNoExecutionService
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
+import de.dkfz.roddy.knowledge.files.FileObject
+import de.dkfz.roddy.knowledge.files.GenericFile
 import groovy.transform.CompileStatic
+import org.junit.rules.ExternalResource
+import org.junit.rules.TemporaryFolder
 
+import java.nio.file.Paths
 import java.util.concurrent.TimeoutException
 
 /**
  * Created by heinold on 01.07.16.
  */
+@groovy.transform.CompileStatic
+class TestWorkflow extends Workflow {
+
+    @Override
+    boolean execute(ExecutionContext context) throws ConfigurationError {
+        return true
+    }
+
+}
+
 @CompileStatic
-public class MockupExecutionContextBuilder {
+class ContextResource extends ExternalResource {
 
-    public static final String DIR_PREFIX = "RoddyTests_"
+    static final String DIR_PREFIX = "RoddyTests"
 
-    public static File getTestBaseDirectory(String testID) {
-        final File testBaseDirectory = File.createTempDir(DIR_PREFIX, "_" + testID)
-        testBaseDirectory.deleteOnExit();
-        testBaseDirectory
+    public TemporaryFolder tempFolder = new TemporaryFolder(new File ("/tmp"))
+
+    public File tempDir
+
+    @Override
+    protected void before() throws Throwable {
+        tempFolder.create()
+        tempDir = tempFolder.newFolder(DIR_PREFIX)
+        Roddy.applicationConfiguration.getOrSetApplicationProperty(Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY, tempDir.toString())
     }
 
-    public static File getDirectory(String testID, String id) {
-        def file = new File(getTestBaseDirectory(testID), id)
-        if(!file.exists()) file.mkdirs();
-        file.deleteOnExit();
-        return file;
+    @Override
+    protected void after() {
+        tempFolder.delete()
     }
 
-    public static File getTestLoggingDirectory(String testID) {
-        return getDirectory(testID, "logdir");
+    File createTempdir(String name) {
+        assert tempDir != null
+        File dir = new File (tempDir, name)
+        dir.mkdirs()
+        return dir
     }
 
-    public static File getTestExecutionDirectory(String testID) {
-        return getDirectory(testID, "exec_dir");
+    File getTestBaseDirectory(String testID) {
+        return createTempdir(testID)
     }
 
-    public static File getTestOutputDirectory(String testID) {
-        return getDirectory(testID, "output");
+    File getDirectory(String testID, String id) {
+        return createTempdir(Paths.get(testID, id).toString())
     }
 
-    public static File getTestInputDirectory(String testID) {
-        return getDirectory(testID, "input");
+    File getTestLoggingDirectory(String testID) {
+        return getDirectory(testID, "logdir")
     }
 
-    public static RuntimeService createSimpleRuntimeService(final String testClassName) {
+    File getTestExecutionDirectory(String testID) {
+        return getDirectory(testID, "exec_dir")
+    }
+
+    File getTestOutputDirectory(String testID) {
+        return getDirectory(testID, "output")
+    }
+
+    File getTestInputDirectory(String testID) {
+        return getDirectory(testID, "input")
+    }
+
+    RuntimeService createSimpleRuntimeService(final String testClassName) {
         return new RuntimeService() {
             @Override
-            public Map<String, Object> getDefaultJobParameters(ExecutionContext context, String TOOLID) {
-                return null;
+            Map<String, Object> getDefaultJobParameters(ExecutionContext context, String TOOLID) {
+                return null
             }
 
             @Override
-            public String createJobName(ExecutionContext executionContext, BaseFile file, String TOOLID, boolean reduceLevel) {
-                return null;
+            String createJobName(ExecutionContext executionContext, BaseFile file, String TOOLID, boolean reduceLevel) {
+                return null
             }
 
             @Override
-            public boolean isFileValid(BaseFile baseFile) {
-                return false;
+            boolean isFileValid(BaseFile baseFile) {
+                return false
             }
 
             @Override
@@ -83,11 +112,16 @@ public class MockupExecutionContextBuilder {
         }
     }
 
-    public static ExecutionContext createSimpleContext(final Class testClass, final Configuration testConfig = new Configuration(null), final RuntimeService testRuntimeService = createSimpleRuntimeService(testClass.name)) {
+    ExecutionContext createSimpleContext(
+            final Class testClass,
+            final Configuration testConfig = new Configuration(null),
+            final RuntimeService testRuntimeService = createSimpleRuntimeService(testClass.name)) {
         return createSimpleContext(testClass.name, testConfig, testRuntimeService)
     }
 
-    public static ExecutionContext createSimpleContext(final String testID, final Configuration testConfig = new Configuration(null), final RuntimeService testRuntimeService = createSimpleRuntimeService(testID)) {
+    ExecutionContext createSimpleContext(
+            final String testID,
+            final Configuration testConfig = new Configuration(null), final RuntimeService testRuntimeService = createSimpleRuntimeService(testID)) {
 
         final File testInputDirectory = getTestInputDirectory(testID)
         final File testOutputDirectory = getTestOutputDirectory(testID)
@@ -98,6 +132,7 @@ public class MockupExecutionContextBuilder {
             if (!f.exists()) f.mkdirs()
         }
 
+        ExecutionContext result
         if (testConfig) {
 
             final PreloadedConfiguration projectPreloadConfig =
@@ -121,16 +156,17 @@ public class MockupExecutionContextBuilder {
 
             final DataSet dataSet = new DataSet(analysis, "TEST_PID", getTestOutputDirectory("TEST_PID"))
 
-            return new ExecutionContext(System.getProperty("user.name"), analysis, dataSet, ExecutionContextLevel.UNSET,
+            result = new ExecutionContext(System.getProperty("user.name"), analysis, dataSet, ExecutionContextLevel.UNSET,
                     testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime())
 
         } else {
-            return new ExecutionContext(System.getProperty("user.name"), null, null, ExecutionContextLevel.UNSET,
-                                        testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime())
+            result = new ExecutionContext(System.getProperty("user.name"), null, null, ExecutionContextLevel.UNSET,
+                    testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime())
         }
+        return result
     }
 
-    static BatchEuphoriaJobManager createMockupJobManager() {
+    BatchEuphoriaJobManager createMockupJobManager() {
         new BatchEuphoriaJobManager(new NoNoExecutionService(), JobManagerOptions.create().build()) {
 
             @Override
@@ -236,5 +272,30 @@ public class MockupExecutionContextBuilder {
                 return null
             }
         }
+    }
+
+    static BaseFile makeTestBaseFileInstance(ExecutionContext context, String baseName) {
+
+        FilenamePattern fp =
+                new OnScriptParameterFilenamePattern(GenericFile as Class<BaseFile>, baseName, baseName,
+                        "/tmp/$baseName")
+        context.configuration.filenamePatterns.add(fp)
+        return new GenericFile(new BaseFile.ConstructionHelperForManualCreation(
+                context,
+                new ToolEntry(baseName, "/tmp", baseName),
+                baseName, baseName, null, null, null))
+    }
+
+    static BaseFile makeTestBaseFileInstance(String baseName, List<BaseFile> parentFiles) {
+        assert parentFiles.size() > 0
+        FilenamePattern fp =
+                new OnScriptParameterFilenamePattern(GenericFile as Class<BaseFile>, baseName, baseName,
+                        "/tmp/$baseName")
+        parentFiles[0].executionContext.configuration.filenamePatterns.add(fp)
+        return new GenericFile(new BaseFile.ConstructionHelperForManualCreation(
+                parentFiles[0],
+                parentFiles as List<FileObject>,
+                new ToolEntry(baseName, "/tmp", baseName),
+                baseName, baseName, null, "1", null, null))
     }
 }
