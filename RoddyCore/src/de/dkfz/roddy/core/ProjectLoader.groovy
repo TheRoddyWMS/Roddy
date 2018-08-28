@@ -390,7 +390,7 @@ class ProjectLoader {
     }
 
     AnalysisConfiguration loadAnalysisConfigurationFromProjectConfigurationOrFail(ProjectConfiguration projectConfiguration, String analysisID) {
-        AnalysisConfiguration analysisConfiguration = projectConfiguration.getAnalysis(analysisID);
+        AnalysisConfiguration analysisConfiguration = projectConfiguration.getAnalysis(analysisID)
         if (!analysisConfiguration) {
             throw new ProjectLoaderException("The analysis configuration for ${analysisID} could not be retrieved.")
         }
@@ -470,73 +470,17 @@ class ProjectLoader {
      */
     void performFinalChecksOrFail(Analysis analysis, String configurationIdentifier, ProjectConfiguration projectConfiguration, String projectID) {
         if (analysis == null) {
-            StringBuilder sb = new StringBuilder();
-            sb << "Could not load analysis ${configurationIdentifier}, try one of those: " << Constants.ENV_LINESEPARATOR;
+            StringBuilder sb = new StringBuilder()
+            sb << "Could not load analysis ${configurationIdentifier}, try one of those: " << Constants.ENV_LINESEPARATOR
             for (String aID : projectConfiguration.listOfAnalysisIDs) {
-                sb << "  " << projectID << "@" << aID << Constants.ENV_LINESEPARATOR;
+                sb << "  " << projectID << "@" << aID << Constants.ENV_LINESEPARATOR
             }
-            throw new ProjectLoaderException(sb.toString());
+            throw new ProjectLoaderException(sb.toString())
         }
 
         if (analysis.getRuntimeService() == null) {
-            throw new ProjectLoaderException("There is no runtime service class set for the selected analysis. This has to be set in either the project configuration or the analysis configuration.");
+            throw new ProjectLoaderException("There is no runtime service class set for the selected analysis. This has to be set in either the project configuration or the analysis configuration.")
         }
-
-        List<String> errors = []
-
-        // Earliest check for valid input and output directories. If they are not accessible or writeable.
-        // The checks are done before the readability tests because we need to check for the raw configuration values
-        // as the next check will already use translated value
-
-        String valueInDir = analysis.configuration.configurationValues.get(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, "").value
-        String valueOutDir = analysis.configuration.configurationValues.get(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, "").value
-        
-        if (!valueInDir && !valueOutDir) {
-            errors << "Both the input and output base directories are not set. You must set at least inputBaseDirectory or outputBaseDirectory."
-
-        } else {
-
-            // Fill variable, if it is missing. Log a warning.
-            if(!valueInDir) {
-                logger.always("The input base directory is not set. Taking the path of the output base directory instead.")
-                analysis.configuration.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, valueOutDir, "path"))
-            }
-
-            if(!valueOutDir) {
-                logger.always("The output base directory is not set. Taking the path of the input base directory instead.")
-                analysis.configuration.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, valueInDir, "path"))
-            }
-
-            // Now start with the input directory
-            errors += checkDirForReadabilityAndExecutability(analysis.getInputBaseDirectory(), "input")
-            errors += checkDirForReadabilityAndExecutability(analysis.getOutputBaseDirectory(), "output")
-
-            // Out dir needs to be writable
-            if (!FileSystemAccessProvider.instance.isWritable(analysis.getOutputBaseDirectory()))
-                errors << (String) "The output was not writeable at path ${analysis.getOutputBaseDirectory()}."
-        }
-
-        if (!errors)
-            return
-
-        throw new ProjectLoaderException((["There were errors in directory access checks:"] + errors).join("\n\t"))
     }
 
-    List<String> checkDirForReadabilityAndExecutability(File dirToCheck, String dirtype) {
-        List<String> errors = []
-        for (File _dir = dirToCheck; _dir; _dir = _dir.parentFile) {
-            boolean readable = FileSystemAccessProvider.instance.isReadable(_dir)
-            boolean executable = FileSystemAccessProvider.instance.isExecutable(_dir)
-            if (!readable || !executable) {
-                if (!readable && !executable)
-                    errors << (String) "The ${dirtype} directory was neither readable nor executable at path ${_dir}."
-                else if (!readable)
-                    errors << (String) "The ${dirtype} directory was not readable at path ${_dir}."
-                else if (!executable)
-                    errors << (String) "The ${dirtype} directory was not executable at path ${_dir}."
-                break
-            }
-        }
-        return errors
-    }
 }

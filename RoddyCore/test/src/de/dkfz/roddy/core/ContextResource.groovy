@@ -21,9 +21,6 @@ import org.junit.rules.TemporaryFolder
 import java.nio.file.Paths
 import java.util.concurrent.TimeoutException
 
-/**
- * Created by heinold on 01.07.16.
- */
 @groovy.transform.CompileStatic
 class TestWorkflow extends Workflow {
 
@@ -165,7 +162,7 @@ class ContextResource extends ExternalResource {
         return result
     }
 
-    BatchEuphoriaJobManager createMockupJobManager() {
+    static BatchEuphoriaJobManager createMockupJobManager() {
         new BatchEuphoriaJobManager(new NoNoExecutionService(), JobManagerOptions.create().build()) {
 
             @Override
