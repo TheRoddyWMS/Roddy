@@ -277,7 +277,7 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
                 stream().
                 filter({ ToolParameterOfFiles.isInstance(it) }).
                 map({ it as ToolParameterOfFiles }).
-                collect(Collectors.toList());
+                collect(Collectors.toList())
     }
 
     List<ResourceSet> getResourceSets() {

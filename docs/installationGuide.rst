@@ -80,10 +80,10 @@ Roddy 2.3
 
 Please see `Versioning`_ for information about how to mix different versions of Roddy in the same directory.
 
-Roddy 3.0
----------
+Roddy 3
+-------
 
-For Roddy version 3.0 zips are deployed to Github releases (continuous deployment via Travis). The thus installed Roddy will contain all Java library dependencies except the JDK and Groovy, which are both needed during the start-up, before the actual Roddy is started.
+For Roddy version 3 zips are deployed to Github releases (continuous deployment via Travis). The thus installed Roddy will contain all Java library dependencies except the JDK and Groovy, which are both needed during the start-up, before the actual Roddy is started.
 
 1. Release ZIPs for Roddy and the Roddy environment are available via `Github Releases`_. Download the latest release of the RoddyEnv ZIP and unpack it and change into the Roddy environment directory (e.g. "Roddy"). This "environment" is basically a specific directory structure and a start-up script that allow to install multiple Roddy versions in parallel.
 2. After that you can install arbitrary releases of the Roddy ZIP into `dist/bin/$major.$minor.$patch` directories.
