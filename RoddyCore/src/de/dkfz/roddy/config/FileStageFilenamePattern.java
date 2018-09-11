@@ -39,4 +39,8 @@ public class FileStageFilenamePattern extends FilenamePattern {
         return null;
     }
 
+    public String toString() {
+        return super.toString() + ", fileStage=" + fileStage;
+    }
+
 }

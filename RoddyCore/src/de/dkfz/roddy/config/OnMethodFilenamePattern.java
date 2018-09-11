@@ -47,4 +47,8 @@ public class OnMethodFilenamePattern extends FilenamePattern {
     }
 
     public Class getCalledMethodsClass() { return calledMethodsClass; }
+
+    public String toString() {
+        return super.toString() + ", calledMethodsClass=" + calledMethodsClass.getCanonicalName() + ", calledMethodsName=" + calledMethodsName.getName();
+    }
 }

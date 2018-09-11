@@ -14,7 +14,7 @@ export fullParameterList
 export GROOVY_BINARY=groovy
 
 # Default Roddy Java options
-JAVA_OPTS=${JAVA_OPTS:--Xms64m -Xmx500m}
+RODDY_JAVA_OPTS=${RODDY_JAVA_OPTS:-${JAVA_OPTS:--Xms64m -Xmx1g}}
 
 # OFS is the original field separator
 export OFS=$IFS

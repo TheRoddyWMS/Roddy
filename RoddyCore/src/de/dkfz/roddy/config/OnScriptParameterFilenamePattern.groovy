@@ -14,12 +14,12 @@ import de.dkfz.roddy.knowledge.files.BaseFile
 public class OnScriptParameterFilenamePattern extends FilenamePattern {
 
     private final String toolID;
-    private final String calledParameterID;
+    private final String parameterID;
 
     public OnScriptParameterFilenamePattern(Class<BaseFile> cls, String toolID, String parameter, String pattern) {
         super(cls, pattern, "default");
         this.toolID = toolID;
-        this.calledParameterID = parameter;
+        this.parameterID = parameter;
     }
 
     @Override
@@ -37,14 +37,18 @@ public class OnScriptParameterFilenamePattern extends FilenamePattern {
 
     @Override
     public String getID() {
-        return String.format("SCRIPTPARM::onParm_%s:%s[%s]", toolID?:"[ANY]", calledParameterID, selectionTag);
+        return String.format("SCRIPTPARM::onParm_%s:%s[%s]", toolID?:"[ANY]", parameterID, selectionTag);
     }
 
     public String getCalledParameterID() {
-        return calledParameterID;
+        return parameterID;
     }
 
     public String getToolID(){
         return toolID;
+    }
+
+    String toString() {
+        super.toString() + ", toolID=$toolID, parameterID=$parameterID"
     }
 }

@@ -36,4 +36,8 @@ public class OnToolFilenamePattern extends FilenamePattern {
         return null;
     }
 
+    public String toString() {
+        return super.toString() + ", toolID=" + toolID;
+    }
+
 }

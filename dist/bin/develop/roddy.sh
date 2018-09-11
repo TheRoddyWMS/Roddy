@@ -5,7 +5,7 @@ set -o pipefail
 cd `dirname $0`
 parm1=${1-}
 
-JAVA_OPTS=${JAVA_OPTS:--Xms64m -Xmx500m}
+RODDY_JAVA_OPTS=${RODDY_JAVA_OPTS:-${JAVA_OPTS:--Xms64m -Xmx1g}}
 
 # Call some scripts before other steps start.
 if [[ "$parm1" == "prepareprojectconfig" ]]; then
@@ -135,7 +135,7 @@ caller=$(checkAndDownloadGroovyServ "${RODDY_DIRECTORY}")
 if [[ ${caller} == java ]]; then
 
   echo "Using Java to start Roddy" >> /dev/stderr
-  ${caller} ${debuggerSettings} $JAVA_OPTS -enableassertions -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy "$@"
+  ${caller} ${debuggerSettings} $RODDY_JAVA_OPTS -enableassertions -cp .:$libraries:${RODDY_BINARY} de.dkfz.roddy.Roddy "$@"
 
 elif [[ $(basename ${caller}) == groovyclient && -f ${caller} && -x ${caller} ]]; then
 

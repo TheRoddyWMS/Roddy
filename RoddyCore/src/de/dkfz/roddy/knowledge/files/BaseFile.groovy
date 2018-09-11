@@ -75,6 +75,11 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         Configuration getJobConfiguration() {
             return jobConfiguration
         }
+
+        @Override
+        String toString() {
+            "selectionTag=$selectionTag, indexInFileGroup=$indexInFileGroup"
+        }
     }
 
     static class ConstructionHelperForSourceFiles extends ConstructionHelperForBaseFiles<ConstructionHelperForSourceFiles> {
@@ -89,6 +94,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         File getPath() {
             return path
         }
+
     }
 
     /**
@@ -102,6 +108,11 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         public final String toolID
         public final String parameterID
         public final List<FileObject> parentFiles
+
+        @Override
+        String toString() {
+            super.toString() + ", toolID=$toolID, parameterID=$parameterID"
+        }
 
         @Deprecated
         ConstructionHelperForGenericCreation(FileObject parentObject, List<FileObject> parentFiles, ToolEntry creatingTool, String toolID,
@@ -328,7 +339,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         idxInFileGroup = helper.indexInFileGroup
         this.helperObject = helper
 
-        if (helper instanceof ConstructionHelperForGenericCreation) { //Manual creation is currently intrinsic.
+        if (helper instanceof ConstructionHelperForGenericCreation) { // Manual creation is currently intrinsic.
             ConstructionHelperForGenericCreation _helper = helper as ConstructionHelperForGenericCreation
             if (_helper.parentObject instanceof FileGroup) {
                 parentFiles.addAll((_helper.parentObject as FileGroup).getFilesInGroup())
@@ -625,10 +636,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         }
 
         Collection<FilenamePattern> allFoundPatterns = availablePatterns.values().sum() as Collection<FilenamePattern>
-        if (allFoundPatterns.size() > 0) {
-            logger.sometimes("Found ${allFoundPatterns.size()} filename patterns for file class ${baseFile.class.name}")
-            logger.rare("\t\n" + allFoundPatterns.collect { it.class.name + ": " + it.pattern }.join("\t\n"))
-        } else {
+        if (allFoundPatterns.size() == 0) {
             logger.severe("Could not find any matching filename patterns for file class ${baseFile.class.name}. Please check your configuration." +
                     " Tried matching against:\n\t" + cfg.filenamePatterns.allValuesAsList.collect { it.cls }.join("\t\n"))
         }
@@ -651,7 +659,6 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
     static Tuple2<File, FilenamePattern> getFilename(BaseFile baseFile, String selectionTag) {
         if (!selectionTag)
             selectionTag = DEFAULT
-        Tuple2<File, FilenamePattern> patternResult = new Tuple2<>(null, null)
 
         //Find the correct pattern:
         // Look if filename patterns for this class are available
@@ -669,19 +676,20 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         results[derivedFrom] = findFilenameFromSourcefilePatterns(baseFile, availablePatterns[derivedFrom], selectionTag)
         results[FilenamePatternDependency.FileStage] = findFilenameFromGenericPatterns(baseFile, availablePatterns[FilenamePatternDependency.FileStage], selectionTag)
 
-        patternResult = results[onScriptParameter] ?: results[onMethod] ?: results[onTool] ?: results[derivedFrom] ?: results[FilenamePatternDependency.FileStage]
+        Tuple2<File, FilenamePattern> patternResult =
+                results[onScriptParameter] ?: results[onMethod] ?: results[onTool] ?: results[derivedFrom] ?: results[FilenamePatternDependency.FileStage]
         // Do some further checks for selection tags.
         // Two cases. If the selectiontag is default and if it is not. If the selectiontag is not null
-        if ((selectionTag == DEFAULT && (!patternResult || patternResult.x == null)) || patternResult.x == null) {
+        if (!patternResult || patternResult.x == null) {
 
-            StringBuilder sb = new StringBuilder("Could not find any filename pattern for a file object of class ${baseFile.class.name}\n")
+            StringBuilder sb = new StringBuilder("Could not find filename pattern for a file of class ${baseFile.class.name}: ${baseFile.toString()}\n")
 
             sb << "The following patterns are available for this file class:\n\t"
             sb << availablePatterns.findAll { it }.collect {
                 FilenamePatternDependency k, List<FilenamePattern> v ->
                     v.collect {
                         FilenamePattern value ->
-                            "${k.name()} : type=${value.cls.name}, pattern=${value.pattern}"
+                            "${k.name()} : ${value.toString()}"
                     }
             }.flatten().join("\n\t")
             sb << "\nNote these may not have matched because they may be specific for a tool!"
@@ -692,7 +700,8 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
                 logger.sometimes(sb.toString())
         } else {
             // Check whether the path exists and create it if necessary.
-            if (context.getExecutionContextLevel().allowedToSubmitJobs && !FileSystemAccessProvider.getInstance().checkDirectory(patternResult.x.getParentFile(), context, true)) {
+            if (context.executionContextLevel.allowedToSubmitJobs &&
+                    !FileSystemAccessProvider.instance.checkDirectory(patternResult.x.parentFile, context, true)) {
                 if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.FailOnAutoFilenames))
                     throw new IOException("Output path could not be created for file: " + baseFile)
             }
@@ -932,6 +941,6 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
 
     @Override
     String toString() {
-        return "BaseFile of type " + getClass().getName() + " with path " + path
+        return "BaseFile of class ${getClass().getName()} with path $path: ${helperObject.toString()}"
     }
 }

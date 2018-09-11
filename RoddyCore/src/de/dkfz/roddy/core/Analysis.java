@@ -448,11 +448,11 @@ public class Analysis {
                 }
             }
         } catch (ConfigurationError e) {
-            logger.sometimes(e.getMessage() + "\n" + getStackTraceAsString(e));
+            logger.sometimes(e.getMessage() + Constants.ENV_LINESEPARATOR + getStackTraceAsString(e));
             context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand(e.getMessage()));
         } catch (Exception e) {
-            logger.always("An unknown / unhandled exception occurred: '" + e.getLocalizedMessage() + "'");
-            logger.always(e.getMessage() + "\n" + getStackTraceAsString(e));
+            logger.always("An unhandled exception of type '" + e.getClass().getCanonicalName() + "' occurred: '" + e.getLocalizedMessage() + "'");
+            logger.always(e.getMessage() + Constants.ENV_LINESEPARATOR + getStackTraceAsString(e));
             context.addErrorEntry(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.getMessage()));
         } finally {
             // Look up errors when jobs are executed directly and when there were any started jobs.

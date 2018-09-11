@@ -291,7 +291,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         int slotPosition = allRawInputParameters.keySet().asList().indexOf(key)
 
         if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.FailOnAutoFilenames))
-            throw new RuntimeException("Auto filenames are forbidden when strict mode is active.")
+            throw new ConfigurationError("Auto filenames are forbidden when strict mode is active.", context.configuration)
         else
             context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.
                     expand("An auto filename will be used for ${jobName}:${slotPosition} / ${baseFile.class.name}"))
