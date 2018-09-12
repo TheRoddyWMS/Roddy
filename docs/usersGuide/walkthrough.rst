@@ -533,7 +533,7 @@ using the configuration attribute of the analysis tag:
     <analysis id='postMergeQC' configuration='postMergeQCAnalysis' useplugin="AlignmentAndQCWorkflows:1.1.39"/>
     <analysis id='postMergeExomeQC' configuration='postMergeExomeQCAnalysis' useplugin="AlignmentAndQCWorkflows:1.1.39"/>
 
-    <!-- Unreleased or Beta -->
+    <!-- Roddy 3 -->
     <analysis id='rdw' configuration='snvRecurrenceDetectionAnalysis' useplugin="SNVRecurrenceDetectionWorkflow"/>
     <analysis id='WGBS' configuration='bisulfiteCoreAnalysis' useplugin="AlignmentAndQCWorkflows:1.1.39"/>
 

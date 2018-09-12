@@ -1,3 +1,5 @@
+import java.nio.file.Paths
+
 /*
  * Copyright (c) 2017 German Cancer Research Center (DKFZ).
  *
@@ -40,6 +42,7 @@ apply plugin: 'application'
 apply plugin: 'distribution'
 apply plugin: 'groovy'
 apply plugin: 'kr.motd.sphinx'  // Apache 2.0
+apply plugin: 'codenarc'
 
 // Java settings
 ext.langLevel = "1.8"
@@ -258,6 +261,20 @@ sphinx {
     sourceDirectory = "${project.projectDir}/docs/"
     outputDirectory = "${project.buildDir}/site/"
     warningsAsErrors = true
+}
+
+
+codenarc {
+    toolVersion = "1.2.1"
+    ignoreFailures = true
+}
+
+codenarcMain {
+    configFile = rootProject.file("config/codenarc/codenarc.groovy")
+}
+
+codenarcTest {
+    configFile = rootProject.file("config/codenarc/codenarc.groovy")
 }
 
 // end of build.gradle

@@ -79,6 +79,10 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
 
     protected abstract BaseFile getSourceFile(BaseFile[] baseFiles);
 
+    public String toString() {
+        return getClass().getSimpleName() + ": class=" + cls.getCanonicalName() + ", selectionTag=" + selectionTag + ", pattern=" + pattern;
+    }
+
     /**
      * Fills special values collected from the first parent file.
      * <p>

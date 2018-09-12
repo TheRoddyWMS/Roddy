@@ -53,4 +53,8 @@ public class FileStage {
 //            fs.getClass().getF
         }
     }
+
+    public String toString() {
+        return "fileStage=" + value;
+    }
 }
