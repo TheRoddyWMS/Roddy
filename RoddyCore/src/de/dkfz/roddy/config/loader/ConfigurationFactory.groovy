@@ -30,6 +30,7 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.Tuple3
+import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.NodeChild
 import groovy.util.slurpersupport.NodeChildren
@@ -148,7 +149,7 @@ class ConfigurationFactory {
 
             StringBuilder messageForDuplicates = new StringBuilder("Configuration files using the same id were found:\n")
             for (String id in duplicateConfigurationIDs.sort().unique()) {
-                messageForDuplicates << "\t" << id << ([" found in:"] + pathsForCfgs[id]).join("\n\t\t")
+                messageForDuplicates << "\t" << id << ([" found in:"] + pathsForCfgs[id]).join("\n\t\t") + "\n"
             }
             messageForDuplicates << "\n" << (["This is not allowed! Check your configuration directories for files containing using same ids:"] + configurationDirectories.collect { it.absolutePath }).join("\n\t")
 
@@ -558,7 +559,7 @@ class ConfigurationFactory {
                     }
                     filenamePatterns.put(fp.getID(), fp)
                 } catch (Exception ex) {
-                    logger.severe("${ex.message}: " + (new groovy.xml.StreamingMarkupBuilder().bindNode(filename) as String))
+                    logger.severe("Error during filename pattern processing (ignored): ${ex.message}: " + (new groovy.xml.StreamingMarkupBuilder().bindNode(filename) as String))
                 }
             }
         }
@@ -620,27 +621,40 @@ class ConfigurationFactory {
         return new Tuple3<Class, Boolean, Integer>(_classID, isArray, enforcedArraySize)
     }
 
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic
+    static Optional<Method> lastMethodOfName(Class<FileObject> calledClass, String methodName) {
+        int idx = calledClass.getMethods().findLastIndexOf { Method method ->
+            method.getName() == methodName
+        }
+        if (idx == -1) {
+            return Optional.empty()
+        } else {
+            return Optional.of(calledClass.getMethods()[idx])
+        }
+    }
+
+    @CompileStatic(TypeCheckingMode.SKIP)
     static FilenamePattern readOnMethodFilenamePattern(String pkg, NodeChild filename) {
         String methodName = filename.@onMethod.text()
         String pattern = filename.@pattern.text()
         String selectionTag = extractAttributeText(filename, "selectiontag", Constants.DEFAULT)
         Class<FileObject> _cls = loadPatternClass(pkg, filename.@class.text(), BaseFile).x
         Class<FileObject> calledClass = _cls
-        if (methodName.contains(".")) { //Different class as source class!
+        if (methodName.contains(".")) { // Different class as source class!
             String[] stuff = methodName.split(SPLIT_STOP)
             String className = stuff[0 .. -2].join(".")
             methodName = stuff[-1]
-            calledClass = LibrariesFactory.instance.classLoaderHelper.searchForClass(className)
-        }
-        Method _method = null
-        for (Method m : calledClass.getMethods()) {
-            if (m.name == methodName) {
-                _method = m
+            try {
+                calledClass = LibrariesFactory.instance.classLoaderHelper.searchForClass(className)
+            } catch (ClassNotFoundException e) {
+                throw new ConfigurationError("Could not find class for onMethod matching: '${e.message}", null as String, e)
             }
         }
-        FilenamePattern fp = new OnMethodFilenamePattern(_cls, calledClass, _method, pattern, selectionTag)
-        return fp
+        Method method = lastMethodOfName(calledClass, methodName).orElseThrow {
+                    new ConfigurationError("Found class '${calledClass.getCanonicalName()}' matching on method pattern, " +
+                            "but it does not have requested method '$methodName'", null as String)
+        }
+        new OnMethodFilenamePattern(_cls, calledClass, method, pattern, selectionTag)
     }
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
