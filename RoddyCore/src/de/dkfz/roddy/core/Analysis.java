@@ -20,6 +20,7 @@ import de.dkfz.roddy.execution.jobs.JobState;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -347,7 +348,8 @@ public class Analysis {
     }
 
 
-    protected boolean prepareExecution(ExecutionContext context) {
+    protected boolean prepareExecution(ExecutionContext context)
+        throws IOException {
         logger.rare("" + context.getExecutionContextLevel());
         boolean isExecutable;
         String datasetID = context.getDataSet().getId();
@@ -450,6 +452,9 @@ public class Analysis {
         } catch (ConfigurationError e) {
             logger.sometimes(e.getMessage() + Constants.ENV_LINESEPARATOR + getStackTraceAsString(e));
             context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand(e.getMessage()));
+        } catch (IOException e) {
+            logger.always(e.getMessage());
+            context.addErrorEntry(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.getMessage()));
         } catch (Exception e) {
             logger.always("An unhandled exception of type '" + e.getClass().getCanonicalName() + "' occurred: '" + e.getLocalizedMessage() + "'");
             logger.always(e.getMessage() + Constants.ENV_LINESEPARATOR + getStackTraceAsString(e));
