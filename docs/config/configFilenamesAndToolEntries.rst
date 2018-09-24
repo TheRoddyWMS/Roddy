@@ -201,7 +201,7 @@ Output types
 ~~~~~~~~~~~~
 
 The output of a Roddy job is always a file or a group of files. Moreover, you are only allowed to have one top-level output
-object in the XML description, but this object might be one which holds other objects like the mentionend file groups.
+object in the XML description, but this object might be one which holds other objects like the mentioned file groups.
 
 If your tool does not create output files you can omit those entries. However, it might still be wise to create some sort of checkpoint
 for the tool so that Roddys rerun feature will work properly. The syntax for output objects is quite similar to the

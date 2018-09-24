@@ -17,9 +17,11 @@ import de.dkfz.roddy.execution.io.ExecutionService;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.execution.jobs.Job;
 import de.dkfz.roddy.execution.jobs.JobState;
+import groovy.lang.Closure;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -347,7 +349,8 @@ public class Analysis {
     }
 
 
-    protected boolean prepareExecution(ExecutionContext context) {
+    protected boolean prepareExecution(ExecutionContext context)
+        throws IOException {
         logger.rare("" + context.getExecutionContextLevel());
         boolean isExecutable;
         String datasetID = context.getDataSet().getId();
@@ -380,6 +383,49 @@ public class Analysis {
         return isExecutable;
     }
 
+    @FunctionalInterface
+    public interface ThrowingThunkWithSideEffects {
+        void apply() throws Exception;
+    }
+
+    protected void withErrorReporting(ExecutionContext context, boolean preventLoggingOnQueryStatus, ThrowingThunkWithSideEffects code) {
+        try {
+            code.apply();
+        } catch (ConfigurationError e) {
+            logger.sometimes(e.getMessage() + Constants.ENV_LINESEPARATOR + getStackTraceAsString(e));
+            context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand(e.getMessage()));
+        } catch (IOException e) {
+            logger.always(e.getMessage());
+            context.addErrorEntry(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.getMessage()));
+        } catch (Exception e) {
+            logger.always("An unhandled exception of type '" + e.getClass().getCanonicalName() + "' occurred: '" + e.getLocalizedMessage() + "'");
+            logger.always(e.getMessage() + Constants.ENV_LINESEPARATOR + getStackTraceAsString(e));
+            context.addErrorEntry(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.getMessage()));
+        } finally {
+            // Look up errors when jobs are executed directly and when there were any started jobs.
+            if (context.getStartedJobs().size() > 0) {
+                String failedJobs = "";
+                for (Job job : context.getExecutedJobs()) {
+                    if (job.getJobState() == JobState.FAILED)
+                        failedJobs += "\n\t" + job.getJobID() + ",\t" + job.getJobName();
+                }
+                if (failedJobs.length() > 0)
+                    context.addErrorEntry(ExecutionContextError.EXECUTION_JOBFAILED.expand("One or more jobs failed to execute:" + failedJobs));
+            }
+
+            // Print out configuration errors (for context configuration! Not only for analysis)
+            // Don't know, if this is the right place.
+            if (context.getConfiguration().hasErrors())
+                logger.always(getLoadErrorText(context));
+
+            // Print out informational messages like infos, warnings, errors
+            // Only print them out if !QUERY_STATUS and the runmode is testrun or testrerun.
+            if ((!preventLoggingOnQueryStatus || (context.getExecutionContextLevel() != ExecutionContextLevel.QUERY_STATUS))) {
+                printMessagesForContext(context);
+            }
+        }
+    }
+
 
     /**
      * Executes the context object.
@@ -394,9 +440,9 @@ public class Analysis {
      * @param context
      */
     protected void executeRun(ExecutionContext context, boolean preventLoggingOnQueryStatus) {
-        logger.rare("" + context.getExecutionContextLevel());
-        String datasetID = context.getDataSet().getId();
-        try {
+        withErrorReporting(context, preventLoggingOnQueryStatus, () -> {
+            logger.rare("" + context.getExecutionContextLevel());
+            String datasetID = context.getDataSet().getId();
 
             boolean isExecutable = prepareExecution(context);
 
@@ -447,36 +493,7 @@ public class Analysis {
                     }
                 }
             }
-        } catch (ConfigurationError e) {
-            logger.sometimes(e.getMessage() + Constants.ENV_LINESEPARATOR + getStackTraceAsString(e));
-            context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand(e.getMessage()));
-        } catch (Exception e) {
-            logger.always("An unhandled exception of type '" + e.getClass().getCanonicalName() + "' occurred: '" + e.getLocalizedMessage() + "'");
-            logger.always(e.getMessage() + Constants.ENV_LINESEPARATOR + getStackTraceAsString(e));
-            context.addErrorEntry(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.getMessage()));
-        } finally {
-            // Look up errors when jobs are executed directly and when there were any started jobs.
-            if (context.getStartedJobs().size() > 0) {
-                String failedJobs = "";
-                for (Job job : context.getExecutedJobs()) {
-                    if (job.getJobState() == JobState.FAILED)
-                        failedJobs += "\n\t" + job.getJobID() + ",\t" + job.getJobName();
-                }
-                if (failedJobs.length() > 0)
-                    context.addErrorEntry(ExecutionContextError.EXECUTION_JOBFAILED.expand("One or more jobs failed to execute:" + failedJobs));
-            }
-
-            // Print out configuration errors (for context configuration! Not only for analysis)
-            // Don't know, if this is the right place.
-            if (context.getConfiguration().hasErrors())
-                logger.always(getLoadErrorText(context));
-
-            // Print out informational messages like infos, warnings, errors
-            // Only print them out if !QUERY_STATUS and the runmode is testrun or testrerun.
-            if ((!preventLoggingOnQueryStatus || (context.getExecutionContextLevel() != ExecutionContextLevel.QUERY_STATUS))) {
-                printMessagesForContext(context);
-            }
-        }
+        });
     }
 
     private static String getLoadErrorText(ExecutionContext context) {
@@ -569,7 +586,8 @@ public class Analysis {
      * @param pidList
      */
     public void cleanup(List<String> pidList) {
-        if (!((AnalysisConfiguration) getConfiguration()).hasCleanupScript() && !ExecutionContext.createAnalysisWorkflowObject(this).hasCleanupMethod())
+        AnalysisConfiguration analysisConfiguration = (AnalysisConfiguration) getConfiguration();
+        if (!analysisConfiguration.hasCleanupScript() && !ExecutionContext.createAnalysisWorkflowObject(this).hasCleanupMethod())
             logger.postAlwaysInfo("There is neither a configured cleanup script or a native workflow cleanup method available for this analysis.");
 
         List<DataSet> dataSets = getRuntimeService().loadDatasetsWithFilter(this, pidList, true);
@@ -578,40 +596,41 @@ public class Analysis {
             ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this,
                     ds, ExecutionContextLevel.CLEANUP, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null);
 
-            if (((AnalysisConfiguration) getConfiguration()).hasCleanupScript()) {
-                String cleanupScript = ((AnalysisConfiguration) getConfiguration()).getCleanupScript();
-                if (cleanupScript != null && cleanupScript != "") {
-                    Job cleanupJob = new Job(context, "cleanupScript", cleanupScript, null);
-//                  Command cleanupCmd = Roddy.getJobManager().createCommand(cleanupJob, cleanupJob.getToolPath(), new LinkedList<>());
-                    try {
-                        ExecutionService.getInstance().writeFilesForExecution(context);
-                        cleanupJob.run();
-                    } finally {
-                        ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context);
+            if (analysisConfiguration.hasCleanupScript()) {
+                withErrorReporting(context, false, () -> {
+                    String cleanupScript = analysisConfiguration.getCleanupScript();
+                    if (cleanupScript != null && cleanupScript != "") {
+                        Job cleanupJob = new Job(context, "cleanupScript", cleanupScript, null);
+                        try {
+                            ExecutionService.getInstance().writeFilesForExecution(context);
+                            cleanupJob.run();
+                        } finally {
+                            ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context);
+                        }
                     }
-                }
+                });
             }
 
             // Call the workflows cleanup java method.
             if (context.getWorkflow().hasCleanupMethod()) {
-                Workflow wf = context.getWorkflow();
-                boolean isExecutable = prepareExecution(context);
-                if (!isExecutable) {
-                    logger.severe(
-                            new StringBuilder("The workflow does not seem to be executable for dataset " + context.dataSet.getId()).
-                                    append("\n\tSetup for cleanup failed.").
-                                    toString());
-                } else {
-                    try {
-                        boolean successfullyExecuted = wf.cleanup();
-                        if (successfullyExecuted)
-                            finallyStartJobsOfContext(context);
-                    } catch (BEException e) {
-                        context.addErrorEntry(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e));
-                    } finally {
-                        ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context);
+                withErrorReporting(context, false, () -> {
+                    Workflow wf = context.getWorkflow();
+                    boolean isExecutable = prepareExecution(context);
+                    if (!isExecutable) {
+                        logger.severe(
+                                new StringBuilder("The workflow does not seem to be executable for dataset " + context.dataSet.getId()).
+                                        append("\n\tSetup for cleanup failed.").
+                                        toString());
+                    } else {
+                        try {
+                            boolean successfullyExecuted = wf.cleanup();
+                            if (successfullyExecuted)
+                                finallyStartJobsOfContext(context);
+                        } finally {
+                            ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context);
+                        }
                     }
-                }
+                });
             }
         }
     }

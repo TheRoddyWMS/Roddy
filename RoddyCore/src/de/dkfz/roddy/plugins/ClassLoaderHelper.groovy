@@ -74,6 +74,8 @@ class ClassLoaderHelper {
                 foundCoreClass = LibrariesFactory.instance.loadClass(className)
             } catch (ClassNotFoundException ex) {
                 // Silently ignored. The class may or may not be in core. If the class can not be found, it is fine here.
+                // Is this the right place to decide this? Should it not be in the responsibility of the caller to decide whether this an exceptional
+                // situation? Maybe better throw and catch?
             }
             if (foundCoreClass) break
             // Ignore if it is empty, we will fall back to the plugin strategy afterwards! Or search in the next package

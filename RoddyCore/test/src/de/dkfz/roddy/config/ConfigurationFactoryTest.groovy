@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.config
 
-import de.dkfz.roddy.Constants
+
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.loader.ConfigurationLoaderException
@@ -354,7 +354,9 @@ class ConfigurationFactoryTest {
 
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     void testReadFilenamePatternsForOnMethodPatternType_base(NodeChild xml) {
-        OnMethodFilenamePattern fpattern = ConfigurationFactory.readOnMethodFilenamePattern("de.dkfz.roddy.knowledge.files", xml.filename.getAt(0)) as OnMethodFilenamePattern
+        OnMethodFilenamePattern fpattern =
+                ConfigurationFactory.readOnMethodFilenamePattern('de.dkfz.roddy.knowledge.files',
+                        xml.filename.getAt(0) as NodeChild) as OnMethodFilenamePattern
         assert fpattern.filenamePatternDependency == FilenamePatternDependency.onMethod
         assert fpattern.cls.name.endsWith("TestFileOnMethod")
     }
@@ -363,7 +365,9 @@ class ConfigurationFactoryTest {
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     void testReadFilenamePatternsForOnToolPatternType() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_ONTOOL_PATTERN)
-        OnToolFilenamePattern fpattern = ConfigurationFactory.readOnToolFilenamePattern("de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0)) as OnToolFilenamePattern
+        OnToolFilenamePattern fpattern =
+                ConfigurationFactory.readOnToolFilenamePattern('de.dkfz.roddy.knowledge.files.FileStage',
+                        xml.filename.getAt(0) as NodeChild) as OnToolFilenamePattern
         assert fpattern.filenamePatternDependency == FilenamePatternDependency.onTool
         assert fpattern.cls.name.endsWith("TestFileOnTool")
     }
@@ -372,7 +376,9 @@ class ConfigurationFactoryTest {
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     void testReadFilenamePatternsForFileStageBasedPatternType() {
         NodeChild xml = getParsedFilenamePattern(STR_VALID_FILESTAGE_PATTERN)
-        FileStageFilenamePattern fpattern = ConfigurationFactory.readFileStageFilenamePattern(null, "de.dkfz.roddy.knowledge.files.FileStage", xml.filename.getAt(0))
+        FileStageFilenamePattern fpattern =
+                ConfigurationFactory.readFileStageFilenamePattern(null, 'de.dkfz.roddy.knowledge.files.FileStage',
+                        xml.filename.getAt(0) as NodeChild)
         assert fpattern.filenamePatternDependency == FilenamePatternDependency.FileStage
         assert fpattern.cls.name.endsWith("FileWithFileStage")
     }
