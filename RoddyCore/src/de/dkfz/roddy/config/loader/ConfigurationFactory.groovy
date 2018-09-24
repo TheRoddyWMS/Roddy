@@ -149,7 +149,7 @@ class ConfigurationFactory {
 
             StringBuilder messageForDuplicates = new StringBuilder("Configuration files using the same id were found:\n")
             for (String id in duplicateConfigurationIDs.sort().unique()) {
-                messageForDuplicates << "\t" << id << ([" found in:"] << pathsForCfgs[id]).join("\n\t\t") << "\n"
+                messageForDuplicates << "\t" << id << ([" found in:"] + pathsForCfgs[id]).join("\n\t\t") << "\n"
             }
             messageForDuplicates << "\n" << (["This is not allowed! Check your configuration directories for files containing using same ids:"] + configurationDirectories.collect { it.absolutePath }).join("\n\t")
 
