@@ -283,7 +283,6 @@ class RoddyCLIClient {
         return analysis
     }
 
-
     static void checkConfigurationErrorsAndMaybePrintAndFail(Configuration configuration) {
         if (configuration.hasErrors()) {
             StringBuilder sb = new StringBuilder();

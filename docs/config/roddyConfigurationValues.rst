@@ -38,7 +38,7 @@ The following options set specific debugging options for Bash
 Exposed to Jobs
 ---------------
 
-The following variables are exposed to plugins by default and are set to by Roddy to the specific values applicabel to the job.
+The following variables are exposed to plugins by default and are set to by Roddy to the specific values applicable to the job.
 
 * RODDY_SCRATCH: Affected by `baseScratchDirectory` applicationProperties.ini option.
 * RODDY_JOBID: The job-identifier (PBS_JOBID, LSB_JOBID, etc.)
