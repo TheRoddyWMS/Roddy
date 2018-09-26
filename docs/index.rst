@@ -13,18 +13,18 @@
     configuration
     roddyDevelopment
     pluginDevelopment
+    faq
 
 .. Here are the used hyperlinks in this document.
    They are mostly relative links
     developersGuide
-.. _`GitHub project site`: https://github.com/eilslabs/Roddy
-.. _`F.A.Q.`: https://github.com/eilslabs/Roddy/wiki/FAQ
+.. _`GitHub project site`: https://github.com/TheRoddyWMS/Roddy
 .. _`Example workflow`: exampleWorkflow
 .. _`Users Guide`: usersGuide
 .. _`Plugin developers guide`: pluginDevelopersGuide
 .. _`Developers guide`: developersGuide
-.. _`RoddyToolLib`: https://github.com/eilslabs/RoddyToolLib
-.. _`BatchEuphoria`: https://github.com/eilslabs/BatchEuphoria
+.. _`RoddyToolLib`: https://github.com/TheRoddyWMS/RoddyToolLib
+.. _`BatchEuphoria`: https://github.com/TheRoddyWMS/BatchEuphoria
 
 
 The Roddy WMS
@@ -72,7 +72,7 @@ Do you want to develop workflows with it? Open up the :doc:`pluginDevelopment/pl
 
 Do you want to develop it? See the :doc:`roddyDevelopment/developersGuide`
 
-Do you have questions? Please visit the `F.A.Q.`_ section in our GitHub Wiki
+Do you have questions? Check out the :doc:`faq`
 
 License and associated projects
 -------------------------------
