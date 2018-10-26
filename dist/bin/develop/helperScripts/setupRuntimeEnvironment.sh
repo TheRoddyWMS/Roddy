@@ -70,7 +70,7 @@ fi
 #   $1 - String which identifies the software
 #   $2 - Actual version
 #   $3 - Requested version
-function compareVersion {
+function assertXsVersionIsAtLeast {
   local major=$(echo $2 | cut -d "." -f 1)
   local minor=$(echo $2 | cut -d "." -f 2)
 
@@ -88,5 +88,5 @@ javaVersion=$(echo $versions | cut -d ":" -f 2-3 | cut -d " " -f 4)
 groovyVersion=$(echo $versions | cut -d ":" -f 2-3 | cut -d " " -f 2)
 
 # ... and compare them.
-compareVersion "Java" $javaVersion $JDK_VERSION
-compareVersion "Groovy" $groovyVersion $GROOVY_VERSION
+assertXsVersionIsAtLeast "Java" $javaVersion $JDK_VERSION
+assertXsVersionIsAtLeast "Groovy" $groovyVersion $GROOVY_VERSION

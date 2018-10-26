@@ -526,34 +526,34 @@ class GenericMethod {
      * @return
      */
     BaseFile convertToolFileParameterToBaseFile(ToolFileParameter fileParameter, String fileGroupIndexValue, BaseFile firstInputFile, List<BaseFile> allInputFiles) {
-        Constructor c = searchBaseFileConstructorForConstructionHelperObject(fileParameter.fileClass);
-        BaseFile bf;
+        Constructor c = searchBaseFileConstructorForConstructionHelperObject(fileParameter.fileClass)
+        BaseFile bf
         try {
-            if (c == null) {
-                // Actually this must not be the case! If a developer has its custom class, it must provide this constructor.
-
-                //TODO URGENT
-                //The underlying error is that a configuration file has e.g. a typo, or not? Such kind of errors are user errors, where there is a clear cause (line X in file Y contains garbage Z). Ideally we would just display an error message with as much information possible to allow the user to fix the error, but no stack trace.
-
-                context.addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_NOCONSTRUCTOR.expand("File object of type ${fileParameter?.fileClass} with input ${firstInputFile?.class} needs a constructor which takes a ConstuctionHelper object."));
-                throw new RuntimeException("Could not find valid constructor for type  ${fileParameter?.fileClass} with input ${firstInputFile?.class}.");
+            if (c == null) {  // Error! If a developer has its custom class, he must provide this constructor.
+                context.addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_NOCONSTRUCTOR.
+                        expand("File object of type ${fileParameter?.fileClass} with input ${firstInputFile?.class}" +
+                                ' needs a constructor which takes a ConstuctionHelper object.'))
+                throw new RuntimeException("Could not find valid constructor for type  ${fileParameter?.fileClass} with input ${firstInputFile?.class}.")
             } else {
-                BaseFile.ConstructionHelperForGenericCreation helper = new BaseFile.ConstructionHelperForGenericCreation(firstInputFile, allInputFiles as List<FileObject>, calledTool, toolName, fileParameter.scriptParameterName, fileParameter.filenamePatternSelectionTag, fileGroupIndexValue, firstInputFile.fileStage, null);
+                BaseFile.ConstructionHelperForGenericCreation helper =
+                        new BaseFile.ConstructionHelperForGenericCreation(firstInputFile, allInputFiles as List<FileObject>, calledTool, toolName,
+                                fileParameter.scriptParameterName, fileParameter.filenamePatternSelectionTag, fileGroupIndexValue,
+                                firstInputFile.fileStage, null)
                 if (jobConfiguration) helper.setJobConfiguration(jobConfiguration)
-                bf = c.newInstance(helper);
+                bf = c.newInstance(helper)
             }
         } catch (InvocationTargetException ex) {
             throw(ex.targetException)
         }
 
         if (!fileParameter.checkFile.evaluate(context))
-            bf.setAsTemporaryFile();
+            bf.setAsTemporaryFile()
 
         if (allInputFiles.size() > 1)
-            bf.setParentFiles(allInputFiles, true);
+            bf.setParentFiles(allInputFiles, true)
 
         if (fileParameter.scriptParameterName) {
-            parameters[fileParameter.scriptParameterName] = bf;
+            parameters[fileParameter.scriptParameterName] = bf
         }
         bf
     }
