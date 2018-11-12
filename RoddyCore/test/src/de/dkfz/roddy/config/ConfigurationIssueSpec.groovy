@@ -36,7 +36,7 @@ class ConfigurationIssueSpec extends Specification {
 
         where:
         template                  | messageContent | expectedLevel  | expectedCollectiveMessage
-        unattachedDollarCharacter | smallArray     | CVALUE_WARNING | "Several variables in your configuration contain one or more dollar signs. As this might impose problems in your cluster jobs, check then entries in your job configuration files. See the extended logs for more information."
+        unattachedDollarCharacter | smallArray     | CVALUE_WARNING | "Several variables in your configuration contain one or more dollar signs. As this might impose problems in your cluster jobs, check the entries in your job configuration files. See the extended logs for more information."
         valueAndTypeMismatch      | largeArray     | CVALUE_ERROR   | "Several variables in your configuration mismatch regarding their type and value. See the extended logs for more information."
     }
 
@@ -85,7 +85,7 @@ class ConfigurationIssueSpec extends Specification {
 
     def "test toString() {"() {
         expect:
-        unattachedDollarCharacter.expand("a").toString() == "ConfigurationIssue of type 'unattachedDollarCharacter' with level 'CVALUE_WARNING'"
-        valueAndTypeMismatch.expand("b", "c").toString() == "ConfigurationIssue of type 'valueAndTypeMismatch' with level 'CVALUE_ERROR'"
+        unattachedDollarCharacter.expand("a").toString() == "The variable named 'a' contains one or more dollar signs, which do not belong to a Roddy variable definition (\${variable identifier}). This might impose problems, so make sure, that your results job configuration is created in the way you want."
+        valueAndTypeMismatch.expand("b", "c").toString() == "The value of variable named 'b' does not match the variables type 'c'."
     }
 }
