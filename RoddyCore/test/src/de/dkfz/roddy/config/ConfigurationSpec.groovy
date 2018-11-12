@@ -37,14 +37,20 @@ class ConfigurationSpec extends Specification {
     void "test bad configuration values in configuration"() {
         when:
         Configuration cfgA = new Configuration()
+        Configuration cfgB = new Configuration()
+        Configuration cfgC = new Configuration()
+        cfgB.addParent(cfgA)
+        cfgC.addParent(cfgB)
+
+        // Shall be elevated but their warnings and errors shall only exist once!
         cfgA.configurationValues << new ConfigurationValue("vala", 'unattached $ sign ')
         cfgA.configurationValues << new ConfigurationValue("valb", 'type mismatch', "integer")
 
         then:
-        cfgA.warnings.size() == 1
-        cfgA.warnings[0].id == ConfigurationIssue.ConfigurationIssueTemplate.unattachedDollarCharacter
+        cfgC.warnings.size() == 1
+        cfgC.warnings[0].id == ConfigurationIssue.ConfigurationIssueTemplate.unattachedDollarCharacter
 
-        cfgA.errors.size() == 1
-        cfgA.errors[0].id == ConfigurationIssue.ConfigurationIssueTemplate.valueAndTypeMismatch
+        cfgC.errors.size() == 1
+        cfgC.errors[0].id == ConfigurationIssue.ConfigurationIssueTemplate.valueAndTypeMismatch
     }
 }

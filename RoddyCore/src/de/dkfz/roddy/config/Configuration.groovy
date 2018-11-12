@@ -433,9 +433,10 @@ public class Configuration implements ContainerParent<Configuration>, Configurat
         errors << error
     }
 
-    List<ConfigurationIssue> getErrors() {
-        def errors = parents.collect { it.errors }.flatten()
-        errors += configurationValues.allValuesAsList.errors
+    List<ConfigurationIssue> getErrors(boolean ignoreCValues = false) {
+        def errors = parents.collect { it.getErrors(true) }.flatten()
+        if (!ignoreCValues)
+            errors += configurationValues.allValuesAsList.collectNested { ConfigurationValue val -> val.errors }.flatten()
         return errors as List<ConfigurationIssue>
     }
 
@@ -444,18 +445,18 @@ public class Configuration implements ContainerParent<Configuration>, Configurat
         for (Configuration parent : parents) { // Could be made shorter, but this is rather efficient as it breaks as soon as an error was found.
             if (parent.hasErrors()) return true
         }
-        configurationValues.allValuesAsList.any { it.hasErrors() }
-        return false
+        return configurationValues.allValuesAsList.any { it.hasErrors() }
     }
-    
+
     void addWarning(ConfigurationIssue warning) {
         if (warning == null) return;
         warnings.add(warning);
     }
 
-    List<ConfigurationIssue> getWarnings() {
-        def warnings = parents.collect { it.warnings }.flatten()
-        warnings += configurationValues.allValuesAsList.warnings
+    List<ConfigurationIssue> getWarnings(boolean ignoreCValues = false) {
+        def warnings = parents.collect { it.getWarnings(true) }.flatten()
+        if (!ignoreCValues)
+            warnings += configurationValues.allValuesAsList.collectNested { ConfigurationValue val -> val.warnings }.flatten()
         return warnings as List<ConfigurationIssue>
     }
 
@@ -464,8 +465,7 @@ public class Configuration implements ContainerParent<Configuration>, Configurat
         for (Configuration parent : parents) { // Could be made shorter, but this is rather efficient as it breaks as soon as an error was found.
             if (parent.hasWarnings()) return true
         }
-        configurationValues.allValuesAsList.any { it.hasWarnings() }
-        return false
+        return configurationValues.allValuesAsList.any { it.hasWarnings() }
     }
 
     boolean isInvalid() {

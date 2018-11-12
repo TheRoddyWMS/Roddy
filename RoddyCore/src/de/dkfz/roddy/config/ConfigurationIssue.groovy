@@ -39,7 +39,7 @@ class ConfigurationIssue {
     static enum ConfigurationIssueTemplate {
         unattachedDollarCharacter(
                 ConfigurationIssueLevel.CVALUE_WARNING,
-                "Several variables in your configuration contain one or more dollar signs. As this might impose problems in your cluster jobs, check then entries in your job configuration files. See the extended logs for more information.",
+                "Several variables in your configuration contain one or more dollar signs. As this might impose problems in your cluster jobs, check the entries in your job configuration files. See the extended logs for more information.",
                 "The variable named '#REPLACE_0#' contains one or more dollar signs, which do not belong to a Roddy variable definition (\${variable identifier}). This might impose problems, so make sure, that your results job configuration is created in the way you want."
         ),
         valueAndTypeMismatch(
@@ -115,7 +115,7 @@ class ConfigurationIssue {
 
     @Override
     String toString() {
-        return "ConfigurationIssue of type '${id}' with level '${level.name()}'".toString()
+        return message
     }
 
 }

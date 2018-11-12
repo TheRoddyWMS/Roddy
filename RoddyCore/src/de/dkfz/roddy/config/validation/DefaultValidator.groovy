@@ -38,7 +38,6 @@ class DefaultValidator extends ConfigurationValueValidator {
 
         boolean result = checkDataTypes(configurationValue, ev)
         result &= checkDollarSignUsage(configurationValue)
-
         this.result = result
         return result
     }
@@ -63,14 +62,16 @@ class DefaultValidator extends ConfigurationValueValidator {
         return true
     }
 
+    static String TEXT = '(([^${}]){0,}|(\$){0,}){0,}'
+    static String VARIABLE = '([$][{](.){0,}[}]){0,}'
+    static GString matcher = /${TEXT}${VARIABLE}${TEXT}/
+
     /**
      * API Level 3.4+
      */
     boolean checkDollarSignUsage(ConfigurationValue configurationValue) {
+        if (!configurationValue.value.contains('$')) return true
 
-        def TEXT = '(([^${}]){0,}|(\\$){0,}){0,}'
-        def VARIABLE = '([$][{](.){0,}[}]){0,}'
-        def matcher = /${TEXT}${VARIABLE}${TEXT}/
 
         String val = configurationValue.value
         boolean result = val ==~ matcher

@@ -124,6 +124,23 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         invalid = !valid
     }
 
+    private ConfigurationValue(Configuration config, ConfigurationValue parent) {
+        this.id = parent.id
+        this.value = parent.value
+        this.configuration = config
+        this.type = parent.type
+        this.description = parent.description
+        this.tags += parent.tags
+        this.tags << "ELEVATED"
+        this.validator = parent.validator // Do not revalidate
+        this.valid = parent.valid
+        this.invalid = parent.invalid
+    }
+
+    ConfigurationValue elevate(Configuration newParent) {
+        return new ConfigurationValue(newParent, this)
+    }
+
     @Override
     boolean equals(Object o) {
         // Auto-code from Idea.
@@ -432,7 +449,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
     EnumerationValue getEnumerationValueType(EnumerationValue defaultType) {
         Enumeration enumeration
         try {
-            enumeration = getConfiguration()?.getEnumerations()?.getValue("cvalueType")
+            enumeration = getConfiguration()?.getEnumerations()?.getValue("cvalueType", null)
             if (!enumeration) {
                 // Get default types...
                 enumeration = Enumeration.getDefaultCValueTypeEnumeration()

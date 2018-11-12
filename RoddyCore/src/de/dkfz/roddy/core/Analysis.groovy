@@ -216,7 +216,7 @@ public class Analysis {
             if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.FailOnErroneousDryRuns) && oldContext.hasErrors()) {
                 // Why print out here? Because the oldContext was started with suppressed messages (Default for QUERY_STATUS).
                 // As there are errors, we'll print them here, otherwise we won't see them.
-                printMessagesForContext(oldContext);
+                printErrorsAndWarnings(oldContext)
                 newRunContexts.add(oldContext);
                 logger.postAlwaysInfo("\nYour tried to start an analysis using rerun or testrerun.\n" +
                         " This is a two step process, where the first step is used to gather information about previous runs." +
@@ -402,12 +402,16 @@ public class Analysis {
             if ((!preventLoggingOnQueryStatus || (context.getExecutionContextLevel() != ExecutionContextLevel.QUERY_STATUS))) {
                 // Print out configuration errors (for context configuration! Not only for analysis)
                 // Don't know, if this is the right place.
-                boolean printed = printConfigurationErrorsAndWarnings(context);
-                printed |= printMessagesForContext(context);
-                if (printed)
-                    logger.always("\nPlease check extended logs in " + logger.getCentralLogFile() + " for more details.");
+                printErrorsAndWarnings(context)
             }
         }
+    }
+
+    void printErrorsAndWarnings(ExecutionContext context) {
+        boolean printed = printConfigurationErrorsAndWarnings(context)
+        printed |= printMessagesForContext(context)
+        if (printed)
+            logger.always("\nPlease check extended logs in " + logger.getCentralLogFile() + " for more details.")
     }
 
     /**
@@ -482,9 +486,15 @@ public class Analysis {
     private boolean printConfigurationErrorsAndWarnings(ExecutionContext context) {
         String datasetID = context.dataSet.getId()
         Configuration configuration = context.getConfiguration()
-        
-        if (configuration.hasErrors()) printMessages(datasetID, "configuration errors", condense(configuration.getErrors()))
-        if (configuration.hasWarnings()) printMessages(datasetID, "configuration warnings", condense(configuration.getWarnings()))
+
+        if (configuration.hasErrors()) {
+            printMessages(datasetID, "configuration errors", condense(configuration.getErrors()))
+            printMessages(datasetID, "configuration errors", configuration.getErrors(), false)
+        }
+        if (configuration.hasWarnings()) {
+            printMessages(datasetID, "configuration warnings", condense(configuration.getWarnings()))
+            printMessages(datasetID, "configuration warnings", configuration.getWarnings(), false)
+        }
         if (configuration.hasLoadErrors()) printMessages(datasetID, "configuration load errors", configuration.getListOfLoadErrors());
 
         return configuration.hasLoadErrors() | configuration.hasWarnings() | configuration.hasErrors()
@@ -519,13 +529,16 @@ public class Analysis {
         return printed;
     }
 
-    private void printMessages(String datasetID, String title, List entries) {
+    private void printMessages(String datasetID, String title, List entries, boolean logAlways = true) {
         StringBuilder messages = new StringBuilder();
-        messages.append("\nThere were " + title + " for dataset " + datasetID);
+        messages.append("\nThere were " + title + " for dataset " + datasetID)
         for (Object entry : entries) {
-            messages.append("\n\t* ").append(entry.toString());
+            messages.append("\n\t* ").append(entry.toString())
         }
-        logger.postAlwaysInfo(messages.toString());
+        if(logAlways)
+            logger.postAlwaysInfo(messages.toString())
+        else
+            logger.sometimes(messages.toString())
     }
 
     /**

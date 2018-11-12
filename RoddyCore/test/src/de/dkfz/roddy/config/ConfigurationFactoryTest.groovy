@@ -30,6 +30,7 @@ import java.lang.reflect.Method
 
 import static de.dkfz.roddy.Constants.DEFAULT
 import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate.unattachedDollarCharacter
+import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate.valueAndTypeMismatch
 import static de.dkfz.roddy.config.ResourceSetSize.*
 
 /**
@@ -121,13 +122,14 @@ class ConfigurationFactoryTest {
     }
 
     @Test
-    void testReadConfigurationWithWarningForDollarsigns() {
+    void testReadConfigurationWithWarningsAndErrors() {
         String text = """
             <configuration name='testForDollars'>
                 <configurationvalues>
                     <cvalue name='valWithDollars1' value='sometext\$dollarinit' />
                     <cvalue name='valWithDollars2' value='sometext\$dollarstwo' />
                     <cvalue name='valWithDollars3' value='sometext\${realValue}' />
+                    <cvalue name='valWithMismatch' value='sometext' type='integer' />
                 </configurationvalues>
             </configuration>
         """
@@ -140,6 +142,10 @@ class ConfigurationFactoryTest {
         assert cfg.warnings[0].message == "The variable named 'valWithDollars1' contains one or more dollar signs, which do not belong to a Roddy variable definition (\${variable identifier}). This might impose problems, so make sure, that your results job configuration is created in the way you want."
         assert cfg.warnings[1].id == unattachedDollarCharacter
         assert cfg.warnings[1].message == "The variable named 'valWithDollars2' contains one or more dollar signs, which do not belong to a Roddy variable definition (\${variable identifier}). This might impose problems, so make sure, that your results job configuration is created in the way you want."
+        assert cfg.hasErrors()
+        assert cfg.errors.size() == 1
+        assert cfg.errors[0].id == valueAndTypeMismatch
+        assert cfg.errors[0].message == "The value of variable named 'valWithMismatch' does not match the variables type 'integer'."
     }
 
 
