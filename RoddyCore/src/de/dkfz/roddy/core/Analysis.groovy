@@ -1,35 +1,27 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2018 German Cancer Research Center (DKFZ).
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.core;
+package de.dkfz.roddy.core
 
-import de.dkfz.roddy.AvailableFeatureToggles;
-import de.dkfz.roddy.BEException;
-import de.dkfz.roddy.Constants;
-import de.dkfz.roddy.Roddy;
-import de.dkfz.roddy.client.RoddyStartupOptions;
-import de.dkfz.roddy.config.*;
-import de.dkfz.roddy.config.loader.ConfigurationLoadError;
-import de.dkfz.roddy.execution.io.ExecutionService;
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
-import de.dkfz.roddy.execution.jobs.Job;
-import de.dkfz.roddy.execution.jobs.JobState;
-import groovy.lang.Closure;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
+import de.dkfz.roddy.AvailableFeatureToggles
+import de.dkfz.roddy.BEException
+import de.dkfz.roddy.Constants
+import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.client.RoddyStartupOptions
+import de.dkfz.roddy.config.*
+import de.dkfz.roddy.execution.io.ExecutionService
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.execution.jobs.BEJob
+import de.dkfz.roddy.execution.jobs.Job
+import de.dkfz.roddy.execution.jobs.JobState
+import groovy.transform.CompileStatic
+import org.apache.commons.io.filefilter.WildcardFileFilter
 
-import java.io.File;
-import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-
-import static de.dkfz.roddy.tools.RoddyIOHelperMethods.getStackTraceAsString;
-
+import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate
+import static de.dkfz.roddy.tools.RoddyIOHelperMethods.getStackTraceAsString
 
 /**
  * An analysis represents the combination of a project, a workflow implementation and a configuration.
@@ -39,6 +31,7 @@ import static de.dkfz.roddy.tools.RoddyIOHelperMethods.getStackTraceAsString;
  * <p>
  * TODO Enable a initialize (cache erase?) to make it possible to reset data sets and data set states for an analysis.
  */
+@CompileStatic
 public class Analysis {
 
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(Analysis.class.getSimpleName());
@@ -182,7 +175,7 @@ public class Analysis {
      * An identifier can contain wildcards. The Apache WildCardFileFilter is used for wildcard resolution.
      *
      * @param pidFilters A list of identifiers or wildcards
-     * @param level      The level for the context execution
+     * @param level The level for the context execution
      * @return
      */
     public List<ExecutionContext> run(List<String> pidFilters, ExecutionContextLevel level, boolean preventLoggingOnQueryStatus) {
@@ -270,14 +263,14 @@ public class Analysis {
     public Map<DataSet, Boolean> checkStatus(List<String> pids, boolean suppressInfo) {
         List<DataSet> dataSets = getRuntimeService().loadDatasetsWithFilter(this, pids, suppressInfo);
         Map<DataSet, Boolean> results = new LinkedHashMap<>();
-        dataSets.parallelStream().forEach(ds -> {
+        dataSets.parallelStream().each({ DataSet ds ->
             boolean result = hasKnownRunningJobs(ds);
             synchronized (results) {
                 results.put(ds, result);
             }
         });
         List<DataSet> sortedKeys = new LinkedList<>(results.keySet());
-        sortedKeys.sort((ds1, ds2) -> ds1.getId().compareTo(ds2.getId()));
+        sortedKeys.sort { DataSet ds1, DataSet ds2 -> ds1.getId().compareTo(ds2.getId()) };
         Map<DataSet, Boolean> sortedMap = new LinkedHashMap<>();
         for (DataSet ds : sortedKeys) {
             sortedMap.put(ds, results.get(ds));
@@ -337,11 +330,9 @@ public class Analysis {
      */
     public void runDeferredContext(final ExecutionContext ec) {
 //        ThreadGroup
-        Thread t = new Thread(() -> {
-            executeRun(ec);
-        });
-        t.setName(String.format("Deferred execution context execution for " + Constants.PID + " %s", ec.getDataSet().getId()));
-        t.start();
+        Thread t = Thread.start(String.format("Deferred execution context execution for " + Constants.PID + " %s", ec.getDataSet().getId()), {
+            executeRun(ec)
+        })
     }
 
     protected void executeRun(ExecutionContext context) {
@@ -350,7 +341,7 @@ public class Analysis {
 
 
     protected boolean prepareExecution(ExecutionContext context)
-        throws IOException {
+            throws IOException {
         logger.rare("" + context.getExecutionContextLevel());
         boolean isExecutable;
         String datasetID = context.getDataSet().getId();
@@ -358,9 +349,7 @@ public class Analysis {
         boolean contextRightsSettings = ExecutionService.getInstance().checkAccessRightsSettings(context);
         boolean contextPermissions = ExecutionService.getInstance().checkContextDirectoriesAndFiles(context);
         boolean configurationValidity =
-                Roddy.isStrictModeEnabled() && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors)
-                        ? !getConfiguration().hasErrors()
-                        : true;
+                Roddy.isStrictModeEnabled() && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors) ? !getConfiguration().hasLoadErrors() : true;
 
         // The setup of the workflow and the executability check may require the execution store, e.g. for synchronously called jobs
         // to gather data from the remote side.
@@ -383,24 +372,19 @@ public class Analysis {
         return isExecutable;
     }
 
-    @FunctionalInterface
-    public interface ThrowingThunkWithSideEffects {
-        void apply() throws Exception;
-    }
-
-    protected void withErrorReporting(ExecutionContext context, boolean preventLoggingOnQueryStatus, ThrowingThunkWithSideEffects code) {
+    protected void withErrorReporting(ExecutionContext context, boolean preventLoggingOnQueryStatus, Closure code) {
         try {
-            code.apply();
+            code();
         } catch (ConfigurationError e) {
             logger.sometimes(e.getMessage() + Constants.ENV_LINESEPARATOR + getStackTraceAsString(e));
-            context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand(e.getMessage()));
+            context.addError(ExecutionContextError.EXECUTION_SETUP_INVALID.expand(e.getMessage()));
         } catch (IOException e) {
             logger.always(e.getMessage());
-            context.addErrorEntry(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.getMessage()));
+            context.addError(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.getMessage()));
         } catch (Exception e) {
             logger.always("An unhandled exception of type '" + e.getClass().getCanonicalName() + "' occurred: '" + e.getLocalizedMessage() + "'");
             logger.always(e.getMessage() + Constants.ENV_LINESEPARATOR + getStackTraceAsString(e));
-            context.addErrorEntry(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.getMessage()));
+            context.addError(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.getMessage()));
         } finally {
             // Look up errors when jobs are executed directly and when there were any started jobs.
             if (context.getStartedJobs().size() > 0) {
@@ -410,22 +394,21 @@ public class Analysis {
                         failedJobs += "\n\t" + job.getJobID() + ",\t" + job.getJobName();
                 }
                 if (failedJobs.length() > 0)
-                    context.addErrorEntry(ExecutionContextError.EXECUTION_JOBFAILED.expand("One or more jobs failed to execute:" + failedJobs));
+                    context.addError(ExecutionContextError.EXECUTION_JOBFAILED.expand("One or more jobs failed to execute:" + failedJobs));
             }
-
-            // Print out configuration errors (for context configuration! Not only for analysis)
-            // Don't know, if this is the right place.
-            if (context.getConfiguration().hasErrors())
-                logger.always(getLoadErrorText(context));
 
             // Print out informational messages like infos, warnings, errors
             // Only print them out if !QUERY_STATUS and the runmode is testrun or testrerun.
             if ((!preventLoggingOnQueryStatus || (context.getExecutionContextLevel() != ExecutionContextLevel.QUERY_STATUS))) {
-                printMessagesForContext(context);
+                // Print out configuration errors (for context configuration! Not only for analysis)
+                // Don't know, if this is the right place.
+                boolean printed = printConfigurationErrorsAndWarnings(context);
+                printed |= printMessagesForContext(context);
+                if (printed)
+                    logger.always("\nPlease check extended logs in " + logger.getCentralLogFile() + " for more details.");
             }
         }
     }
-
 
     /**
      * Executes the context object.
@@ -440,7 +423,7 @@ public class Analysis {
      * @param context
      */
     protected void executeRun(ExecutionContext context, boolean preventLoggingOnQueryStatus) {
-        withErrorReporting(context, preventLoggingOnQueryStatus, () -> {
+        withErrorReporting(context, preventLoggingOnQueryStatus, {
             logger.rare("" + context.getExecutionContextLevel());
             String datasetID = context.getDataSet().getId();
 
@@ -496,30 +479,42 @@ public class Analysis {
         });
     }
 
-    private static String getLoadErrorText(ExecutionContext context) {
-        StringBuilder messages = new StringBuilder();
-        messages.append("There were configuration errors for dataset " + context.dataSet.getId());
-        for (ConfigurationLoadError configurationLoadError : context.getConfiguration().getListOfLoadErrors()) {
-            messages.append("\n\t*" + configurationLoadError.toString());
+    private boolean printConfigurationErrorsAndWarnings(ExecutionContext context) {
+        String datasetID = context.dataSet.getId()
+        Configuration configuration = context.getConfiguration()
+        if (configuration.hasWarnings()) {
+            // Prepare warnings (condense messages)
+            List<ConfigurationIssue> originalWarnings = configuration.getWarnings()
+            List<String> warnings = []
+            for (ConfigurationIssueTemplate template : ConfigurationIssueTemplate.values()) {
+                int count = (int) originalWarnings.count { it.id == template }
+                if (count > 1) {
+                    warnings << template.collectiveMessage
+                } else if (count == 1) {
+                    warnings << originalWarnings.find { it.id == template }.message
+                }
+            }
+            printMessages(datasetID, "configuration warnings", warnings);
         }
-        return messages.toString();
+        if (configuration.hasLoadErrors()) printMessages(datasetID, "configuration errors", configuration.getListOfLoadErrors());
+        boolean printed = configuration.hasLoadErrors() | configuration.hasWarnings();
+        return printed;
     }
 
-    private void printMessagesForContext(ExecutionContext context) {
+    private boolean printMessagesForContext(ExecutionContext context) {
         String datasetID = context.dataSet.getId();
-        if (context.hasInfos()) printMessages(context, datasetID, "infos");
-        if (context.hasWarnings()) printMessages(context, datasetID, "warnings");
-        if (context.hasErrors()) printMessages(context, datasetID, "errors");
-        if (context.hasWarnings() || context.hasErrors())
-            logger.always("\nPlease check extended logs in " + logger.getCentralLogFile() + " for more details.");
-
+        if (context.hasInfos()) printMessages(datasetID, "execution infos", context.getInfos());
+        if (context.hasWarnings()) printMessages(datasetID, "execution warnings", context.getWarnings());
+        if (context.hasErrors()) printMessages(datasetID, "execution errors", context.getErrors());
+        boolean printed = context.hasWarnings() || context.hasErrors();
+        return printed;
     }
 
-    private void printMessages(ExecutionContext context, String datasetID, String title) {
+    private void printMessages(String datasetID, String title, List entries) {
         StringBuilder messages = new StringBuilder();
-        messages.append("\nThere were " + title + " for the execution context for dataset " + datasetID);
-        for (ExecutionContextError executionContextError : context.getErrors()) {
-            messages.append("\n\t* ").append(executionContextError.toString());
+        messages.append("\nThere were " + title + " for dataset " + datasetID);
+        for (Object entry : entries) {
+            messages.append("\n\t* ").append(entry.toString());
         }
         logger.postAlwaysInfo(messages.toString());
     }
@@ -530,7 +525,7 @@ public class Analysis {
      * @param context
      */
     private void finallyStartJobsOfContext(ExecutionContext context) throws BEException {
-        Roddy.getJobManager().startHeldJobs(context.getExecutedJobs());
+        Roddy.getJobManager().startHeldJobs(context.getExecutedJobs() as List<BEJob>);
     }
 
     /**
@@ -567,7 +562,7 @@ public class Analysis {
         if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.RollbackOnWorkflowError)) {
             try {
                 logger.severe("A workflow error occurred, try to rollback / abort submitted jobs.");
-                Roddy.getJobManager().killJobs(context.jobsForProcess);
+                Roddy.getJobManager().killJobs(context.jobsForProcess as List<BEJob>);
             } catch (Exception ex) {
                 logger.severe("Could not successfully abort jobs.", ex);
             }
@@ -576,7 +571,6 @@ public class Analysis {
                     "\n\tYou might consider to enable Roddy strict mode by setting the feature toggles 'StrictMode' and 'RollbackOnWorkflowError'.");
         }
     }
-
 
     /**
      * Calls a cleanup script and / or a workflows cleanup method to cleanup the directories of a workflow.
@@ -597,7 +591,7 @@ public class Analysis {
                     ds, ExecutionContextLevel.CLEANUP, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null);
 
             if (analysisConfiguration.hasCleanupScript()) {
-                withErrorReporting(context, false, () -> {
+                withErrorReporting(context, false, {
                     String cleanupScript = analysisConfiguration.getCleanupScript();
                     if (cleanupScript != null && cleanupScript != "") {
                         Job cleanupJob = new Job(context, "cleanupScript", cleanupScript, null);
@@ -613,7 +607,7 @@ public class Analysis {
 
             // Call the workflows cleanup java method.
             if (context.getWorkflow().hasCleanupMethod()) {
-                withErrorReporting(context, false, () -> {
+                withErrorReporting(context, false, {
                     Workflow wf = context.getWorkflow();
                     boolean isExecutable = prepareExecution(context);
                     if (!isExecutable) {

@@ -16,7 +16,6 @@ import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.config.validation.XSDValidator
 import de.dkfz.roddy.execution.io.MetadataTableFactory
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.plugins.PluginInfoMap
@@ -309,7 +308,7 @@ class ProjectLoader {
 
         projectConfiguration = fac.getProjectConfiguration(projectID);
 
-        if (projectConfiguration.hasErrors()) {
+        if (projectConfiguration.hasLoadErrors()) {
             RoddyCLIClient.checkConfigurationErrorsAndMaybePrintAndFail(projectConfiguration)
         }
 

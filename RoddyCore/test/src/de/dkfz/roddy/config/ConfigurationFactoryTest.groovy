@@ -29,6 +29,7 @@ import org.junit.rules.ExpectedException
 import java.lang.reflect.Method
 
 import static de.dkfz.roddy.Constants.DEFAULT
+import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate.unattachedDollarCharacter
 import static de.dkfz.roddy.config.ResourceSetSize.*
 
 /**
@@ -120,6 +121,29 @@ class ConfigurationFactoryTest {
     }
 
     @Test
+    void testReadConfigurationWithWarningForDollarsigns() {
+        String text = """
+            <configuration name='testForDollars'>
+                <configurationvalues>
+                    <cvalue name='valWithDollars1' value='sometext\$dollarinit' />
+                    <cvalue name='valWithDollars2' value='sometext\$dollarstwo' />
+                    <cvalue name='valWithDollars3' value='sometext\${realValue}' />
+                </configurationvalues>
+            </configuration>
+        """
+        NodeChild xml = (NodeChild) new XmlSlurper().parseText(text)
+        PreloadedConfiguration pc = new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "testForDollars", "", "", xml, "", null, null, text)
+        Configuration cfg = ConfigurationFactory.instance.loadConfiguration(pc)
+        assert cfg.hasWarnings()
+        assert cfg.warnings.size() == 2
+        assert cfg.warnings[0].id == unattachedDollarCharacter
+        assert cfg.warnings[0].message == "The variable named 'valWithDollars1' contains one or more dollar signs, which do not belong to a Roddy variable definition (\${variable identifier}). This might impose problems, so make sure, that your results job configuration is created in the way you want."
+        assert cfg.warnings[1].id == unattachedDollarCharacter
+        assert cfg.warnings[1].message == "The variable named 'valWithDollars2' contains one or more dollar signs, which do not belong to a Roddy variable definition (\${variable identifier}). This might impose problems, so make sure, that your results job configuration is created in the way you want."
+    }
+
+
+    @Test
     void testLoadValidConfigurationDirectories() {
         // Load context from valid directories and see, if the step fails.
         ConfigurationFactory.initialize([testFolder1, testFolder2])
@@ -184,7 +208,6 @@ class ConfigurationFactoryTest {
         assert toolEntry.getInlineScript().equals("echo 'test'")
         assert toolEntry.getInlineScriptName().equals("testscript.sh")
     }
-
     @Test
     @Ignore("The factory does not have that methode anymore. ProcessingToolReader has one, but it returns a NullPointerException in this test.")
     void testParseToolResourceSet() {
