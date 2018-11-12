@@ -482,23 +482,32 @@ public class Analysis {
     private boolean printConfigurationErrorsAndWarnings(ExecutionContext context) {
         String datasetID = context.dataSet.getId()
         Configuration configuration = context.getConfiguration()
-        if (configuration.hasWarnings()) {
-            // Prepare warnings (condense messages)
-            List<ConfigurationIssue> originalWarnings = configuration.getWarnings()
-            List<String> warnings = []
-            for (ConfigurationIssueTemplate template : ConfigurationIssueTemplate.values()) {
-                int count = (int) originalWarnings.count { it.id == template }
-                if (count > 1) {
-                    warnings << template.collectiveMessage
-                } else if (count == 1) {
-                    warnings << originalWarnings.find { it.id == template }.message
-                }
+        
+        if (configuration.hasErrors()) printMessages(datasetID, "configuration errors", condense(configuration.getErrors()))
+        if (configuration.hasWarnings()) printMessages(datasetID, "configuration warnings", condense(configuration.getWarnings()))
+        if (configuration.hasLoadErrors()) printMessages(datasetID, "configuration load errors", configuration.getListOfLoadErrors());
+
+        return configuration.hasLoadErrors() | configuration.hasWarnings() | configuration.hasErrors()
+    }
+
+    /**
+     * Takes ConfigurationIssues, sorts them by their template identifier and replaces multiple variants of the same
+     * template with their collective message. If only one value of a template exists, its message is used.
+     *
+     * @param issues
+     * @return Return a list of messages and collective messages.
+     */
+    static List<String> condense(List<ConfigurationIssue> issues) {
+        List<String> result = []
+        for (ConfigurationIssueTemplate template : ConfigurationIssueTemplate.values()) {
+            int count = (int) issues.count { it.id == template }
+            if (count > 1) {
+                result << template.collectiveMessage
+            } else if (count == 1) {
+                result << issues.find { it.id == template }.message
             }
-            printMessages(datasetID, "configuration warnings", warnings);
         }
-        if (configuration.hasLoadErrors()) printMessages(datasetID, "configuration errors", configuration.getListOfLoadErrors());
-        boolean printed = configuration.hasLoadErrors() | configuration.hasWarnings();
-        return printed;
+        result
     }
 
     private boolean printMessagesForContext(ExecutionContext context) {
