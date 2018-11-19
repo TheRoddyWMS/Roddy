@@ -6,10 +6,15 @@
 
 package de.dkfz.roddy.execution.jobs
 
+import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.TestFileStageSettings
-import de.dkfz.roddy.core.ContextResource;
+import de.dkfz.roddy.core.ContextResource
+import de.dkfz.roddy.execution.io.ExecutionService
+import de.dkfz.roddy.execution.io.LocalExecutionService
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 import de.dkfz.roddy.knowledge.files.BaseFile
 import groovy.transform.CompileStatic
+import org.junit.BeforeClass
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -21,6 +26,12 @@ class JobTest {
 
     @Rule
     final public ContextResource contextResource = new ContextResource()
+
+    @BeforeClass
+    static void setup() {
+        ExecutionService.initializeService(LocalExecutionService, RunMode.CLI)
+        FileSystemAccessProvider.initializeProvider(true)
+    }
 
     @CompileStatic
     static class TestFile extends BaseFile {

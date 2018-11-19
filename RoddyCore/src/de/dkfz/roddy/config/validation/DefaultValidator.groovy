@@ -46,15 +46,15 @@ class DefaultValidator extends ConfigurationValueValidator {
     private boolean isConfigurationValueTypeCorrect(ConfigurationValue configurationValue, EnumerationValue ev) {
         String evID = ev != null ? ev.getId() : "string"
         try {
-            if (evID.equals("integer")) {
+            if (evID == "integer") {
                 configurationValue.toInt()
-            } else if (evID.equals("boolean")) {
+            } else if (evID == "boolean") {
                 configurationValue.toBoolean()
-            } else if (evID.equals("float")) {
+            } else if (evID == "float") {
                 configurationValue.toFloat()
-            } else if (evID.equals("double")) {
+            } else if (evID == "double") {
                 configurationValue.toDouble()
-            } else if (evID.equals("string")) {
+            } else if (evID == "string") {
             }
         } catch (Exception e) {
             super.errors << new ConfigurationIssue(valueAndTypeMismatch, configurationValue.id, evID)
