@@ -6,6 +6,10 @@
 
 package de.dkfz.roddy.core;
 
+import de.dkfz.roddy.Constants;
+import de.dkfz.roddy.config.Configuration;
+import de.dkfz.roddy.config.ConfigurationValue;
+import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues;
 import de.dkfz.roddy.execution.io.BaseMetadataTable;
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
 
@@ -82,6 +86,22 @@ public class DataSet extends InfoObject implements Serializable {
 
     public Project getProject() {
         return project;
+    }
+
+    /**
+     * This table contains some minimal information about the dataset and is meant
+     * for INTERNAL USE ONLY!
+     * @return
+     */
+    public Configuration getConfiguration() {
+        Configuration c = new Configuration(null);
+
+        RecursiveOverridableMapContainerForConfigurationValues configurationValues = c.getConfigurationValues();
+        configurationValues.put(Constants.PID, id);
+        configurationValues.put(Constants.PID_CAP, id);
+        configurationValues.put(Constants.DATASET, id);
+        configurationValues.put(Constants.DATASET_CAP, id);
+        return c;
     }
 
     public BaseMetadataTable getMetadataTable() {

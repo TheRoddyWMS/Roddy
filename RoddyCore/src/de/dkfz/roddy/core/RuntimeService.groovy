@@ -450,6 +450,7 @@ class RuntimeService {
         return getOutputBaseDirectoryCV(analysis.configuration).toFile(analysis)
     }
 
+    @Deprecated
     File getOutputBaseDirectory(DataSet dataSet, Analysis analysis) {
         return getOutputBaseDirectoryCV(analysis.configuration).toFile(analysis, dataSet)
     }
@@ -471,7 +472,7 @@ class RuntimeService {
     }
 
     File getOutputAnalysisBaseDirectory(ExecutionContext context) {
-        return getOutputAnalysisBaseDirectory(context.dataSet, context.analysis)
+        return getOutputAnalysisBaseCV(context.analysis).toFile(context)
     }
 
 

@@ -14,6 +14,7 @@ import de.dkfz.roddy.config.validation.DefaultValidator
 import de.dkfz.roddy.core.Analysis
 import de.dkfz.roddy.core.DataSet
 import de.dkfz.roddy.core.ExecutionContext
+import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.CollectionHelperMethods
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
@@ -96,8 +97,8 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
     /**
      * API Level 3.4+
      */
-    ConfigurationValue(Configuration config = null, double value) {
-        this(config, value.toString(), "double")
+    ConfigurationValue(Configuration config = null, String id, double value) {
+        this(config, id, value.toString(), "double")
     }
 
     ConfigurationValue(Configuration config, String id, String value) {
@@ -114,7 +115,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
 
     ConfigurationValue(Configuration config, String id, String value, String type, String description, List<String> tags) {
         this.id = id
-        this.value = value
+        this.value = value != null ? replaceObsoleteVariableIdentifiers(value) : null
         this.configuration = config
         this.type = !RoddyConversionHelperMethods.isNullOrEmpty(type) ? type : determineTypeOfValue(value)
         this.description = description
@@ -124,6 +125,11 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         invalid = !valid
     }
 
+    /**
+     * Copy constructor for cvalue elevation
+     * @param config
+     * @param parent
+     */
     private ConfigurationValue(Configuration config, ConfigurationValue parent) {
         this.id = parent.id
         this.value = parent.value
@@ -132,13 +138,26 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         this.description = parent.description
         this.tags += parent.tags
         this.tags << "ELEVATED"
-        this.validator = parent.validator // Do not revalidate
+        this.validator = parent.validator // Do not revalidate, this is much too expensive for many values
         this.valid = parent.valid
         this.invalid = parent.invalid
     }
 
     ConfigurationValue elevate(Configuration newParent) {
         return new ConfigurationValue(newParent, this)
+    }
+
+    @Deprecated
+    static String replaceObsoleteVariableIdentifiers(String cval) {
+        ([
+                '$USERNAME' : '${USERNAME}',
+                '$USERGROUP': '${USERGROUP}',
+                '$USERHOME' : '${USERHOME}',
+                '$PWD'      : "\${$ExecutionService.RODDY_CVALUE_DIRECTORY_EXECUTION}"
+        ] as Map<String, String>).each { String k, String v ->
+            cval = cval.replace(k, v)
+        }
+        return cval
     }
 
     @Override
@@ -200,14 +219,6 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         return "string"
     }
 
-    private String replaceString(String src, String pattern, String text) {
-        if (src.contains(pattern)) {
-            return src.replace(pattern, text)
-        }
-        return src
-    }
-
-
     private String checkAndCorrectPathThrow(String temp) throws ConfigurationError {
         String curUserPath = (new File("")).getAbsolutePath()
         String applicationDirectory = Roddy.getApplicationDirectory().getAbsolutePath()
@@ -244,41 +255,12 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
      * @param dataSet
      * @return
      */
-    File toFile(Analysis analysis, DataSet dataSet) throws ConfigurationError {
-        File f = toFile(analysis)
+    File toFile(Analysis analysis, DataSet dataSet = null) throws ConfigurationError {
+        String temp = new File(toEvaluatedValue([], id, value ?: "", configuration)).absolutePath
 
-        String temp = f.getAbsolutePath()
-        temp = temp.contains("\${" + Constants.PID + "}") ? replaceString(temp, "\${" + Constants.PID + "}", dataSet.getId()) : temp
-        temp = temp.contains("\${" + Constants.PID_CAP + "}") ? replaceString(temp, "\${" + Constants.PID_CAP + "}", dataSet.getId()) : temp
-        temp = temp.contains("\${" + Constants.DATASET + "}") ? replaceString(temp, "\${" + Constants.DATASET + "}", dataSet.getId()) : temp
-        temp = temp.contains("\${" + Constants.DATASET_CAP + "}") ? replaceString(temp, "\${" + Constants.DATASET_CAP + "}", dataSet.getId()) : temp
+        if (analysis) temp = toEvaluatedValue([], id, temp, analysis.configuration)
+        if (dataSet) temp = toEvaluatedValue([], id, temp, dataSet.configuration)
 
-        return new File(temp)
-    }
-
-    File toFile(Analysis analysis) {
-        if (analysis == null) return toFile()
-
-        String temp = toFile().getAbsolutePath()
-        temp = replaceConfigurationBasedValues(temp, analysis.getConfiguration())
-        temp = replaceString(temp, "\${" + Constants.PROJECT_NAME + "}", analysis.getProject().getName())
-        temp = checkAndCorrectPath(temp)
-
-        String userID = analysis.getUsername()
-        String groupID = analysis.getUsergroup()
-
-        if (userID != null) {
-            temp = replaceString(temp, "\$USERNAME", userID)
-            temp = replaceString(temp, "\${USERNAME}", userID)
-        }
-        if (groupID != null) {
-            temp = replaceString(temp, "\$USERGROUP", groupID)
-            temp = replaceString(temp, "\${USERGROUP}", groupID)
-        }
-
-        String ud = FileSystemAccessProvider.getInstance().getUserDirectory().getAbsolutePath()
-        temp = replaceString(temp, "\$USERHOME", ud)
-        temp = replaceString(temp, "\${USERHOME}", ud)
         temp = checkAndCorrectPath(temp)
 
         return new File(temp)
@@ -294,7 +276,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         }
 
         if (context == null) {
-            _toFileCache = toFile()
+            _toFileCache = new File(value)
             return _toFileCache
         }
         try {
@@ -312,37 +294,6 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         } catch (Exception ex) {
             return null
         }
-    }
-
-    static String replaceConfigurationBasedValues(String temp, Configuration configuration) {
-        String[] allValues = temp.split("/")//File.separator);
-        for (int i = 0; i < allValues.length; i++) {
-            if (!allValues[i].startsWith('$')) continue
-            String cValName = allValues[i].substring(2, allValues[i].length() - 1)
-            if (!configuration.getConfigurationValues().hasValue(cValName))
-                continue
-            ConfigurationValue cval = configuration.getConfigurationValues().get(cValName)
-            if (cValName.toLowerCase().contains("directory") || cval.type.equals("path")) {
-                temp = temp.replace(allValues[i], replaceConfigurationBasedValues(cval.value, configuration))
-            } else {
-                temp = temp.replace(allValues[i], cval.toString())
-            }
-        }
-        return temp
-    }
-
-    File toFile(Map<String, String> replacements) {
-        String temp = value
-
-        for (String key : replacements.keySet()) {
-            String val = replacements.get(key)
-            temp = temp.replace(key, val)
-        }
-        return new File(temp)
-    }
-
-    File toFile() {
-        return new File(value)
     }
 
     Boolean toBoolean() {
@@ -384,45 +335,42 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         return Long.parseLong(value)
     }
 
-    Pattern variableDetection = Pattern.compile('[$][{][a-zA-Z0-9_]*[}]')
+    static final Pattern variableDetection = Pattern.compile('[$][{][a-zA-Z0-9_]*[}]')
 
     @Override
     String toString() {
-        return toString(new LinkedList<>())
+        return toEvaluatedValue([], id, value, configuration)
     }
 
-    @Deprecated
-    String toString(List<String> blackList) {
-        return toEvaluatedValue(blackList)
-    }
+    static String toEvaluatedValue(List<String> blackList, String valueID, String initialValue, Configuration configuration) {
 
-    String toEvaluatedValue(List<String> blackList) {
-        String temp = value
+        String temp = initialValue
         if (configuration != null) {
-            List<String> valueIDs = getIDsForParentValues()
-            if (CollectionHelperMethods.intersects(blackList, valueIDs)) {
-                ConfigurationError exc = new ConfigurationError("Cyclic dependency found for cvalue '" + this.id + "' in file " + (configuration.preloadedConfiguration != null ? configuration.preloadedConfiguration.file : configuration.getID()), configuration, "Cyclic dependency", null)
+            List<String> valueIDs = getIDsForParentValues(temp)
+            if (blackList.intersect(valueIDs as Iterable<String>)) {
+                def badFile = configuration.preloadedConfiguration != null ? configuration.preloadedConfiguration.file : configuration.getID()
+                ConfigurationError exc = new ConfigurationError("Cyclic dependency found for cvalue '${valueID}' in file '${badFile}'", configuration, "Cyclic dependency", null)
                 configuration.addLoadError(new ConfigurationLoadError(configuration, "cValues", exc.getMessage(), exc))
                 throw exc
             }
-
+            def configurationValues = configuration.getConfigurationValues()
             for (String vName : valueIDs) {
-                if (configuration.getConfigurationValues().hasValue(vName)) {
-                    List<String> subBlackList = new LinkedList<>(blackList)
-                    subBlackList.add(vName)
-                    temp = temp.replace("\${" + vName + '}', configuration.getConfigurationValues().get(vName).toString(subBlackList))
+                if (configurationValues.hasValue(vName)) {
+                    List<String> subBlackList = blackList + [vName]
+                    ConfigurationValue subValue = configurationValues[vName] as ConfigurationValue
+                    temp = temp.replace("\${$vName}", toEvaluatedValue(subBlackList, subValue.id, subValue.value, subValue.configuration))
                 }
             }
         }
         return temp
     }
 
-    List<String> getIDsForParentValues() {
+    static List<String> getIDsForParentValues(String value) {
         List<String> parentValues = new LinkedList<>()
 
         Matcher m = variableDetection.matcher(value)
         // Findall is not available in standard java, so I use groovy here.
-        for (String s : ConfigurationValueHelper.callFindAllForPatternMatcher(m)) {
+        for (String s : m.findAll()) {
             String vName = s.replaceAll("[\${}]", "")
             parentValues.add(vName)
         }

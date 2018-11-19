@@ -70,6 +70,9 @@ class DefaultValidator extends ConfigurationValueValidator {
      * API Level 3.4+
      */
     boolean checkDollarSignUsage(ConfigurationValue configurationValue) {
+
+        if (configurationValue.value == null) return true
+
         if (!configurationValue.value.contains('$')) return true
 
 
