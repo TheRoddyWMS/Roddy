@@ -37,15 +37,20 @@ class ConfigurationIssue {
      * Various templates for configuration related issues.
      */
     static enum ConfigurationIssueTemplate {
-        unattachedDollarCharacter(
+        detachedDollarCharacter(
                 ConfigurationIssueLevel.CVALUE_WARNING,
                 "Several variables in your configuration contain one or more dollar signs. As this might impose problems in your cluster jobs, check the entries in your job configuration files. See the extended logs for more information.",
-                "The variable named '#REPLACE_0#' contains one or more dollar signs, which do not belong to a Roddy variable definition (\${variable identifier}). This might impose problems, so make sure, that your results job configuration is created in the way you want."
+                "Variable '#REPLACE_0#' contains plain dollar sign(s) without braces. Roddy does not interpret them as variables and cannot guarantee correct ordering of assignments for such variables in the job parameter file."
         ),
         valueAndTypeMismatch(
                 ConfigurationIssueLevel.CVALUE_ERROR,
                 "Several variables in your configuration mismatch regarding their type and value. See the extended logs for more information.",
-                "The value of variable named '#REPLACE_0#' does not match the variables type '#REPLACE_1#'."
+                "The value of variable named '#REPLACE_0#' is not of its declared type '#REPLACE_1#'."
+        ),
+        inproperVariableExpression(
+                ConfigurationIssueLevel.CVALUE_WARNING,
+                "Several variables in your configuration might misuse the variable import wrong. A variable needs to be imported into another value with \${variable identifiert}.",
+                "The variable named '#REPLACE_0#' might misuse the variable import. Make sure, that all intended variable imports are non-escaped and formed like \${variable identifier}. Also, variable nesting is not allowed."
         )
 
         final ConfigurationIssueLevel level

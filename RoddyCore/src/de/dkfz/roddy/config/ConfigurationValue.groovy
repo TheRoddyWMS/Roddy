@@ -9,8 +9,9 @@ package de.dkfz.roddy.config
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.loader.ConfigurationLoadError
-import de.dkfz.roddy.config.validation.ConfigurationValueValidator
+import de.dkfz.roddy.config.validation.BashValidator
 import de.dkfz.roddy.config.validation.DefaultValidator
+import de.dkfz.roddy.config.validation.FileSystemValidator
 import de.dkfz.roddy.core.Analysis
 import de.dkfz.roddy.core.DataSet
 import de.dkfz.roddy.core.ExecutionContext
@@ -19,11 +20,6 @@ import de.dkfz.roddy.tools.CollectionHelperMethods
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import groovy.transform.CompileStatic
 
-import java.io.File
-import java.util.Arrays
-import java.util.LinkedList
-import java.util.List
-import java.util.Map
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -37,6 +33,24 @@ import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BASH_ARRAY
 class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiable, ConfigurationIssue.IConfigurationIssueContainer {
 
     private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(ConfigurationValue.class.getSimpleName())
+
+    /**
+     * API Level 3.4+
+     */
+    static Enumeration getDefaultCValueTypeEnumeration() {
+        Enumeration _def = new Enumeration("cvalueType", [
+                new EnumerationValue('filename', FileSystemValidator.name),
+                new EnumerationValue('filenamePattern', FileSystemValidator.name),
+                new EnumerationValue('path', FileSystemValidator.name),
+                new EnumerationValue('bashArray', BashValidator.name),
+                new EnumerationValue('boolean', DefaultValidator.name),
+                new EnumerationValue('integer', DefaultValidator.name),
+                new EnumerationValue('float',   DefaultValidator.name),
+                new EnumerationValue('double',  DefaultValidator.name),
+                new EnumerationValue('string',  DefaultValidator.name),
+        ])
+        return _def
+    }
 
     public final String id
 
@@ -58,9 +72,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
      */
     final boolean valid
 
-    /**
-     * API Level 3.4+
-     */
+    @Deprecated
     final boolean invalid
 
     /**
@@ -136,6 +148,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         this.valid = parent.valid
         this.invalid = parent.invalid
     }
+
 
     ConfigurationValue elevate(Configuration newParent) {
         return new ConfigurationValue(newParent, this)
@@ -452,7 +465,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
             enumeration = getConfiguration()?.getEnumerations()?.getValue("cvalueType", null)
             if (!enumeration) {
                 // Get default types...
-                enumeration = Enumeration.getDefaultCValueTypeEnumeration()
+                enumeration = getDefaultCValueTypeEnumeration()
             }
             String _ev = getType()
             if (_ev == null || _ev.trim().equals(""))
@@ -466,7 +479,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
 
     @Deprecated
     boolean isInvalid() {
-        return invalid
+        return !valid
     }
 
     @Deprecated

@@ -36,13 +36,14 @@ class DefaultValidator extends ConfigurationValueValidator {
         super.warnings.clear()
         EnumerationValue ev = configurationValue.getEnumerationValueType()
 
-        boolean result = checkDataTypes(configurationValue, ev)
-        result &= checkDollarSignUsage(configurationValue)
+        boolean result = isConfigurationValueTypeCorrect(configurationValue, ev)
+        result &= areDollarCharactersProperlyUsed(configurationValue)
+        result &= areVariablesProperlyDefined(configurationValue)
         this.result = result
         return result
     }
 
-    private boolean checkDataTypes(ConfigurationValue configurationValue, EnumerationValue ev) {
+    private boolean isConfigurationValueTypeCorrect(ConfigurationValue configurationValue, EnumerationValue ev) {
         String evID = ev != null ? ev.getId() : "string"
         try {
             if (evID.equals("integer")) {
@@ -62,22 +63,53 @@ class DefaultValidator extends ConfigurationValueValidator {
         return true
     }
 
-    static String TEXT = '(([^${}]){0,}|(\$){0,}){0,}'
-    static String VARIABLE = '([$][{](.){0,}[}]){0,}'
-    static GString matcher = /${TEXT}${VARIABLE}${TEXT}/
-
     /**
-     * API Level 3.4+
+     * Trick: Remove escaped escape characters! This way only single escape characters will be used for the check.
      */
-    boolean checkDollarSignUsage(ConfigurationValue configurationValue) {
-        if (!configurationValue.value.contains('$')) return true
+    static String removeEscapedEscapeCharacters(String temp) {
+        // Why the loop? Because replaceAll won't do it and will totally replace e.g. odd escape sequence, e.g.:
+        // \\abc => abc     and
+        // \\\abc => abc    as well!
+        while (temp.contains("\\\\"))
+            temp = temp.replace("\\\\", "")
+        temp
+    }
 
+    /** Match either a detached dollar (withouth esacpe and brace) somewhere in the text
+     *   OR a non escaped detached dollar at line end.
+     *   OR a detached dollar string '$'
+     */
+    static String matchDetachedDollars = /([^\\][$][^{])|([^\\][$]$)|(^[$]$)/
 
-        String val = configurationValue.value
-        boolean result = val ==~ matcher
+    boolean areDollarCharactersProperlyUsed(ConfigurationValue cv) {
+        if (!cv.value.contains('$')) return true
+
+        String temp = removeEscapedEscapeCharacters(cv.value)
+
+        boolean result = !temp.findAll(matchDetachedDollars)
 
         if (!result) {
-            super.warnings << new ConfigurationIssue(unattachedDollarCharacter, configurationValue.id)
+            super.warnings << new ConfigurationIssue(detachedDollarCharacter, cv.id)
+        }
+
+        return result
+    }
+
+    static final String VARIABLE = '([^\\\\{][$][{]([\\w[-]_]){1,}[}])|(^[$][{]([\\w[-]_]){1,}[}])'
+    static final String VARIABLE_START = '([^\\\\|^{][$][{])|(^[$][{])'
+
+    boolean areVariablesProperlyDefined(ConfigurationValue cv) {
+        if (!cv.value.contains('$')) return true
+
+        String temp = removeEscapedEscapeCharacters(cv.value)
+
+        int countOfVariables = temp.findAll(VARIABLE).size()
+        int countOfStartedVariables = temp.findAll(VARIABLE_START).size()
+
+        boolean result = countOfVariables == countOfStartedVariables
+
+        if (!result) {
+            super.warnings << new ConfigurationIssue(inproperVariableExpression, cv.id)
         }
 
         return result

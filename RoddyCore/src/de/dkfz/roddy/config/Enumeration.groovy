@@ -5,6 +5,7 @@
  */
 
 package de.dkfz.roddy.config
+
 /**
  * a custom enumeration class which allows the definition of enumerations in configuration files.
  */
@@ -17,32 +18,13 @@ class Enumeration implements RecursiveOverridableMapContainer.Identifiable {
 
     private final LinkedHashMap<String, EnumerationValue> values = new LinkedHashMap<String, EnumerationValue>()
 
-    /**
-     * API Level 3.4+
-     */
-    static Enumeration getDefaultCValueTypeEnumeration() {
-        Enumeration _def = new Enumeration("cvalueType", [
-                new EnumerationValue('filename', "de.dkfz.roddy.config.validation.FileSystemValidator"),
-                new EnumerationValue('filenamePattern', "de.dkfz.roddy.config.validation.FileSystemValidator"),
-                new EnumerationValue('path', "de.dkfz.roddy.config.validation.FileSystemValidator"),
-                new EnumerationValue('bashArray', "de.dkfz.roddy.config.validation.BashValidator"),
-                new EnumerationValue('boolean', "de.dkfz.roddy.config.validation.DefaultValidator"),
-                new EnumerationValue('integer', "de.dkfz.roddy.config.validation.DefaultValidator"),
-                new EnumerationValue('float', "de.dkfz.roddy.config.validation.DefaultValidator"),
-                new EnumerationValue('double', "de.dkfz.roddy.config.validation.DefaultValidator"),
-                new EnumerationValue('string', "de.dkfz.roddy.config.validation.DefaultValidator"),
-        ])
-        return _def
-    }
-
-    Enumeration(String name, List<EnumerationValue> values, String description = "", Enumeration enumeration = null) {
+    Enumeration(String name, List<EnumerationValue> values, String description = "") {
         if (!name)
             throw new RuntimeException("A enumeration must have a valid name.")
         this.name = name
         this.description = description
         if (!values)
             throw new RuntimeException("There must be some enumeration values. An enumeration cannot be empty.")
-//        this.values.putAll(enumeration.values);
         final Enumeration THIS = this
         values.each { EnumerationValue ev -> THIS.values[ev.id] = ev }
     }

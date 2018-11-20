@@ -1,19 +1,19 @@
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.config.ConfigurationIssue
+
 import spock.lang.Shared
 import spock.lang.Specification
 
-import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate.unattachedDollarCharacter
+import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate.detachedDollarCharacter
 import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate.valueAndTypeMismatch
 
 class AnalysisSpec extends Specification {
 
     @Shared
-    static def valA = unattachedDollarCharacter.expand("a")
+    static def valA = detachedDollarCharacter.expand("a")
 
     @Shared
-    static def valB = unattachedDollarCharacter.expand("b")
+    static def valB = detachedDollarCharacter.expand("b")
 
     @Shared
     static def valC = valueAndTypeMismatch.expand("a", "b")

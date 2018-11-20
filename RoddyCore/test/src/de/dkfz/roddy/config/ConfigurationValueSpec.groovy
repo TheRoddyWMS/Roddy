@@ -8,10 +8,10 @@ class ConfigurationValueSpec extends Specification {
 //    }
 //
     @Shared
-    static final EnumerationValue evString = Enumeration.defaultCValueTypeEnumeration.getValue("string")
+    static final EnumerationValue evString = ConfigurationValue.defaultCValueTypeEnumeration.getValue("string")
 
     @Shared
-    static final EnumerationValue evInt = Enumeration.defaultCValueTypeEnumeration.getValue("integer")
+    static final EnumerationValue evInt = ConfigurationValue.defaultCValueTypeEnumeration.getValue("integer")
 
     def "get enumeration value type (cvalue type)"(cvalue, defaultType, expectedValue) {
         expect:

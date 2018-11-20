@@ -29,7 +29,7 @@ import org.junit.rules.ExpectedException
 import java.lang.reflect.Method
 
 import static de.dkfz.roddy.Constants.DEFAULT
-import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate.unattachedDollarCharacter
+import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate.detachedDollarCharacter
 import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate.valueAndTypeMismatch
 import static de.dkfz.roddy.config.ResourceSetSize.*
 
@@ -138,14 +138,14 @@ class ConfigurationFactoryTest {
         Configuration cfg = ConfigurationFactory.instance.loadConfiguration(pc)
         assert cfg.hasWarnings()
         assert cfg.warnings.size() == 2
-        assert cfg.warnings[0].id == unattachedDollarCharacter
-        assert cfg.warnings[0].message == "The variable named 'valWithDollars1' contains one or more dollar signs, which do not belong to a Roddy variable definition (\${variable identifier}). This might impose problems, so make sure, that your results job configuration is created in the way you want."
-        assert cfg.warnings[1].id == unattachedDollarCharacter
-        assert cfg.warnings[1].message == "The variable named 'valWithDollars2' contains one or more dollar signs, which do not belong to a Roddy variable definition (\${variable identifier}). This might impose problems, so make sure, that your results job configuration is created in the way you want."
+        assert cfg.warnings[0].id == detachedDollarCharacter
+        assert cfg.warnings[0].message == "Variable 'valWithDollars1' contains plain dollar sign(s) without braces. Roddy does not interpret them as variables and cannot guarantee correct ordering of assignments for such variables in the job parameter file."
+        assert cfg.warnings[1].id == detachedDollarCharacter
+        assert cfg.warnings[1].message == "Variable 'valWithDollars2' contains plain dollar sign(s) without braces. Roddy does not interpret them as variables and cannot guarantee correct ordering of assignments for such variables in the job parameter file."
         assert cfg.hasErrors()
         assert cfg.errors.size() == 1
         assert cfg.errors[0].id == valueAndTypeMismatch
-        assert cfg.errors[0].message == "The value of variable named 'valWithMismatch' does not match the variables type 'integer'."
+        assert cfg.errors[0].message == "The value of variable named 'valWithMismatch' is not of its declared type 'integer'."
     }
 
 
@@ -215,7 +215,7 @@ class ConfigurationFactoryTest {
         assert toolEntry.getInlineScriptName().equals("testscript.sh")
     }
     @Test
-    @Ignore("The factory does not have that methode anymore. ProcessingToolReader has one, but it returns a NullPointerException in this test.")
+    @Ignore("The factory does not have that method anymore. ProcessingToolReader has one, but it returns a NullPointerException in this test.")
     void testParseToolResourceSet() {
         Method parseToolResourceSet = ConfigurationFactory.getDeclaredMethod("parseToolResourceSet", NodeChild, Configuration)
         parseToolResourceSet.setAccessible(true)

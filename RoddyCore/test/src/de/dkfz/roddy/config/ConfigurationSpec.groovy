@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.config
 
-import groovy.transform.CompileStatic
+
 import spock.lang.Specification
 
 /**
@@ -43,12 +43,12 @@ class ConfigurationSpec extends Specification {
         cfgC.addParent(cfgB)
 
         // Shall be elevated but their warnings and errors shall only exist once!
-        cfgA.configurationValues << new ConfigurationValue("vala", 'unattached $ sign ')
+        cfgA.configurationValues << new ConfigurationValue("vala", 'detached $ sign ')
         cfgA.configurationValues << new ConfigurationValue("valb", 'type mismatch', "integer")
 
         then:
         cfgC.warnings.size() == 1
-        cfgC.warnings[0].id == ConfigurationIssue.ConfigurationIssueTemplate.unattachedDollarCharacter
+        cfgC.warnings[0].id == ConfigurationIssue.ConfigurationIssueTemplate.detachedDollarCharacter
 
         cfgC.errors.size() == 1
         cfgC.errors[0].id == ConfigurationIssue.ConfigurationIssueTemplate.valueAndTypeMismatch

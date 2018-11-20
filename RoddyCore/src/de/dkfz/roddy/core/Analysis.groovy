@@ -394,14 +394,12 @@ public class Analysis {
                         failedJobs += "\n\t" + job.getJobID() + ",\t" + job.getJobName();
                 }
                 if (failedJobs.length() > 0)
-                    context.addError(ExecutionContextError.EXECUTION_JOBFAILED.expand("One or more jobs failed to execute:" + failedJobs));
+                    context.addError(ExecutionContextError.EXECUTION_JOBFAILED.expand("Job(s) failed to execute:" + failedJobs));
             }
 
             // Print out informational messages like infos, warnings, errors
             // Only print them out if !QUERY_STATUS and the runmode is testrun or testrerun.
             if ((!preventLoggingOnQueryStatus || (context.getExecutionContextLevel() != ExecutionContextLevel.QUERY_STATUS))) {
-                // Print out configuration errors (for context configuration! Not only for analysis)
-                // Don't know, if this is the right place.
                 printErrorsAndWarnings(context)
             }
         }
