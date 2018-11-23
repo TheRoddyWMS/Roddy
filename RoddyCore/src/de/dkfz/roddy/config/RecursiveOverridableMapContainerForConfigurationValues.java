@@ -10,6 +10,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING;
+
 /**
  * Helps configurations to store overridable versions of configuration values and other things
  */
@@ -109,7 +111,7 @@ public class RecursiveOverridableMapContainerForConfigurationValues
     }
 
     public void put(String id, String value) {
-        this.put(id, value, "string");
+        this.put(id, value, CVALUE_TYPE_STRING);
     }
 
 }

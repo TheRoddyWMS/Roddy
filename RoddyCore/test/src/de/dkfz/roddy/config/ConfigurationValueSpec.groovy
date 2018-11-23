@@ -10,6 +10,9 @@ import org.junit.ClassRule
 import spock.lang.Shared
 import spock.lang.Specification
 
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_INTEGER
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING
+
 class ConfigurationValueSpec extends Specification {
 //    def "GetEnumerationValueType"() {
 //    }
@@ -28,21 +31,21 @@ class ConfigurationValueSpec extends Specification {
     }
 
     @Shared
-    static final EnumerationValue evString = ConfigurationValue.defaultCValueTypeEnumeration.getValue("string")
+    static final EnumerationValue evString = ConfigurationValue.defaultCValueTypeEnumeration.getValue(CVALUE_TYPE_STRING)
 
     @Shared
-    static final EnumerationValue evInt = ConfigurationValue.defaultCValueTypeEnumeration.getValue("integer")
+    static final EnumerationValue evInt = ConfigurationValue.defaultCValueTypeEnumeration.getValue(CVALUE_TYPE_INTEGER)
 
     def "get enumeration value type (cvalue type)"(cvalue, defaultType, expectedValue) {
         expect:
         cvalue.getEnumerationValueType(defaultType) == expectedValue
 
         where:
-        cvalue                                       | defaultType | expectedValue
-        new ConfigurationValue("a", "b")             | null        | evString
-        new ConfigurationValue("a", "b")             | evString    | evString
-        new ConfigurationValue("b", "abc", "string") | null        | evString
-        new ConfigurationValue("c", 1)               | null        | evInt
+        cvalue                                                 | defaultType | expectedValue
+        new ConfigurationValue("a", "b")                       | null        | evString
+        new ConfigurationValue("a", "b")                       | evString    | evString
+        new ConfigurationValue("b", "abc", CVALUE_TYPE_STRING) | null        | evString
+        new ConfigurationValue("c", 1)                         | null        | evInt
     }
 
     def "test variable replacement for toFile()"() {

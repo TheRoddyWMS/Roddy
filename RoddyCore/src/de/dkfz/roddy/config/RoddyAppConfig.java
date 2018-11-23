@@ -6,6 +6,8 @@ import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
 
 import java.io.File;
 
+import static de.dkfz.roddy.config.ConfigurationConstants.*;
+
 public class RoddyAppConfig extends AppConfig {
 
     public RoddyAppConfig() {
@@ -27,7 +29,7 @@ public class RoddyAppConfig extends AppConfig {
 
     public boolean getOrSetBooleanApplicationProperty(String pName, boolean defaultValue) throws ConfigurationError {
         try {
-            return Boolean.parseBoolean(getOrSetApplicationProperty(pName, String.valueOf(defaultValue), "boolean"));
+            return Boolean.parseBoolean(getOrSetApplicationProperty(pName, String.valueOf(defaultValue), CVALUE_TYPE_BOOLEAN));
         } catch (IllegalArgumentException e) {
             throw new ConfigurationError(e.getMessage(), pName, e);
         }
@@ -43,7 +45,7 @@ public class RoddyAppConfig extends AppConfig {
 
     public String getOrSetApplicationProperty(String pName, String defaultValue) {
         try {
-            return getOrSetApplicationProperty(pName, defaultValue, "string");
+            return getOrSetApplicationProperty(pName, defaultValue, CVALUE_TYPE_STRING);
         } catch (ConfigurationError e) {
             throw new RuntimeException("type = 'string' should never throw ConfigurationError", e);
         }
@@ -54,13 +56,13 @@ public class RoddyAppConfig extends AppConfig {
         assert(null != type);
         String value;
         switch (type) {
-            case "string":
+            case CVALUE_TYPE_STRING:
                 value = uncheckedGetOrSetApplicationProperty(pName, defaultValue);
                 break;
-            case "path":
+            case CVALUE_TYPE_PATH:
                 value = uncheckedGetOrSetApplicationProperty(pName, defaultValue);
                 break;
-            case "boolean":
+            case CVALUE_TYPE_BOOLEAN:
                 if (!RoddyConversionHelperMethods.isBoolean(defaultValue)) {
                     throw new RuntimeException("Trying to get boolean via getOrSetApplicationProperty with non-boolean defaultValue: " + defaultValue);
                 }

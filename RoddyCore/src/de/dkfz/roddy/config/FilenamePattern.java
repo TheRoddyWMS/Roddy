@@ -23,6 +23,7 @@ import java.util.Map;
 
 import static de.dkfz.roddy.Constants.DEFAULT;
 import static de.dkfz.roddy.StringConstants.EMPTY;
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_PATH;
 
 /**
  * Filename patterns are stored in a configuration file. They are project specific and should be fully configurable.
@@ -171,7 +172,7 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
                     String cvalID = s.substring(2, s.length() - 1);
                     ConfigurationValue cval = cfg.getConfigurationValues().get(cvalID);
 
-                    String pathSup = cval.getType().equals("path") ? cval.toFile(context).getAbsolutePath() : cval.toString();
+                    String pathSup = cval.getType().equals(CVALUE_TYPE_PATH) ? cval.toFile(context).getAbsolutePath() : cval.toString();
                     pathSup = pathSup.replace(Roddy.getApplicationDirectory().getAbsolutePath() + "/", ""); //Remove Roddy application folder from path...
                     src = src.replace(s, pathSup);
                 }

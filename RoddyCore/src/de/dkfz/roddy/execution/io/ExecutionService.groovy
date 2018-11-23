@@ -609,7 +609,7 @@ abstract class ExecutionService implements BEExecutionService {
             File folder, PluginInfo pInfo ->
                 def bPathID = folder.getName()
                 String basepathConfigurationID = ConfigurationConverter.createVariableName(ConfigurationConstants.CVALUE_PREFIX_BASEPATH, bPathID)
-                cfg.getConfigurationValues().add(new ConfigurationValue(basepathConfigurationID, RoddyIOHelperMethods.assembleLocalPath(dstExecutionDirectory, RuntimeService.DIRNAME_ANALYSIS_TOOLS, bPathID).getAbsolutePath(), "string"))
+                cfg.getConfigurationValues().add(new ConfigurationValue(basepathConfigurationID, RoddyIOHelperMethods.assembleLocalPath(dstExecutionDirectory, RuntimeService.DIRNAME_ANALYSIS_TOOLS, bPathID).getAbsolutePath(),  ConfigurationConstants.CVALUE_TYPE_STRING))
         }
 
         Map<String, List<Map<String, String>>> mapOfInlineScripts = [:]

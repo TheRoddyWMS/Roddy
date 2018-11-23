@@ -12,6 +12,11 @@ import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.EnumerationValue
 import groovy.transform.CompileStatic
 
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BOOLEAN
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_DOUBLE
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_FLOAT
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_INTEGER
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING
 import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate.*
 
 /**
@@ -36,6 +41,8 @@ class DefaultValidator extends ConfigurationValueValidator {
         super.warnings.clear()
         EnumerationValue ev = configurationValue.getEnumerationValueType()
 
+        if (configurationValue.value == null) return true
+
         boolean result = isConfigurationValueTypeCorrect(configurationValue, ev)
         result &= areDollarCharactersProperlyUsed(configurationValue)
         result &= areVariablesProperlyDefined(configurationValue)
@@ -44,17 +51,17 @@ class DefaultValidator extends ConfigurationValueValidator {
     }
 
     private boolean isConfigurationValueTypeCorrect(ConfigurationValue configurationValue, EnumerationValue ev) {
-        String evID = ev != null ? ev.getId() : "string"
+        String evID = ev != null ? ev.getId() : CVALUE_TYPE_STRING
         try {
-            if (evID == "integer") {
+            if (evID == CVALUE_TYPE_INTEGER) {
                 configurationValue.toInt()
-            } else if (evID == "boolean") {
+            } else if (evID == CVALUE_TYPE_BOOLEAN) {
                 configurationValue.toBoolean()
-            } else if (evID == "float") {
+            } else if (evID == CVALUE_TYPE_FLOAT) {
                 configurationValue.toFloat()
-            } else if (evID == "double") {
+            } else if (evID == CVALUE_TYPE_DOUBLE) {
                 configurationValue.toDouble()
-            } else if (evID == "string") {
+            } else if (evID == CVALUE_TYPE_STRING) {
             }
         } catch (Exception e) {
             super.errors << new ConfigurationIssue(valueAndTypeMismatch, configurationValue.id, evID)

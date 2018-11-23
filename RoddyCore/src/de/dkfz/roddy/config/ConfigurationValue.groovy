@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.config
 
-import de.dkfz.roddy.Constants
+
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.loader.ConfigurationLoadError
 import de.dkfz.roddy.config.validation.BashValidator
@@ -17,7 +17,6 @@ import de.dkfz.roddy.core.DataSet
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.tools.CollectionHelperMethods
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import groovy.transform.CompileStatic
 
@@ -25,7 +24,16 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 import static de.dkfz.roddy.StringConstants.*
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BASH_ARRAY
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BOOLEAN
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_DOUBLE
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_FILENAME
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_FILENAME_PATTERN
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_FLOAT
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_INTEGER
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_PATH
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING
 
 /**
  * A configuration value
@@ -39,16 +47,16 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
      * API Level 3.4+
      */
     static Enumeration getDefaultCValueTypeEnumeration() {
-        Enumeration _def = new Enumeration("cvalueType", [
-                new EnumerationValue('filename', FileSystemValidator.name),
-                new EnumerationValue('filenamePattern', FileSystemValidator.name),
-                new EnumerationValue('path', FileSystemValidator.name),
-                new EnumerationValue('bashArray', BashValidator.name),
-                new EnumerationValue('boolean', DefaultValidator.name),
-                new EnumerationValue('integer', DefaultValidator.name),
-                new EnumerationValue('float',   DefaultValidator.name),
-                new EnumerationValue('double',  DefaultValidator.name),
-                new EnumerationValue('string',  DefaultValidator.name),
+        Enumeration _def = new Enumeration(CVALUE_TYPE, [
+                new EnumerationValue(CVALUE_TYPE_FILENAME, FileSystemValidator.name),
+                new EnumerationValue(CVALUE_TYPE_FILENAME_PATTERN, FileSystemValidator.name),
+                new EnumerationValue(CVALUE_TYPE_PATH, FileSystemValidator.name),
+                new EnumerationValue(CVALUE_TYPE_BASH_ARRAY, BashValidator.name),
+                new EnumerationValue(CVALUE_TYPE_BOOLEAN, DefaultValidator.name),
+                new EnumerationValue(CVALUE_TYPE_INTEGER, DefaultValidator.name),
+                new EnumerationValue(CVALUE_TYPE_FLOAT, DefaultValidator.name),
+                new EnumerationValue(CVALUE_TYPE_DOUBLE, DefaultValidator.name),
+                new EnumerationValue(CVALUE_TYPE_STRING, DefaultValidator.name),
         ])
         return _def
     }
@@ -89,28 +97,28 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
      * API Level 3.4+
      */
     ConfigurationValue(Configuration config = null, String id, boolean value) {
-        this(config, id, value.toString(), "boolean")
+        this(config, id, value.toString(), CVALUE_TYPE_BOOLEAN)
     }
 
     /**
      * API Level 3.4+
      */
     ConfigurationValue(Configuration config = null, String id, int value) {
-        this(config, id, value.toString(), "integer")
+        this(config, id, value.toString(), CVALUE_TYPE_INTEGER)
     }
 
     /**
      * API Level 3.4+
      */
     ConfigurationValue(Configuration config = null, String id, float value) {
-        this(config, id, value.toString(), "float")
+        this(config, id, value.toString(), CVALUE_TYPE_FLOAT)
     }
 
     /**
      * API Level 3.4+
      */
     ConfigurationValue(Configuration config = null, String id, double value) {
-        this(config, id, value.toString(), "double")
+        this(config, id, value.toString(), CVALUE_TYPE_DOUBLE)
     }
 
     ConfigurationValue(Configuration config, String id, String value) {
@@ -127,7 +135,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
 
     ConfigurationValue(Configuration config, String id, String value, String type, String description, List<String> tags) {
         this.id = id
-        this.value = value != null ? replaceObsoleteVariableIdentifiers(value) : null
+        this.value = value != null ? replaceDeprecatedVariableIdentifiers(value) : null
         this.configuration = config
         this.type = !RoddyConversionHelperMethods.isNullOrEmpty(type) ? type : determineTypeOfValue(value)
         this.description = description
@@ -161,7 +169,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
     }
 
     @Deprecated
-    static String replaceObsoleteVariableIdentifiers(String cval) {
+    static String replaceDeprecatedVariableIdentifiers(String cval) {
         ([
                 '$USERNAME' : '${USERNAME}',
                 '$USERGROUP': '${USERGROUP}',
@@ -181,9 +189,9 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
 
         ConfigurationValue that = (ConfigurationValue) o
 
-        if (id != null ? !id.equals(that.id) : that.id != null) return false
-        if (value != null ? !value.equals(that.value) : that.value != null) return false
-        return type != null ? type.equals(that.type) : that.type == null
+        if (id != null ? id != that.id : that.id != null) return false
+        if (value != null ? value != that.value : that.value != null) return false
+        return type != null ? type == that.type : that.type == null
     }
 
     @Override
@@ -225,37 +233,16 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
      * @return
      */
     static String determineTypeOfValue(String value) {
-        if (RoddyConversionHelperMethods.isInteger(value)) return "integer"
-        if (RoddyConversionHelperMethods.isDouble(value)) return "double"
-        if (RoddyConversionHelperMethods.isFloat(value)) return "float"
-        if (RoddyConversionHelperMethods.isDefinedArray(value)) return "bashArray"
-        return "string"
-    }
-
-    private String checkAndCorrectPathThrow(String temp) throws ConfigurationError {
-        String curUserPath = (new File("")).getAbsolutePath()
-        String applicationDirectory = Roddy.getApplicationDirectory().getAbsolutePath()
-        //TODO Make something like a blacklist. This is not properly handled now. Initially this was done because Java sometimes puts something in front of the file paths.
-        if (value.startsWith('${') || value.startsWith('$') || value.startsWith("~") || !value.startsWith("/")) {
-            if (temp == applicationDirectory) {
-                throw new ConfigurationError(id + " configuration value is empty", configuration)
-            } else if (temp.startsWith(applicationDirectory)) {
-                temp = temp.substring(applicationDirectory.length() + 1)
-            } else if (temp.startsWith(curUserPath)) {
-                temp = temp.substring(curUserPath.length() + 1)
-            }
-        }
-
-        return temp
+        if (RoddyConversionHelperMethods.isInteger(value)) return CVALUE_TYPE_INTEGER
+        if (RoddyConversionHelperMethods.isDouble(value)) return CVALUE_TYPE_DOUBLE
+        if (RoddyConversionHelperMethods.isFloat(value)) return CVALUE_TYPE_FLOAT
+        if (RoddyConversionHelperMethods.isDefinedArray(value)) return CVALUE_TYPE_BASH_ARRAY
+        return CVALUE_TYPE_STRING
     }
 
     @Deprecated
     private String checkAndCorrectPath(String temp) {
-        try {
-            return checkAndCorrectPathThrow(temp)
-        } catch (Exception e) {
-            return null
-        }
+        return temp
     }
 
     private ExecutionContext _toFileExecutionContext
@@ -264,17 +251,20 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
     /**
      * Converts this configuration value to a path and fills in data set and analysis specific settings.
      *
-     * @param analysis
-     * @param dataSet
-     * @return
+     * If other values are imported by this value, the used configuration objects are in the following order
+     * - The first configuration is the configuration in which the configuration value resides.
+     *   As we are mostly working with elevated configuration values (context configurations),
+     *   it is the uppermost configuration.
+     * - The second configuration is the configuration for the analysis. If the value is evaluated,
+     *   the analysis configuration might already have been used.
+     * - The third configuration replaces identifiers for pid/dataset and is directly taken from the dataset
+     *
      */
     File toFile(Analysis analysis, DataSet dataSet = null) throws ConfigurationError {
         String temp = new File(toEvaluatedValue([], id, value ?: "", configuration)).absolutePath
 
         if (analysis) temp = toEvaluatedValue([], id, temp, analysis.configuration)
         if (dataSet) temp = toEvaluatedValue([], id, temp, dataSet.configuration)
-
-        temp = checkAndCorrectPath(temp)
 
         return new File(temp)
     }
@@ -294,7 +284,6 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         }
         try {
             String temp = toFile(context.getAnalysis(), context.getDataSet()).getAbsolutePath()
-            temp = checkAndCorrectPath(temp)
             if (value.startsWith("\${DIR_BUNDLED_FILES}") || value.startsWith("\${DIR_RODDY}"))
                 temp = Roddy.getApplicationDirectory().getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + temp
 
@@ -311,20 +300,20 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
 
     Boolean toBoolean() {
         String v = value != null ? value.toLowerCase() : "f"
-        if (v.startsWith("y") || v.startsWith("j") || v.startsWith("t") || v.equals("1")) {
-            if (!v.equals("true")) {
+        if (v.startsWith("y") || v.startsWith("j") || v.startsWith("t") || v == "1") {
+            if (v != "true") {
                 logger.warning("Boolean configuration value '" + id + "' must be 'true' or 'false'. Found: " + v)
             }
-            if (v.equals("1")) {
+            if (v == "1") {
                 logger.warning("Boolean configuration value '" + id + "' is '1'. Since Roddy 3.0.8 interpreted as 'true'.")
             }
             return true
         }
-        if (v.startsWith("n") || v.startsWith("f") || v.equals("0")) {
-            if (!v.equals("false")) {
+        if (v.startsWith("n") || v.startsWith("f") || v == "0") {
+            if (v != "false") {
                 logger.warning("Boolean configuration value '" + id + "' must be 'true' or 'false'. Found: " + v)
             }
-            if (v.equals("0")) {
+            if (v == "0") {
                 logger.warning("Boolean configuration value '" + id + "' is '0'. Since Roddy 3.0.8 interpreted as 'false'.")
             }
             return false
@@ -410,14 +399,14 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
     EnumerationValue getEnumerationValueType(EnumerationValue defaultType) {
         Enumeration enumeration
         try {
-            enumeration = getConfiguration()?.getEnumerations()?.getValue("cvalueType", null)
+            enumeration = getConfiguration()?.getEnumerations()?.getValue(CVALUE_TYPE, null)
             if (!enumeration) {
                 // Get default types...
                 enumeration = getDefaultCValueTypeEnumeration()
             }
             String _ev = getType()
-            if (_ev == null || _ev.trim().equals(""))
-                _ev = "string"
+            if (_ev == null || _ev.trim() == "")
+                _ev = CVALUE_TYPE_STRING
             EnumerationValue ev = enumeration.getValue(_ev)
             return ev
         } catch (ConfigurationError e) {
@@ -432,7 +421,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
 
     @Deprecated
     void setInvalid(boolean invalid) {
-//        this.invalid = invalid
+        // Not used anymore, invalid is not overriden.
     }
 
 
@@ -468,7 +457,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
     }
 
     List<String> toStringList(String delimiter, String[] ignoreStrings) {
-        if (CVALUE_TYPE_BASH_ARRAY.equals(type)) {
+        if (CVALUE_TYPE_BASH_ARRAY == type) {
             return _bashArrayToStringList()
         }
 

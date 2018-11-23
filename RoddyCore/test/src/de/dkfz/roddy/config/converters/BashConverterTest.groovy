@@ -23,6 +23,15 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BASH_ARRAY
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BOOLEAN
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_DOUBLE
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_FLOAT
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_INTEGER
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_PATH
+import static de.dkfz.roddy.config.ConfigurationConstants.DEBUG_OPTIONS_USE_EXECUTE_OUTPUT
+import static de.dkfz.roddy.config.ConfigurationConstants.DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT
+
 /**
  * Created by heinold on 30.06.16.
  */
@@ -89,13 +98,13 @@ class BashConverterTest {
     private Configuration createTestConfiguration() {
         Configuration configuration = new Configuration(null);
         configuration.getConfigurationValues().addAll([
-                new ConfigurationValue(configuration, CVAL_OUTPUT_ANALYSIS_BASE_DIRECTORY, '${outputBaseDirectory}/Dideldum', "path"),
-                new ConfigurationValue(configuration, CVAL_TEST_OUTPUT_DIRECTORY, "testvalue", "path"),
-                new ConfigurationValue(configuration, CVAL_TEST_BASHARRAY, "( a b c d )", "bashArray"),
-                new ConfigurationValue(configuration, CVAL_TEST_BASHARRAY_QUOTES, "'( a b c d )'", "bashArray"),
-                new ConfigurationValue(configuration, CVAL_TEST_INTEGER, "100", "integer"),
-                new ConfigurationValue(configuration, CVAL_TEST_FLOAT, "1.0", "float"),
-                new ConfigurationValue(configuration, CVAL_TEST_DOUBLE, "1.0", "double"),
+                new ConfigurationValue(configuration, CVAL_OUTPUT_ANALYSIS_BASE_DIRECTORY, '${outputBaseDirectory}/Dideldum', CVALUE_TYPE_PATH),
+                new ConfigurationValue(configuration, CVAL_TEST_OUTPUT_DIRECTORY, "testvalue", CVALUE_TYPE_PATH),
+                new ConfigurationValue(configuration, CVAL_TEST_BASHARRAY, "( a b c d )", CVALUE_TYPE_BASH_ARRAY),
+                new ConfigurationValue(configuration, CVAL_TEST_BASHARRAY_QUOTES, "'( a b c d )'", CVALUE_TYPE_BASH_ARRAY),
+                new ConfigurationValue(configuration, CVAL_TEST_INTEGER, "100", CVALUE_TYPE_INTEGER),
+                new ConfigurationValue(configuration, CVAL_TEST_FLOAT, "1.0", CVALUE_TYPE_FLOAT),
+                new ConfigurationValue(configuration, CVAL_TEST_DOUBLE, "1.0", CVALUE_TYPE_DOUBLE),
                 new ConfigurationValue(configuration, CVAL_TEST_SPACE_QUOTES, "text with spaces"),
                 new ConfigurationValue(configuration, CVAL_TEST_TAB_QUOTES, "text\twith\ttabs"),
                 new ConfigurationValue(configuration, CVAL_TEST_NEWLINE_QUOTES, "text\nwith\nnewlines"),
@@ -140,7 +149,7 @@ class BashConverterTest {
                toString().
                trim() ==  "declare -x WRAPPED_SCRIPT_DEBUG_OPTIONS=\"-v -x -o pipefail \""
 
-        configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT, "true", "boolean")
+        configuration.configurationValues.put(DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT, "true", CVALUE_TYPE_BOOLEAN)
         assert new BashConverter().
                appendDebugVariables(configuration).
                toString().
@@ -148,8 +157,8 @@ class BashConverterTest {
                           "",
                           "export PS4='+(\${BASH_SOURCE}:\${LINENO}): \${FUNCNAME[0]: +\$ { FUNCNAME[0] }():}'"].join("\n")
 
-        configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXECUTE_OUTPUT, "false", "boolean")
-        configuration.configurationValues.put(ConfigurationConstants.DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT, "false", "boolean")
+        configuration.configurationValues.put(DEBUG_OPTIONS_USE_EXECUTE_OUTPUT, "false", CVALUE_TYPE_BOOLEAN)
+        configuration.configurationValues.put(DEBUG_OPTIONS_USE_EXTENDED_EXECUTE_OUTPUT, "false", CVALUE_TYPE_BOOLEAN)
         assert new BashConverter().
                        appendDebugVariables(configuration).
                        toString().
@@ -171,11 +180,10 @@ class BashConverterTest {
         def configuration = createTestConfiguration()
 
         File tmpDir = contextResource.tempFolder.newFile()
-        configuration.configurationValues.put(CVAL_OUTPUT_BASE_DIRECTORY, tmpDir.absolutePath, "path")
+        configuration.configurationValues.put(CVAL_OUTPUT_BASE_DIRECTORY, tmpDir.absolutePath, CVALUE_TYPE_PATH)
         Roddy.applicationConfiguration.getOrSetApplicationProperty(Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY, tmpDir.absolutePath)
 
         Map<String, String> listWiAutoQuoting = [
-                (CVAL_TEST_OUTPUT_DIRECTORY)           : "declare -x    testOutputDirectory=testvalue",
                 (CVAL_TEST_BASHARRAY)                  : "declare -x    testBashArray=\"( a b c d )\"",
                 (CVAL_TEST_BASHARRAY_QUOTES)           : "declare -x    testBashArrayQuotes='( a b c d )'",
                 (CVAL_TEST_INTEGER)                    : "declare -x -i testInteger=100",

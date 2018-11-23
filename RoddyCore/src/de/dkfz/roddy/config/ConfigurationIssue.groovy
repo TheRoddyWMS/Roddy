@@ -49,7 +49,7 @@ class ConfigurationIssue {
         ),
         inproperVariableExpression(
                 ConfigurationIssueLevel.CVALUE_WARNING,
-                "Several variables in your configuration might misuse the variable import wrong. A variable needs to be imported into another value with \${variable identifiert}.",
+                "Several variables in your configuration might misuse the variable import wrong. A variable needs to be imported into another value with \${variable identifier}.",
                 "The variable named '#REPLACE_0#' might misuse the variable import. Make sure, that all intended variable imports are non-escaped and formed like \${variable identifier}. Also, variable nesting is not allowed."
         )
 

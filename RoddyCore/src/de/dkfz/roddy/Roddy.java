@@ -668,12 +668,12 @@ public class Roddy {
             configurationValues.addAll(externalConfigurationValues);
 
             if (useCustomIODirectories()) {
-                configurationValues.add(new ConfigurationValue(CFG_INPUT_BASE_DIRECTORY, Roddy.getCustomBaseInputDirectory(), "path"));
-                configurationValues.add(new ConfigurationValue(CFG_OUTPUT_BASE_DIRECTORY, Roddy.getCustomBaseOutputDirectory(), "path"));
+                configurationValues.add(new ConfigurationValue(CFG_INPUT_BASE_DIRECTORY, Roddy.getCustomBaseInputDirectory(), CVALUE_TYPE_PATH));
+                configurationValues.add(new ConfigurationValue(CFG_OUTPUT_BASE_DIRECTORY, Roddy.getCustomBaseOutputDirectory(), CVALUE_TYPE_PATH));
             }
 
             if (getUsedResourcesSize() != null) {
-                configurationValues.add(new ConfigurationValue(CFG_USED_RESOURCES_SIZE, Roddy.getUsedResourcesSize().toString(), "string"));
+                configurationValues.add(new ConfigurationValue(CFG_USED_RESOURCES_SIZE, Roddy.getUsedResourcesSize().toString(), CVALUE_TYPE_STRING));
             }
 
         }

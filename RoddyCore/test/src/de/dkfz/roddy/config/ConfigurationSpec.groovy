@@ -9,6 +9,8 @@ package de.dkfz.roddy.config
 
 import spock.lang.Specification
 
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_INTEGER
+
 /**
  * Created by heinold on 22.07.16.
  */
@@ -44,7 +46,7 @@ class ConfigurationSpec extends Specification {
 
         // Shall be elevated but their warnings and errors shall only exist once!
         cfgA.configurationValues << new ConfigurationValue("vala", 'detached $ sign ')
-        cfgA.configurationValues << new ConfigurationValue("valb", 'type mismatch', "integer")
+        cfgA.configurationValues << new ConfigurationValue("valb", 'type mismatch', CVALUE_TYPE_INTEGER)
 
         then:
         cfgC.warnings.size() == 1
