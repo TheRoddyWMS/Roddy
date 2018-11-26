@@ -197,10 +197,10 @@ class BashCommandSet extends ShellCommandSet {
 
     @Override
     String getListFullDirectoryContentRecursivelyCommand(File f, int depth, FileType selectedType, boolean detailed) {
-        StringBuilder sb = new StringBuilder("find ")
+        StringBuilder sb = new StringBuilder("find -L ")
         sb << "\"" << f.absolutePath << "\""
 
-        if (depth > 0) sb << " -L -maxdepth ${depth}"
+        if (depth > 0) sb << " -maxdepth ${depth}"
         if (selectedType == FileType.DIRECTORIES) sb << " -type d"
         if (selectedType == FileType.FILES) sb << " -type f"
         if (detailed) sb << " -ls"
