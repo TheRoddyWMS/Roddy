@@ -186,7 +186,7 @@ class BashCommandSet extends ShellCommandSet {
 
     @Override
     String getListFilesInDirectoryCommand(File path) {
-        return "find ${path.absolutePath} -type f -maxdepth 1"
+        return "find -L ${path.absolutePath} -type f -maxdepth 1"
     }
 
     @Override
@@ -200,7 +200,7 @@ class BashCommandSet extends ShellCommandSet {
         StringBuilder sb = new StringBuilder("find ")
         sb << "\"" << f.absolutePath << "\""
 
-        if (depth > 0) sb << " -maxdepth ${depth}"
+        if (depth > 0) sb << " -L -maxdepth ${depth}"
         if (selectedType == FileType.DIRECTORIES) sb << " -type d"
         if (selectedType == FileType.FILES) sb << " -type f"
         if (detailed) sb << " -ls"
