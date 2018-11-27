@@ -25,11 +25,8 @@ class RoddyTestSpec extends Specification {
         }
     }
 
-    static final ExecutionContext genericContext
-
     static {
         ExecutionService.initializeService(LocalExecutionService, RunMode.CLI)
         FileSystemAccessProvider.initializeProvider(true)
-        genericContext = contextResource.createSimpleContext(RoddyTestSpec)
     }
 }
