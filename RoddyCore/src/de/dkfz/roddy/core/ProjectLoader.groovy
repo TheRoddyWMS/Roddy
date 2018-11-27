@@ -390,7 +390,8 @@ class ProjectLoader {
             throw new ProjectLoaderException("Could not load analysis ${analysisID}")
 
         try {
-            new ClassLoaderHelper().searchForClass(analysis.configuration.workflowClass)
+            def _cls = new ClassLoaderHelper().searchForClass(analysis.configuration.workflowClass)
+            if (!_cls) throw new ClassNotFoundException("Class not found ${analysis.configuration.workflowClass}.")
         } catch (ClassNotFoundException ex) {
             throw new ProjectLoaderException("The configured workflow class ${analysis.configuration.workflowClass} for analysis ${analysisID} does not exist or could not be loaded.\n\t- Is the plugin properly compiled?\n\t- Is the workflow class spelled correctly?")
         }
