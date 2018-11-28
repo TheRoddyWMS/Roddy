@@ -26,7 +26,10 @@ import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager;
 import de.dkfz.roddy.execution.jobs.JobManagerOptions;
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager;
 import de.dkfz.roddy.plugins.LibrariesFactory;
-import de.dkfz.roddy.tools.*;
+import de.dkfz.roddy.tools.AppConfig;
+import de.dkfz.roddy.tools.LoggerWrapper;
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
+import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import groovy.transform.CompileStatic;
 
 import java.io.File;
@@ -37,6 +40,7 @@ import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.util.*;
 
 import static de.dkfz.roddy.RunMode.CLI;
@@ -618,8 +622,10 @@ public class Roddy {
         }
     }
 
-    /** Copy the scratchBaseDirectory value from the applicationProperties.ini into the configuration. Set the default value for RODDY_SCRATCH
-     *  to $scratchBaseDirectory/$RODDY_JOBID.
+    /**
+     * Copy the scratchBaseDirectory value from the applicationProperties.ini into the configuration. Set the default value for RODDY_SCRATCH
+     * to $scratchBaseDirectory/$RODDY_JOBID.
+     *
      * @return
      */
     private static void setScratchDirectory(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
@@ -642,7 +648,7 @@ public class Roddy {
 
         }
         configurationValues.add(new ConfigurationValue(Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY, scratchBaseDir));
-        String scratchDir = new File ("$" + Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY,
+        String scratchDir = new File("$" + Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY,
                 "$" + ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW).toString();
         configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW, scratchDir));
     }
@@ -716,6 +722,7 @@ public class Roddy {
         jobManager = (BatchEuphoriaJobManager) first.newInstance(ExecutionService.getInstance()
                 , JobManagerOptions.create()
                         .setCreateDaemon(true)
+                        .setUpdateInterval(Duration.ofSeconds(RoddyConversionHelperMethods.toInt(applicationProperties.getOrSetApplicationProperty(Constants.APP_PROPERTY_JOB_MANAGER_UPDATE_INTERVAL, "300", "integer"))))
                         .setPassEnvironment(applicationProperties.getOrSetBooleanApplicationProperty(Constants.APP_PROPERTY_JOB_MANAGER_PASS_ENVIRONMENT, false))
                         .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
                         .setHoldJobIsEnabled(applicationProperties.getOrSetBooleanApplicationProperty(Constants.APP_PROPERTY_JOB_MANAGER_HOLDJOBS_ON_SUBMISSION, true))
@@ -759,8 +766,12 @@ public class Roddy {
 
     private static int waitForJobs() {
         try {
-            Thread.sleep(15000); //Sleep at least 15 seconds to let any job scheduler handle things...
-            return jobManager.waitForJobsToFinish();
+            if (jobManager.isDaemonAlive()) {
+                logger.always("Roddy will wait for jobs now.");
+                Thread.sleep(5000); //Sleep at least 5 seconds to let any job scheduler handle things...
+                return jobManager.waitForJobsToFinish();
+            }
+            return 249;
         } catch (Exception ex) {
             return 250;
         }
@@ -773,6 +784,8 @@ public class Roddy {
 
     public static void exit(int ecode) {
         Initializable.destroyAll();
+        if (jobManager != null)
+            jobManager.stopUpdateDaemon();
         System.exit(ecode <= 250 ? ecode : 250); //Exit codes should be in range from 0 .. 255
     }
 

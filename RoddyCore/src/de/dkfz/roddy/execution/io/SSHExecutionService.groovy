@@ -17,9 +17,10 @@ import com.jcraft.jsch.agentproxy.Identity
 import com.jcraft.jsch.agentproxy.sshj.AuthAgent
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.config.RoddyAppConfig
+import de.dkfz.roddy.execution.io.FileAttributes
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
-import de.dkfz.roddy.config.RoddyAppConfig
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import net.schmizz.sshj.SSHClient
@@ -157,6 +158,9 @@ class SSHExecutionService extends RemoteExecutionService {
                 c.startSession()
                 t2 = System.nanoTime()
                 logger.sometimes(RoddyIOHelperMethods.printTimingInfo("start ssh client session", t1, t2))
+            } catch (UnknownHostException ex) {
+                logger.severe("Could not setup SSH access with your configuration: The specified host is not available - ${ex.message}")
+                Roddy.exit(255)
             } catch (UserAuthException ex) {
                 logger.severe(
                         [
@@ -170,10 +174,10 @@ class SSHExecutionService extends RemoteExecutionService {
                         ].join("\n\t")
                 )
 
-                Roddy.exit(1)
+                Roddy.exit(255)
             } catch (Exception ex) {
                 logger.severe("Fatal and unknown error during initialization of SSHExecutionService. Message: \"${ex.message}\".")
-                Roddy.exit(1)
+                Roddy.exit(255)
             }
             client = c
             sftpClient = client.newSFTPClient()
@@ -219,10 +223,12 @@ class SSHExecutionService extends RemoteExecutionService {
             if (![Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_SSHAGENT].contains(sshMethod))
                 sshMethod = Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD
 
+
             List<SSHPoolConnectionSet> tempEntries = new LinkedList<>()
             String[] sshHosts = appConf.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_HOSTS).split(SPLIT_COMMA)
             int i = 0
             for (String host : sshHosts) {
+                logger.always("Opening SSH connection: $sshUser@$host via $sshMethod")
                 SSHPoolConnectionSet cs = new SSHPoolConnectionSet(i++, sshUser, host, sshMethod)
                 cs.initialize()
                 if (cs.check())
@@ -313,15 +319,6 @@ class SSHExecutionService extends RemoteExecutionService {
 
     @Override
     boolean initialize() {
-        return initialize(false)
-    }
-
-    boolean initialize(boolean waitFor) {
-        if (!waitFor) {
-            Thread.start { connectionPool.initialize() }
-            return true
-        }
-
         return connectionPool.initialize()
     }
 

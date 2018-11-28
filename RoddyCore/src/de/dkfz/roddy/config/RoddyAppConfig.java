@@ -57,6 +57,12 @@ public class RoddyAppConfig extends AppConfig {
             case "string":
                 value = uncheckedGetOrSetApplicationProperty(pName, defaultValue);
                 break;
+            case "integer":
+                if (!RoddyConversionHelperMethods.isInteger(defaultValue)) {
+                    throw new ConfigurationError(String.format("The value for '%s' is not of type '%s'", pName, type), pName);
+                }
+                value = uncheckedGetOrSetApplicationProperty(pName, defaultValue);
+                break;
             case "path":
                 value = uncheckedGetOrSetApplicationProperty(pName, defaultValue);
                 break;
