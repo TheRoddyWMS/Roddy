@@ -6,11 +6,11 @@
 package de.dkfz.roddy
 
 import de.dkfz.roddy.core.ContextResource
-import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import org.junit.ClassRule
+import spock.lang.Shared
 import spock.lang.Specification
 
 /**
@@ -19,11 +19,8 @@ import spock.lang.Specification
 class RoddyTestSpec extends Specification {
 
     @ClassRule
-    static final ContextResource contextResource = new ContextResource() {
-        {
-            before()
-        }
-    }
+    @Shared
+    final ContextResource contextResource = new ContextResource()
 
     static {
         ExecutionService.initializeService(LocalExecutionService, RunMode.CLI)

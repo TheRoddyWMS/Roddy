@@ -6,7 +6,11 @@
 
 package de.dkfz.roddy.core
 
+import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.Configuration
+import de.dkfz.roddy.execution.io.ExecutionService
+import de.dkfz.roddy.execution.io.LocalExecutionService
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.knowledge.files.BaseFile
 import groovy.transform.CompileStatic
 import org.junit.Rule
@@ -14,9 +18,14 @@ import org.junit.Test
 
 @CompileStatic
 class ContextResourceTest {
-    
+
     @Rule
     public ContextResource contextResource = new ContextResource()
+
+    static {
+        ExecutionService.initializeService(LocalExecutionService, RunMode.CLI)
+        FileSystemAccessProvider.initializeProvider(true)
+    }
 
     @Test
     void testGetTestBaseDirectory() {

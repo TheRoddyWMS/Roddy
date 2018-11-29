@@ -103,6 +103,19 @@ class Analysis {
 
     private ContextConfiguration _analysisConfiguration = null
 
+    /**
+     * Tests using analysis objects will need to implement the following:
+     *
+     * static {
+     *   ExecutionService.initializeService(LocalExecutionService, RunMode.CLI)
+     *   FileSystemAccessProvider.initializeProvider(true)
+     * }
+     *
+     * If they don't, tests will fail with a NullPointerException!
+     *
+     * Alternatively, you could use the RoddyTestSpec class as a base for Spock tests.
+     * @return
+     */
     AnalysisConfiguration getConfiguration() {
         if (_analysisConfiguration == null) {
             _analysisConfiguration = new ContextConfiguration((AnalysisConfiguration) this.configuration, (ProjectConfiguration) this.project.getConfiguration())
