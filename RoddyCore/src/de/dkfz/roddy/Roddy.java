@@ -205,7 +205,7 @@ public class Roddy {
             if (list == null || list.length != 1) {
                 System.out.println("You must call roddy from the right location! (Base roddy folder where roddy.sh resides). You used: '" +
                         applicationDirectory + "'");
-                System.exit(255);
+                System.exit(ExitReasons.wrongStartupLocation.getCode());
             }
 
             if (args.length == 0) {
@@ -226,7 +226,7 @@ public class Roddy {
             // we check for this particular exception by using its simple class name!
             if (!e.getClass().getName().endsWith("SystemExitException"))
                 e.printStackTrace();
-            exit(1);
+            exit(ExitReasons.groovyServError.getCode());
         }
     }
 
@@ -252,7 +252,7 @@ public class Roddy {
         CommandLineCall clc = new CommandLineCall(list);
         commandLineCall = clc;
         if (clc.isMalformed())
-            exit(1);
+            exit(ExitReasons.malformedCommandLine.getCode());
 
         // Initialize the logger with an initial setup. At this point we don't know about things like the logger settings
         // or the used app ini file. However, all the following methods rely on an existing valid logger setup.
@@ -262,7 +262,7 @@ public class Roddy {
 
         time("initial checks");
         if (!roddyExecutionRequirementsFulfilled())
-            exit(1);
+            exit(ExitReasons.unfulfilledRequirements.getCode());
 
         time("ftoggleini");
         initializeFeatureToggles();
@@ -285,7 +285,7 @@ public class Roddy {
         }
 
         if (!jobExecutionRequirementsFulfilled())
-            exit(1);
+            exit(ExitReasons.unfulfilledRequirements.getCode());
 
         time("initserv");
         parseRoddyStartupModeAndRun(clc);
@@ -430,7 +430,7 @@ public class Roddy {
             }
         } catch (RuntimeException e) {
             logger.severe("Parsing startup options failed.");
-            exit(1);
+            exit(ExitReasons.unparseableStartupOptions.getCode());
         }
     }
 
@@ -441,7 +441,7 @@ public class Roddy {
             logger.postSometimesInfo("Trying to load alternative feature toggles file: " + toggleIni);
             if (toggleIni == null || !toggleIni.exists()) {
                 logger.postAlwaysInfo("Cannot find requested toggle file.");
-                exit(1);
+                exit(ExitReasons.unknownFeatureToggleFile.getCode());
             }
 
         } else {
@@ -469,7 +469,7 @@ public class Roddy {
             String toggleNames = RoddyIOHelperMethods.joinArray(AvailableFeatureToggles.values(), "\n\t");
             logger.severe("Available toggle values are:\n\t" + toggleNames);
             if (isStrictModeEnabled())
-                exit(1);
+                exit(ExitReasons.unknownFeatureToggle.getCode());
         }
     }
 
@@ -575,7 +575,7 @@ public class Roddy {
                 l = ProxySelector.getDefault().select(new URI("http://codemirror.net"));
             } catch (URISyntaxException e) {
                 e.printStackTrace();
-                System.exit(1);
+                System.exit(ExitReasons.unknownProxyProblem.getCode());
             }
 
             if (l != null) {
@@ -637,7 +637,7 @@ public class Roddy {
                 propertyFilePath = Roddy.getPropertiesFilePath();
                 System.err.println(Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY +
                         " is not defined. Please add it to your application properties file: '" + propertyFilePath + "'");
-                System.exit(1);
+                System.exit(ExitReasons.scratchDirNotConfigured.getCode());
             } catch (FileNotFoundException e) {
                 // The file must have existed, because we are accessing the values in it.
                 scratchBaseDir = System.getenv("CURRENT_PWD");
@@ -714,7 +714,7 @@ public class Roddy {
                 available.append("\n\t" + acs.getClassName());
             }
             logger.severe("Could not find job manager class: " + jobManagerClassID + ", available are: " + available.toString() + "\nPlease set the jobManagerClass entry in your application ini file: " + getPropertiesFilePath().getAbsolutePath() + "");
-            exit(1);
+            exit(ExitReasons.wrongJobManagerClass.getCode());
         }
 
         /** Get the constructor which comes with no parameters */
@@ -786,7 +786,7 @@ public class Roddy {
         Initializable.destroyAll();
         if (jobManager != null)
             jobManager.stopUpdateDaemon();
-        System.exit(ecode <= 250 ? ecode : 250); //Exit codes should be in range from 0 .. 255
+        System.exit(ecode <= 255 ? ecode : ExitReasons.wrongExitCodeUsed.getCode()); //Exit codes should be in range from 0 .. 255
     }
 
     public static void loadPropertiesFile() {
@@ -795,7 +795,7 @@ public class Roddy {
             file = getPropertiesFilePath();
         } catch (FileNotFoundException e) {
             logger.postAlwaysInfo("Could not load the application properties file: " + e.getMessage() + ". Roddy will exit.");
-            exit(1);
+            exit(ExitReasons.appPropertiesFileNotFound.getCode());
         }
         logger.postAlwaysInfo("Loading properties file " + file.getAbsolutePath() + ".");
 

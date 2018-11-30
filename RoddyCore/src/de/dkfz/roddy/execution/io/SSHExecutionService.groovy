@@ -16,6 +16,7 @@ import com.jcraft.jsch.agentproxy.ConnectorFactory
 import com.jcraft.jsch.agentproxy.Identity
 import com.jcraft.jsch.agentproxy.sshj.AuthAgent
 import de.dkfz.roddy.Constants
+import de.dkfz.roddy.ExitReasons
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.RoddyAppConfig
 import de.dkfz.roddy.execution.io.FileAttributes
@@ -160,7 +161,7 @@ class SSHExecutionService extends RemoteExecutionService {
                 logger.sometimes(RoddyIOHelperMethods.printTimingInfo("start ssh client session", t1, t2))
             } catch (UnknownHostException ex) {
                 logger.severe("Could not setup SSH access with your configuration: The specified host is not available - ${ex.message}")
-                Roddy.exit(255)
+                Roddy.exit(ExitReasons.unknownSSHHost.code)
             } catch (UserAuthException ex) {
                 logger.severe(
                         [
@@ -174,10 +175,10 @@ class SSHExecutionService extends RemoteExecutionService {
                         ].join("\n\t")
                 )
 
-                Roddy.exit(255)
+                Roddy.exit(ExitReasons.invalidSSHConfig.code)
             } catch (Exception ex) {
                 logger.severe("Fatal and unknown error during initialization of SSHExecutionService. Message: \"${ex.message}\".")
-                Roddy.exit(255)
+                Roddy.exit(ExitReasons.fatalSSHError.code)
             }
             client = c
             sftpClient = client.newSFTPClient()

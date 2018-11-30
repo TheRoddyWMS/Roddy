@@ -52,8 +52,6 @@ public class Constants {
     public static final String ERR_MSG_WRONG_PARAMETER_COUNT = "You did not provide proper parameters, args.length = ";
     public static final String ERR_MSG_NO_APPLICATION_PROPERTY_FILE = "Configuration does not exist. Cannot start application.";
 
-//    public static final String APP_EXITCODE_
-
     /////////////////////////
     // Environment settings
     /////////////////////////
