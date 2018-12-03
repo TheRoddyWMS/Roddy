@@ -40,7 +40,7 @@ enum AvailableFeatureToggles {
     ////////////////////////
     */
     @Deprecated
-    ForbidSubmissionOnRunning(false),
+    ForbidSubmissionOnRunning(true),
 
     @Deprecated
     BreakSubmissionOnError(false),

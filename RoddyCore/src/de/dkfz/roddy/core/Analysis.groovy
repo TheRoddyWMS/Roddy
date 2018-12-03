@@ -260,10 +260,7 @@ class Analysis {
     }
 
     private boolean canStartJobs(DataSet ds) {
-        if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning)) {
-            throw new RuntimeException("Feature toggle forbidSubmissionOnRunning is currently unsupported due to lack of use by users. If you need it contact the developers.")
-        }
-        return !Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning) || !hasKnownRunningJobs(ds)
+        return !Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning) || !hasKnownRunningJobs(ds);
     }
 
     boolean hasKnownRunningJobs(DataSet ds) {

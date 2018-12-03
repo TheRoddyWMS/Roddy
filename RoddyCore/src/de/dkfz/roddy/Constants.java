@@ -41,6 +41,7 @@ public class Constants {
     public static final String APP_PROPERTY_SCRATCH_BASE_DIRECTORY = "scratchBaseDirectory";
     public static final String APP_PROPERTY_JOB_MANAGER_PASS_ENVIRONMENT = "jobManagerPassEnvironment";
     public static final String APP_PROPERTY_JOB_MANAGER_HOLDJOBS_ON_SUBMISSION = "jobManagerHoldJobsOnSubmission";
+    public static final String APP_PROPERTY_JOB_MANAGER_UPDATE_INTERVAL = "jobManagerUpdateInterval";
     public static final String APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT = "baseEnvironmentScript";
 
     /////////////////////////
@@ -50,8 +51,6 @@ public class Constants {
     public static final String ERR_MSG_ONLY_ONE_JOB_ALLOWED = "A job object is not allowed to run several times.";
     public static final String ERR_MSG_WRONG_PARAMETER_COUNT = "You did not provide proper parameters, args.length = ";
     public static final String ERR_MSG_NO_APPLICATION_PROPERTY_FILE = "Configuration does not exist. Cannot start application.";
-
-//    public static final String APP_EXITCODE_
 
     /////////////////////////
     // Environment settings

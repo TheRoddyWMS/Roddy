@@ -41,7 +41,7 @@ public class RoddyNetworkSubmissionServer {
 
         } catch (Exception ex) {
             System.out.println(ex);
-            System.exit(1);
+            System.exit(ExitReasons.unhandledException.code);
         }
 
         //Just exit without an error

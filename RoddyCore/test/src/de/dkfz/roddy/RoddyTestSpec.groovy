@@ -9,17 +9,19 @@ import de.dkfz.roddy.core.ContextResource
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import groovy.transform.CompileStatic
 import org.junit.ClassRule
+import org.junit.Rule
 import spock.lang.Shared
 import spock.lang.Specification
 
 /**
  * Base class for Spock tests which does some basic initialization stuff.
  */
+@CompileStatic
 class RoddyTestSpec extends Specification {
 
-    @ClassRule
-    @Shared
+    @Rule
     final ContextResource contextResource = new ContextResource()
 
     static {
