@@ -6,29 +6,20 @@
 
 package de.dkfz.roddy.execution.io
 
-import de.dkfz.roddy.config.loader.ConfigurationLoaderException
-import de.dkfz.roddy.execution.BEExecutionService
-import de.dkfz.roddy.execution.jobs.BEJobResult
-import de.dkfz.roddy.execution.jobs.Command
-import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.JobManagerOptions
-import de.dkfz.roddy.execution.jobs.JobState
-import de.dkfz.roddy.AvailableFeatureToggles
-import de.dkfz.roddy.Constants
-import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.RunMode
-import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.*
 import de.dkfz.roddy.client.cliclient.RoddyCLIClient
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
-import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.config.converters.XMLConverter
+import de.dkfz.roddy.config.loader.ConfigurationFactory
+import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.core.*
+import de.dkfz.roddy.execution.BEExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.BEJobID
+import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.execution.jobs.cluster.lsf.LSFCommand
 import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommand
 import de.dkfz.roddy.execution.jobs.cluster.sge.SGECommand
@@ -69,20 +60,20 @@ abstract class ExecutionService implements BEExecutionService {
     static void initializeService(Class executionServiceClass, RunMode runMode) {
         executionService = (ExecutionService) executionServiceClass.getConstructors()[0].newInstance()
         if (runMode == RunMode.CLI) {
-            boolean isConnected = executionService.tryInitialize(true)
+            boolean isConnected = executionService.tryInitialize()
             if (!isConnected) {
                 int queryCount = 0
                 //If password is not stored, ask once for the password only, increase queryCount.
                 if (!Boolean.parseBoolean(Roddy.applicationConfiguration.getOrSetApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_STORE_PWD, Boolean.FALSE.toString()))) {
                     Roddy.applicationConfiguration.setApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD)
                     RoddyCLIClient.askForPassword()
-                    isConnected = executionService.tryInitialize(true)
+                    isConnected = executionService.tryInitialize()
                     queryCount++
                 }
                 for (; queryCount < 3 && !isConnected; queryCount++) {
                     //Wait for correct password, count to three?
                     RoddyCLIClient.performCommandLineSetup()
-                    isConnected = executionService.tryInitialize(true)
+                    isConnected = executionService.tryInitialize()
                 }
             }
         } else {
@@ -128,9 +119,10 @@ abstract class ExecutionService implements BEExecutionService {
     boolean initialize() {
     }
 
-    boolean tryInitialize(boolean waitFor) {
+    boolean tryInitialize() {
         try {
             long t1 = System.nanoTime()
+            initialize()
             logger.postSometimesInfo(RoddyIOHelperMethods.printTimingInfo("initialize exec service", t1, System.nanoTime()))
             return true
         } catch (Exception ex) {
@@ -138,17 +130,7 @@ abstract class ExecutionService implements BEExecutionService {
         }
     }
 
-    boolean tryInitialize() {
-        try {
-            return initialize()
-        } catch (Exception ex) {
-            return false
-        }
-    }
-
-    void destroy() {
-//        this.listOfListeners.clear();
-    }
+    void destroy() {}
 
     protected abstract ExecutionResult _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream)
 
@@ -195,7 +177,7 @@ abstract class ExecutionService implements BEExecutionService {
             throw new IOException("Job log file ${jobLog} does not exist")
 
         Long jobLogSize = FileSystemAccessProvider.instance.fileSize(jobLog)
-        Long maximumJobLogSize = context.configurationValues.get("maximumJobLogSize", (1024*1024*10).toString()).toLong()
+        Long maximumJobLogSize = context.configurationValues.get("maximumJobLogSize", (1024 * 1024 * 10).toString()).toLong()
         if (jobLogSize > maximumJobLogSize)
             throw new IOException("Job log file of ${jobLogSize} byte is larger than permitted size ${maximumJobLogSize}")
 
@@ -456,7 +438,7 @@ abstract class ExecutionService implements BEExecutionService {
         File roddyBundledFilesDirectory = Roddy.getBundledFilesDirectory()
 
         provider.checkDirectories([executionBaseDirectory, executionDirectory, temporaryDirectory, lockFilesDirectory], context, true)
-        if(context.executionContextLevel.allowedToSubmitJobs){
+        if (context.executionContextLevel.allowedToSubmitJobs) {
             logger.always("Creating the following execution directory to store information about this process:")
             logger.always("\t${executionDirectory.getAbsolutePath()}")
         }

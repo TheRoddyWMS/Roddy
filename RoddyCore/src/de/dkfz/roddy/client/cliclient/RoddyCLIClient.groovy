@@ -69,7 +69,7 @@ class RoddyCLIClient {
 
     static void startMode(CommandLineCall clc) {
         //TODO Convert to CommandLineCall
-        String[] args = clc.getArguments();
+        String[] args = clc.getArguments().toArray(new String[0]);
         switch (clc.startupMode) {
             case showreadme:
                 showReadme();
@@ -276,7 +276,7 @@ class RoddyCLIClient {
         Analysis analysis = new ProjectLoader().loadAnalysisAndProject(analysisID)
         if (!analysis) {
             logger.severe("Could not load analysis ${analysisID}")
-            Roddy.exit(1)
+            Roddy.exit(ExitReasons.analysisNotLoadable.getCode())
         }
         // This check only applies for analysis configuration files.
         checkConfigurationErrorsAndMaybePrintAndFail(analysis.configuration)
@@ -294,7 +294,7 @@ class RoddyCLIClient {
             } else {
                 logger.severe("There were configuration errors and Roddy will not start. Consider using --${RoddyStartupOptions.ignoreconfigurationerrors.name()} to ignore errors.")
                 System.err.println(errorText)
-                Roddy.exit(1)
+                Roddy.exit(ExitReasons.severeConfigurationErrors.code)
             }
         }
     }
