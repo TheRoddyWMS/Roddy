@@ -772,7 +772,7 @@ public class Roddy {
     private static int waitForJobs() {
         try {
             if (jobManager.isDaemonAlive()) {
-                logger.always("Roddy will wait now, until all started jobs are finished.");
+                logger.always("Waiting now, until all jobs are finished.");
                 Thread.sleep(5000); //Sleep at least 5 seconds to let any job scheduler handle things...
                 if (jobManager.waitForJobsToFinish()) {
                     return ExitReasons.aJobHadAnError.getCode();
