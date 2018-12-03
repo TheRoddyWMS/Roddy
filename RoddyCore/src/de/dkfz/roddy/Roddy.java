@@ -226,7 +226,7 @@ public class Roddy {
             // we check for this particular exception by using its simple class name!
             if (!e.getClass().getName().endsWith("SystemExitException"))
                 e.printStackTrace();
-            exit(ExitReasons.groovyServError.getCode());
+            exit(ExitReasons.groovyServError);
         }
     }
 
@@ -429,8 +429,7 @@ public class Roddy {
                 }
             }
         } catch (RuntimeException e) {
-            logger.severe("Parsing startup options failed.");
-            exit(ExitReasons.unparseableStartupOptions.getCode());
+            exit(ExitReasons.unparseableStartupOptions);
         }
     }
 
@@ -440,8 +439,7 @@ public class Roddy {
             toggleIni = new File(commandLineCall.getOptionValue(RoddyStartupOptions.usefeaturetoggleconfig));
             logger.postSometimesInfo("Trying to load alternative feature toggles file: " + toggleIni);
             if (toggleIni == null || !toggleIni.exists()) {
-                logger.postAlwaysInfo("Cannot find requested toggle file.");
-                exit(ExitReasons.unknownFeatureToggleFile.getCode());
+                exit(ExitReasons.unknownFeatureToggleFile);
             }
 
         } else {
@@ -727,6 +725,14 @@ public class Roddy {
                         .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
                         .setHoldJobIsEnabled(applicationProperties.getOrSetBooleanApplicationProperty(Constants.APP_PROPERTY_JOB_MANAGER_HOLDJOBS_ON_SUBMISSION, true))
                         .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI()).build());
+        jobManager.addUpdateDaemonListener((job, state) -> {
+            if (state.isSuccessful()) {
+                // Message for started jobs are also printed with println
+                System.out.println(String.format("  Job %s finished successfully.", job.getJobID()));
+            } else {
+                System.out.println(String.format("  Job %s finished with an error and state %s.", job.getJobID(), state.name()));
+            }
+        });
     }
 
     private static BatchEuphoriaJobManager jobManager;
@@ -757,8 +763,7 @@ public class Roddy {
             if (jobManager.executesWithoutJobSystem() && waitForJobsToFinish) {
                 exitCode = waitForJobs();
             } else {
-                // TODO: #167 (https://github.com/eilslabs/Roddy/issues/167)
-                exit(0);
+                exitCode = 0;
             }
         }
         exit(exitCode);
@@ -767,15 +772,16 @@ public class Roddy {
     private static int waitForJobs() {
         try {
             if (jobManager.isDaemonAlive()) {
-                logger.always("Roddy will wait for jobs now.");
+                logger.always("Roddy will wait now, until all started jobs are finished.");
                 Thread.sleep(5000); //Sleep at least 5 seconds to let any job scheduler handle things...
-                return jobManager.waitForJobsToFinish();
+                if (jobManager.waitForJobsToFinish()) {
+                    return ExitReasons.aJobHadAnError.getCode();
+                }
             }
-            return 249;
         } catch (Exception ex) {
-            return 250;
+            exit(ExitReasons.waitForJobsFailedWithAnUnknownError);
         }
-
+        return 0;
     }
 
     public static void exit() {
@@ -787,6 +793,11 @@ public class Roddy {
         if (jobManager != null)
             jobManager.stopUpdateDaemon();
         System.exit(ecode <= 255 ? ecode : ExitReasons.wrongExitCodeUsed.getCode()); //Exit codes should be in range from 0 .. 255
+    }
+
+    public static void exit(ExitReasons reason) {
+        logger.severe(reason.getMessage());
+        exit(reason.getCode());
     }
 
     public static void loadPropertiesFile() {

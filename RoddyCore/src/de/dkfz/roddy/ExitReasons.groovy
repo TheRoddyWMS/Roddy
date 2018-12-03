@@ -25,9 +25,11 @@ enum ExitReasons {
     analysisNotLoadable(244, "Could not load analysis"),
     severeConfigurationErrors(243, "Severe configuration errors occurred."),
     unhandledException(242, "Unhandled exception."),
-    unknownSSHHost(241, "Unknown SSH host."),
+    unknownSSHHost(241, "Could not setup SSH access with your configuration: The specified host is not available ."),
     invalidSSHConfig(240, "SSH setup is not valid."),
     fatalSSHError(239, "Fatal error during SSH setup."),
+    aJobHadAnError(238, "At least one of your started jobs exited with an error."),
+    waitForJobsFailedWithAnUnknownError(237, "Roddy.waitForJobs() failed with an unknown exception."),
 
     wrongExitCodeUsed(100, "Someone uses a wrong exit code somewhere in Roddy. Exit codes should be in class ExitReasons (if possible) and must be in the range [1;255].")
 

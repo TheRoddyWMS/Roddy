@@ -160,8 +160,7 @@ class SSHExecutionService extends RemoteExecutionService {
                 t2 = System.nanoTime()
                 logger.sometimes(RoddyIOHelperMethods.printTimingInfo("start ssh client session", t1, t2))
             } catch (UnknownHostException ex) {
-                logger.severe("Could not setup SSH access with your configuration: The specified host is not available - ${ex.message}")
-                Roddy.exit(ExitReasons.unknownSSHHost.code)
+                Roddy.exit(ExitReasons.unknownSSHHost)
             } catch (UserAuthException ex) {
                 logger.severe(
                         [
