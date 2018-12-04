@@ -1,7 +1,7 @@
 <!--
   ~ Copyright (c) 2018 DKFZ - ODCF
   ~
-  ~ Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+  ~ Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
   -->
 
 <configuration name='simpleCohortWorkflowAnalysis'

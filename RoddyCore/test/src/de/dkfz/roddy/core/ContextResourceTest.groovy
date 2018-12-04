@@ -1,12 +1,16 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.core
 
+import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.Configuration
+import de.dkfz.roddy.execution.io.ExecutionService
+import de.dkfz.roddy.execution.io.LocalExecutionService
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.knowledge.files.BaseFile
 import groovy.transform.CompileStatic
 import org.junit.Rule
@@ -14,9 +18,14 @@ import org.junit.Test
 
 @CompileStatic
 class ContextResourceTest {
-    
+
     @Rule
     public ContextResource contextResource = new ContextResource()
+
+    static {
+        ExecutionService.initializeService(LocalExecutionService, RunMode.CLI)
+        FileSystemAccessProvider.initializeProvider(true)
+    }
 
     @Test
     void testGetTestBaseDirectory() {

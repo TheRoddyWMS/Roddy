@@ -1,7 +1,7 @@
 <!--
   ~ Copyright (c) 2016 eilslabs.
   ~
-  ~ Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+  ~ Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
   -->
 
 <configuration configurationType='project' name='testProjectImportLvl0' description='Test project' runtimeServiceClass='de.dkfz.roddy.knowledge.examples.SimpleRuntimeService' imports="testProjectImportLvl1">

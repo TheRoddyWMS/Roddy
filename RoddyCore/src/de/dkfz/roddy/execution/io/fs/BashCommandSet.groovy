@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.execution.io.fs
@@ -186,7 +186,7 @@ class BashCommandSet extends ShellCommandSet {
 
     @Override
     String getListFilesInDirectoryCommand(File path) {
-        return "find ${path.absolutePath} -type f -maxdepth 1"
+        return "find -L ${path.absolutePath} -type f -maxdepth 1"
     }
 
     @Override
@@ -197,7 +197,7 @@ class BashCommandSet extends ShellCommandSet {
 
     @Override
     String getListFullDirectoryContentRecursivelyCommand(File f, int depth, FileType selectedType, boolean detailed) {
-        StringBuilder sb = new StringBuilder("find ")
+        StringBuilder sb = new StringBuilder("find -L ")
         sb << "\"" << f.absolutePath << "\""
 
         if (depth > 0) sb << " -maxdepth ${depth}"

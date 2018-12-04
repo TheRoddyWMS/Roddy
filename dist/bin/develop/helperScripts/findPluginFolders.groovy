@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2016 eilslabs.
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 // This script is used to extract find all plugin base folders.

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2018 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
+ */
 package de.dkfz.roddy.config;
 
 import de.dkfz.roddy.RunMode;
@@ -57,6 +62,12 @@ public class RoddyAppConfig extends AppConfig {
         String value;
         switch (type) {
             case CVALUE_TYPE_STRING:
+                value = uncheckedGetOrSetApplicationProperty(pName, defaultValue);
+                break;
+            case CVALUE_TYPE_INTEGER:
+                if (!RoddyConversionHelperMethods.isInteger(defaultValue)) {
+                    throw new ConfigurationError(String.format("The value for '%s' is not of type '%s'", pName, type), pName);
+                }
                 value = uncheckedGetOrSetApplicationProperty(pName, defaultValue);
                 break;
             case CVALUE_TYPE_PATH:

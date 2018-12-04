@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2018 German Cancer Research Center (DKFZ).
+ * Copyright (c) 2018 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.core
@@ -103,6 +103,19 @@ class Analysis {
 
     private ContextConfiguration _analysisConfiguration = null
 
+    /**
+     * Tests using analysis objects will need to implement the following:
+     *
+     * static {
+     *   ExecutionService.initializeService(LocalExecutionService, RunMode.CLI)
+     *   FileSystemAccessProvider.initializeProvider(true)
+     * }
+     *
+     * If they don't, tests will fail with a NullPointerException!
+     *
+     * Alternatively, you could use the RoddyTestSpec class as a base for Spock tests.
+     * @return
+     */
     AnalysisConfiguration getConfiguration() {
         if (_analysisConfiguration == null) {
             _analysisConfiguration = new ContextConfiguration((AnalysisConfiguration) this.configuration, (ProjectConfiguration) this.project.getConfiguration())
@@ -247,10 +260,7 @@ class Analysis {
     }
 
     private boolean canStartJobs(DataSet ds) {
-        if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning)) {
-            throw new RuntimeException("Feature toggle forbidSubmissionOnRunning is currently unsupported due to lack of use by users. If you need it contact the developers.")
-        }
-        return !Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning) || !hasKnownRunningJobs(ds)
+        return !Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning) || !hasKnownRunningJobs(ds);
     }
 
     boolean hasKnownRunningJobs(DataSet ds) {

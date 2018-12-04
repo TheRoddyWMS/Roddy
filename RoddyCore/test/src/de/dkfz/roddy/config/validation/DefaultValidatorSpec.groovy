@@ -1,5 +1,11 @@
+/*
+ * Copyright (c) 2018 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
+ */
 package de.dkfz.roddy.config.validation
 
+import de.dkfz.roddy.RoddyTestSpec
 import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationIssue
 import de.dkfz.roddy.config.ConfigurationValue
@@ -13,7 +19,7 @@ import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_INTEGER
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING
 import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate.*
 
-class DefaultValidatorSpec extends Specification {
+class DefaultValidatorSpec extends RoddyTestSpec {
 
     def 'test removeEscapedEscapeCharacters'(value, expected) {
         expect:

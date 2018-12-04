@@ -1,5 +1,11 @@
+/*
+ * Copyright (c) 2018 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
+ */
 package de.dkfz.roddy.config
 
+import de.dkfz.roddy.RoddyTestSpec
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.core.ContextResource
 import de.dkfz.roddy.core.ExecutionContext
@@ -13,22 +19,7 @@ import spock.lang.Specification
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_INTEGER
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING
 
-class ConfigurationValueSpec extends Specification {
-//    def "GetEnumerationValueType"() {
-//    }
-//
-
-    @ClassRule
-    static ContextResource contextResource = new ContextResource() {
-        {
-            before()
-        }
-    }
-
-    def setupSpec() {
-        ExecutionService.initializeService(LocalExecutionService, RunMode.CLI)
-        FileSystemAccessProvider.initializeProvider(true)
-    }
+class ConfigurationValueSpec extends RoddyTestSpec {
 
     @Shared
     static final EnumerationValue evString = ConfigurationValue.defaultCValueTypeEnumeration.getValue(CVALUE_TYPE_STRING)
