@@ -11,7 +11,7 @@ import groovy.transform.CompileStatic
 @CompileStatic
 enum ExitReasons {
 
-    wrongStartupLocation(255, "You must call roddy from the right location! (Base roddy folder where roddy.sh resides."),
+    wrongStartupLocation(255, "Wrong execution directory. Change to directory with roddy.sh before execution."),
     groovyServError(254, "SystemExitException throw by GroovyServ, will exit now."),
     malformedCommandLine(253, "Command line was malformed."),
     unfulfilledRequirements(252, "Execution requirements unfulfilled."),
@@ -22,7 +22,7 @@ enum ExitReasons {
     scratchDirNotConfigured(247, Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY + " is not defined."),
     wrongJobManagerClass(246, "Wrong job manager class."),
     appPropertiesFileNotFound(245, "Application properties file not found or loadable."),
-    analysisNotLoadable(244, "Could not load analysis"),
+    analysisNotLoadable(244, "Could not load analysis."),
     severeConfigurationErrors(243, "Severe configuration errors occurred."),
     unhandledException(242, "Unhandled exception."),
     unknownSSHHost(241, "SSH remote host could not be reached."),
@@ -31,7 +31,7 @@ enum ExitReasons {
     aJobHadAnError(238, "At least one job exited with an error."),
     waitForJobsFailedWithAnUnknownError(237, "Roddy.waitForJobs() failed with an unknown exception."),
 
-    wrongExitCodeUsed(100, "Someone uses a wrong exit code somewhere in Roddy. Exit codes should be in class ExitReasons (if possible) and must be in the range [1;255].")
+    wrongExitCodeUsed(100, "Exit codes should be in class ExitReasons (if possible) and must be in the range [1;255].")
 
     final String message
 
