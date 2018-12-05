@@ -12,11 +12,7 @@ import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.EnumerationValue
 import groovy.transform.CompileStatic
 
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BOOLEAN
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_DOUBLE
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_FLOAT
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_INTEGER
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING
+import static de.dkfz.roddy.config.ConfigurationConstants.*
 import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate.*
 
 /**
@@ -84,9 +80,10 @@ class DefaultValidator extends ConfigurationValueValidator {
 
     /** Match either a detached dollar (withouth esacpe and brace) somewhere in the text
      *   OR a non escaped detached dollar at line end.
-     *   OR a detached dollar string '$'
+     *   OR a detached dollar string '$'.
+     *   OR a detached dollar at the beginning of the line.
      */
-    static String matchDetachedDollars = /([^\\][$][^{])|([^\\][$]$)|(^[$]$)/
+    static String matchDetachedDollars = /([^\\][$][^{])|([^\\][$]$)|(^[$]$)|(^[$][^{])/
 
     boolean areDollarCharactersProperlyUsed(ConfigurationValue cv) {
         if (!cv.value.contains('$')) return true

@@ -41,7 +41,7 @@ class ConfigurationIssueSpec extends Specification {
 
         where:
         template                | messageContent | expectedLevel  | expectedCollectiveMessage
-        detachedDollarCharacter | smallArray     | CVALUE_WARNING | "Several variables in your configuration contain one or more dollar signs. As this might impose problems in your cluster jobs, check the entries in your job configuration files. See the extended logs for more information."
+        detachedDollarCharacter | smallArray     | CVALUE_WARNING | "Several variables contain plain dollar sign(s). Roddy does not interpret them as variables and cannot guarantee correct ordering of assignments for such variables in the job parameter file."
         valueAndTypeMismatch    | largeArray     | CVALUE_ERROR   | "Several variables in your configuration mismatch regarding their type and value. See the extended logs for more information."
     }
 
