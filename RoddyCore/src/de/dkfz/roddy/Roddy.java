@@ -102,7 +102,7 @@ public class Roddy {
     private static String baseInputDirectory;
     private static String baseOutputDirectory;
 
-    private static final File applicationDirectory = new File(System.getProperty("user.dir"));
+    private static final File applicationDirectory = new File(SystemProperties.getUserDir());
     private static final File applicationBundleDirectory = new File(applicationDirectory, "bundledFiles");
 
     private static CommandLineCall commandLineCall;
@@ -640,7 +640,7 @@ public class Roddy {
                 // The file must have existed, because we are accessing the values in it.
                 scratchBaseDir = System.getenv("CURRENT_PWD");
                 if (scratchBaseDir == null) {
-                    scratchBaseDir = System.getProperty("user.dir");
+                    scratchBaseDir = SystemProperties.getUserDir();
                 }
             }
 
@@ -834,7 +834,7 @@ public class Roddy {
      * @return
      */
     public static File getSettingsDirectory() {
-        String userHome = System.getProperty("user.home");
+        String userHome = SystemProperties.getUserHome();
         if (userHome == null) {
             throw new IllegalStateException("user.home==null");
         }

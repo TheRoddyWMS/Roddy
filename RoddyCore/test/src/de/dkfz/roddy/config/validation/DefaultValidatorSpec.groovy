@@ -6,17 +6,10 @@
 package de.dkfz.roddy.config.validation
 
 import de.dkfz.roddy.RoddyTestSpec
-import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationIssue
 import de.dkfz.roddy.config.ConfigurationValue
-import spock.lang.Specification
 
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BASH_ARRAY
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BOOLEAN
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_DOUBLE
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_FLOAT
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_INTEGER
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING
+import static de.dkfz.roddy.config.ConfigurationConstants.*
 import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate.*
 
 class DefaultValidatorSpec extends RoddyTestSpec {
@@ -60,7 +53,7 @@ class DefaultValidatorSpec extends RoddyTestSpec {
         'bla bla'  | CVALUE_TYPE_BASH_ARRAY | true     | [] // Bash arrays need to be checked in a totally different way.
     }
 
-    def 'test check proper dollar sign usage in variables'(value, type, expected, expectedWarnings, expectedErrors) {
+    def 'test check proper dollar sign usage in variables'(String value, String type, Boolean expected, List<ConfigurationIssue> expectedWarnings, List<ConfigurationIssue> expectedErrors) {
         when:
         ConfigurationValue cval = new ConfigurationValue('bla', value, type)
 
@@ -82,6 +75,7 @@ class DefaultValidatorSpec extends RoddyTestSpec {
 
         // Not ok
         'abc$'                  | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla')] | []
+        '$abc'                  | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla')] | []
         'tr$ue'                 | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla')] | []
         '$'                     | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla')] | []
         'abc$\\{'               | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla')] | []

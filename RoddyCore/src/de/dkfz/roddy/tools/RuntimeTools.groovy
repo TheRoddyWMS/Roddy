@@ -8,6 +8,7 @@ package de.dkfz.roddy.tools
 
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.SystemProperties
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.versions.Version
 import de.dkfz.roddy.tools.versions.VersionLevel
@@ -27,7 +28,7 @@ final class RuntimeTools {
     }
 
     static String getJavaRuntimeVersion() {
-        String javaRuntimeVersion = System.getProperty("java.version").split("[.]")[0..1].join(".")
+        String javaRuntimeVersion = SystemProperties.getJavaVersion().split("[.]")[0..1].join(".")
         javaRuntimeVersion
     }
 
@@ -46,7 +47,7 @@ final class RuntimeTools {
     }
 
     static File getDevelopmentDistFolder() {
-        return new File(System.getProperty("user.dir"), "dist/bin/develop")
+        return new File(SystemProperties.getUserDir(), "dist/bin/develop")
     }
 
     static File getGroovyLibrary() {
@@ -58,9 +59,9 @@ final class RuntimeTools {
             logger.info("Loading groovy library from GroovyServ environment " + file)
             return file
         } else {
-            def file = new File(System.getProperty("java.class.path").split("[:]").find { new File(it).name.startsWith("groovy") })
+            def file = new File(SystemProperties.getJavaClasspath().split("[:]").find { new File(it).name.startsWith("groovy") })
             if (file == null)
-                throw new RuntimeException("Could not find groovy library in class path: " + System.getProperty("java.class.path"))
+                throw new RuntimeException("Could not find groovy library in class path: " + SystemProperties.getJavaClasspath())
             logger.info("Loading groovy library from local environment " + file)
             return file
         }

@@ -128,17 +128,31 @@ The configuration value itself is defined as a cvalue element. Each element can 
 * *type* - There exist several types for configuration values. The default value is string. Note, that the selection of
   the type will influence, how variables are interpreted and evaluated / converted.
 
-  - *string* will
+  - *string* accepts any value.
 
   - *int* will accept integer values only. E.g. 1, 2, 3 or 4.
 
-  - *float* will accept float values in differnt formats. E.g. 1.2f 1.2
+  - *float* will accept valid Java / Groovy float values. E.g. 1.2f 1.2
 
-  - *double* will accept
+  - *double* will accept valid Java / Groovy double values. E.g. 1.2 or 1.2E-3.
 
+  - *boolean* will evaluate true (preferred), y, j, t and 1 to true and false (preferred), n, f and 0 to false.
 
+  - *path* indicates, that the variable is a path or a part of a path.
 
-  - *boolean*
+Nice to know - Order of evaluation in Roddy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Configuration values can be cast to their *type* by calling any of the methods *toBoolean()*,
+*toInt()*, *toFloat()*, *toDouble()*, *toString()* and *toFile()*.
+
+In contrast to the other methods, *toString()* and *toFile()* are quite complex methods which will resolve referenced
+variables. Moreover, *toFile()* also has a particular order in which configuration objects are used to achieve this:
+
+1. The first used configuration is normally the project configuration. So every referenced value stored in there will
+   become evaluated.
+2. The second used configuration is the analysis configuration and replaces USERNAME, USERGROUP, USERHOME, projectName and any other value attached to the analysis.
+3. The last used configuration is the one from the dataset, and replaces pid, PID, dataSet and DATASET.
 
 Special values
 ~~~~~~~~~~~~~~
@@ -151,7 +165,7 @@ and
 
 **Binaries** which look like BWA_BINARY, MBUFFER_BINARY, PYTHON_BINARY and so on.
 
-Run flags are always considered to be boolean and are e.g. used smartly in Brawl based workflows. Binary variables are or are supposed to be checked on workflow validation and startup in future versions. If you want to exchange a binary in a fast way or set a fixed binary for your scripts, it is also wise to store everything in configuration values. 
+Run flags are always considered to be boolean and are e.g. used in Brawl based workflows. Binary variables are or are supposed to be checked on workflow validation and startup in future versions. If you want to exchange a binary in a fast way or set a fixed binary for your scripts, it is also wise to store everything in configuration values.
 
 Tool entries and filename patterns
 ----------------------------------

@@ -44,7 +44,7 @@ class ConfigurationIssue {
     static enum ConfigurationIssueTemplate {
         detachedDollarCharacter(
                 ConfigurationIssueLevel.CVALUE_WARNING,
-                "Several variables in your configuration contain one or more dollar signs. As this might impose problems in your cluster jobs, check the entries in your job configuration files. See the extended logs for more information.",
+                "Several variables contain plain dollar sign(s). Roddy does not interpret them as variables and cannot guarantee correct ordering of assignments for such variables in the job parameter file.",
                 "Variable '#REPLACE_0#' contains plain dollar sign(s) without braces. Roddy does not interpret them as variables and cannot guarantee correct ordering of assignments for such variables in the job parameter file."
         ),
         valueAndTypeMismatch(
@@ -54,8 +54,8 @@ class ConfigurationIssue {
         ),
         inproperVariableExpression(
                 ConfigurationIssueLevel.CVALUE_WARNING,
-                "Several variables in your configuration might misuse the variable import wrong. A variable needs to be imported into another value with \${variable identifier}.",
-                "The variable named '#REPLACE_0#' might misuse the variable import. Make sure, that all intended variable imports are non-escaped and formed like \${variable identifier}. Also, variable nesting is not allowed."
+                "Several variables in your configuration might use malformatted variable imports. Variable imports must look like \${variable identifier}, nesting is forbidden.",
+                "Variable '#REPLACE_0#' might use malformatted variable imports. Variable imports must look like \${variable identifier}, nesting is forbidden."
         )
 
         final ConfigurationIssueLevel level

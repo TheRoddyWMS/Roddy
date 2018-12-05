@@ -78,27 +78,19 @@ class Analysis {
     }
 
     String getUsername() {
-        try {
-            return FileSystemAccessProvider.getInstance().callWhoAmI()
-        } catch (Exception e) {
-            return "UNKNOWN"
-        }
+        return FileSystemAccessProvider.getInstance().callWhoAmI()
     }
 
     String getUsergroup() {
-        try {
-            //Get the default value.
-            String groupID = FileSystemAccessProvider.getInstance().getMyGroup()
+        //Get the default value.
+        String groupID = FileSystemAccessProvider.getInstance().getMyGroup()
 
-            //If it is configured, get the group id from the config.
-            boolean processSetUserGroup = getConfiguration().getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, true)
-            if (processSetUserGroup) {
-                groupID = getConfiguration().getConfigurationValues().getString(ConfigurationConstants.CFG_OUTPUT_FILE_GROUP, groupID)
-            }
-            return groupID
-        } catch (Exception e) {
-            return "UNKNOWN"
+        //If it is configured, get the group id from the config.
+        boolean processSetUserGroup = getConfiguration().getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, true)
+        if (processSetUserGroup) {
+            groupID = getConfiguration().getConfigurationValues().getString(ConfigurationConstants.CFG_OUTPUT_FILE_GROUP, groupID)
         }
+        return groupID
     }
 
     private ContextConfiguration _analysisConfiguration = null
@@ -120,10 +112,10 @@ class Analysis {
         if (_analysisConfiguration == null) {
             _analysisConfiguration = new ContextConfiguration((AnalysisConfiguration) this.configuration, (ProjectConfiguration) this.project.getConfiguration())
             [
-                    'USERNAME' : getUsername(),
-                    'USERGROUP' : getUsergroup(),
-                    'USERHOME' : FileSystemAccessProvider.getInstance().getUserDirectory().getAbsolutePath(),
-                    (Constants.PROJECT_NAME) : project.name,
+                    (Constants.USERNAME)    : getUsername(),
+                    (Constants.USERGROUP)   : getUsergroup(),
+                    (Constants.USERHOME)    : FileSystemAccessProvider.getInstance().getUserDirectory().getAbsolutePath(),
+                    (Constants.PROJECT_NAME): project.name,
             ].each { String k, String v ->
                 _analysisConfiguration.configurationValues << new ConfigurationValue(_analysisConfiguration, k, v)
             }
@@ -202,7 +194,7 @@ class Analysis {
 
         for (DataSet ds : selectedDatasets) {
             if (level.allowedToSubmitJobs && !canStartJobs(ds)) {
-                logger.postAlwaysInfo("The " + Constants.PID + " " + ds.getId() + " is still running and will be skipped for the process.")
+                logger.postAlwaysInfo("The ${Constants.DATASET_HR} ${ds.id} is still running and will be skipped for the process.")
                 continue
             }
 
@@ -243,7 +235,7 @@ class Analysis {
             }
 
             if (!test && !canStartJobs(ds)) {
-                logger.postAlwaysInfo("The " + Constants.PID + " " + ds.getId() + " is still running and will be skipped for the process.")
+                logger.postAlwaysInfo("The ${Constants.DATASET_HR} ${ds.id} is still running and will be skipped for the process.")
                 continue
             }
 
@@ -343,7 +335,7 @@ class Analysis {
      */
     void runDeferredContext(final ExecutionContext ec) {
 //        ThreadGroup
-        Thread t = Thread.start(String.format("Deferred execution context execution for " + Constants.PID + " %s", ec.getDataSet().getId()), {
+        Thread t = Thread.start(String.format("Deferred execution context execution for " + Constants.DATASET_HR + " %s", ec.getDataSet().getId()), {
             executeRun(ec)
         })
     }
@@ -546,7 +538,7 @@ class Analysis {
         for (Object entry : entries) {
             messages.append("\n\t* ").append(entry.toString())
         }
-        if(logAlways)
+        if (logAlways)
             logger.postAlwaysInfo(messages.toString())
         else
             logger.sometimes(messages.toString())

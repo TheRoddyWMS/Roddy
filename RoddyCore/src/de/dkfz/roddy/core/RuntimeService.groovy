@@ -6,18 +6,14 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationError
-import de.dkfz.roddy.config.ConfigurationValue
-import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
-import de.dkfz.roddy.config.ConfigurationConstants
-import de.dkfz.roddy.config.ToolEntry
+import de.dkfz.roddy.config.*
 import de.dkfz.roddy.execution.io.BaseMetadataTable
 import de.dkfz.roddy.execution.io.MetadataTableFactory
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
@@ -327,9 +323,9 @@ class RuntimeService {
      * @return
      */
     String extractDataSetIDFromPath(File path, Analysis analysis) {
-        String pattern = getOutputAnalysisBaseCV(analysis).toFile(analysis).getAbsolutePath()
+        String pattern = getOutputAnalysisBaseDirectoryCV(analysis).toFile(analysis).getAbsolutePath()
         RoddyIOHelperMethods.getPatternVariableFromPath(pattern, Constants.DATASET, path.getAbsolutePath()).
-                orElse(RoddyIOHelperMethods.getPatternVariableFromPath(pattern, Constants.PID, path.getAbsolutePath()).
+                orElse(RoddyIOHelperMethods.getPatternVariableFromPath(pattern, Constants.DATASET, path.getAbsolutePath()).
                         orElse(Constants.UNKNOWN))
     }
 
@@ -461,18 +457,18 @@ class RuntimeService {
      * @param context
      * @return
      */
-    private ConfigurationValue getOutputAnalysisBaseCV(Analysis analysis) {
+    private ConfigurationValue getOutputAnalysisBaseDirectoryCV(Analysis analysis) {
         return analysis.getConfiguration().getConfigurationValues().
                 get(ConfigurationConstants.CFG_OUTPUT_ANALYSIS_BASE_DIRECTORY,
                         getOutputBaseDirectory(analysis).toString())
     }
 
     File getOutputAnalysisBaseDirectory(DataSet dataSet, Analysis analysis) {
-        return getOutputAnalysisBaseCV(analysis).toFile(analysis, dataSet)
+        return getOutputAnalysisBaseDirectoryCV(analysis).toFile(analysis, dataSet)
     }
 
     File getOutputAnalysisBaseDirectory(ExecutionContext context) {
-        return getOutputAnalysisBaseCV(context.analysis).toFile(context)
+        return getOutputAnalysisBaseDirectoryCV(context.analysis).toFile(context)
     }
 
 

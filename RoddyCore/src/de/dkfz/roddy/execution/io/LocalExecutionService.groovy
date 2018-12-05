@@ -6,15 +6,11 @@
 
 package de.dkfz.roddy.execution.io
 
+import de.dkfz.roddy.SystemProperties
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationValue
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.Command
-import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.tools.LoggerWrapper
-
-import java.lang.reflect.Field
 
 /**
  * The local execution service executes commands on the local machine. For this groovy's execute() method is used.
@@ -26,7 +22,7 @@ class LocalExecutionService extends ExecutionService {
 
     @Override
     String getUsername() {
-        return System.getProperty("user.name")
+        return SystemProperties.getUserName()
     }
 
     @Override

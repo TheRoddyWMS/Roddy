@@ -6,7 +6,6 @@
 
 package de.dkfz.roddy.config
 
-
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.loader.ConfigurationLoadError
 import de.dkfz.roddy.config.validation.BashValidator
@@ -24,16 +23,7 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 import static de.dkfz.roddy.StringConstants.*
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BASH_ARRAY
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BOOLEAN
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_DOUBLE
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_FILENAME
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_FILENAME_PATTERN
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_FLOAT
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_INTEGER
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_PATH
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING
+import static de.dkfz.roddy.config.ConfigurationConstants.*
 
 /**
  * A configuration value
@@ -80,9 +70,6 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
      * API Level 3.4+
      */
     final boolean valid
-
-    @Deprecated
-    final boolean invalid
 
     /**
      * API Level 3.4+
@@ -142,7 +129,6 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         if (tags != null)
             this.tags.addAll(tags)
         valid = validator.validate(this)
-        invalid = !valid
     }
 
     /**
@@ -160,7 +146,6 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         this.tags << "ELEVATED"
         this.validator = parent.validator // Do not revalidate, this is much too expensive for many values
         this.valid = parent.valid
-        this.invalid = parent.invalid
     }
 
 
@@ -287,10 +272,6 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
             if (value.startsWith("\${DIR_BUNDLED_FILES}") || value.startsWith("\${DIR_RODDY}"))
                 temp = Roddy.getApplicationDirectory().getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + temp
 
-            if (temp.contains(ConfigurationConstants.CVALUE_PLACEHOLDER_EXECUTION_DIRECTORY)) {
-                String pd = context.getExecutionDirectory().getAbsolutePath()
-                temp = temp.replace(ConfigurationConstants.CVALUE_PLACEHOLDER_EXECUTION_DIRECTORY, pd)
-            }
             _toFileCache = new File(temp)
             return _toFileCache
         } catch (Exception ex) {
@@ -414,16 +395,13 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         }
     }
 
-    @Deprecated
+    boolean isValid() {
+        return valid
+    }
+
     boolean isInvalid() {
         return !valid
     }
-
-    @Deprecated
-    void setInvalid(boolean invalid) {
-        // Not used anymore, invalid is not overriden.
-    }
-
 
     private List<String> _bashArrayToStringList() {
         String vTemp = value.substring(1, value.length() - 2).trim() //Split away () and leading or trailing white characters.

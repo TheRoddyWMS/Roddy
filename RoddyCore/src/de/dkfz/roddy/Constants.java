@@ -34,7 +34,6 @@ public class Constants {
     public static final String APP_PROPERTY_CONFIGURATION_DIRECTORIES = "configurationDirectories";
     public static final String APP_PROPERTY_PLUGIN_DIRECTORIES = "pluginDirectories";
     public static final String APP_PROPERTIES_FILENAME = "applicationProperties.ini";
-    public static final String APP_PROPERTY_APPLICATION_DEBUG_TAG_NOJOBSUBMISSION = "NOJOBSUBMISSION";
     public static final String APP_PROPERTY_NET_USEPROXY = "netUseProxy";
     public static final String APP_PROPERTY_NET_PROXY_ADDRESS = "netProxyAddress";
     public static final String APP_PROPERTY_NET_PROXY_USR = "netProxyUser";
@@ -50,20 +49,12 @@ public class Constants {
 
     public static final String ERR_MSG_ONLY_ONE_JOB_ALLOWED = "A job object is not allowed to run several times.";
     public static final String ERR_MSG_WRONG_PARAMETER_COUNT = "You did not provide proper parameters, args.length = ";
-    public static final String ERR_MSG_NO_APPLICATION_PROPERTY_FILE = "Configuration does not exist. Cannot start application.";
 
     /////////////////////////
     // Environment settings
     /////////////////////////
 
-    public static final String ENV_LINESEPARATOR = System.getProperty("line.separator");
-
-    /////////////////////////
-    // Roddy tools
-    /////////////////////////
-
-    public static final String TOOLID_CREATE_LOCKFILES = "createLockFiles";
-    public static final String TOOLID_STREAM_BUFFER = "streamBuffer";
+    public static final String ENV_LINESEPARATOR = SystemProperties.getLineSeparator();
 
     /////////////////////////
     // Other constants
@@ -72,6 +63,9 @@ public class Constants {
     public static final String UNKNOWN_USER = "UNKNOWN";
     public static final String UNKNOWN = "UNKNOWN";
     public static final String NO_VALUE = "<NO_VALUE>";
+    public static final String USERNAME = "USERNAME";
+    public static final String USERGROUP = "USERGROUP";
+    public static final String USERHOME = "USERHOME";
     public static final String DEFAULT = "default";
 
     public static final String RODDY_PARENT_JOBS = "RODDY_PARENT_JOBS";
@@ -81,8 +75,11 @@ public class Constants {
     public static final String PARAMETER_FILE_SUFFIX = ".parameters";
     public static final String PROJECT_NAME = "projectName";
     public static final String DATASET = "dataSet";
+    public static final String DATASET_HR = "dataset";
     public static final String DATASET_CAP = "DATASET";
+    @Deprecated
     public static final String PID_CAP = "PID";
+    @Deprecated
     public static final String PID = "pid";
 
     /////////////////////////

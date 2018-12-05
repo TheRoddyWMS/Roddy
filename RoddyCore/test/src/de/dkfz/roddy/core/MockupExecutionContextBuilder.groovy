@@ -6,13 +6,8 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.config.AnalysisConfiguration
-import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationError
-import de.dkfz.roddy.config.PreloadedConfiguration
-import de.dkfz.roddy.config.ProjectConfiguration
-import de.dkfz.roddy.config.ResourceSet
-import de.dkfz.roddy.config.ResourceSetSize
+import de.dkfz.roddy.SystemProperties
+import de.dkfz.roddy.config.*
 import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.NoNoExecutionService
 import de.dkfz.roddy.execution.jobs.*
@@ -122,11 +117,11 @@ public class MockupExecutionContextBuilder {
 
             final DataSet dataSet = new DataSet(analysis, "TEST_PID", getTestOutputDirectory("TEST_PID"))
 
-            return new ExecutionContext(System.getProperty("user.name"), analysis, dataSet, ExecutionContextLevel.UNSET,
+            return new ExecutionContext(SystemProperties.getUserName(), analysis, dataSet, ExecutionContextLevel.UNSET,
                     testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime())
 
         } else {
-            return new ExecutionContext(System.getProperty("user.name"), null, null, ExecutionContextLevel.UNSET,
+            return new ExecutionContext(SystemProperties.getUserName(), null, null, ExecutionContextLevel.UNSET,
                                         testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime())
         }
     }

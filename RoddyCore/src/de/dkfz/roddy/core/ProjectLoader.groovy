@@ -16,12 +16,7 @@ import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.config.validation.XSDValidator
 import de.dkfz.roddy.execution.io.MetadataTableFactory
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.plugins.ClassLoaderHelper
-import de.dkfz.roddy.plugins.LibrariesFactory
-import de.dkfz.roddy.plugins.PluginInfo
-import de.dkfz.roddy.plugins.PluginInfoMap
-import de.dkfz.roddy.plugins.PluginLoaderException
+import de.dkfz.roddy.plugins.*
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
 import java.lang.reflect.InvocationTargetException
@@ -243,7 +238,7 @@ class ProjectLoader {
 
         lines << "inputBaseDirectory=" + Roddy.customBaseInputDirectory
         lines << "outputBaseDirectory=" + Roddy.customBaseOutputDirectory
-        lines << "outputAnalysisBaseDirectory=\${outputBaseDirectory}/\${${Constants.PID}}".toString()
+        lines << "outputAnalysisBaseDirectory=\${outputBaseDirectory}/\${${Constants.DATASET}}".toString()
 
         projectID = "CFreeMode_" + Integer.toHexString(configurationFileName.hashCode())
 
