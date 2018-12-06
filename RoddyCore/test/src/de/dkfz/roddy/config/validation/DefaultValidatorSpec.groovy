@@ -100,5 +100,6 @@ class DefaultValidatorSpec extends RoddyTestSpec {
         'abc${${var}}'     | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla')] | []
         'abc${'            | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla')] | []
         'ab${c'            | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla')] | []
+        '${}'              | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla')] | []
     }
 }

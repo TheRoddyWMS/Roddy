@@ -40,7 +40,7 @@ class DefaultValidator extends ConfigurationValueValidator {
         if (configurationValue.value == null) return true
 
         boolean result = isConfigurationValueTypeCorrect(configurationValue, ev)
-        result &= areDollarCharactersProperlyUsed(configurationValue)
+        result &= areDollarCharactersAttached(configurationValue)
         result &= areVariablesProperlyDefined(configurationValue)
         this.result = result
         return result
@@ -78,14 +78,14 @@ class DefaultValidator extends ConfigurationValueValidator {
         temp
     }
 
-    /** Match either a detached dollar (withouth esacpe and brace) somewhere in the text
+    /** Match either a detached dollar (without escape and brace) somewhere in the text
      *   OR a non escaped detached dollar at line end.
      *   OR a detached dollar string '$'.
      *   OR a detached dollar at the beginning of the line.
      */
     static String matchDetachedDollars = /([^\\][$][^{])|([^\\][$]$)|(^[$]$)|(^[$][^{])/
 
-    boolean areDollarCharactersProperlyUsed(ConfigurationValue cv) {
+    boolean areDollarCharactersAttached(ConfigurationValue cv) {
         if (!cv.value.contains('$')) return true
 
         String temp = removeEscapedEscapeCharacters(cv.value)
