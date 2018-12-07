@@ -2,17 +2,23 @@
 
 * Version update to 3.4.0
 
-  - ForbitSubmissionToRunning turned on by default
+  - Improved validation of configuration values.
+
+  - ForbidSubmissionToRunning was reenabled and turned on by default.
   
-  - ExitReasons class for usage within Roddy and plugins
+  - Created ExitReasons class for usage within Roddy and plugins. The class stores different exit codes and messages.
   
-  - Bugfixes local job execution and cluster job submission
+  - Bugfixes for local job execution and cluster job submission
   
-  - Updated to BatchEuphoria 0.0.6
+  - Updated to BatchEuphoria 0.0.6.
   
-  - Follow symbolic links when listing files in directories, e.g. collecting dataset names
+  - Follow symbolic links when listing files in directories, e.g. collecting dataset names.
   
-  - Improved test coverage
+  - Added a base class for Spock tests: RoddyTestSpec.
+  
+  - Updated copyright notices.
+  
+  - Improved test coverage.
 
 * Version update to 3.3.3
 
