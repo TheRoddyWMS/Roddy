@@ -226,7 +226,7 @@ public class Roddy {
             // we check for this particular exception by using its simple class name!
             if (!e.getClass().getName().endsWith("SystemExitException"))
                 e.printStackTrace();
-            exit(ExitReasons.groovyServError);
+            exitWithMessage(ExitReasons.groovyServError);
         }
     }
 
@@ -429,7 +429,7 @@ public class Roddy {
                 }
             }
         } catch (RuntimeException e) {
-            exit(ExitReasons.unparseableStartupOptions);
+            exitWithMessage(ExitReasons.unparseableStartupOptions);
         }
     }
 
@@ -439,7 +439,7 @@ public class Roddy {
             toggleIni = new File(commandLineCall.getOptionValue(RoddyStartupOptions.usefeaturetoggleconfig));
             logger.postSometimesInfo("Trying to load alternative feature toggles file: " + toggleIni);
             if (toggleIni == null || !toggleIni.exists()) {
-                exit(ExitReasons.unknownFeatureToggleFile);
+                exitWithMessage(ExitReasons.unknownFeatureToggleFile);
             }
 
         } else {
@@ -779,7 +779,7 @@ public class Roddy {
                 }
             }
         } catch (Exception ex) {
-            exit(ExitReasons.waitForJobsFailedWithAnUnknownError);
+            exitWithMessage(ExitReasons.waitForJobsFailedWithAnUnknownError);
         }
         return 0;
     }
@@ -795,7 +795,7 @@ public class Roddy {
         System.exit(ecode <= 255 ? ecode : ExitReasons.wrongExitCodeUsed.getCode()); //Exit codes should be in range from 0 .. 255
     }
 
-    public static void exit(ExitReasons reason) {
+    public static void exitWithMessage(ExitReasons reason) {
         logger.severe(reason.getMessage());
         exit(reason.getCode());
     }

@@ -161,7 +161,7 @@ class SSHExecutionService extends RemoteExecutionService {
                 t2 = System.nanoTime()
                 logger.sometimes(RoddyIOHelperMethods.printTimingInfo("start ssh client session", t1, t2))
             } catch (UnknownHostException ex) {
-                Roddy.exit(ExitReasons.unknownSSHHost)
+                Roddy.exitWithMessage(ExitReasons.unknownSSHHost)
             } catch (UserAuthException ex) {
                 logger.severe(
                         [
