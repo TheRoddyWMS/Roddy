@@ -53,7 +53,12 @@ then
 
     echo "Searching source files"
 
-    test=`find src/ -type f \( -name "*.groovy" -or -name "*.java"  \)`
+    if [[ -d src/main ]]; then
+        srcDir=src/main/
+    else
+        srcDir=src/
+    fi
+    test=`find $srcDir -type f \( -name "*.groovy" -or -name "*.java"  \)`
 
     echo "Searching libraries"
 
