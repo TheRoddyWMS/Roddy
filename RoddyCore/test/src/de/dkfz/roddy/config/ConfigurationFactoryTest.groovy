@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2017 eilslabs.
+ * Copyright (c) 2017 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.config
@@ -29,6 +29,8 @@ import org.junit.rules.ExpectedException
 import java.lang.reflect.Method
 
 import static de.dkfz.roddy.Constants.DEFAULT
+import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate.detachedDollarCharacter
+import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate.valueAndTypeMismatch
 import static de.dkfz.roddy.config.ResourceSetSize.*
 
 /**
@@ -120,6 +122,34 @@ class ConfigurationFactoryTest {
     }
 
     @Test
+    void testReadConfigurationWithWarningsAndErrors() {
+        String text = """
+            <configuration name='testForDollars'>
+                <configurationvalues>
+                    <cvalue name='valWithDollars1' value='sometext\$dollarinit' />
+                    <cvalue name='valWithDollars2' value='sometext\$dollarstwo' />
+                    <cvalue name='valWithDollars3' value='sometext\${realValue}' />
+                    <cvalue name='valWithMismatch' value='sometext' type='integer' />
+                </configurationvalues>
+            </configuration>
+        """
+        NodeChild xml = (NodeChild) new XmlSlurper().parseText(text)
+        PreloadedConfiguration pc = new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "testForDollars", "", "", xml, "", null, null, text)
+        Configuration cfg = ConfigurationFactory.instance.loadConfiguration(pc)
+        assert cfg.hasWarnings()
+        assert cfg.warnings.size() == 2
+        assert cfg.warnings[0].id == detachedDollarCharacter
+        assert cfg.warnings[0].message == "Variable 'valWithDollars1' contains plain dollar sign(s) without braces. Roddy does not interpret them as variables and cannot guarantee correct ordering of assignments for such variables in the job parameter file."
+        assert cfg.warnings[1].id == detachedDollarCharacter
+        assert cfg.warnings[1].message == "Variable 'valWithDollars2' contains plain dollar sign(s) without braces. Roddy does not interpret them as variables and cannot guarantee correct ordering of assignments for such variables in the job parameter file."
+        assert cfg.hasErrors()
+        assert cfg.errors.size() == 1
+        assert cfg.errors[0].id == valueAndTypeMismatch
+        assert cfg.errors[0].message == "The value of variable named 'valWithMismatch' is not of its declared type 'integer'."
+    }
+
+
+    @Test
     void testLoadValidConfigurationDirectories() {
         // Load context from valid directories and see, if the step fails.
         ConfigurationFactory.initialize([testFolder1, testFolder2])
@@ -184,9 +214,8 @@ class ConfigurationFactoryTest {
         assert toolEntry.getInlineScript().equals("echo 'test'")
         assert toolEntry.getInlineScriptName().equals("testscript.sh")
     }
-
     @Test
-    @Ignore("The factory does not have that methode anymore. ProcessingToolReader has one, but it returns a NullPointerException in this test.")
+    @Ignore("The factory does not have that method anymore. ProcessingToolReader has one, but it returns a NullPointerException in this test.")
     void testParseToolResourceSet() {
         Method parseToolResourceSet = ConfigurationFactory.getDeclaredMethod("parseToolResourceSet", NodeChild, Configuration)
         parseToolResourceSet.setAccessible(true)

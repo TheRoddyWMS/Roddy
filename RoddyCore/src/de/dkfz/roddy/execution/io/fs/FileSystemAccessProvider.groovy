@@ -1,23 +1,24 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.execution.io.fs
 
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.SystemProperties
 import de.dkfz.roddy.config.converters.ConfigurationConverter
-import de.dkfz.roddy.plugins.LibrariesFactory
-import de.dkfz.roddy.tools.ComplexLine
-import de.dkfz.roddy.tools.LoggerWrapper
-import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.FileAttributes
 import de.dkfz.roddy.knowledge.files.BaseFile
+import de.dkfz.roddy.plugins.LibrariesFactory
+import de.dkfz.roddy.tools.ComplexLine
+import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.io.FileType
 import org.apache.commons.io.filefilter.WildcardFileFilter
 
@@ -419,7 +420,7 @@ public class FileSystemAccessProvider {
     public File getUserDirectory() {
         if (_userHome == null) {
             if (ExecutionService.getInstance().isLocalService()) {
-                String jHomeVar = System.getProperty("user.home");
+                String jHomeVar = SystemProperties.getUserHome();
                 _userHome = new File(jHomeVar)
             } else {
                 String cmd = commandSet.getUserDirectoryCommand();

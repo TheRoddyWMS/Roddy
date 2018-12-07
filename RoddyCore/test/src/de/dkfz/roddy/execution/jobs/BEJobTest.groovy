@@ -1,42 +1,53 @@
 /*
- * Copyright (c) 2017 eilslabs.
+ * Copyright (c) 2017 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.execution.jobs
 
+import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.TestFileStageSettings
-import de.dkfz.roddy.core.ContextResource;
+import de.dkfz.roddy.core.ContextResource
+import de.dkfz.roddy.execution.io.ExecutionService
+import de.dkfz.roddy.execution.io.LocalExecutionService
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.knowledge.files.BaseFile
 import groovy.transform.CompileStatic
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.BeforeClass
+import org.junit.Rule
+import org.junit.Test
 
 /**
  * Created by heinold on 10.01.17.
  */
 @CompileStatic
-public class BEJobTest {
+class BEJobTest {
 
     @Rule
     final public ContextResource contextResource = new ContextResource()
 
-    @CompileStatic
-    public static class TestFile extends BaseFile {
+    @BeforeClass
+    static void setup() {
+        ExecutionService.initializeService(LocalExecutionService, RunMode.CLI)
+        FileSystemAccessProvider.initializeProvider(true)
+    }
 
-        public TestFile(BaseFile.ConstructionHelperForSourceFiles helper) {
-            super(helper);
+    @CompileStatic
+    static class TestFile extends BaseFile {
+
+        TestFile(BaseFile.ConstructionHelperForSourceFiles helper) {
+            super(helper)
         }
 
-        public File getPath() {
-            return new File('/a/test/${jobParameter,name=\"abc\"}/${jobParameter,name=\"def\"}/text.txt');
+        File getPath() {
+            return new File('/a/test/${jobParameter,name=\"abc\"}/${jobParameter,name=\"def\"}/text.txt')
         }
 
     }
 
     @Test
-    public void replaceParametersInFilePath() throws Exception {
+    void replaceParametersInFilePath() throws Exception {
         BaseFile bf = new TestFile(new BaseFile.ConstructionHelperForSourceFiles(new File("/invalid"),
                 contextResource.createSimpleContext(BEJobTest.name), new TestFileStageSettings<>(), null))
         def parm = ["abc": "avalue",

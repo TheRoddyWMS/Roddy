@@ -1,32 +1,32 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.config
+
 /**
  * a custom enumeration class which allows the definition of enumerations in configuration files.
  */
 @groovy.transform.CompileStatic
-public class Enumeration implements RecursiveOverridableMapContainer.Identifiable {
+class Enumeration implements RecursiveOverridableMapContainer.Identifiable {
 
-    private final String name;
+    private final String name
 
-    private final String description;
+    private final String description
 
-    private final LinkedHashMap<String, EnumerationValue> values = new LinkedHashMap<String, EnumerationValue>();
+    private final LinkedHashMap<String, EnumerationValue> values = new LinkedHashMap<String, EnumerationValue>()
 
-    public Enumeration(String name, List<EnumerationValue> values, String description = "", Enumeration enumeration = null) {
+    Enumeration(String name, List<EnumerationValue> values, String description = "") {
         if (!name)
             throw new RuntimeException("A enumeration must have a valid name.")
-        this.name = name;
-        this.description = description;
+        this.name = name
+        this.description = description
         if (!values)
             throw new RuntimeException("There must be some enumeration values. An enumeration cannot be empty.")
-//        this.values.putAll(enumeration.values);
-        final Enumeration THIS = this;
-        values.each { EnumerationValue ev -> THIS.values[ev.id] = ev };
+        final Enumeration THIS = this
+        values.each { EnumerationValue ev -> THIS.values[ev.id] = ev }
     }
 
     String getName() {
@@ -49,6 +49,6 @@ public class Enumeration implements RecursiveOverridableMapContainer.Identifiabl
 
     @Override
     String getID() {
-        return getName();
+        return getName()
     }
 }

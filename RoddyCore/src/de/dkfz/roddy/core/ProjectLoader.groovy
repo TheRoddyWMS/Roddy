@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.core
@@ -16,12 +16,7 @@ import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.config.validation.XSDValidator
 import de.dkfz.roddy.execution.io.MetadataTableFactory
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.plugins.ClassLoaderHelper
-import de.dkfz.roddy.plugins.LibrariesFactory
-import de.dkfz.roddy.plugins.PluginInfo
-import de.dkfz.roddy.plugins.PluginInfoMap
-import de.dkfz.roddy.plugins.PluginLoaderException
+import de.dkfz.roddy.plugins.*
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
 import java.lang.reflect.InvocationTargetException
@@ -243,7 +238,7 @@ class ProjectLoader {
 
         lines << "inputBaseDirectory=" + Roddy.customBaseInputDirectory
         lines << "outputBaseDirectory=" + Roddy.customBaseOutputDirectory
-        lines << "outputAnalysisBaseDirectory=\${outputBaseDirectory}/\${${Constants.PID}}".toString()
+        lines << "outputAnalysisBaseDirectory=\${outputBaseDirectory}/\${${Constants.DATASET}}".toString()
 
         projectID = "CFreeMode_" + Integer.toHexString(configurationFileName.hashCode())
 
@@ -310,7 +305,7 @@ class ProjectLoader {
 
         projectConfiguration = fac.getProjectConfiguration(projectID);
 
-        if (projectConfiguration.hasErrors()) {
+        if (projectConfiguration.hasLoadErrors()) {
             RoddyCLIClient.checkConfigurationErrorsAndMaybePrintAndFail(projectConfiguration)
         }
 

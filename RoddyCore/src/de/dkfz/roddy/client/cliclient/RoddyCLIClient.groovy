@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2017 eilslabs.
+ * Copyright (c) 2017 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.client.cliclient
@@ -32,6 +32,7 @@ import de.dkfz.roddy.tools.versions.Version
 
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 import static de.dkfz.roddy.client.RoddyStartupModes.*
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_PATH
 
 /**
  * Command line client for roddy.
@@ -215,12 +216,12 @@ class RoddyCLIClient {
             // Fill variable, if it is missing. Log a warning.
             if (!valueInDir) {
                 logger.always("The input base directory is not set. Taking the path of the output base directory instead.")
-                analysis.configuration.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, valueOutDir, "path"))
+                analysis.configuration.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, valueOutDir, CVALUE_TYPE_PATH))
             }
 
             if (!valueOutDir) {
                 logger.always("The output base directory is not set. Taking the path of the input base directory instead.")
-                analysis.configuration.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, valueInDir, "path"))
+                analysis.configuration.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, valueInDir, CVALUE_TYPE_PATH))
             }
 
             // Now start with the input directory
@@ -284,7 +285,7 @@ class RoddyCLIClient {
     }
 
     static void checkConfigurationErrorsAndMaybePrintAndFail(Configuration configuration) {
-        if (configuration.hasErrors()) {
+        if (configuration.hasLoadErrors()) {
             StringBuilder sb = new StringBuilder();
             printConfigurationLoadErrors(configuration, sb, 0, Constants.ENV_LINESEPARATOR)
             String errorText = ConsoleStringFormatter.getFormatter().formatAll(sb.toString())

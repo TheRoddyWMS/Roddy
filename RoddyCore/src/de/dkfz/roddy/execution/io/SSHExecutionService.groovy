@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 /*
@@ -18,6 +18,7 @@ import com.jcraft.jsch.agentproxy.sshj.AuthAgent
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.ExitReasons
 import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.SystemProperties
 import de.dkfz.roddy.config.RoddyAppConfig
 import de.dkfz.roddy.execution.io.FileAttributes
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -160,7 +161,7 @@ class SSHExecutionService extends RemoteExecutionService {
                 t2 = System.nanoTime()
                 logger.sometimes(RoddyIOHelperMethods.printTimingInfo("start ssh client session", t1, t2))
             } catch (UnknownHostException ex) {
-                Roddy.exit(ExitReasons.unknownSSHHost)
+                Roddy.exitWithMessage(ExitReasons.unknownSSHHost)
             } catch (UserAuthException ex) {
                 logger.severe(
                         [
@@ -216,8 +217,8 @@ class SSHExecutionService extends RemoteExecutionService {
 
         private void _initialize() {
             RoddyAppConfig appConf = Roddy.applicationConfiguration
-            String sshUser = appConf.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_USER, System.getProperty("user.name"))
-            if (sshUser == "USERNAME") sshUser = System.getProperty("user.name") //Get the local name if USERNAME is set
+            String sshUser = appConf.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_USER, SystemProperties.getUserName())
+            if (sshUser == Constants.USERNAME) sshUser = SystemProperties.getUserName() //Get the local name if USERNAME is set
             String sshMethod = appConf.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD)
 
             if (![Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_PWD, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_KEYFILE, Constants.APP_PROPERTY_EXECUTION_SERVICE_AUTH_METHOD_SSHAGENT].contains(sshMethod))
@@ -312,8 +313,8 @@ class SSHExecutionService extends RemoteExecutionService {
     @Override
     String getUsername() {
         String userName = Roddy.applicationConfiguration.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_USER)
-        if (userName == "USERNAME") //Get the local username.
-            userName = System.getProperty("user.name")
+        if (userName == Constants.USERNAME) //Get the local username.
+            userName = SystemProperties.getUserName()
         return userName
     }
 

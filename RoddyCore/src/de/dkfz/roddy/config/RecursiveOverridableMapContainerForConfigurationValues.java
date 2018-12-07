@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.config;
@@ -9,6 +9,8 @@ package de.dkfz.roddy.config;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING;
 
 /**
  * Helps configurations to store overridable versions of configuration values and other things
@@ -47,10 +49,7 @@ public class RecursiveOverridableMapContainerForConfigurationValues
      */
     @Override
     protected ConfigurationValue temporarilyElevateValue(ConfigurationValue src) {
-        ConfigurationValue configurationValue = new ConfigurationValue(this.getContainerParent(), src.id, src.value, src.getType(),
-                src.getDescription(), new LinkedList<>(src.getListOfTags()));
-        configurationValue.getListOfTags().add("ELEVATED");
-        return configurationValue;
+        return src.elevate(this.getContainerParent());
     }
 
     public ConfigurationValue get(String id) {
@@ -112,7 +111,7 @@ public class RecursiveOverridableMapContainerForConfigurationValues
     }
 
     public void put(String id, String value) {
-        this.put(id, value, "string");
+        this.put(id, value, CVALUE_TYPE_STRING);
     }
 
 }

@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy;
@@ -102,7 +102,7 @@ public class Roddy {
     private static String baseInputDirectory;
     private static String baseOutputDirectory;
 
-    private static final File applicationDirectory = new File(System.getProperty("user.dir"));
+    private static final File applicationDirectory = new File(SystemProperties.getUserDir());
     private static final File applicationBundleDirectory = new File(applicationDirectory, "bundledFiles");
 
     private static CommandLineCall commandLineCall;
@@ -226,7 +226,7 @@ public class Roddy {
             // we check for this particular exception by using its simple class name!
             if (!e.getClass().getName().endsWith("SystemExitException"))
                 e.printStackTrace();
-            exit(ExitReasons.groovyServError);
+            exitWithMessage(ExitReasons.groovyServError);
         }
     }
 
@@ -429,7 +429,7 @@ public class Roddy {
                 }
             }
         } catch (RuntimeException e) {
-            exit(ExitReasons.unparseableStartupOptions);
+            exitWithMessage(ExitReasons.unparseableStartupOptions);
         }
     }
 
@@ -439,7 +439,7 @@ public class Roddy {
             toggleIni = new File(commandLineCall.getOptionValue(RoddyStartupOptions.usefeaturetoggleconfig));
             logger.postSometimesInfo("Trying to load alternative feature toggles file: " + toggleIni);
             if (toggleIni == null || !toggleIni.exists()) {
-                exit(ExitReasons.unknownFeatureToggleFile);
+                exitWithMessage(ExitReasons.unknownFeatureToggleFile);
             }
 
         } else {
@@ -640,7 +640,7 @@ public class Roddy {
                 // The file must have existed, because we are accessing the values in it.
                 scratchBaseDir = System.getenv("CURRENT_PWD");
                 if (scratchBaseDir == null) {
-                    scratchBaseDir = System.getProperty("user.dir");
+                    scratchBaseDir = SystemProperties.getUserDir();
                 }
             }
 
@@ -672,12 +672,12 @@ public class Roddy {
             configurationValues.addAll(externalConfigurationValues);
 
             if (useCustomIODirectories()) {
-                configurationValues.add(new ConfigurationValue(CFG_INPUT_BASE_DIRECTORY, Roddy.getCustomBaseInputDirectory(), "path"));
-                configurationValues.add(new ConfigurationValue(CFG_OUTPUT_BASE_DIRECTORY, Roddy.getCustomBaseOutputDirectory(), "path"));
+                configurationValues.add(new ConfigurationValue(CFG_INPUT_BASE_DIRECTORY, Roddy.getCustomBaseInputDirectory(), CVALUE_TYPE_PATH));
+                configurationValues.add(new ConfigurationValue(CFG_OUTPUT_BASE_DIRECTORY, Roddy.getCustomBaseOutputDirectory(), CVALUE_TYPE_PATH));
             }
 
             if (getUsedResourcesSize() != null) {
-                configurationValues.add(new ConfigurationValue(CFG_USED_RESOURCES_SIZE, Roddy.getUsedResourcesSize().toString(), "string"));
+                configurationValues.add(new ConfigurationValue(CFG_USED_RESOURCES_SIZE, Roddy.getUsedResourcesSize().toString(), CVALUE_TYPE_STRING));
             }
 
         }
@@ -779,7 +779,7 @@ public class Roddy {
                 }
             }
         } catch (Exception ex) {
-            exit(ExitReasons.waitForJobsFailedWithAnUnknownError);
+            exitWithMessage(ExitReasons.waitForJobsFailedWithAnUnknownError);
         }
         return 0;
     }
@@ -795,7 +795,7 @@ public class Roddy {
         System.exit(ecode <= 255 ? ecode : ExitReasons.wrongExitCodeUsed.getCode()); //Exit codes should be in range from 0 .. 255
     }
 
-    public static void exit(ExitReasons reason) {
+    public static void exitWithMessage(ExitReasons reason) {
         logger.severe(reason.getMessage());
         exit(reason.getCode());
     }
@@ -834,7 +834,7 @@ public class Roddy {
      * @return
      */
     public static File getSettingsDirectory() {
-        String userHome = System.getProperty("user.home");
+        String userHome = SystemProperties.getUserHome();
         if (userHome == null) {
             throw new IllegalStateException("user.home==null");
         }

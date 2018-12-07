@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.config;
@@ -311,8 +311,8 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
-    public boolean hasErrors() {
-        return checkAnalysisConfig().hasErrors();
+    public boolean hasLoadErrors() {
+        return checkAnalysisConfig().hasLoadErrors();
     }
 
     @Override

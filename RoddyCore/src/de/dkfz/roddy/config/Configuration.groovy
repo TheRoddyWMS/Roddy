@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.config;
@@ -13,12 +13,9 @@ import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.core.RuntimeService;
 import de.dkfz.roddy.plugins.LibrariesFactory;
 import de.dkfz.roddy.plugins.PluginInfo;
-import de.dkfz.roddy.tools.RoddyIOHelperMethods;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
-
-import java.io.File;
-import java.io.FileFilter;
-import java.util.*;
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
+import groovy.transform.CompileStatic;
+import org.apache.commons.io.filefilter.WildcardFileFilter
 
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA;
 
@@ -35,8 +32,8 @@ import static de.dkfz.roddy.StringConstants.SPLIT_COMMA;
  *
  * @author michael
  */
-public class Configuration implements ContainerParent<Configuration> {
-
+@CompileStatic
+public class Configuration implements ContainerParent<Configuration>, ConfigurationIssue.IConfigurationIssueContainer {
 
     /**
      * Several levels of configurations.
@@ -71,12 +68,17 @@ public class Configuration implements ContainerParent<Configuration> {
      * A list of parent configuration objects. Order matters! Configurations are stored with
      * increasing priority, so parents[0] has the lowest and parents[n -1] has the highest priority
      */
-    private final List<Configuration> parents = new LinkedList<>();
+    private final List<Configuration> parents = []
 
-    private final Map<String, Configuration> subConfigurations = new LinkedHashMap<>();
+    private final Map<String, Configuration> subConfigurations = [:]
 
-    private List<ConfigurationValidationError> listOfValidationErrors = new LinkedList<>();
-    private List<ConfigurationLoadError> listOfLoadErrors = new LinkedList<>();
+    private final List<ConfigurationValidationError> listOfValidationErrors = []
+
+    private final List<ConfigurationLoadError> listOfLoadErrors = []
+
+    private final List<ConfigurationIssue> warnings = []
+
+    private final List<ConfigurationIssue> errors = []
 
     private final RecursiveOverridableMapContainerForConfigurationValues configurationValues =
             new RecursiveOverridableMapContainerForConfigurationValues(this, "configurationValues");
@@ -122,7 +124,7 @@ public class Configuration implements ContainerParent<Configuration> {
 
     /**
      * @param preloadedConfiguration
-     * @param parentConfigurations   A list of parent configuration objects.
+     * @param parentConfigurations A list of parent configuration objects.
      *                               Order matters! Configurations are stored with
      *                               increasing priority, so pcs[0] has the lowest
      *                               and pcs[n -1] has the highest priority
@@ -200,7 +202,7 @@ public class Configuration implements ContainerParent<Configuration> {
      */
     @Override
     public String getID() {
-        if(preloadedConfiguration != null)
+        if (preloadedConfiguration != null)
             return preloadedConfiguration.id;
         else
             return "'Unnamed Configuration'";
@@ -364,7 +366,9 @@ public class Configuration implements ContainerParent<Configuration> {
         return toolPath;
     }
 
-    /** The actual path to the copy of the tool on the execution host (which can be local or remote). */
+    /**
+     * The actual path to the copy of the tool on the execution host (which can be local or remote).
+     */
     public File getProcessingToolPath(ExecutionContext context, String tool) throws ConfigurationError {
         ToolEntry te = null;
         try {
@@ -398,19 +402,6 @@ public class Configuration implements ContainerParent<Configuration> {
         return String.format("Configuration %s / %s of type %s", getName(), getID(), getClass().getName());
     }
 
-    //
-//    public FilenamePattern getFilenamePattern(BaseFile cls, BaseFile derivedFromCls) {
-//        Class _cls = cls.getClass();
-//        Class _derivedFromCls = derivedFromCls.getClass();
-//        FilenamePattern pattern = getFilenamePattern(FilenamePattern.assembleID(_cls, _derivedFromCls));
-//        return pattern;
-//    }
-//
-//    public FilenamePattern getFilenamePattern(BaseFile newFile, FileStage stage) {
-//        Class cls = newFile.getClass();
-//        FilenamePattern pattern = getFilenamePattern(FilenamePattern.assembleID(cls, stage));
-//        return pattern;
-//    }
     public void addValidationError(ConfigurationValidationError error) {
         this.listOfValidationErrors.add(error);
     }
@@ -419,41 +410,65 @@ public class Configuration implements ContainerParent<Configuration> {
         this.listOfLoadErrors.add(error);
     }
 
-    public void addLoadErrors(Collection<ConfigurationLoadError> errors) {
+    void addLoadErrors(Collection<ConfigurationLoadError> errors) {
         this.listOfLoadErrors.addAll(errors);
     }
 
-    public List<ConfigurationLoadError> getListOfLoadErrors() {
-        LinkedList<ConfigurationLoadError> errors = new LinkedList<>();
-        for (Configuration c : parents) {
-            errors.addAll(c.getListOfLoadErrors());
-        }
-        errors.addAll(listOfLoadErrors);
-        return errors;
+    List<ConfigurationLoadError> getListOfLoadErrors() {
+        def loadErrors = parents.collect { it.getListOfLoadErrors() }.flatten()
+        loadErrors += listOfLoadErrors
+        return loadErrors as List<ConfigurationLoadError>;
     }
 
-
-    public boolean hasErrors() {
-        boolean hasErrors = listOfLoadErrors.size() > 0;
-        if (parents != null) {
-            for (Configuration parent : parents) {
-                hasErrors |= parent.hasErrors();
-            }
+    boolean hasLoadErrors() {
+        if (listOfLoadErrors) return true
+        for (Configuration parent : parents) {
+            if (parent.hasLoadErrors()) return true
         }
-        return hasErrors;
+        return false
     }
 
-    public boolean isInvalid() {
+    void addError(ConfigurationIssue error) {
+        if (error == null) return
+        errors << error
+    }
+
+    List<ConfigurationIssue> getErrors(boolean ignoreCValues = false) {
+        def errors = parents.collect { it.getErrors(true) }.flatten()
+        if (!ignoreCValues)
+            errors += configurationValues.allValuesAsList.collectNested { ConfigurationValue val -> val.errors }.flatten()
+        return errors as List<ConfigurationIssue>
+    }
+
+    boolean hasErrors() {
+        if (errors.size() > 0) return true
+        for (Configuration parent : parents) { // Could be made shorter, but this is rather efficient as it breaks as soon as an error was found.
+            if (parent.hasErrors()) return true
+        }
+        return configurationValues.allValuesAsList.any { it.hasErrors() }
+    }
+
+    void addWarning(ConfigurationIssue warning) {
+        if (warning == null) return;
+        warnings.add(warning);
+    }
+
+    List<ConfigurationIssue> getWarnings(boolean ignoreCValues = false) {
+        def warnings = parents.collect { it.getWarnings(true) }.flatten()
+        if (!ignoreCValues)
+            warnings += configurationValues.allValuesAsList.collectNested { ConfigurationValue val -> val.warnings }.flatten()
+        return warnings as List<ConfigurationIssue>
+    }
+
+    boolean hasWarnings() {
+        if (warnings.size() > 0) return true
+        for (Configuration parent : parents) { // Could be made shorter, but this is rather efficient as it breaks as soon as an error was found.
+            if (parent.hasWarnings()) return true
+        }
+        return configurationValues.allValuesAsList.any { it.hasWarnings() }
+    }
+
+    boolean isInvalid() {
         return this.listOfValidationErrors.size() > 0;
     }
-
-//    /**
-//     * Integrates another configuration without overriding existing values.
-//     *
-//     * @param cfg
-//     */
-//    public void integrate(Configuration cfg, boolean completeHierarchy) {
-//        ConfigurationFactory.integrateConfig(cfg, this, completeHierarchy);
-//    }
-
 }

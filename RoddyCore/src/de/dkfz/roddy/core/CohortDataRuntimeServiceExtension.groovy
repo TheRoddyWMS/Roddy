@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2018 German Cancer Research Center (DKFZ).
+ * Copyright (c) 2018 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.core
@@ -256,12 +256,12 @@ class CohortDataRuntimeServiceExtension {
         for (filter in pidFilters) {
             boolean faulty = !validateCohortDataSetLoadingString(filter)
             if (faulty) {
-                logger.severe("The ${Constants.PID} string ${filter} is malformed.")
+                logger.severe("The ${Constants.DATASET_HR} string ${filter} is malformed.")
                 foundFaulty = true
             }
         }
         if (foundFaulty) {
-            logger.severe("The dataset list you provided contains errors, Roddy will not start jobs.")
+            logger.severe("The ${Constants.DATASET_HR} list you provided contains errors, Roddy will not start jobs.")
             return false
         }
         return true

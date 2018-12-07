@@ -1,13 +1,13 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy
 
-import de.dkfz.roddy.client.cliclient.CommandLineCall
 import de.dkfz.roddy.client.RoddyStartupModes
+import de.dkfz.roddy.client.cliclient.CommandLineCall
 import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSJobManager
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
@@ -31,7 +31,7 @@ class RoddyTest {
         return RoddyConversionHelperMethods.toBoolean(System.getenv(RUN_INTEGRATIONTESTS), false)
     }
 
-    private static File temporarySettingsDirectory = new File(System.getProperty("user.home"), ".RODDY_TEST_SETTINGS_DIRECTORY")
+    private static File temporarySettingsDirectory = new File(SystemProperties.getUserHome(), ".RODDY_TEST_SETTINGS_DIRECTORY")
 
     // Helper method to set a final static field accessible and writable!
     // Taken from: http://stackoverflow.com/questions/2474017/using-reflection-to-change-static-final-file-separatorchar-for-unit-testing/2474242#2474242

@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.execution.io
@@ -23,8 +23,9 @@ import org.junit.Test
 import org.junit.rules.ExpectedException
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
+import java.util.Arrays
 
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING;
 import static org.junit.Assert.*;
 
 /**
@@ -48,12 +49,12 @@ public class MetadataTableFactoryTest {
         RecursiveOverridableMapContainerForConfigurationValues configurationValues = configuration.getConfigurationValues();
 
         // Add columns
-        configurationValues.add(new ConfigurationValue(configuration, "datasetCol", "PID", "string", "", ["mandatory"] as List<String>));
-        configurationValues.add(new ConfigurationValue(configuration, "fileCol", "File", "string", "", ["mandatory"] as List<String>));
-        configurationValues.add(new ConfigurationValue(configuration, "rumpleCol", "Rumple", "string", "", [] as List<String>));
+        configurationValues.add(new ConfigurationValue(configuration, "datasetCol", "PID", CVALUE_TYPE_STRING, "", ["mandatory"] as List<String>));
+        configurationValues.add(new ConfigurationValue(configuration, "fileCol", "File", CVALUE_TYPE_STRING, "", ["mandatory"] as List<String>));
+        configurationValues.add(new ConfigurationValue(configuration, "rumpleCol", "Rumple", CVALUE_TYPE_STRING, "", [] as List<String>));
 
         // Add list of used columns
-        configurationValues.add(new ConfigurationValue(configuration, "metadataTableColumnIDs", "datasetCol,fileCol,rumpleCol", "string", "", [] as List<String>));
+        configurationValues.add(new ConfigurationValue(configuration, "metadataTableColumnIDs", "datasetCol,fileCol,rumpleCol", CVALUE_TYPE_STRING, "", [] as List<String>));
 
         // Setup Roddy to allow --usemetadatatable
         def field = Roddy.getDeclaredField("commandLineCall")

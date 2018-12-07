@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.config
@@ -31,5 +31,26 @@ public class EnumerationValue {
 
     String getTag() {
         return tag
+    }
+
+    boolean equals(o) {
+        if (this.is(o)) return true
+        if (getClass() != o.class) return false
+
+        EnumerationValue that = (EnumerationValue) o
+
+        if (description != that.description) return false
+        if (id != that.id) return false
+        if (tag != that.tag) return false
+
+        return true
+    }
+
+    int hashCode() {
+        int result
+        result = (id != null ? id.hashCode() : 0)
+        result = 31 * result + (description != null ? description.hashCode() : 0)
+        result = 31 * result + (tag != null ? tag.hashCode() : 0)
+        return result
     }
 }
