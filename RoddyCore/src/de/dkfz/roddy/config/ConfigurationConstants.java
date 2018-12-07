@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.config;
@@ -50,10 +50,16 @@ public class ConfigurationConstants {
     public static final String CVALUE_PLACEHOLDER_RODDY_QUEUE_RAW = "RODDY_QUEUE";
     public static final String CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW = "RODDY_SCRATCH";
     public static final String CVALUE_DEFAULT_SCRATCH_DIR = "defaultScratchDir";
+    public static final String CVALUE_TYPE = "cvalueType";
     public static final String CVALUE_TYPE_BASH_ARRAY = "bashArray";
     public static final String CVALUE_TYPE_PATH = "path";
     public static final String CVALUE_TYPE_STRING = "string";
     public static final String CVALUE_TYPE_BOOLEAN = "boolean";
+    public static final String CVALUE_TYPE_FLOAT = "float";
+    public static final String CVALUE_TYPE_DOUBLE = "double";
+    public static final String CVALUE_TYPE_INTEGER = "integer";
+    public static final String CVALUE_TYPE_FILENAME_PATTERN = "filenamePattern";
+    public static final String CVALUE_TYPE_FILENAME = "filename";
 
     public static final String CVALUE_PREFIX_BASEPATH = "BASEPATH_";
     public static final String CVALUE_PREFIX_TOOL = "TOOL_";

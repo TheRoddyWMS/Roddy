@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2017 eilslabs.
+ * Copyright (c) 2017 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.config.loader
@@ -46,6 +46,9 @@ import java.text.ParseException
 import java.util.logging.Level
 
 import static de.dkfz.roddy.StringConstants.*
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_PATH
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_PATH
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING
 
 /**
  * Factory for loading, importing, exporting and writing configuration files.
@@ -863,7 +866,7 @@ class ConfigurationFactory {
     private ConfigurationValue readConfigurationValue(NodeChild cvalueNode, Configuration config) {
         String key = cvalueNode.@name.text()
         String value = cvalueNode.@value.text()
-        String type = extractAttributeText(cvalueNode, "type", "string")
+        String type = extractAttributeText(cvalueNode, "type", CVALUE_TYPE_STRING)
         List<String> tags = extractAttributeText(cvalueNode, "tags", null)?.split(StringConstants.COMMA)
 
         if (!cvalueNode.attributes().containsKey("name"))
@@ -875,7 +878,7 @@ class ConfigurationFactory {
         //any directory to "path". In case of the output directories, this was a bad thing! So we know about
         //this specific type of variable and just set it to path at any time.
         if (key.endsWith("OutputDirectory"))
-            type = "path"
+            type = CVALUE_TYPE_PATH
         String description = extractAttributeText(cvalueNode, "description")
         return new ConfigurationValue(config, key, value, type, description, tags)
     }

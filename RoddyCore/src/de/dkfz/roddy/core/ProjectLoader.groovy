@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.core
@@ -16,10 +16,7 @@ import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.config.validation.XSDValidator
 import de.dkfz.roddy.execution.io.MetadataTableFactory
-import de.dkfz.roddy.plugins.LibrariesFactory
-import de.dkfz.roddy.plugins.PluginInfo
-import de.dkfz.roddy.plugins.PluginInfoMap
-import de.dkfz.roddy.plugins.PluginLoaderException
+import de.dkfz.roddy.plugins.*
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 
 import java.lang.reflect.InvocationTargetException
@@ -241,7 +238,7 @@ class ProjectLoader {
 
         lines << "inputBaseDirectory=" + Roddy.customBaseInputDirectory
         lines << "outputBaseDirectory=" + Roddy.customBaseOutputDirectory
-        lines << "outputAnalysisBaseDirectory=\${outputBaseDirectory}/\${${Constants.PID}}".toString()
+        lines << "outputAnalysisBaseDirectory=\${outputBaseDirectory}/\${${Constants.DATASET}}".toString()
 
         projectID = "CFreeMode_" + Integer.toHexString(configurationFileName.hashCode())
 
@@ -386,6 +383,13 @@ class ProjectLoader {
 
         if (analysis == null)
             throw new ProjectLoaderException("Could not load analysis ${analysisID}")
+
+        try {
+            def _cls = new ClassLoaderHelper().searchForClass(analysis.configuration.workflowClass)
+            if (!_cls) throw new ClassNotFoundException("Class not found ${analysis.configuration.workflowClass}.")
+        } catch (ClassNotFoundException ex) {
+            throw new ProjectLoaderException("The configured workflow class ${analysis.configuration.workflowClass} for analysis ${analysisID} does not exist or could not be loaded.\n\t- Is the plugin properly compiled?\n\t- Is the workflow class spelled correctly?")
+        }
     }
 
     AnalysisConfiguration loadAnalysisConfigurationFromProjectConfigurationOrFail(ProjectConfiguration projectConfiguration, String analysisID) {

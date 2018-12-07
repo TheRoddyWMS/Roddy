@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.config.converters
@@ -19,6 +19,11 @@ import groovy.transform.CompileStatic
 
 import java.util.logging.Level
 import static Constants.RODDY_CONFIGURATION_MAGICSTRING
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BASH_ARRAY
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_DOUBLE
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_FLOAT
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_INTEGER
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_PATH
 
 
 /**
@@ -194,7 +199,7 @@ class BashConverter extends ConfigurationConverter {
 
             for (ConfigurationValue cv in listOfUnsortedValues.values().findAll { !isValidationRule(it) && !isComment(it) }) {
 
-                List<String> dependenciesToOtherValues = cv.getIDsForParentValues()
+                List<String> dependenciesToOtherValues = ConfigurationValue.getIDsForParentValues(cv.value)
 
                 // Check, how many dependencies to other values are set and find out for each dependency, if
                 // it was resolved in a former loop run or if it is a blacklisted value.
@@ -310,13 +315,13 @@ class BashConverter extends ConfigurationConverter {
         } else {
             String tmp
 
-            if (cv.type && cv.type.toLowerCase() == "basharray") {
+            if (cv.type && cv.type.toLowerCase() == CVALUE_TYPE_BASH_ARRAY) {
                 return new StringBuilder("${declareVar} ${cv.id}=${addQuotesIfRequested(cv.toString(), autoQuoteArrays)}".toString())
-            } else if (cv.type && cv.type.toLowerCase() == "integer") {
+            } else if (cv.type && cv.type.toLowerCase() == CVALUE_TYPE_INTEGER) {
                 return new StringBuilder("${declareInt} ${cv.id}=${cv.toString()}".toString())
-            } else if (cv.type && ["double", "float"].contains(cv.type.toLowerCase())) {
+            } else if (cv.type && [CVALUE_TYPE_DOUBLE, CVALUE_TYPE_FLOAT].contains(cv.type.toLowerCase())) {
                 return new StringBuilder("${declareVar} ${cv.id}=${cv.toString()}".toString())
-            } else if (cv.type && cv.type.toLowerCase() == "path") {
+            } else if (cv.type && cv.type.toLowerCase() == CVALUE_TYPE_PATH) {
                 tmp = "${cv.toFile(context)}".toString()
             } else {
                 if (cv.value.startsWith("-") || cv.value.startsWith("*")) {

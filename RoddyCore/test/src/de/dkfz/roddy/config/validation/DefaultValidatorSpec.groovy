@@ -1,12 +1,18 @@
+/*
+ * Copyright (c) 2018 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
+ */
 package de.dkfz.roddy.config.validation
 
+import de.dkfz.roddy.RoddyTestSpec
 import de.dkfz.roddy.config.ConfigurationIssue
 import de.dkfz.roddy.config.ConfigurationValue
-import spock.lang.Specification
 
+import static de.dkfz.roddy.config.ConfigurationConstants.*
 import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate.*
 
-class DefaultValidatorSpec extends Specification {
+class DefaultValidatorSpec extends RoddyTestSpec {
 
     def 'test removeEscapedEscapeCharacters'(value, expected) {
         expect:
@@ -32,22 +38,22 @@ class DefaultValidatorSpec extends Specification {
         cval.valid == expected
 
         where:
-        value      | type        | expected | expectedErrors
-        1          | 'integer'   | true     | []
-        1.0f       | 'float'     | true     | []
-        1.0        | 'double'    | true     | []
-        true       | 'boolean'   | true     | []
-        'badvalue' | 'boolean'   | true     | [] // Validates always!
-        'a'        | 'integer'   | false    | [new ConfigurationIssue(valueAndTypeMismatch, 'bla', 'integer')]
-        'b'        | 'float'     | false    | [new ConfigurationIssue(valueAndTypeMismatch, 'bla', 'float')]
-        'c'        | 'double'    | false    | [new ConfigurationIssue(valueAndTypeMismatch, 'bla', 'double')]
-        '( abc )'  | 'bashArray' | true     | []
-        '(abc)'    | 'bashArray' | true     | []
-        'bla'      | 'bashArray' | true     | [] // Bash arrays can be empty. But then they actually may not contain whitespace
-        'bla bla'  | 'bashArray' | true     | [] // Bash arrays need to be checked in a totally different way.
+        value      | type                   | expected | expectedErrors
+        1          | CVALUE_TYPE_INTEGER    | true     | []
+        1.0f       | CVALUE_TYPE_FLOAT      | true     | []
+        1.0        | CVALUE_TYPE_DOUBLE     | true     | []
+        true       | CVALUE_TYPE_BOOLEAN    | true     | []
+        'badvalue' | CVALUE_TYPE_BOOLEAN    | true     | [] // Validates always!
+        'a'        | CVALUE_TYPE_INTEGER    | false    | [new ConfigurationIssue(valueAndTypeMismatch, 'bla', CVALUE_TYPE_INTEGER)]
+        'b'        | CVALUE_TYPE_FLOAT      | false    | [new ConfigurationIssue(valueAndTypeMismatch, 'bla', CVALUE_TYPE_FLOAT)]
+        'c'        | CVALUE_TYPE_DOUBLE     | false    | [new ConfigurationIssue(valueAndTypeMismatch, 'bla', CVALUE_TYPE_DOUBLE)]
+        '( abc )'  | CVALUE_TYPE_BASH_ARRAY | true     | []
+        '(abc)'    | CVALUE_TYPE_BASH_ARRAY | true     | []
+        'bla'      | CVALUE_TYPE_BASH_ARRAY | true     | [] // Bash arrays can be empty. But then they actually may not contain whitespace
+        'bla bla'  | CVALUE_TYPE_BASH_ARRAY | true     | [] // Bash arrays need to be checked in a totally different way.
     }
 
-    def 'test check proper dollar sign usage in variables'(value, type, expected, expectedWarnings, expectedErrors) {
+    def 'test check proper dollar sign usage in variables'(String value, String type, Boolean expected, List<ConfigurationIssue> expectedWarnings, List<ConfigurationIssue> expectedErrors) {
         when:
         ConfigurationValue cval = new ConfigurationValue('bla', value, type)
 
@@ -57,21 +63,22 @@ class DefaultValidatorSpec extends Specification {
         cval.valid == expected
 
         where:
-        value                   | type     | expected | expectedWarnings                          | expectedErrors
+        value                   | type               | expected | expectedWarnings                        | expectedErrors
         // All are ok
-        'abc${var}bcd${var}'    | 'string' | true     | []                                        | []
-        'abc${var}bcd${var}def' | 'string' | true     | []                                        | []
+        'abc${var}bcd${var}'    | CVALUE_TYPE_STRING | true     | []                                      | []
+        'abc${var}bcd${var}def' | CVALUE_TYPE_STRING | true     | []                                      | []
 
-        '\\$'                   | 'string' | true     | []                                      | []  //Escaped dollar
-        'abc\\$'                | 'string' | true     | []                                      | []  //Escaped dollar
-        'abc\\${'               | 'string' | true     | []                                      | []  //Escaped dollar with open brace
-        'a\\${b}c'              | 'string' | true     | []                                      | []  //Escaped dollar with complete braces
+        '\\$'                   | CVALUE_TYPE_STRING | true     | []                                      | []  //Escaped dollar
+        'abc\\$'                | CVALUE_TYPE_STRING | true     | []                                      | []  //Escaped dollar
+        'abc\\${'               | CVALUE_TYPE_STRING | true     | []                                      | []  //Escaped dollar with open brace
+        'a\\${b}c'              | CVALUE_TYPE_STRING | true     | []                                      | []  //Escaped dollar with complete braces
 
         // Not ok
-        'abc$'                  | 'string' | false    | [detachedDollarCharacter.expand('bla')] | []
-        'tr$ue'                 | 'string' | false    | [detachedDollarCharacter.expand('bla')] | []
-        '$'                     | 'string' | false    | [detachedDollarCharacter.expand('bla')] | []
-        'abc$\\{'               | 'string' | false    | [detachedDollarCharacter.expand('bla')] | []
+        'abc$'                  | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla')] | []
+        '$abc'                  | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla')] | []
+        'tr$ue'                 | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla')] | []
+        '$'                     | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla')] | []
+        'abc$\\{'               | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla')] | []
     }
 
     def "test check for proper variable usage definition"() {
@@ -84,14 +91,15 @@ class DefaultValidatorSpec extends Specification {
         cval.valid == expected
 
         where:
-        value              | type     | expected | expectedWarnings                           | expectedErrors
-        'abc${var}'        | "string" | true     | []                                         | []
-        'abc\\${var}'      | "string" | true     | []                                         | []
-        'abc${var}v${var}' | "string" | true     | []                                         | []
-        '\\${c}'           | 'string' | true     | []                                         | []
-        '\\${c'            | 'string' | true     | []                                         | []
-        'abc${${var}}'     | "string" | false    | [inproperVariableExpression.expand('bla')] | []
-        'abc${'            | 'string' | false    | [inproperVariableExpression.expand('bla')] | []
-        'ab${c'            | 'string' | false    | [inproperVariableExpression.expand('bla')] | []
+        value              | type               | expected | expectedWarnings                           | expectedErrors
+        'abc${var}'        | CVALUE_TYPE_STRING | true     | []                                         | []
+        'abc\\${var}'      | CVALUE_TYPE_STRING | true     | []                                         | []
+        'abc${var}v${var}' | CVALUE_TYPE_STRING | true     | []                                         | []
+        '\\${c}'           | CVALUE_TYPE_STRING | true     | []                                         | []
+        '\\${c'            | CVALUE_TYPE_STRING | true     | []                                         | []
+        'abc${${var}}'     | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla')] | []
+        'abc${'            | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla')] | []
+        'ab${c'            | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla')] | []
+        '${}'              | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla')] | []
     }
 }

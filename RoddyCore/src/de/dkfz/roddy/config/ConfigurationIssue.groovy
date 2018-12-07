@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2018 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
+ */
 package de.dkfz.roddy.config
 
 import groovy.transform.CompileStatic
@@ -39,18 +44,18 @@ class ConfigurationIssue {
     static enum ConfigurationIssueTemplate {
         detachedDollarCharacter(
                 ConfigurationIssueLevel.CVALUE_WARNING,
-                "Several variables in your configuration contain one or more dollar signs. As this might impose problems in your cluster jobs, check the entries in your job configuration files. See the extended logs for more information.",
+                "Variables contain plain dollar sign(s). Roddy does not interpret them as variables and cannot guarantee correct ordering of assignments for such variables in the job parameter file.",
                 "Variable '#REPLACE_0#' contains plain dollar sign(s) without braces. Roddy does not interpret them as variables and cannot guarantee correct ordering of assignments for such variables in the job parameter file."
         ),
         valueAndTypeMismatch(
                 ConfigurationIssueLevel.CVALUE_ERROR,
-                "Several variables in your configuration mismatch regarding their type and value. See the extended logs for more information.",
+                "Variables in your configuration mismatch regarding their type and value. See the extended logs for more information.",
                 "The value of variable named '#REPLACE_0#' is not of its declared type '#REPLACE_1#'."
         ),
         inproperVariableExpression(
                 ConfigurationIssueLevel.CVALUE_WARNING,
-                "Several variables in your configuration might misuse the variable import wrong. A variable needs to be imported into another value with \${variable identifiert}.",
-                "The variable named '#REPLACE_0#' might misuse the variable import. Make sure, that all intended variable imports are non-escaped and formed like \${variable identifier}. Also, variable nesting is not allowed."
+                "Variables in your configuration appear to misuse variable imports. Import variables like \${variable identifier}, nesting like '\${\${innerVar }}' is forbidden and it must not be empty.",
+                "Variable '#REPLACE_0#' might use malformatted variable imports. Import variables like \${variable identifier}, nesting like '\${\${innerVar}}' is forbidden and it must not be empty."
         )
 
         final ConfigurationIssueLevel level

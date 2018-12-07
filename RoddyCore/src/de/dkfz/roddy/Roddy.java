@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy;
@@ -26,7 +26,10 @@ import de.dkfz.roddy.execution.jobs.BatchEuphoriaJobManager;
 import de.dkfz.roddy.execution.jobs.JobManagerOptions;
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager;
 import de.dkfz.roddy.plugins.LibrariesFactory;
-import de.dkfz.roddy.tools.*;
+import de.dkfz.roddy.tools.AppConfig;
+import de.dkfz.roddy.tools.LoggerWrapper;
+import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
+import de.dkfz.roddy.tools.RoddyIOHelperMethods;
 import groovy.transform.CompileStatic;
 
 import java.io.File;
@@ -37,6 +40,7 @@ import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.util.*;
 
 import static de.dkfz.roddy.RunMode.CLI;
@@ -98,7 +102,7 @@ public class Roddy {
     private static String baseInputDirectory;
     private static String baseOutputDirectory;
 
-    private static final File applicationDirectory = new File(System.getProperty("user.dir"));
+    private static final File applicationDirectory = new File(SystemProperties.getUserDir());
     private static final File applicationBundleDirectory = new File(applicationDirectory, "bundledFiles");
 
     private static CommandLineCall commandLineCall;
@@ -201,7 +205,7 @@ public class Roddy {
             if (list == null || list.length != 1) {
                 System.out.println("You must call roddy from the right location! (Base roddy folder where roddy.sh resides). You used: '" +
                         applicationDirectory + "'");
-                System.exit(255);
+                System.exit(ExitReasons.wrongStartupLocation.getCode());
             }
 
             if (args.length == 0) {
@@ -222,7 +226,7 @@ public class Roddy {
             // we check for this particular exception by using its simple class name!
             if (!e.getClass().getName().endsWith("SystemExitException"))
                 e.printStackTrace();
-            exit(1);
+            exitWithMessage(ExitReasons.groovyServError);
         }
     }
 
@@ -248,7 +252,7 @@ public class Roddy {
         CommandLineCall clc = new CommandLineCall(list);
         commandLineCall = clc;
         if (clc.isMalformed())
-            exit(1);
+            exit(ExitReasons.malformedCommandLine.getCode());
 
         // Initialize the logger with an initial setup. At this point we don't know about things like the logger settings
         // or the used app ini file. However, all the following methods rely on an existing valid logger setup.
@@ -258,7 +262,7 @@ public class Roddy {
 
         time("initial checks");
         if (!roddyExecutionRequirementsFulfilled())
-            exit(1);
+            exit(ExitReasons.unfulfilledRequirements.getCode());
 
         time("ftoggleini");
         initializeFeatureToggles();
@@ -281,7 +285,7 @@ public class Roddy {
         }
 
         if (!jobExecutionRequirementsFulfilled())
-            exit(1);
+            exit(ExitReasons.unfulfilledRequirements.getCode());
 
         time("initserv");
         parseRoddyStartupModeAndRun(clc);
@@ -425,8 +429,7 @@ public class Roddy {
                 }
             }
         } catch (RuntimeException e) {
-            logger.severe("Parsing startup options failed.");
-            exit(1);
+            exitWithMessage(ExitReasons.unparseableStartupOptions);
         }
     }
 
@@ -436,8 +439,7 @@ public class Roddy {
             toggleIni = new File(commandLineCall.getOptionValue(RoddyStartupOptions.usefeaturetoggleconfig));
             logger.postSometimesInfo("Trying to load alternative feature toggles file: " + toggleIni);
             if (toggleIni == null || !toggleIni.exists()) {
-                logger.postAlwaysInfo("Cannot find requested toggle file.");
-                exit(1);
+                exitWithMessage(ExitReasons.unknownFeatureToggleFile);
             }
 
         } else {
@@ -465,7 +467,7 @@ public class Roddy {
             String toggleNames = RoddyIOHelperMethods.joinArray(AvailableFeatureToggles.values(), "\n\t");
             logger.severe("Available toggle values are:\n\t" + toggleNames);
             if (isStrictModeEnabled())
-                exit(1);
+                exit(ExitReasons.unknownFeatureToggle.getCode());
         }
     }
 
@@ -571,7 +573,7 @@ public class Roddy {
                 l = ProxySelector.getDefault().select(new URI("http://codemirror.net"));
             } catch (URISyntaxException e) {
                 e.printStackTrace();
-                System.exit(1);
+                System.exit(ExitReasons.unknownProxyProblem.getCode());
             }
 
             if (l != null) {
@@ -618,8 +620,10 @@ public class Roddy {
         }
     }
 
-    /** Copy the scratchBaseDirectory value from the applicationProperties.ini into the configuration. Set the default value for RODDY_SCRATCH
-     *  to $scratchBaseDirectory/$RODDY_JOBID.
+    /**
+     * Copy the scratchBaseDirectory value from the applicationProperties.ini into the configuration. Set the default value for RODDY_SCRATCH
+     * to $scratchBaseDirectory/$RODDY_JOBID.
+     *
      * @return
      */
     private static void setScratchDirectory(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
@@ -631,18 +635,18 @@ public class Roddy {
                 propertyFilePath = Roddy.getPropertiesFilePath();
                 System.err.println(Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY +
                         " is not defined. Please add it to your application properties file: '" + propertyFilePath + "'");
-                System.exit(1);
+                System.exit(ExitReasons.scratchDirNotConfigured.getCode());
             } catch (FileNotFoundException e) {
                 // The file must have existed, because we are accessing the values in it.
                 scratchBaseDir = System.getenv("CURRENT_PWD");
                 if (scratchBaseDir == null) {
-                    scratchBaseDir = System.getProperty("user.dir");
+                    scratchBaseDir = SystemProperties.getUserDir();
                 }
             }
 
         }
         configurationValues.add(new ConfigurationValue(Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY, scratchBaseDir));
-        String scratchDir = new File ("$" + Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY,
+        String scratchDir = new File("$" + Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY,
                 "$" + ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW).toString();
         configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW, scratchDir));
     }
@@ -668,12 +672,12 @@ public class Roddy {
             configurationValues.addAll(externalConfigurationValues);
 
             if (useCustomIODirectories()) {
-                configurationValues.add(new ConfigurationValue(CFG_INPUT_BASE_DIRECTORY, Roddy.getCustomBaseInputDirectory(), "path"));
-                configurationValues.add(new ConfigurationValue(CFG_OUTPUT_BASE_DIRECTORY, Roddy.getCustomBaseOutputDirectory(), "path"));
+                configurationValues.add(new ConfigurationValue(CFG_INPUT_BASE_DIRECTORY, Roddy.getCustomBaseInputDirectory(), CVALUE_TYPE_PATH));
+                configurationValues.add(new ConfigurationValue(CFG_OUTPUT_BASE_DIRECTORY, Roddy.getCustomBaseOutputDirectory(), CVALUE_TYPE_PATH));
             }
 
             if (getUsedResourcesSize() != null) {
-                configurationValues.add(new ConfigurationValue(CFG_USED_RESOURCES_SIZE, Roddy.getUsedResourcesSize().toString(), "string"));
+                configurationValues.add(new ConfigurationValue(CFG_USED_RESOURCES_SIZE, Roddy.getUsedResourcesSize().toString(), CVALUE_TYPE_STRING));
             }
 
         }
@@ -708,7 +712,7 @@ public class Roddy {
                 available.append("\n\t" + acs.getClassName());
             }
             logger.severe("Could not find job manager class: " + jobManagerClassID + ", available are: " + available.toString() + "\nPlease set the jobManagerClass entry in your application ini file: " + getPropertiesFilePath().getAbsolutePath() + "");
-            exit(1);
+            exit(ExitReasons.wrongJobManagerClass.getCode());
         }
 
         /** Get the constructor which comes with no parameters */
@@ -716,10 +720,19 @@ public class Roddy {
         jobManager = (BatchEuphoriaJobManager) first.newInstance(ExecutionService.getInstance()
                 , JobManagerOptions.create()
                         .setCreateDaemon(true)
+                        .setUpdateInterval(Duration.ofSeconds(RoddyConversionHelperMethods.toInt(applicationProperties.getOrSetApplicationProperty(Constants.APP_PROPERTY_JOB_MANAGER_UPDATE_INTERVAL, "300", "integer"))))
                         .setPassEnvironment(applicationProperties.getOrSetBooleanApplicationProperty(Constants.APP_PROPERTY_JOB_MANAGER_PASS_ENVIRONMENT, false))
                         .setTrackOnlyStartedJobs(trackOnlyStartedJobs)
                         .setHoldJobIsEnabled(applicationProperties.getOrSetBooleanApplicationProperty(Constants.APP_PROPERTY_JOB_MANAGER_HOLDJOBS_ON_SUBMISSION, true))
                         .setUserIdForJobQueries(FileSystemAccessProvider.getInstance().callWhoAmI()).build());
+        jobManager.addUpdateDaemonListener((job, state) -> {
+            if (state.isSuccessful()) {
+                // Message for started jobs are also printed with println
+                System.out.println(String.format("  Job %s finished successfully.", job.getJobID()));
+            } else {
+                System.out.println(String.format("  Job %s finished with an error and state %s.", job.getJobID(), state.name()));
+            }
+        });
     }
 
     private static BatchEuphoriaJobManager jobManager;
@@ -750,8 +763,7 @@ public class Roddy {
             if (jobManager.executesWithoutJobSystem() && waitForJobsToFinish) {
                 exitCode = waitForJobs();
             } else {
-                // TODO: #167 (https://github.com/eilslabs/Roddy/issues/167)
-                exit(0);
+                exitCode = 0;
             }
         }
         exit(exitCode);
@@ -759,12 +771,17 @@ public class Roddy {
 
     private static int waitForJobs() {
         try {
-            Thread.sleep(15000); //Sleep at least 15 seconds to let any job scheduler handle things...
-            return jobManager.waitForJobsToFinish();
+            if (jobManager.isDaemonAlive()) {
+                logger.always("Waiting now, until all jobs are finished.");
+                Thread.sleep(5000); //Sleep at least 5 seconds to let any job scheduler handle things...
+                if (jobManager.waitForJobsToFinish()) {
+                    return ExitReasons.aJobHadAnError.getCode();
+                }
+            }
         } catch (Exception ex) {
-            return 250;
+            exitWithMessage(ExitReasons.waitForJobsFailedWithAnUnknownError);
         }
-
+        return 0;
     }
 
     public static void exit() {
@@ -773,7 +790,14 @@ public class Roddy {
 
     public static void exit(int ecode) {
         Initializable.destroyAll();
-        System.exit(ecode <= 250 ? ecode : 250); //Exit codes should be in range from 0 .. 255
+        if (jobManager != null)
+            jobManager.stopUpdateDaemon();
+        System.exit(ecode <= 255 ? ecode : ExitReasons.wrongExitCodeUsed.getCode()); //Exit codes should be in range from 0 .. 255
+    }
+
+    public static void exitWithMessage(ExitReasons reason) {
+        logger.severe(reason.getMessage());
+        exit(reason.getCode());
     }
 
     public static void loadPropertiesFile() {
@@ -782,7 +806,7 @@ public class Roddy {
             file = getPropertiesFilePath();
         } catch (FileNotFoundException e) {
             logger.postAlwaysInfo("Could not load the application properties file: " + e.getMessage() + ". Roddy will exit.");
-            exit(1);
+            exit(ExitReasons.appPropertiesFileNotFound.getCode());
         }
         logger.postAlwaysInfo("Loading properties file " + file.getAbsolutePath() + ".");
 
@@ -810,7 +834,7 @@ public class Roddy {
      * @return
      */
     public static File getSettingsDirectory() {
-        String userHome = System.getProperty("user.home");
+        String userHome = SystemProperties.getUserHome();
         if (userHome == null) {
             throw new IllegalStateException("user.home==null");
         }

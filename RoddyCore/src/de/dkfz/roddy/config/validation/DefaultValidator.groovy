@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.config.validation
@@ -12,6 +12,7 @@ import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.EnumerationValue
 import groovy.transform.CompileStatic
 
+import static de.dkfz.roddy.config.ConfigurationConstants.*
 import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate.*
 
 /**
@@ -36,25 +37,27 @@ class DefaultValidator extends ConfigurationValueValidator {
         super.warnings.clear()
         EnumerationValue ev = configurationValue.getEnumerationValueType()
 
+        if (configurationValue.value == null) return true
+
         boolean result = isConfigurationValueTypeCorrect(configurationValue, ev)
-        result &= areDollarCharactersProperlyUsed(configurationValue)
+        result &= areDollarCharactersAttached(configurationValue)
         result &= areVariablesProperlyDefined(configurationValue)
         this.result = result
         return result
     }
 
     private boolean isConfigurationValueTypeCorrect(ConfigurationValue configurationValue, EnumerationValue ev) {
-        String evID = ev != null ? ev.getId() : "string"
+        String evID = ev != null ? ev.getId() : CVALUE_TYPE_STRING
         try {
-            if (evID.equals("integer")) {
+            if (evID == CVALUE_TYPE_INTEGER) {
                 configurationValue.toInt()
-            } else if (evID.equals("boolean")) {
+            } else if (evID == CVALUE_TYPE_BOOLEAN) {
                 configurationValue.toBoolean()
-            } else if (evID.equals("float")) {
+            } else if (evID == CVALUE_TYPE_FLOAT) {
                 configurationValue.toFloat()
-            } else if (evID.equals("double")) {
+            } else if (evID == CVALUE_TYPE_DOUBLE) {
                 configurationValue.toDouble()
-            } else if (evID.equals("string")) {
+            } else if (evID == CVALUE_TYPE_STRING) {
             }
         } catch (Exception e) {
             super.errors << new ConfigurationIssue(valueAndTypeMismatch, configurationValue.id, evID)
@@ -75,13 +78,14 @@ class DefaultValidator extends ConfigurationValueValidator {
         temp
     }
 
-    /** Match either a detached dollar (withouth esacpe and brace) somewhere in the text
+    /** Match either a detached dollar (without escape and brace) somewhere in the text
      *   OR a non escaped detached dollar at line end.
-     *   OR a detached dollar string '$'
+     *   OR a detached dollar string '$'.
+     *   OR a detached dollar at the beginning of the line.
      */
-    static String matchDetachedDollars = /([^\\][$][^{])|([^\\][$]$)|(^[$]$)/
+    static String matchDetachedDollars = /([^\\][$][^{])|([^\\][$]$)|(^[$]$)|(^[$][^{])/
 
-    boolean areDollarCharactersProperlyUsed(ConfigurationValue cv) {
+    boolean areDollarCharactersAttached(ConfigurationValue cv) {
         if (!cv.value.contains('$')) return true
 
         String temp = removeEscapedEscapeCharacters(cv.value)

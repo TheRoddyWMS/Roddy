@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2017 eilslabs.
+ * Copyright (c) 2017 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.config.loader
@@ -32,6 +32,8 @@ import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.NodeChild
 import groovy.util.slurpersupport.NodeChildren
 
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_FILENAME
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING
 import static de.dkfz.roddy.config.loader.ConfigurationFactory.extractAttributeText
 
 /**
@@ -239,7 +241,7 @@ class ProcessingToolReader {
             return parseTuple(child, toolID)
         } else if (type == "filegroup") {
             return parseFileGroup(child, toolID)
-        } else if (type == "string") {
+        } else if (type == CVALUE_TYPE_STRING) {
             ToolStringParameter.ParameterSetbyOptions setby = Enum.valueOf(ToolStringParameter.ParameterSetbyOptions.class, extractAttributeText(child, "setby", ToolStringParameter.ParameterSetbyOptions.callingCode.name()))
 
             String pName = readAttribute(child, "scriptparameter")
@@ -262,7 +264,7 @@ class ProcessingToolReader {
         Class _cls = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, BaseFile.class.name)
 
         String pName = readAttribute(child, "scriptparameter")
-        String fnPattern = readAttributeOrDefault(child, "filename")
+        String fnPattern = readAttributeOrDefault(child, CVALUE_TYPE_FILENAME)
         String fnpSelTag = extractAttributeText(child, "selectiontag", extractAttributeText(child, "fnpatternselectiontag", Constants.DEFAULT))
         String parentFileVariable = extractAttributeText(child, "variable", null) //This is only the case for child files.
         ToolFileParameterCheckCondition check = new ToolFileParameterCheckCondition(extractAttributeText(child, "check", "true"))

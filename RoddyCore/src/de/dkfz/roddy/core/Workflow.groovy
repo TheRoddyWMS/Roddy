@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2017 German Cancer Research Center (DKFZ).
+ * Copyright (c) 2017 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
- * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
+ * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.core
@@ -21,6 +21,12 @@ import groovy.transform.CompileStatic
 
 import java.lang.reflect.Method
 import java.util.concurrent.ExecutionException
+
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BASH_ARRAY
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BOOLEAN
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_DOUBLE
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_FLOAT
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_INTEGER
 
 /**
  * A worklow can be created and executed to process a set of data.
@@ -125,19 +131,19 @@ abstract class Workflow {
 
     final void setEnvBoolean(String id, boolean value) { cvalue(id, value) }
 
-    final void setEnvBashArray(String id, String value) { cvalue(id, value, "bashArray") }
+    final void setEnvBashArray(String id, String value) { cvalue(id, value, CVALUE_TYPE_BASH_ARRAY) }
 
     def getEnv(String id) {
         ConfigurationValue value = context.configuration.configurationValues[id]
-        if (value.type == "integer") {
+        if (value.type == CVALUE_TYPE_INTEGER) {
             return value.toInt()
-        } else if (value.type == "float") {
+        } else if (value.type == CVALUE_TYPE_FLOAT) {
             return value.toFloat()
-        } else if (value.type == "double") {
+        } else if (value.type == CVALUE_TYPE_DOUBLE) {
             return value.toDouble()
-        } else if (value.type == "boolean") {
+        } else if (value.type == CVALUE_TYPE_BOOLEAN) {
             return value.toBoolean()
-        } else if (value.type == "bashArray") {
+        } else if (value.type == CVALUE_TYPE_BASH_ARRAY) {
             return value.toStringList()
         } else {
             return value.toString()
@@ -170,7 +176,7 @@ abstract class Workflow {
      * @param value
      */
     final void cvalue(String id, int value) {
-        context.configurationValues << new ConfigurationValue(context.configuration, id, value.toString(), "integer")
+        context.configurationValues << new ConfigurationValue(context.configuration, id, value.toString(), CVALUE_TYPE_INTEGER)
     }
 
     /**
@@ -179,7 +185,7 @@ abstract class Workflow {
      * @param value
      */
     final void cvalue(String id, float value) {
-        context.configurationValues << new ConfigurationValue(context.configuration, id, value.toString(), "float")
+        context.configurationValues << new ConfigurationValue(context.configuration, id, value.toString(), CVALUE_TYPE_FLOAT)
     }
 
     /**
@@ -188,7 +194,7 @@ abstract class Workflow {
      * @param value
      */
     final void cvalue(String id, double value) {
-        context.configurationValues << new ConfigurationValue(context.configuration, id, value.toString(), "double")
+        context.configurationValues << new ConfigurationValue(context.configuration, id, value.toString(), CVALUE_TYPE_DOUBLE)
     }
 
     /**
@@ -197,7 +203,7 @@ abstract class Workflow {
      * @param value
      */
     final void cvalue(String id, boolean value) {
-        context.configurationValues << new ConfigurationValue(context.configuration, id, value.toString(), "boolean")
+        context.configurationValues << new ConfigurationValue(context.configuration, id, value.toString(), CVALUE_TYPE_BOOLEAN)
     }
 
     /**
