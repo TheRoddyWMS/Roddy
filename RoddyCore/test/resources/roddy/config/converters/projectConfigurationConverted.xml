@@ -1,0 +1,35 @@
+<!--Copyright (c) 2018 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).-->
+<!--Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).-->
+<configuration id='projectJSONConfiguration' description='A complete configuration with all known elements.'>
+    <analyses>
+        <analysis id='test1' configuration='testAnalysis' />
+        <analysis id='test2' configuration='testAnalysis' useplugin='TestPluginWithJarFile'/>
+    </analyses>
+    <configurationvalues>
+        <cvalue name='aValue' value='Some text' description='A configuration value' type='string'/>
+        <cvalue name='aValue1' value='Some text' description='Reduced'/>
+        <cvalue name='aValue2' value='Some text'/>
+        <cvalue name='bValue' value='500' description='A second configuration value' type='integer'/>
+        <cvalue name='cValueWithQuotes' value='500' description='A second "configuration" value' type='integer'/>
+    </configurationvalues>
+    <processingtools>
+        <tool name='aToolWithoutResources' value='someFile.sh' basepath='aPath'/>
+        <tool name='aToolWithResources' value='someFile.sh' basepath='aPath'>
+            <resourcesets>
+                <rset size='l' memory='0.1' cores='1' nodes='1' walltime='1'/>
+                <rset size='xl' memory='1' cores='2' nodes='1' walltime='4'/>
+            </resourcesets>
+            <input type='file' typeof='TextFile' scriptparameter='PARM_A'/>
+            <input type='file' typeof='TextFile' scriptparameter='PARM_B'/>
+            <output type='file' typeof='TextFile' scriptparameter='PARM_C'/>
+            <output type='file' typeof='TextFile' scriptparameter='PARM_D' filename='/tmp/abc'/>
+        </tool>
+    </processingtools>
+    <filenames package='de.dkfz.roddy.testpackage' filestagesbase='de.dkfz.roddy.TestFileStage'>
+        <filename class='AFileClass' derivedFrom='BaseClass' pattern='/tmp/abc/SomePattern/${variable}'/>
+        <filename class='BFileClass' onMethod='AClass.method' selectiontag='segments1' pattern='/tmp/abc/SomePattern/${variable}'/>
+        <filename class='BFileClass' onMethod='AClass.method' selectiontag='segments2' pattern='/tmp/abc/SomePattern/${variable}'/>
+        <filename class='CFileClass' onScriptParameter='PARM_A' pattern='/tmp/abc/SomePattern/${variable}'/>
+        <filename class='DFileClass' onTool='aToolWithResources' pattern='/tmp/abc/SomePattern/${variable}'/>
+    </filenames>
+</configuration>

@@ -13,6 +13,7 @@ import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.Configuration.ConfigurationType
 import de.dkfz.roddy.config.converters.BashConverter
+import de.dkfz.roddy.config.converters.JSONConverter
 import de.dkfz.roddy.config.converters.YAMLConverter
 import de.dkfz.roddy.core.Project
 import de.dkfz.roddy.core.ProjectLoaderException
@@ -25,7 +26,6 @@ import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.plugins.SyntheticPluginInfo
-
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
@@ -46,7 +46,6 @@ import java.text.ParseException
 import java.util.logging.Level
 
 import static de.dkfz.roddy.StringConstants.*
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_PATH
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_PATH
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING
 
@@ -246,7 +245,17 @@ class ConfigurationFactory {
         if (file.name.endsWith(".groovy") || file.name.endsWith(".brawl"))
             return loadAndPreprocessBrawlFile(file)
 
+        if (file.name.endsWith(".json"))
+            return loadAndPreprocessJSONFile(file)
+
+        if (file.name.endsWith(".yaml"))
+            return loadAndPreprocessYAMLFile(file)
+
         throw new UnknownConfigurationFileTypeException("Unknown file type ${file.name} for a configuration file.")
+    }
+
+    static String loadAndPreprocessJSONFile(File s) {
+        return new JSONConverter().convertToXML(s)
     }
 
     static String loadAndPreprocessYAMLFile(File s) {
@@ -276,10 +285,10 @@ class ConfigurationFactory {
      * Loads basic info about a configuration file.
      *
      * Basic info contains i.e. the name, description, subconfigs and the type of a configuration.
-     * @see PreloadedConfiguration
      *
      * @param file The config file.
      * @return An object containing basic information about a configuration OR null, if the no preloaded config could be loaded.
+     * @see PreloadedConfiguration
      */
     PreloadedConfiguration loadInformationalConfigurationContent(File file) {
         String text = loadAndPreprocessTextFromFile(file)
@@ -644,7 +653,7 @@ class ConfigurationFactory {
         Class<FileObject> calledClass = _cls
         if (methodName.contains(".")) { // Different class as source class!
             String[] stuff = methodName.split(SPLIT_STOP)
-            String className = stuff[0 .. -2].join(".")
+            String className = stuff[0..-2].join(".")
             methodName = stuff[-1]
             try {
                 calledClass = LibrariesFactory.instance.classLoaderHelper.searchForClass(className)
@@ -653,8 +662,8 @@ class ConfigurationFactory {
             }
         }
         Method method = lastMethodOfName(calledClass, methodName).orElseThrow {
-                    new ConfigurationError("Found class '${calledClass.getCanonicalName()}' matching on method pattern, " +
-                            "but it does not have requested method '$methodName'", null as String)
+            new ConfigurationError("Found class '${calledClass.getCanonicalName()}' matching on method pattern, " +
+                    "but it does not have requested method '$methodName'", null as String)
         }
         new OnMethodFilenamePattern(_cls, calledClass, method, pattern, selectionTag)
     }
@@ -741,11 +750,26 @@ class ConfigurationFactory {
         return fp
     }
 
+    @Deprecated
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    /**
+     * processingtools is newer and writing it all lowercase is like
+     * with the other tags.
+     */
+    NodeChild selectProcessingtoolsNode(NodeChild configurationNode) {
+        def pTools = configurationNode.processingtools
+
+        if (!pTools.tool.size())
+            pTools = configurationNode.processingTools
+
+        return pTools
+    }
+
     @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
     boolean readProcessingTools(NodeChild configurationNode, Configuration config) {
         Map<String, ToolEntry> toolEntries = config.getTools().getMap()
         boolean hasErrors = false
-        for (NodeChild tool in configurationNode.processingTools.tool) {
+        for (NodeChild tool in selectProcessingtoolsNode(configurationNode).tool) {
             String toolID = tool.@name.text()
             logger.postRareInfo("Processing tool ${toolID}")
             def toolReader = new ProcessingToolReader(tool, config)
