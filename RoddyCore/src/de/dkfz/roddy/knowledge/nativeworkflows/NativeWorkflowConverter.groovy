@@ -9,7 +9,6 @@ package de.dkfz.roddy.knowledge.nativeworkflows
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.config.converters.BashConverter
-import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.plugins.NativePluginInfo
 import de.dkfz.roddy.plugins.PluginLoaderException
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -113,6 +112,7 @@ class NativeWorkflowConverter {
 
             // Get rid of the analysis import section
             xml.children().findAll { NodeChild it -> it.name() == "availableAnalyses" }.replaceNode {}
+            xml.children().findAll { NodeChild it -> it.name() == "availableanalyses" }.replaceNode {}
 
             List<String> toolIDs = nativePluginInfo.getToolIDs()
             List<String> toolFileNames = nativePluginInfo.getToolFileNames()

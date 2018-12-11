@@ -18,13 +18,9 @@ import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import groovy.transform.CompileStatic
 
 import java.util.logging.Level
-import static Constants.RODDY_CONFIGURATION_MAGICSTRING
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BASH_ARRAY
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_DOUBLE
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_FLOAT
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_INTEGER
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_PATH
 
+import static Constants.RODDY_CONFIGURATION_MAGICSTRING
+import static de.dkfz.roddy.config.ConfigurationConstants.*
 
 /**
  * Converts a configuration object to bash script.
@@ -549,7 +545,7 @@ class BashConverter extends ConfigurationConverter {
         xmlLines << "usedresourcessize='" + getHeaderValue(header, "usedresourcessize", "l") + "' >"
 
         def headerValues = getHeaderValues(header, "analysis", [])
-        xmlLines << "  <availableAnalyses>"
+        xmlLines << "  <availableanalyses>"
 
         headerValues.each {
             String analysis ->
@@ -563,7 +559,7 @@ class BashConverter extends ConfigurationConverter {
                 String plg = split[2]
                 xmlLines << "    <analysis id='${id}' configuration='${cfg}' useplugin='${plg}' />".toString()
         }
-        xmlLines << "  </availableAnalyses>"
+        xmlLines << "  </availableanalyses>"
         return xmlLines
     }
 

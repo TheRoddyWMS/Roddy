@@ -116,6 +116,8 @@ dependencies {
     compile 'org.bouncycastle:bcprov-ext-jdk15on:1.51'          // MIT
     compile 'org.bouncycastle:bcprov-jdk15on:1.51'              // MIT
 
+    compile 'org.yaml:snakeyaml:1.23'                           // Apache 2.0
+
     compile 'com.google.guava:guava:23.0'                       // Apache 2.0
 
     compile 'org.apache.commons:commons-csv:1.2'                // Apache 2.0

@@ -208,8 +208,7 @@ class ConfigurationFactoryTest {
     }
 
     @Test
-    void testReadProcessingTools() {
-//                <test>
+    void testReadProcessingToolsWithNewSyntax() {
         NodeChild xml = (NodeChild) new XmlSlurper().parseText(
                 """
                 <config>
@@ -218,9 +217,26 @@ class ConfigurationFactoryTest {
                     </processingtools>
                 </config>
                 """
-//                </test>
         )
-        ConfigurationFactory.instance.readProcessingTools(xml, new Configuration())
+        Configuration cfg = new Configuration()
+        ConfigurationFactory.instance.readProcessingTools(xml, cfg)
+        assert cfg.tools.size() == 1
+    }
+
+    @Test
+    void testReadProcessingToolsWithOldSyntax() {
+        NodeChild xml = (NodeChild) new XmlSlurper().parseText(
+                """
+                <config>
+                    <processingTools>
+                        <tool name='sometool' value='sometool.sh' basepath='bp' />
+                    </processingTools>
+                </config>
+                """
+        )
+        Configuration cfg = new Configuration()
+        ConfigurationFactory.instance.readProcessingTools(xml, cfg)
+        assert cfg.tools.size() == 1
     }
 
     @Test

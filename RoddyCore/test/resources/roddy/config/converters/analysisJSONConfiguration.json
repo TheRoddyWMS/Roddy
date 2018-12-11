@@ -5,7 +5,7 @@
 //
 {
   "configuration": {
-    "id": "analysisJSONConfiguration",
+    "name": "analysisJSONConfiguration",
     "description": "A complete configuration with all known elements.",
     "configurationType": "analysis",
     "class": "Analysis",

@@ -128,8 +128,10 @@
         <xs:sequence>
             <xs:choice maxOccurs="unbounded">
                 <xs:element type="availableAnalysesType" name="availableAnalyses" minOccurs="0" maxOccurs="1"/>
+                <xs:element type="availableAnalysesType" name="availableanalyses" minOccurs="0" maxOccurs="1"/>
                 <xs:element type="configurationvaluesType" name="configurationvalues" minOccurs="0" maxOccurs="1"/>
                 <xs:element type="processingToolsType" name="processingTools" minOccurs="0" maxOccurs="1"/>
+                <xs:element type="processingToolsType" name="processingtools" minOccurs="0" maxOccurs="1"/>
                 <xs:element type="subconfigurationsType" name="subconfigurations" minOccurs="0" maxOccurs="1"/>
                 <xs:element type="filenamesType" name="filenames" minOccurs="0" maxOccurs="1"/>
                 <xs:element type="enumerationsType" name="enumerations" minOccurs="0" maxOccurs="1"/>

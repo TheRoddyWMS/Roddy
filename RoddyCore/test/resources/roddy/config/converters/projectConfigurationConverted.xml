@@ -1,35 +1,55 @@
 <!--Copyright (c) 2018 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).-->
 <!--Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).-->
-<configuration id='projectJSONConfiguration' description='A complete configuration with all known elements.'>
-    <analyses>
+<configuration name='projectJSONConfiguration' description='A complete configuration with all known elements.' usedresourcessize='l' configurationType='project'>
+    <availableanalyses>
         <analysis id='test1' configuration='testAnalysis' />
-        <analysis id='test2' configuration='testAnalysis' useplugin='TestPluginWithJarFile'/>
-    </analyses>
+        <analysis id='test2' configuration='testAnalysis' useplugin='TestPluginWithJarFile' />
+    </availableanalyses>
     <configurationvalues>
-        <cvalue name='aValue' value='Some text' description='A configuration value' type='string'/>
-        <cvalue name='aValue1' value='Some text' description='Reduced'/>
-        <cvalue name='aValue2' value='Some text'/>
-        <cvalue name='bValue' value='500' description='A second configuration value' type='integer'/>
-        <cvalue name='cValueWithQuotes' value='500' description='A second "configuration" value' type='integer'/>
+        <cvalue name='aValue' value='Some text' description='A configuration value' type='string' />
+        <cvalue name='aValue1' value='Some text' description='Reduced' />
+        <cvalue name='aValue2' value='Some text' />
+        <cvalue name='bValue' value='500' description='A second configuration value' type='integer' />
+        <cvalue name='cValueWithQuotes' value='500' description='A second "configuration" value' type='integer' />
     </configurationvalues>
     <processingtools>
-        <tool name='aToolWithoutResources' value='someFile.sh' basepath='aPath'/>
+        <tool name='aToolWithoutResources' value='someFile.sh' basepath='aPath' />
         <tool name='aToolWithResources' value='someFile.sh' basepath='aPath'>
             <resourcesets>
-                <rset size='l' memory='0.1' cores='1' nodes='1' walltime='1'/>
-                <rset size='xl' memory='1' cores='2' nodes='1' walltime='4'/>
+                <rset size='l' memory='0.1' cores='1' nodes='1' walltime='1' />
+                <rset size='xl' memory='1' cores='2' nodes='1' walltime='4' />
             </resourcesets>
-            <input type='file' typeof='TextFile' scriptparameter='PARM_A'/>
-            <input type='file' typeof='TextFile' scriptparameter='PARM_B'/>
-            <output type='file' typeof='TextFile' scriptparameter='PARM_C'/>
-            <output type='file' typeof='TextFile' scriptparameter='PARM_D' filename='/tmp/abc'/>
+            <input type='file' typeof='TextFile' scriptparameter='PARM_A' />
+            <input type='file' typeof='TextFile' scriptparameter='PARM_B' />
+            <output type='file' typeof='TextFile' scriptparameter='PARM_C' />
+            <output type='file' typeof='TextFile' scriptparameter='PARM_D' filename='/tmp/abc' />
         </tool>
     </processingtools>
     <filenames package='de.dkfz.roddy.testpackage' filestagesbase='de.dkfz.roddy.TestFileStage'>
-        <filename class='AFileClass' derivedFrom='BaseClass' pattern='/tmp/abc/SomePattern/${variable}'/>
-        <filename class='BFileClass' onMethod='AClass.method' selectiontag='segments1' pattern='/tmp/abc/SomePattern/${variable}'/>
-        <filename class='BFileClass' onMethod='AClass.method' selectiontag='segments2' pattern='/tmp/abc/SomePattern/${variable}'/>
-        <filename class='CFileClass' onScriptParameter='PARM_A' pattern='/tmp/abc/SomePattern/${variable}'/>
-        <filename class='DFileClass' onTool='aToolWithResources' pattern='/tmp/abc/SomePattern/${variable}'/>
+        <filename class='AFileClass' derivedFrom='BaseClass' pattern='/tmp/abc/SomePattern/${variable}' />
+        <filename class='BFileClass' onMethod='AClass.method' selectiontag='segments1' pattern='/tmp/abc/SomePattern/${variable}' />
+        <filename class='BFileClass' onMethod='AClass.method' selectiontag='segments2' pattern='/tmp/abc/SomePattern/${variable}' />
+        <filename class='CFileClass' onScriptParameter='PARM_A' pattern='/tmp/abc/SomePattern/${variable}' />
+        <filename class='DFileClass' onTool='aToolWithResources' pattern='/tmp/abc/SomePattern/${variable}' />
     </filenames>
+    <subconfigurations>
+        <configuration name='withInheritance' inheritAnalyses='true'>
+            <configurationvalues>
+                <cvalue name='nestedValue' value='Nested variable value' />
+            </configurationvalues>
+        </configuration>
+        <configuration name='withInheritanceAndSubConfig' inheritAnalyses='true'>
+            <subconfigurations>
+                <configuration name='deeplyNestedConfig' inheritAnalyses='true' />
+            </subconfigurations>
+        </configuration>
+        <configuration name='withoutInheritance'>
+            <availableanalyses>
+                <analysis id='nestedAnalysis' configuration='testAnalysis' useplugin='TestPlugin' />
+            </availableanalyses>
+            <configurationvalues>
+                <cvalue name='nestedValue2' value='Another nested value' />
+            </configurationvalues>
+        </configuration>
+    </subconfigurations>
 </configuration>

@@ -106,7 +106,7 @@ class ConfigurationFactory {
                     logger.log(Level.SEVERE, "Cannot read from configuration directory ${baseDir.absolutePath}, does the folder exist und do you have access (read/execute) rights to it?")
                     throw new ConfigurationLoaderException("Cannot access (read and execute) configuration directory '${baseDir}'")
                 }
-                File[] files = baseDir.listFiles((FileFilter) new WildcardFileFilter(["*.xml", "*.sh", "*.yml"]))
+                File[] files = baseDir.listFiles((FileFilter) new WildcardFileFilter(["*.xml", "*.sh", "*.yml", "*.yaml", "*.json"]))
                 if (files == null) {
                     logger.info("No configuration files found in path ${baseDir.getAbsolutePath()}")
                 }
@@ -248,7 +248,7 @@ class ConfigurationFactory {
         if (file.name.endsWith(".json"))
             return loadAndPreprocessJSONFile(file)
 
-        if (file.name.endsWith(".yaml"))
+        if (file.name.endsWith(".yaml") || file.name.endsWith(".yml"))
             return loadAndPreprocessYAMLFile(file)
 
         throw new UnknownConfigurationFileTypeException("Unknown file type ${file.name} for a configuration file.")
@@ -305,6 +305,18 @@ class ConfigurationFactory {
         return _preloadConfiguration(file, text, xml, null)
     }
 
+    @Deprecated
+    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    /**
+     * availableanalyses is newer and writing it all lowercase is like
+     * with the other tags.
+     */
+    NodeChildren selectAvailableAnalysesNode(NodeChild configurationNode) {
+        def availableanalyses = configurationNode.availableanalyses.size() == 1 ? configurationNode.availableanalyses : configurationNode.availableAnalyses
+
+        return availableanalyses
+    }
+
     /**
      * Loads a basic / informational part of each available configurationNode file.
      * Recursive helper method.
@@ -326,7 +338,7 @@ class ConfigurationFactory {
         if (type == ConfigurationType.PROJECT) {
             List<String> analyses = []
 
-            NodeChildren san = configurationNode.availableAnalyses
+            NodeChildren san = selectAvailableAnalysesNode(configurationNode)
             if (!Boolean.parseBoolean(extractAttributeText(configurationNode, XMLTAG_ATTRIBUTE_INHERITANALYSES, FALSE))) {
                 analyses = _loadPreloadedConfigurationAnalyses(san)
             } else {
@@ -481,7 +493,7 @@ class ConfigurationFactory {
             config = new ProjectConfiguration(icc, runtimeServiceClass, availableAnalyses, parentConfig)
             boolean inheritAnalyses = Boolean.parseBoolean(extractAttributeText(configurationNode, XMLTAG_ATTRIBUTE_INHERITANALYSES, "false"))
             if (!inheritAnalyses) {
-                availableAnalyses.putAll(_loadAnalyses(configurationNode.availableAnalyses))
+                availableAnalyses.putAll(_loadAnalyses(selectAvailableAnalysesNode(configurationNode)))
             } else {
                 if (parentConfig instanceof ProjectConfiguration) {
                     ProjectConfiguration pcParent = (ProjectConfiguration) parentConfig
@@ -756,10 +768,9 @@ class ConfigurationFactory {
      * processingtools is newer and writing it all lowercase is like
      * with the other tags.
      */
-    NodeChild selectProcessingtoolsNode(NodeChild configurationNode) {
+    NodeChildren selectProcessingtoolsNode(NodeChild configurationNode) {
         def pTools = configurationNode.processingtools
-
-        if (!pTools.tool.size())
+        if (pTools.size() == 0)
             pTools = configurationNode.processingTools
 
         return pTools

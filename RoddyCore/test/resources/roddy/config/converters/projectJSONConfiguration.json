@@ -5,9 +5,11 @@
 //
 {
   "configuration": {
-    "id": "projectJSONConfiguration",
+    "name": "projectJSONConfiguration",
     "description": "A complete configuration with all known elements.",
-    "analyses": [
+    "usedresourcessize": "l",
+    "configurationType": "project",
+    "availableanalyses": [
       {
         "id": "test1",
         "configuration": "testAnalysis"
@@ -132,6 +134,44 @@
           "pattern": "/tmp/abc/SomePattern/${variable}"
         }
       ]
-    }
+    },
+    "subconfigurations": [
+      {
+        "name": "withInheritance",
+        "inheritAnalyses": "true",
+        "configurationvalues": [
+          {
+            "name": "nestedValue",
+            "value": "Nested variable value"
+          }
+        ]
+      },
+      {
+        "name": "withInheritanceAndSubConfig",
+        "inheritAnalyses": "true",
+        "subconfigurations": [
+          {
+            "name": "deeplyNestedConfig",
+            "inheritAnalyses": "true"
+          }
+        ]
+      },
+      {
+        "name": "withoutInheritance",
+        "availableanalyses": [
+          {
+            "id": "nestedAnalysis",
+            "configuration": "testAnalysis",
+            "useplugin": "TestPlugin"
+          }
+        ],
+        "configurationvalues": [
+          {
+            "name": "nestedValue2",
+            "value": "Another nested value"
+          }
+        ]
+      }
+    ]
   }
 }
