@@ -96,7 +96,7 @@ class CommandLineParameterParserTest extends Specification {
 
         then:
         result.success
-        result.get().getClass() == "CValueParameter"
+        result.get().getClass() == CValueParameter
         (result.get() as CValueParameter).name == 'cvalues'
         (result.get() as CValueParameter).cvalues == cvalues
 
@@ -119,7 +119,7 @@ class CommandLineParameterParserTest extends Specification {
         '--cvalues=a:b,c:'                 | [a:'b', c:'']
         '--cvalues=_a:b'                   | [_a:'b']
         '--cvalues=a::,b'                  | [a:':', b:null]
-        '--cvalues=a:\\,,b'                | [a:',', b:null]      // escaped commas are fine
+        '--cvalues=a:\\,,b'                | [a:'\\,', b:null]      // escaped commas are fine
         '--cvalues=a:\\:,b:c'              | [a:'\\:', b:'c']
     }
 

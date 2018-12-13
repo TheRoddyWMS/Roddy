@@ -56,7 +56,7 @@ class CValueParameter implements Parameter {
 
     CValueParameter(Map<String, String> cvalues) {
         assert null != cvalues
-        name = "cvalue"
+        name = "cvalues"
         this.cvalues = cvalues
     }
 
@@ -151,10 +151,8 @@ class CommandLineParameterParser {
                     flatten()
 
     static Parser cvalueExpr = bashVariableNameExpr.seq(of(':' as Character).seq(variableValueExpr).optional()).
-        map { List<String> r ->
-            System.err.println("cvalueExpr ${r} -> ${r.getAt(1)?.getAt(1)}")
-            System.err.println("cvalueExpr ${r} -> result: " + new MapEntry(r.get(0), r.getAt(1)?.getAt(1)))
-            new MapEntry(r.get(0), r.getAt(1)?.getAt(1))
+        map { List r ->
+            new MapEntry(r.get(0), (r.getAt(1) as List)?.getAt(1))
         }
 
     static Parser cvalueSeparatorExpr = of(',' as Character).seq(whitespace().star()).
@@ -166,11 +164,18 @@ class CommandLineParameterParser {
      */
     static Parser cvalueListExtensionExpr = cvalueSeparatorExpr.seq(cvalueExpr).star().
         map { List<List> r -> r*.get(1) }  // return the cvalue MapEntry
+
     /**
      * For convenience, also empty '--cvalues=' is allowed. Therefore the optional().
      */
     static Parser cvalueListExpr = cvalueExpr.seq(cvalueListExtensionExpr).optional().
-        map { List<MapEntry<String,String>> r -> r.flatten() }    // flatten out the list extension
+        map { List r ->
+            if (null == r)
+                []  // no cvalues, optional == empty
+            else {
+                [r.get(0)] + (r.get(1) as List)
+            }
+        }    // flatten out the list extension
 
     /**
      * Special subparser for --cvalues parameter that traverses into the content and ensures correct bash-variable
@@ -178,9 +183,8 @@ class CommandLineParameterParser {
      */
     static Parser cvalueParameterExpr =
             parameterPrefix.seq(StringParser.of('cvalues')).seq(of('=' as Character)).seq(cvalueListExpr).end().
-            map { List<Map> parseTree ->
-                System.err.println("cvalueParameterExpr: " + parseTree.get(3))
-                new CValueParameter(parseTree.get(3))
+            map { List<List> parseTree ->
+                new CValueParameter(parseTree.get(3).toList().collectEntries())
             }
 
     static Parser commandLineParameterExpr =
