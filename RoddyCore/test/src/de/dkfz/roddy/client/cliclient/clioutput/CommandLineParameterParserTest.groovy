@@ -6,104 +6,193 @@
 package de.dkfz.roddy.client.cliclient.clioutput
 
 
-import org.parboiled.Parboiled
-import org.parboiled.parserunners.ReportingParseRunner
-import org.parboiled.support.ParsingResult
 import spock.lang.Specification
 
 class CommandLineParameterParserTest extends Specification {
 
-    CommandLineParameterParser parser = Parboiled.createParser(CommandLineParameterParser.class)
-
-    def "arbitrary parameter"(String target, String name) {
+    def "arbitrary parameter"(String target) {
         when:
-        ParsingResult<Parameter> result = new ReportingParseRunner(parser.CommandLineParameterExpr()).run(target)
+        def result = CommandLineParameterParser.arbitraryParameterExpr.parse(target)
 
         then:
-        result.parseErrors.isEmpty()
-        result.resultValue.class == ArbitraryParameter
-        (result.resultValue as ArbitraryParameter).name == name
+        result.success
+        result.get().class == ArbitraryParameter.class
+        result.get().name == target
 
         where:
-        target     |   name
-        ""         |    ""
-        "run"      |    "run"
+        target | _
+        ''     | _
+        'run'  | _
+        '\"'   | _
     }
 
 
-    def "parameter without value"(String target, String name) {
+    def "parameter without value (success)"(String target, String name) {
         when:
-        ParsingResult<Parameter> result = new ReportingParseRunner(parser.CommandLineParameterExpr()).run(target)
+        def result = CommandLineParameterParser.parameterWithoutValueExpr.parse(target)
 
         then:
-        result.parseErrors.isEmpty()
-        result.class == ParameterWithoutValue
-        (result.resultValue as ParameterWithoutValue).name == name
+        result.success
+        result.get().class == ParameterWithoutValue
+        result.get().name == name
 
         where:
-        target     |   name
-        "--"       |    ""         // this is a common pattern to separate two lists of different parameter sets
-        "--appIni" |    "appIni"
+        target     | name
+        '--'       | ''        // this is a common pattern to separate two lists of different parameter sets
+        '--appIni' | 'appIni'
+    }
+
+    def "parameter without value (failure)"(String target) {
+        when:
+        def result = CommandLineParameterParser.parameterWithoutValueExpr.parse(target)
+
+        then:
+        !result.success
+
+        where:
+        target | _
+        ''     | _
     }
 
 
-    def "parameter with value"(String target, String name, String value) {
+
+
+    def "parameter with value (success)"(String target, String name, String value) {
         when:
-        ParsingResult<Parameter> result = new ReportingParseRunner(parser.CommandLineParameterExpr()).run(target)
+        def result = CommandLineParameterParser.parameterWithValueExpr.parse(target)
 
         then:
-        assert result.parseErrors.isEmpty()
-        result.class == ParameterWithValue
-        (result.resultValue as ParameterWithValue).name == name
-        (result.resultValue as ParameterWithValue).value == value
+        result.success
+        result.get().class == ParameterWithValue
+        result.get().name == name
+        result.get().value == value
 
         where:
         target              |   name        | value
-        "--appIni="         |    "appIni"   | ""      // reasonable
-        "--appIni=bla"      |    "appIni"   | "bla"
-        "--appIni=bla blub" |    "appIni"   | "bla blub"   // if it was passed by the shell, it is the value
-
-
-        // TODO Fail on '--=' or '--=bla'
+        '--appIni='         |    'appIni'   | ''           // reasonable
+        '--appIni=bla'      |    'appIni'   | 'bla'
+        '--appIni=bla=blub' |    'appIni'   | 'bla=blub'    // stop parameter name at first equal sign
+        '--appIni=bla blub' |    'appIni'   | 'bla blub'    // if it was passed by the shell, it is the value
     }
 
-
-    def "cvalue parameter"(String target, String name, Map<String,String> cvalues) {
+    def "parameter with value (failure)"(String target) {
         when:
-        ParsingResult<Parameter> result = new ReportingParseRunner(parser.CommandLineParameterExpr()).run(target)
+        def result = CommandLineParameterParser.parameterWithValueExpr.parse(target)
 
         then:
-        result.parseErrors.isEmpty()
-        result.class == CValueParameter
-        (result.resultValue as CValueParameter).name == name
-        (result.resultValue as CValueParameter).cvalues == cvalues
+        !result.success
 
         where:
-        target                             |   name        | cvalues
-        '--cvalues='                       |    'cvalues'  | [:]      // reasonable
-        '--cvalues=bla'                    |    'cvalues'  | [bla:null]
-        '--cvalues=bla:blub'               |    'cvalues'  | [bla:'blub']
-        '--cvalues=a:'                     |    'cvalues'  | [a:'']
-        '--cvalues=a: '                    |    'cvalues'  | [a:' ']
-        '--cvalues=a:( )'                  |    'cvalues'  | [a:'( )']
-        '--cvalues=a: ( )'                 |    'cvalues'  | [a:' ( )']
-        '--cvalues=a:b,c:d'                |    'cvalues'  | [a:'b', c:'d']
-        '--cvalues=a:b,c:'                 |    'cvalues'  | [a:'b', c:'']
-        '--cvalues=_a:b'                   |    'cvalues'  | [_a:'b']
-        "--cvalues=a:' '"                  |    'cvalues'  | [a:"' '"]            // do not interpret the content!
-        '--cvalues=a::'                    |    'cvalues'  | [a:':']              // colons as values are allowed
-        '--cvalues=a::,b'                  |    'cvalues'  | [a:':', b:null]
-        '--cvalues=a:\\,,b'                |    'cvalues'  | [a:',', b:null]      // escaped commas are fine
-        '--cvalues=a:\\\\,,b'              |    'cvalues'  | [a:'\\,', b:null]    // escaped escapes are fine
-        '--cvalues=a:\\:,b:c'              |    'cvalues'  | [a:'\\:', b:'c']
-        '--cvalues=a:\\: --malformedInput' |    'cvalues'  | [a:'\\: --malformedInput']   // input is preprocessed parameters, not command-lines
-
-        // TODO Fail on
-        // "--cvalues=a:,"   // empty second cvalue
-        // "--cvalues=0a:"   // not Bash identifier
-        // "--cvalues=_^:nope"  // not Bash identifier
+        target   | _
+        '--='    | _
+        '--=bla' | _
+        '--'     | _
     }
 
 
+    def "cvalue parameter (success)"(String target, Map<String,String> cvalues) {
+        when:
+        def result = CommandLineParameterParser.cvalueParameterExpr.parse(target)
+
+        then:
+        result.success
+        result.get().getClass() == "CValueParameter"
+        (result.get() as CValueParameter).name == 'cvalues'
+        (result.get() as CValueParameter).cvalues == cvalues
+
+
+        where:
+        target                             | cvalues
+        '--cvalues='                       | [:]                 // reasonable
+        '--cvalues=bla'                    | [bla:null]
+        '--cvalues=bla:blub'               | [bla:'blub']
+        '--cvalues=a:'                     | [a:'']
+        '--cvalues=a: '                    | [a:' ']
+        '--cvalues=a:( )'                  | [a:'( )']
+        '--cvalues=a: ( )'                 | [a:' ( )']
+        "--cvalues=a:' '"                  | [a:"' '"]
+        '--cvalues=a::'                    | [a:':']              // colons as values are allowed
+        '--cvalues=a:\\: --malformedInput' | [a:'\\: --malformedInput']   // input is preprocessed parameters, not command-lines
+        '--cvalues=a:b,c:d'                | [a:'b', c:'d']
+        '--cvalues=a:b,c:d ,e:f'           | [a:'b', c:'d ', e:'f']
+        '--cvalues=a:b, c:d'               | [a:'b', c:'d']
+        '--cvalues=a:b,c:'                 | [a:'b', c:'']
+        '--cvalues=_a:b'                   | [_a:'b']
+        '--cvalues=a::,b'                  | [a:':', b:null]
+        '--cvalues=a:\\,,b'                | [a:',', b:null]      // escaped commas are fine
+        '--cvalues=a:\\:,b:c'              | [a:'\\:', b:'c']
+    }
+
+    def "cvalue parameter (failure)"(String target) {
+        when:
+        def result = CommandLineParameterParser.cvalueParameterExpr.parse(target)
+
+        then:
+        !result.success
+
+        where:
+        target                             | _
+        '--cval=a:yip'                     | _  // cvalue parameter name doesn't match
+
+        '--cvalues=a:,'                    | _  // empty cvalue (second)
+        '--cvalues=,a:'                    | _  // empty cvalue (first)
+        '--cvalues=a: ,'                   | _  // empty cvalue (second)
+
+        '--cvalues=0a:'                    | _  // not Bash identifier
+        '--cvalues=_^:nope'                | _  // not Bash identifier
+
+        '--cvalues=a:\\\\,,b'              | _  // incorrectly escaped comma (in the middle)
+    }
+
+    def "bash variable parser (success)"(String target) {
+        when:
+        def result = CommandLineParameterParser.bashVariableNameExpr.parse(target)
+
+        then:
+        result.success
+
+        where:
+        target     | _
+        '_a'       | _
+        '__'       | _
+        '_1'       | _
+        'a_'       | _
+        'a_1'      | _
+        'ab_x1_'    | _
+    }
+
+    def "bash variable parser (failure)"(String target) {
+        when:
+        def result = CommandLineParameterParser.bashVariableNameExpr.parse(target)
+
+        then:
+        !result.success
+
+        where:
+        target     | _
+        '_'        | _
+        '1'        | _
+        '1_'       | _
+        '1a'       | _
+        '.'        | _
+        '/'        | _
+        '\\'       | _
+        '^'        | _
+    }
+
+    def "complete commandline parameter parser test (success)"(String target) {
+        when:
+        def result = CommandLineParameterParser.commandLineParameterExpr.parse(target)
+
+        then:
+        result.success
+
+        where:
+        target            | _
+        '--'              | _
+        '--abc'           | _
+        '--cvalues'       | _
+        "--cvalues='a:b'" | _
+    }
 
 }
