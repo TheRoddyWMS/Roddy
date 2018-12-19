@@ -246,7 +246,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
      *
      */
     File toFile(Analysis analysis, DataSet dataSet = null) throws ConfigurationError {
-        String temp = new File(toEvaluatedValue([], id, value ?: "", configuration)).absolutePath
+        String temp = toEvaluatedValue([], id, value ?: "", configuration)
 
         if (analysis) temp = toEvaluatedValue([], id, temp, analysis.configuration)
         if (dataSet) temp = toEvaluatedValue([], id, temp, dataSet.configuration)
@@ -268,7 +268,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
             return _toFileCache
         }
         try {
-            String temp = toFile(context.getAnalysis(), context.getDataSet()).getAbsolutePath()
+            String temp = toFile(context.getAnalysis(), context.getDataSet()).getPath()
             if (value.startsWith("\${DIR_BUNDLED_FILES}") || value.startsWith("\${DIR_RODDY}"))
                 temp = Roddy.getApplicationDirectory().getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + temp
 
