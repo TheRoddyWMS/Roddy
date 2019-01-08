@@ -208,6 +208,38 @@ class ConfigurationFactoryTest {
     }
 
     @Test
+    void testReadProcessingToolsWithNewSyntax() {
+        NodeChild xml = (NodeChild) new XmlSlurper().parseText(
+                """
+                <config>
+                    <processingtools>
+                        <tool name='sometool' value='sometool.sh' basepath='bp' />
+                    </processingtools>
+                </config>
+                """
+        )
+        Configuration cfg = new Configuration()
+        ConfigurationFactory.instance.readProcessingTools(xml, cfg)
+        assert cfg.tools.size() == 1
+    }
+
+    @Test
+    void testReadProcessingToolsWithOldSyntax() {
+        NodeChild xml = (NodeChild) new XmlSlurper().parseText(
+                """
+                <config>
+                    <processingTools>
+                        <tool name='sometool' value='sometool.sh' basepath='bp' />
+                    </processingTools>
+                </config>
+                """
+        )
+        Configuration cfg = new Configuration()
+        ConfigurationFactory.instance.readProcessingTools(xml, cfg)
+        assert cfg.tools.size() == 1
+    }
+
+    @Test
     void testReadInlineScript() {
         def toolEntry = new ProcessingToolReader(getToolEntryWithInlineScript(), null).readProcessingTool()
         assert toolEntry.hasInlineScript()
@@ -254,7 +286,6 @@ class ConfigurationFactoryTest {
         assert rsets[xl].walltime instanceof TimeUnit && rsets[xl].walltime.toString() == "07:12:00:00"; // 180h
     }
 
-    // @Michael: Should the two following derived from pattern map to the same pattern ID if the same class attribute value is used?
     private static final String STR_VALID_DERIVEDFROM_PATTERN = "<filename class='TestFileWithParent' derivedFrom='TestParentFile' pattern='/tmp/onderivedFile'/>"
     private static final String STR_VALID_DERIVEDFROM_PATTERN_WITH_INLINESCRIPT = "<filename class='TestFileWithParent' derivedFrom='TestParentFile' pattern='/tmp/onderivedFile'/>"
     private static final String STR_VALID_DERIVEDFROM_PATTERN_WITH_ARR = "<filename class='TestFileWithParentArr' derivedFrom='TestParentFile[2]' pattern='/tmp/onderivedFile'/>"

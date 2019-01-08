@@ -1,0 +1,108 @@
+#
+# Copyright (c) 2018 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+#
+# Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
+#
+---
+configuration:
+  name: projectJSONConfiguration
+  description: A complete configuration with all known elements.
+  usedresourcessize: l
+  configurationType: project
+  availableanalyses:
+    - id: test1
+      configuration: testAnalysis
+    - id: test2
+      configuration: testAnalysis
+      useplugin: TestPluginWithJarFile
+  configurationvalues:
+    - name: aValue
+      value: Some text
+      description: A configuration value
+      type: string
+    - name: aValue1
+      value: Some text
+      description: Reduced
+    - name: aValue2
+      value: Some text
+    - name: bValue
+      value: 500
+      description: A second configuration value
+      type: integer
+    - name: cValueWithQuotes
+      value: 500
+      description: A second "configuration" value
+      type: integer
+  processingtools:
+    - name: aToolWithoutResources
+      value: someFile.sh
+      basepath: aPath
+    - name: aToolWithResources
+      value: someFile.sh
+      basepath: aPath
+      resourcesets:
+        - size: l
+          memory: '0.1'
+          cores: '1'
+          nodes: '1'
+          walltime: '1'
+        - size: xl
+          memory: '1'
+          cores: '2'
+          nodes: '1'
+          walltime: '4'
+      input:
+        - type: file
+          typeof: TextFile
+          scriptparameter: PARM_A
+        - type: file
+          typeof: TextFile
+          scriptparameter: PARM_B
+      output:
+        - type: file
+          typeof: TextFile
+          scriptparameter: PARM_C
+        - type: file
+          typeof: TextFile
+          scriptparameter: PARM_D
+          filename: "/tmp/abc"
+  filenames:
+    package: de.dkfz.roddy.testpackage
+    filestagesbase: de.dkfz.roddy.TestFileStage
+    patterns:
+      - class: AFileClass
+        derivedFrom: BaseClass
+        pattern: "/tmp/abc/SomePattern/${variable}"
+      - class: BFileClass
+        onMethod: AClass.method
+        selectiontag: segments1
+        pattern: "/tmp/abc/SomePattern/${variable}"
+      - class: BFileClass
+        onMethod: AClass.method
+        selectiontag: segments2
+        pattern: "/tmp/abc/SomePattern/${variable}"
+      - class: CFileClass
+        onScriptParameter: PARM_A
+        pattern: "/tmp/abc/SomePattern/${variable}"
+      - class: DFileClass
+        onTool: aToolWithResources
+        pattern: "/tmp/abc/SomePattern/${variable}"
+  subconfigurations:
+    - name: withInheritance
+      inheritAnalyses: true
+      configurationvalues:
+        - name: nestedValue
+          value: Nested variable value
+    - name: withInheritanceAndSubConfig
+      inheritAnalyses: true
+      subconfigurations:
+        - name: deeplyNestedConfig
+          inheritAnalyses: true
+    - name: withoutInheritance
+      availableanalyses:
+        - id: nestedAnalysis
+          configuration: testAnalysis
+          useplugin: TestPlugin
+      configurationvalues:
+        - name: nestedValue2
+          value: Another nested value

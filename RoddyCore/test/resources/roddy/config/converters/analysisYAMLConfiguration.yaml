@@ -1,0 +1,32 @@
+#
+# Copyright (c) 2018 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+#
+# Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
+#
+---
+configuration:
+  name: analysisJSONConfiguration
+  description: A complete configuration with all known elements.
+  configurationType: analysis
+  class: Analysis
+  workflowClass: TestWorkflow
+  runtimeServiceClass: TestRuntimeService
+  imports: someotherfile
+  listOfUsedTools: a,b,c
+  usedToolFolders: somePath
+  configurationvalues:
+    - name: aValue
+      value: Some text
+      description: A configuration value
+      type: string
+  processingtools:
+    - name: aToolWithoutResources
+      value: someFile.sh
+      basepath: aPath
+  filenames:
+    package: de.dkfz.roddy.testpackage
+    filestagesbase: de.dkfz.roddy.TestFileStage
+    patterns:
+      - class: AFileClass
+        derivedFrom: BaseClass
+        pattern: "/tmp/abc/SomePattern/${variable}"

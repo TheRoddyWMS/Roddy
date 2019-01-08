@@ -1,5 +1,9 @@
 # Work in progress
 
+  - Add YAML configuration files.
+  
+  - Add JSON configuration files.
+
 * Version update to 3.4.0
 
   - Improved validation of configuration values.
