@@ -124,7 +124,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         this.id = id
         this.value = value != null ? replaceDeprecatedVariableIdentifiers(value) : null
         this.configuration = config
-        this.type = !RoddyConversionHelperMethods.isNullOrEmpty(type) ? type : determineTypeOfValue(value)
+        this.type = !RoddyConversionHelperMethods.isNullOrEmpty(type) ? type : guessTypeOfValue(value)
         this.description = description
         if (tags != null)
             this.tags.addAll(tags)
@@ -217,7 +217,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
      *
      * @return
      */
-    static String determineTypeOfValue(String value) {
+    static String guessTypeOfValue(String value) {
         if (RoddyConversionHelperMethods.isInteger(value)) return CVALUE_TYPE_INTEGER
         if (RoddyConversionHelperMethods.isDouble(value)) return CVALUE_TYPE_DOUBLE
         if (RoddyConversionHelperMethods.isFloat(value)) return CVALUE_TYPE_FLOAT

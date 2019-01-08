@@ -94,6 +94,16 @@ enum RoddyStartupModes {
         this.scope = scope
     }
 
+    static Optional<RoddyStartupModes> fromString(String name) {
+        RoddyStartupModes mode
+        try {
+            mode = name as RoddyStartupModes
+        } catch (Exception e) {
+            return Optional.empty()
+        }
+        return Optional.of(mode)
+    }
+
     private static void printCommand(RoddyStartupModes option, String parameters) {
         System.out.println(String.format("  %s %s " + Constants.ENV_LINESEPARATOR, option.toString(), parameters))
     }

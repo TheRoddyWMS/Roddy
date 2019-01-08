@@ -371,7 +371,7 @@ public class Roddy {
 
                 //Enable the setup of all debug options via the command line.
                 if (startupOption == (RoddyStartupOptions.debugOptions)) {
-                    String[] options = clc.getOptionList(startupOption).toArray(new String[0]);
+                    String[] options = clc.getOptionValueList(startupOption).toArray(new String[0]);
 
                 }
 
@@ -384,7 +384,7 @@ public class Roddy {
                     if (startupOption == (RoddyStartupOptions.useiodir)) {
                         useCustomIODirectories = true;
 
-                        List<String> directories = clc.getOptionList(startupOption);
+                        List<String> directories = clc.getOptionValueList(startupOption);
                         if (directories.size() == 0 || directories.size() > 2) {
                             throw new RuntimeException("Arguments for --useiodir are wrong");
                         }
@@ -405,7 +405,7 @@ public class Roddy {
                     // When a job is not submitted successfully, Roddy will wait try to do it again
                     if (startupOption == (RoddyStartupOptions.resubmitjobonerror)) {
                         repeatJobSubmission = true;
-                        List<String> options = clc.getOptionList(startupOption);
+                        List<String> options = clc.getOptionValueList(startupOption);
                         if (options.size() > 0)
                             repeatJobSubmissionAmount = RoddyConversionHelperMethods.toInt(options.get(0));
                         if (options.size() > 1)
@@ -420,11 +420,11 @@ public class Roddy {
 
                     //Enable setup of workflow run flags from the command line
                     if (startupOption == (RoddyStartupOptions.run)) {
-                        String[] flags = clc.getOptionList(startupOption).toArray(new String[0]);
+                        String[] flags = clc.getOptionValueList(startupOption).toArray(new String[0]);
                     }
 
                     if (startupOption == (RoddyStartupOptions.dontrun)) {
-                        String[] flags = clc.getOptionList(startupOption).toArray(new String[0]);
+                        String[] flags = clc.getOptionValueList(startupOption).toArray(new String[0]);
                     }
                 }
             }
@@ -480,7 +480,7 @@ public class Roddy {
         // Stores if an error happened
         boolean error = false;
         if (commandLineCall.isOptionSet(opt)) {
-            List<String> listOfToggles = commandLineCall.getOptionList(opt);
+            List<String> listOfToggles = commandLineCall.getOptionValueList(opt);
             for (String toggle : listOfToggles) {
                 try {
                     if (AvailableFeatureToggles.valueOf(toggle) != null)
@@ -667,7 +667,7 @@ public class Roddy {
             setScratchDirectory(configurationValues);
 
             // Add custom command line values to the project configuration.
-            List<ConfigurationValue> externalConfigurationValues = getCommandLineCall().getSetConfigurationValues();
+            List<ConfigurationValue> externalConfigurationValues = getCommandLineCall().getConfigurationValues();
 
             configurationValues.addAll(externalConfigurationValues);
 
@@ -901,7 +901,7 @@ public class Roddy {
     private static List<File> loadFolderListFromConfiguration(RoddyStartupOptions option, String configurationConstant) throws ConfigurationError {
         String[] split;
         if (getCommandLineCall().isOptionSet(option))
-            split = getCommandLineCall().getOptionList(option).toArray(new String[0]);
+            split = getCommandLineCall().getOptionValueList(option).toArray(new String[0]);
         else
             split = applicationProperties.getOrSetApplicationProperty(configurationConstant, "").split("[,:]");
 

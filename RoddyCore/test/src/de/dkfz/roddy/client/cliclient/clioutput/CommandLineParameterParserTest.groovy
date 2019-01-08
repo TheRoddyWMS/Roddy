@@ -12,7 +12,7 @@ class CommandLineParameterParserTest extends Specification {
 
     def "arbitrary parameter"(String target) {
         when:
-        def result = CommandLineParameterParser.arbitraryParameterExpr.parse(target)
+        def result = CommandLineParameterParser.arbitraryParameterExpr.end().parse(target)
 
         then:
         result.success
@@ -29,7 +29,7 @@ class CommandLineParameterParserTest extends Specification {
 
     def "parameter without value (success)"(String target, String name) {
         when:
-        def result = CommandLineParameterParser.parameterWithoutValueExpr.parse(target)
+        def result = CommandLineParameterParser.parameterWithoutValueExpr.end().parse(target)
 
         then:
         result.success
@@ -44,7 +44,7 @@ class CommandLineParameterParserTest extends Specification {
 
     def "parameter without value (failure)"(String target) {
         when:
-        def result = CommandLineParameterParser.parameterWithoutValueExpr.parse(target)
+        def result = CommandLineParameterParser.parameterWithoutValueExpr.end().parse(target)
 
         then:
         !result.success
@@ -59,7 +59,7 @@ class CommandLineParameterParserTest extends Specification {
 
     def "parameter with value (success)"(String target, String name, String value) {
         when:
-        def result = CommandLineParameterParser.parameterWithValueExpr.parse(target)
+        def result = CommandLineParameterParser.parameterWithValueExpr.end().parse(target)
 
         then:
         result.success
@@ -77,7 +77,7 @@ class CommandLineParameterParserTest extends Specification {
 
     def "parameter with value (failure)"(String target) {
         when:
-        def result = CommandLineParameterParser.parameterWithValueExpr.parse(target)
+        def result = CommandLineParameterParser.parameterWithValueExpr.end().parse(target)
 
         then:
         !result.success
@@ -92,7 +92,7 @@ class CommandLineParameterParserTest extends Specification {
 
     def "cvalue parameter (success)"(String target, Map<String,String> cvalues) {
         when:
-        def result = CommandLineParameterParser.cvalueParameterExpr.parse(target)
+        def result = CommandLineParameterParser.cvalueParameterExpr.end().parse(target)
 
         then:
         result.success
@@ -104,35 +104,39 @@ class CommandLineParameterParserTest extends Specification {
         where:
         target                             | cvalues
         '--cvalues='                       | [:]                 // reasonable
-        '--cvalues=bla'                    | [bla:null]
-        '--cvalues=bla:blub'               | [bla:'blub']
-        '--cvalues=a:'                     | [a:'']
-        '--cvalues=a: '                    | [a:' ']
-        '--cvalues=a:( )'                  | [a:'( )']
-        '--cvalues=a: ( )'                 | [a:' ( )']
-        "--cvalues=a:' '"                  | [a:"' '"]
-        '--cvalues=a::'                    | [a:':']              // colons as values are allowed
-        '--cvalues=a:\\: --malformedInput' | [a:'\\: --malformedInput']   // input is preprocessed parameters, not command-lines
-        '--cvalues=a:b,c:d'                | [a:'b', c:'d']
-        '--cvalues=a:b,c:d ,e:f'           | [a:'b', c:'d ', e:'f']
-        '--cvalues=a:b, c:d'               | [a:'b', c:'d']
-        '--cvalues=a:b,c:'                 | [a:'b', c:'']
-        '--cvalues=_a:b'                   | [_a:'b']
-        '--cvalues=a::,b'                  | [a:':', b:null]
-        '--cvalues=a:\\,,b'                | [a:'\\,', b:null]      // escaped commas are fine
-        '--cvalues=a:\\:,b:c'              | [a:'\\:', b:'c']
+        '--cvalues=bla:blub'               | [bla:new CValue('bla','blub')]
+        '--cvalues=a:'                     | [a:new CValue('a', '')]
+        '--cvalues=a: '                    | [a:new CValue('a', ' ')]
+        '--cvalues= a:b'                   | [a:new CValue('a', 'b')]    // ignore spaces around variable names
+        '--cvalues=a:( )'                  | [a:new CValue('a', '( )')]
+        '--cvalues=a: ( )'                 | [a:new CValue('a', ' ( )')]
+        "--cvalues=a:' '"                  | [a:new CValue('a', "' '")]
+        '--cvalues=a::string'              | [a:new CValue('a', '', 'string')] // colons as values are allowed, a type may follow
+        '--cvalues=a:\\: --parameter'      | [a:new CValue('a', ': --parameter')] // input is preprocessed parameters, not command-lines
+        '--cvalues=a:\\:,b:c'              | [a:new CValue('a', ':'), b:new CValue('b', 'c')] // escaped colons are fine
+        '--cvalues=a:\\,,b:c'              | [a:new CValue('a', ','), b:new CValue('b', 'c')] // escaped commas are fine
+        '--cvalues=a:b,c:d'                | [a:new CValue('a', 'b'), c:new CValue('c', 'd')]
+        '--cvalues=a:b,c:d ,e:f'           | [a:new CValue('a', 'b'), c:new CValue('c', 'd '), e:new CValue('e', 'f')]
+        '--cvalues=a:b, c:d'               | [a:new CValue('a', 'b'), c:new CValue('c', 'd')]
+        '--cvalues=a:b,c:'                 | [a:new CValue('a', 'b'), c:new CValue('c', '')]
+        '--cvalues=_a:b'                   | [_a:new CValue('_a', 'b')]
+        '--cvalues=a:A1,b:B, a:A2'         | [a:new CValue('a', 'A2') , b:new CValue('b', 'B')]
+        // later redefinition overrides earlier definition; key output order does is arbitrary (thus not [b:'B', a:'A2']
     }
 
     def "cvalue parameter (failure)"(String target) {
         when:
-        def result = CommandLineParameterParser.cvalueParameterExpr.parse(target)
+        def result = CommandLineParameterParser.cvalueParameterExpr.end().parse(target)
 
         then:
         !result.success
 
         where:
         target                             | _
+        '--cvalues'                        | _  // cvalue parameter without parameter list doesn't match
         '--cval=a:yip'                     | _  // cvalue parameter name doesn't match
+
+        '--cvalues=bla'                    | _  // force explicit definition with colon
 
         '--cvalues=a:,'                    | _  // empty cvalue (second)
         '--cvalues=,a:'                    | _  // empty cvalue (first)
@@ -141,12 +145,14 @@ class CommandLineParameterParserTest extends Specification {
         '--cvalues=0a:'                    | _  // not Bash identifier
         '--cvalues=_^:nope'                | _  // not Bash identifier
 
+        '--cvalues=a::'                    | _  // empty type is not allowed
+
         '--cvalues=a:\\\\,,b'              | _  // incorrectly escaped comma (in the middle)
     }
 
     def "bash variable parser (success)"(String target) {
         when:
-        def result = CommandLineParameterParser.bashVariableNameExpr.parse(target)
+        def result = CommandLineParameterParser.bashVariableNameExpr.end().parse(target)
 
         then:
         result.success
@@ -163,7 +169,7 @@ class CommandLineParameterParserTest extends Specification {
 
     def "bash variable parser (failure)"(String target) {
         when:
-        def result = CommandLineParameterParser.bashVariableNameExpr.parse(target)
+        def result = CommandLineParameterParser.bashVariableNameExpr.end().parse(target)
 
         then:
         !result.success
@@ -180,19 +186,23 @@ class CommandLineParameterParserTest extends Specification {
         '^'        | _
     }
 
-    def "complete commandline parameter parser test (success)"(String target) {
+    def "complete commandline parameter parser test (success)"(String target, Class resultClass) {
         when:
-        def result = CommandLineParameterParser.commandLineParameterExpr.parse(target)
+        def result = CommandLineParameterParser.commandLineParameterExpr.end().parse(target)
 
         then:
         result.success
+        result.get().getClass() == resultClass
 
         where:
-        target            | _
-        '--'              | _
-        '--abc'           | _
-        '--cvalues'       | _
-        "--cvalues='a:b'" | _
+        target            | resultClass
+        'xy'              | ArbitraryParameter
+        '--'              | ParameterWithoutValue
+        '--abc'           | ParameterWithoutValue
+        '--abc=val'       | ParameterWithValue
+        '--cvalues='      | CValueParameter
+        '--cvalues=a:b'   | CValueParameter
+        "--cvalues=a:( a bash array ),b:1.0,c:2:double,d:'quoted string',e:1.0f,f:1" | CValueParameter
     }
 
 }

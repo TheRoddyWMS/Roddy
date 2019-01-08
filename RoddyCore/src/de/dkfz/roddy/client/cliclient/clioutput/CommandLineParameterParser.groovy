@@ -5,8 +5,10 @@
  */
 package de.dkfz.roddy.client.cliclient.clioutput
 
+import de.dkfz.roddy.tools.Tuple2
 import groovy.transform.CompileStatic
 import org.petitparser.parser.Parser
+import org.petitparser.parser.primitive.FailureParser
 import org.petitparser.parser.primitive.StringParser
 
 import static org.petitparser.parser.primitive.CharacterParser.*
@@ -49,14 +51,75 @@ class ParameterWithValue implements Parameter {
 
 }
 
+/** CValue is a value object and not modifiable. Therefore there are equals and hashCode methods. */
 @CompileStatic
-class CValueParameter implements Parameter {
+class CValue {
+    private final String name
+    private final String value
+    private final String type
 
-    Map<String, String> cvalues
+    CValue(String name, String value = null, String type = null) {
+        assert(null != name)
+        this.name = name
+        this.value = value
+        this.type = type
+    }
 
-    CValueParameter(Map<String, String> cvalues) {
-        assert null != cvalues
-        name = "cvalues"
+    String getName() {
+        this.name
+    }
+
+
+    String getValue() {
+        this.value
+    }
+
+    String getType() {
+        this.type
+    }
+
+    String toString() {
+        "CValue('$name','$value','$type')"
+    }
+
+    @Override
+    int hashCode() {
+        Objects.hash(name, value, type)
+    }
+
+    @Override
+    boolean equals(Object obj) {
+        if(obj == null)
+            return false
+        if(!(obj instanceof CValue))
+            return false
+
+        CValue other = obj as CValue
+        name == other.name &&
+                value == other.value &&
+                type == other.type
+    }
+
+}
+
+@CompileStatic
+class CValueParameter extends ParameterWithValue {
+
+    Map<String, CValue> cvalues
+
+
+    private static String cvalueMapToValue(Map<String, CValue> cvalues) {
+        cvalues.collect { k, v ->
+            def res = v.name + ':' + v.value
+            if (v.type != null) {
+                res += ':' + v.type
+            }
+            res
+        }.join(',')
+    }
+
+    CValueParameter(Map<String, CValue> cvalues) {
+        super('cvalues', cvalueMapToValue(cvalues))
         this.cvalues = cvalues
     }
 
@@ -121,6 +184,8 @@ class CommandLineParameterParser {
 
     static Parser commaExpr = of(',' as Character)
 
+    static Parser colonExpr = of(':' as Character)
+
     /**
      * Just a convenience name for backslash. '\'
      */
@@ -129,35 +194,66 @@ class CommandLineParameterParser {
     /**
      * Commas are the variable assignment separators. Therefore, escaped commas are just commas. '\,'
      */
-    static Parser escapedCommaExpr = escapeExpr.seq(commaExpr)
+    static Parser escapedCommaExpr = escapeExpr.seq(commaExpr).
+            map { List r -> r.get(1) }    // strip off escape
 
     /**
      * Escaped escapes are just escape-characters. '\\'
      */
-    static Parser escapedEscapeExpr = escapeExpr.seq(escapeExpr)
+    static Parser escapedEscapeExpr = escapeExpr.seq(escapeExpr).
+            map { List r -> r.get(1) }    // strip off escape
+
+    /**
+     * Colons ':' separate values from types declarations (value:type)
+     */
+    static Parser escapedColonExpr = escapeExpr.seq(colonExpr).
+            map { List r -> r.get(1) }    // strip off escape
 
     /**
      * Configuration value in the '--cvalues' value are either '\\' (first, to get consumed), '\,' (to ensure
      * escaped commas are taken as is, or non-commas. The matching ends at the first non-escaped comma that
      * is necessarily the delimiter to the next configuration variable.
      */
-    static Parser variableValueExpr = escapedEscapeExpr.or(escapedCommaExpr).or(commaExpr.neg()).star().
-            flatten()
+    static Parser variableValueExpr = escapedEscapeExpr.or(escapedCommaExpr).or(escapedColonExpr).or(commaExpr.or(colonExpr).neg()).star().
+            map { List r -> r.join('') }  // flatten() didn't work: it kept the escapes that should be stripped already be the nested expressions
 
-    /** Although '_' is a bash-variable, it is none that can be set. Therefore here we have a dichotomy. */
+    /** Note that although '_' is a bash-variable, it is none that can be set. */
     static Parser bashVariableNameExpr =
             letter().seq(word().or(underscoreExpr).star()).
             or(underscoreExpr.seq(word().or(underscoreExpr).plus())).
-                    flatten()
+                    trim().     // ignore whitespace around variable names during parsing
+                    map { List r ->
+                        r.flatten().join('').trim()
+                    }
 
-    static Parser cvalueExpr = bashVariableNameExpr.seq(of(':' as Character).seq(variableValueExpr).optional()).
+    static Parser variableTypeExpr = word().plus().
+        flatten()
+
+    static Parser separatedVariableValueExpr = colonExpr.seq(variableValueExpr).
+        map { List r -> r.get(1) }   // drop the ':'
+
+    static Parser separatedVariableTypeExpr = colonExpr.seq(variableTypeExpr).
+        map { List r -> r.get(1) }   // drop the ':'
+
+    /**
+     * A complete --cvalue option value must include a variable name and a colon as kind of declaration operator and an optionally empty value ('').
+     * It may or may not contain a variable type declaration that itself must not be empty (so rather leave the type out, empty type names are not allowed.
+     */
+    static Parser cvalueExpr =
+            bashVariableNameExpr.seq(separatedVariableValueExpr.seq(separatedVariableTypeExpr.optional())).
         map { List r ->
-            new MapEntry(r.get(0), (r.getAt(1) as List)?.getAt(1))
+            String name = r[0]
+            if (null == name) {
+                return null
+            } else {
+                String value = (r[1] as List)?.getAt(0)
+                String type =  (r[1] as List)?.getAt(1)
+                new MapEntry(r.get(0), new CValue(name, value, type))
+            }
         }
 
-    static Parser cvalueSeparatorExpr = of(',' as Character).seq(whitespace().star()).
+    static Parser cvalueSeparatorExpr = commaExpr.seq(whitespace().star()).
         map { null }      // simplify the returned value
-
 
     /**
      * The cvalueListExtensionExprs exists mostly to produce a clean CValueParameter list and thus simplify the map in cvalueListExpr.
@@ -182,15 +278,26 @@ class CommandLineParameterParser {
      * assignments (with colons as assignment operators) within.
      */
     static Parser cvalueParameterExpr =
-            parameterPrefix.seq(StringParser.of('cvalues')).seq(of('=' as Character)).seq(cvalueListExpr).end().
+            parameterPrefix.seq(StringParser.of('cvalues')).
+                    seq(of('=' as Character).or(FailureParser.withMessage("No content"))).
+                    seq(cvalueListExpr.or(FailureParser.withMessage("Malformed content"))).
             map { List<List> parseTree ->
-                new CValueParameter(parseTree.get(3).toList().collectEntries())
+                new CValueParameter(parseTree.get(3).toList().collectEntries() as Map<String,CValue>)
             }
 
-    static Parser commandLineParameterExpr =
-            cvalueParameterExpr.
-                    or(parameterWithValueExpr).
-                    or(parameterWithoutValueExpr).
-                    or(arbitraryParameterExpr)
+    /* Unfortunately, there does not seem to be a compositor that allows quick-fail on fatal input. The ChoiceParser
+       knows only successful and failed result objects and continues on every failure. It does not know fatal errors,
+       such as parsing '--cvalue' that would fix to a 'cvalue' parameter and then stopping completely.
+
+       The following therefore returns with parameterWithValueExpr if '--cvalues=' is given and '--cvalues=error' is
+       equally ignored and instead parameterWithValue returned (=success).
+
+       TODO: Find a way to create a single entry point with correct & meaningful error handling (early failure in cvalues branch).
+     */
+//    static Parser commandLineParameterExpr =
+//            cvalueParameterExpr.
+//                    or(parameterWithValueExpr).
+//                    or(parameterWithoutValueExpr).
+//                    or(arbitraryParameterExpr)
 
 }

@@ -11,7 +11,7 @@ package de.dkfz.roddy.client;
  *
  */
 @groovy.transform.CompileStatic
-public enum RoddyStartupOptions {
+enum RoddyStartupOptions {
     /**
      * An option specifically for listworkflows.
      * Prints a list in this way:
@@ -81,7 +81,8 @@ public enum RoddyStartupOptions {
 
     userepository(true),
 
-    detailed, disallowexit;
+    detailed,
+    disallowexit;
 
     public final boolean acceptsParameters;
 
@@ -91,5 +92,14 @@ public enum RoddyStartupOptions {
 
     RoddyStartupOptions(boolean acceptsParameters) {
         this.acceptsParameters = acceptsParameters;
+    }
+
+    static Optional<RoddyStartupOptions> fromString(String option) {
+        try {
+            RoddyStartupOptions parsedOption = option as RoddyStartupOptions
+            Optional.of(parsedOption)
+        } catch (e) {
+            return Optional.empty()
+        }
     }
 }
