@@ -294,10 +294,10 @@ class CommandLineParameterParser {
 
        TODO: Find a way to create a single entry point with correct & meaningful error handling (early failure in cvalues branch).
      */
-//    static Parser commandLineParameterExpr =
-//            cvalueParameterExpr.
-//                    or(parameterWithValueExpr).
-//                    or(parameterWithoutValueExpr).
-//                    or(arbitraryParameterExpr)
+    static Parser commandLineParameterExpr =
+            cvalueParameterExpr.
+                    or(parameterWithValueExpr).
+                    or(parameterWithoutValueExpr).
+                    or(arbitraryParameterExpr)
 
 }
