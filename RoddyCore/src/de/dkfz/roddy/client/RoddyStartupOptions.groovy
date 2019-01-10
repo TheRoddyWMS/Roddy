@@ -4,7 +4,9 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.client;
+package de.dkfz.roddy.client
+
+import de.dkfz.roddy.tools.EnumHelper;
 
 /**
  * Additional options for the Roddy startup.
@@ -95,11 +97,6 @@ enum RoddyStartupOptions {
     }
 
     static Optional<RoddyStartupOptions> fromString(String option) {
-        try {
-            RoddyStartupOptions parsedOption = option as RoddyStartupOptions
-            Optional.of(parsedOption)
-        } catch (e) {
-            return Optional.empty()
-        }
+        EnumHelper.castFromString(option)
     }
 }

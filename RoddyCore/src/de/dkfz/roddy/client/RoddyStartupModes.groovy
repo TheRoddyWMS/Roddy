@@ -10,6 +10,8 @@ import de.dkfz.roddy.Constants
 import static de.dkfz.roddy.client.RoddyStartupOptions.*
 import static de.dkfz.roddy.client.RoddyStartupModeScopes.*
 
+import de.dkfz.roddy.tools.EnumHelper
+
 /**
  * Contains the possible startup modes for Roddy.
  */
@@ -95,13 +97,7 @@ enum RoddyStartupModes {
     }
 
     static Optional<RoddyStartupModes> fromString(String name) {
-        RoddyStartupModes mode
-        try {
-            mode = name as RoddyStartupModes
-        } catch (Exception e) {
-            return Optional.empty()
-        }
-        return Optional.of(mode)
+        EnumHelper.castFromString(name)
     }
 
     private static void printCommand(RoddyStartupModes option, String parameters) {

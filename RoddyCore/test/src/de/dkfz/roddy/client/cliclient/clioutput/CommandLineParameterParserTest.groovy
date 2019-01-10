@@ -98,7 +98,7 @@ class CommandLineParameterParserTest extends Specification {
         result.success
         result.get().getClass() == CValueParameter
         (result.get() as CValueParameter).name == 'cvalues'
-        (result.get() as CValueParameter).cvalues == cvalues
+        (result.get() as CValueParameter).cvaluesMap.collectEntries { it } == cvalues
 
 
         where:
@@ -184,25 +184,6 @@ class CommandLineParameterParserTest extends Specification {
         '/'        | _
         '\\'       | _
         '^'        | _
-    }
-
-    def "complete commandline parameter parser test (success)"(String target, Class resultClass) {
-        when:
-        def result = CommandLineParameterParser.commandLineParameterExpr.end().parse(target)
-
-        then:
-        result.success
-        result.get().getClass() == resultClass
-
-        where:
-        target            | resultClass
-        'xy'              | ArbitraryParameter
-        '--'              | ParameterWithoutValue
-        '--abc'           | ParameterWithoutValue
-        '--abc=val'       | ParameterWithValue
-        '--cvalues='      | CValueParameter
-        '--cvalues=a:b'   | CValueParameter
-        "--cvalues=a:( a bash array ),b:1.0,c:2:double,d:'quoted string',e:1.0f,f:1" | CValueParameter
     }
 
 }

@@ -5,7 +5,7 @@
  */
 package de.dkfz.roddy.client.cliclient.clioutput
 
-import de.dkfz.roddy.tools.Tuple2
+import com.google.common.collect.ImmutableMap
 import groovy.transform.CompileStatic
 import org.petitparser.parser.Parser
 import org.petitparser.parser.primitive.FailureParser
@@ -54,9 +54,9 @@ class ParameterWithValue implements Parameter {
 /** CValue is a value object and not modifiable. Therefore there are equals and hashCode methods. */
 @CompileStatic
 class CValue {
-    private final String name
-    private final String value
-    private final String type
+    final String name
+    final String value
+    final String type
 
     CValue(String name, String value = null, String type = null) {
         assert(null != name)
@@ -65,21 +65,16 @@ class CValue {
         this.type = type
     }
 
-    String getName() {
-        this.name
-    }
-
-
-    String getValue() {
-        this.value
-    }
-
-    String getType() {
-        this.type
-    }
-
     String toString() {
         "CValue('$name','$value','$type')"
+    }
+
+    String toCValueParameterString() {
+        def res = name + ':' + value
+        if (type != null) {
+            res += ':' + type
+        }
+        res
     }
 
     @Override
@@ -105,22 +100,19 @@ class CValue {
 @CompileStatic
 class CValueParameter extends ParameterWithValue {
 
-    Map<String, CValue> cvalues
-
+    private final ImmutableMap<String, CValue> cvaluesMap
 
     private static String cvalueMapToValue(Map<String, CValue> cvalues) {
-        cvalues.collect { k, v ->
-            def res = v.name + ':' + v.value
-            if (v.type != null) {
-                res += ':' + v.type
-            }
-            res
-        }.join(',')
+        cvalues.values()*.toCValueParameterString().join(',')
     }
 
     CValueParameter(Map<String, CValue> cvalues) {
         super('cvalues', cvalueMapToValue(cvalues))
-        this.cvalues = cvalues
+        this.cvaluesMap = ImmutableMap.builder().putAll(cvalues).build() as ImmutableMap<String, CValue>
+    }
+
+    Map<String, CValue> getCvaluesMap() {
+        cvaluesMap.collectEntries { it } as Map<String, CValue>
     }
 
 }
@@ -284,20 +276,5 @@ class CommandLineParameterParser {
             map { List<List> parseTree ->
                 new CValueParameter(parseTree.get(3).toList().collectEntries() as Map<String,CValue>)
             }
-
-    /* Unfortunately, there does not seem to be a compositor that allows quick-fail on fatal input. The ChoiceParser
-       knows only successful and failed result objects and continues on every failure. It does not know fatal errors,
-       such as parsing '--cvalue' that would fix to a 'cvalue' parameter and then stopping completely.
-
-       The following therefore returns with parameterWithValueExpr if '--cvalues=' is given and '--cvalues=error' is
-       equally ignored and instead parameterWithValue returned (=success).
-
-       TODO: Find a way to create a single entry point with correct & meaningful error handling (early failure in cvalues branch).
-     */
-    static Parser commandLineParameterExpr =
-            cvalueParameterExpr.
-                    or(parameterWithValueExpr).
-                    or(parameterWithoutValueExpr).
-                    or(arbitraryParameterExpr)
 
 }

@@ -9,7 +9,6 @@ package de.dkfz.roddy.client.cliclient
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 import static de.dkfz.roddy.client.RoddyStartupModes.help
 
-import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.client.RoddyStartupModes
 import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.client.cliclient.clioutput.*
@@ -52,40 +51,49 @@ class CommandLineCall {
         }
     }
 
-    @CompileDynamic
-    private static Optional<Parameter> processParameter(final RoddyStartupOptions option, final ArbitraryParameter parameter, final List<String> errors) {
-        throw new RuntimeException("Oops! Parsed ArbitraryParameter in 'parseOptions()'")
-    }
 
-    @CompileDynamic
-    private static Optional<Parameter> processParameter(final RoddyStartupOptions option, final ParameterWithValue parameter, final List<String> errors) {
-        // If the option is known ensure the option parsed as with value is indeed accepting values.
-        if (option.acceptsParameters) {
-            Optional.of(parameter)
+    /** The method glues together the functionality of the RoddyStartupOptions class with the more
+     *  general parsing code. In particular, here is checked, whether ParameterWith[out]Value indeed
+     *  takes an argument according to RoddyStartupOptions.
+     *
+     *  Compare #266
+     *
+     * @param option
+     * @param parameter
+     * @param errors
+     * @return
+     */
+    private static Optional<Parameter> processParameter(final RoddyStartupOptions option, final Parameter parameter, final List<String> errors) {
+        Optional<Parameter> result
+        if (parameter instanceof ArbitraryParameter) {
+            throw new RuntimeException("Oops! Parsed ArbitraryParameter in 'parseOptions()'")
+        } else if (parameter instanceof ParameterWithValue) {
+            // If the option is known ensure the option parsed as with value is indeed accepting values.
+            if (option.acceptsParameters) {
+                result = Optional.of(parameter)
+            } else {
+                errors << "The option " + option + " is malformed! Parameter value required."
+                result = Optional.empty()
+            }
+        } else if (parameter instanceof  ParameterWithoutValue) {
+            // If the option is known ensure the option parsed as with value is indeed NOT accepting values.
+            if (!option.acceptsParameters) {
+                result = Optional.of(parameter)
+            } else {
+                errors << "The option " + option + " is malformed! No parameter value expected."
+                result = Optional.empty()
+            }
+        } else if (parameter instanceof CValueParameter) {
+            result = Optional.of(parameter)
         } else {
-            errors << "The option " + option + " is malformed! Parameter value required."
-            Optional.empty()
+            throw new RuntimeException("Oops! Unknown Parameter subtype '${parameter.getClass()}': ${parameter.toString()}")
         }
+        return result
     }
 
-    @CompileDynamic
-    private static Optional<Parameter> processParameter(final RoddyStartupOptions option, final ParameterWithoutValue parameter, final List<String> errors) {
-        // If the option is known ensure the option parsed as with value is indeed accepting values.
-        if (!option.acceptsParameters) {
-            Optional.of(parameter)
-        } else {
-            errors << "The option " + option + " is malformed! No parameter value expected."
-            Optional.empty()
-        }
-    }
-
-    @CompileDynamic
-    private static Optional<Parameter> processParameter(final RoddyStartupOptions option, final CValueParameter parameter, final List<String> errors) {
-        Optional.of(parameter)
-    }
-
-    /** Check whether the parsed option is indeed accepted as option by Roddy. Errors are accumulated in the error argument.
-     *  If it is an accepted option, add the option value. Errors are accumulated in the error variable. */
+    /** Check whether the parsed option is indeed accepted as option by Roddy. Errors are accumulated
+     *  in the error argument. If it is an accepted option, add the option value. Errors are
+     *  accumulated in the error variable. */
     @CompileDynamic
     private static Optional<MapEntry> handle(final Parameter parameter, final List<String> errors) {
         Optional<RoddyStartupOptions> res = RoddyStartupOptions.fromString(parameter.name)
@@ -101,19 +109,21 @@ class CommandLineCall {
     }
 
 
-    /** This method exists only because java-petitparser apparently has no notion of a fatally failing parse expression with or(). Instead it simply
-     *  continues to parse with the next alternative and ignores the fatal error. Maybe there is a workaround using a different grammar.
+    /** This method exists only because java-petitparser apparently has no notion of a fatally failing parse
+     *  expression with or(). Instead it simply continues to parse with the next alternative and ignores the
+     *  fatal error. Maybe there is a workaround using a different grammar.
      *
       * @param optArg
      * @return
      */
     private static Result parse(String optArg) {
         Result cvalueResult = cvaluesParser.parse(optArg)
-        if (cvalueResult.success || cvalueResult.message.endsWith("content") || cvalueResult.message == "end of input expected") {
-            // The second case is a fatal error: A cvalues parameter with corrupt content.
+        if (cvalueResult.success || cvalueResult.message.endsWith('content') ||
+                cvalueResult.message == 'end of input expected') {
+            // The second and third cases are fatal errors: A cvalues parameter with corrupt content.
             return cvalueResult
         }
-        return otherParser.parse(optArg)
+        otherParser.parse(optArg)
     }
 
 
@@ -193,44 +203,40 @@ class CommandLineCall {
         optionsMap.keySet().asList()
     }
 
-    /** Split by a non-escaped character. Leading even number of escapes are accounted for. Note that because a lookahead is used,
-     *  at max 100 escapes are accounted for. */
+    /** Split by a non-escaped character. Leading even number of escapes are accounted for. Note that because a
+     *  lookahead is used, at max 100 escapes are accounted for. */
     static List<String> splitByNonEscapedCharacter(String string, Character c) {
         string.split("(?<=(?:^|[^\\\\])(?:\\\\\\\\){0,100})${c}") as List<String>
     }
 
-    /** Return a list of values associated with the parameter option. If none are allowed for the option, null is returned. */
+    /** Return a list of values associated with the parameter option. If none are allowed for the option,
+     *  null is returned. */
     List<String> getOptionValueList(RoddyStartupOptions option) {
         if (!option.acceptsParameters) {
             null
         } else {
             Parameter p = optionsMap.get(option)
             if (p instanceof CValueParameter) {
-                (p as CValueParameter).cvalues.collect { k, v ->
-                    "${k}:${v}"
-                } as List<String>
+                (p as CValueParameter).cvaluesMap.values()*.toCValueParameterString() as List<String>
             } else if (p instanceof ParameterWithValue) {
                 splitByNonEscapedCharacter((p as ParameterWithValue).value, ',' as Character)
             } else {
-                throw new RuntimeException("Possible programming error.")
+                throw new RuntimeException('Possible programming error.')
             }
         }
     }
 
-    /** Return the option's values. Note that cvalue options are reconstructed, such that leading spaces of cvalue names are discarded. */
+    /** Return the option's values. Note that cvalue options are reconstructed, such that leading spaces of cvalue
+     *  names are discarded. */
     String getOptionValue(RoddyStartupOptions option) {
         if (!option.acceptsParameters) {
             null
         } else {
             Parameter p = optionsMap.get(option)
-            if (p instanceof CValueParameter) {
-                   (p as CValueParameter).cvalues.collect { k, v ->
-                    "${k}:${v}"
-                }.join(",")
-            } else if (p instanceof ParameterWithValue) {
+            if (p instanceof ParameterWithValue || p instanceof CValueParameter) {
                 (p as ParameterWithValue).value
             } else {
-                throw new RuntimeException("Possible programming error.")
+                throw new RuntimeException('Possible programming error.')
             }
         }
     }
@@ -245,8 +251,9 @@ class CommandLineCall {
      * @return
      */
     List<ConfigurationValue> getConfigurationValues() {
-        (optionsMap.get(RoddyStartupOptions.cvalues, new CValueParameter([:])) as CValueParameter).cvalues.
-                collect { k, cval ->
+        (optionsMap.get(RoddyStartupOptions.cvalues, new CValueParameter([:])) as CValueParameter).
+                cvaluesMap.values().
+                collect { cval ->
                     new ConfigurationValue(cval.name, cval.value, cval.type)
                 }
     }
