@@ -32,7 +32,6 @@
     <cvalue name='ForbidSubmissionOnRunning' value='true' />
     <cvalue name='BreakSubmissionOnError' value='true' />
     <cvalue name='RollbackOnSubmissionOnError' value='false' />
-    <cvalue name='ModifiedVariablePassing' value='true' />
     <cvalue name='UseOldDataSetIDExtraction' value='true' />
     <cvalue name='AutoFilenames' value='false' />
     <cvalue name='UnzipZippedPlugins' value='false' />
