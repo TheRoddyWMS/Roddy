@@ -4,14 +4,16 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.client;
+package de.dkfz.roddy.client
+
+import de.dkfz.roddy.tools.EnumHelper
 
 /**
  * Additional options for the Roddy startup.
  *
  */
 @groovy.transform.CompileStatic
-public enum RoddyStartupOptions {
+enum RoddyStartupOptions {
     /**
      * An option specifically for listworkflows.
      * Prints a list in this way:
@@ -81,15 +83,20 @@ public enum RoddyStartupOptions {
 
     userepository(true),
 
-    detailed, disallowexit;
+    detailed,
+    disallowexit;
 
-    public final boolean acceptsParameters;
+    public final boolean acceptsParameters
 
     RoddyStartupOptions() {
-        this(false);
+        this(false)
     }
 
     RoddyStartupOptions(boolean acceptsParameters) {
-        this.acceptsParameters = acceptsParameters;
+        this.acceptsParameters = acceptsParameters
+    }
+
+    static Optional<RoddyStartupOptions> fromString(String option) {
+        EnumHelper.castFromString(option)
     }
 }

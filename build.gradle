@@ -143,7 +143,8 @@ dependencies {
     compile 'com.jcraft:jsch.agentproxy.connector-factory:0.0.9'  // BSD-style, http://www.jcraft.com/jsch-agent-proxy/LICENSE.txt
     compile 'com.jcraft:jsch.agentproxy.sshagent:0.0.9'           // BSD-style, http://www.jcraft.com/jsch-agent-proxy/LICENSE.txt
 
-    compile 'com.thoughtworks.xstream:xstream:1.4.5'            // BSD
+    compile 'com.thoughtworks.xstream:xstream:1.4.5'                          // BSD
+    compile 'com.github.petitparser.java-petitparser:petitparser-core:2.2.0'  // MIT
 
     // Testing libraries
     testCompile 'junit:junit:4.12'                              // EPL 1.0
