@@ -6,135 +6,250 @@
 
 package de.dkfz.roddy.client.cliclient
 
-import de.dkfz.roddy.StringConstants
-import de.dkfz.roddy.client.RoddyStartupModes
-import de.dkfz.roddy.client.RoddyStartupOptions
-import de.dkfz.roddy.config.ConfigurationValue
-import de.dkfz.roddy.execution.io.ExecutionService
-import de.dkfz.roddy.tools.LoggerWrapper
-
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 import static de.dkfz.roddy.client.RoddyStartupModes.help
+
+import de.dkfz.roddy.client.RoddyStartupModes
+import de.dkfz.roddy.client.RoddyStartupOptions
+import de.dkfz.roddy.client.cliclient.clioutput.*
+import de.dkfz.roddy.config.ConfigurationValue
+import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.Tuple2
+import org.petitparser.context.Result
+import org.petitparser.parser.Parser
 
 /**
  * A helper class for command line calls.
  * Options and parameters are extracted and put into an object of this class.
  */
 @groovy.transform.CompileStatic
-public class CommandLineCall {
-    private static LoggerWrapper logger = LoggerWrapper.getLogger(RoddyCLIClient.class.getSimpleName());
-    public final RoddyStartupModes startupMode;
-    private final List<String> arguments;
-    private final List<String> parameters;
-    private Map<RoddyStartupOptions, List<String>> optionsMap;
+class CommandLineCall {
+
+    private static final Parser cvaluesParser = CommandLineParameterParser.cvalueParameterExpr.end("malformed content")
+    private static final Parser otherParser = CommandLineParameterParser.parameterWithValueExpr.
+            or(CommandLineParameterParser.parameterWithoutValueExpr).
+            or(CommandLineParameterParser.arbitraryParameterExpr).end()
+
+
+    private static LoggerWrapper logger = LoggerWrapper.getLogger(RoddyCLIClient.class.getSimpleName())
+    public final RoddyStartupModes startupMode
+    private final List<String> arguments
+    private final List<String> parameters
+    private Map<RoddyStartupOptions, Parameter> optionsMap
     final boolean malformed
 
-    CommandLineCall(List<String> args) {
-        parameters = [];
-        optionsMap = [:];
-        if (!args.size() == 0)
-            args = [RoddyStartupModes.help.toString()];
-        this.arguments = args;
-
-        List<String> parameters = args.findAll { String arg -> !arg.startsWith("--") } as ArrayList<String>;
-        Collection<String> options = args.findAll { String arg -> arg.startsWith("--") };
-
-        // Try to extract the startup mode. If it not know, display the help message.
-        try {
-            startupMode = parameters ? parameters[0] as RoddyStartupModes : help;
-        } catch (Exception ex) {
-            logger.postAlwaysInfo("The startupmode " + parameters[0] + " is not known.");
-            this.startupMode = help;
-            return;
+    static RoddyStartupModes parseStartupMode(List<String> args) {
+        // The following implies that parameters (without '--') and options (with '--') can be freely mixed.
+        String putativeModeSpec = args.find { String arg -> !arg.startsWith('--') }
+        Optional<RoddyStartupModes> mode = RoddyStartupModes.fromString(putativeModeSpec)
+        if (mode.isPresent()) {
+            return mode.get()
+        } else {
+            logger.postAlwaysInfo("The startupmode '${putativeModeSpec}' is not known.")
+            return help
         }
+    }
 
-        //Parse options
+
+    /** The method glues together the functionality of the RoddyStartupOptions class with the more
+     *  general parsing code. In particular, here is checked, whether ParameterWith[out]Value indeed
+     *  takes an argument according to RoddyStartupOptions.
+     *
+     *  Compare #266
+     *
+     * @param option
+     * @param parameter
+     * @param errors
+     * @return
+     */
+    private static Optional<Parameter> processParameter(final RoddyStartupOptions option, final Parameter parameter, final List<String> errors) {
+        Optional<Parameter> result
+        if (parameter instanceof ArbitraryParameter) {
+            throw new RuntimeException("Oops! Parsed ArbitraryParameter in 'parseOptions()'")
+        } else if (parameter instanceof ParameterWithValue) {
+            // If the option is known ensure the option parsed as with value is indeed accepting values.
+            if (option.acceptsParameters) {
+                result = Optional.of(parameter)
+            } else {
+                errors << "The option " + option + " is malformed! Parameter value required."
+                result = Optional.empty()
+            }
+        } else if (parameter instanceof  ParameterWithoutValue) {
+            // If the option is known ensure the option parsed as with value is indeed NOT accepting values.
+            if (!option.acceptsParameters) {
+                result = Optional.of(parameter)
+            } else {
+                errors << "The option " + option + " is malformed! No parameter value expected."
+                result = Optional.empty()
+            }
+        } else if (parameter instanceof CValueParameter) {
+            result = Optional.of(parameter)
+        } else {
+            throw new RuntimeException("Oops! Unknown Parameter subtype '${parameter.getClass()}': ${parameter.toString()}")
+        }
+        result
+    }
+
+    /** Check whether the parsed option is indeed accepted as option by Roddy. Errors are accumulated
+     *  in the error argument. */
+    private static Optional<MapEntry> handle(final Parameter parameter, final List<String> errors) {
+        Optional<RoddyStartupOptions> opt = RoddyStartupOptions.fromString(parameter.name)
+        if (opt.isPresent()) {
+            return processParameter(opt.get(), parameter, errors).
+                        map { new MapEntry(opt.get(), it) }
+        } else {
+            errors << "Unknown option '" + parameter.name + "'"
+            return Optional.empty()
+        }
+    }
+
+
+    /** This method exists only because java-petitparser apparently has no notion of a fatally failing parse
+     *  expression with or(). Instead it simply continues to parse with the next alternative and ignores the
+     *  fatal error. Maybe there is a workaround using a different grammar.
+     *
+      * @param optArg
+     * @return
+     */
+    private static Result parse(String optArg) {
+        Result cvalueResult = cvaluesParser.parse(optArg)
+        if (cvalueResult.success || cvalueResult.message.endsWith('content') ||
+                cvalueResult.message == 'end of input expected') {
+            // The second and third cases are fatal errors: A cvalues parameter with corrupt content.
+            return cvalueResult
+        }
+        otherParser.parse(optArg)
+    }
+
+
+
+    /**
+     * Parse the options (the portion of the args that start with '--').
+     *
+     * @param    options
+     * @return   Pair with a Map RoddyStartupOptions and their values and a list of collected errors.
+     */
+    private static Tuple2<Map<RoddyStartupOptions, Parameter>, List<String>> parseOptions(List<String> args) {
+        // The following implies that parameters (without '--') and options (with '--') can be freely mixed
+        // but order within each group matters.
+        List<String> options = args.findAll { String arg -> arg.startsWith('--') }
+        Map<RoddyStartupOptions, Parameter> parsedOptions = [:]
         List<String> errors = []
-        Map<RoddyStartupOptions, List<String>> parsedOptions = [:];
         for (String optArg in options) {
-            String[] split = optArg.split(StringConstants.SPLIT_EQUALS);
-            try {
-                RoddyStartupOptions option = split[0][2..-1] as RoddyStartupOptions;
-                //TODO This needs to be reworked because:
-                //i.e. --cvalues=test:abc,test2:(e,e,f),test3("A string, with a comma") will seriously make problems!
-                //Leave it for now, but come back to it if it is necessary.
-                List<String> values = option.acceptsParameters ? split[1].split(StringConstants.SPLIT_COMMA)?.toList() : null;
-                parsedOptions[option] = values;
-                if (option.acceptsParameters)
-                    if (values)
-                        parsedOptions[option] = values;
-                    else {
-                        errors << "The option " + option + " is malformed!"
-                    }
-            } catch (Exception ex) {
-                errors << "The option with " + optArg + " is malformed!";
+            Result parseResult = parse(optArg)
+            if (parseResult.failure) {
+                errors << "Could not parse option string '" + optArg + "': ${parseResult.message}"
+            } else {
+                handle(parseResult.get() as Parameter, errors).map { MapEntry entry ->
+                    parsedOptions.put(entry.key as RoddyStartupOptions, entry.value as Parameter)
+                }
             }
         }
+        new Tuple2(parsedOptions, errors)
+    }
 
-        if(errors)
-            logger.severe(errors.join("\n\t"))
-        malformed = errors
+    CommandLineCall(List<String> args) {
+        // Guard against empty parameter list. Assume help is requested.
+        if (args.empty)
+            args = [help.toString()]
+        this.arguments = args
 
-        // Store all parameters and remove the startup mode.
-        if (parameters.size() > 1)
-            this.parameters += parameters[1..-1];
-        this.optionsMap.putAll(parsedOptions);
+        // Store all parameters (do not start with '--') and remove the startup mode.
+        List<String> allParameters = args.findAll { String arg -> !arg.startsWith('--') } as ArrayList<String>
+        if (allParameters.size() > 1)
+            this.parameters = allParameters[1..-1]
+        else
+            this.parameters = []
+        startupMode = parseStartupMode(args)
+
+        // Now process the options (that start with '--').
+        Tuple2<Map<RoddyStartupOptions, Parameter>, List<String>> options = parseOptions(args)
+        if (options.y) {
+            logger.severe(options.y.join("\n\t"))
+            malformed = true
+        } else {
+            malformed = false
+        }
+        this.optionsMap = options.x
     }
 
     List<String> getParameters() {
-        return new LinkedList(parameters);
+        new LinkedList(parameters)
     }
 
     String getAnalysisID() {
-        return parameters[0];
+        parameters[0]
     }
 
     List<String> getDatasetSpecifications() {
-        return Arrays.asList(parameters[1].split(SPLIT_COMMA));
+        Arrays.asList(parameters[1].split(SPLIT_COMMA))
     }
 
-    public boolean hasParameters() {
-        return parameters.size() > 0;
+    boolean hasParameters() {
+        parameters.size() > 0
     }
 
-    public boolean isOptionSet(RoddyStartupOptions option) {
-        return optionsMap.containsKey(option);
+    boolean isOptionSet(RoddyStartupOptions option) {
+        optionsMap.containsKey(option)
     }
 
-    public List<RoddyStartupOptions> getOptionList() {
-        return optionsMap.keySet().asList();
+    /** Get list of options (i.e. parameter names). */
+    List<RoddyStartupOptions> getOptionList() {
+        optionsMap.keySet().asList()
     }
 
-    public String getOptionValue(RoddyStartupOptions option) {
-        return optionsMap.get(option)?.first();
+    /** Split by a non-escaped character. Leading even number of escapes are accounted for. Note that because a
+     *  lookahead is used, at max 100 escapes are accounted for. */
+    static List<String> splitByNonEscapedCharacter(String string, Character c) {
+        string.split("(?<=(?:^|[^\\\\])(?:\\\\\\\\){0,100})${c}") as List<String>
     }
 
-    public List<String> getOptionList(RoddyStartupOptions option) {
-        return optionsMap.get(option);
+    /** Return a list of values associated with the parameter option. If none are allowed for the option,
+     *  null is returned. */
+    List<String> getOptionValueList(RoddyStartupOptions option) {
+        if (!option.acceptsParameters) {
+            null
+        } else {
+            Parameter p = optionsMap.get(option)
+            if (p instanceof CValueParameter) {
+                (p as CValueParameter).cvaluesMap.values()*.toCValueParameterString() as List<String>
+            } else if (p instanceof ParameterWithValue) {
+                splitByNonEscapedCharacter((p as ParameterWithValue).value, ',' as Character)
+            } else {
+                throw new RuntimeException('Possible programming error.')
+            }
+        }
     }
 
-    public List<String> getArguments() {
-        return arguments;
+    /** Return the option's values. Note that cvalue options are reconstructed, such that leading spaces of cvalue
+     *  names are discarded. */
+    String getOptionValue(RoddyStartupOptions option) {
+        if (!option.acceptsParameters) {
+            null
+        } else {
+            Parameter p = optionsMap.get(option)
+            if (p instanceof ParameterWithValue || p instanceof CValueParameter) {
+                (p as ParameterWithValue).value
+            } else {
+                throw new RuntimeException('Possible programming error.')
+            }
+        }
+    }
+
+    List<String> getArguments() {
+        arguments
     }
 
     /**
-     * Returns all set configuration values as a list in the format:
+     * Returns all configuration values as a list in the format:
      * [ a:a string, b:another string, c:123, ... ]
      * @return
      */
-    public List<ConfigurationValue> getSetConfigurationValues() {
-        def externalConfigurationValues = optionsMap.get(RoddyStartupOptions.cvalues, []);
-        def configurationValues = []
-        for (eVal in externalConfigurationValues) {
-            String[] splitIDValue = eVal.split(StringConstants.SPLIT_COLON);
-            //TODO Put in a better error checking when converting the split string to a configuration value.
-            //Remark, if a value contains : / colons, it will not work!
-            String cvalueId = splitIDValue[0];
-            String value = (splitIDValue.size() >= 2 ? splitIDValue[1] : ""); // Surround value with single quotes '' to prevent string interpretation for e.g. execution in bash
-            String type = splitIDValue.size() >= 3 ? splitIDValue[2] : null; // If null is set, type is guessed.
-
-            configurationValues << new ConfigurationValue(cvalueId, value, type)
-        }
-        configurationValues
+    List<ConfigurationValue> getConfigurationValues() {
+        (optionsMap.get(RoddyStartupOptions.cvalues, new CValueParameter([:])) as CValueParameter).
+                cvaluesMap.values().
+                collect { cval ->
+                    new ConfigurationValue(cval.name, cval.value, cval.type)
+                }
     }
 }

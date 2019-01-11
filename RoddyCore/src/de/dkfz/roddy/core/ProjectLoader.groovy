@@ -321,7 +321,7 @@ class ProjectLoader {
      */
     void attachAdditionallyPassedConfigurations() {
         if (Roddy.isOptionSet(RoddyStartupOptions.additionalImports)) {
-            Roddy.commandLineCall.getOptionList(RoddyStartupOptions.additionalImports).each {
+            Roddy.commandLineCall.getOptionValueList(RoddyStartupOptions.additionalImports).each {
                 String cfg ->
                     projectConfiguration.addParent(ConfigurationFactory.instance.getConfiguration(cfg))
             }
