@@ -88,23 +88,19 @@ class CommandLineCall {
         } else {
             throw new RuntimeException("Oops! Unknown Parameter subtype '${parameter.getClass()}': ${parameter.toString()}")
         }
-        return result
+        result
     }
 
     /** Check whether the parsed option is indeed accepted as option by Roddy. Errors are accumulated
-     *  in the error argument. If it is an accepted option, add the option value. Errors are
-     *  accumulated in the error variable. */
-    @CompileDynamic
+     *  in the error argument. */
     private static Optional<MapEntry> handle(final Parameter parameter, final List<String> errors) {
-        Optional<RoddyStartupOptions> res = RoddyStartupOptions.fromString(parameter.name)
-        if (!res.isPresent()) {
-            // Add error message, for unknown options
-            errors << "Unknown option '" + parameter.name + "'"
-            Optional.empty()
+        Optional<RoddyStartupOptions> opt = RoddyStartupOptions.fromString(parameter.name)
+        if (opt.isPresent()) {
+            return processParameter(opt.get(), parameter, errors).
+                        map { new MapEntry(opt.get(), it) }
         } else {
-            RoddyStartupOptions option = res.get() as RoddyStartupOptions
-            processParameter(option, parameter, errors).
-                    map { new MapEntry(option, it) }
+            errors << "Unknown option '" + parameter.name + "'"
+            return Optional.empty()
         }
     }
 

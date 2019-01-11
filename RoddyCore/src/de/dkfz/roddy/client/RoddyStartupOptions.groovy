@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.client
 
-import de.dkfz.roddy.tools.EnumHelper;
+import de.dkfz.roddy.tools.EnumHelper
 
 /**
  * Additional options for the Roddy startup.
@@ -86,14 +86,14 @@ enum RoddyStartupOptions {
     detailed,
     disallowexit;
 
-    public final boolean acceptsParameters;
+    public final boolean acceptsParameters
 
     RoddyStartupOptions() {
-        this(false);
+        this(false)
     }
 
     RoddyStartupOptions(boolean acceptsParameters) {
-        this.acceptsParameters = acceptsParameters;
+        this.acceptsParameters = acceptsParameters
     }
 
     static Optional<RoddyStartupOptions> fromString(String option) {
