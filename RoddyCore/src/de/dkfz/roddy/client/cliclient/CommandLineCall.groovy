@@ -15,7 +15,6 @@ import de.dkfz.roddy.client.cliclient.clioutput.*
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.Tuple2
-import groovy.transform.CompileDynamic
 import org.petitparser.context.Result
 import org.petitparser.parser.Parser
 
