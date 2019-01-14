@@ -57,12 +57,21 @@ enum AvailableFeatureToggles {
      * declare -x BASH_ARRAY="value"
      *
      * unless they are already quoted.
+     *
+     * You should turn this on if you use old Bash versions (at least before Bash 4.2, maybe also later). Some
+     * Bash versions do not import array variables that are explicitly exported in the calling context.
+     * This option simply exports array variables as strings. You can then cast them into array variables
+     * with e.g.
+     *
+     * declare -a varName="$importedVarName"
+     *
      */
     AutoQuoteBashArrayVariables(true),
 
     /**
      * Fail, if strict mode is enabled and auto filenames would be created.
      */
+    // TODO Make this the default in version 4
     FailOnAutoFilenames(false),
 
     /**
