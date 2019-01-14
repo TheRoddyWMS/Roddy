@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.knowledge.methods
 
+import de.dkfz.roddy.AvailableFeatureToggles
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.converters.BashConverter
 import de.dkfz.roddy.core.ExecutionContext
@@ -285,9 +286,13 @@ class GenericMethod {
             } else if (entry instanceof Map) {
                 (entry as Map).forEach { k, v ->
                     if (v instanceof List)
-                        parameters[k.toString()] = BashConverter.convertListToBashArrayString(v)
+                        parameters[k.toString()] =
+                                BashConverter.convertListToBashArrayString(v,
+                                        context.getFeatureToggleStatus(AvailableFeatureToggles.AutoQuoteBashArrayVariables))
                     else if (v instanceof Map)
-                        parameters[k.toString()] = BashConverter.convertMapToBashMapString(v)
+                        parameters[k.toString()] =
+                                BashConverter.convertMapToBashMapString(v,
+                                    context.getFeatureToggleStatus(AvailableFeatureToggles.AutoQuoteBashArrayVariables))
                     else
                         parameters[k.toString()] = v.toString()
                 }

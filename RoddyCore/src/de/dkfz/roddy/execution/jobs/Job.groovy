@@ -337,7 +337,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
             } else
                 convertedParameters.add(o.toString())
         }
-        return BashConverter.convertListToBashArrayString(convertedParameters)
+        return BashConverter.convertListToBashArrayString(convertedParameters,
+            context.getFeatureToggleStatus(AvailableFeatureToggles.AutoQuoteBashArrayVariables))
     }
 
 
