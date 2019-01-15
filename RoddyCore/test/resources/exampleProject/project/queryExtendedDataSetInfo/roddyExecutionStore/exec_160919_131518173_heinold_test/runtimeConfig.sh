@@ -35,7 +35,6 @@ declare -x    XMLValidation=true
 declare -x    ForbidSubmissionOnRunning=true
 declare -x    BreakSubmissionOnError=true
 declare -x    RollbackOnSubmissionOnError=false
-declare -x    ModifiedVariablePassing=true
 declare -x    UseOldDataSetIDExtraction=true
 declare -x    AutoFilenames=false
 declare -x    UnzipZippedPlugins=false

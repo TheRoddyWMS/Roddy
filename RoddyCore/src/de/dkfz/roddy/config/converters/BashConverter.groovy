@@ -18,7 +18,7 @@ import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import groovy.transform.CompileStatic
 
 import java.util.logging.Level
-import static Constants.RODDY_CONFIGURATION_MAGICSTRING
+import static de.dkfz.roddy.Constants.RODDY_CONFIGURATION_MAGICSTRING
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BASH_ARRAY
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_DOUBLE
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_FLOAT
@@ -35,7 +35,6 @@ class BashConverter extends ConfigurationConverter {
 
     final String separator = Constants.ENV_LINESEPARATOR
 
-    //TODO Use a pipeline converter interface with methods like "convertCValues, convertCValueBundles, convertTools"
     @Override
     String convert(ExecutionContext context, Configuration _cfg) {
         Configuration cfg = new Configuration(null, _cfg)
@@ -240,17 +239,25 @@ class BashConverter extends ConfigurationConverter {
     /** Dependent on the settings and whether the string is quoted, return the quoted string. */
     static String addQuotesIfRequested(String value, Boolean doQuote = true) {
         if (isQuoted(value) || !doQuote)
-            return value
+            value
         else
-            return '"' + value + '"'
+            '"' + value + '"'
     }
 
-    static String convertListToBashArrayString(List list) {
-        "(${list.collect { it.toString() }.join(" ")})" as String
+    static String convertListToBashArrayString(List list, doQuote = true) {
+        String result = "(${list.collect { it.toString() }.join(" ")})"
+        if (doQuote)
+            '"' + result + '"'
+        else
+            result
     }
 
-    static String convertMapToBashMapString(Map map) {
-        "(${map.collect { k, v -> "[$k]=$v"}.join(" ")})" as String
+    static String convertMapToBashMapString(Map map, doQuote = true) {
+        String result = "(${map.collect { k, v -> "[$k]=$v" }.join(" ")})"
+        if (doQuote)
+            '"' + result + '"'
+        else
+            result
     }
 
     /** To convert a simple Map of String keys to String values (possibly pre-converted!), this method should be used.
