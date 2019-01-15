@@ -239,9 +239,9 @@ class BashConverter extends ConfigurationConverter {
     /** Dependent on the settings and whether the string is quoted, return the quoted string. */
     static String addQuotesIfRequested(String value, Boolean doQuote = true) {
         if (isQuoted(value) || !doQuote)
-            return value
+            value
         else
-            return '"' + value + '"'
+            '"' + value + '"'
     }
 
     static String convertListToBashArrayString(List list, doQuote = true) {

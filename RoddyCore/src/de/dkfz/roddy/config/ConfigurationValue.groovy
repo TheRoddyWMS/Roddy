@@ -404,7 +404,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
     }
 
     private List<String> _bashArrayToStringList() {
-        String vTemp = value.trim().substring(1, value.length() - 2).trim() //Split away () and leading or trailing white characters.
+        String vTemp = value.trim()[1 .. -3].trim() //Split away () and leading or trailing white characters.
         String[] temp = vTemp.split(SPLIT_WHITESPACE) //Split by white character
 
         //Ignore leading and trailing brackets
