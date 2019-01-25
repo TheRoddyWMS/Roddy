@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.knowledge.files
 
-import de.dkfz.roddy.AvailableFeatureToggles
+import de.dkfz.roddy.FeatureToggles
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.core.ExecutionContext
@@ -694,7 +694,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
             }.flatten().join("\n\t")
             sb << "\nNote these may not have matched because they may be specific for a tool!"
 
-            if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.FailOnAutoFilenames))
+            if (Roddy.getFeatureToggleValue(FeatureToggles.FailOnAutoFilenames))
                 throw new ConfigurationError(sb.toString(), baseFile.executionContext.configuration)
             else
                 logger.sometimes(sb.toString())
@@ -702,7 +702,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
             // Check whether the path exists and create it if necessary.
             if (context.executionContextLevel.allowedToSubmitJobs &&
                     !FileSystemAccessProvider.instance.checkDirectory(patternResult.x.parentFile, context, true)) {
-                if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.FailOnAutoFilenames))
+                if (Roddy.getFeatureToggleValue(FeatureToggles.FailOnAutoFilenames))
                     throw new IOException("Output path could not be created for file: " + baseFile)
             }
         }

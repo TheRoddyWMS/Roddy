@@ -149,8 +149,8 @@ class RoddyCLIClient {
     public static void showFeatureToggles() {
         println("Available feature toggles and their default values.")
         println("Note, that not every toggle is active or usable!")
-        AvailableFeatureToggles.values().each {
-            AvailableFeatureToggles toggle ->
+        FeatureToggles.values().each {
+            FeatureToggles toggle ->
                 println("\t${toggle.name()} [def:${toggle.defaultValue}]")
         }
     }

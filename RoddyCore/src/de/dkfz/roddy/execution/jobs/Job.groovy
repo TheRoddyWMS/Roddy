@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.execution.jobs
 
-import de.dkfz.roddy.AvailableFeatureToggles
+import de.dkfz.roddy.FeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.*
@@ -290,7 +290,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
     private String generateAutoFilename(String key, BaseFile baseFile) {
         int slotPosition = allRawInputParameters.keySet().asList().indexOf(key)
 
-        if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.FailOnAutoFilenames))
+        if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(FeatureToggles.FailOnAutoFilenames))
             throw new ConfigurationError("Auto filenames are forbidden when strict mode is active.", context.configuration)
         else
             context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.
@@ -338,7 +338,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 convertedParameters.add(o.toString())
         }
         return BashConverter.convertListToBashArrayString(convertedParameters,
-            context.getFeatureToggleStatus(AvailableFeatureToggles.AutoQuoteBashArrayVariables))
+            context.getFeatureToggleStatus(FeatureToggles.AutoQuoteBashArrayVariables))
     }
 
 
@@ -574,7 +574,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             if (!cmd.jobID) {
                 context.addErrorEntry(ExecutionContextError.EXECUTION_SUBMISSION_FAILURE.expand("Please check your submission command manually.\n\t  Is your access group set properly? [${context.getAnalysis().getUsergroup()}]\n\t  Can the submission binary handle your binary?\n\t  Is your submission system offline?"))
                 logger.postSometimesInfo("Command: ${runResult.command}\nStatus Code: ${runResult.executionResult.exitCode}, Output:\n${runResult.executionResult.resultLines.join("\n")}")
-                if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.BreakSubmissionOnError)) {
+                if (Roddy.getFeatureToggleValue(FeatureToggles.BreakSubmissionOnError)) {
                     context.abortJobSubmission()
                 }
             }

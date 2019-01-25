@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.AvailableFeatureToggles
+import de.dkfz.roddy.FeatureToggles
 import de.dkfz.roddy.BEException
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
@@ -221,7 +221,7 @@ class Analysis {
         for (ExecutionContext oldContext : contexts) {
             DataSet ds = oldContext.getDataSet()
 
-            if (Roddy.getFeatureToggleValue(AvailableFeatureToggles.FailOnErroneousDryRuns) && oldContext.hasErrors()) {
+            if (Roddy.getFeatureToggleValue(FeatureToggles.FailOnErroneousDryRuns) && oldContext.hasErrors()) {
                 // Why print out here? Because the oldContext was started with suppressed messages (Default for QUERY_STATUS).
                 // As there are errors, we'll print them here, otherwise we won't see them.
                 printErrorsAndWarnings(oldContext)
@@ -252,7 +252,7 @@ class Analysis {
     }
 
     private boolean canStartJobs(DataSet ds) {
-        return !Roddy.getFeatureToggleValue(AvailableFeatureToggles.ForbidSubmissionOnRunning) || !hasKnownRunningJobs(ds);
+        return !Roddy.getFeatureToggleValue(FeatureToggles.ForbidSubmissionOnRunning) || !hasKnownRunningJobs(ds);
     }
 
     boolean hasKnownRunningJobs(DataSet ds) {
@@ -584,7 +584,7 @@ class Analysis {
      * @param context
      */
     private void maybeAbortStartedJobsOfContext(ExecutionContext context) {
-        if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(AvailableFeatureToggles.RollbackOnWorkflowError)) {
+        if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(FeatureToggles.RollbackOnWorkflowError)) {
             try {
                 logger.severe("A workflow error occurred, try to rollback / abort submitted jobs.")
                 Roddy.getJobManager().killJobs(context.jobsForProcess as List<BEJob>)
