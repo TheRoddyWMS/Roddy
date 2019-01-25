@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.AvailableFeatureToggles
+import de.dkfz.roddy.FeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.Configuration
@@ -337,7 +337,7 @@ class ExecutionContext {
         return new Configuration(null, getConfiguration())
     }
 
-    boolean getFeatureToggleStatus(AvailableFeatureToggles toggle) {
+    boolean getFeatureToggleStatus(FeatureToggles toggle) {
         if (toggle.applicationLevelOnly) {
             logger.warning("The feature toggle ${toggle} is marked as application level only. The application level value will be used.")
         } else {

@@ -59,6 +59,7 @@ abstract class Workflow {
      * Workflow specific setups can be created here.
      * This includes i.e. the creation of paths.
      */
+    @Deprecated
     boolean setupExecution(ExecutionContext context) {
         true
     }
@@ -67,8 +68,13 @@ abstract class Workflow {
         return setupExecution(context)
     }
 
+    @Deprecated
     boolean finalizeExecution(ExecutionContext context) {
         true
+    }
+
+    boolean finalizeExecution() {
+        finalizeExecution(context)
     }
 
     /**
@@ -78,6 +84,7 @@ abstract class Workflow {
      * @param context
      * @return
      */
+    @Deprecated
     boolean checkExecutability(ExecutionContext context) {
         return true
     }
@@ -86,7 +93,12 @@ abstract class Workflow {
         return checkExecutability(context)
     }
 
+    @Deprecated
     abstract boolean execute(ExecutionContext context) throws ConfigurationError
+
+    boolean execute() throws ConfigurationError {
+        execute(context)
+    }
 
     boolean hasCleanupMethod() {
         for (Method m : this.getClass().getMethods()) {
@@ -97,6 +109,7 @@ abstract class Workflow {
         return false
     }
 
+    @Deprecated
     boolean cleanup(DataSet dataset) {
         return false
     }

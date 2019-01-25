@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.config.converters
 
-import de.dkfz.roddy.AvailableFeatureToggles
+import de.dkfz.roddy.FeatureToggles
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
@@ -313,7 +313,7 @@ class BashConverter extends ConfigurationConverter {
         StringBuilder text = new StringBuilder()
         String declareVar = ""
         String declareInt = ""
-        if (context.getFeatureToggleStatus(AvailableFeatureToggles.UseDeclareFunctionalityForBashConverter)) {
+        if (context.getFeatureToggleStatus(FeatureToggles.UseDeclareFunctionalityForBashConverter)) {
             declareVar = "declare -x   "
             declareInt = "declare -x -i"
         }
@@ -355,8 +355,8 @@ class BashConverter extends ConfigurationConverter {
         convertConfigurationValue(
                 cv
                 , context
-                , context.getFeatureToggleStatus(AvailableFeatureToggles.QuoteSomeScalarConfigValues)
-                , context.getFeatureToggleStatus(AvailableFeatureToggles.AutoQuoteBashArrayVariables)
+                , context.getFeatureToggleStatus(FeatureToggles.QuoteSomeScalarConfigValues)
+                , context.getFeatureToggleStatus(FeatureToggles.AutoQuoteBashArrayVariables)
         )
     }
 

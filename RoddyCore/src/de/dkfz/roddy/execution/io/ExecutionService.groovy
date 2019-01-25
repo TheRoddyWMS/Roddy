@@ -449,8 +449,8 @@ abstract class ExecutionService implements BEExecutionService {
         getInstance().addSpecificSettingsToConfiguration(cfg)
 
         //Add feature toggles to configuration
-        AvailableFeatureToggles.values().each {
-            AvailableFeatureToggles toggle ->
+        FeatureToggles.values().each {
+            FeatureToggles toggle ->
                 configurationValues.put(toggle.name(), ((Boolean) Roddy.getFeatureToggleValue(toggle)).toString(), CVALUE_TYPE_BOOLEAN)
         }
 

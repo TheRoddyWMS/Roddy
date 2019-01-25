@@ -10,7 +10,7 @@ package de.dkfz.roddy;
  * A list of available feature toggles.
  * Will be modified e.g. if something new comes up or something is removed or finally kept and enabled.
  */
-enum AvailableFeatureToggles {
+enum FeatureToggles {
 
     /**
      ////////////////////////
@@ -79,15 +79,15 @@ enum AvailableFeatureToggles {
      */
     FailOnErroneousDryRuns(true )
 
-    public final boolean defaultValue
+    final boolean defaultValue
 
     /**
      * Sets, if the mode is only applicable on application level.
      * Otherwise it can be set in xml configurations.
      */
-    public final boolean applicationLevelOnly
+    final boolean applicationLevelOnly
 
-    AvailableFeatureToggles(boolean defaultValue, boolean applicationLevelOnly = false) {
+    FeatureToggles(boolean defaultValue, boolean applicationLevelOnly = false) {
         this.applicationLevelOnly = applicationLevelOnly
         this.defaultValue = defaultValue
     }

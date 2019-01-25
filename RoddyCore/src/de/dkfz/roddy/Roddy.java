@@ -125,7 +125,7 @@ public class Roddy {
     private static AppConfig featureToggleConfig;
 
     public static boolean isStrictModeEnabled() {
-        return getFeatureToggleValue(AvailableFeatureToggles.StrictMode);
+        return getFeatureToggleValue(FeatureToggles.StrictMode);
     }
 
     public static int getRepeatSubmissionAmount() {
@@ -452,8 +452,8 @@ public class Roddy {
             featureToggleConfig = appConfig;
         } else {
             featureToggleConfig = new AppConfig();
-            Arrays.asList(AvailableFeatureToggles.values()).forEach(toggle -> {
-                featureToggleConfig.setProperty(toggle.name(), "" + toggle.defaultValue);
+            Arrays.asList(FeatureToggles.values()).forEach(toggle -> {
+                featureToggleConfig.setProperty(toggle.name(), "" + toggle.getDefaultValue());
             });
         }
 
@@ -464,7 +464,7 @@ public class Roddy {
 
         // TODO:STRICT In Strict mode we should exit after all toggles were checked.
         if (!successful) {
-            String toggleNames = RoddyIOHelperMethods.joinArray(AvailableFeatureToggles.values(), "\n\t");
+            String toggleNames = RoddyIOHelperMethods.joinArray(FeatureToggles.values(), "\n\t");
             logger.severe("Available toggle values are:\n\t" + toggleNames);
             if (isStrictModeEnabled())
                 exit(ExitReasons.unknownFeatureToggle.getCode());
@@ -483,7 +483,7 @@ public class Roddy {
             List<String> listOfToggles = commandLineCall.getOptionValueList(opt);
             for (String toggle : listOfToggles) {
                 try {
-                    if (AvailableFeatureToggles.valueOf(toggle) != null)
+                    if (FeatureToggles.valueOf(toggle) != null)
                         featureToggleConfig.setProperty(toggle, "" + enabled);
                 } catch (IllegalArgumentException e) {
                     // Just catch and tell the user what's wrong.
@@ -495,9 +495,9 @@ public class Roddy {
         return !error;
     }
 
-    public static boolean getFeatureToggleValue(AvailableFeatureToggles toggle) {
-        if (featureToggleConfig == null) return toggle.defaultValue;
-        return RoddyConversionHelperMethods.toBoolean(featureToggleConfig.getProperty(toggle.name(), null), toggle.defaultValue);
+    public static boolean getFeatureToggleValue(FeatureToggles toggle) {
+        if (featureToggleConfig == null) return toggle.getDefaultValue();
+        return RoddyConversionHelperMethods.toBoolean(featureToggleConfig.getProperty(toggle.name(), null), toggle.getDefaultValue());
     }
 
     public static boolean isOptionSet(RoddyStartupOptions opt) {
