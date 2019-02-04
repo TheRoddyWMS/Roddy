@@ -574,7 +574,7 @@ class ConfigurationFactory {
         String classSimpleName = filename.@class.text()
         String fnDerivedFrom = filename.@derivedFrom.text()
         String pattern = filename.@pattern.text()
-        String selectionTag = extractAttributeText(filename, "selectiontag", Constants.DEFAULT)
+        String selectionTag = extractSelectionTag(filename)
 
         Tuple3<Class, Boolean, Integer> parentClassResult = loadPatternClass(pkg, fnDerivedFrom)
         Tuple3<Class, Boolean, Integer> classResult = loadPatternClass(pkg, classSimpleName, parentClassResult.x)
@@ -639,7 +639,7 @@ class ConfigurationFactory {
     static FilenamePattern readOnMethodFilenamePattern(String pkg, NodeChild filename) {
         String methodName = filename.@onMethod.text()
         String pattern = filename.@pattern.text()
-        String selectionTag = extractAttributeText(filename, "selectiontag", Constants.DEFAULT)
+        String selectionTag = extractSelectionTag(filename)
         Class<FileObject> _cls = loadPatternClass(pkg, filename.@class.text(), BaseFile).x
         Class<FileObject> calledClass = _cls
         if (methodName.contains(".")) { // Different class as source class!
@@ -663,6 +663,7 @@ class ConfigurationFactory {
     static FilenamePattern readOnScriptParameterFilenamePattern(String pkg, NodeChild filename) {
         String scriptParameter = filename.@onScriptParameter.text()
         String pattern = filename.@pattern.text()
+        String selectionTag = extractSelectionTag(filename)
         String toolName, parameterName
         String[] splitResult = scriptParameter.trim().split(":")
         if (splitResult.size() == 1) {
@@ -688,7 +689,7 @@ class ConfigurationFactory {
         }
         Class<FileObject> _cls = loadPatternClass(pkg, filename.@class.text(), BaseFile).x
 
-        FilenamePattern fp = new OnScriptParameterFilenamePattern(_cls, toolName, parameterName, pattern)
+        FilenamePattern fp = new OnScriptParameterFilenamePattern(_cls, toolName, parameterName, pattern, selectionTag)
         return fp
     }
 
@@ -697,7 +698,7 @@ class ConfigurationFactory {
         Class<FileObject> _cls = loadPatternClass(pkg, filename.@class.text(), BaseFile).x
         String scriptName = filename.@onTool.text()
         String pattern = filename.@pattern.text()
-        String selectionTag = extractAttributeText(filename, "selectiontag", Constants.DEFAULT)
+        String selectionTag = extractSelectionTag(filename)
         FilenamePattern fp = new OnToolFilenamePattern(_cls, scriptName, pattern, selectionTag)
         return fp
     }
@@ -707,7 +708,7 @@ class ConfigurationFactory {
         Class<FileObject> _cls = loadPatternClass(pkg, filename.@class.text(), BaseFile).x
         String fileStage = filename.@fileStage.text()
         String pattern = filename.@pattern.text()
-        String selectionTag = extractAttributeText(filename, "selectiontag", Constants.DEFAULT)
+        String selectionTag = extractSelectionTag(filename)
         FileStage fs = null
 
         if (fileStage.contains(".")) { //Load without a base package / class
@@ -894,6 +895,13 @@ class ConfigurationFactory {
             throw new ConfigurationLoadError(null, id, "Attribute '${id}' not defined in node ${node.name()}", ex)
         }
         return defaultText
+    }
+
+    static String extractSelectionTag(NodeChild node) {
+        extractAttributeText(node, "selectionTag",
+                extractAttributeText(node, "selectiontag",
+                        extractAttributeText(node, "fnpatternselectiontag",
+                                Constants.DEFAULT)))
     }
 
 

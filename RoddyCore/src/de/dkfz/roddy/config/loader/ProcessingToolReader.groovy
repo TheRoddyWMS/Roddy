@@ -6,35 +6,22 @@
 
 package de.dkfz.roddy.config.loader
 
-import de.dkfz.roddy.Constants
-import de.dkfz.roddy.config.OnScriptParameterFilenamePattern
-import de.dkfz.roddy.config.ResourceSet
-import de.dkfz.roddy.config.ResourceSetSize
-import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ToolEntry
-import de.dkfz.roddy.config.ToolFileGroupParameter
-import de.dkfz.roddy.config.ToolFileParameter
-import de.dkfz.roddy.config.ToolFileParameterCheckCondition
-import de.dkfz.roddy.config.ToolStringParameter
-import de.dkfz.roddy.config.ToolTupleParameter
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_FILENAME
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING
+import static de.dkfz.roddy.config.loader.ConfigurationFactory.extractAttributeText
+import static de.dkfz.roddy.config.loader.ConfigurationFactory.extractSelectionTag
+
+import de.dkfz.roddy.config.*
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.knowledge.files.FileObjectTupleFactory
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.plugins.LibrariesFactory
-import de.dkfz.roddy.tools.BufferValue
-import de.dkfz.roddy.tools.LoggerWrapper
-import de.dkfz.roddy.tools.RoddyConversionHelperMethods
-import de.dkfz.roddy.tools.RoddyIOHelperMethods
-import de.dkfz.roddy.tools.TimeUnit
+import de.dkfz.roddy.tools.*
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.NodeChild
 import groovy.util.slurpersupport.NodeChildren
-
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_FILENAME
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING
-import static de.dkfz.roddy.config.loader.ConfigurationFactory.extractAttributeText
 
 /**
  * Class to load a processing tool entry from a node slurper
@@ -43,7 +30,7 @@ import static de.dkfz.roddy.config.loader.ConfigurationFactory.extractAttributeT
 @CompileStatic
 class ProcessingToolReader {
 
-    static LoggerWrapper logger = LoggerWrapper.getLogger(de.dkfz.roddy.config.loader.ProcessingToolReader)
+    static LoggerWrapper logger = LoggerWrapper.getLogger(ProcessingToolReader)
 
     NodeChild tool
 
@@ -203,9 +190,9 @@ class ProcessingToolReader {
         ResourceSet tempSet = null
         try {
             ResourceSetSize rsetSize = readAttribute(rset, "size")
-            //Is it short defined or long defined?
+            // Is it short defined or long defined?
             String valueList = extractAttributeText(rset, "values", "")
-            if (!valueList) { //Must be fully specified.
+            if (!valueList) { // Must be fully specified.
                 // Only parse the memory value, if it is set.
                 BufferValue rsetUsedMemory
                 String _rsetUsedMemory = extractAttributeText(rset, "memory", null)
@@ -234,60 +221,68 @@ class ProcessingToolReader {
      * @return
      */
     ToolEntry.ToolParameter parseToolParameter(NodeChild child, String toolID) {
-        String type = readAttribute(child, "type")
-        if (type == "file") { //Load a file
+        String type = readAttribute(child, 'type')
+        if (type == 'file') { // Load a file
             return parseFile(child, toolID)
-        } else if (type == "tuple") {
+        } else if (type == 'tuple') {
             return parseTuple(child, toolID)
-        } else if (type == "filegroup") {
+        } else if (type == 'filegroup') {
             return parseFileGroup(child, toolID)
         } else if (type == CVALUE_TYPE_STRING) {
-            ToolStringParameter.ParameterSetbyOptions setby = Enum.valueOf(ToolStringParameter.ParameterSetbyOptions.class, extractAttributeText(child, "setby", ToolStringParameter.ParameterSetbyOptions.callingCode.name()))
+            ToolStringParameter.ParameterSetbyOptions setby =
+                    Enum.valueOf(ToolStringParameter.ParameterSetbyOptions.class,
+                            extractAttributeText(child, 'setby',
+                                    ToolStringParameter.ParameterSetbyOptions.callingCode.name()))
 
-            String pName = readAttribute(child, "scriptparameter")
+            String pName = readAttribute(child, 'scriptparameter')
             ToolStringParameter tsp
             if (setby == ToolStringParameter.ParameterSetbyOptions.callingCode) {
                 tsp = new ToolStringParameter(pName)
             } else {
-                tsp = new ToolStringParameter(pName, extractAttributeText(child, "cValueID"))
+                tsp = new ToolStringParameter(pName, extractAttributeText(child, 'cValueID'))
             }
 
             return tsp
         } else {
-            addLoadErr("The type attribute of a parameter was invalid (${type}) for tool ${toolID}\n" + ConfigurationFactory.ERROR_PRINTOUT_XML_LINEPREFIX + RoddyConversionHelperMethods.toFormattedXML(child, "\n" + ConfigurationFactory.ERROR_PRINTOUT_XML_LINEPREFIX))
+            addLoadErr("The type attribute of a parameter was invalid (${type}) for tool ${toolID}\n" +
+                    ConfigurationFactory.ERROR_PRINTOUT_XML_LINEPREFIX +
+                    RoddyConversionHelperMethods.toFormattedXML(child, "\n" +
+                            ConfigurationFactory.ERROR_PRINTOUT_XML_LINEPREFIX))
             return null
         }
     }
 
     ToolFileParameter parseFile(NodeChild child, String toolID, ToolFileParameter parent = null) {
-        String cls = readAttribute(child, "typeof")
-        Class _cls = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, BaseFile.class.name)
+        String cls = readAttribute(child, 'typeof')
+        Class _cls = LibrariesFactory.instance.loadRealOrSyntheticClass(cls, BaseFile.class.name)
 
-        String pName = readAttribute(child, "scriptparameter")
-        String fnPattern = readAttributeOrDefault(child, CVALUE_TYPE_FILENAME)
-        String fnpSelTag = extractAttributeText(child, "selectiontag", extractAttributeText(child, "fnpatternselectiontag", Constants.DEFAULT))
-        String parentFileVariable = extractAttributeText(child, "variable", null) //This is only the case for child files.
-        ToolFileParameterCheckCondition check = new ToolFileParameterCheckCondition(extractAttributeText(child, "check", "true"))
+        String parameterId = readAttribute(child, 'scriptparameter')
+        String pattern = readAttributeOrDefault(child, CVALUE_TYPE_FILENAME)
+        String selectionTag = extractSelectionTag(child)
+        String parentFileVariable = extractAttributeText(child, 'variable', null) // This is only the case for child files.
+        ToolFileParameterCheckCondition check =
+                new ToolFileParameterCheckCondition(extractAttributeText(child, 'check', 'true'))
 
         if (parent && !parentFileVariable)
             addLoadErr("Tool file parameter with parent file parameter does not have 'variable' set")
 
-        List<ToolEntry.ToolConstraint> constraints = new LinkedList<ToolEntry.ToolConstraint>()
-        for (constraint in readCollection(child, "constraint")) {
-            String method = readAttribute(constraint, "method")
-            String methodonfail = readAttribute(constraint, "methodonfail")
+        List<ToolEntry.ToolConstraint> constraints = []
+        for (constraint in readCollection(child, 'constraint')) {
+            String method = readAttribute(constraint, 'method')
+            String methodonfail = readAttribute(constraint, 'methodonfail')
             constraints << new ToolEntry.ToolConstraint(_cls.getMethod(methodonfail), _cls.getMethod(method))
         }
 
         // A file can have several defined child files
-        List<ToolFileParameter> subParameters = new LinkedList<ToolFileParameter>()
-        ToolFileParameter toolParameter = new ToolFileParameter(_cls, constraints, pName, check, fnpSelTag, subParameters, parentFileVariable)
+        List<ToolFileParameter> subParameters = []
+        ToolFileParameter toolParameter =
+                new ToolFileParameter(_cls, constraints, parameterId, check, selectionTag, subParameters, parentFileVariable)
         for (NodeChild fileChild in (child.children() as List<NodeChild>)) {
             subParameters << (ToolFileParameter) parseFile(fileChild, toolID, toolParameter)
         }
 
-        if (fnPattern) {
-            config.getFilenamePatterns().add(new OnScriptParameterFilenamePattern(_cls, toolID, pName, fnPattern))
+        if (pattern) {
+            config.filenamePatterns.add(new OnScriptParameterFilenamePattern(_cls, toolID, parameterId, pattern, selectionTag))
         }
 
         return toolParameter
@@ -312,13 +307,17 @@ class ProcessingToolReader {
 
     ToolFileGroupParameter parseFileGroup(NodeChild groupNode, String toolID) {
         String cls = extractAttributeText(groupNode, "typeof", GenericFileGroup.name)
-        Class<FileGroup> filegroupClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, FileGroup.class.name)
+        Class<FileGroup> filegroupClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(cls, FileGroup.class.name) as Class<FileGroup>
         if (!filegroupClass)
-            filegroupClass = GenericFileGroup
+            filegroupClass = GenericFileGroup as Class<FileGroup>
 
-        ToolFileGroupParameter.PassOptions passas = Enum.valueOf(ToolFileGroupParameter.PassOptions.class, extractAttributeText(groupNode, "passas", ToolFileGroupParameter.PassOptions.parameters.name()))
-        ToolFileGroupParameter.IndexOptions indexOptions = Enum.valueOf(ToolFileGroupParameter.IndexOptions.class, extractAttributeText(groupNode, "indices", ToolFileGroupParameter.IndexOptions.numeric.name()))
-        String selectiontag = extractAttributeText(groupNode, "selectiontag", extractAttributeText(groupNode, "fnpatternselectiontag", Constants.DEFAULT))
+        ToolFileGroupParameter.PassOptions passas =
+                Enum.valueOf(ToolFileGroupParameter.PassOptions.class, extractAttributeText(groupNode, "passas",
+                        ToolFileGroupParameter.PassOptions.parameters.name()))
+        ToolFileGroupParameter.IndexOptions indexOptions =
+                Enum.valueOf(ToolFileGroupParameter.IndexOptions.class, extractAttributeText(groupNode, "indices",
+                        ToolFileGroupParameter.IndexOptions.numeric.name()))
+        String selectiontag = extractSelectionTag(groupNode)
 
         String fileclass = extractAttributeText(groupNode, "fileclass", null)
         int childCount = groupNode.children().size()
@@ -351,7 +350,7 @@ class ProcessingToolReader {
         int childCount = groupNode.children().size()
         List<ToolFileParameter> children = new LinkedList<ToolFileParameter>()
         if (childCount == 0 && passas != ToolFileGroupParameter.PassOptions.array)
-            logger.severe("No files in the file group. Configuration is not valid.")
+            logger.severe("No files in the file group. Invalid configuration.")
         for (Object fileChild in groupNode.children()) {
             children << (parseToolParameter(fileChild as NodeChild, toolID) as ToolFileParameter)
         }

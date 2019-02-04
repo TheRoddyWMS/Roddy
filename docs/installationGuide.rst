@@ -58,7 +58,7 @@ Roddy 2.3
 
   - If you intend to use Roddy and do not want to develop plugins or Roddy itself:
 
-    - Download any `JRE v1.8.*`_ (OpenJDK and SunJDK were tested). Also download `Groovy 2.4.*`_
+    - Download any `JRE v1.8.*`_ (OpenJDK and SunJDK were tested). Also download `Groovy 2.3.*`_
 
     - Open up the dist folder in the Roddy directory.
 
@@ -68,7 +68,7 @@ Roddy 2.3
 
   - If you want to develop Roddy or Roddy plugins:
 
-    - Download any `JDK v1.8.*`_ (OpenJDK and SunJDK were tested). Also download `Groovy 2.4.*`_
+    - Download any `JDK v1.8.*`_ (OpenJDK and SunJDK were tested). Also download `Groovy 2.3.*`_
 
     - Open up the dist folder in the Roddy directory.
 
@@ -79,6 +79,10 @@ Roddy 2.3
 3. Optionally unpack one or more of the release zips in *dist/bin/* directory.
 
 Please see `Versioning`_ for information about how to mix different versions of Roddy in the same directory.
+
+You will need an :doc:`config/applicationProperties` file with the configuration for accessing your computing environment.
+
+Note that the Roddy 2.4 releases are actually Roddy 3 pre-releases. Please use Roddy 3 instead.
 
 Roddy 3
 -------
@@ -92,9 +96,11 @@ For Roddy version 3 zips are deployed to Github releases (continuous deployment 
 .. code-block:: Bash
 
    pushd dist/plugins
-   git clone https://github.com/eilslabs/Roddy-Default-Plugin.git DefaultPlugin
-   git clone https://github.com/eilslabs/Roddy-Base-Plugin PluginBase
+   git clone https://github.com/TheRoddyWMS/Roddy-Default-Plugin.git DefaultPlugin
+   git clone https://github.com/TheRoddyWMS/Roddy-Base-Plugin PluginBase
    popd
+
+You will need an :doc:`config/applicationProperties` file with the configuration for accessing your computing environment.
 
 Versioning
 ----------
@@ -103,7 +109,7 @@ The Roddy environment with the top-level "roddy.sh" allow you to co-install mult
 e.g. from the release zips, into directories in "dist/bin" following the naming scheme "dist/bin/$major.$minor.$patch". The desired version can than
 be selected during Roddy invocations using the "--useRoddyVersion" parameter.
 
-Additionally, Roddy is capable of handling multiple versions of the same workflow plugin. Therefore, if you install specific plugins, such as the `ACEseq plugin <https://github.com/eilslabs/ACEseqWorkflow>`_, you will need specific versions of e.g. the default and base plugins. The way to progress here is to first check in the plugin of interest in the "buildinfo.txt", which plugins and their versions are needed, and then progress in this way from plugin to plugin recursively.
+Additionally, Roddy is capable of handling multiple versions of the same workflow plugin. Therefore, if you install specific plugins, such as the `ACEseq plugin <https://github.com/DKFZ-ODCF/ACEseqWorkflow>`_, you will need specific versions of e.g. the default and base plugins. The way to progress here is to first check in the plugin of interest in the "buildinfo.txt", which plugins and their versions are needed, and then progress in this way from plugin to plugin recursively.
 
 The installation of specific plugin version needs to be done in directories named after the scheme `$pluginName_$major.$minor.$patch[-$revision]` (the revision is optional). Usually you can get specific versions -- official releases of plugins -- in the Github Releases of the plugin. Alternatively you clone the repository into an appropriately named directory and then check out the tag with the version of interest.
 
@@ -167,8 +173,8 @@ If you want to build Roddy yourself, clone the repository. The repository alread
     cd Roddy
     git checkout develop
     pushd dist/plugins
-    git clone https://github.com/eilslabs/Roddy-Default-Plugin.git DefaultPlugin
-    git clone https://github.com/eilslabs/Roddy-Base-Plugin PluginBase
+    git clone https://github.com/TheRoddyWMS/Roddy-Default-Plugin.git DefaultPlugin
+    git clone https://github.com/TheRoddyWMS/Roddy-Base-Plugin PluginBase
     popd
     ./gradlew build
 

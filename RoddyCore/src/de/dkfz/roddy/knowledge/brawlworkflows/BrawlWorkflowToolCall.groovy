@@ -6,6 +6,7 @@
 package de.dkfz.roddy.knowledge.brawlworkflows
 
 import de.dkfz.roddy.config.ConfigurationError
+import de.dkfz.roddy.config.FilenamePattern
 import de.dkfz.roddy.config.OnScriptParameterFilenamePattern
 import de.dkfz.roddy.config.ResourceSet
 import de.dkfz.roddy.config.ResourceSetSize
@@ -51,7 +52,8 @@ class BrawlWorkflowToolCall {
     void output(String fileclass, String parameter, String pattern) {
         def fileParameter = getToolFileParameter(fileclass, parameter)
         outputParameters << fileParameter
-        workflow.context.configuration.filenamePatterns << new OnScriptParameterFilenamePattern(fileParameter.fileClass as Class<BaseFile>, toolID, parameter, pattern)
+        workflow.context.configuration.filenamePatterns <<
+                new OnScriptParameterFilenamePattern(fileParameter.fileClass as Class<BaseFile>, toolID, parameter, pattern, FilenamePattern.DEFAULT_SELECTIONTAG)
     }
 
     void threads(int threads) {

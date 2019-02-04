@@ -198,7 +198,11 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
     }
 
     static BaseFile constructManual(Class<? extends BaseFile> classToConstruct, FileObject parentFile) {
-        return constructManual(classToConstruct, parentFile, null, null, null, null, null, null, null)
+        constructManual(classToConstruct, parentFile, null, null, null, null, null, null, null)
+    }
+
+    static BaseFile constructManual(Class<? extends BaseFile> classToConstruct, FileObject parentFile, String selectionTag) {
+        constructManual(classToConstruct, parentFile, null, null, null, null, selectionTag, null, null)
     }
 
     /**
@@ -658,7 +662,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
      */
     static Tuple2<File, FilenamePattern> getFilename(BaseFile baseFile, String selectionTag) {
         if (!selectionTag)
-            selectionTag = DEFAULT
+            selectionTag = FilenamePattern.DEFAULT_SELECTIONTAG
 
         //Find the correct pattern:
         // Look if filename patterns for this class are available
@@ -678,11 +682,11 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
 
         Tuple2<File, FilenamePattern> patternResult =
                 results[onScriptParameter] ?: results[onMethod] ?: results[onTool] ?: results[derivedFrom] ?: results[FilenamePatternDependency.FileStage]
-        // Do some further checks for selection tags.
-        // Two cases. If the selectiontag is default and if it is not. If the selectiontag is not null
+
         if (!patternResult || patternResult.x == null) {
 
-            StringBuilder sb = new StringBuilder("Could not find filename pattern for a file of class ${baseFile.class.name}: ${baseFile.toString()}\n")
+            ConstructionHelperForGenericCreation helper = baseFile.helperObject as ConstructionHelperForGenericCreation
+            StringBuilder sb = new StringBuilder("Could not find filename pattern for a file: ${baseFile.toString()}\n")
 
             sb << "The following patterns are available for this file class:\n\t"
             sb << availablePatterns.findAll { it }.collect {
@@ -853,10 +857,21 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         FilenamePattern appliedPattern = availablePatterns.find {
             FilenamePattern _fp ->
                 OnScriptParameterFilenamePattern fp = _fp as OnScriptParameterFilenamePattern
-                boolean parameterFound = fp.calledParameterID == helper.parameterID
+                boolean parameterFound = fp.parameterID == helper.parameterID
                 boolean scriptValid = fp.toolID ? fp.toolID == helper.toolID : true
-
-                return parameterFound && scriptValid
+                boolean selectionTagsMatch
+                if (Roddy.getFeatureToggleValue(FeatureToggles.StrictOnScriptParameterSelectionTag)) {
+                    // Strict matching: default only matches default
+                    selectionTagsMatch = fp.selectionTag == selectionTag
+                } else {
+                    // Weak matching: default always matches
+                    selectionTagsMatch =
+                            null == fp.selectionTag || null == selectionTag  ||
+                                    FilenamePattern.DEFAULT_SELECTIONTAG == fp.selectionTag ||
+                                    FilenamePattern.DEFAULT_SELECTIONTAG == selectionTag ||
+                                    fp.selectionTag == selectionTag
+                }
+                return parameterFound && scriptValid && selectionTagsMatch
         }
         if (!appliedPattern) return null
         File filename = new File(appliedPattern.apply(baseFile))

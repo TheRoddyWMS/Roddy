@@ -601,66 +601,68 @@ class RoddyCLIClient {
     }
 
     private static void outputTestrunResult(List<ExecutionContext> executionContexts, boolean rerun) {
-        final String separator = Constants.ENV_LINESEPARATOR;
+        final String SEPARATOR = Constants.ENV_LINESEPARATOR
         for (ExecutionContext ec : executionContexts) {
             Configuration configuration = ec.getConfiguration()
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder()
 
             Collection<Job> collectedJobs = ec.getExecutedJobs().findAll { Job job -> job.getJobID() != null && (rerun ? job.runResult?.successful : true) }
             def numberOfJobs = collectedJobs.size()
 
             if (numberOfJobs > 0) {
-                sb << "\n#FWHITE##BGBLUE#Information about run test for dataset: " << ec.getDataSet().getId() << "#CLEAR#" << separator;
-                sb << "  #FWHITE#Input directory#CLEAR#     : ${ec.getInputDirectory()}" << separator;
-                sb << "  #FWHITE#Output directory#CLEAR#    : ${ec.getOutputDirectory()}" << separator;
-                sb << "  #FWHITE#Execution directory#CLEAR# : ${ec.getExecutionDirectory()}" << separator;
-                sb << "  #FWHITE#List of jobs (${numberOfJobs}):#CLEAR#" << separator;
+                sb << "\n#FWHITE##BGBLUE#Information about run test for dataset: " << ec.dataSet.id << '#CLEAR#' << SEPARATOR
+                sb << "  #FWHITE#Input directory#CLEAR#     : ${ec.getInputDirectory()}" << SEPARATOR
+                sb << "  #FWHITE#Output directory#CLEAR#    : ${ec.getOutputDirectory()}" << SEPARATOR
+                sb << "  #FWHITE#Execution directory#CLEAR# : ${ec.getExecutionDirectory()}" << SEPARATOR
+                sb << "  #FWHITE#List of jobs (${numberOfJobs}):#CLEAR#" << SEPARATOR
             } else {
-                sb << "#FRED#There were no executed jobs for dataset " << ec.getDataSet().getId() << "#CLEAR#" << separator;
+                sb << '#FRED#There were no executed jobs for dataset ' << ec.dataSet.id << '#CLEAR#' << SEPARATOR
             }
 
             for (Job job : collectedJobs) {
 
-                String resources = " Resources are either not specified, could not be found or could not be handled by the JobManager for this tool ";
+                String resources = ' Resources are either not specified, could not be found or could not be handled by the JobManager for this tool '
 
                 try {
-                    ToolEntry tool = configuration.getTools().getValue(job.getToolID());
-                    ResourceSet resourceSet = tool.getResourceSet(configuration);
+                    ToolEntry tool = configuration.tools.getValue(job.toolID)
+                    ResourceSet resourceSet = tool.getResourceSet(configuration)
                     if (!(resourceSet instanceof EmptyResourceSet)) {
-                        ProcessingParameters convertResourceSet = Roddy.getJobManager().convertResourceSet(job, resourceSet)
+                        ProcessingParameters convertResourceSet = Roddy.jobManager.convertResourceSet(job, resourceSet)
                         if (convertResourceSet)
-                            resources = convertResourceSet.toString();
+                            resources = convertResourceSet.toString()
                     }
                 } catch (Exception ex) {
                 }
 
-                sb << "    #FYELLOW#${job.getJobID()}:#CLEAR# ${job.getToolID()} [${resources}]" << separator;
+                sb << "    #FYELLOW#${job.jobID}:#CLEAR# ${job.toolID} [${resources}]" << SEPARATOR
 
                 for (k in job.reportedParameters.keySet()) {
-                    String _k = k;
-                    if (k.length() > 25)
-                        _k = k.substring(0, 23) + ".."
-                    String parm = job.reportedParameters.get(k, "").replace(ec.getExecutionDirectory().getAbsolutePath(), "[ exDir]");
-                    parm = parm.replace(ec.getOutputDirectory().getAbsolutePath(), "[outDir]");
-                    parm = parm.replace(ec.getInputDirectory().getAbsolutePath(), "[ inDir]");
-                    if (parm.startsWith("parameterArray") && parm != "parameterArray=()") {
-                        parm = parm.replace(" ", "\n" + " ".padRight(38));
-                        parm = parm.replace("(", "(\n" + " ".padRight(38));
-                        parm = parm.replace(")", "\n" + " ".padRight(34) + ")");
+                    String _k = k
+                    Integer variablePrintWidth =
+                            Math.max(7, Roddy.applicationConfiguration.getOrSetIntegerApplicationProperty(Constants.APP_PROPERTY_TESTRUN_VARIABLE_WIDTH, 25))
+                    if (k.length() > variablePrintWidth)
+                        _k = k.substring(0, variablePrintWidth - 2) + '..'
+                    String parm = job.reportedParameters.get(k, '').replace(ec.executionDirectory.absolutePath, '[ exDir]')
+                    parm = parm.replace(ec.outputDirectory.absolutePath, '[outDir]')
+                    parm = parm.replace(ec.inputDirectory.absolutePath, '[ inDir]')
+                    if (parm.startsWith('parameterArray') && parm != 'parameterArray=()') {
+                        parm = parm.replace(' ', '\n' + ' '.padRight(38))
+                        parm = parm.replace('(', '(\n' + ' '.padRight(38))
+                        parm = parm.replace(')', '\n' + ' '.padRight(34) + ')')
                     }
-                    if (parm.endsWith(".auto"))
+                    if (parm.endsWith('.auto'))
                         parm = "#BLUE##BGYELLOW#${parm}#CLEAR#"
-                    sb << "      ${_k.padRight(26)}: ${parm}" << separator;
+                    sb << "      ${_k.padRight(variablePrintWidth + 1)}: ${parm}" << SEPARATOR
                 }
             }
 
-            ec.getExecutedJobs()
+            ec.executedJobs
 
-            sb << separator;
-            sb << separator;
+            sb << SEPARATOR
+            sb << SEPARATOR
 
-            println(ConsoleStringFormatter.getFormatter().formatAll(sb.toString()));
+            println(ConsoleStringFormatter.formatter.formatAll(sb.toString()))
         }
     }
 

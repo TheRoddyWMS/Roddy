@@ -40,6 +40,14 @@ public class RoddyAppConfig extends AppConfig {
         }
     }
 
+    public Integer getOrSetIntegerApplicationProperty(String pName, Integer defaultValue) throws ConfigurationError {
+        try {
+            return Integer.parseInt(getOrSetApplicationProperty(pName, String.valueOf(defaultValue), CVALUE_TYPE_INTEGER));
+        } catch (IllegalArgumentException e) {
+            throw new ConfigurationError(e.getMessage(), pName, e);
+        }
+    }
+
     public void setApplicationProperty(RunMode runMode, String appPropertyExecutionServiceClass, String text) {
         setApplicationProperty(runMode.name() + "." + appPropertyExecutionServiceClass, text);
     }
