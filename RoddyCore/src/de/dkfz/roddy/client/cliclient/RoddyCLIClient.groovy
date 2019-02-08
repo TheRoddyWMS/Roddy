@@ -651,7 +651,7 @@ class RoddyCLIClient {
                         parm = parm.replace('(', '(\n' + ' '.padRight(38))
                         parm = parm.replace(')', '\n' + ' '.padRight(34) + ')')
                     }
-                    if (parm.endsWith('.auto'))
+                    if (parm.endsWith(Constants.AUTO_FILENAME_SUFFIX))
                         parm = "#BLUE##BGYELLOW#${parm}#CLEAR#"
                     sb << "      ${_k.padRight(variablePrintWidth + 1)}: ${parm}" << SEPARATOR
                 }

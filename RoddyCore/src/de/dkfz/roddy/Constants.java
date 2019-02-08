@@ -83,6 +83,8 @@ public class Constants {
     @Deprecated
     public static final String PID = "pid";
 
+    public static final String AUTO_FILENAME_SUFFIX = ".auto";
+
     /////////////////////////
     // Bash configs
     /////////////////////////

@@ -85,8 +85,20 @@ enum FeatureToggles {
      *
      * DEPRECATED: In version 4 this should be set to strict without a feature toggle.
      */
-    @Deprecated
-    StrictOnScriptParameterSelectionTag(false)
+    StrictParameterSelectionTagEquality(false),
+
+    /**
+     * The old way of matching filename patterns had a strict hierarchy in the pattern matching algorithm.
+     * For instance, if a pattern had an onScriptParameter match, `derivedFrom` attributes were ignored.
+     *
+     * The unified filenamepattern matcher allows for combinations of attributes to match that were not possible
+     * with the old matcher. for instance, with the new matcher in the above example, if both the `derivedFrom`
+     * and `onScriptParameter` attributes are set, both need to match. This is stricter than the previous
+     * algorithm and therefore some relaxation can be requested by e.g. `onScriptParameter="*"` or
+     * `derivedFrom="*"` -- which is needed to e.g. override previously defined patters in higher priority
+     * configuration files.
+     */
+    UnifiedFilenamePatternMatcher(false)
 
     final boolean defaultValue
 

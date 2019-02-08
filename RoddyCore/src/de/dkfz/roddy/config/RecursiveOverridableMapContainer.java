@@ -113,20 +113,25 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
     }
 
     /**
-     * When you have several configuration objects, e.g.
+     * Without "elevation" of value the situation is thus: When you have several configuration
+     * objects, e.g. just two:
+     *
      * A -> B
      *
-     * A contains values a and b, where a == abc and b has a reference to a b=${a}
+     * Here, A contains values a and b, with a == abc and b has a reference to a b=${a}.
      * B contains values a'  == def
-     * If you query B for b, b holds a reference to configuration A
-     * Therefore, b.toString() will result in b == abc and NOT in def as expected.
      *
-     * By elevating a copy of b to B, everything will be fixed, as B can be the parent of b'
+     * If you query B for b, b holds a reference to configuration A. Therefore, b.toString()
+     * will result in b == abc and NOT in def as expected.
+     *
+     * No elevation is the fix:
+     *
+     * By elevating a copy of b to B, B can be the parent of b'.
      *
      * This is true for ConfigurationValue, which rely on dependencies between themselves.
      *
      * In RecursiveOverridableMapContainerForConfigurationValues, we override the method and
-     * copy the value and set the configuration reference to (in this example) B
+     * copy the value and set the configuration reference to (in this example) B.
      *
      * @param src
      * @return
@@ -161,7 +166,7 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
 
     /**
      * @throws ConfigurationError if a value is requested that does not exist.
-     * @param id    Configuration value to return.
+     * @param id    the evaluated value for the id.
      */
     public V getValue(K id) throws ConfigurationError {
         if (!hasValue(id))
