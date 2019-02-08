@@ -860,7 +860,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
                 boolean parameterFound = fp.parameterID == helper.parameterID
                 boolean scriptValid = fp.toolID ? fp.toolID == helper.toolID : true
                 boolean selectionTagsMatch
-                if (Roddy.getFeatureToggleValue(FeatureToggles.StrictOnScriptParameterSelectionTag)) {
+                if (Roddy.getFeatureToggleValue(FeatureToggles.StrictParameterSelectionTagEquality)) {
                     // Strict matching: default only matches default
                     selectionTagsMatch = fp.selectionTag == selectionTag
                 } else {

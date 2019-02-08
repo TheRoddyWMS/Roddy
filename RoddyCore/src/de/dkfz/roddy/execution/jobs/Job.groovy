@@ -283,12 +283,12 @@ class Job extends BEJob<BEJob, BEJobResult> {
      *  The auto file name will be composed from the jobName, the key value, a hash code generated
      *  from these information and the list of parent files and the .auto suffix.
      *
-     * @param key
+     * @param parameterName
      * @param baseFile
      * @return auto filename as path string
      */
-    private String generateAutoFilename(String key, BaseFile baseFile) {
-        int slotPosition = allRawInputParameters.keySet().asList().indexOf(key)
+    private String generateAutoFilename(String parameterName, BaseFile baseFile) {
+        int slotPosition = allRawInputParameters.keySet().asList().indexOf(parameterName)
 
         if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(FeatureToggles.FailOnAutoFilenames))
             throw new ConfigurationError("Auto filenames are forbidden when strict mode is active.", context.configuration)
@@ -296,9 +296,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
             context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.
                     expand("An auto filename will be used for ${jobName}:${slotPosition} / ${baseFile.class.name}"))
 
-        Integer hashCode = generateHashCode(jobName + key + slotPosition, parentFiles)
+        Integer hashCode = generateHashCode(jobName + parameterName + slotPosition, parentFiles)
 
-        File autoPath = new File(context.getOutputDirectory(), [jobName, key, hashCode, slotPosition].join("_") + ".auto")
+        File autoPath = new File(context.getOutputDirectory(), [jobName, parameterName, hashCode, slotPosition].join("_") + AUTO_FILENAME_SUFFIX)
         baseFile.setPath(autoPath)
         baseFile.setAsTemporaryFile()
         return autoPath.absolutePath
@@ -307,15 +307,15 @@ class Job extends BEJob<BEJob, BEJobResult> {
     /** Convert a BaseFile object into a path string. First try to replace all variables using the raw job input parameters as background variables.
      *  If that fails, generate an auto file name.
      *
-     * @param key
+     * @param parameterName
      * @param baseFile
      * @return path to basefile
      */
-    private String baseFileToParameterString(String key, BaseFile baseFile) {
+    private String baseFileToParameterString(String parameterName, BaseFile baseFile) {
         String newPath = replaceParametersInFilePath(baseFile, allRawInputParameters)
         //Explicitly query newPath for a proper value!
         if (newPath == null) {
-            newPath = generateAutoFilename(key, baseFile)
+            newPath = generateAutoFilename(parameterName, baseFile)
         }
         return newPath
         //            newParameters[k + "_path"] = newPath;
@@ -327,13 +327,13 @@ class Job extends BEJob<BEJob, BEJobResult> {
     }
 
 
-    private String collectionToParameterString(String key, Collection collection) {
+    private String collectionToParameterString(String parameterName, Collection collection) {
         //TODO This is not the best way to do this, think of a better one which is more generic.
         List<Object> convertedParameters = new LinkedList<>()
         for (Object o : collection) {
             if (o instanceof BaseFile) {
                 if (((BaseFile) o).getPath() != null)
-                    convertedParameters.add(baseFileToParameterString(key, o as BaseFile))
+                    convertedParameters.add(baseFileToParameterString(parameterName, o as BaseFile))
             } else
                 convertedParameters.add(o.toString())
         }
@@ -342,15 +342,15 @@ class Job extends BEJob<BEJob, BEJobResult> {
     }
 
 
-    private String parameterObjectToString(String key, Object value) {
+    private String parameterObjectToString(String parameterName, Object value) {
         if (value instanceof File) {
             return fileToParameterString(value as File)
         } else if (value instanceof BaseFile) {
-            return baseFileToParameterString(key, value as BaseFile)
+            return baseFileToParameterString(parameterName, value as BaseFile)
         } else if (value instanceof FileGroup) {
-            return collectionToParameterString(key, (value as FileGroup).getFilesInGroup())
+            return collectionToParameterString(parameterName, (value as FileGroup).getFilesInGroup())
         } else if (value instanceof Collection) {
-            return collectionToParameterString(key, value as Collection)
+            return collectionToParameterString(parameterName, value as Collection)
         } else {
             return value.toString()
         }

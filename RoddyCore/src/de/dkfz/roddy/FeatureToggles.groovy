@@ -85,8 +85,7 @@ enum FeatureToggles {
      *
      * DEPRECATED: In version 4 this should be set to strict without a feature toggle.
      */
-    @Deprecated
-    StrictOnScriptParameterSelectionTag(false)
+    StrictParameterSelectionTagEquality(false),
 
     final boolean defaultValue
 
