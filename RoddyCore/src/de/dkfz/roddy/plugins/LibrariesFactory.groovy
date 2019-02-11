@@ -78,7 +78,7 @@ class LibrariesFactory extends Initializable {
      * Actually only creates a new singleton clearing out old values.
      * @return
      */
-    public static LibrariesFactory initializeFactory(boolean enforceinit = false) {
+    static LibrariesFactory initializeFactory(boolean enforceinit = false) {
         if (!librariesFactory || enforceinit)
             librariesFactory = new LibrariesFactory();
         return librariesFactory;

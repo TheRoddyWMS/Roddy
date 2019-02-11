@@ -6,11 +6,14 @@
 
 package de.dkfz.roddy.knowledge.files
 
+import static de.dkfz.roddy.Constants.DEFAULT
+
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.*
+import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.loader.ConfigurationFactory as CF
-import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ContextResource
+import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -27,8 +30,6 @@ import org.junit.Rule
 import org.junit.Test
 
 import java.lang.reflect.Method
-
-import static de.dkfz.roddy.Constants.DEFAULT
 
 /**
  * Created by heinold on 20.01.16.
@@ -74,10 +75,14 @@ class BaseFileTest {
         ExecutionService.initializeService(LocalExecutionService, RunMode.CLI)
         FileSystemAccessProvider.initializeProvider(true)
         //Setup plugins and default configuration folders
-        LibrariesFactory.initializeFactory(true)
-        LibrariesFactory.instance.loadLibraries(LibrariesFactory.
-                buildupPluginQueue(LibrariesFactoryTest.callLoadMapOfAvailablePlugins(), 'DefaultPlugin').values() as List)
-        CF.initialize(LibrariesFactory.instance.getLoadedPlugins().collect { it -> it.getConfigurationDirectory() })
+        LibrariesFactory libFact = LibrariesFactory.initializeFactory(true)
+
+        libFact.loadLibraries(
+                LibrariesFactory.buildupPluginQueue(
+                        LibrariesFactoryTest.callLoadMapOfAvailablePlugins(), 'DefaultPlugin'
+                ).values() as List
+        )
+        CF.initialize(libFact.getLoadedPlugins().collect { it -> it.getConfigurationDirectory() })
 
         final Configuration mockupConfig = new Configuration(new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, DEFAULT,
                 '', '', null, '', ResourceSetSize.l, null, null, null,
@@ -89,7 +94,7 @@ class BaseFileTest {
                 return new File('/tmp/RoddyTests/RoddyTestScript_ExecutionServiceTest.sh')
             }
         }
-        syntheticTestFileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass('FileWithFileStage', BaseFile.class as Class<FileObject>)
+        syntheticTestFileClass = libFact.loadRealOrSyntheticClass('FileWithFileStage', BaseFile.class as Class<FileObject>)
         ToolEntry toolEntry = new ToolEntry('RoddyTests', 'RoddyTests', 'RoddyTestScript_ExecutionServiceTest.sh')
         toolEntry.getOutputParameters(mockupConfig).add(new ToolFileParameter(syntheticTestFileClass, null, 'TEST',
                 new ToolFileParameterCheckCondition(true)))

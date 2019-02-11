@@ -79,8 +79,10 @@ class ConfigurationFactory {
     private Map<ConfigurationType, Map<String, PreloadedConfiguration>> availableConfigurationsByTypeAndID = [:]
 
 
+    @Deprecated // substitute by a version that returns the singleton
     static void initialize(List<File> configurationDirectories = null) {
         singleton = new ConfigurationFactory(configurationDirectories)
+
     }
 
     static ConfigurationFactory getInstance() {

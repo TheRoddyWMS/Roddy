@@ -100,7 +100,7 @@ configurations.all {
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         if (details.requested.name == "RoddyToolLib") {
             details.useVersion roddyToolLibVersion
-            details.because 'BatchEuphoria not affected by RoddyToolLib 1.0.0 API changes.'
+            details.because "BatchEuphoria not affected by RoddyToolLib ${roddyToolLibVersion} API changes."
         }
     }
 }

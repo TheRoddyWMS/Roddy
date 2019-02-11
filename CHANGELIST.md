@@ -1,4 +1,4 @@
-# Work in progress
+# Changelist
 
 * 3.5.0
 
@@ -40,7 +40,7 @@
 
   - Improved validation of configuration values.
 
-  - ForbidSubmissionToRunning was re-enabled and turned on by default.
+  - ForbidSubmissionOnRunning was re-enabled and turned on by default.
   
   - Created ExitReasons class for usage within Roddy and plugins. The class stores different exit codes and messages.
   
@@ -215,8 +215,6 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
     Those parameters will all override the settings in the application properties file
 
 - (WIP) Integrate SLURM as a cluster backend
-
-# Changelist
 
 * 2.3.97b
 

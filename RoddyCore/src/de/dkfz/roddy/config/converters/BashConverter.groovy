@@ -337,7 +337,7 @@ class BashConverter extends ConfigurationConverter {
                 tmp = BashService.escape(evaluatedValue)
                 logger.always("Bash variable '${cv.id}' contains double quote. Will be escaped! Please check: [${tmp}]")
             } else if (quoteSomeScalarConfigValues && !isQuoted(evaluatedValue) && evaluatedValue =~ /[\s\t\n;<>&!#'`|?{}\[\]()~\r\f$]/) {
-                // TODO User de.dkfz.roddy.tools.shell.bash.Service to escape characters. Note that quoting is the wrong thing if there are double quotes in the string! This should be implemented end to end with correct parsing of configuration values into arrays (account for escapes!) and without intermediate casting into Strings for bashArray variables.
+                // TODO Use de.dkfz.roddy.tools.shell.bash.Service to escape characters. Note that quoting is the wrong thing if there are double quotes in the string! This should be implemented end to end with correct parsing of configuration values into arrays (account for escapes!) and without intermediate casting into Strings for bashArray variables.
                 tmp = "\"${evaluatedValue}\"".toString()
             } else {
                 tmp = evaluatedValue
