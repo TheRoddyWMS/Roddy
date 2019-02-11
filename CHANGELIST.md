@@ -2,11 +2,13 @@
 
 * 3.5.0
 
+  - Fixed non-quoting of variables with spaces. Now they are quoted and thus correctly interpreted as string variables instead of Bash array variables that are not correctly exported due to the Bash bug. 
+  
   - Allow for "selectionTag" in filename patterns and output file tags
   
   - Correctly processes selectionTag for onScriptParameter filename pattern matching
   
-  - Added feature toggle `StrictOnScriptParameterSelectionTag` with default `false`; with `false` default selection tag values always match; with `true`, which will be the Roddy 4 default selection tag values in output file declarations only match default selection tags in filename patterns
+  - Added feature toggle `StrictOnScriptParameterSelectionTag` with default `false`; with `false` default selection tag values always match; with `true`, which is planned to be the Roddy 4, "default" selection tag values in output file declarations only match "default" selection tags in filename patterns
   
   - Improved parsing of `--cvalues` command-line argument solving issues with colons ':' in configuration variables
   
