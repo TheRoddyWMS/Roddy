@@ -24,6 +24,8 @@
   
   - Added `testRunVariableWidth` application property to change the width of the printing of job-parameter names. Defaults to old values 25.
   
+  - Update to Gradle 5.1.1 
+  
 * 3.4.2
 
   - Fix a bug which made CValue.toFile() output wrong paths
