@@ -15,6 +15,7 @@ import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.fs.BashCommandSet
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.tools.shell.bash.Service
 import groovy.transform.CompileStatic
 
 import java.util.logging.Level
@@ -332,8 +333,11 @@ class BashConverter extends ConfigurationConverter {
                 tmp = "${cv.toFile(context)}".toString()
             } else if (evaluatedValue.startsWith("-") || evaluatedValue.startsWith("*")) {
                 tmp = "\"${evaluatedValue}\"".toString()
+            } else if (!isQuoted(evaluatedValue) && evaluatedValue =~ /"/) {
+                tmp = Service.escape(evaluatedValue)
+                logger.always("Bash variable '${cv.id}' contains double quote. Will be escaped! Please check: [${tmp}]")
             } else if (quoteSomeScalarConfigValues && !isQuoted(evaluatedValue) && evaluatedValue =~ /[\s\t\n;<>&!#'`|?{}\[\]()~\r\f$]/) {
-                // TODO User de.dkfz.roddy.tools.shell.bash.Service to escape characters. Note that quoting is the wrong thing if there are double quotes in the string!
+                // TODO User de.dkfz.roddy.tools.shell.bash.Service to escape characters. Note that quoting is the wrong thing if there are double quotes in the string! This should be implemented end to end with correct parsing of configuration values into arrays (account for escapes!) and without intermediate casting into Strings for bashArray variables.
                 tmp = "\"${evaluatedValue}\"".toString()
             } else {
                 tmp = evaluatedValue

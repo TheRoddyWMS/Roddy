@@ -2,7 +2,9 @@
 
 * 3.5.0
 
-  - Fixed non-quoting of variables with spaces. Now they are quoted and thus correctly interpreted as string variables instead of Bash array variables that are not correctly exported due to the Bash bug. 
+  - Fixed non-quoting of variables with spaces. Now they are quoted and thus correctly interpreted as string variables instead of Bash array variables that are not correctly exported due to the Bash bug.
+  
+  - Added escaping of not already quoted variables containing double quotes as quoting these could yield wrong results (e.g. in the context of named Bash bug).  
   
   - Allow for "selectionTag" in filename patterns and output file tags
   
@@ -22,11 +24,19 @@
   
   - Added `testRunVariableWidth` application property to change the width of the printing of job-parameter names. Defaults to old values 25.
   
+* 3.4.2
+
+  - Fix a bug which made CValue.toFile() output wrong paths
+  
+* 3.4.1
+
+  - Add JSON configuration file loader and tests
+  
 * 3.4.0
 
   - Improved validation of configuration values.
 
-  - ForbidSubmissionToRunning was reenabled and turned on by default.
+  - ForbidSubmissionToRunning was re-enabled and turned on by default.
   
   - Created ExitReasons class for usage within Roddy and plugins. The class stores different exit codes and messages.
   
