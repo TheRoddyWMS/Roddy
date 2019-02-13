@@ -17,6 +17,7 @@ import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING;
  */
 public class RecursiveOverridableMapContainerForConfigurationValues
         extends RecursiveOverridableMapContainer<String, ConfigurationValue, Configuration> {
+
     RecursiveOverridableMapContainerForConfigurationValues(Configuration parent, String id) {
         super(parent, id);
     }
@@ -30,7 +31,7 @@ public class RecursiveOverridableMapContainerForConfigurationValues
     }
 
     /**
-     * Temporary elevation makes it possible for Roddy to evaluate variables with dependent values properly.
+     * Temporary elevation makes it possible for Roddy to properly evaluate variables with dependent values.
      *
      * Given are two configurations:
      * C extends B, B extends A
@@ -42,7 +43,8 @@ public class RecursiveOverridableMapContainerForConfigurationValues
      * expected C.b = 'klm'
      * expected B.b = 'hij'
      *
-     * If you do not elevate the value, B.b would resolve to B.b = 'abc', because the configuration value does only know about its parent and predecessors.
+     * If you do not elevate the value, B.b would resolve to B.b = 'abc',
+     * because the configuration value does only know about its parent and predecessors.
      *
      * @param src
      * @return
@@ -56,7 +58,7 @@ public class RecursiveOverridableMapContainerForConfigurationValues
         return get(id, "");
     }
 
-    /** Get value or throw a RuntimeException, if the value does not exist. */
+    /** Get value or throw a ConfigurationError, if the value does not exist. */
     public ConfigurationValue getOrThrow(String id) throws ConfigurationError {
         return getValue(id);
     }

@@ -11,9 +11,6 @@ package de.dkfz.roddy.config;
  */
 public class ToolStringParameter extends ToolEntry.ToolParameter<ToolStringParameter> {
 
-    private final String cValueID;
-    private final ParameterSetbyOptions setby;
-
     /**
      * How this parameter is filled.
      * Can be set by the calling code, it must really be done there!
@@ -23,6 +20,15 @@ public class ToolStringParameter extends ToolEntry.ToolParameter<ToolStringParam
         callingCode,
         configurationValue
     }
+
+    /**
+     * The original idea was that the value that was given to the job via the script-parameter name was provided in a configuration value.
+     * As now all configuration values are provided as is, this option is obsolete.
+     */
+    @Deprecated
+    private final String cValueID;
+
+    private final ParameterSetbyOptions setby;
 
     /**
      * Call this, if the value is set in code.
@@ -38,8 +44,8 @@ public class ToolStringParameter extends ToolEntry.ToolParameter<ToolStringParam
     /**
      * Call this, if you have the id of a configuration value.
      *
-     * @param scriptParameterName
-     * @param cValueID
+     * @param scriptParameterName    Name of the parameter as communicated to the job via the environment
+     * @param cValueID               Possible configuration value name to fill in the values from upon calling the job.
      */
     public ToolStringParameter(String scriptParameterName, String cValueID) {
         super(scriptParameterName);

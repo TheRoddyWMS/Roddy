@@ -35,9 +35,9 @@ class TestWorkflow extends Workflow {
 @CompileStatic
 class ContextResource extends ExternalResource {
 
-    static final String DIR_PREFIX = "RoddyTests"
+    static final String DIR_PREFIX = 'RoddyTests'
 
-    public TemporaryFolder tempFolder = new TemporaryFolder(new File ("/tmp"))
+    public TemporaryFolder tempFolder = new TemporaryFolder(new File ('/tmp'))
 
     public File tempDir
 
@@ -69,19 +69,19 @@ class ContextResource extends ExternalResource {
     }
 
     File getTestLoggingDirectory(String testID) {
-        return getDirectory(testID, "logdir")
+        return getDirectory(testID, 'logdir')
     }
 
     File getTestExecutionDirectory(String testID) {
-        return getDirectory(testID, "exec_dir")
+        return getDirectory(testID, 'exec_dir')
     }
 
     File getTestOutputDirectory(String testID) {
-        return getDirectory(testID, "output")
+        return getDirectory(testID, 'output')
     }
 
     File getTestInputDirectory(String testID) {
-        return getDirectory(testID, "input")
+        return getDirectory(testID, 'input')
     }
 
     RuntimeService createSimpleRuntimeService(final String testClassName) {
@@ -133,8 +133,8 @@ class ContextResource extends ExternalResource {
         if (testConfig) {
 
             final PreloadedConfiguration projectPreloadConfig =
-                    new PreloadedConfiguration(null, Configuration.ConfigurationType.PROJECT, "TestProject", "",
-                            "", null, "", ResourceSetSize.l, null, [], null, "")
+                    new PreloadedConfiguration(null, Configuration.ConfigurationType.PROJECT, 'TestProject', '',
+                            '', null, '', ResourceSetSize.l, null, [], null, '')
 
             final ProjectConfiguration projectConfig =
                     new ProjectConfiguration(projectPreloadConfig, testRuntimeService.getClass().toString(), [:], testConfig)
@@ -142,16 +142,16 @@ class ContextResource extends ExternalResource {
             final Project project = new Project(projectConfig, testRuntimeService, null, null)
 
             final PreloadedConfiguration analysisPreloadConfig =
-                    new PreloadedConfiguration(null, Configuration.ConfigurationType.ANALYSIS, "TestAnalysis", "",
-                            "", null, "", ResourceSetSize.l, null, [], null, "")
+                    new PreloadedConfiguration(null, Configuration.ConfigurationType.ANALYSIS, 'TestAnalysis', '',
+                            '', null, '', ResourceSetSize.l, null, [], null, '')
 
             final AnalysisConfiguration analysisConfig = new AnalysisConfiguration(analysisPreloadConfig,
-                    "de.dkfz.roddy.core.TestWorkflow",
-                    testRuntimeService.getClass().toString(), null, [], [], "")
+                    'de.dkfz.roddy.core.TestWorkflow',
+                    testRuntimeService.getClass().toString(), null, [], [], '')
 
-            final Analysis analysis = new Analysis("Test", project, new RuntimeService(), analysisConfig)
+            final Analysis analysis = new Analysis('Test', project, new RuntimeService(), analysisConfig)
 
-            final DataSet dataSet = new DataSet(analysis, "TEST_PID", getTestOutputDirectory("TEST_PID"))
+            final DataSet dataSet = new DataSet(analysis, 'TEST_PID', getTestOutputDirectory('TEST_PID'))
 
             result = new ExecutionContext(SystemProperties.getUserName(), analysis, dataSet, ExecutionContextLevel.UNSET,
                     testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime())
@@ -275,11 +275,11 @@ class ContextResource extends ExternalResource {
 
         FilenamePattern fp =
                 new OnScriptParameterFilenamePattern(GenericFile as Class<BaseFile>, baseName, baseName,
-                        "/tmp/$baseName")
+                        "/tmp/$baseName", FilenamePattern.DEFAULT_SELECTIONTAG)
         context.configuration.filenamePatterns.add(fp)
         return new GenericFile(new BaseFile.ConstructionHelperForManualCreation(
                 context,
-                new ToolEntry(baseName, "/tmp", baseName),
+                new ToolEntry(baseName, '/tmp', baseName),
                 baseName, baseName, null, null, null))
     }
 
@@ -287,12 +287,12 @@ class ContextResource extends ExternalResource {
         assert parentFiles.size() > 0
         FilenamePattern fp =
                 new OnScriptParameterFilenamePattern(GenericFile as Class<BaseFile>, baseName, baseName,
-                        "/tmp/$baseName")
+                        "/tmp/$baseName", FilenamePattern.DEFAULT_SELECTIONTAG)
         parentFiles[0].executionContext.configuration.filenamePatterns.add(fp)
         return new GenericFile(new BaseFile.ConstructionHelperForManualCreation(
                 parentFiles[0],
                 parentFiles,
-                new ToolEntry(baseName, "/tmp", baseName),
-                baseName, baseName, null, "1", null, null))
+                new ToolEntry(baseName, '/tmp', baseName),
+                baseName, baseName, null, '1', null, null))
     }
 }

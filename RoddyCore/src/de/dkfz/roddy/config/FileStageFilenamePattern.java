@@ -40,7 +40,7 @@ public class FileStageFilenamePattern extends FilenamePattern {
     }
 
     public String toString() {
-        return super.toString() + ", fileStage=" + fileStage;
+        return super.toString() + " fileStage=" + fileStage;
     }
 
 }

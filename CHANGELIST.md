@@ -1,10 +1,46 @@
-# Work in progress
+# Changelist
 
-* Version update to 3.4.0
+* 3.5.0
+
+  - Fixed non-quoting of variables with spaces. Now they are quoted and thus correctly interpreted as string variables instead of Bash array variables that are not correctly exported due to the Bash bug.
+  
+  - Added escaping of not already quoted variables containing double quotes as quoting these could yield wrong results (e.g. in the context of named Bash bug).  
+  
+  - Allow for "selectionTag" in filename patterns and output file tags
+  
+  - Correctly processes selectionTag for onScriptParameter filename pattern matching
+  
+  - Added feature toggle `StrictOnScriptParameterSelectionTag` with default `false`; with `false` default selection tag values always match; with `true`, which is planned to be the Roddy 4, "default" selection tag values in output file declarations only match "default" selection tags in filename patterns
+  
+  - Improved parsing of `--cvalues` command-line argument solving issues with colons ':' in configuration variables
+  
+  - Removed ModifiedVariablePassing feature toggle
+  
+  - Fixed a new regression with not quoting bash/map variables in the job-parameter files
+  
+  - Lots of minor improvements of (error) output and behaviour
+  
+  - Updated BatchEuphoria dependency
+  
+  - Added `testRunVariableWidth` application property to change the width of the printing of job-parameter names. Defaults to old values 25.
+  
+  - Update to Gradle 5.1.1
+  
+  - Update to RoddyToolLib 2.1.1 
+  
+* 3.4.2
+
+  - Fix a bug which made CValue.toFile() output wrong paths
+  
+* 3.4.1
+
+  - Add JSON configuration file loader and tests
+  
+* 3.4.0
 
   - Improved validation of configuration values.
 
-  - ForbidSubmissionToRunning was reenabled and turned on by default.
+  - ForbidSubmissionOnRunning was re-enabled and turned on by default.
   
   - Created ExitReasons class for usage within Roddy and plugins. The class stores different exit codes and messages.
   
@@ -20,7 +56,7 @@
   
   - Improved test coverage.
 
-* Version update to 3.3.3
+* 3.3.3
 
   - Further improved error reporting
   
@@ -28,13 +64,13 @@
   
   - Improved robustness
 
-* Version update to 3.3.2
+* 3.3.2
 
   - Improved directory checks
   
   - Improved error reporting
 
-* Version update to 3.3.1
+* 3.3.1
 
   - Updated to RoddyToolLib 2.0.0
   
@@ -42,7 +78,7 @@
   
   - Fixed autofilename bug
 
-* Version update to 3.3.0 (= 3.2.3)
+* 3.3.0 (misreports itself as 3.2.3)
 
   - Bugfixes to get Sophia 2.0.0 running
   
@@ -50,7 +86,7 @@
   
   - Mis-tagged this release as 3.2.3!
 
-* Version update to 3.2.2
+* 3.2.2
 
   - Fixed context warnings that were mis-represented as errors
   
@@ -64,7 +100,7 @@
   
   - Sphinxs documentation with plantuml plugin support
 
-* Version update to 3.2.1
+* 3.2.1
 
   - FileOnErroneousDryRuns feature toggle
   
@@ -74,7 +110,7 @@
   
   - Improved error reporting
 
-* Version update to 3.2.0
+* 3.2.0
 
   - Improved loading of cohorts and supercohorts
   
@@ -88,7 +124,7 @@
   
   - Allow selectiontag in FileGroup
 
-* Version update to 3.1.0
+* 3.1.0
 
   - Improved cohort handling
   
@@ -102,7 +138,7 @@
   
   - Improved unknow libdir problem during roddy.sh compile
 
-* Version update to 3.0.11
+* 3.0.11
 
   - Fix printidlessruntimeconfig
   
@@ -110,15 +146,15 @@
   
   - IO-dir checks also in other modes but run
 
-* Version update to 3.0.10
+* 3.0.10
 
   - Backported tool-compression bug related to MD5 sum creation from 3.2.1 
 
-* Version update to 3.0.9
+* 3.0.9
 
   - Update to RoddyToolLib 2.0.0
 
-* Version update to 3.0.8
+* 3.0.8
 
   - Boolean configuration value `1` was incorrectly interpreted as `false`. Fixed to be interpreted as `true`. Added warnings that on the long run only "true" and "false" will be allowed values for Booleans.
 
@@ -132,15 +168,15 @@
   
   - Removed `preventJobExecution` configuration variable
 
-* Version update to 3.0.1-3.0.7
+* 3.0.1-3.0.7
 
   - Bugfix releases
   
   - TheRoddyWMS organization
 
-* Version update to 3.0.4 
+* 3.0.4 
 
-* Version update to 3.0.0
+* 3.0.0
 
   - Many bugfixes and error message improvements
 
@@ -154,13 +190,13 @@
   
   - improved structure and content of output (show plugin directories and loaded XMLs)
 
-* Version update to 2.3.187
+* 2.3.187
 
   - Many bugfixes
   
   - Improved error messages
 
-* Version update to 2.3.133
+* 2.3.133
 
 This section contains features which are currently in development. Testable / active features
 are in the changelist.
@@ -180,9 +216,7 @@ Entries here can be marked with (PLANNED) or (WIP). (TEST) is more for the Chang
 
 - (WIP) Integrate SLURM as a cluster backend
 
-# Changelist
-
-* Version update to 2.3.97b
+* 2.3.97b
 
 Beta release.
 - Working version of new runtime class location implementation.
@@ -197,7 +231,7 @@ Beta release.
 - Metadata table support
 - Colored output
 
-* Version update to 2.2.112
+* 2.2.112
 
 * Version update
 
@@ -229,7 +263,7 @@ Beta release.
       
   ![Dependency graph]("documentation/readme_images/Roddy Plan_0.jpg")
 
-* Version update to 2.2.87
+* 2.2.87
 
     - Fix: Fix some bugs regarding brawl workflows.
 
@@ -239,7 +273,7 @@ Beta release.
   target project folder. Roddy will take care of the rest. Both update and create will update
   the configurationDirestories part in the ini file to contain/change the newly created directory
 
-* Version update to 2.2.81
+* 2.2.81
 
     - Fix: Output directories will now always be set to type "path". This will prevent errors for
       output files, if users forget to set this particular variables to the proper type.
@@ -255,7 +289,7 @@ Beta release.
       brawl scripts will be auto converted and compiled to Groovy workflows upon startup. This way it is guaranteed
       that those scripts are written properly. Still missing is the for loop syntax.
 
-* Version update to 2.2.66
+* 2.2.66
 
     - (TEST) Implement the "showreadme" command to show the Roddy README.md
     
@@ -269,7 +303,7 @@ Beta release.
     
     - (TEST) Introduce a killswitch to disable filename imports upon analysis import.
 
-* Version update to 2.2.49
+* 2.2.49
 
     - Add the --extendedlist option to support a very extended view for checkworkflostatus.
       In this view, all previous runs are shown.
@@ -300,7 +334,7 @@ Beta release.
     
     - (TEST) Pass parameters in a parameter file instead of the normal cli parameter passing. (Feature toggle id: ModifiedVariablePassing[def:false])
 
-* Version update to 2.2.8
+* 2.2.8
 
     - (TEST) Break submission, if an error occurs. If a job cannot be started on a cluster environment, the overall
       job submission will be skipped. Running / Started processes are not affected. (Feature toggle id: BreakSubmissionOnError[def:false])
@@ -317,7 +351,7 @@ Beta release.
                            /lib
       Regarding Runtime libraries handling like groovy and the JDK there is no good solution yet.
 
-* Version update to 2.1.49
+* 2.1.49
 
     - Roddy will perform a lot more checks before starting a workflow. These checks include file system
       checks, file availability and some more. 
@@ -337,22 +371,22 @@ Beta release.
         If the used plugins are not set, Roddy will try to load all plugins in
         their latest version.
 
-* Version update to 2.1.28
+* 2.1.28
 
-* Version update to 2.1.27
+* 2.1.27
 
     - Bugfix: There was an error in some rare cases with the job wrapper script. In those rare
   cases, the code to query the last jobstates failed and the script was not started. This only
   occurred when using SGE. 
 
-* Version update to 2.1.26
+* 2.1.26
 
     - Roddy tries to create all files with the proper group rights and settings. This
   is mostly tested for PBS based execution. The change of settings includes files in
   .roddyExecutionDirectory as well as those in the roddyExecutionStore
   File settings are set recursively where this is necessary.
 
-* Version update to 2.1.24
+* 2.1.24
 
     - (TEST) You can use Roddy to create new workflows. Use the createworkflow option for that:
       bash roddy.sh createworkflow (pluginID) [native:](workflowID)
@@ -360,7 +394,7 @@ Beta release.
     - (TEST)The application properties ini readout is changed in such a way, that the users user
   name will be used if USERNAME or "" is supplied. This will also be the default parameter.
 
-* Version update to 2.1.14
+* 2.1.14
 
     - (TEST) There is now a basic support for native workflows. Though the workflow scripts still
       need to be adapted somehow, the new mechanism could make it very easy to integrate
@@ -376,4 +410,4 @@ Beta release.
     - Roddy now supports the parameter --useRoddyVersion= from the command line, it overrides
   the settings in the application properties ini file
 
-* Version update to 2.1.8
+* 2.1.8

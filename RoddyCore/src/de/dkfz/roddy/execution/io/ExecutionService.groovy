@@ -304,7 +304,7 @@ abstract class ExecutionService implements BEExecutionService {
             def userGroup = context.getOutputGroupString()
             boolean isGroupAvailable = FileSystemAccessProvider.getInstance().isGroupAvailable(userGroup)
             if (!isGroupAvailable) {
-                context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("The requested user group ${userGroup} is not available on the target system.\n\t\tDisable Roddys access rights management by setting outputAllowAccessRightsModification to true or\n\t\tSelect a proper group by setting outputFileGroup."))
+                context.addError(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("The requested user group ${userGroup} is not available on the target system.\n\t\tDisable Roddys access rights management by setting outputAllowAccessRightsModification to true or\n\t\tSelect a proper group by setting outputFileGroup."))
                 valid = false
             }
         }
@@ -329,7 +329,7 @@ abstract class ExecutionService implements BEExecutionService {
         File inputBaseDirectory = analysis.getInputBaseDirectory()
         Boolean inputIsReadable = fsap.isReadable(inputBaseDirectory)
         if (!inputIsReadable)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.
+            context.addError(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.
                     expand("The input base directory is not readable: ${inputBaseDirectory}, please check access rights and ownership.", Level.SEVERE))
 
         // Project output base directory with i.e. ../results_per_pid
@@ -337,10 +337,10 @@ abstract class ExecutionService implements BEExecutionService {
         Boolean outputIsWriteable =
                 fsap.directoryExists(outputBaseDirectory) ? fsap.isReadable(outputBaseDirectory) && fsap.isWritable(outputBaseDirectory) : null
         if (outputIsWriteable == null)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.
+            context.addError(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.
                     expand("Output base directory is missing: ${outputBaseDirectory}, please create with proper access rights and ownership.", Level.SEVERE))
         else if (outputIsWriteable == Boolean.FALSE) //Do an else if because groovy might evaluate null to false.
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
+            context.addError(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
                     expand("Output base directory is not writable: ${outputBaseDirectory}, please change access rights and ownership."))
 
         // Output with dataset id
@@ -348,10 +348,10 @@ abstract class ExecutionService implements BEExecutionService {
         Boolean datasetDirIsWritable =
                 fsap.directoryExists(outputDirectory) ? fsap.isReadable(outputDirectory) && fsap.isWritable(outputDirectory) : null
         if (datasetDirIsWritable == null)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.
+            context.addError(ExecutionContextError.EXECUTION_PATH_NOTFOUND_WARN.
                     expand("Creating output directory: ${outputDirectory}", Level.INFO))
         else if (datasetDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evalute null to false.
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
+            context.addError(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
                     expand("Output directory is not writable: ${outputDirectory}"))
 
         // roddyExecutionStore in the dataset folder
@@ -359,7 +359,7 @@ abstract class ExecutionService implements BEExecutionService {
         Boolean baseContextDirIsWritable =
                 fsap.directoryExists(baseContextExecutionDirectory) ? fsap.isReadable(baseContextExecutionDirectory) && fsap.isWritable(baseContextExecutionDirectory) : null
         if (baseContextDirIsWritable == Boolean.FALSE) //Do an else if because groovy might evaluate null to false.
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
+            context.addError(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
                     expand("The datasets execution storage folder is not writable: ${baseContextExecutionDirectory}"))
 
         // the exec_... folder in the base context exec dir. (NOT CHECKED, created later!)
@@ -370,7 +370,7 @@ abstract class ExecutionService implements BEExecutionService {
         Boolean projectExecutionContextDirIsWritable =
                 fsap.directoryExists(projectExecutionDirectory) ? fsap.isReadable(projectExecutionDirectory) && fsap.directoryExists(projectExecutionDirectory) : null
         if (projectExecutionContextDirIsWritable == Boolean.FALSE)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
+            context.addError(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
                     expand("The project execution store is not writable: ${projectExecutionDirectory}"))
 
         // .roddyExecCache.txt containing the list of executed runs in the project output folder
@@ -378,7 +378,7 @@ abstract class ExecutionService implements BEExecutionService {
         Boolean projectExecCacheFileIsWritable =
                 outputIsWriteable && fsap.fileExists(projectExecCacheFile) ? fsap.isReadable(projectExecCacheFile) && fsap.isWritable(projectExecCacheFile) : null
         if (projectExecCacheFileIsWritable == Boolean.FALSE)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
+            context.addError(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
                     expand("The projects execution cache file is not writable: ${projectExecCacheFile}"))
 
         // The md5 sum file in .roddyExecutionStore
@@ -386,7 +386,7 @@ abstract class ExecutionService implements BEExecutionService {
         Boolean projectToolsMD5SumFileIsWritable =
                 fsap.fileExists(projectToolsMD5SumFile) ? fsap.isReadable(projectToolsMD5SumFile) && fsap.isWritable(projectToolsMD5SumFile) : projectExecutionContextDirIsWritable
         if (projectToolsMD5SumFileIsWritable == Boolean.FALSE)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
+            context.addError(ExecutionContextError.EXECUTION_PATH_NOTWRITABLE.
                     expand("The project md5sum file is not writable: ${projectToolsMD5SumFile}"))
 
         //Just check, if there were new errors.
@@ -786,7 +786,7 @@ abstract class ExecutionService implements BEExecutionService {
                     getInstance().execute(str, true)
                     provider.setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.getAbsolutePath()), context)
                     if (!provider.directoryExists(analysisToolsServerDir))
-                        context.addErrorEntry(ExecutionContextError.EXECUTION_PATH_NOTFOUND.expand("The central archive ${analysisToolsServerDir.absolutePath} was not created!"))
+                        context.addError(ExecutionContextError.EXECUTION_PATH_NOTFOUND.expand("The central archive ${analysisToolsServerDir.absolutePath} was not created!"))
 
                 }
                 provider.checkDirectory(dstAnalysisToolsDirectory, context, true)

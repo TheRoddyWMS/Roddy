@@ -45,6 +45,6 @@ public class DerivedFromFilenamePattern extends FilenamePattern {
     }
 
     public String toString() {
-        return super.toString() + ", derivedFromClass=" + derivedFromCls.getCanonicalName();
+        return super.toString() + " derivedFromClass=" + derivedFromCls.getCanonicalName();
     }
 }

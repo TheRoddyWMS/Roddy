@@ -15,6 +15,7 @@ import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.fs.BashCommandSet
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.tools.shell.bash.Service as BashService
 import groovy.transform.CompileStatic
 
 import java.util.logging.Level
@@ -317,27 +318,29 @@ class BashConverter extends ConfigurationConverter {
             declareVar = "declare -x   "
             declareInt = "declare -x -i"
         }
+        String evaluatedValue = cv.toString()
         if (cv.toString().startsWith("#COMMENT")) {
-            text << cv.toString()
+            text << evaluatedValue
         } else {
             String tmp
-
             if (cv.type && cv.type.toLowerCase() == CVALUE_TYPE_BASH_ARRAY) {
-                return new StringBuilder("${declareVar} ${cv.id}=${addQuotesIfRequested(cv.toString(), autoQuoteArrays)}".toString())
+                return new StringBuilder("${declareVar} ${cv.id}=${addQuotesIfRequested(evaluatedValue, autoQuoteArrays)}".toString())
             } else if (cv.type && cv.type.toLowerCase() == CVALUE_TYPE_INTEGER) {
                 return new StringBuilder("${declareInt} ${cv.id}=${cv.toString()}".toString())
             } else if (cv.type && [CVALUE_TYPE_DOUBLE, CVALUE_TYPE_FLOAT].contains(cv.type.toLowerCase())) {
-                return new StringBuilder("${declareVar} ${cv.id}=${cv.toString()}".toString())
+                return new StringBuilder("${declareVar} ${cv.id}=${evaluatedValue}".toString())
             } else if (cv.type && cv.type.toLowerCase() == CVALUE_TYPE_PATH) {
                 tmp = "${cv.toFile(context)}".toString()
+            } else if (evaluatedValue.startsWith("-") || evaluatedValue.startsWith("*")) {
+                tmp = "\"${evaluatedValue}\"".toString()
+            } else if (!isQuoted(evaluatedValue) && evaluatedValue =~ /"/) {
+                tmp = BashService.escape(evaluatedValue)
+                logger.always("Bash variable '${cv.id}' contains double quote. Will be escaped! Please check: [${tmp}]")
+            } else if (quoteSomeScalarConfigValues && !isQuoted(evaluatedValue) && evaluatedValue =~ /[\s\t\n;<>&!#'`|?{}\[\]()~\r\f$]/) {
+                // TODO Use de.dkfz.roddy.tools.shell.bash.Service to escape characters. Note that quoting is the wrong thing if there are double quotes in the string! This should be implemented end to end with correct parsing of configuration values into arrays (account for escapes!) and without intermediate casting into Strings for bashArray variables.
+                tmp = "\"${evaluatedValue}\"".toString()
             } else {
-                if (cv.value.startsWith("-") || cv.value.startsWith("*")) {
-                    tmp = "\"${cv.toString()}\"".toString()
-                } else if (quoteSomeScalarConfigValues && !isQuoted(cv.value) && cv.value =~ /[\s\t\n;]/) {
-                    tmp = "\"${cv.toString()}\"".toString()
-                } else {
-                    tmp = "${cv.toString()}".toString()
-                }
+                tmp = evaluatedValue
             }
             text << "${declareVar} ${cv.id}="
             //TODO Important, this is a serious hack! It must be removed soon

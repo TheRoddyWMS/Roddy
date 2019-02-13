@@ -6,11 +6,12 @@
 
 package de.dkfz.roddy.config.converters
 
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING
+
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ContextResource
@@ -21,7 +22,6 @@ import org.junit.BeforeClass
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
 
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BASH_ARRAY
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BOOLEAN
@@ -41,6 +41,8 @@ class BashConverterTest {
     @Rule
     public final ContextResource contextResource = new ContextResource()
 
+    public static final String CVAL_TEST_VARIABLE_WITH_SPACES = "testVariableValueWithSpaces"
+    public static final String CVAL_TEST_EVAL_VARIABLE_WITH_SPACES = "testEvaluatedVariableWithSpaces"
     public static final String CVAL_TEST_OUTPUT_DIRECTORY = "testOutputDirectory"
     public static final String CVAL_OUTPUT_BASE_DIRECTORY = "outputBaseDirectory"
     public static final String CVAL_OUTPUT_ANALYSIS_BASE_DIRECTORY = "outputAnalysisBaseDirectory"
@@ -98,6 +100,7 @@ class BashConverterTest {
     private Configuration createTestConfiguration() {
         Configuration configuration = new Configuration(null);
         configuration.getConfigurationValues().addAll([
+                new ConfigurationValue(configuration, CVAL_TEST_VARIABLE_WITH_SPACES, 'here-> <-space', CVALUE_TYPE_STRING),
                 new ConfigurationValue(configuration, CVAL_OUTPUT_ANALYSIS_BASE_DIRECTORY, '${outputBaseDirectory}/Dideldum', CVALUE_TYPE_PATH),
                 new ConfigurationValue(configuration, CVAL_TEST_OUTPUT_DIRECTORY, "testvalue", CVALUE_TYPE_PATH),
                 new ConfigurationValue(configuration, CVAL_TEST_BASHARRAY, "( a b c d )", CVALUE_TYPE_BASH_ARRAY),
@@ -110,6 +113,7 @@ class BashConverterTest {
                 new ConfigurationValue(configuration, CVAL_TEST_NEWLINE_QUOTES, "text\nwith\nnewlines"),
                 new ConfigurationValue(configuration, CVAL_TEST_SPACE_NQUOTE_ALREADY_QUOTED, "\"text with spaces\""),
                 new ConfigurationValue(configuration, CVAL_TEST_EQUALITY_SIGN, "--par1=val1 --par2=val2"),
+                new ConfigurationValue(configuration, CVAL_TEST_EVAL_VARIABLE_WITH_SPACES, "\${${CVAL_TEST_VARIABLE_WITH_SPACES}}"),
         ] as List<ConfigurationValue>)
         return configuration
     }
@@ -184,11 +188,13 @@ class BashConverterTest {
         Roddy.applicationConfiguration.getOrSetApplicationProperty(Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY, tmpDir.absolutePath)
 
         Map<String, String> listWiAutoQuoting = [
-                (CVAL_TEST_BASHARRAY)                  : "declare -x    testBashArray=\"( a b c d )\"",
-                (CVAL_TEST_BASHARRAY_QUOTES)           : "declare -x    testBashArrayQuotes='( a b c d )'",
-                (CVAL_TEST_INTEGER)                    : "declare -x -i testInteger=100",
-                (CVAL_TEST_FLOAT)                      : "declare -x    testFloat=1.0",
-                (CVAL_TEST_DOUBLE)                     : "declare -x    testDouble=1.0",
+                (CVAL_TEST_EVAL_VARIABLE_WITH_SPACES) : "declare -x    ${CVAL_TEST_EVAL_VARIABLE_WITH_SPACES}=\"here-> <-space\"".toString(),
+                (CVAL_TEST_VARIABLE_WITH_SPACES)      : "declare -x    ${CVAL_TEST_VARIABLE_WITH_SPACES}=\"here-> <-space\"".toString(),
+                (CVAL_TEST_BASHARRAY)                 : "declare -x    testBashArray=\"( a b c d )\"",
+                (CVAL_TEST_BASHARRAY_QUOTES)          : "declare -x    testBashArrayQuotes='( a b c d )'",
+                (CVAL_TEST_INTEGER)                   : "declare -x -i testInteger=100",
+                (CVAL_TEST_FLOAT)                     : "declare -x    testFloat=1.0",
+                (CVAL_TEST_DOUBLE)                    : "declare -x    testDouble=1.0",
                 // These tests here fail, if you only start this test. Leave them at the end, so we can at least test the other tests.
                 (CVAL_OUTPUT_BASE_DIRECTORY)           : "declare -x    ${CVAL_OUTPUT_BASE_DIRECTORY}=$tmpDir".toString(),
                 (CVAL_OUTPUT_ANALYSIS_BASE_DIRECTORY)  : "declare -x    ${CVAL_OUTPUT_ANALYSIS_BASE_DIRECTORY}=$tmpDir/Dideldum".toString(),

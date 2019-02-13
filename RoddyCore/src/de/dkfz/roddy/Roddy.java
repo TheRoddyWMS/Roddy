@@ -600,15 +600,15 @@ public class Roddy {
     private static Configuration applicationSpecificConfiguration = null;
 
     private static void setDefaultRoddyJobIdVariable(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
-        configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_JOBID_RAW, "$" + Roddy.jobManager.getJobIdVariable()));
+        configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_JOBID_RAW, "${" + Roddy.jobManager.getJobIdVariable() + "}"));
     }
 
     private static void setDefaultRoddyJobNameVariable(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
-        configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_JOBNAME_RAW, "$" + Roddy.jobManager.getJobNameVariable()));
+        configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_JOBNAME_RAW, "${" + Roddy.jobManager.getJobNameVariable() + "}"));
     }
 
     private static void setDefaultRoddyQueueVariable(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
-        configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_QUEUE_RAW, "$" + Roddy.jobManager.getQueueVariable()));
+        configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_QUEUE_RAW, "${" + Roddy.jobManager.getQueueVariable() + "}"));
     }
 
     @Deprecated

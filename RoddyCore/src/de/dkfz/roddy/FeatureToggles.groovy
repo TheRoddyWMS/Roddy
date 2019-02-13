@@ -77,7 +77,15 @@ enum FeatureToggles {
     /**
      * Fail, if e.g. upon (test)rerun the first dry run QUERY_STATUS failed.
      */
-    FailOnErroneousDryRuns(true )
+    FailOnErroneousDryRuns(true ),
+
+    /**
+     * If true, null vs. set selection tag in filenamepattern vs. file comparison is *not* a match.
+     * If false, the matching is relaxed in that comparison against unset selection tags can be a match.
+     *
+     * DEPRECATED: In version 4 this should be set to strict without a feature toggle.
+     */
+    StrictParameterSelectionTagEquality(false)
 
     final boolean defaultValue
 

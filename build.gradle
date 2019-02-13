@@ -92,20 +92,21 @@ repositories {
 }
 
 
+ext.roddyToolLibVersion = "2.1.1"
 
 configurations.all {
     resolutionStrategy.cacheChangingModulesFor(0, 'seconds')
     resolutionStrategy.cacheDynamicVersionsFor(0, 'seconds')
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         if (details.requested.name == "RoddyToolLib") {
-            details.useVersion "1.0.0"
-            details.because 'BatchEuphoria not affected by RoddyToolLib 1.0.0 API changes.'
+            details.useVersion roddyToolLibVersion
+            details.because "BatchEuphoria not affected by RoddyToolLib ${roddyToolLibVersion} API changes."
         }
     }
 }
 
 dependencies {
-    compile 'com.github.theroddywms:RoddyToolLib:2.0.0'         // MIT
+    compile "com.github.theroddywms:RoddyToolLib:${roddyToolLibVersion}"         // MIT
     // compile 'com.github.theroddywms:RoddyToolLib:master-SNAPSHOT'    // MIT
     compile 'com.github.theroddywms:BatchEuphoria:0.0.6'        // MIT
     // compile 'com.github.theroddywms:BatchEuphoria:master-SNAPSHOT'   // MIT
