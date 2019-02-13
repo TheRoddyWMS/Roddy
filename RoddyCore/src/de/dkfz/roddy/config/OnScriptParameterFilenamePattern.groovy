@@ -50,6 +50,6 @@ class OnScriptParameterFilenamePattern extends FilenamePattern {
     }
 
     String toString() {
-        super.toString() + ", toolID=$toolID, parameterID=$parameterID"
+        super.toString() + " toolID=$toolID parameterID=$parameterID"
     }
 }

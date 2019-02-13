@@ -78,7 +78,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
 
         @Override
         String toString() {
-            "selectionTag=$selectionTag, indexInFileGroup=$indexInFileGroup"
+            "selectionTag=$selectionTag indexInFileGroup=$indexInFileGroup"
         }
     }
 
@@ -664,11 +664,6 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         if (!selectionTag)
             selectionTag = FilenamePattern.DEFAULT_SELECTIONTAG
 
-        //Find the correct pattern:
-        // Look if filename patterns for this class are available
-        // If not throw an exception
-        // Look if there is only one available: Easy, use this
-        // onMethod, sourcefile, filestage
         ExecutionContext context = baseFile.getExecutionContext()
         LinkedHashMap<FilenamePatternDependency, LinkedList<FilenamePattern>> availablePatterns =
                 loadAvailableFilenamePatternsForBaseFileClass(baseFile, context)
