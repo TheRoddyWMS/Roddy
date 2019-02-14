@@ -11,6 +11,8 @@ To successfully manage a workflow, Roddy needs to know about several things:
 
 - And, if you want, some debug settings.
 
+When setting paths and referring to e.g. environment variables like "${USER}" braces "${...}" to avoid warning about variables without braces that Roddy generates (since version 3.5) to warn you about possibly unresolved variables.
+
 Let's have a brief look at it:
 
 .. code-block:: Bash
