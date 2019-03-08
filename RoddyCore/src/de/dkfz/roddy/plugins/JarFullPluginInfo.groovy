@@ -13,11 +13,11 @@ import groovy.transform.CompileStatic
  * Created by heinold on 04.05.17.
  */
 @CompileStatic
-class JarFulPluginInfo extends PluginInfo {
+class JarFullPluginInfo extends PluginInfo {
 
     final File jarFile
 
-    JarFulPluginInfo(String name, File directory, File jarFile, String version, String roddyAPIVersion, String jdkVersion, Map<String, String> dependencies) {
+    JarFullPluginInfo(String name, File directory, File jarFile, String version, String roddyAPIVersion, String jdkVersion, Map<String, String> dependencies) {
         super(name, directory, version, roddyAPIVersion, jdkVersion, dependencies)
         this.jarFile = jarFile
     }

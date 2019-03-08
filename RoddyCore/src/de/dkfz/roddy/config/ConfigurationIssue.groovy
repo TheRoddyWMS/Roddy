@@ -55,7 +55,7 @@ class ConfigurationIssue {
         inproperVariableExpression(
                 ConfigurationIssueLevel.CVALUE_WARNING,
                 "Variables in your configuration appear to misuse variable imports. Import variables like \${variable identifier}, nesting like '\${\${innerVar }}' is forbidden and it must not be empty.",
-                "Variable '#REPLACE_0#' might use malformatted variable imports. Import variables like \${variable identifier}, nesting like '\${\${innerVar}}' is forbidden and it must not be empty."
+                "Variable '#REPLACE_0#' may use malformatted variable imports. Import variables like \${variable identifier}, nesting like '\${\${innerVar}}' is forbidden and it must not be empty."
         )
 
         final ConfigurationIssueLevel level

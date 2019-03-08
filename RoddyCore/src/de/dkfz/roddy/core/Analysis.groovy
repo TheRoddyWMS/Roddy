@@ -334,10 +334,9 @@ class Analysis {
      * @param ec The execution context which will be context in a separate thread.
      */
     void runDeferredContext(final ExecutionContext ec) {
-//        ThreadGroup
-        Thread t = Thread.start(String.format("Deferred execution context execution for " + Constants.DATASET_HR + " %s", ec.getDataSet().getId()), {
+        Thread t = Thread.start(String.format("Deferred execution context execution for " + Constants.DATASET_HR + " %s", ec.dataSet.id)) {
             executeRun(ec)
-        })
+        }
     }
 
     protected void executeRun(ExecutionContext context) {
@@ -345,25 +344,22 @@ class Analysis {
     }
 
 
-    protected boolean prepareExecution(ExecutionContext context)
-            throws IOException {
-        logger.rare("" + context.getExecutionContextLevel())
-        boolean isExecutable
-        String datasetID = context.getDataSet().getId()
-        Exception eCopy = null
-        boolean contextRightsSettings = ExecutionService.getInstance().checkAccessRightsSettings(context)
-        boolean contextPermissions = ExecutionService.getInstance().checkContextDirectoriesAndFiles(context)
+    protected boolean prepareExecution(ExecutionContext context) {
+        logger.rare(context.executionContextLevel.toString())
+        String datasetID = context.dataSet.id
+        boolean contextRightsSettings = ExecutionService.instance.checkAccessRightsSettings(context)
+        boolean contextPermissions = ExecutionService.instance.checkContextDirectoriesAndFiles(context)
         boolean configurationValidity =
-                Roddy.isStrictModeEnabled() && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors) ? !getConfiguration().hasLoadErrors() : true
+                Roddy.strictModeEnabled && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors) ? !configuration.hasLoadErrors() : true
 
-        // The setup of the workflow and the executability check may require the execution store, e.g. for synchronously called jobs
-        // to gather data from the remote side.
-        ExecutionService.getInstance().writeFilesForExecution(context)
+        // The setup of the workflow and the executability check may require the execution store, e.g. for
+        // synchronously called jobs to gather data from the remote side.
+        ExecutionService.instance.writeFilesForExecution(context)
 
-        boolean setupExecutionStatus = context.getWorkflow().setupExecution()
-        boolean contextExecutability = context.getWorkflow().checkExecutability()
+        boolean setupExecutionStatus = context.workflow.setupExecution()
+        boolean contextExecutability = context.workflow.checkExecutability()
 
-        isExecutable = setupExecutionStatus && contextRightsSettings && contextPermissions && contextExecutability && configurationValidity
+        boolean isExecutable = setupExecutionStatus && contextRightsSettings && contextPermissions && contextExecutability && configurationValidity
 
         if (!isExecutable) {
             StringBuilder message = new StringBuilder("The workflow does not seem to be executable for dataset " + datasetID)
@@ -381,25 +377,25 @@ class Analysis {
         try {
             code()
         } catch (ConfigurationError e) {
-            logger.sometimes(e.getMessage() + Constants.ENV_LINESEPARATOR + getStackTraceAsString(e))
-            context.addError(ExecutionContextError.EXECUTION_SETUP_INVALID.expand(e.getMessage()))
+            logger.sometimes(e.message + Constants.ENV_LINESEPARATOR + getStackTraceAsString(e))
+            context.addError(ExecutionContextError.EXECUTION_SETUP_INVALID.expand(e.message))
         } catch (IOException e) {
-            logger.always(e.getMessage())
-            context.addError(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.getMessage()))
+            logger.always(e.message)
+            context.addError(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.message))
         } catch (Exception e) {
-            logger.always("An unhandled exception of type '" + e.getClass().getCanonicalName() + "' occurred: '" + e.getLocalizedMessage() + "'")
-            logger.always(e.getMessage() + Constants.ENV_LINESEPARATOR + getStackTraceAsString(e))
-            context.addError(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.getMessage()))
+            logger.always("An unhandled exception of type '" + e.class.canonicalName + "' occurred: '" + e.localizedMessage + "'")
+            logger.always(e.message + Constants.ENV_LINESEPARATOR + getStackTraceAsString(e))
+            context.addError(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.message))
         } finally {
             // Look up errors when jobs are executed directly and when there were any started jobs.
             if (context.getStartedJobs().size() > 0) {
                 String failedJobs = ""
                 for (Job job : context.getExecutedJobs()) {
                     if (job.getJobState() == JobState.FAILED)
-                        failedJobs += "\n\t" + job.getJobID() + ",\t" + job.getJobName()
+                        failedJobs += "\n\t" + job.jobID + ",\t" + job.jobName
                 }
                 if (failedJobs.length() > 0)
-                    context.addError(ExecutionContextError.EXECUTION_JOBFAILED.expand("Job(s) failed to execute:" + failedJobs));
+                    context.addError(ExecutionContextError.EXECUTION_JOBFAILED.expand("Job(s) failed to execute:" + failedJobs))
             }
 
             // Print out informational messages like infos, warnings, errors
@@ -430,9 +426,9 @@ class Analysis {
      * @param context
      */
     protected void executeRun(ExecutionContext context, boolean preventLoggingOnQueryStatus) {
-        withErrorReporting(context, preventLoggingOnQueryStatus, {
-            logger.rare("" + context.getExecutionContextLevel())
-            String datasetID = context.getDataSet().getId()
+        withErrorReporting(context, preventLoggingOnQueryStatus) {
+            logger.rare(context.executionContextLevel.toString())
+            String datasetID = context.dataSet.id
 
             boolean isExecutable = prepareExecution(context)
 
@@ -441,8 +437,8 @@ class Analysis {
                 try {
                     boolean execute = true
                     if (context.getExecutionContextLevel().allowedToSubmitJobs) { // Only do these checks, if we are not in query mode!
-                        List<String> invalidPreparedFiles = ExecutionService.getInstance().checkForInaccessiblePreparedFiles(context)
-                        boolean copiedAnalysisToolsAreExecutable = ExecutionService.getInstance().checkCopiedAnalysisTools(context)
+                        List<String> invalidPreparedFiles = ExecutionService.instance.checkForInaccessiblePreparedFiles(context)
+                        boolean copiedAnalysisToolsAreExecutable = ExecutionService.instance.checkCopiedAnalysisTools(context)
                         boolean ignoreFileChecks = Roddy.isOptionSet(RoddyStartupOptions.disablestrictfilechecks)
                         execute &= ignoreFileChecks || (invalidPreparedFiles.size() == 0 && copiedAnalysisToolsAreExecutable)
                         if (!execute) {
@@ -483,7 +479,7 @@ class Analysis {
                     }
                 }
             }
-        })
+        }
     }
 
     private boolean printConfigurationErrorsAndWarnings(ExecutionContext context) {
