@@ -597,16 +597,20 @@ public class Roddy {
 
     private static Configuration applicationSpecificConfiguration = null;
 
+    private static String asRoddyVarRef(String var) {
+        return "${" + var + "}";
+    }
+
     private static void setDefaultRoddyJobIdVariable(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
-        configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_JOBID_RAW, "$" + Roddy.jobManager.getJobIdVariable()));
+        configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_JOBID_RAW, asRoddyVarRef(Roddy.jobManager.getJobIdVariable())));
     }
 
     private static void setDefaultRoddyJobNameVariable(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
-        configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_JOBNAME_RAW, "$" + Roddy.jobManager.getJobNameVariable()));
+        configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_JOBNAME_RAW, asRoddyVarRef(Roddy.jobManager.getJobNameVariable())));
     }
 
     private static void setDefaultRoddyQueueVariable(RecursiveOverridableMapContainerForConfigurationValues configurationValues) {
-        configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_QUEUE_RAW, "$" + Roddy.jobManager.getQueueVariable()));
+        configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_QUEUE_RAW, asRoddyVarRef(Roddy.jobManager.getQueueVariable())));
     }
 
     @Deprecated
@@ -642,8 +646,8 @@ public class Roddy {
 
         }
         configurationValues.add(new ConfigurationValue(Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY, scratchBaseDir));
-        String scratchDir = new File ("$" + Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY,
-                "$" + ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW).toString();
+        String scratchDir = new File(asRoddyVarRef(Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY),
+                asRoddyVarRef(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID_RAW)).toString();
         configurationValues.add(new ConfigurationValue(CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW, scratchDir));
     }
 
