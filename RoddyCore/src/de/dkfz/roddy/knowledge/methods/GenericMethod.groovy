@@ -554,8 +554,9 @@ class GenericMethod {
         if (!fileParameter.checkFile.evaluate(context))
             bf.setAsTemporaryFile()
 
-        if (allInputFiles.size() > 1)
-            bf.setParentFiles(allInputFiles, true)
+        // Should already be done with the helper.
+//        if (allInputFiles.size() > 1)
+//            bf.setParentFiles(allInputFiles, true, fileParameter.filenamePatternSelectionTag)
 
         if (fileParameter.scriptParameterName) {
             parameters[fileParameter.scriptParameterName] = bf
