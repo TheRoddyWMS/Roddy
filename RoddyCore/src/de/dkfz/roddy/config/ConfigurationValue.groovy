@@ -4,29 +4,24 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.config;
+package de.dkfz.roddy.config
 
-import de.dkfz.roddy.Constants;
-import de.dkfz.roddy.Roddy;
-import de.dkfz.roddy.config.loader.ConfigurationLoadError;
-import de.dkfz.roddy.core.Analysis;
-import de.dkfz.roddy.core.DataSet;
-import de.dkfz.roddy.core.ExecutionContext;
-import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider;
-import de.dkfz.roddy.tools.CollectionHelperMethods;
+import static de.dkfz.roddy.StringConstants.*
+import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BASH_ARRAY
+
+import de.dkfz.roddy.Constants
+import de.dkfz.roddy.Roddy
+import de.dkfz.roddy.config.loader.ConfigurationLoadError
+import de.dkfz.roddy.core.Analysis
+import de.dkfz.roddy.core.DataSet
+import de.dkfz.roddy.core.ExecutionContext
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.tools.CollectionHelperMethods
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
-import groovy.transform.CompileStatic;
+import groovy.transform.CompileStatic
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static de.dkfz.roddy.StringConstants.*;
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_BASH_ARRAY;
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 /**
  * A configuration value
@@ -101,11 +96,11 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
      * @return
      */
     public static String determineTypeOfValue(String value) {
-        if (RoddyConversionHelperMethods.isInteger(value)) return "integer";
-        if (RoddyConversionHelperMethods.isDouble(value)) return "double";
-        if (RoddyConversionHelperMethods.isFloat(value)) return "float";
-        if (RoddyConversionHelperMethods.isDefinedArray(value)) return "bashArray";
-        return "string";
+        if (RoddyConversionHelperMethods.isInteger(value)) return "integer"
+        if (RoddyConversionHelperMethods.isDouble(value)) return "double"
+        if (RoddyConversionHelperMethods.isFloat(value)) return "float"
+        if (RoddyConversionHelperMethods.isDefinedArray(value)) return "bashArray"
+        return "string"
     }
 
     private String replaceString(String src, String pattern, String text) {
@@ -120,7 +115,7 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
     private String checkAndCorrectPathThrow(String temp) throws ConfigurationError {
         String curUserPath = (new File("")).getAbsolutePath();
         String applicationDirectory = Roddy.getApplicationDirectory().getAbsolutePath();
-        //TODO Make something like a blacklist. This is not properly handled now. Initially this was done because Java sometimes puts something in front of the file paths.
+        // TODO Make something like a blacklist. This is not properly handled now. Initially this was done because Java sometimes puts something in front of the file paths.
         if (value.startsWith('${') || value.startsWith('$') || value.startsWith("~") || !value.startsWith("/")) {
             if (temp == applicationDirectory) {
                 throw new ConfigurationError(id + " configuration value is empty", configuration);
@@ -374,35 +369,35 @@ public class ConfigurationValue implements RecursiveOverridableMapContainer.Iden
     }
 
     public void setInvalid(boolean invalid) {
-        this.invalid = invalid;
+        this.invalid = invalid
     }
 
 
     private List<String> _bashArrayToStringList() {
-        String vTemp = value.substring(1, value.length() - 2).trim(); //Split away () and leading or trailing white characters.
-        String[] temp = vTemp.split(SPLIT_WHITESPACE); //Split by white character
+        String vTemp = value.substring(1, value.length() - 2).trim() // Split away () and leading or trailing white characters.
+        String[] temp = vTemp.split(SPLIT_WHITESPACE) // Split by white character
 
-        //Ignore leading and trailing brackets
-        List<String> resultStrings = new LinkedList<>();
+        // Ignore leading and trailing brackets
+        List<String> resultStrings = new LinkedList<>()
 
         for (int i = 0; i < temp.length; i++) {
 
-            //Detect if value is a range { .. }
-            //TODO Enable array of this form {1..N}C = 1C 2C 3C 4C .. NC
+            // Detect if value is a range { .. }
+            // TODO Enable array of this form {1..N}C = 1C 2C 3C 4C .. NC
             if (temp[i].startsWith(BRACE_LEFT) && temp[i].contains(BRACE_RIGHT) && temp[i].contains(DOUBLESTOP)) {
-                String[] rangeTemp = temp[i].split(SPLIT_DOUBLESTOP);
-                int start = Integer.parseInt(rangeTemp[0].replace(BRACE_LEFT, EMPTY).trim());
-                int end = Integer.parseInt(rangeTemp[1].replace(BRACE_RIGHT, EMPTY).trim());
+                String[] rangeTemp = temp[i].split(SPLIT_DOUBLESTOP)
+                int start = Integer.parseInt(rangeTemp[0].replace(BRACE_LEFT, EMPTY).trim())
+                int end = Integer.parseInt(rangeTemp[1].replace(BRACE_RIGHT, EMPTY).trim())
                 for (int j = start; j <= end; j++) {
-                    resultStrings.add(EMPTY + j);
+                    resultStrings.add(EMPTY + j)
                 }
             } else {
-                //Just append the value.
-                resultStrings.add(temp[i]);
+                // Just append the value.
+                resultStrings.add(temp[i])
             }
         }
 
-        return resultStrings;
+        return resultStrings
     }
 
     public List<String> toStringList() {
