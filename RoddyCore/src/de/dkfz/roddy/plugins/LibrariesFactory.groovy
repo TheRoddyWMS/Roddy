@@ -17,10 +17,8 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RuntimeTools
 import de.dkfz.roddy.tools.Tuple2
 import de.dkfz.roddy.tools.Tuple5
-import de.dkfz.roddy.tools.versions.Version
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
-import de.dkfz.roddy.tools.versions.CompatibilityChecker
 
 import java.util.regex.Pattern
 
@@ -469,7 +467,7 @@ class LibrariesFactory extends Initializable {
             } else if (_entry.type == PluginType.RODDY) {
                 File jarFile = directory.listFiles().find { File f -> f.name.endsWith ".jar"; }
                 if (jarFile) {
-                    newPluginInfo = new JarFulPluginInfo(pluginName, directory, jarFile, pluginFullVersion, biHelper.getRoddyAPIVersion(), biHelper.getJDKVersion(), biHelper.getDependencies())
+                    newPluginInfo = new JarFullPluginInfo(pluginName, directory, jarFile, pluginFullVersion, biHelper.getRoddyAPIVersion(), biHelper.getJDKVersion(), biHelper.getDependencies())
                 } else {
                     newPluginInfo = new JarLessPluginInfo(pluginName, directory, pluginFullVersion, biHelper.getDependencies())
                 }
@@ -653,7 +651,7 @@ class LibrariesFactory extends Initializable {
             }
 
             File jarFile
-            if (pi instanceof JarFulPluginInfo) {
+            if (pi instanceof JarFullPluginInfo) {
                 jarFile = pi.directory.listFiles().find { File f -> f.name.endsWith(".jar") };
                 if (jarFile && !addFile(jarFile)) {
                     synchronized (errors) {

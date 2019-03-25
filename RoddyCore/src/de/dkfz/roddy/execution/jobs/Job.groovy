@@ -203,9 +203,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
         parameters.putAll(convertResourceSetToParameters())
         reportedParameters.putAll(parameters)
 
-        this.parameters[PARM_WRAPPED_SCRIPT] = context.getConfiguration().getProcessingToolPath(context, toolID).getAbsolutePath()
+        this.parameters[PARM_WRAPPED_SCRIPT] = context.configuration.getProcessingToolPath(context, toolID).absolutePath
         this.parameters[PARM_WRAPPED_SCRIPT_MD5] = getToolMD5(toolID, context)
-        this.parameters[PARM_JOBCREATIONCOUNTER] = "" + jobCreationCounter
+        this.parameters[PARM_JOBCREATIONCOUNTER] = jobCreationCounter.toString()
 
         if (inputParameters != null)
             initialInputParameters.putAll(inputParameters)
@@ -270,7 +270,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
                     if (!p instanceof BaseFile) return
 
                     BaseFile _bf = (BaseFile) p
-                    template += ("" + _bf.getAbsolutePath())
+                    template += _bf.absolutePath.toString()
 
             }
         }
@@ -293,12 +293,12 @@ class Job extends BEJob<BEJob, BEJobResult> {
         if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(FeatureToggles.FailOnAutoFilenames))
             throw new ConfigurationError("Auto filenames are forbidden when strict mode is active.", context.configuration)
         else
-            context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.
+            context.addError(ExecutionContextError.EXECUTION_SETUP_INVALID.
                     expand("An auto filename will be used for ${jobName}:${slotPosition} / ${baseFile.class.name}"))
 
         Integer hashCode = generateHashCode(jobName + parameterName + slotPosition, parentFiles)
 
-        File autoPath = new File(context.getOutputDirectory(), [jobName, parameterName, hashCode, slotPosition].join("_") + AUTO_FILENAME_SUFFIX)
+        File autoPath = new File(context.getOutputDirectory(), [jobName, jobCreationCounter, parameterName, hashCode, slotPosition].join("_") + AUTO_FILENAME_SUFFIX)
         baseFile.setPath(autoPath)
         baseFile.setAsTemporaryFile()
         return autoPath.absolutePath
