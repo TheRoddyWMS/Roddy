@@ -1,5 +1,13 @@
 # Changelist
 
+* WiP 
+  
+  - Bugfix: Use the job creation counter as additional information to make the auto filenames unique (development feature)
+
+* 3.5.1
+
+  - Fixed variable reference for RODDY_ variables responsible for a sporadic bug due to incorrectly sorted parameter file
+
 * 3.5.0
 
   - Fixed non-quoting of variables with spaces. Now they are quoted and thus correctly interpreted as string variables instead of Bash array variables that are not correctly exported due to the Bash bug.
@@ -55,6 +63,10 @@
   - Updated copyright notices.
   
   - Improved test coverage.
+
+* 3.3.4 (ReleaseBranch_3.3)
+
+  - Fixed variable reference for RODDY_ variables responsible for a sporadic bug due to incorrectly sorted parameter file
 
 * 3.3.3
 
