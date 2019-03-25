@@ -1,5 +1,107 @@
 # Work in progress
 
+* 3.3.4 (ReleaseBranch_3.3)
+
+  - Fixed variable reference for RODDY_ variables responsible for a sporadic bug due to incorrectly sorted parameter file
+
+* 3.3.3
+
+  - Further improved error reporting
+  
+  - Increased default JVM memory size to 1G
+  
+  - Improved robustness
+
+* 3.3.2
+
+  - Improved directory checks
+  
+  - Improved error reporting
+
+* 3.3.1
+
+  - Updated to RoddyToolLib 2.0.0
+  
+  - Updated to BatchEuphoria 0.0.5
+  
+  - Fixed autofilename bug
+
+* 3.3.0 (misreports itself as 3.2.3)
+
+  - Bugfixes to get Sophia 2.0.0 running
+  
+  - Added more (longer) tuple classes for jobs with more inputs/outputs
+  
+  - Mis-tagged this release as 3.2.3!
+
+* 3.2.2
+
+  - Fixed context warnings that were mis-represented as errors
+  
+  - Bugfixes to get BamToFastqPlugin running
+  
+  - Fixed FailOnAutoFilenames feature toggle usage
+   
+  - Improved error reporting (e.g. report .roddy/ logfile, configuration errors)
+  
+  - Fixed bug in remote file-existence checks
+  
+  - Sphinxs documentation with plantuml plugin support
+
+* 3.2.1
+
+  - FileOnErroneousDryRuns feature toggle
+  
+  - Extended plugin API
+  
+  - Fixed rare MD5 file check bug during tool compression: locally modified plugins could result in always uploading known plugin versions
+  
+  - Improved error reporting
+
+* 3.2.0
+
+  - Improved loading of cohorts and supercohorts
+  
+  - Improved cyclic dependency detection in configuration variables
+  
+  - testrerun shows all configuration again
+  
+  - Stricter conversion of Sphinx documentation
+  
+  - Allow FileGroup in tool tuple output
+  
+  - Allow selectiontag in FileGroup
+
+* 3.1.0
+
+  - Improved cohort handling
+  
+  - Supercohorts
+   
+  - RoddyToolLib 1.0.0
+  
+  - ContextResource for simpler test writing
+  
+  - No JDK version check for plugins anymore
+  
+  - Improved unknow libdir problem during roddy.sh compile
+
+* 3.0.11
+
+  - Fix printidlessruntimeconfig
+  
+  - Backported ContextResource from 3.1.0 version bump
+  
+  - IO-dir checks also in other modes but run
+
+* 3.0.10
+
+  - Backported tool-compression bug related to MD5 sum creation from 3.2.1 
+
+* 3.0.9
+
+  - Update to RoddyToolLib 2.0.0
+
 * Version update to 3.0.8
 
   - Boolean configuration value `1` was incorrectly interpreted as `false`. Fixed to be interpreted as `true`. Added warnings that on the long run only "true" and "false" will be allowed values for Booleans.
