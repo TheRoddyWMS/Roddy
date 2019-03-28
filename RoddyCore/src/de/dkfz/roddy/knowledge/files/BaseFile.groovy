@@ -345,7 +345,10 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
 
         if (helper instanceof ConstructionHelperForGenericCreation) { // Manual creation is currently intrinsic.
             ConstructionHelperForGenericCreation _helper = helper as ConstructionHelperForGenericCreation
-            if (_helper.parentObject instanceof FileGroup) {
+            if (helper.parentFiles) {
+                parentFiles.addAll((helper.parentFiles as List<BaseFile>))
+                this.fileStageSettings = (FS) _helper.fileStageSettings
+            } else if (_helper.parentObject instanceof FileGroup) {
                 parentFiles.addAll((_helper.parentObject as FileGroup).getFilesInGroup())
                 this.fileStageSettings = (FS) _helper.fileStageSettings
             } else if (_helper.parentObject instanceof BaseFile) {
@@ -549,16 +552,17 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         parentFiles.add(baseFile)
     }
 
+    @Deprecated
     void setParentFiles(List<BaseFile> parentfiles) {
-        setParentFiles(parentfiles, false)
+        setParentFiles(parentfiles, false, DEFAULT)
     }
 
-    void setParentFiles(List<BaseFile> parentfiles, boolean resetFilename) {
+    void setParentFiles(List<BaseFile> parentfiles, boolean resetFilename, String selectionTag) {
         this.parentFiles.clear()
         this.parentFiles.addAll(parentfiles)
         if (resetFilename) {
             File temp = path
-            Tuple2<File, FilenamePattern> fnresult = getFilename(this)
+            Tuple2<File, FilenamePattern> fnresult = getFilename(this, selectionTag)
             this.path = fnresult?.x
             this.appliedFilenamePattern = fnresult?.y
             if (path == null) {
@@ -615,6 +619,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
      * @param baseFile
      * @return
      */
+    @Deprecated
     static Tuple2<File, FilenamePattern> getFilename(BaseFile baseFile) {
         return getFilename(baseFile, DEFAULT)
     }
@@ -861,7 +866,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
                 } else {
                     // Weak matching: default always matches
                     selectionTagsMatch =
-                            null == fp.selectionTag || null == selectionTag  ||
+                            null == fp.selectionTag || null == selectionTag ||
                                     FilenamePattern.DEFAULT_SELECTIONTAG == fp.selectionTag ||
                                     FilenamePattern.DEFAULT_SELECTIONTAG == selectionTag ||
                                     fp.selectionTag == selectionTag

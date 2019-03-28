@@ -69,15 +69,15 @@ class ExecutionContext {
     /**
      * Keeps a list of all files which were created with this process.
      */
-    protected final List<BaseFile> allFilesInRun = new LinkedList<BaseFile>()
+    protected final List<BaseFile> allFilesInRun = new LinkedList<BaseFile>().asSynchronized()
     /**
      * Keeps a list of all (previously) started jobs which belong to this process.
      */
-    protected final List<Job> jobsForProcess = new LinkedList<>()
+    protected final List<Job> jobsForProcess = new LinkedList<Job>().asSynchronized()
     /**
      * Stores a list of all calls which were passed to the job system within this context.
      */
-    private final List<Command> commandCalls = new LinkedList<Command>()
+    private final List<Command> commandCalls = new LinkedList<Command>().asSynchronized()
     /**
      * This is some sort of synchronization checkpoint marker.
      * Contexts which were started with the same
@@ -87,17 +87,17 @@ class ExecutionContext {
      * Keeps a list of errors which happen either on read back or on execution.
      * The list is not stored and rebuilt if necessary, so not all errors might be available.
      */
-    private final List<ExecutionContextError> errors = []
+    private final List<ExecutionContextError> errors = [].asSynchronized()
     /**
      * Keeps a list of warnings which happen either on read back or on execution.
      * The list is not stored and rebuilt if necessary, so not all errors might be available.
      */
-    private final List<ExecutionContextError> warnings = []
+    private final List<ExecutionContextError> warnings = [].asSynchronized()
     /**
      * Keeps a list of info entries which happen either on read back or on execution.
      * The list is not stored and rebuilt if necessary, so not all errors might be available.
      */
-    private final List<ExecutionContextError> infos = []
+    private final List<ExecutionContextError> infos = [].asSynchronized()
 
     /**
      * The timestamp of this context object

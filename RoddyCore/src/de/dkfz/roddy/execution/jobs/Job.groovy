@@ -6,8 +6,8 @@
 
 package de.dkfz.roddy.execution.jobs
 
-import de.dkfz.roddy.FeatureToggles
 import de.dkfz.roddy.Constants
+import de.dkfz.roddy.FeatureToggles
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.config.converters.BashConverter
@@ -26,10 +26,10 @@ import de.dkfz.roddy.tools.Tuple2
 import groovy.transform.CompileDynamic
 
 import static de.dkfz.roddy.Constants.*
-import static de.dkfz.roddy.execution.jobs.JobConstants.*
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID
 import static de.dkfz.roddy.config.ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT
 import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
+import static de.dkfz.roddy.execution.jobs.JobConstants.PRM_TOOL_ID
 
 @groovy.transform.CompileStatic
 class Job extends BEJob<BEJob, BEJobResult> {
@@ -318,12 +318,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
             newPath = generateAutoFilename(parameterName, baseFile)
         }
         return newPath
-        //            newParameters[k + "_path"] = newPath;
-        //TODO Create a toStringList method for filestages. The method should then be very generic.
-        //                this.parameters.put(k + "_fileStage_numericIndex", "" + bf.getFileStage().getNumericIndex());
-        //                this.parameters.put(k + "_fileStage_index", bf.getFileStage().getIndex());
-        //                this.parameters.put(k + "_fileStage_laneID", bf.getFileStage().getLaneId());
-        //                this.parameters.put(k + "_fileStage_runID", bf.getFileStage().getRunID());
     }
 
 

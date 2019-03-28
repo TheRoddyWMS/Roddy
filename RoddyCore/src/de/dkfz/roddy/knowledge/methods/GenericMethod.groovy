@@ -525,24 +525,24 @@ class GenericMethod {
     /**
      *
      * @param fileParameter
-     * @param fileGroupIndexValue May be null or empty! Is set, when a filegroup and its children are created. Holds the index value within the filegroup (numeric or a string)
+     * @param fileGroupIndex May be null or empty! Is set, when a filegroup and its children are created. Holds the index value within the filegroup (numeric or a string)
      * @param firstInputFile
      * @param allInputFiles
      * @return
      */
-    BaseFile convertToolFileParameterToBaseFile(ToolFileParameter fileParameter, String fileGroupIndexValue, BaseFile firstInputFile, List<BaseFile> allInputFiles) {
+    BaseFile convertToolFileParameterToBaseFile(ToolFileParameter fileParameter, String fileGroupIndex, BaseFile firstInputFile, List<BaseFile> allInputFiles) {
         Constructor c = searchBaseFileConstructorForConstructionHelperObject(fileParameter.fileClass)
         BaseFile bf
         try {
             if (c == null) {  // Error! If a developer has its custom class, he must provide this constructor.
-                context.addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_NOCONSTRUCTOR.
+                context.addError(ExecutionContextError.EXECUTION_FILECREATION_NOCONSTRUCTOR.
                         expand("File object of type ${fileParameter?.fileClass} with input ${firstInputFile?.class}" +
                                 ' needs a constructor which takes a ConstuctionHelper object.'))
                 throw new RuntimeException("Could not find valid constructor for type  ${fileParameter?.fileClass} with input ${firstInputFile?.class}.")
             } else {
                 BaseFile.ConstructionHelperForGenericCreation helper =
                         new BaseFile.ConstructionHelperForGenericCreation(firstInputFile, allInputFiles as List<FileObject>, calledTool, toolName,
-                                fileParameter.scriptParameterName, fileParameter.filenamePatternSelectionTag, fileGroupIndexValue,
+                                fileParameter.scriptParameterName, fileParameter.filenamePatternSelectionTag, fileGroupIndex,
                                 firstInputFile.fileStage, null)
                 if (jobConfiguration) helper.setJobConfiguration(jobConfiguration)
                 bf = c.newInstance(helper)
@@ -553,9 +553,6 @@ class GenericMethod {
 
         if (!fileParameter.checkFile.evaluate(context))
             bf.setAsTemporaryFile()
-
-        if (allInputFiles.size() > 1)
-            bf.setParentFiles(allInputFiles, true)
 
         if (fileParameter.scriptParameterName) {
             parameters[fileParameter.scriptParameterName] = bf
