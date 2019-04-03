@@ -345,9 +345,8 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
 
         if (helper instanceof ConstructionHelperForGenericCreation) { // Manual creation is currently intrinsic.
             ConstructionHelperForGenericCreation _helper = helper as ConstructionHelperForGenericCreation
-            def _pFiles = helper.parentFiles
-            if (_pFiles) {
-                parentFiles.addAll((_pFiles as List<BaseFile>))
+            if (helper.parentFiles) {
+                parentFiles.addAll((helper.parentFiles as List<BaseFile>))
                 this.fileStageSettings = (FS) _helper.fileStageSettings
             } else if (_helper.parentObject instanceof FileGroup) {
                 parentFiles.addAll((_helper.parentObject as FileGroup).getFilesInGroup())
