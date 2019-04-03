@@ -686,8 +686,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
 
         if (!patternResult || patternResult.x == null) {
 
-            ConstructionHelperForGenericCreation helper = baseFile.helperObject as ConstructionHelperForGenericCreation
-            StringBuilder sb = new StringBuilder("Could not find filename pattern for a file: ${baseFile.toString()}\n")
+            StringBuilder sb = new StringBuilder("Could not find filename pattern for a file of class: ${baseFile.class} with selection tag ${selectionTag}\n")
 
             sb << "The following patterns are available for this file class:\n\t"
             sb << availablePatterns.findAll { it }.collect {
@@ -699,10 +698,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
             }.flatten().join("\n\t")
             sb << "\nNote these may not have matched because they may be specific for a tool!"
 
-            if (Roddy.getFeatureToggleValue(FeatureToggles.FailOnAutoFilenames))
-                throw new ConfigurationError(sb.toString(), baseFile.executionContext.configuration)
-            else
-                logger.sometimes(sb.toString())
+            logger.sometimes(sb.toString())
         } else {
             // Check whether the path exists and create it if necessary.
             if (context.executionContextLevel.allowedToSubmitJobs &&
