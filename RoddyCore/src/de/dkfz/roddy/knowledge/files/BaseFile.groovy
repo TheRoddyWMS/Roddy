@@ -685,7 +685,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
 
         if (!patternResult || patternResult.x == null) {
 
-            StringBuilder sb = new StringBuilder("Could not find filename pattern for a file of class: ${baseFile.class} with selection tag ${selectionTag}\n")
+            StringBuilder sb = new StringBuilder("Could not find filename pattern for a file of class: ${baseFile.class} with selection tag '${selectionTag}'\n")
 
             sb << "The following patterns are available for this file class:\n\t"
             sb << availablePatterns.findAll { it }.collect {
