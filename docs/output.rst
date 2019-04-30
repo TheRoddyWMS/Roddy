@@ -3,7 +3,7 @@ Output
 
 There is not much to say about the standard output and error of Roddy, except that the information on which jobs are submitted is printed to standard output, while all other information is printed to standard error. This simplifies the parsing of the submission results.
 
-More interesting is the execution metadata. Note that the ``$outputAnalysisBaseDirectory`` is by default the same as ``$outputBaseDirectory`` but for many workflows is in a subdirectory of ``$outputBaseDirectory``.
+More interesting is the execution metadata. Note that the ``$outputAnalysisBaseDirectory`` is configurable and by default the same as ``$outputBaseDirectory/$dataSet`` (defined in the DefaultPlugin configuration). For many workflows it is in a subdirectory of ``$outputBaseDirectory``.
 
 ``$outputAnalysisBaseDirectory/roddyExecutionStore``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
