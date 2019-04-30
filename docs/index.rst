@@ -11,6 +11,7 @@
     exampleWorkflow
     usersGuide
     configuration
+    output
     roddyDevelopment
     pluginDevelopment
     faq

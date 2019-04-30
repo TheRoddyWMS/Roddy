@@ -7,3 +7,23 @@ Roddy is a framework for development and management of workflows on a batch proc
 # Documentation
 
 You can find the documentation at [Read the Docs](http://roddy-documentation.readthedocs.io), including [detailed installation instructions](http://roddy-documentation.readthedocs.io/installationGuide.html).
+
+# Workflows
+
+The following workflows have been developed at the DKFZ based on Roddy as workflow management system:
+
+  * [Alignment and QC workflows](https://github.com/DKFZ-ODCF/AlignmentAndQCWorkflows)
+  * [SNV-Calling workflow](https://github.com/DKFZ-ODCF/SNVCallingWorkflow)
+  * [ACEseq workflow](https://github.com/DKFZ-ODCF/ACEseqWorkflow) for copy-number variation calling
+  * [InDel-Calling workflow](https://github.com/DKFZ-ODCF/IndelCallingWorkflow) workflow
+  * [Sophia workflow](https://github.com/DKFZ-ODCF/SophiaWorkflow) for structural variation calling
+  * RNA-seq workflow (to be published)
+  * CNVkit for copy-number variation calling on exome data (to be published)
+  * Leaf-Cutter workflow
+  * [Bam-to-FASTQ](https://github.com/TheRoddyWMS/BamToFastqPlugin) plugin
+  
+The following plugins are available as support for the workflows:
+
+  * [COWorkflowBasePlugin](https://github.com/DKFZ-ODCF/COWorkflowsBasePlugin) with basic control code for many of the workflows
+  * [PluginBase](https://github.com/TheRoddyWMS/Roddy-Base-Plugin) just the plugin base-class from which other plugins are derived
+  * [DefaultPlugin](https://github.com/TheRoddyWMS/Roddy-Default-Plugin) with the `wrapInScript.sh` that wraps all Roddy cluster jobs
