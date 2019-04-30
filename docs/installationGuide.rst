@@ -2,7 +2,7 @@
 .. _`GitHub project site`: https://github.com/eilslabs/Roddy
 .. _`JRE v1.8.*`: https://java.com/de/download/linux_manual.jsp
 .. _`JDK v1.8.*`: http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
-.. _`Groovy 2.4.*`: http://groovy-lang.org/download.html
+.. _`Groovy 2.3.*`: http://groovy-lang.org/download.html
 .. _`Maven Groovy repository`: http://repo1.maven.org/maven2/org/codehaus/groovy/groovy-binary/
 .. _`GroovyServ` : https://kobo.github.io/groovyserv/
 .. _`SDKMan` : http://sdkman.io/
@@ -58,7 +58,7 @@ Roddy 2.3
 
   - If you intend to use Roddy and do not want to develop plugins or Roddy itself:
 
-    - Download any `JRE v1.8.*`_ (OpenJDK and SunJDK were tested). Also download `Groovy 2.4.*`_
+    - Download any `JRE v1.8.*`_ (OpenJDK and SunJDK were tested). Also download `Groovy 2.3.*`_
 
     - Open up the dist folder in the Roddy directory.
 
@@ -68,7 +68,7 @@ Roddy 2.3
 
   - If you want to develop Roddy or Roddy plugins:
 
-    - Download any `JDK v1.8.*`_ (OpenJDK and SunJDK were tested). Also download `Groovy 2.4.*`_
+    - Download any `JDK v1.8.*`_ (OpenJDK and SunJDK were tested). Also download `Groovy 2.3.*`_
 
     - Open up the dist folder in the Roddy directory.
 

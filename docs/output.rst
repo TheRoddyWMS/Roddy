@@ -1,14 +1,12 @@
-.. _otp: https://otp.dkfz.de/otp/
-
 Output
 ======
 
-There is not much to say about the standard output and error of Roddy, except that the information on which jobs are submitted is printed to standard output, while all other information is printed to standard error. This simplifies the parsing of the submission results by systems like otp_.
+There is not much to say about the standard output and error of Roddy, except that the information on which jobs are submitted is printed to standard output, while all other information is printed to standard error. This simplifies the parsing of the submission results.
 
-More interesting is the execution metadata.
+More interesting is the execution metadata. Note that the ``$outputAnalysisBaseDirectory`` is by default the same as ``$outputBaseDirectory`` but for many workflows is in a subdirectory of ``$outputBaseDirectory``.
 
-roddyExecutionStore
-~~~~~~~~~~~~~~~~~~~
+``$outputAnalysisBaseDirectory/roddyExecutionStore``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Roddy execution store contains the most important metadata required for debugging and reproduction. The directory contains one ``exec_*`` subdirectory for each Roddy run for the data output directory in which the execution store is located.
 
@@ -25,13 +23,18 @@ Specifically the following files are contained:
 ``.o%J`` files
     Combined standard output and error of the job as run on the cluster.
 
-.roddyExecCache
-~~~~~~~~~~~~~~~
+``$outputBaseDirectory/.roddyExecCache.txt``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A small CSV file containing information about execution stored, workflow analysis ID, and user names that ran the analysis.
+
+``$outputBaseDirectory/.roddyExecutionStore/``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This hidden directory contains the scripts from the plugins as transferred from the host on which you executed Roddy. For different versions of your plugins different subdirectories are created, each with a version and timestamp tag. If you develop a workflow and change scripts multiple such directories for the same plugin version may coexist, but each with a different timestamp. The ``roddyExecutionStore/exec_*/analysisTools`` directory contains symlinks to these unpacked plugin tools directories that were used for the specific job execution.
 
 $HOME/.roddy/logs
 ~~~~~~~~~~~~~~~~~
 
-More extensive log files of Roddy containing information about the execution of the Roddy core workflow management system, including possible exception stacktraces, standard output and error, etc. After each run the corresponding log file name is reported on the standard error at the end of the execution.
+More extensive log files of Roddy containing information about the execution of the Roddy core workflow management system, including possible exception stacktraces, standard output and error, etc. After each run the corresponding log file name is reported on the standard error at the end of the execution. Note, however, that because these files can get quite big, only 30 of them are kept in this directory!
 
