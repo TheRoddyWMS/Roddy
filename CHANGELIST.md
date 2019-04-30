@@ -1,9 +1,25 @@
 # Changelist
 
-* WiP 
+* 3.5.3
+
+  - Bugfix: Quote selectionTag in string to visualize also empty selection tags.
+  
+  - Bugfix: Fail on auto-filename check
+  
+  - Upgrade from BatchEuphoria 0.0.6 to 0.0.7
+   
+    - Fixes date parsing issues in LSF
+    
+    - Reduced memory consumption with LSF, if many jobs ran in the monitored time interval
+
+* 3.5.2
+  
+  - Bugfix: Fixed multi-threading bug for parallel execution of jobs in older SNV workflow plugins. This bug may have caused missed processing of chromosomes. 
   
   - Bugfix: Use the job creation counter as additional information to make the auto filenames unique (development feature)
-
+  
+  - Bugfix: Exit on "derivedfrom" filename pattern despite matched pattern
+   
 * 3.5.1
 
   - Fixed variable reference for RODDY_ variables responsible for a sporadic bug due to incorrectly sorted parameter file
