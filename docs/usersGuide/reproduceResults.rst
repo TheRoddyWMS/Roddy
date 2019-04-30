@@ -56,7 +56,7 @@ Beware: Multiple Execution Stores
 
 Beware that you may have multiple execution store directories if Roddy was run with in "rerun" mode, e.g. to complete a failed job. Here things can get really complicated if the different parts of the output data were produced with different versions or configurations.
 
-  * Ideally you should call Roddy with explicitly mentioning the plugin version, like in the example above. Due to the plugin dependency and automatic loading you may want to check that all used plugins were identical. You can check the ``versionInfo.txt`` file in the execution stores to learn which versions were used during each execution.
+  * Ideally, you should call Roddy explicitly mentioning the plugin version, like in the example above. Due to the plugin dependency and automatic loading you may want to check that all used plugins were identical. You can check the ``versionInfo.txt`` file in the execution stores to learn which versions were used during each execution.
   * For configuration files the situation is more complex. Currently, the logfiles are only permanently logged in the ``$HOME/.roddy/logs`` directory. But the most important resource for configuration values are the ``.parameter`` files for each job in the ``roddyExecutionStore`` directories.
 
 If you are paranoid, you should always restart your analysis completely, if you intend to change any of the above mentioned factors like configurations, etc. If you know what you do, you may decide differently and change parameters even for an individual dataset, but then you should document what you do. It is really easy to mess up the configuration by changing a configuration value in a file. Better use versioned configuration files.
