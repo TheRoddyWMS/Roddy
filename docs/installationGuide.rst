@@ -58,7 +58,7 @@ Roddy 2.3
 
   - If you intend to use Roddy and do not want to develop plugins or Roddy itself:
 
-    - Download any `JRE v1.8.*`_ (OpenJDK and SunJDK were tested). Also download `Groovy 2.3.*`_
+    - Download any `JRE v1.8.*`_ (OpenJDK and SunJDK were tested). Also download `Groovy 2.4.*`_
 
     - Open up the dist folder in the Roddy directory.
 
@@ -68,7 +68,7 @@ Roddy 2.3
 
   - If you want to develop Roddy or Roddy plugins:
 
-    - Download any `JDK v1.8.*`_ (OpenJDK and SunJDK were tested). Also download `Groovy 2.3.*`_
+    - Download any `JDK v1.8.*`_ (OpenJDK and SunJDK were tested). Also download `Groovy 2.4.*`_
 
     - Open up the dist folder in the Roddy directory.
 
