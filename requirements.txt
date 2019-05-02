@@ -1,1 +1,2 @@
 sphinxcontrib-plantuml==0.15
+javasphinx==0.9.15
