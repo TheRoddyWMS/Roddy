@@ -184,3 +184,5 @@ texinfo_documents = [
 
 
 
+# -- Required to get plantuml to run on www.readthedocs.ord ----------------
+plantuml = 'java -Djava.awt.headless=true -jar /usr/share/plantuml/plantuml.jar'
