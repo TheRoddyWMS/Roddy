@@ -1,6 +1,0 @@
-[submodule "dist/plugins/PluginBase"]
-	path = dist/plugins/PluginBase
-	url = https://github.com/eilslabs/Roddy-Base-Plugin.git
-[submodule "dist/plugins/DefaultPlugin"]
-	path = dist/plugins/DefaultPlugin
-	url = https://github.com/eilslabs/Roddy-Default-Plugin.git
