@@ -184,5 +184,14 @@ texinfo_documents = [
 
 
 
-# -- Required to get plantuml to run on www.readthedocs.ord ----------------
-plantuml = 'java -Djava.awt.headless=true -jar /usr/share/plantuml/plantuml.jar'
+# -- Required to get plantuml to run on www.readthedocs.org ----------------
+# this file: docs/source/conf.py
+# plantuml:  bin/plantuml.jar
+_bin = os.path.normpath(os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "..", "bin"
+))
+
+plantuml = 'java -Djava.awt.headless=true -jar {}/plantuml.jar'.format(_bin)
+
+plantuml_output_format = "svg"
+
