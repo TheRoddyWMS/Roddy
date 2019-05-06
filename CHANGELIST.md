@@ -1,5 +1,9 @@
 # Changelist
 
+* 3.5.4
+
+  - Bugfix: real and repeatable job calls files did not contain command but object reference
+
 * 3.5.3
 
   - Bugfix: Quote selectionTag in string to visualize also empty selection tags.

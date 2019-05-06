@@ -826,7 +826,7 @@ abstract class ExecutionService implements BEExecutionService {
         }
         for (Command c : commandCalls) {
             BEJobID eID = c.getJobID()
-            String cmdStr = c.toString()
+            String cmdStr = c.toBashCommandString()
             realCalls.append(eID).append(", ").append(cmdStr).append(separator)
 
             String repeatCallLine = String.format("%s=`%s`" + separator, eID, cmdStr)
