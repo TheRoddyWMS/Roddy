@@ -46,21 +46,21 @@ class DefaultValidator extends ConfigurationValueValidator {
         return result
     }
 
-    private boolean isConfigurationValueTypeCorrect(ConfigurationValue configurationValue, EnumerationValue ev) {
+    private boolean isConfigurationValueTypeCorrect(ConfigurationValue cv, EnumerationValue ev) {
         String evID = ev != null ? ev.getId() : CVALUE_TYPE_STRING
         try {
             if (evID == CVALUE_TYPE_INTEGER) {
-                configurationValue.toInt()
+                cv.toInt()
             } else if (evID == CVALUE_TYPE_BOOLEAN) {
-                configurationValue.toBoolean()
+                cv.toBoolean()
             } else if (evID == CVALUE_TYPE_FLOAT) {
-                configurationValue.toFloat()
+                cv.toFloat()
             } else if (evID == CVALUE_TYPE_DOUBLE) {
-                configurationValue.toDouble()
+                cv.toDouble()
             } else if (evID == CVALUE_TYPE_STRING) {
             }
         } catch (Exception e) {
-            super.errors << new ConfigurationIssue(valueAndTypeMismatch, configurationValue.id, evID)
+            super.errors << new ConfigurationIssue(valueAndTypeMismatch, cv.id, cv?.configuration?.file?.toString(), evID)
             return false
         }
         return true
@@ -87,13 +87,14 @@ class DefaultValidator extends ConfigurationValueValidator {
 
     boolean areDollarCharactersAttached(ConfigurationValue cv) {
         if (!cv.value.contains('$')) return true
+        if (cv.value == '${$}') return true   // $$ is the current process ID variable, which is fine as value.
 
         String temp = removeEscapedEscapeCharacters(cv.value)
 
         boolean result = !temp.findAll(matchDetachedDollars)
 
         if (!result) {
-            super.warnings << new ConfigurationIssue(detachedDollarCharacter, cv.id)
+            super.warnings << new ConfigurationIssue(detachedDollarCharacter, cv.id, cv?.configuration?.file?.toString())
         }
 
         return result
@@ -104,6 +105,7 @@ class DefaultValidator extends ConfigurationValueValidator {
 
     boolean areVariablesProperlyDefined(ConfigurationValue cv) {
         if (!cv.value.contains('$')) return true
+        if (cv.value == '${$}') return true   // $$ is the current process ID variable, which is fine as value.
 
         String temp = removeEscapedEscapeCharacters(cv.value)
 
@@ -113,7 +115,7 @@ class DefaultValidator extends ConfigurationValueValidator {
         boolean result = countOfVariables == countOfStartedVariables
 
         if (!result) {
-            super.warnings << new ConfigurationIssue(inproperVariableExpression, cv.id)
+            super.warnings << new ConfigurationIssue(inproperVariableExpression, cv.id, cv?.configuration?.file?.toString())
         }
 
         return result

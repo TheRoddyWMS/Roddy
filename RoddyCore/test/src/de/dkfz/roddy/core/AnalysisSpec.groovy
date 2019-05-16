@@ -15,13 +15,13 @@ import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate
 class AnalysisSpec extends Specification {
 
     @Shared
-    static def valA = detachedDollarCharacter.expand("a")
+    static def valA = detachedDollarCharacter.expand("a", "/some/path")
 
     @Shared
-    static def valB = detachedDollarCharacter.expand("b")
+    static def valB = detachedDollarCharacter.expand("b", "/other/path")
 
     @Shared
-    static def valC = valueAndTypeMismatch.expand("a", "b")
+    static def valC = valueAndTypeMismatch.expand("a", "/another/path","b")
 
     def "Condense"(issues, expected) {
         expect:

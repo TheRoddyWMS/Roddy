@@ -44,18 +44,18 @@ class ConfigurationIssue {
     static enum ConfigurationIssueTemplate {
         detachedDollarCharacter(
                 ConfigurationIssueLevel.CVALUE_WARNING,
-                "Variables contain plain dollar sign(s). Roddy does not interpret them as variables and cannot guarantee correct ordering of assignments for such variables in the job parameter file.",
-                "Variable '#REPLACE_0#' contains plain dollar sign(s) without braces. Roddy does not interpret them as variables and cannot guarantee correct ordering of assignments for such variables in the job parameter file."
+                "Variables with plain dollar sign(s). Roddy does not interpret them as variables and cannot guarantee correct ordering of assignments for such variables in the job parameter file.",
+                "Variable '#REPLACE_0#' defined in '#REPLACE_1#' with plain dollar sign(s) without braces. Roddy does not interpret them as variables and cannot guarantee correct ordering of assignments for such variables in the job parameter file."
         ),
         valueAndTypeMismatch(
                 ConfigurationIssueLevel.CVALUE_ERROR,
                 "Variables in your configuration mismatch regarding their type and value. See the extended logs for more information.",
-                "The value of variable named '#REPLACE_0#' is not of its declared type '#REPLACE_1#'."
+                "The value of variable named '#REPLACE_0#' defined in '#REPLACE_1#' is not of its declared type '#REPLACE_2#'."
         ),
         inproperVariableExpression(
                 ConfigurationIssueLevel.CVALUE_WARNING,
-                "Variables in your configuration appear to misuse variable imports. Import variables like \${variable identifier}, nesting like '\${\${innerVar }}' is forbidden and it must not be empty.",
-                "Variable '#REPLACE_0#' may use malformatted variable imports. Import variables like \${variable identifier}, nesting like '\${\${innerVar}}' is forbidden and it must not be empty."
+                "Variables in your configuration appear to misuse variable references. For variable references \${variable identifier} nesting like '\${\${innerVar}}' is forbidden and it must not be empty.",
+                "Variable '#REPLACE_0#' defined in '#REPLACE_1#' may use malformatted variable references. For variables references like \${variable identifier} nesting like '\${\${innerVar}}' is forbidden and it must not be empty."
         )
 
         final ConfigurationIssueLevel level
@@ -91,7 +91,7 @@ class ConfigurationIssue {
         this.id = template
         String _message = id.message
         for (int i = 0; i < messageContent.length; i++) {
-            _message = _message.replace("#REPLACE_${i}#", messageContent[i])
+            _message = _message.replace("#REPLACE_${i}#", "" + messageContent[i])
         }
         this.message = _message
     }
