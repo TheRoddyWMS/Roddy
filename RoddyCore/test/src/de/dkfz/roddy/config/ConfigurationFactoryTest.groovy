@@ -134,18 +134,18 @@ class ConfigurationFactoryTest {
             </configuration>
         """
         NodeChild xml = (NodeChild) new XmlSlurper().parseText(text)
-        PreloadedConfiguration pc = new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "testForDollars", "", "", xml, "", null, null, text)
+        PreloadedConfiguration pc = new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "testForDollars", "", "", xml, "", null, new File("/some/path"), text)
         Configuration cfg = ConfigurationFactory.instance.loadConfiguration(pc)
         assert cfg.hasWarnings()
         assert cfg.warnings.size() == 2
         assert cfg.warnings[0].id == detachedDollarCharacter
-        assert cfg.warnings[0].message == "Variable 'valWithDollars1' contains plain dollar sign(s) without braces. Roddy does not interpret them as variables and cannot guarantee correct ordering of assignments for such variables in the job parameter file."
+        assert cfg.warnings[0].message == "Variable 'valWithDollars1' defined in '/some/path' with plain dollar sign(s) without braces. Roddy does not interpret them as variables and cannot guarantee correct ordering of assignments for such variables in the job parameter file."
         assert cfg.warnings[1].id == detachedDollarCharacter
-        assert cfg.warnings[1].message == "Variable 'valWithDollars2' contains plain dollar sign(s) without braces. Roddy does not interpret them as variables and cannot guarantee correct ordering of assignments for such variables in the job parameter file."
+        assert cfg.warnings[1].message == "Variable 'valWithDollars2' defined in '/some/path' with plain dollar sign(s) without braces. Roddy does not interpret them as variables and cannot guarantee correct ordering of assignments for such variables in the job parameter file."
         assert cfg.hasErrors()
         assert cfg.errors.size() == 1
         assert cfg.errors[0].id == valueAndTypeMismatch
-        assert cfg.errors[0].message == "The value of variable named 'valWithMismatch' is not of its declared type 'integer'."
+        assert cfg.errors[0].message == "The value of variable named 'valWithMismatch' defined in '/some/path' is not of its declared type 'integer'."
     }
 
 

@@ -471,4 +471,8 @@ public class Configuration implements ContainerParent<Configuration>, Configurat
     boolean isInvalid() {
         return this.listOfValidationErrors.size() > 0;
     }
+
+    File getFile() {
+        return preloadedConfiguration.file
+    }
 }

@@ -44,9 +44,9 @@ class DefaultValidatorSpec extends RoddyTestSpec {
         1.0        | CVALUE_TYPE_DOUBLE     | true     | []
         true       | CVALUE_TYPE_BOOLEAN    | true     | []
         'badvalue' | CVALUE_TYPE_BOOLEAN    | true     | [] // Validates always!
-        'a'        | CVALUE_TYPE_INTEGER    | false    | [new ConfigurationIssue(valueAndTypeMismatch, 'bla', CVALUE_TYPE_INTEGER)]
-        'b'        | CVALUE_TYPE_FLOAT      | false    | [new ConfigurationIssue(valueAndTypeMismatch, 'bla', CVALUE_TYPE_FLOAT)]
-        'c'        | CVALUE_TYPE_DOUBLE     | false    | [new ConfigurationIssue(valueAndTypeMismatch, 'bla', CVALUE_TYPE_DOUBLE)]
+        'a'        | CVALUE_TYPE_INTEGER    | false    | [new ConfigurationIssue(valueAndTypeMismatch, 'bla', 'null', CVALUE_TYPE_INTEGER)]
+        'b'        | CVALUE_TYPE_FLOAT      | false    | [new ConfigurationIssue(valueAndTypeMismatch, 'bla', 'null', CVALUE_TYPE_FLOAT)]
+        'c'        | CVALUE_TYPE_DOUBLE     | false    | [new ConfigurationIssue(valueAndTypeMismatch, 'bla', 'null', CVALUE_TYPE_DOUBLE)]
         '( abc )'  | CVALUE_TYPE_BASH_ARRAY | true     | []
         '(abc)'    | CVALUE_TYPE_BASH_ARRAY | true     | []
         'bla'      | CVALUE_TYPE_BASH_ARRAY | true     | [] // Bash arrays can be empty. But then they actually may not contain whitespace
@@ -74,11 +74,11 @@ class DefaultValidatorSpec extends RoddyTestSpec {
         'a\\${b}c'              | CVALUE_TYPE_STRING | true     | []                                      | []  //Escaped dollar with complete braces
 
         // Not ok
-        'abc$'                  | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla')] | []
-        '$abc'                  | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla')] | []
-        'tr$ue'                 | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla')] | []
-        '$'                     | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla')] | []
-        'abc$\\{'               | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla')] | []
+        'abc$'                  | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla', 'null')] | []
+        '$abc'                  | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla', 'null')] | []
+        'tr$ue'                 | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla', 'null')] | []
+        '$'                     | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla', 'null')] | []
+        'abc$\\{'               | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla', 'null')] | []
     }
 
     def "test check for proper variable usage definition"() {
@@ -97,9 +97,9 @@ class DefaultValidatorSpec extends RoddyTestSpec {
         'abc${var}v${var}' | CVALUE_TYPE_STRING | true     | []                                         | []
         '\\${c}'           | CVALUE_TYPE_STRING | true     | []                                         | []
         '\\${c'            | CVALUE_TYPE_STRING | true     | []                                         | []
-        'abc${${var}}'     | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla')] | []
-        'abc${'            | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla')] | []
-        'ab${c'            | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla')] | []
-        '${}'              | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla')] | []
+        'abc${${var}}'     | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla', 'null')] | []
+        'abc${'            | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla', 'null')] | []
+        'ab${c'            | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla', 'null')] | []
+        '${}'              | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla', 'null')] | []
     }
 }

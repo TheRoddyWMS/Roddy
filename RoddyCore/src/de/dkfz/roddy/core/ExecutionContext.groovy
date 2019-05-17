@@ -683,9 +683,9 @@ class ExecutionContext {
     boolean valueIsEmpty(Object value, String variableName = null) {
         if (value == null || value.toString() == "") {
             if (variableName)
-                addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("Expected value to be set: ${variableName}"))
+                addError(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("Expected value to be set: ${variableName}"))
             else
-                addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("A value is null or empty."))
+                addError(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("A value is null or empty."))
             return true
         }
         return false
@@ -693,7 +693,7 @@ class ExecutionContext {
 
     boolean fileIsAccessible(File file, String variableName = null) {
         if (valueIsEmpty(file, variableName) || !FileSystemAccessProvider.getInstance().checkFile(file, false, this)) {
-            addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("File '${file}' not accessible${variableName ? ": " + variableName : "."}"))
+            addError(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("File '${file}' not accessible${variableName ? ": " + variableName : "."}"))
             return false
         }
         return true
@@ -702,7 +702,7 @@ class ExecutionContext {
     boolean fileIsExecutable(File file, String variableName = null) {
         if (!(fileIsAccessible(file, variableName))) return;
         if (!FileSystemAccessProvider.getInstance().isExecutable(file)) {
-            addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("File '${file}' is not executable${variableName ? ": " + variableName : "."}"))
+            addError(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("File '${file}' is not executable${variableName ? ": " + variableName : "."}"))
             return false
         }
         return true
@@ -710,7 +710,7 @@ class ExecutionContext {
 
     boolean directoryIsAccessible(File directory, String variableName = null) {
         if (valueIsEmpty(directory, variableName) || !FileSystemAccessProvider.getInstance().checkDirectory(directory, this, false)) {
-            addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("Directory '${directory}' not accessible${variableName ? ": " + variableName : "."}"))
+            addError(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("Directory '${directory}' not accessible${variableName ? ": " + variableName : "."}"))
             return false
         }
         return true

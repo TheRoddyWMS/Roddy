@@ -4,6 +4,8 @@ Roddy is a framework for development and management of workflows on a batch proc
 
 > <table><tr><td><a href="https://www.denbi.de/"><img src="docs/images/denbi.png" alt="de.NBI logo" width="300" align="left"></a></td><td><strong>Your opinion matters!</strong> The development of Roddy is supported by the <a href="https://www.denbi.de/">German Network for Bioinformatic Infrastructure (de.NBI)</a>. By completing <a href="https://www.surveymonkey.de/r/denbi-service?sc=hd-hub&tool=roddy">this very short survey</a> you support our efforts to improve this tool.</td></tr></table>
 
+> No new features will be implemented for Roddy! We will continue to fix bugs occurring with currently existing workflows. On the long run, existing workflows should be migrated to other workflow management systems. 
+
 # Documentation
 
 You can find the documentation at [Read the Docs](http://roddy-documentation.readthedocs.io), including [detailed installation instructions](http://roddy-documentation.readthedocs.io/installationGuide.html).

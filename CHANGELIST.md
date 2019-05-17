@@ -1,5 +1,10 @@
 # Changelist
 
+* 3.5.5
+
+  - Improved error messages for nested variable errors (more information to diagnose the cause)
+  - Bugfix: nested variable error with job manager without queues (e.g. DirectSynchronousExecutionJobManager)
+
 * 3.5.4
 
   - Bugfix: real and repeatable job calls files did not contain command but object reference
