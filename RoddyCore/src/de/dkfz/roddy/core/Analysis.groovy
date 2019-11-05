@@ -17,6 +17,7 @@ import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.JobState
+import de.dkfz.roddy.tools.LoggerWrapper
 import groovy.transform.CompileStatic
 import org.apache.commons.io.filefilter.WildcardFileFilter
 
@@ -34,7 +35,7 @@ import static de.dkfz.roddy.tools.RoddyIOHelperMethods.getStackTraceAsString
 @CompileStatic
 class Analysis {
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(Analysis.class.getSimpleName())
+    private static final LoggerWrapper logger = LoggerWrapper.getLogger(Analysis.class.getSimpleName())
 
     /**
      * An analysis should have a unique name like i.e. whole_genome_processing or exome_analysis
@@ -78,17 +79,19 @@ class Analysis {
     }
 
     String getUsername() {
-        return FileSystemAccessProvider.getInstance().callWhoAmI()
+        return FileSystemAccessProvider.instance.callWhoAmI()
     }
 
     String getUsergroup() {
         //Get the default value.
-        String groupID = FileSystemAccessProvider.getInstance().getMyGroup()
+        String groupID = FileSystemAccessProvider.instance.myGroup
 
         //If it is configured, get the group id from the config.
-        boolean processSetUserGroup = getConfiguration().getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, true)
+        boolean processSetUserGroup = configuration.configurationValues.
+                getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, true)
         if (processSetUserGroup) {
-            groupID = getConfiguration().getConfigurationValues().getString(ConfigurationConstants.CFG_OUTPUT_FILE_GROUP, groupID)
+            groupID = configuration.configurationValues.
+                    getString(ConfigurationConstants.CFG_OUTPUT_FILE_GROUP, groupID)
         }
         return groupID
     }
@@ -110,11 +113,12 @@ class Analysis {
      */
     AnalysisConfiguration getConfiguration() {
         if (_analysisConfiguration == null) {
-            _analysisConfiguration = new ContextConfiguration((AnalysisConfiguration) this.configuration, (ProjectConfiguration) this.project.getConfiguration())
+            _analysisConfiguration = new ContextConfiguration((AnalysisConfiguration) this.configuration,
+                                                              (ProjectConfiguration) this.project.configuration)
             [
-                    (Constants.USERNAME)    : getUsername(),
-                    (Constants.USERGROUP)   : getUsergroup(),
-                    (Constants.USERHOME)    : FileSystemAccessProvider.getInstance().getUserDirectory().getAbsolutePath(),
+                    (Constants.USERNAME)    : username,
+                    (Constants.USERGROUP)   : usergroup,
+                    (Constants.USERHOME)    : FileSystemAccessProvider.instance.userDirectory.absolutePath,
                     (Constants.PROJECT_NAME): project.name,
             ].each { String k, String v ->
                 _analysisConfiguration.configurationValues << new ConfigurationValue(_analysisConfiguration, k, v)
@@ -135,7 +139,7 @@ class Analysis {
      */
     File getInputBaseDirectory() {
         if (inputBaseDirectory == null)
-            inputBaseDirectory = getRuntimeService().getInputBaseDirectory(this)
+            inputBaseDirectory = runtimeService.getInputBaseDirectory(this)
         assert (inputBaseDirectory != null)
         return inputBaseDirectory
     }
@@ -146,7 +150,7 @@ class Analysis {
      * @return
      */
     File getOutputBaseDirectory() {
-        File outputBaseDirectory = getRuntimeService().getOutputBaseDirectory(this)
+        File outputBaseDirectory = runtimeService.getOutputBaseDirectory(this)
         assert (outputBaseDirectory != null)
         return outputBaseDirectory
     }
@@ -157,19 +161,19 @@ class Analysis {
      * @return
      */
     File getOutputAnalysisBaseDirectory() {
-        return getRuntimeService().getOutputBaseDirectory(this)
+        return runtimeService.getOutputBaseDirectory(this)
     }
 
     DataSet getDataSet(String dataSetID) {
         // TODO: The avoidRecursion variable is more or less a hack. It work
-        for (DataSet d : getRuntimeService().getListOfPossibleDataSets(this, true))
-            if (d.getId() == dataSetID)
+        for (DataSet d : runtimeService.getListOfPossibleDataSets(this, true))
+            if (d.id == dataSetID)
                 return d
         return null
     }
 
     RuntimeService getRuntimeService() {
-        RuntimeService rs = project.getRuntimeService()
+        RuntimeService rs = project.runtimeService
         if (rs == null) rs = runtimeService
         return rs
     }
@@ -199,7 +203,7 @@ class Analysis {
             }
 
             ExecutionContext context =
-                    new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, level,
+                    new ExecutionContext(FileSystemAccessProvider.instance.callWhoAmI(), this, ds, level,
                             ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null, creationCheckPoint)
 
             executeRun(context, preventLoggingOnQueryStatus)
@@ -219,7 +223,7 @@ class Analysis {
         long creationCheckPoint = System.nanoTime()
         LinkedList<ExecutionContext> newRunContexts = new LinkedList<>()
         for (ExecutionContext oldContext : contexts) {
-            DataSet ds = oldContext.getDataSet()
+            DataSet ds = oldContext.dataSet
 
             if (Roddy.getFeatureToggleValue(FeatureToggles.FailOnErroneousDryRuns) && oldContext.hasErrors()) {
                 // Why print out here? Because the oldContext was started with suppressed messages (Default for QUERY_STATUS).
@@ -240,11 +244,16 @@ class Analysis {
             }
 
             ExecutionContext context =
-                    new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, oldContext.getDataSet(),
-                            test ? ExecutionContextLevel.TESTRERUN : ExecutionContextLevel.RERUN,
-                            oldContext.getOutputDirectory(), oldContext.getInputDirectory(), null, creationCheckPoint)
+                    new ExecutionContext(FileSystemAccessProvider.instance.callWhoAmI(),
+                                         this,
+                                         oldContext.dataSet,
+                                         test ? ExecutionContextLevel.TESTRERUN : ExecutionContextLevel.RERUN,
+                                         oldContext.outputDirectory,
+                                         oldContext.inputDirectory,
+                                         null,
+                                         creationCheckPoint)
 
-            context.getAllFilesInRun().addAll(oldContext.getAllFilesInRun())
+            context.allFilesInRun.addAll(oldContext.allFilesInRun)
             executeRun(context)
             newRunContexts.add(context)
         }
@@ -252,7 +261,7 @@ class Analysis {
     }
 
     private boolean canStartJobs(DataSet ds) {
-        return !Roddy.getFeatureToggleValue(FeatureToggles.ForbidSubmissionOnRunning) || !hasKnownRunningJobs(ds);
+        return !Roddy.getFeatureToggleValue(FeatureToggles.ForbidSubmissionOnRunning) || !hasKnownRunningJobs(ds)
     }
 
     boolean hasKnownRunningJobs(DataSet ds) {
@@ -275,7 +284,9 @@ class Analysis {
             }
         })
         List<DataSet> sortedKeys = new LinkedList<>(results.keySet())
-        sortedKeys.sort { DataSet ds1, DataSet ds2 -> ds1.getId().compareTo(ds2.getId()) }
+        sortedKeys.sort { DataSet ds1, DataSet ds2 ->
+            ds1.id <=> ds2.id
+        }
         Map<DataSet, Boolean> sortedMap = new LinkedHashMap<>()
         for (DataSet ds : sortedKeys) {
             sortedMap.put(ds, results.get(ds))
@@ -312,7 +323,15 @@ class Analysis {
         for (DataSet ds : getRuntimeService().getListOfPossibleDataSets(this)) {
             if (!new WildcardFileFilter(pidFilter).accept(ds.getInputFolderForAnalysis(this)))
                 continue
-            final ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this, ds, executionContextLevel, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null, creationCheckPoint)
+            final ExecutionContext context = new ExecutionContext(
+                    FileSystemAccessProvider.instance.callWhoAmI(),
+                    this,
+                    ds,
+                    executionContextLevel,
+                    ds.getOutputFolderForAnalysis(this),
+                    ds.getInputFolderForAnalysis(this),
+                    null,
+                    creationCheckPoint)
             runDeferredContext(context)
             return context
         }
@@ -322,8 +341,15 @@ class Analysis {
     /**
      */
     ExecutionContext rerunDeferredContext(ExecutionContext oldContext, final ExecutionContextLevel executionContextLevel, long creationCheckPoint, boolean test) {
-        ExecutionContext context = new ExecutionContext(oldContext.getExecutingUser(), oldContext.getAnalysis(), oldContext.getDataSet(), test ? ExecutionContextLevel.TESTRERUN : ExecutionContextLevel.RERUN, oldContext.getOutputDirectory(), oldContext.getInputDirectory(), null, creationCheckPoint)
-        context.getAllFilesInRun().addAll(oldContext.getAllFilesInRun())
+        ExecutionContext context = new ExecutionContext(oldContext.executingUser,
+                                                        oldContext.analysis,
+                                                        oldContext.dataSet,
+                                                        test ? ExecutionContextLevel.TESTRERUN : ExecutionContextLevel.RERUN,
+                                                        oldContext.outputDirectory,
+                                                        oldContext.inputDirectory,
+                                                        null,
+                                                        creationCheckPoint)
+        context.allFilesInRun.addAll(oldContext.allFilesInRun)
         runDeferredContext(context)
         return context
     }
@@ -334,7 +360,7 @@ class Analysis {
      * @param ec The execution context which will be context in a separate thread.
      */
     void runDeferredContext(final ExecutionContext ec) {
-        Thread t = Thread.start(String.format("Deferred execution context execution for " + Constants.DATASET_HR + " %s", ec.dataSet.id)) {
+        Thread t = Thread.start(String.format('Deferred execution context execution for ' + Constants.DATASET_HR + ' %s', ec.dataSet.id)) {
             executeRun(ec)
         }
     }
@@ -362,11 +388,16 @@ class Analysis {
         boolean isExecutable = setupExecutionStatus && contextRightsSettings && contextPermissions && contextExecutability && configurationValidity
 
         if (!isExecutable) {
-            StringBuilder message = new StringBuilder("The workflow does not seem to be executable for dataset " + datasetID)
-            if (!contextRightsSettings) message.append("\n\tContext access rights settings could not be validated.")
-            if (!contextPermissions) message.append("\n\tContext permissions could not be validated.")
-            if (!contextExecutability) message.append("\n\tContext and workflow are not considered executable.")
-            if (!configurationValidity) message.append("\n\tContext configuration has errors.")
+            StringBuilder message =
+                    new StringBuilder('The workflow does not seem to be executable for dataset ' + datasetID)
+            if (!contextRightsSettings)
+                message.append('\n\tContext access rights settings could not be validated.')
+            if (!contextPermissions)
+                message.append('\n\tContext permissions could not be validated.')
+            if (!contextExecutability)
+                message.append('\n\tContext and workflow are not considered executable.')
+            if (!configurationValidity)
+                message.append('\n\tContext configuration has errors.')
             logger.severe(message.toString())
         }
 
@@ -395,12 +426,12 @@ class Analysis {
                         failedJobs += "\n\t" + job.jobID + ",\t" + job.jobName
                 }
                 if (failedJobs.length() > 0)
-                    context.addError(ExecutionContextError.EXECUTION_JOBFAILED.expand("Job(s) failed to execute:" + failedJobs))
+                    context.addError(ExecutionContextError.EXECUTION_JOBFAILED.expand('Job(s) failed to execute:' + failedJobs))
             }
 
             // Print out informational messages like infos, warnings, errors
             // Only print them out if !QUERY_STATUS and the runmode is testrun or testrerun.
-            if ((!preventLoggingOnQueryStatus || (context.getExecutionContextLevel() != ExecutionContextLevel.QUERY_STATUS))) {
+            if ((!preventLoggingOnQueryStatus || (context.executionContextLevel != ExecutionContextLevel.QUERY_STATUS))) {
                 printErrorsAndWarnings(context)
             }
         }
@@ -436,20 +467,21 @@ class Analysis {
                 boolean successfullyExecuted = false
                 try {
                     boolean execute = true
-                    if (context.getExecutionContextLevel().allowedToSubmitJobs) { // Only do these checks, if we are not in query mode!
+                    if (context.executionContextLevel.allowedToSubmitJobs) { // Only do these checks, if we are not in query mode!
                         List<String> invalidPreparedFiles = ExecutionService.instance.checkForInaccessiblePreparedFiles(context)
                         boolean copiedAnalysisToolsAreExecutable = ExecutionService.instance.checkCopiedAnalysisTools(context)
                         boolean ignoreFileChecks = Roddy.isOptionSet(RoddyStartupOptions.disablestrictfilechecks)
                         execute &= ignoreFileChecks || (invalidPreparedFiles.size() == 0 && copiedAnalysisToolsAreExecutable)
                         if (!execute) {
-                            StringBuilder message = new StringBuilder("There were errors after preparing the workflow run for dataset " + datasetID)
+                            StringBuilder message =
+                                    new StringBuilder('There were errors after preparing the workflow run for dataset ' + datasetID)
                             if (invalidPreparedFiles.size() > 0)
-                                message.append("\n\tSome files could not be written. Workflow will not execute.\n\t"
-                                        + String.join("\t\n", invalidPreparedFiles))
+                                message.append('\n\tSome files could not be written. Workflow will not execute.\n\t'
+                                                       + String.join('\t\n', invalidPreparedFiles))
                             if (!copiedAnalysisToolsAreExecutable)
-                                message.append("\n\tSome declared tools are not executable. Workflow will not execute.")
+                                message.append('\n\tSome declared tools are not executable. Workflow will not execute.')
                             if (ignoreFileChecks) {
-                                message.append("\n  The errors were ignored because disablestrictfilechecks is set.")
+                                message.append('\n  The errors were ignored because disablestrictfilechecks is set.')
                             }
                             logger.severe(message.toString())
                         }
@@ -463,14 +495,15 @@ class Analysis {
                     }
                 } catch (Exception ex) {
                     successfullyExecuted = false
+                    maybeAbortStartedJobsOfContext(context)
                     throw ex
                 } finally {
 
-                    if (context.getExecutionContextLevel() == ExecutionContextLevel.QUERY_STATUS) { // Clean up
+                    if (context.executionContextLevel == ExecutionContextLevel.QUERY_STATUS) { // Clean up
                         // Query file validity of all files
-                        FileSystemAccessProvider.getInstance().validateAllFilesInContext(context)
+                        FileSystemAccessProvider.instance.validateAllFilesInContext(context)
                         if (context.getExecutionDirectory().getName().contains(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX))
-                            FileSystemAccessProvider.getInstance().removeDirectory(context.getExecutionDirectory())
+                            FileSystemAccessProvider.instance.removeDirectory(context.getExecutionDirectory())
                     } else {
                         if (!successfullyExecuted)
                             maybeAbortStartedJobsOfContext(context)
@@ -483,18 +516,19 @@ class Analysis {
     }
 
     private boolean printConfigurationErrorsAndWarnings(ExecutionContext context) {
-        String datasetID = context.dataSet.getId()
-        Configuration configuration = context.getConfiguration()
+        String datasetID = context.dataSet.id
+        Configuration configuration = context.configuration
 
         if (configuration.hasErrors()) {
-            printMessages(datasetID, "configuration errors", condense(configuration.getErrors()))
-            printMessages(datasetID, "configuration errors", configuration.getErrors(), false)
+            printMessages(datasetID, 'configuration errors', condense(configuration.errors))
+            printMessages(datasetID, 'configuration errors', configuration.errors, false)
         }
         if (configuration.hasWarnings()) {
-            printMessages(datasetID, "configuration warnings", condense(configuration.getWarnings()))
-            printMessages(datasetID, "configuration warnings", configuration.getWarnings(), false)
+            printMessages(datasetID, 'configuration warnings', condense(configuration.warnings))
+            printMessages(datasetID, 'configuration warnings', configuration.warnings, false)
         }
-        if (configuration.hasLoadErrors()) printMessages(datasetID, "configuration load errors", configuration.getListOfLoadErrors())
+        if (configuration.hasLoadErrors())
+            printMessages(datasetID, 'configuration load errors', configuration.listOfLoadErrors)
 
         return configuration.hasLoadErrors() | configuration.hasWarnings() | configuration.hasErrors()
     }
@@ -520,19 +554,23 @@ class Analysis {
     }
 
     private boolean printMessagesForContext(ExecutionContext context) {
-        String datasetID = context.dataSet.getId()
-        if (context.hasInfos()) printMessages(datasetID, "execution infos", context.getInfos())
-        if (context.hasWarnings()) printMessages(datasetID, "execution warnings", context.getWarnings())
-        if (context.hasErrors()) printMessages(datasetID, "execution errors", context.getErrors())
+        String datasetID = context.dataSet.id
+        if (context.hasInfos())
+            printMessages(datasetID, 'execution infos', context.infos)
+        if (context.hasWarnings())
+            printMessages(datasetID, 'execution warnings', context.warnings)
+        if (context.hasErrors())
+            printMessages(datasetID, 'execution errors',
+                          context.errors)
         boolean printed = context.hasWarnings() || context.hasErrors()
         return printed
     }
 
     private void printMessages(String datasetID, String title, List entries, boolean logAlways = true) {
         StringBuilder messages = new StringBuilder()
-        messages.append("\nThere were " + title + " for dataset " + datasetID)
+        messages.append('\nThere were ' + title + ' for dataset ' + datasetID)
         for (Object entry : entries) {
-            messages.append("\n\t* ").append(entry.toString())
+            messages.append('\n\t* ').append(entry.toString())
         }
         if (logAlways)
             logger.postAlwaysInfo(messages.toString())
@@ -556,40 +594,42 @@ class Analysis {
      */
     private void cleanUpAndFinishWorkflowRun(ExecutionContext context) {
         //First, check if there were any executed jobs. If not, we can safely delete the the context directory.
-        if (context.getStartedJobs().size() == 0) {
+        if (context.startedJobs.size() == 0) {
             if (Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.forcekeepexecutiondirectory)) {
-                logger.always("There were no started jobs, but Roddy will keep the execution directory as forcekeepexecutiondirectory was set.")
+                logger.always('There were no started jobs, but Roddy will keep the execution directory as forcekeepexecutiondirectory was set.')
             } else {
-                logger.always("There were no started jobs, the execution directory will be removed.")
-                if (context.getExecutionDirectory().getName().contains(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX))
-                    FileSystemAccessProvider.getInstance().removeDirectory(context.getExecutionDirectory())
+                logger.always('There were no started jobs, the execution directory will be removed.')
+                if (context.executionDirectory.name.contains(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX))
+                    FileSystemAccessProvider.instance.removeDirectory(context.executionDirectory)
                 else {
-                    throw new RuntimeException("A wrong path would be deleted: " + context.getExecutionDirectory().getAbsolutePath())
+                    throw new RuntimeException('A wrong path would be deleted: ' + context.executionDirectory.absolutePath)
                 }
             }
         } else {
-            ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context)
+            ExecutionService.instance.writeAdditionalFilesAfterExecution(context)
         }
     }
 
     /**
      * Checks, whether strict mode AND rollback toggles are enabled and
      * try to abort jobs by calling the job manager.
-     * Occurring exceptions are catched so following code can be executed properly.
+     * Occurring exceptions are caught such that following code can be executed properly.
      *
      * @param context
      */
     private void maybeAbortStartedJobsOfContext(ExecutionContext context) {
         if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(FeatureToggles.RollbackOnWorkflowError)) {
             try {
-                logger.severe("A workflow error occurred, try to rollback / abort submitted jobs.")
-                Roddy.getJobManager().killJobs(context.jobsForProcess as List<BEJob>)
+                logger.severe('A workflow error occurred, try to rollback / abort submitted jobs.')
+                Roddy.jobManager.killJobs(context.jobsForProcess as List<BEJob>)
             } catch (Exception ex) {
-                logger.severe("Could not successfully abort jobs.", ex)
+                logger.severe('Could not abort jobs.', ex)
             }
         } else {
-            logger.severe("A workflow error occurred. However, strict mode is disabled and/or RollbackOnWorkflowError is disabled and therefore all submitted jobs will be left running." +
-                    "\n\tYou might consider to enable Roddy strict mode by setting the feature toggles 'StrictMode' and 'RollbackOnWorkflowError'.")
+            logger.severe('A workflow error occurred, but strict mode is disabled and/or ' +
+                                  'RollbackOnWorkflowError is disabled. Submitted jobs will be left running.' +
+                                  '\n\tConsider to enabling Roddy strict mode by setting the feature toggles ' +
+                                  "'StrictMode' and 'RollbackOnWorkflowError'.")
         }
     }
 
@@ -603,24 +643,24 @@ class Analysis {
     void cleanup(List<String> pidList) {
         AnalysisConfiguration analysisConfiguration = (AnalysisConfiguration) getConfiguration()
         if (!analysisConfiguration.hasCleanupScript() && !ExecutionContext.createAnalysisWorkflowObject(this).hasCleanupMethod())
-            logger.postAlwaysInfo("There is neither a configured cleanup script or a native workflow cleanup method available for this analysis.")
+            logger.postAlwaysInfo('There is neither a configured cleanup script or a native workflow cleanup method available for this analysis.')
 
-        List<DataSet> dataSets = getRuntimeService().loadDatasetsWithFilter(this, pidList, true)
+        List<DataSet> dataSets = runtimeService.loadDatasetsWithFilter(this, pidList, true)
         for (DataSet ds : dataSets) {
 
-            ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.getInstance().callWhoAmI(), this,
+            ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.instance.callWhoAmI(), this,
                     ds, ExecutionContextLevel.CLEANUP, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null)
 
             if (analysisConfiguration.hasCleanupScript()) {
                 withErrorReporting(context, false, {
-                    String cleanupScript = analysisConfiguration.getCleanupScript()
+                    String cleanupScript = analysisConfiguration.cleanupScript
                     if (cleanupScript != null && cleanupScript != "") {
                         Job cleanupJob = new Job(context, "cleanupScript", cleanupScript, null)
                         try {
-                            ExecutionService.getInstance().writeFilesForExecution(context)
+                            ExecutionService.instance.writeFilesForExecution(context)
                             cleanupJob.run()
                         } finally {
-                            ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context)
+                            ExecutionService.instance.writeAdditionalFilesAfterExecution(context)
                         }
                     }
                 })
@@ -628,13 +668,14 @@ class Analysis {
 
             // Call the workflows cleanup java method.
             if (context.getWorkflow().hasCleanupMethod()) {
-                withErrorReporting(context, false, {
-                    Workflow wf = context.getWorkflow()
+                withErrorReporting(context, false) {
+                    Workflow wf = context.workflow
                     boolean isExecutable = prepareExecution(context)
                     if (!isExecutable) {
                         logger.severe(
-                                new StringBuilder("The workflow does not seem to be executable for dataset " + context.dataSet.getId()).
-                                        append("\n\tSetup for cleanup failed.").
+                                new StringBuilder('The workflow does not seem to be executable for dataset ' +
+                                                          context.dataSet.id).
+                                        append('\n\tSetup for cleanup failed.').
                                         toString())
                     } else {
                         try {
@@ -645,12 +686,12 @@ class Analysis {
                             ExecutionService.getInstance().writeAdditionalFilesAfterExecution(context)
                         }
                     }
-                })
+                }
             }
         }
     }
 
     File getReadmeFile() {
-        return getConfiguration().getPreloadedConfiguration().getReadmeFile()
+        configuration.preloadedConfiguration.readmeFile
     }
 }
