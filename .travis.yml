@@ -13,6 +13,10 @@ before_install:
 - source "/home/travis/.sdkman/bin/sdkman-init.sh"
 - sdk install java 8.0.232-open
 - java -version
+- export JAVA_HOME="$HOME/.sdkman/candidates/java/current"
+- export JAVA_ROOT="$JAVA_HOME"
+- export JRE_HOME="$JAVA_HOME"
+- export JDK_HOME="$JAVA_HOME"
 - sdk install groovy 2.4.13
 - groovy --version
 - git clone https://github.com/eilslabs/Roddy-Default-Plugin.git dist/plugins/DefaultPlugin
