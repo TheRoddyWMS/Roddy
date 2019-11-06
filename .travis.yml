@@ -2,17 +2,19 @@ language: groovy
 sudo: required
 before_cache:
 - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
-cache:
-  directories:
-  - "$HOME/.gradle/caches/"
-  - "$HOME/.gradle/wrapper/"
+#cache:
+#  directories:
+#  - "$HOME/.gradle/caches/"
+#  - "$HOME/.gradle/wrapper/"
 before_install:
 - curl -s get.sdkman.io | bash
 - source "$HOME/.sdkman/bin/sdkman-init.sh"
 - echo sdkman_auto_answer=true > ~/.sdkman/etc/config
 - source "/home/travis/.sdkman/bin/sdkman-init.sh"
 - sdk install java 8.0.232-open
-- export JAVA_OPTS="-bootclasspath ${JAVA_HOME}/jre/lib/rt.jar"
+- java -version
+- sdk install groovy 2.4.13
+- groovy --version
 - git clone https://github.com/eilslabs/Roddy-Default-Plugin.git dist/plugins/DefaultPlugin
 - git clone https://github.com/eilslabs/Roddy-Base-Plugin.git dist/plugins/PluginBase
 deploy:
