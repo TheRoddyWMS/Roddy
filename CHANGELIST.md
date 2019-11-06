@@ -1,5 +1,10 @@
 # Changelist
 
+* 3.5.6
+
+  - Bugfix: Delete submitted but suspended jobs upon exception in plugin
+  - Updatet Travis CI config to use Java and Groovy version via SDKMAN! 
+
 * 3.5.5
 
   - Improved error messages for nested variable errors (more information to diagnose the cause)
