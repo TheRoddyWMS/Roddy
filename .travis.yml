@@ -12,6 +12,7 @@ before_install:
 - echo sdkman_auto_answer=true > ~/.sdkman/etc/config
 - source "/home/travis/.sdkman/bin/sdkman-init.sh"
 - sdk install java 8.0.232-open
+- export JAVA_OPTS="-bootclasspath ${JAVA_HOME}/jre/lib/rt.jar"
 - git clone https://github.com/eilslabs/Roddy-Default-Plugin.git dist/plugins/DefaultPlugin
 - git clone https://github.com/eilslabs/Roddy-Base-Plugin.git dist/plugins/PluginBase
 deploy:
