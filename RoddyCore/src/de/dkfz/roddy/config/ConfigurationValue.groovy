@@ -16,6 +16,7 @@ import de.dkfz.roddy.core.DataSet
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import groovy.transform.CompileStatic
 
@@ -31,13 +32,13 @@ import static de.dkfz.roddy.config.ConfigurationConstants.*
 @CompileStatic
 class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiable, ConfigurationIssue.IConfigurationIssueContainer {
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(ConfigurationValue.class.getSimpleName())
+    private static final LoggerWrapper logger = LoggerWrapper.getLogger(ConfigurationValue.class.simpleName)
 
     /**
      * API Level 3.4+
      */
     static Enumeration getDefaultCValueTypeEnumeration() {
-        Enumeration _def = new Enumeration(CVALUE_TYPE, [
+        new Enumeration(CVALUE_TYPE, [
                 new EnumerationValue(CVALUE_TYPE_FILENAME, FileSystemValidator.name),
                 new EnumerationValue(CVALUE_TYPE_FILENAME_PATTERN, FileSystemValidator.name),
                 new EnumerationValue(CVALUE_TYPE_PATH, FileSystemValidator.name),
@@ -48,12 +49,11 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
                 new EnumerationValue(CVALUE_TYPE_DOUBLE, DefaultValidator.name),
                 new EnumerationValue(CVALUE_TYPE_STRING, DefaultValidator.name),
         ])
-        return _def
     }
 
-    public final String id
+    final String id
 
-    public final String value
+    final String value
 
     private final Configuration configuration
 
@@ -64,7 +64,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
      */
     private final String description
 
-    private final List<String> tags = new LinkedList<>()
+    private final List<String> tags = [] as LinkedList<String>
 
     /**
      * API Level 3.4+
@@ -185,11 +185,11 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
     }
 
     @Override
-    void addWarning(ConfigurationIssue warning) {}
+    void addWarning(ConfigurationIssue warning) { }
 
     @Override
     List<ConfigurationIssue> getWarnings() {
-        validator.getWarnings()
+        validator.warnings
     }
 
     @Override
@@ -198,15 +198,15 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
     }
 
     @Override
-    void addError(ConfigurationIssue error) {}
+    void addError(ConfigurationIssue error) { }
 
     @Override
     List<ConfigurationIssue> getErrors() {
-        validator.getErrors()
+        validator.errors
     }
 
     Configuration getConfiguration() {
-        return configuration
+        configuration
     }
 
     /**
@@ -407,8 +407,8 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         String vTemp = value.trim()[1 .. -3].trim() //Split away () and leading or trailing white characters.
         String[] temp = vTemp.split(SPLIT_WHITESPACE) //Split by white character
 
-        //Ignore leading and trailing brackets
-        List<String> resultStrings = new LinkedList<>()
+        // Ignore leading and trailing brackets
+        List<String> resultStrings = [] as LinkedList<String>
 
         for (int i = 0; i < temp.length; i++) {
 
@@ -440,7 +440,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         }
 
         String[] temp = value.split(SBRACKET_LEFT + delimiter + SBRACKET_RIGHT)
-        List<String> tempList = new LinkedList<String>()
+        List<String> tempList = [] as LinkedList<String>
         List<String> ignorable = Arrays.asList(ignoreStrings)
 
         for (String _t : temp) {
@@ -455,7 +455,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
 
     @Override
     String getID() {
-        return id
+        id
     }
 
     /**
@@ -464,11 +464,11 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
      * @return
      */
     String getValue() {
-        return value
+        value
     }
 
     String getDescription() {
-        return description
+        description
     }
 
     /**
@@ -477,6 +477,6 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
      * @return
      */
     boolean isNullOrEmpty() {
-        return value == null || value.length() == 0 || value.trim().length() == 0
+        value == null || value.length() == 0 || value.trim().length() == 0
     }
 }
