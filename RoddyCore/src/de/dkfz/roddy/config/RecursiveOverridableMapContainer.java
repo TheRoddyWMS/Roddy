@@ -118,13 +118,13 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
      *
      * A -> B
      *
-     * Here, A contains values a and b, with a == abc and b has a reference to a b=${a}.
-     * B contains values a'  == def
+     * Here, A contains keys a and b, with a=abc and b has a reference to a b=${a}.
+     * B contains values a' == def
      *
      * If you query B for b, b holds a reference to configuration A. Therefore, b.toString()
      * will result in b == abc and NOT in def as expected.
      *
-     * No elevation is the fix:
+     * Now elevation is the fix:
      *
      * By elevating a copy of b to B, B can be the parent of b'.
      *

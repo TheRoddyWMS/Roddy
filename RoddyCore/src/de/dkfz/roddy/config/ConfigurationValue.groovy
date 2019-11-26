@@ -7,7 +7,6 @@
 package de.dkfz.roddy.config
 
 import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.config.loader.ConfigurationLoadError
 import de.dkfz.roddy.config.validation.BashValidator
 import de.dkfz.roddy.config.validation.DefaultValidator
 import de.dkfz.roddy.config.validation.FileSystemValidator
@@ -19,9 +18,6 @@ import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import groovy.transform.CompileStatic
-
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 
 import static de.dkfz.roddy.StringConstants.*
 import static de.dkfz.roddy.config.ConfigurationConstants.*
@@ -175,7 +171,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         ConfigurationValue that = (ConfigurationValue) o
 
         if (id != null ? id != that.id : that.id != null) return false
-        if (value != null ? value != that.value : that.value != null) return false
+        if (this.value != null ? this.value != that.value : that.value != null) return false
         return type != null ? type == that.type : that.type == null
     }
 
@@ -246,10 +242,10 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
      *
      */
     File toFile(Analysis analysis, DataSet dataSet = null) throws ConfigurationError {
-        String temp = toEvaluatedValue([], id, value ?: "", configuration)
+        String temp = ConfigurationValueHelper.evaluateValue(id, this.value ?: "", configuration)
 
-        if (analysis) temp = toEvaluatedValue([], id, temp, analysis.configuration)
-        if (dataSet) temp = toEvaluatedValue([], id, temp, dataSet.configuration)
+        if (analysis) temp = ConfigurationValueHelper.evaluateValue(id, temp, analysis.configuration)
+        if (dataSet) temp = ConfigurationValueHelper.evaluateValue(id, temp, dataSet.configuration)
 
         return new File(temp)
     }
@@ -264,14 +260,16 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         }
 
         if (context == null) {
-            _toFileCache = new File(value)
+            _toFileCache = new File(this.value)
             return _toFileCache
         }
         try {
-            String temp = toFile(context.getAnalysis(), context.getDataSet()).getPath()
-            if (value.startsWith("\${DIR_BUNDLED_FILES}") || value.startsWith("\${DIR_RODDY}"))
-                temp = Roddy.getApplicationDirectory().getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + temp
-
+            String temp = toFile(context.analysis, context.dataSet).path
+            if (this.value.startsWith("\${DIR_BUNDLED_FILES}") || this.value.startsWith("\${DIR_RODDY}")) {
+                temp = Roddy.getApplicationDirectory().absolutePath +
+                        FileSystemAccessProvider.instance.pathSeparator +
+                        temp
+            }
             _toFileCache = new File(temp)
             return _toFileCache
         } catch (Exception ex) {
@@ -280,7 +278,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
     }
 
     Boolean toBoolean() {
-        String v = value != null ? value.toLowerCase() : "f"
+        String v = this.value != null ? this.value.toLowerCase() : "f"
         if (v.startsWith("y") || v.startsWith("j") || v.startsWith("t") || v == "1") {
             if (v != "true") {
                 logger.warning("Boolean configuration value '" + id + "' must be 'true' or 'false'. Found: " + v)
@@ -303,63 +301,26 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
     }
 
     int toInt() {
-        return Integer.parseInt(value)
+        Integer.parseInt(this.evaluatedValue)
     }
 
     float toFloat() {
-        return Float.parseFloat(value)
+        Float.parseFloat(this.evaluatedValue)
     }
 
     double toDouble() {
-        return Double.parseDouble(value)
+        Double.parseDouble(this.evaluatedValue)
     }
 
     long toLong() {
-        return Long.parseLong(value)
+        Long.parseLong(this.evaluatedValue)
     }
-
-    static final Pattern variableDetection = Pattern.compile('[$][{][a-zA-Z0-9_]*[}]')
 
     @Override
     String toString() {
-        return toEvaluatedValue([], id, value, configuration)
+        this.evaluatedValue
     }
 
-    static String toEvaluatedValue(List<String> blackList, String valueID, String initialValue, Configuration configuration) {
-
-        String temp = initialValue
-        if (configuration != null) {
-            List<String> valueIDs = getIDsForParentValues(temp)
-            if (blackList.intersect(valueIDs as Iterable<String>)) {
-                def badFile = configuration.preloadedConfiguration != null ? configuration.preloadedConfiguration.file : configuration.getID()
-                ConfigurationError exc = new ConfigurationError("Cyclic dependency found for cvalue '${valueID}' in file '${badFile}'", configuration, "Cyclic dependency", null)
-                configuration.addLoadError(new ConfigurationLoadError(configuration, "cValues", exc.getMessage(), exc))
-                throw exc
-            }
-            def configurationValues = configuration.getConfigurationValues()
-            for (String vName : valueIDs) {
-                if (configurationValues.hasValue(vName)) {
-                    List<String> subBlackList = blackList + [vName]
-                    ConfigurationValue subValue = configurationValues[vName] as ConfigurationValue
-                    temp = temp.replace("\${$vName}", toEvaluatedValue(subBlackList, subValue.id, subValue.value, subValue.configuration))
-                }
-            }
-        }
-        return temp
-    }
-
-    static List<String> getIDsForParentValues(String value) {
-        List<String> parentValues = new LinkedList<>()
-
-        Matcher m = variableDetection.matcher(value)
-        // Findall is not available in standard java, so I use groovy here.
-        for (String s : m.findAll()) {
-            String vName = s.replaceAll("[\${}]", "")
-            parentValues.add(vName)
-        }
-
-        return parentValues
-    }
 
     String getType() {
         return type
@@ -404,7 +365,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
     }
 
     private List<String> _bashArrayToStringList() {
-        String vTemp = value.trim()[1 .. -3].trim() //Split away () and leading or trailing white characters.
+        String vTemp = this.value.trim()[1 .. -3].trim() //Split away () and leading or trailing white characters.
         String[] temp = vTemp.split(SPLIT_WHITESPACE) //Split by white character
 
         // Ignore leading and trailing brackets
@@ -439,7 +400,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
             return _bashArrayToStringList()
         }
 
-        String[] temp = value.split(SBRACKET_LEFT + delimiter + SBRACKET_RIGHT)
+        String[] temp = this.value.split(SBRACKET_LEFT + delimiter + SBRACKET_RIGHT)
         List<String> tempList = [] as LinkedList<String>
         List<String> ignorable = Arrays.asList(ignoreStrings)
 
@@ -464,7 +425,11 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
      * @return
      */
     String getValue() {
-        value
+        this.value
+    }
+
+    String getEvaluatedValue() {
+        ConfigurationValueHelper.evaluateValue(id, this.value, configuration)
     }
 
     String getDescription() {
@@ -477,6 +442,6 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
      * @return
      */
     boolean isNullOrEmpty() {
-        value == null || value.length() == 0 || value.trim().length() == 0
+        this.value == null || this.value.length() == 0 || this.value.trim().length() == 0
     }
 }
