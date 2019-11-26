@@ -1,9 +1,13 @@
 # Changelist
 
+* 3.5.7
+
+  - Refactorings and few more tests
+
 * 3.5.6
 
   - Bugfix: Delete submitted but suspended jobs upon exception in plugin
-  - Updatet Travis CI config to use Java and Groovy version via SDKMAN! 
+  - Updated Travis CI config to use Java and Groovy version via SDKMAN! 
 
 * 3.5.5
 
