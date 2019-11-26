@@ -12,6 +12,7 @@ import static de.dkfz.roddy.client.RoddyStartupModes.help
 import de.dkfz.roddy.client.RoddyStartupModes
 import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.client.cliclient.clioutput.*
+import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.Tuple2
@@ -62,7 +63,9 @@ class CommandLineCall {
      * @param errors
      * @return
      */
-    private static Optional<Parameter> processParameter(final RoddyStartupOptions option, final Parameter parameter, final List<String> errors) {
+    private static Optional<Parameter> processParameter(final RoddyStartupOptions option,
+                                                        final Parameter parameter,
+                                                        final List<String> errors) {
         Optional<Parameter> result
         if (parameter instanceof ArbitraryParameter) {
             throw new RuntimeException("Oops! Parsed ArbitraryParameter in 'parseOptions()'")
@@ -76,11 +79,11 @@ class CommandLineCall {
             }
         } else if (parameter instanceof  ParameterWithoutValue) {
             // If the option is known ensure the option parsed as with value is indeed NOT accepting values.
-            if (!option.acceptsParameters) {
-                result = Optional.of(parameter)
-            } else {
+            if (option.acceptsParameters) {
                 errors << "The option " + option + " is malformed! No parameter value expected."
                 result = Optional.empty()
+            } else {
+                result = Optional.of(parameter)
             }
         } else if (parameter instanceof CValueParameter) {
             result = Optional.of(parameter)
@@ -245,11 +248,14 @@ class CommandLineCall {
      * [ a:a string, b:another string, c:123, ... ]
      * @return
      */
-    List<ConfigurationValue> getConfigurationValues() {
-        (optionsMap.get(RoddyStartupOptions.cvalues, new CValueParameter([:])) as CValueParameter).
-                cvaluesMap.values().
-                collect { cval ->
-                    new ConfigurationValue(cval.name, cval.value, cval.type)
-                }
+    Configuration getConfiguration() {
+        Configuration configuration = new Configuration()
+        configuration.configurationValues.addAll(
+                (optionsMap.get(RoddyStartupOptions.cvalues, new CValueParameter([:]))
+                        as CValueParameter).
+                        cvaluesMap.values().collect { cval ->
+                    new ConfigurationValue(configuration, cval.name, cval.value, cval.type)
+                })
+        return configuration
     }
 }
