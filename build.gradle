@@ -88,7 +88,7 @@ test {
 repositories {
     mavenCentral()                                        // Most dependencies
     maven { url 'https://jitpack.io' }                    // Github: RoddyToolLib, BatchEuphoria
-    maven { url "http://central.maven.org/maven2/" }      // Some of the remaining dependencies
+    maven { url "https://repo1.maven.org/maven2/" }       // Some of the remaining dependencies
 }
 
 
