@@ -163,7 +163,7 @@ setup plugin directories. So look up the file and take a look into all
 configured directories.
 
 Benchmarking Jobs
-~~~~~~~~~~~~~~~~~
+-----------------
 
 Roddy has no built-in benchmarking facility, however, you can obtain process-specific job statistics using the `pidstat` tool from the sysstat package. To achieve this you can add the following code to the environment script (base-environment, workflow-environment, or job environment). The code will collect all process-IDs and collect basic process-statistics for each of them.
 
