@@ -213,7 +213,7 @@
 
   - Bugfixes
   
-  - Start-up script reads `INCREASE_BUILD_NUMBER` (true, false) variable defaulting to true, to allow turning off automatic build-number increase.
+  - Start-up script reads `INCREASE_BUILD_VERSION` (true, false) variable defaulting to true, to allow turning off automatic build-number increase.
   
   - Basic implementation of a new Brawl DSL based on Groovy. 
   

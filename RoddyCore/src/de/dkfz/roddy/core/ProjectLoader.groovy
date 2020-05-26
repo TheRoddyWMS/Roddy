@@ -455,7 +455,6 @@ class ProjectLoader {
             logger.postRareInfo("Loading information configuration context for ${projectID} from ${iccProject.file}")
         }
 
-        //Validate the project icc
         if (!XSDValidator.validateTree(iccProject) && Roddy.isStrictModeEnabled()) {
             throw new ProjectLoaderException("Validation of project configuration failed.")
         }
