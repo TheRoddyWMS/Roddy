@@ -251,8 +251,7 @@ class CommandLineCall {
     Configuration getConfiguration() {
         Configuration configuration = new Configuration()
         configuration.configurationValues.addAll(
-                (optionsMap.get(RoddyStartupOptions.cvalues, new CValueParameter([:]))
-                        as CValueParameter).
+                (optionsMap.get(RoddyStartupOptions.cvalues, new CValueParameter([:])) as CValueParameter).
                         cvaluesMap.values().collect { cval ->
                     new ConfigurationValue(configuration, cval.name, cval.value, cval.type)
                 })

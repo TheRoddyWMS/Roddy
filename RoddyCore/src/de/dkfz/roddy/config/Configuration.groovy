@@ -287,7 +287,7 @@ class Configuration implements ContainerParent<Configuration>, ConfigurationIssu
      *
      * @param c
      */
-    void resetParent(Configuration c) {
+    void setParent(Configuration c) {
         parents.clear()
         parents.add(c)
     }

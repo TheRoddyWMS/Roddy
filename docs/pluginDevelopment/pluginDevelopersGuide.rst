@@ -161,3 +161,64 @@ and set it to depend on NewPlugin:
 Good question, that totally depends on your application ini file and the
 setup plugin directories. So look up the file and take a look into all
 configured directories.
+
+Benchmarking Jobs
+-----------------
+
+Roddy has no built-in benchmarking facility, however, you can obtain process-specific job statistics using the `pidstat` tool from the sysstat package. To achieve this you can add the following code to the environment script (base-environment, workflow-environment, or job environment). The code will collect all process-IDs and collect basic process-statistics for each of them.
+
+::
+
+    joinStrings() {
+         local sep="${1:-,}"
+         perl -e 'my @l = <>; chomp @l; print join("'$sep'", @l) . "\n";'
+    }
+
+    # Based on https://unix.stackexchange.com/questions/67668/elegantly-get-list-of-descendant-processes
+    listAllSubprocessesOf() {
+        ps=${1:-1}
+        while [[ "$ps" != "" ]]; do
+            echo $ps
+            unset ps1 ps2
+            for p in $ps; do
+                read ps2 < /proc/$p/task/$p/children 2>/dev/null 1>/dev/null || true
+                if [[ "$ps2" != "" && "$ps1" != "$ps" ]]; then
+                    ps1="$ps1 $ps2"
+                else
+                    ps1="$ps1"
+                fi
+            done
+            ps="$ps1"
+        done | tr " " "\n" | tail -n +2
+    }
+
+
+    # Run this in background process and call with the parent-process ID
+    # to be monitored. Terminate the process, when done. Output will
+    # go to standard-output.
+    # trackActiveSubProcessesOf $$ -d -u -r -h > $outfile &
+    pidstatOfActiveSubProcessesOf() {
+        local processId="${1:?No process ID provided}"
+        local interval="${2:?No measurement interval provided}"
+        shift 2
+        declare -a options=($@)
+        set -xv
+        while true; do
+            local subProcesses=$(listAllSubprocessesOf "$processId" | joinStrings)
+            if [[ "$subProcesses" != "" ]]; then
+                pidstat -p "$subProcesses" "${options[@]}" "$interval" 1
+            fi
+        done
+    }
+
+    PIDSTAT_OPTIONS="${PIDSTAT_OPTIONS:--d -u -r -l -h}"
+
+    # Put the pidstat output besides the parameter file.
+    currentDir=$(dirname "$PARAMETER_FILE")
+
+    # The parameter file name does not contain some now available information!
+    pidStatFile="$currentDir/$LSB_JOBNAME.pidstat.$LSB_JOBID"
+    # Create an empty job-output file.
+    truncate -s 0 "$pidStatFile"
+    pidstatOfActiveSubProcessesOf "$$" 60 $PIDSTAT_OPTIONS >> "$pidStatFile" &
+    # This process will be automatically terminated by the wrap-in-script oftur the wrapped-script finished.

@@ -247,10 +247,10 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
-    public void resetParent(Configuration c) {
-        super.resetParent(c);
+    public void setParent(Configuration c) {
+        super.setParent(c);
         if (c != null)
-            checkAnalysisConfig().resetParent(c);
+            checkAnalysisConfig().setParent(c);
     }
 
     @Override
