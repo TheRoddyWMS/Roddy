@@ -1,5 +1,10 @@
 # Changelist
 
+* 3.5.8
+
+  - Bugfix: Project XML validation didn't exit != 0 in strict mode
+  - Refactorings and more tests
+
 * 3.5.7
 
   - Refactorings and few more tests
