@@ -242,7 +242,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
      *
      */
     File toFile(Analysis analysis, DataSet dataSet = null) throws ConfigurationError {
-        String temp = ConfigurationValueHelper.evaluateValue(id, this.value ?: "", configuration)
+        String temp = ConfigurationValueHelper.evaluateValue(id, value ?: "", configuration)
 
         if (analysis) temp = ConfigurationValueHelper.evaluateValue(id, temp, analysis.configuration)
         if (dataSet) temp = ConfigurationValueHelper.evaluateValue(id, temp, dataSet.configuration)
@@ -260,12 +260,12 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         }
 
         if (context == null) {
-            _toFileCache = new File(this.value)
+            _toFileCache = new File(value)
             return _toFileCache
         }
         try {
             String temp = toFile(context.analysis, context.dataSet).path
-            if (this.value.startsWith("\${DIR_BUNDLED_FILES}") || this.value.startsWith("\${DIR_RODDY}")) {
+            if (value.startsWith("\${DIR_BUNDLED_FILES}") || value.startsWith("\${DIR_RODDY}")) {
                 temp = Roddy.getApplicationDirectory().absolutePath +
                         FileSystemAccessProvider.instance.pathSeparator +
                         temp
@@ -278,7 +278,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
     }
 
     Boolean toBoolean() {
-        String v = this.value != null ? this.value.toLowerCase() : "f"
+        String v = value != null ? value.toLowerCase() : "f"
         if (v.startsWith("y") || v.startsWith("j") || v.startsWith("t") || v == "1") {
             if (v != "true") {
                 logger.warning("Boolean configuration value '" + id + "' must be 'true' or 'false'. Found: " + v)
@@ -301,24 +301,24 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
     }
 
     int toInt() {
-        Integer.parseInt(this.evaluatedValue)
+        Integer.parseInt(evaluatedValue)
     }
 
     float toFloat() {
-        Float.parseFloat(this.evaluatedValue)
+        Float.parseFloat(evaluatedValue)
     }
 
     double toDouble() {
-        Double.parseDouble(this.evaluatedValue)
+        Double.parseDouble(evaluatedValue)
     }
 
     long toLong() {
-        Long.parseLong(this.evaluatedValue)
+        Long.parseLong(evaluatedValue)
     }
 
     @Override
     String toString() {
-        this.evaluatedValue
+        evaluatedValue
     }
 
 
@@ -365,7 +365,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
     }
 
     private List<String> _bashArrayToStringList() {
-        String vTemp = this.value.trim()[1 .. -3].trim() //Split away () and leading or trailing white characters.
+        String vTemp = value.trim()[1 .. -3].trim() //Split away () and leading or trailing white characters.
         String[] temp = vTemp.split(SPLIT_WHITESPACE) //Split by white character
 
         // Ignore leading and trailing brackets
@@ -400,7 +400,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
             return _bashArrayToStringList()
         }
 
-        String[] temp = this.value.split(SBRACKET_LEFT + delimiter + SBRACKET_RIGHT)
+        String[] temp = value.split(SBRACKET_LEFT + delimiter + SBRACKET_RIGHT)
         List<String> tempList = [] as LinkedList<String>
         List<String> ignorable = Arrays.asList(ignoreStrings)
 
@@ -429,7 +429,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
     }
 
     String getEvaluatedValue() {
-        ConfigurationValueHelper.evaluateValue(id, this.value, configuration)
+        ConfigurationValueHelper.evaluateValue(id, value, configuration)
     }
 
     String getDescription() {
@@ -442,6 +442,6 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
      * @return
      */
     boolean isNullOrEmpty() {
-        this.value == null || this.value.length() == 0 || this.value.trim().length() == 0
+        value == null || value.length() == 0 || value.trim().length() == 0
     }
 }
