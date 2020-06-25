@@ -664,7 +664,7 @@ public class FileSystemAccessProvider {
                 return ExecutionService.getInstance().execute(commandSet.getReadOutTextFileCommand(file), true).resultLines.toArray(new String[0])
             }
         } catch (Exception ex) {
-            logger.postAlwaysInfo("There was an error while trying to load file " + file)
+            logger.postAlwaysInfo("Error loading file '" + file + "'")
             return null
         }
     }
@@ -673,7 +673,7 @@ public class FileSystemAccessProvider {
         try {
             return ExecutionService.getInstance().execute(commandSet.getReadLineOfFileCommand(file, lineIndex), true).resultLines[0];
         } catch (Exception ex) {
-            logger.postAlwaysInfo("There was an error while trying to read a line of file " + file);
+            logger.postAlwaysInfo("Error reading line from file '" + file + "'");
         }
     }
 
@@ -687,13 +687,13 @@ public class FileSystemAccessProvider {
                 if (ExecutionService.getInstance().isLocalService()) {
                     boolean created = filename.createNewFile();
                     if (!created)
-                        throw new IOException("The file ${filename.absolutePath} could not be created.")
+                        throw new IOException("File '${filename.absolutePath}' could not be created.")
                     return created
                 } else
                     throw new RuntimeException("Not implemented yet!");
             }
         } catch (Exception ex) {
-            logger.postAlwaysInfo("There was an error while trying to create file " + filename);
+            logger.postAlwaysInfo("Error creating file '" + filename + "'");
         }
     }
 
@@ -729,7 +729,7 @@ public class FileSystemAccessProvider {
                 }
             }
         } catch (Exception ex) {
-            logger.postAlwaysInfo("There was an error during the attempt to append to file " + filename);
+            logger.postAlwaysInfo("Error appending to file '" + filename + "'");
         }
     }
 
