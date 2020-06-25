@@ -4,6 +4,7 @@
 
   - Bugfix: Project XML validation didn't exit != 0 in strict mode
   - Refactorings and more tests
+  - Reduced verbosity of some file access error messages
 
 * 3.5.7
 
