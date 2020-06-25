@@ -35,7 +35,7 @@ class CommandLineCallTest extends Specification {
                                                                           Integer size, String id, String value) {
         when:
         CommandLineCall clc = new CommandLineCall(['run', 'prj@ana', "--cvalues=${cvalueString}"])
-        List<ConfigurationValue> configurationValues = clc.configuration.configurationValues.getAllValuesAsList()
+        List<ConfigurationValue> configurationValues = clc.configuration.configurationValues.allValuesAsList
 
         then:
         configurationValues.size() == size
