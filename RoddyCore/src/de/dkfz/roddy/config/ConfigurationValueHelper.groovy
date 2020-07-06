@@ -13,28 +13,50 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 /**
- * Groovy helper class for configuration value objects.
- * Not all things in configuration value can be converted to groovy
- * without a load of work, so it is easier to write this helper class
- * which just provides some basic groovy functionality for the java
- * part.
+ * Helper class (or service) for configuration value objects.
  */
 @CompileStatic
 class ConfigurationValueHelper {
 
+    /**
+     * Pattern for matching configuration value references in configuration values.
+     *
+     * TODO Change this to '[$][{][a-zA-Z_][a-zA-Z_0-9]*[}]'. This changing is compatibility-breaking.
+     * */
     private static final Pattern VARIABLE_PATTERN = Pattern.compile('[$][{][a-zA-Z0-9_]*[}]')
+
+    /**
+     * Note this is public.
+     *
+     * @param value   String to search in.
+     * @return        List of variable names in variable reference patterns
+     */
+    static List<String> getContainedKeys(String value) {
+        List<String> containedKeys = [] as LinkedList
+
+        Matcher m = VARIABLE_PATTERN.matcher(value)
+        // Findall is not available in standard java, so I use groovy here.
+        for (String s : m.findAll()) {
+            String vName = s.replaceAll('[\${}]', '')
+            containedKeys.add(vName)
+        }
+
+        return containedKeys
+    }
 
     /** Evaluate a String with an initial value and associated with a key (valueID) that contains value references of
      *  the form '${someKey}'. The actual values to be used as replacements for '${someKey}' are taken from a
      *  Configuration object.
      *
-     *  Essentially this implements a simple templating mechanism that takes its values from a Configuration. The
-     *  configuration represents a tree and `toEvaluatedValue` is called recursively on the configuration values in the
-     *  tree to fill in all non-blacklisted variable references.
+     *  Essentially this implements a templating mechanism that takes its values from a Configuration. The
+     *  configuration represents a tree and `evaluateValue` is called recursively on the configuration values in the
+     *  tree to fill in all non-blacklisted variable references. The evaluation follows the normal rules for value
+     *  evaluation in configuration trees, with configurations of different priorities (e.g. CLI configuration has
+     *  highest priority).
      *
-     *  Note that the load errors of the Configuration may updated AND a ConfigurationError may get thrown if a
-     *  valueID that is directly queried or than occurs during the recursive evaluation is in the blacklist. The same
-     *  is true for cyclic dependencies.
+     *  Note that the loading errors of the Configuration may get updated AND a ConfigurationError may get thrown, if a
+     *  valueID that is directly queried or that occurs during the recursive evaluation is in the blacklist or if there
+     *  is a cyclic dependency.
      *
      * @param key             key of the value itself
      * @param value           the current value itself in which the replacements should take place
@@ -55,16 +77,16 @@ class ConfigurationValueHelper {
                                             String initialValue,
                                             Configuration configuration,
                                             List<String> blackList) {
-        String temp = initialValue
+        String result = initialValue
         if (configuration != null) {
-            List<String> containedKeys = getContainedKeys(temp)
+            List<String> containedKeys = getContainedKeys(result)
             if (blackList.intersect(containedKeys as Iterable<String>)) {
-                def badFile =
+                def badConf =
                         configuration.preloadedConfiguration != null ?
                                 configuration.preloadedConfiguration.file :
                                 configuration.ID
                 ConfigurationError exc =
-                        new ConfigurationError("Cyclic dependency found for cvalue '${valueID}' in file '${badFile}'",
+                        new ConfigurationError("Cyclic dependency found for cvalue '${valueID}' in file '${badConf}'",
                                                configuration, 'Cyclic dependency', null)
                 configuration.addLoadError(new ConfigurationLoadError(configuration, 'cValues', exc.message, exc))
                 throw exc
@@ -72,29 +94,16 @@ class ConfigurationValueHelper {
             def configurationValues = configuration.configurationValues
             for (String vName : containedKeys) {
                 if (configurationValues.hasValue(vName)) {
-                    List<String> subBlackList = blackList + [vName]
-                    ConfigurationValue subValue = configurationValues[vName] as ConfigurationValue
-                    temp = temp.replace("\${$vName}",
-                                        evaluateValueImpl(subValue.id,
-                                                          subValue.value,
-                                                          subValue.configuration,
-                                                          subBlackList))
+                    ConfigurationValue referencedValue = configurationValues[vName] as ConfigurationValue
+                    result = result.replace("\${$vName}",
+                                            evaluateValueImpl(referencedValue.id,
+                                                              referencedValue.value,
+                                                              referencedValue.configuration,
+                                                              blackList + [vName]))
                 }
             }
         }
-        return temp
+        return result
     }
 
-    static List<String> getContainedKeys(String value) {
-        List<String> containedKeys = [] as LinkedList
-
-        Matcher m = VARIABLE_PATTERN.matcher(value)
-        // Findall is not available in standard java, so I use groovy here.
-        for (String s : m.findAll()) {
-            String vName = s.replaceAll('[\${}]', '')
-            containedKeys.add(vName)
-        }
-
-        return containedKeys
-    }
 }
