@@ -184,8 +184,20 @@ The last step you need to do is to compile and run the script.
     [RODDY_DIRECTORY]/roddy.sh compileplugin NewPlugin --c=[YOUR_INI_FILE]
 
 If you stuck to the example code, everything should be fine now and
-you can call it. We'll use to the configurations-free mode here. Therefore
-we call the testrun mode with the pattern
+you can call it. Note that in this call the workflow version will automatically get bumped at the patch level, i.e.
+`$major.$minor.$patch => $major.$minor.($patch + 1)`. If you want to increase the major or minor level, you have to do
+this manually in the `buildversion.txt` in the plugin-root directory. Furthermore, you should then turn of patch-level
+bumping using the `INCREASE_BUILD_VERSION` environment variable, otherwise the patch-version will get again incremented
+automatically:
+
+.. code-block:: Bash
+
+    INCREASE_BUILD_VERSION=false [RODDY_DIRECTORY]/roddy.sh compileplugin NewPlugin --c=[YOUR_INI_FILE]
+
+
+
+
+We'll use to the configurations-free mode here. Therefore we call the testrun mode with the pattern
 
 .. code-block:: Bash
 

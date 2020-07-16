@@ -1,9 +1,20 @@
 # Changelist
 
+* 3.5.8
+
+  - Bugfix: Project XML validation didn't exit != 0 in strict mode
+  - Refactorings and more tests
+  - Reduced verbosity of some file access error messages
+  - CI now uses Java 8.0.252-open (sdkman) and Groovy 2.4.19 for building
+
+* 3.5.7
+
+  - Refactorings and few more tests
+
 * 3.5.6
 
   - Bugfix: Delete submitted but suspended jobs upon exception in plugin
-  - Updatet Travis CI config to use Java and Groovy version via SDKMAN! 
+  - Updated Travis CI config to use Java and Groovy version via SDKMAN! 
 
 * 3.5.5
 
@@ -204,7 +215,7 @@
 
   - Bugfixes
   
-  - Start-up script reads `INCREASE_BUILD_NUMBER` (true, false) variable defaulting to true, to allow turning off automatic build-number increase.
+  - Start-up script reads `INCREASE_BUILD_VERSION` (true, false) variable defaulting to true, to allow turning off automatic build-number increase.
   
   - Basic implementation of a new Brawl DSL based on Groovy. 
   

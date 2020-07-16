@@ -46,6 +46,40 @@ class ConfigurationValueInheritanceTests {
     }
 
     /**
+     *
+     */
+    @Test
+    void testCValueSubstitutionWithNonStringValue() {
+        Configuration A = new Configuration(null)
+        Configuration B = new Configuration(null, A)
+
+        def cvA = A.configurationValues
+        def cvB = B.configurationValues
+
+        cvA.put('int', '1', "integer")
+        cvA.put('intRef', '${int}', "integer")
+        
+        cvA.put('float', '3.0', "float")
+        cvA.put('floatRef', '${float}', "float")
+        
+        cvA.put('double', '4.0', "double")
+        cvA.put('doubleRef', '${double}', "double")
+        
+        assert cvB['intRef'].value == '${int}'
+        assert cvB['intRef'].evaluatedValue == '1'
+        assert cvB['intRef'].toInt() == 1
+        assert cvB['intRef'].toLong() == 1
+
+        assert cvB['floatRef'].value == '${float}'
+        assert cvB['floatRef'].evaluatedValue == '3.0'
+        assert cvB['floatRef'].toFloat() == 3.0
+
+        assert cvB['doubleRef'].value == '${double}'
+        assert cvB['doubleRef'].evaluatedValue == '4.0'
+        assert cvB['doubleRef'].toDouble() == 4.0
+    }
+
+    /**
      * Given are three configurations:
      * C extends B, B extends A
      * =>   A -> B -> C

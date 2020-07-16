@@ -309,9 +309,10 @@ class ProjectLoader {
             RoddyCLIClient.checkConfigurationErrorsAndMaybePrintAndFail(projectConfiguration)
         }
 
-        PreloadedConfiguration iccAnalysis = ((AnalysisConfigurationProxy) projectConfiguration.getAnalysis(analysisID)).preloadedConfiguration;
+        PreloadedConfiguration iccAnalysis = ((AnalysisConfigurationProxy) projectConfiguration.
+                getAnalysis(analysisID)).preloadedConfiguration;
         if (!XSDValidator.validateTree(iccAnalysis) && Roddy.isStrictModeEnabled()) {
-            throw new ProjectLoaderException("Validation of project configuration failed.")
+            throw new ProjectLoaderException("Validation of analysis configuration failed.")
         }
     }
 
@@ -454,8 +455,10 @@ class ProjectLoader {
             logger.postRareInfo("Loading information configuration context for ${projectID} from ${iccProject.file}")
         }
 
-        //Validate the project icc
-        XSDValidator.validateTree(iccProject);
+        if (!XSDValidator.validateTree(iccProject) && Roddy.isStrictModeEnabled()) {
+            throw new ProjectLoaderException("Validation of project configuration failed.")
+        }
+
         return iccProject;
     }
 

@@ -199,7 +199,7 @@ class BashConverter extends ConfigurationConverter {
 
             for (ConfigurationValue cv in listOfUnsortedValues.values().findAll { !isValidationRule(it) && !isComment(it) }) {
 
-                List<String> dependenciesToOtherValues = ConfigurationValue.getIDsForParentValues(cv.value)
+                List<String> dependenciesToOtherValues = ConfigurationValueHelper.getContainedKeys(cv.value)
 
                 // Check, how many dependencies to other values are set and find out for each dependency, if
                 // it was resolved in a former loop run or if it is a blacklisted value.

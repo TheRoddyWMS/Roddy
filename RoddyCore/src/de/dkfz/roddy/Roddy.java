@@ -675,10 +675,10 @@ public class Roddy {
 
             setScratchDirectory(configurationValues);
 
-            // Add custom command line values to the project configuration.
-            List<ConfigurationValue> externalConfigurationValues = getCommandLineCall().getConfigurationValues();
-
-            configurationValues.addAll(externalConfigurationValues);
+            // Add command line values to the application-specific configuration.
+            Configuration commandlineConfiguration =
+                    getCommandLineCall().getConfiguration();
+            applicationSpecificConfiguration.addParent(commandlineConfiguration);
 
             if (useCustomIODirectories()) {
                 configurationValues.add(new ConfigurationValue(CFG_INPUT_BASE_DIRECTORY, Roddy.getCustomBaseInputDirectory(), CVALUE_TYPE_PATH));

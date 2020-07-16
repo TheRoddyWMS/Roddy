@@ -7,7 +7,6 @@
 package de.dkfz.roddy.config
 
 import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.config.loader.ConfigurationLoadError
 import de.dkfz.roddy.config.validation.BashValidator
 import de.dkfz.roddy.config.validation.DefaultValidator
 import de.dkfz.roddy.config.validation.FileSystemValidator
@@ -19,9 +18,6 @@ import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import groovy.transform.CompileStatic
-
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 
 import static de.dkfz.roddy.StringConstants.*
 import static de.dkfz.roddy.config.ConfigurationConstants.*
@@ -175,7 +171,7 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         ConfigurationValue that = (ConfigurationValue) o
 
         if (id != null ? id != that.id : that.id != null) return false
-        if (value != null ? value != that.value : that.value != null) return false
+        if (this.value != null ? this.value != that.value : that.value != null) return false
         return type != null ? type == that.type : that.type == null
     }
 
@@ -246,10 +242,10 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
      *
      */
     File toFile(Analysis analysis, DataSet dataSet = null) throws ConfigurationError {
-        String temp = toEvaluatedValue([], id, value ?: "", configuration)
+        String temp = ConfigurationValueHelper.evaluateValue(id, value ?: "", configuration)
 
-        if (analysis) temp = toEvaluatedValue([], id, temp, analysis.configuration)
-        if (dataSet) temp = toEvaluatedValue([], id, temp, dataSet.configuration)
+        if (analysis) temp = ConfigurationValueHelper.evaluateValue(id, temp, analysis.configuration)
+        if (dataSet) temp = ConfigurationValueHelper.evaluateValue(id, temp, dataSet.configuration)
 
         return new File(temp)
     }
@@ -268,10 +264,12 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
             return _toFileCache
         }
         try {
-            String temp = toFile(context.getAnalysis(), context.getDataSet()).getPath()
-            if (value.startsWith("\${DIR_BUNDLED_FILES}") || value.startsWith("\${DIR_RODDY}"))
-                temp = Roddy.getApplicationDirectory().getAbsolutePath() + FileSystemAccessProvider.getInstance().getPathSeparator() + temp
-
+            String temp = toFile(context.analysis, context.dataSet).path
+            if (value.startsWith("\${DIR_BUNDLED_FILES}") || value.startsWith("\${DIR_RODDY}")) {
+                temp = Roddy.getApplicationDirectory().absolutePath +
+                        FileSystemAccessProvider.instance.pathSeparator +
+                        temp
+            }
             _toFileCache = new File(temp)
             return _toFileCache
         } catch (Exception ex) {
@@ -303,63 +301,26 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
     }
 
     int toInt() {
-        return Integer.parseInt(value)
+        Integer.parseInt(evaluatedValue)
     }
 
     float toFloat() {
-        return Float.parseFloat(value)
+        Float.parseFloat(evaluatedValue)
     }
 
     double toDouble() {
-        return Double.parseDouble(value)
+        Double.parseDouble(evaluatedValue)
     }
 
     long toLong() {
-        return Long.parseLong(value)
+        Long.parseLong(evaluatedValue)
     }
-
-    static final Pattern variableDetection = Pattern.compile('[$][{][a-zA-Z0-9_]*[}]')
 
     @Override
     String toString() {
-        return toEvaluatedValue([], id, value, configuration)
+        evaluatedValue
     }
 
-    static String toEvaluatedValue(List<String> blackList, String valueID, String initialValue, Configuration configuration) {
-
-        String temp = initialValue
-        if (configuration != null) {
-            List<String> valueIDs = getIDsForParentValues(temp)
-            if (blackList.intersect(valueIDs as Iterable<String>)) {
-                def badFile = configuration.preloadedConfiguration != null ? configuration.preloadedConfiguration.file : configuration.getID()
-                ConfigurationError exc = new ConfigurationError("Cyclic dependency found for cvalue '${valueID}' in file '${badFile}'", configuration, "Cyclic dependency", null)
-                configuration.addLoadError(new ConfigurationLoadError(configuration, "cValues", exc.getMessage(), exc))
-                throw exc
-            }
-            def configurationValues = configuration.getConfigurationValues()
-            for (String vName : valueIDs) {
-                if (configurationValues.hasValue(vName)) {
-                    List<String> subBlackList = blackList + [vName]
-                    ConfigurationValue subValue = configurationValues[vName] as ConfigurationValue
-                    temp = temp.replace("\${$vName}", toEvaluatedValue(subBlackList, subValue.id, subValue.value, subValue.configuration))
-                }
-            }
-        }
-        return temp
-    }
-
-    static List<String> getIDsForParentValues(String value) {
-        List<String> parentValues = new LinkedList<>()
-
-        Matcher m = variableDetection.matcher(value)
-        // Findall is not available in standard java, so I use groovy here.
-        for (String s : m.findAll()) {
-            String vName = s.replaceAll("[\${}]", "")
-            parentValues.add(vName)
-        }
-
-        return parentValues
-    }
 
     String getType() {
         return type
@@ -464,7 +425,11 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
      * @return
      */
     String getValue() {
-        value
+        this.value
+    }
+
+    String getEvaluatedValue() {
+        ConfigurationValueHelper.evaluateValue(id, value, configuration)
     }
 
     String getDescription() {
