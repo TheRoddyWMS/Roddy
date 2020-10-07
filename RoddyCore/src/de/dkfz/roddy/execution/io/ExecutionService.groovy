@@ -92,7 +92,12 @@ abstract class ExecutionService implements BEExecutionService {
         ClassLoader classLoader = LibrariesFactory.getGroovyClassLoader()
 
         RunMode runMode = Roddy.getRunMode()
-        String executionServiceClassID = Roddy.applicationConfiguration.getOrSetApplicationProperty(runMode, Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS, SSHExecutionService.class.getName())
+        String executionServiceClassID =
+                Roddy.applicationConfiguration.
+                        getOrSetApplicationProperty(
+                                runMode,
+                                Constants.APP_PROPERTY_EXECUTION_SERVICE_CLASS,
+                                SSHExecutionService.class.name)
         try {
             Class executionServiceClass = classLoader.loadClass(executionServiceClassID)
             initializeService(executionServiceClass, runMode)
@@ -101,7 +106,7 @@ abstract class ExecutionService implements BEExecutionService {
         }
     }
 
-    ExecutionService() {
+    protected ExecutionService() {
     }
 
     static ExecutionService getInstance() {
@@ -221,9 +226,9 @@ abstract class ExecutionService implements BEExecutionService {
         return execute(cmd).resultLines
     }
 
-    ExecutionResult execute(String string, boolean waitFor = true, OutputStream outputStream = null) {
-        if (string) {
-            return _execute(string, waitFor, true, outputStream)
+    ExecutionResult execute(String command, boolean waitFor = true, OutputStream outputStream = null) {
+        if (command) {
+            return _execute(command, waitFor, true, outputStream)
         } else {
             return new ExecutionResult(false, -1, Arrays.asList("Command not valid. String is empty."), "")
         }

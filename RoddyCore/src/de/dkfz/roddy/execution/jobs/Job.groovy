@@ -172,7 +172,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 , inlineScript ? null : getToolMD5(TOOLID_WRAPIN_SCRIPT, context)
                 , getResourceSetFromConfiguration(toolID, context)
                 , []
-                , [:]
+                , [:] as Map<String,String>
                 , Roddy.getJobManager()
                 , JobLog.toOneFile(new File(context.loggingDirectory, jobName + ".o{JOB_ID}"))
                 , null)

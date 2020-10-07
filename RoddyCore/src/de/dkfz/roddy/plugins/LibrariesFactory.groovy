@@ -56,7 +56,7 @@ class LibrariesFactory extends Initializable {
 
     private Map<PluginInfo, File> loadedJarsByPlugin = [:]
 
-    private PluginInfoMap mapOfPlugins = [:];
+    private PluginInfoMap mapOfPlugins = new PluginInfoMap([:])
 
     private static final Map<String, List<String>> mapOfErrorsForPluginEntries = [:]
 
@@ -518,7 +518,7 @@ class LibrariesFactory extends Initializable {
             usedPluginsCorrected << [id, fullVersion].join(":");
             return new Tuple2(id, fullVersion);
         } as List<Tuple2<String, String>>;
-        usedPlugins = usedPluginsCorrected;
+        usedPlugins = usedPluginsCorrected as String[]
 
         Map<String, PluginInfo> pluginsToActivate = [:];
         while (pluginsToCheck.size() > 0) {

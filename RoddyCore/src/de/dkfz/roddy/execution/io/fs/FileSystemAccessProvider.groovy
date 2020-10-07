@@ -630,7 +630,7 @@ class FileSystemAccessProvider {
     boolean setAccessRightsRecursively(File path, String accessStringDirectories, String accessString, String group) {
         return ExecutionService.instance.
                 execute(commandSet.getSetAccessRightsRecursivelyCommand(
-                        path, accessStringDirectories, accessString, group), false)
+                        path, accessStringDirectories, accessString, group))
     }
 
     boolean setDefaultAccessRights(File file, ExecutionContext context) {
