@@ -14,7 +14,6 @@ import de.dkfz.roddy.execution.UnexpectedExecutionResultException
 import de.dkfz.roddy.tools.LoggerWrapper
 import groovy.transform.CompileStatic
 
-import java.util.concurrent.Callable
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -76,7 +75,7 @@ class LocalExecutionService extends ExecutionService {
      * @return
      */
     // This method actually overrides a base class. But if we keep the @Override, the Groovy (or Java) compiler constantly
-    // claims, that the method does not override it's base method.
+    // claims, that the method does not override its base method.
     // That is, why we keep it in but only as a comment.
 //     @Override
     protected ExecutionResult _execute(String command,

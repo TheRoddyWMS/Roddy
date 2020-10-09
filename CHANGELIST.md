@@ -1,5 +1,12 @@
 # Changelist
 
+* 3.5.9
+
+  - The LocalExecutionService ignored errors of asychronously executed commands. 
+    Now errors Roddy detects errors and reports their standard and error output.
+  - LocalExecutionService always executes commands via `bash -c` (before it
+    did so only if the process was sychronously executed)
+
 * 3.5.8
 
   - Bugfix: Project XML validation didn't exit != 0 in strict mode
