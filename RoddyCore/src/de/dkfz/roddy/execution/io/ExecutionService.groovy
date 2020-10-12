@@ -107,7 +107,7 @@ abstract class ExecutionService implements BEExecutionService {
     }
 
     /** The constructor is not used except in the initialize method above. This is a singleton and the proper way to
-     *  initialize it seems to call the initialize method, not the constructor directly.
+     *  initialize it is to call the initialize method, not the constructor directly.
      */
     protected ExecutionService() {
     }
