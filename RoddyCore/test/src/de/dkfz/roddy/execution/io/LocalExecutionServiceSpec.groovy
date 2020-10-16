@@ -24,8 +24,9 @@ class LocalExecutionServiceSpec extends Specification {
         res.exitCode == 0
         res.successful
         res.resultLines.size() == 2
-        res.resultLines[0] == "hello"  // Note that the newline is removed.
-        res.resultLines[1] == "error"
+        // The order of stderr and stdout is not predictable in the current implementation in RoddyToolLib.
+        (res.resultLines[0] == "hello" && res.resultLines[1] == "error") \
+            || (res.resultLines[0] == "error" && res.resultLines[1] == "hello")
     }
 
     def "execute synchronously and fail with captured stdout and non!-ignored stderr"() {
@@ -36,8 +37,9 @@ class LocalExecutionServiceSpec extends Specification {
         res.exitCode == 1
         !res.successful
         res.resultLines.size() == 2
-        res.resultLines[0] == "hello"  // Note that the newline is removed.
-        res.resultLines[1] == "error"
+        // The order of stderr and stdout is not predictable in the current implementation in RoddyToolLib.
+        (res.resultLines[0] == "hello" && res.resultLines[1] == "error") \
+            || (res.resultLines[0] == "error" && res.resultLines[1] == "hello")
     }
 
     def "execute synchronously and succeed with empty stdout and non!-ignored stderr"() {
@@ -62,7 +64,7 @@ class LocalExecutionServiceSpec extends Specification {
         res.resultLines[0] == "hello"  // Note that the newline is removed.
     }
 
-    def "execute asychronously and succeed with empty stdout and ignored! stderr"() {
+    def "execute asynchronously and succeed with empty stdout and ignored! stderr"() {
         when:
         ExecutionResult res = es.execute("sleep 2; echo 'error' >> /dev/stderr; true", false)
 

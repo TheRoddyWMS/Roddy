@@ -622,16 +622,21 @@ class FileSystemAccessProvider {
     }
 
     /**
-     * Sets the rights for all files in the path and ints subpaths.
-     * @param path
-     * @param accessString
+     * Sets the rights for all files in the path and ints subpaths. Return true if the executed command finished
+     * successfully, otherwise false. Only access rights that are provided as non-null strings are actually set.
+     * If all three access right strings are null, the method returns true!
+     * Permission strings must be valid for chmod. The group must exist. If an error occurs, false is returned.
+     *
+     * @param path                       path to change access rights (recursively)
+     * @param accessStringDirectories    permission string for directories (string, such as "rwx", or octal)
+     * @param accessStringFiles          permission string for files (string, such as "rwx", or octal)
+     * @param group                      group name
      * @return
      */
-    boolean setAccessRightsRecursively(File path, String accessStringDirectories, String accessString, String group) {
-        return ExecutionService.instance.
-                execute(commandSet.getSetAccessRightsRecursivelyCommand(
-                        path, accessStringDirectories, accessString, group),
-                        false)
+    boolean setAccessRightsRecursively(File path, String accessStringDirectories, String accessStringFiles, String group) {
+        commandSet.getSetAccessRightsRecursivelyCommand(path, accessStringDirectories, accessStringFiles, group)
+                .map { ExecutionService.instance.execute(it, false).successful }
+                .orElse(true)
     }
 
     boolean setDefaultAccessRights(File file, ExecutionContext context) {
@@ -640,12 +645,25 @@ class FileSystemAccessProvider {
         return setAccessRights(file, context.outputFileAccessRights, context.outputGroupString)
     }
 
-    boolean setAccessRights(File file, String accessString, String groupID) {
+    /**
+     * Sets the rights for a file. Return true if the executed command finished successfully, otherwise false.
+     * Only access rights that are provided as non-null strings are actually set. If all three access right strings
+     * are null, the method returns true! Permission strings must be valid for chmod. The group must exist. If an error
+     * occurs, false is returned.
+     *
+     * @param path                       fil to change access rights
+     * @param accessString               permission string for file (string, such as "rwx", or octal)
+     * @param group                      group name
+     * @return
+     */
+    boolean setAccessRights(File file, String accessString, String group) {
         ExecutionService eService = ExecutionService.instance
         if (eService.canModifyAccessRights()) {
-            return eService.modifyAccessRights(file, accessString, groupID)
+            return eService.modifyAccessRights(file, accessString, group)
         } else {
-            return eService.execute(commandSet.getSetAccessRightsCommand(file, accessString, groupID))
+            return commandSet.getSetAccessRightsCommand(file, accessString, group)
+                    .map { eService.execute(it).successful }
+                    .orElse(true)
         }
     }
 

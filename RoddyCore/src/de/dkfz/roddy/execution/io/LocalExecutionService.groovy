@@ -91,28 +91,24 @@ class LocalExecutionService extends ExecutionService {
             Future<List<String>> stderr = asyncReadStringStream(process.getErrorStream())
             Future<Integer> exitCode = CompletableFuture.supplyAsync({
                 int exitCode = 0
-                Optional<String> message = Optional.empty()
+                String message = null
                 try {
                     exitCode = process.waitFor()
                     if (exitCode != 0) {
-                        message = Optional.of(["Error executing command (exitCode=${exitCode}, command=${command}):",
-                                               "stdout={${stdout.get().join("\n")}}",
-                                               "stderr={${stderr.get().join("\n")}}"].join("\n"))
+                        message = ["Error executing command (exitCode=${exitCode}, command=${command}):",
+                                   "stdout={${stdout.get().join("\n")}}",
+                                   "stderr={${stderr.get().join("\n")}}"].join("\n")
                     }
                 } catch (InterruptedException e) {
-                    message = Optional.of("Interrupted command=${command}" as String)
+                    message = "Interrupted command=${command}"
                 }
-                message.ifPresent(new Consumer<String>() {
-                    // Groovy 2.4.19 fails to generate the Closure->Consumer shim.
-                    @Override
-                    void accept(String msgString) {
+                if (null != message) {
                         if (ignoreErrors) {
-                            logger.postAlwaysInfo(msgString)
+                            logger.postAlwaysInfo(message)
                         } else {
-                            throw new UnexpectedExecutionResultException(msgString, [])
+                            throw new UnexpectedExecutionResultException(message, [])
                         }
-                    }
-                })
+                }
                 exitCode as Integer
             } as Supplier<Integer>, executorService)
 

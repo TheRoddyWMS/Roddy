@@ -101,7 +101,7 @@ public class NoNoFileSystemAccessProvider extends FileSystemAccessProvider {
     }
 
     @Override
-    public boolean setAccessRights(File file, String accessString, String groupID) {
+    public boolean setAccessRights(File file, String accessString, String group) {
         return true;
     }
 

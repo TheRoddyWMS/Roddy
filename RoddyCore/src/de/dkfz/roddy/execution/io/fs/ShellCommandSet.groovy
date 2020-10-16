@@ -52,9 +52,9 @@ abstract class ShellCommandSet {
 
     abstract String getCheckChangeOfPermissionsPossibilityCommand(File f, String group)
 
-    abstract String getSetAccessRightsCommand(File f, String rightsForFiles, String fileGroup)
+    abstract Optional<String> getSetAccessRightsCommand(File f, String rightsForFiles, String fileGroup)
 
-    abstract String getSetAccessRightsRecursivelyCommand(File f, String rightsForDirectories, String rightsForFiles, String fileGroup)
+    abstract Optional<String> getSetAccessRightsRecursivelyCommand(File f, String rightsForDirectories, String rightsForFiles, String fileGroup)
 
     abstract String getCheckCreateAndReadoutExecCacheFileCommand(File f)
 

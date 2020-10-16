@@ -769,7 +769,9 @@ abstract class ExecutionService implements BEExecutionService {
                             // Unzip the file again. foundExisting stays true
                             GString str = RoddyIOHelperMethods.getCompressor().getDecompressionString(remoteZipFile, analysisToolsServerDir, analysisToolsServerDir)
                             getInstance().execute(str, true)
-                            provider.setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.getAbsolutePath()), context)
+                            boolean success = provider.setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.getAbsolutePath()), context)
+                            if (!success)
+                                logger.warning("Command error occurred and was ignored")
                         } else {
                             // Uh Oh, the file is not existing, the directory is not existing! Copy again and unzip
                             foundExisting = false
@@ -792,7 +794,9 @@ abstract class ExecutionService implements BEExecutionService {
 
                     GString str = RoddyIOHelperMethods.getCompressor().getDecompressionString(new File(dstCommonExecutionDirectory, remoteFile.getName()), analysisToolsServerDir, analysisToolsServerDir)
                     getInstance().execute(str, true)
-                    provider.setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.getAbsolutePath()), context)
+                    boolean success = provider.setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.getAbsolutePath()), context)
+                    if (!success)
+                        logger.warning("Command error occurred and was ignored")
                     if (!provider.directoryExists(analysisToolsServerDir))
                         context.addError(ExecutionContextError.EXECUTION_PATH_NOTFOUND.expand("The central archive ${analysisToolsServerDir.absolutePath} was not created!"))
 

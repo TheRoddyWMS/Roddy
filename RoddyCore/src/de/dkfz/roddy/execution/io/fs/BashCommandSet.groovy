@@ -139,14 +139,27 @@ class BashCommandSet extends ShellCommandSet {
     }
 
     @Override
-    String getSetAccessRightsCommand(File f, String rightsForFiles, String fileGroup) {
-        return "chmod ${rightsForFiles} ${f.absolutePath}; chgrp ${fileGroup} ${f.absolutePath}"
+    Optional<String> getSetAccessRightsCommand(File f, String rightsForFiles, String fileGroup) {
+        def path = "${f.absolutePath}"
+        String result = ""
+        if (null != rightsForFiles)
+            result += "chmod ${rightsForFiles} ${path}; "
+        if (null != fileGroup)
+            result += "chgrp ${fileGroup} ${path}"
+        return Optional.ofNullable(result == "" ? null : result)
     }
 
     @Override
-    String getSetAccessRightsRecursivelyCommand(File f, String rightsForDirectories, String rightsForFiles, String fileGroup) {
-        def path = "${f.getAbsolutePath()}"
-        return "find ${path} -type d | xargs chmod ${rightsForDirectories}; find ${path} -type d | xargs chgrp ${fileGroup}; find ${path} -type f | xargs chmod ${rightsForFiles}; find ${path} -type f | xargs chgrp ${fileGroup};"
+    Optional<String> getSetAccessRightsRecursivelyCommand(File f, String rightsForDirectories, String rightsForFiles, String fileGroup) {
+        def path = "${f.absolutePath}"
+        String result = ""
+        if (null != fileGroup)
+            result += "find '${path}' -type d -or type f | xargs chgrp ${fileGroup}; "
+        if (null != rightsForDirectories)
+            result += "find '${path}' -type d | xargs chmod ${rightsForDirectories}; "
+        if (null != rightsForFiles)
+            result += "find '${path}' -type f | xargs chmod ${rightsForFiles}; "
+        return Optional.ofNullable(result == "" ? null : result)
     }
 
     @Override

@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.client.cliclient
 
+import de.dkfz.roddy.config.PreloadedConfiguration
+
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 import static de.dkfz.roddy.client.RoddyStartupModes.help
 
