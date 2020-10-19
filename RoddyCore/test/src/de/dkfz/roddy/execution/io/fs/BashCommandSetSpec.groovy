@@ -8,7 +8,7 @@ import static groovy.io.FileType.ANY
 import static groovy.io.FileType.DIRECTORIES
 import static groovy.io.FileType.FILES
 
-class BashCommandSetSpecification extends Specification {
+class BashCommandSetSpec extends Specification {
 
     @Shared
     BashCommandSet b = new BashCommandSet()

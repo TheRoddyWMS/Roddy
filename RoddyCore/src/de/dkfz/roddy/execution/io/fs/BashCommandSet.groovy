@@ -12,6 +12,8 @@ import groovy.io.FileType
 
 /**
  * Provides a command generator for linux file systems / bash
+ *
+ * Please avoid using globs or filenames/paths with spaces, because most methods don't quote or escape the input.
  */
 @groovy.transform.CompileStatic
 class BashCommandSet extends ShellCommandSet {
@@ -27,15 +29,16 @@ class BashCommandSet extends ShellCommandSet {
     public static final String TRUE_OR_FALSE = "&& echo ${TRUE} || echo ${FALSE}"
 
     @Override
-    String getFileExistsTestCommand(File f) {
-        String path = f.getAbsolutePath()
+    String getFileExistsTestCommand(File file) {
+        String path = file.getAbsolutePath()
 
         return "[[ -f ${path} ]] " + TRUE_OR_FALSE
     }
 
+
     @Override
-    String getDirectoryExistsTestCommand(File f) {
-        String path = f.getAbsolutePath()
+    String getDirectoryExistsTestCommand(File file) {
+        String path = file.getAbsolutePath()
         return "[[ -d ${path} ]]" + TRUE_OR_FALSE
     }
 
@@ -79,8 +82,8 @@ class BashCommandSet extends ShellCommandSet {
     String getMyGroupCommand() { return "groups | cut -d \" \" -f 1" }
 
     @Override
-    String getOwnerOfPathCommand(File f) {
-        return "stat -c %U ${f.absolutePath}"
+    String getOwnerOfPathCommand(File file) {
+        return "stat -c %U ${file.absolutePath}"
     }
 
     @Override
@@ -133,7 +136,7 @@ class BashCommandSet extends ShellCommandSet {
      *  by a file rather than a directory.
      *
      *  If one of onCreateAccessRights and onCreateFileGroup is null, do nothing if the file/path exists. If the
-     *  file does not exist, create a directory. If the directory creation fails, ignore the error.
+     *  file does not exist, create a directory. If the directory creation fails, **ignore the error**.
      *
      * @param file
      * @param onCreateAccessRights
@@ -152,7 +155,8 @@ class BashCommandSet extends ShellCommandSet {
     }
 
     /** Check whether it is possible to change permissions at the target-location. Specifically, the path `file` will
-     *  be appended by ".roddyPermissionTestFile" and it is checked, whether this can get changes of the permissions.
+     *  be appended by ".roddyPermissionTestFile" and it is checked, whether its permissions can get changed.
+     *
      *  Currently, it is just checked whether chmod is working on that file and -- if group is not null -- whether
      *  the group ownership can be changed to the target group.
      *
@@ -194,7 +198,7 @@ class BashCommandSet extends ShellCommandSet {
         return Optional.ofNullable(result == "" ? null : result)
     }
 
-    /** This is pretty much business logic that should no be in the BashCommandSet, just for the reason, that a
+    /** This is pretty much business logic that should no be in the BashCommandSet just for the reason that a
      *  Bash command is used.
      *
      * @param f
@@ -202,7 +206,7 @@ class BashCommandSet extends ShellCommandSet {
      */
     @Override
     String getCheckCreateAndReadoutExecCacheFileCommand(File f) {
-        return "[[ ! -e ${f.absolutePath} ]] && find ${f.parent} -mindepth 1 -maxdepth 2 -name exec_* > ${f.absolutePath}; cat ${f.absolutePath}"
+        return "[[ ! -e ${f.absolutePath} ]] && find ${f.absoluteFile.parent} -mindepth 1 -maxdepth 2 -name exec_* > ${f.absolutePath}; cat ${f.absolutePath}"
     }
 
     @Override
@@ -315,7 +319,9 @@ class BashCommandSet extends ShellCommandSet {
     }
 
     @Override
-    String getMoveFileCommand(File _in, File _out) { return "mv ${_in.absolutePath} ${_out.absolutePath}" }
+    String getMoveFileCommand(File _in, File _out) {
+        return "mv ${_in.absolutePath} ${_out.absolutePath}" \
+    }
 
     @Override
     String getLockedAppendLineToFileCommand(File file, String line) {
