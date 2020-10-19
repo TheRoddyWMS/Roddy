@@ -1032,7 +1032,7 @@ public class Roddy {
         if (RoddyConversionHelperMethods.isNullOrEmpty(localCommandSet)) {
             logger.postSometimesInfo("Using BashCommandSet, localCommandSet ist not set.");
             BashCommandSet bcs = new BashCommandSet();
-            bcs.validate();
+            bcs.validateShell();
             return bcs;
         }
 
@@ -1040,7 +1040,7 @@ public class Roddy {
         try {
             cls = (Class<ShellCommandSet>) LibrariesFactory.getGroovyClassLoader().loadClass(localCommandSet);
             ShellCommandSet shellCommandSet = cls.newInstance();
-            if (shellCommandSet.validate())
+            if (shellCommandSet.validateShell())
                 return shellCommandSet;
             throw new RuntimeException("The selected ShellCommandSet '${localCommandSet}' could not validate.");
         } catch (ClassNotFoundException e) {

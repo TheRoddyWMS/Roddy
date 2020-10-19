@@ -139,7 +139,7 @@ abstract class ShellCommandSet {
 
     abstract List<String> getShellExecuteCommand(String... commands)
 
-    abstract boolean validate()
+    abstract boolean validateShell()
 
     abstract String getFileSizeCommand(File file)
 

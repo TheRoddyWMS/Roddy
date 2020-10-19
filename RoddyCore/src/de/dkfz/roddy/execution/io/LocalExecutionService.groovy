@@ -74,10 +74,7 @@ class LocalExecutionService extends ExecutionService {
      * @param outputStream   Ignored.
      * @return
      */
-    // This method actually overrides a base class. But if we keep the @Override, the Groovy (or Java) compiler constantly
-    // claims, that the method does not override its base method.
-    // That is, why we keep it in but only as a comment.
-//     @Override
+    @Override
     protected ExecutionResult _execute(String command,
                                        boolean waitFor,
                                        boolean ignoreErrors,
