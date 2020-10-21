@@ -12,7 +12,7 @@ import static de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider.RegexSearch
 import static de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider.RegexSearchDepth.AbsolutePath
 import static de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider.RegexSearchDepth.RelativeToSearchFolder
 
-class FileSystemAccessProviderSpecification extends Specification {
+class FileSystemAccessProviderSpec extends Specification {
 
     @ClassRule
     static ContextResource contextResource = new ContextResource()

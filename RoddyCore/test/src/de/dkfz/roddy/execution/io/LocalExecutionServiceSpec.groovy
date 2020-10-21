@@ -42,7 +42,7 @@ class LocalExecutionServiceSpec extends Specification {
             || (res.resultLines[0] == "error" && res.resultLines[1] == "hello")
     }
 
-    def "execute synchronously and succeed with empty stdout and non!-ignored stderr"() {
+    def "execute synchronously and fail with empty stdout and non!-ignored stderr"() {
         when:
         ExecutionResult res = es.execute("echo 'error' >> /dev/stderr; false", true)
 

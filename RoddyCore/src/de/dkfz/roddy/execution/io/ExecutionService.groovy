@@ -767,11 +767,13 @@ abstract class ExecutionService implements BEExecutionService {
                         //Check if the zip file exists. If so, uncompress it.
                         if (provider.fileExists(remoteZipFile)) {
                             // Unzip the file again. foundExisting stays true
-                            GString str = RoddyIOHelperMethods.getCompressor().getDecompressionString(remoteZipFile, analysisToolsServerDir, analysisToolsServerDir)
-                            getInstance().execute(str, true)
-                            boolean success = provider.setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.getAbsolutePath()), context)
+                            GString command = RoddyIOHelperMethods.compressor.getDecompressionString(
+                                    remoteZipFile, analysisToolsServerDir, analysisToolsServerDir)
+                            instance.execute(command, true)
+                            boolean success = provider.
+                                    setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.absolutePath), context)
                             if (!success)
-                                logger.warning("Command error occurred and was ignored")
+                                logger.warning("Ignoring error while setting default access rights on '${analysisToolsServerDir.absolutePath} (existing archive)'")
                         } else {
                             // Uh Oh, the file is not existing, the directory is not existing! Copy again and unzip
                             foundExisting = false
@@ -780,9 +782,8 @@ abstract class ExecutionService implements BEExecutionService {
                 }
 
                 if (foundExisting) {
-                    //remoteFile.delete(); //Don't need that anymore
                     analysisToolsServerDir = new File(dstCommonExecutionDirectory, "/dir_" + foundExisting)
-                    logger.postSometimesInfo("Skipping copy of file ${remoteFile.getName()}, a file with the same md5 was found.")
+                    logger.postSometimesInfo("Skipping copy of file ${remoteFile.name}, a file with the same md5 was found.")
                 } else {
 
                     analysisToolsServerDir = new File(dstCommonExecutionDirectory, "/dir_" + remoteFile.getName())
@@ -792,13 +793,17 @@ abstract class ExecutionService implements BEExecutionService {
                     provider.checkFile(context.getFileForAnalysisToolsArchiveOverview(), true, context)
                     provider.appendLineToFile(true, context.getFileForAnalysisToolsArchiveOverview(), "${remoteFile.getName()}:${archiveMD5}", true)
 
-                    GString str = RoddyIOHelperMethods.getCompressor().getDecompressionString(new File(dstCommonExecutionDirectory, remoteFile.getName()), analysisToolsServerDir, analysisToolsServerDir)
-                    getInstance().execute(str, true)
-                    boolean success = provider.setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.getAbsolutePath()), context)
+                    GString str = RoddyIOHelperMethods.compressor.getDecompressionString(
+                            new File(dstCommonExecutionDirectory, remoteFile.getName()),
+                            analysisToolsServerDir, analysisToolsServerDir)
+                    instance.execute(str, true)
+                    boolean success = provider.
+                            setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.absolutePath), context)
                     if (!success)
-                        logger.warning("Command error occurred and was ignored")
+                        logger.warning("Ignoring error while setting default access rights on '${analysisToolsServerDir.absolutePath} (no existing archive)'")
                     if (!provider.directoryExists(analysisToolsServerDir))
-                        context.addError(ExecutionContextError.EXECUTION_PATH_NOTFOUND.expand("The central archive ${analysisToolsServerDir.absolutePath} was not created!"))
+                        context.addError(ExecutionContextError.EXECUTION_PATH_NOTFOUND.
+                                expand("The central archive ${analysisToolsServerDir.absolutePath} was not created!"))
 
                 }
                 provider.checkDirectory(dstAnalysisToolsDirectory, context, true)
