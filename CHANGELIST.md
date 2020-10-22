@@ -6,6 +6,8 @@
     Now errors Roddy detects errors and reports their standard and error output.
   - LocalExecutionService always executes commands via `bash -c` (before it
     did so only if the process was sychronously executed)
+  - Update of RoddyToolLib to fix error handling in asynchronous execution and
+    with multi-threading and command-output processing (StringBuilder->StringBuffer)
 
 * 3.5.8
 

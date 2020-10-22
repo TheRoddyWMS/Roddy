@@ -92,7 +92,7 @@ repositories {
 }
 
 // TODO For testing only. Needs to be changed as soon as RoddyToolLib is released.
-ext.roddyToolLibVersion = "2.2.1"
+ext.roddyToolLibVersion = "2.2.2"
 
 configurations.all {
     resolutionStrategy.cacheChangingModulesFor(0, 'seconds')
