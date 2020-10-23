@@ -26,7 +26,6 @@ class LocalExecutionServiceSpec extends Specification {
         res.resultLines.size() == 2
         // The order of stderr and stdout is not predictable in the current implementation in RoddyToolLib.
         // Note in rare cases (1/30 testruns) a "hello" followed by 5 null values is printed an the test fails.
-        System.err.println(res.resultLines.join(", "))
         (res.resultLines[0] == "hello" && res.resultLines[1] == "error") ||
             (res.resultLines[0] == "error" && res.resultLines[1] == "hello") ||
             res.resultLines[0] == "helloerror" ||
