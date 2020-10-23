@@ -1,4 +1,5 @@
-# What is Roddy?
+[![Build Status - Travis](https://travis-ci.org/TheRoddyWMS/Roddy.svg?branch=master)](https://travis-ci.org/TheRoddyWMS/Roddy)
+# What is Roddy? 
 
 Roddy is a framework for development and management of workflows on a batch processing cluster. It has been developed at the German Cancer Research Center (DKFZ) in Heidelberg in the eilslabs group and is used by a number of in-house workflows such as the [PanCancer Alignment Workflow](https://github.com/DKFZ-ODCF/AlignmentAndQCWorkflows) and the [ACEseq workflow](https://github.com/eilslabs/ACEseqWorkflow). The development is now continued in the Omics IT and Data Management Core Facility (ODCF) at the DKFZ.
 
@@ -19,7 +20,7 @@ The following workflows have been developed at the DKFZ based on Roddy as workfl
   * [ACEseq workflow](https://github.com/DKFZ-ODCF/ACEseqWorkflow) for copy-number variation calling
   * [InDel-Calling workflow](https://github.com/DKFZ-ODCF/IndelCallingWorkflow) workflow
   * [Sophia workflow](https://github.com/DKFZ-ODCF/SophiaWorkflow) for structural variation calling
-  * RNA-seq workflow (to be published)
+  * [RNA-seq workflow](https://github.com/DKFZ-ODCF/RNAseqWorkflow)
   * CNVkit for copy-number variation calling on exome data (to be published)
   * Leaf-Cutter workflow
   * [Bam-to-FASTQ](https://github.com/TheRoddyWMS/BamToFastqPlugin) plugin

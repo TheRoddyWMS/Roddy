@@ -363,18 +363,18 @@ class SSHExecutionService extends RemoteExecutionService {
     // That is, why we keep it in but only as a comment.
     //    @Override
     synchronized ExecutionResult _execute(String command, boolean waitFor = true, boolean ignoreError = false, OutputStream outputStream = null) {
-        SSHPoolConnectionSet set = waitForService()
-        SSHClient sshClient = set.client
+        SSHPoolConnectionSet connectionSet = waitForService()
+        SSHClient sshClient = connectionSet.client
 
         if (waitFor) {
-            set.acquire()
+            connectionSet.acquire()
             Session session = sshClient.startSession()
             Session.Command cmd
 
             try {
                 cmd = session.exec(command)
             } finally {
-                set.release()
+                connectionSet.release()
             }
             String content = readStream(cmd.getInputStream())
 
@@ -407,32 +407,32 @@ class SSHExecutionService extends RemoteExecutionService {
             }
 
             return new ExecutionResult(exitStatus == 0, exitStatus, output, "0")
-        }
+        } else {
+            Runnable runnable = new Runnable() {
 
-        Runnable runnable = new Runnable() {
-
-            @Override
-            void run() {
-//                long id = fireExecutionStartedEvent(command)
-                //Append a newgrp (Philip: better "newgrp -"!) to each command, so that all command context in the proper group context.
-                set.acquire()
-                Session session = sshClient.startSession()
-                Session.Command cmd
-                try {
-                    cmd = session.exec(command)
-                } finally {
-                    set.release()
+                @Override
+                void run() {
+//                  long id = fireExecutionStartedEvent(command)
+                    // Append a newgrp (Philip: better "newgrp -"!) to each command, so that all command context in the proper group context.
+                    connectionSet.acquire()
+                    Session session = sshClient.startSession()
+                    Session.Command cmd
+                    try {
+                        cmd = session.exec(command)
+                    } finally {
+                        connectionSet.release()
+                    }
+                    String content = IOUtils.readFully(cmd.getInputStream()).toString()
+                    session.close()
+//                  measureStop(id, "async command  [sshclient:${set.id}] '" + RoddyIOHelperMethods.truncateCommand(command, Roddy.getOrSetApplicationProperty("commandLogTruncate", '20').toInteger()) + "'");
+//                  fireExecutionStoppedEvent(id, command)
                 }
-                String content = IOUtils.readFully(cmd.getInputStream()).toString()
-                session.close()
-//                measureStop(id, "async command  [sshclient:${set.id}] '" + RoddyIOHelperMethods.truncateCommand(command, Roddy.getOrSetApplicationProperty("commandLogTruncate", '20').toInteger()) + "'");
-//                fireExecutionStoppedEvent(id, command)
             }
+            Thread thread = new Thread(runnable)
+            thread.setName("SSHExecutionService::_execute()")
+            thread.start()
+            return new ExecutionResult(true, 0, [], "")
         }
-        Thread thread = new Thread(runnable)
-        thread.setName("SSHExecutionService::_execute()")
-        thread.start()
-        return new ExecutionResult(true, 0, [], "")
     }
 
 //    @Override

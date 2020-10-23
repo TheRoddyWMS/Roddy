@@ -87,17 +87,17 @@ class ExecutionContext {
      * Keeps a list of errors which happen either on read back or on execution.
      * The list is not stored and rebuilt if necessary, so not all errors might be available.
      */
-    private final List<ExecutionContextError> errors = [].asSynchronized()
+    private final List<ExecutionContextError> errors = ([] as List<ExecutionContextError>).asSynchronized()
     /**
      * Keeps a list of warnings which happen either on read back or on execution.
      * The list is not stored and rebuilt if necessary, so not all errors might be available.
      */
-    private final List<ExecutionContextError> warnings = [].asSynchronized()
+    private final List<ExecutionContextError> warnings = ([] as List<ExecutionContextError>).asSynchronized()
     /**
      * Keeps a list of info entries which happen either on read back or on execution.
      * The list is not stored and rebuilt if necessary, so not all errors might be available.
      */
-    private final List<ExecutionContextError> infos = [].asSynchronized()
+    private final List<ExecutionContextError> infos = ([] as List<ExecutionContextError>).asSynchronized()
 
     /**
      * The timestamp of this context object

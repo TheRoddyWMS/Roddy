@@ -44,6 +44,6 @@ class BashCommandSetTest {
         // This method can only be tested if /bin/bash is really avaible. The test makes no sense in my oppinion
 
         def file = new File("/bin/bash")
-        assert file.canRead() && file.canExecute() == new BashCommandSet().validate()
+        assert file.canRead() && file.canExecute() == new BashCommandSet().validateShell()
     }
 }
