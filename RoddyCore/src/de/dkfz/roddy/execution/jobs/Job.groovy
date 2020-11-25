@@ -116,13 +116,13 @@ class Job extends BEJob<BEJob, BEJobResult> {
 //     */
 //    protected BEJob(String jobName, ExecutionContext context, String toolID, Map<String, String> parameters, List<String> arrayIndices, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
 //        super(jobName
-//                , context.getConfiguration().getProcessingToolPath(context, toolID)
-//                , toolID != null && toolID.trim().length() > 0 ? context.getConfiguration().getProcessingToolMD5(toolID): null
+//                , context.configuration.getProcessingToolPath(context, toolID)
+//                , toolID != null && toolID.trim().length() > 0 ? context.configuration.getProcessingToolMD5(toolID): null
 //                , arrayIndices
 //                , parameters
 //                , collectParentJobsFromFiles(parentFiles)
 //                , collectJobIDsFromFiles(parentFiles)
-//                , Roddy.getJobManager())
+//                , Roddy.jobManager)
 //        this.toolID = toolID
 //        this.context = context
 //        this.parentFiles = parentFiles
@@ -142,7 +142,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
         }
     }
 
-    private static List<BEJob> reconcileParentJobInformation(List<BEJob> parentJobs, List<BEJobID> parentJobIDs, BatchEuphoriaJobManager jobManager) {
+    private static List<BEJob> reconcileParentJobInformation(List<BEJob> parentJobs, 
+                                                             List<BEJobID> parentJobIDs,
+                                                             BatchEuphoriaJobManager jobManager) {
         List<BEJob> pJobs
         if ((null != parentJobIDs && !parentJobIDs.isEmpty()) &&
                 (null != parentJobs && !parentJobs.isEmpty())) {
@@ -167,16 +169,16 @@ class Job extends BEJob<BEJob, BEJobResult> {
         List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
         super(new BEJobID()
                 , jobName
-                , context.getConfiguration().getProcessingToolPath(context, TOOLID_WRAPIN_SCRIPT)
+                , context.configuration.getProcessingToolPath(context, TOOLID_WRAPIN_SCRIPT)
                 , inlineScript
                 , inlineScript ? null : getToolMD5(TOOLID_WRAPIN_SCRIPT, context)
                 , getResourceSetFromConfiguration(toolID, context)
                 , []
                 , [:] as Map<String,String>
-                , Roddy.getJobManager()
+                , Roddy.jobManager
                 , JobLog.toOneFile(new File(context.loggingDirectory, jobName + ".o{JOB_ID}"))
                 , null)
-        this.localToolPath = context.getConfiguration().getSourceToolPath(toolID)
+        this.localToolPath = context.configuration.getSourceToolPath(toolID)
         this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectJobIDsFromFiles(parentFiles), jobManager))
         this.context = context
         this.toolID = toolID
@@ -217,22 +219,22 @@ class Job extends BEJob<BEJob, BEJobResult> {
     }
 
     static ResourceSet getResourceSetFromConfiguration(String toolID, ExecutionContext context) {
-        if (!toolID || toolID == Constants.UNKNOWN) {
+        if (!toolID || toolID == UNKNOWN) {
             return new EmptyResourceSet()
         } else {
-            ToolEntry te = context.getConfiguration().getTools().getValue(toolID)
+            ToolEntry te = context.configuration.tools.getValue(toolID)
             return te.getResourceSet(context.configuration) ?: new EmptyResourceSet()
         }
     }
 
     static String getToolMD5(String toolID, ExecutionContext context) throws ConfigurationError {
-        toolID != null && toolID.trim().length() > 0 ? context.getConfiguration().getProcessingToolMD5(toolID) : null
+        toolID != null && toolID.trim().length() > 0 ? context.configuration.getProcessingToolMD5(toolID) : null
     }
 
     static List<BEJob> collectParentJobsFromFiles(List<BaseFile> parentFiles) {
         if (!parentFiles) return []
         List<BEJob> parentJobs = parentFiles.collect {
-            BaseFile bf -> bf?.getCreatingJobsResult()?.job
+            BaseFile bf -> bf?.creatingJobsResult?.job
         }.findAll {
             BEJob job -> job
         } as List<BEJob>
@@ -243,9 +245,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
         List<BEJobID> dIDs = []
         if (parentFiles != null) {
             for (BaseFile bf : parentFiles) {
-                if (bf.isSourceFile() && bf.getCreatingJobsResult() == null) continue
+                if (bf.isSourceFile() && bf.creatingJobsResult == null) continue
                 try {
-                    BEJobID jobid = bf.getCreatingJobsResult()?.getJobID()
+                    BEJobID jobid = bf.creatingJobsResult?.jobID
                     if (jobid?.isValidID()) {
                         dIDs << jobid
                     }
@@ -260,7 +262,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
     }
 
     private static String fileToParameterString(File file) {
-        return file.getAbsolutePath()
+        return file.absolutePath
     }
 
     private static Integer generateHashCode(String template, List<BaseFile> parentFiles) {
@@ -298,8 +300,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         Integer hashCode = generateHashCode(jobName + parameterName + slotPosition, parentFiles)
 
-        File autoPath = new File(context.getOutputDirectory(), [jobName, jobCreationCounter, parameterName, hashCode, slotPosition].join("_") + AUTO_FILENAME_SUFFIX)
-        baseFile.setPath(autoPath)
+        File autoPath = new File(context.getOutputDirectory(), 
+                [jobName, jobCreationCounter, parameterName, hashCode, slotPosition].join("_") + AUTO_FILENAME_SUFFIX)
+        baseFile.path = autoPath
         baseFile.setAsTemporaryFile()
         return autoPath.absolutePath
     }
@@ -326,7 +329,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         List<Object> convertedParameters = new LinkedList<>()
         for (Object o : collection) {
             if (o instanceof BaseFile) {
-                if (((BaseFile) o).getPath() != null)
+                if (((BaseFile) o).path != null)
                     convertedParameters.add(baseFileToParameterString(parameterName, o as BaseFile))
             } else
                 convertedParameters.add(o.toString())
@@ -342,7 +345,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         } else if (value instanceof BaseFile) {
             return baseFileToParameterString(parameterName, value as BaseFile)
         } else if (value instanceof FileGroup) {
-            return collectionToParameterString(parameterName, (value as FileGroup).getFilesInGroup())
+            return collectionToParameterString(parameterName, (value as FileGroup).filesInGroup)
         } else if (value instanceof Collection) {
             return collectionToParameterString(parameterName, value as Collection)
         } else {
@@ -351,17 +354,17 @@ class Job extends BEJob<BEJob, BEJobResult> {
     }
 
     Map<String, String> convertResourceSetToParameters() {
-        def rs = getResourceSet()
+        def rs = resourceSet
         Map<String, String> rsParameters = [:]
         if (rs == null) return rsParameters
 
-        if (rs.isMemSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_MEM"] = rs.mem.toString()
-        if (rs.isCoresSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_CORES"] = rs.cores.toString()
-        if (rs.isNodesSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_NODES"] = rs.nodes.toString()
-        if (rs.isQueueSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_QUEUE"] = rs.queue.toString()
-        if (rs.isWalltimeSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_WALLTIME"] = rs.walltime.toString()
-        if (rs.isAdditionalNodeFlagSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_NODEFLAGS"] = rs.additionalNodeFlag.toString()
-        if (rs.isStorageSet()) rsParameters["RODDY_JOBRESOURCE_REQUEST_STORAGE"] = rs.storage.toString()
+        if (rs.memSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_MEM"] = rs.mem.toString()
+        if (rs.coresSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_CORES"] = rs.cores.toString()
+        if (rs.nodesSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_NODES"] = rs.nodes.toString()
+        if (rs.queueSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_QUEUE"] = rs.queue.toString()
+        if (rs.walltimeSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_WALLTIME"] = rs.walltime.toString()
+        if (rs.additionalNodeFlagSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_NODEFLAGS"] = rs.additionalNodeFlag.toString()
+        if (rs.storageSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_STORAGE"] = rs.storage.toString()
         return rsParameters
     }
 
@@ -370,22 +373,22 @@ class Job extends BEJob<BEJob, BEJobResult> {
     }
 
     static String createJobName(BaseFile bf, String toolName, boolean reduceLevel, List<BaseFile> inputFilesForSizeCalculation) {
-        ExecutionContext rp = bf.getExecutionContext()
-        String runtime = rp.getTimestampString()
+        ExecutionContext rp = bf.executionContext
+        String runtime = rp.timestampString
         StringBuilder sb = new StringBuilder()
-        sb.append("r").append(runtime).append("_").append(bf.getPid()).append("_").append(toolName)
+        sb.append("r").append(runtime).append("_").append(bf.pid).append("_").append(toolName)
         return sb.toString()
     }
 
     static String createJobName(ExecutionContext rp, String postfix) {
-        String runtime = rp.getTimestampString()
+        String runtime = rp.timestampString
         StringBuilder sb = new StringBuilder()
         sb.append("r").append(runtime).append("_").append(rp.getDataSet().getId()).append("_").append(postfix)
         return sb.toString()
     }
 
     static String createJobName(FileGroup fg, String toolName, boolean reduceLevel, List<BaseFile> inputFilesForSizeCalculation) {
-        BaseFile bf = (BaseFile) fg.getFilesInGroup().get(0)
+        BaseFile bf = (BaseFile) fg.filesInGroup.get(0)
         return createJobName(bf, toolName, reduceLevel, inputFilesForSizeCalculation)
     }
 
@@ -393,25 +396,28 @@ class Job extends BEJob<BEJob, BEJobResult> {
         //TODO: It can occur that the regeneration of the filename is not valid!
 
         // Replace $_JOBPARAMETER items in path with proper values.
-        File path = bf.getPath()
+        File path = bf.path
         if (path == null) {
             return null
         }
 
-        String absolutePath = path.getAbsolutePath()
-        List<FilenamePatternHelper.Command> commands = FilenamePatternHelper.extractCommands(bf.getExecutionContext(), PLACEHOLDER_JOBPARAMETER, absolutePath)
+        String absolutePath = path.absolutePath
+        List<FilenamePatternHelper.Command> commands = 
+                FilenamePatternHelper.extractCommands(bf.executionContext, PLACEHOLDER_JOBPARAMETER, absolutePath)
         for (FilenamePatternHelper.Command command : commands) {
             FilenamePatternHelper.CommandAttribute name = command.attributes.get("name")
             if (name != null) {
                 String val = parameters[name.value]
                 if (val == null) {
                     val = NO_VALUE
-                    bf.getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.expand("A value named " + name.value + " cannot be found in the jobs parameter list for a file of ${bf.class.name}. The value is set to <NO_VALUE>"))
+                    bf.executionContext.addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.
+                            expand("A value named " + name.value +
+                                    " cannot be found in the jobs parameter list for a file of ${bf.class.name}. The value is set to <NO_VALUE>"))
                 }
                 absolutePath = absolutePath.replace(command.fullString, val)
             }
             path = new File(absolutePath)
-            bf.setPath(path)
+            bf.path = path
         }
         path
     }
@@ -427,33 +433,37 @@ class Job extends BEJob<BEJob, BEJobResult> {
      */
     @CompileDynamic
     void appendToJobStateLogfile(BatchEuphoriaJobManager jobManager, ExecutionContext executionContext, BEJobResult res, OutputStream out = null) {
-        if (!jobManager.isHoldJobsEnabled() && !jobManager instanceof DirectSynchronousExecutionJobManager) {
+        if (!jobManager.holdJobsEnabled && !jobManager instanceof DirectSynchronousExecutionJobManager) {
             throw new RuntimeException("Appending to JobManager ${ConfigurationConstants.RODDY_JOBSTATE_LOGFILE} not supported when JobManager does not submit on hold: '${jobManager.class.name}")
         }
         if (res.successful) {
-            def job = res.command.getJob()
+            def job = res.command.job
             String jobInfoLine
             String millis = "" + System.currentTimeMillis()
             millis = millis.substring(0, millis.length() - 3)
-            String jobId = job.getJobID()
+            String jobId = job.jobID
             if (jobId != null) {
-                if (job.getJobState() == JobState.UNSTARTED)
+                if (job.jobState == JobState.UNSTARTED)
                     jobInfoLine = jobStateInfoLine(jobId, "UNSTARTED", millis, toolID)
-                else if (job.getJobState() == JobState.ABORTED)
+                else if (job.jobState == JobState.ABORTED)
                     jobInfoLine = jobStateInfoLine(jobId, "ABORTED", millis, toolID)
                 // TODO Issue 222: COMPLETED_SUCCESSFUL is set by BE.ExecutionService, when the execution result is successful, i.e. the qsub, not when the job finished successfully on the cluster!
-//                else if (job.getJobState() == JobState.COMPLETED_SUCCESSFUL)
+//                else if (job.jobState == JobState.COMPLETED_SUCCESSFUL)
 //                    jobInfoLine = jobStateInfoLine(jobId, "0", millis, toolID)
-                else if (job.getJobState() == JobState.FAILED)
+                else if (job.jobState == JobState.FAILED)
                     jobInfoLine = jobStateInfoLine(jobId, "" + res.executionResult.exitCode, millis, toolID)
                 else
                     jobInfoLine = null
             } else {
-                logger.postSometimesInfo("Did not store info for job " + job.getJobName() + ", job id was null.")
+                logger.postSometimesInfo("Did not store info for job " + job.jobName + ", job id was null.")
                 jobInfoLine = null
             }
             if (jobInfoLine != null)
-                FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getJobStateLogFile(executionContext), jobInfoLine, false)
+                FileSystemAccessProvider.instance.
+                        appendLineToFile(true,
+                                executionContext.runtimeService.getJobStateLogFile(executionContext), 
+                                jobInfoLine,
+                                false)
         }
     }
 
@@ -463,10 +473,13 @@ class Job extends BEJob<BEJob, BEJobResult> {
      * @param job
      */
     @CompileDynamic
-    void appendToJobStateLogfile(DirectSynchronousExecutionJobManager jobManager, ExecutionContext executionContext, BEJobResult res, OutputStream outputStream = null) {
+    void appendToJobStateLogfile(DirectSynchronousExecutionJobManager jobManager,
+                                 ExecutionContext executionContext,
+                                 BEJobResult res,
+                                 OutputStream outputStream = null) {
 //        if (res.command.isBlockingCommand()) {
 //            assert (null != outputStream)
-//            File logFile = (res.command.getTag(COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext).getRuntimeService().getLogFileForCommand(res.command)
+//            File logFile = (res.command.getTag(COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext).runtimeService.getLogFileForCommand(res.command)
 //
 //            // Use reflection to get access to the hidden path field :p The stream object does not natively give
 //            // access to it and I do not want to create a new class just for this.
@@ -474,28 +487,32 @@ class Job extends BEJob<BEJob, BEJobResult> {
 //            fieldOfFile.setAccessible(true);
 //            File tmpFile2 = new File((String) fieldOfFile.get(outputStream))
 //
-//            FileSystemAccessProvider.getInstance().moveFile(tmpFile2, logFile)
+//            FileSystemAccessProvider.instance.moveFile(tmpFile2, logFile)
 //        } else {
         if (res.successful) {
             String millis = "" + System.currentTimeMillis()
             millis = millis.substring(0, millis.length() - 3)
             String code = "255"
-            if (res.job.getJobState() == JobState.UNSTARTED)
+            if (res.job.jobState == JobState.UNSTARTED)
                 code = "UNSTARTED" // N
-            else if (res.job.getJobState() == JobState.ABORTED)
+            else if (res.job.jobState == JobState.ABORTED)
                 code = "ABORTED" // A
-            else if (res.job.getJobState() == JobState.COMPLETED_SUCCESSFUL)
+            else if (res.job.jobState == JobState.COMPLETED_SUCCESSFUL)
                 code = "SUCCESSFUL"  // C
-            else if (res.job.getJobState() == JobState.FAILED)
+            else if (res.job.jobState == JobState.FAILED)
                 code = "FAILED" // E
 
-            if (null != res.job.getJobID()) {
+            if (null != res.job.jobID) {
                 // That is indeed funny here: on our cluster, the following line did not work without the forced toString(), however
                 // on our local machine it always worked! Don't know why it worked for PBS... Now we force-convert the parameters.
-                String jobInfoLine = jobStateInfoLine("" + res.job.getJobID(), code, millis, toolID)
-                FileSystemAccessProvider.getInstance().appendLineToFile(true, executionContext.getRuntimeService().getJobStateLogFile(executionContext), jobInfoLine, false)
+                String jobInfoLine = jobStateInfoLine("" + res.job.jobID, code, millis, toolID)
+                FileSystemAccessProvider.instance.
+                        appendLineToFile(true,
+                                executionContext.runtimeService.getJobStateLogFile(executionContext),
+                                jobInfoLine,
+                                false)
             } else {
-                logger.postSometimesInfo("Did not store info for job " + res.job.getJobName() + ", job id was null.")
+                logger.postSometimesInfo("Did not store info for job " + res.job.jobName + ", job id was null.")
             }
 
         }
@@ -516,8 +533,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
         if (runResult != null)
             throw new RuntimeException(ERR_MSG_ONLY_ONE_JOB_ALLOWED)
 
-        ExecutionContextLevel contextLevel = context.getExecutionContextLevel()
-        Configuration configuration = context.getConfiguration()
+        ExecutionContextLevel contextLevel = context.executionContextLevel
+        Configuration configuration = context.configuration
 
         StringBuilder dbgMessage = new StringBuilder()
         StringBuilder jobDetailsLine = new StringBuilder()
@@ -526,7 +543,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         this.parameters[RODDY_PARENT_JOBS] = parameterObjectToString(RODDY_PARENT_JOBS, parentJobIDs.unique()*.id)
         this.parameters[PARAMETER_FILE] = parameterObjectToString(PARAMETER_FILE, parameterFile)
         // The CONFIG_FILE variable is set to the same value as the PARAMETER_FILE to keep older scripts working with job-specific only environments.
-        this.parameters[CONFIG_FILE] = this.parameters[PARAMETER_FILE]  // TODO Deprecated. Remove this line in Roddy 4.0.
+        this.parameters[CONFIG_FILE] = this.parameters[PARAMETER_FILE]  // TODO Deprecated. Remove this line in Roddy 4.0. No config file.
 
         boolean debugWrapInScript = false
         if (configuration.configurationValues.hasValue(DEBUG_WRAP_IN_SCRIPT)) {
@@ -549,7 +566,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             jobDetailsLine << "  Rerun job " + jobName
         }
 
-        //Execute the job or create a dummy command.
+        // Execute the job or create a dummy command.
         if (runJob) {
             storeJobConfigurationFile(createJobConfiguration())
             keepOnlyEssentialParameters()
@@ -557,7 +574,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             if (appendToJobStateLogfile)
                 this.appendToJobStateLogfile(jobManager, executionContext, runResult, null)
             Command cmd = runResult.command
-            jobDetailsLine << " => " + cmd.job.getJobID().toString().padRight(10) // If we have os process id attached, we'll need some space, so pad the output.
+            jobDetailsLine << " => " + cmd.job.jobID.toString().padRight(10) // If we have os process id attached, we'll need some space, so pad the output.
 
             // For direct execution it can be very helpful to know the id of the started process. Sometimes, sub processes
             // remain and need to be killed.
@@ -580,7 +597,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
                     BaseFile bf = o instanceof BaseFile ? (BaseFile) o : null
                     if (!bf) return
 
-                    String absolutePath = bf.getPath().getAbsolutePath()
+                    String absolutePath = bf.path.absolutePath
                     if (absolutePath.contains(CVALUE_PLACEHOLDER_RODDY_JOBID)) {
                         bf.setPath(new File(absolutePath.replace(CVALUE_PLACEHOLDER_RODDY_JOBID, runResult.jobID.shortID)))
                     }
@@ -589,9 +606,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         } else {
             dbgMessage << "\tdummy job created." + ENV_LINESEPARATOR
-            File tool = context.getConfiguration().getProcessingToolPath(context, toolID)
+            File tool = context.configuration.getProcessingToolPath(context, toolID)
             resetJobID(new BEFakeJobID(BEFakeJobID.FakeJobReason.NOT_EXECUTED))
-            runResult = new BEJobResult((Command) null, this, null, tool, parameters, parentFiles.collect { it.getCreatingJobsResult()?.getJob() }.findAll { it })
+            runResult = new BEJobResult((Command) null, this, null, tool, parameters, parentFiles.collect { it.creatingJobsResult?.getJob() }.findAll { it })
             jobState = JobState.DUMMY
         }
 
@@ -616,7 +633,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
     void storeJobConfigurationFile(Configuration cfg) {
         String configText = ConfigurationConverter.convertAutomatically(context, cfg)
-        FileSystemAccessProvider.getInstance().writeTextFile(getParameterFile(), configText, context)
+        FileSystemAccessProvider.instance.writeTextFile(getParameterFile(), configText, context)
     }
 
     /**
@@ -625,7 +642,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
      * @return
      */
     private boolean checkIfJobShouldRerun(StringBuilder dbgMessage) {
-        def isVerbosityHigh = logger.isVerbosityHigh()
+        def isVerbosityHigh = logger.verbosityHigh
         String sep = ENV_LINESEPARATOR
         if (isVerbosityHigh) dbgMessage << "Rerunning job " + jobName
 
@@ -635,7 +652,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         if (isVerbosityHigh) dbgMessage << sep << "\tchecking parent files for validity"
         for (BaseFile pf : parentFiles) {
             if (!pf.isFileValid()) {
-                if (isVerbosityHigh) dbgMessage << sep << "\tfile " << pf.getPath().getName() << " is dirty or does not exist." << sep
+                if (isVerbosityHigh) dbgMessage << sep << "\tfile " << pf.path.getName() << " is dirty or does not exist." << sep
                 parentFileIsDirty = true
             }
         }
@@ -692,7 +709,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             List<BaseFile> knownFiles = context.getAllFilesInRun()
             for (BaseFile bf : knownFiles) {
                 for (int i = 0; i < 3; i++) {
-                    if (fp == null || bf == null || fp.getAbsolutePath() == null || bf.getPath() == null)
+                    if (fp == null || bf == null || fp.absolutePath == null || bf.path == null)
                         try {
                             logger.severe("Taking a short nap because a file does not seem to be finished.")
                             Thread.sleep(100)
@@ -700,10 +717,10 @@ class Job extends BEJob<BEJob, BEJobResult> {
                             e.printStackTrace()
                         }
                 }
-                if (fp.getAbsolutePath().equals(bf.getPath().getAbsolutePath())) {
+                if (fp.absolutePath.equals(bf.path.absolutePath)) {
                     if (!bf.isFileValid()) {
                         fileUnverified = true
-                        if (isVerbosityHigh) dbgMessage << "\tfile " << bf.getPath().getName() << " could not be verified!" << sep
+                        if (isVerbosityHigh) dbgMessage << "\tfile " << bf.path.getName() << " could not be verified!" << sep
                     }
                     knownFilesCnt++
                     break
@@ -731,17 +748,17 @@ class Job extends BEJob<BEJob, BEJobResult> {
  *
  * @return
  */
-    public synchronized File getLogFile() {
+    synchronized File getLogFile() {
         if (_logFile == null)
-            _logFile = this.getExecutionContext().getRuntimeService().getLogFileForJob(this);
+            _logFile = this.executionContext.runtimeService.getLogFileForJob(this);
         return _logFile;
     }
 
-    public boolean hasLogFile() {
-        if (getJobState().isPlannedOrRunning())
+    boolean hasLogFile() {
+        if (jobState.isPlannedOrRunning())
             return false;
         if (_logFile == null)
-            return this.getExecutionContext().getRuntimeService().hasLogFileForJob(this);
+            return this.executionContext.runtimeService.hasLogFileForJob(this);
         return true;
     }
 
