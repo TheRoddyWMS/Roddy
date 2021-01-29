@@ -81,7 +81,8 @@ class BrawlCallingWorkflowTest {
                 
                 // Or implicit like Snakemake? Later maybe
             '''
-        def preloaded = new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "Myname", "", "", null, null, ResourceSetSize.l, null, null, null, null)
+        def preloaded = new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "Myname", "", "",
+                null, null, ResourceSetSize.l, null, null, null, null)
         Configuration cfg = new Configuration(
                 preloaded
         ) {

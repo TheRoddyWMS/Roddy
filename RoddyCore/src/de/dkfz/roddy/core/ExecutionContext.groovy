@@ -1,24 +1,21 @@
 /*
- * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+ * Copyright (c) 2021 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.FeatureToggles
 import de.dkfz.roddy.Constants
+import de.dkfz.roddy.FeatureToggles
 import de.dkfz.roddy.Roddy
-import de.dkfz.roddy.config.Configuration
-import de.dkfz.roddy.config.ConfigurationConstants
-import de.dkfz.roddy.config.ConfigurationError
-import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
-import de.dkfz.roddy.config.ToolEntry
+import de.dkfz.roddy.config.*
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
+import groovy.transform.CompileStatic
 
 import java.util.logging.Level
 
@@ -45,13 +42,13 @@ import java.util.logging.Level
  *
  * @author michael
  */
-@groovy.transform.CompileStatic
+@CompileStatic
 class ExecutionContext {
 
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(ExecutionContext.class.name)
 
     /**
-     * The project to which this context belongs
+     * The project to which this context belongs.
      */
     protected final Project project
     /**
@@ -148,11 +145,13 @@ class ExecutionContext {
      */
     private String executingUser = Constants.UNKNOWN_USER
 
-    ExecutionContext(String userID, Analysis analysis, DataSet dataSet, ExecutionContextLevel executionContextLevel, File outputDirectory, File inputDirectory, File executionDirectory) {
+    ExecutionContext(String userID, Analysis analysis, DataSet dataSet, ExecutionContextLevel executionContextLevel,
+                     File outputDirectory, File inputDirectory, File executionDirectory) {
         this(userID, analysis, dataSet, executionContextLevel, outputDirectory, inputDirectory, executionDirectory, -1)
     }
 
-    ExecutionContext(String userID, Analysis analysis, DataSet dataSet, ExecutionContextLevel executionContextLevel, File outputDirectory, File inputDirectory, File executionDirectory, long creationCheckPoint) {
+    ExecutionContext(String userID, Analysis analysis, DataSet dataSet, ExecutionContextLevel executionContextLevel,
+                     File outputDirectory, File inputDirectory, File executionDirectory, long creationCheckPoint) {
         this.executionDirectory = executionDirectory
         this.outputDirectory = outputDirectory
         this.inputDirectory = inputDirectory
@@ -239,9 +238,9 @@ class ExecutionContext {
         if (workflowClass.name.endsWith('$py')) {
             // Jython creates a class called Workflow$py with a constructor with a single (unused) String parameter.
             workflow = (Workflow) workflowClass.getConstructor(String).newInstance("dummy")
+        } else {
+            workflow = (Workflow) workflowClass.getConstructor().newInstance()
         }
-
-        workflow = (Workflow) workflowClass.getConstructor().newInstance()
         if (context)
             workflow.setContext(context)
         return workflow
@@ -330,11 +329,11 @@ class ExecutionContext {
     }
 
     Configuration getConfiguration() {
-        return analysis.getConfiguration()
+        return analysis.configuration
     }
 
     Configuration createJobConfiguration() {
-        return new Configuration(null, getConfiguration())
+        return new Configuration(null, configuration)
     }
 
     boolean getFeatureToggleStatus(FeatureToggles toggle) {
@@ -349,7 +348,7 @@ class ExecutionContext {
     }
 
     RecursiveOverridableMapContainerForConfigurationValues getConfigurationValues() {
-        return configuration.getConfigurationValues()
+        return configuration.configurationValues
     }
 
     void setTimestamp(Date timestamp) {
@@ -376,6 +375,10 @@ class ExecutionContext {
         this.executingUser = p
     }
 
+    Optional<String> getAccountingProject() {
+        Optional.ofNullable(configurationValues.getString("accountingProject", null))
+    }
+
     /**
      * Returns the execution directory for this context. If it was not set this is done here.
      *
@@ -383,19 +386,19 @@ class ExecutionContext {
      */
     synchronized File getExecutionDirectory() {
         if (executionDirectory == null)
-            executionDirectory = analysis.getRuntimeService().getExecutionDirectory(this)
+            executionDirectory = analysis.runtimeService.getExecutionDirectory(this)
         return executionDirectory
     }
 
     File getFileForAnalysisToolsArchiveOverview() {
         if (!md5OverviewFile)
-            md5OverviewFile = analysis.getRuntimeService().getAnalysedMD5OverviewFile(this)
+            md5OverviewFile = analysis.runtimeService.getAnalysedMD5OverviewFile(this)
         return md5OverviewFile
     }
 
     synchronized File getCommonExecutionDirectory() {
         if (!commonExecutionDirectory)
-            commonExecutionDirectory = analysis.getRuntimeService().getCommonExecutionDirectory(this)
+            commonExecutionDirectory = analysis.runtimeService.getCommonExecutionDirectory(this)
         return commonExecutionDirectory
     }
 
@@ -408,9 +411,9 @@ class ExecutionContext {
         // Include an additional check, if the target filesystem allows the modification and disable this, if necessary.
         if (checkedIfAccessRightsCanBeSet != null)
             return checkedIfAccessRightsCanBeSet
-        boolean modAllowed = getConfiguration().getConfigurationValues().getBoolean(ConfigurationConstants.CFG_ALLOW_ACCESS_RIGHTS_MODIFICATION, true)
+        boolean modAllowed = configurationValues.getBoolean(ConfigurationConstants.CFG_ALLOW_ACCESS_RIGHTS_MODIFICATION, true)
         if (modAllowed && checkedIfAccessRightsCanBeSet == null) {
-            checkedIfAccessRightsCanBeSet = FileSystemAccessProvider.getInstance().checkIfAccessRightsCanBeSet(this)
+            checkedIfAccessRightsCanBeSet = FileSystemAccessProvider.instance.checkIfAccessRightsCanBeSet(this)
             if (!checkedIfAccessRightsCanBeSet) {
                 modAllowed = false
                 addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.
@@ -421,47 +424,47 @@ class ExecutionContext {
     }
 
     FileSystemAccessProvider getFileSystemAccessProvider() {
-        return FileSystemAccessProvider.getInstance()
+        return FileSystemAccessProvider.instance
     }
 
     String getOutputDirectoryAccess() {
         if (!isAccessRightsModificationAllowed()) return null
-        return getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_ACCESS_RIGHTS_FOR_DIRECTORIES,
-                fileSystemAccessProvider.commandSet.getDefaultAccessRightsString()).toString()
+        configurationValues.get(ConfigurationConstants.CFG_OUTPUT_ACCESS_RIGHTS_FOR_DIRECTORIES,
+                fileSystemAccessProvider.commandSet.defaultAccessRightsString).toString()
     }
 
     String getOutputFileAccessRights() {
         if (!isAccessRightsModificationAllowed()) return null
-        return getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_ACCESS_RIGHTS,
-                fileSystemAccessProvider.commandSet.getDefaultAccessRightsString()).toString()
+        return configurationValues.get(ConfigurationConstants.CFG_OUTPUT_ACCESS_RIGHTS,
+                fileSystemAccessProvider.commandSet.defaultAccessRightsString).toString()
     }
 
     String getOutputGroupString() {
         if (!isAccessRightsModificationAllowed()) return null
-        return getConfiguration().getConfigurationValues().get(ConfigurationConstants.CFG_OUTPUT_FILE_GROUP,
-                fileSystemAccessProvider.getMyGroup()).toString()
+        return configurationValues.get(ConfigurationConstants.CFG_OUTPUT_FILE_GROUP,
+                fileSystemAccessProvider.myGroup).toString()
     }
 
     String getUMask() {
-        return getConfiguration().getConfigurationValues().getString(ConfigurationConstants.CFG_OUTPUT_UMASK,
-                fileSystemAccessProvider.commandSet.getDefaultUMask())
+        return configurationValues.getString(ConfigurationConstants.CFG_OUTPUT_UMASK,
+                fileSystemAccessProvider.commandSet.defaultUMask)
     }
 
     synchronized File getLockFilesDirectory() {
         if (lockFilesDirectory == null)
-            lockFilesDirectory = analysis.getRuntimeService().getLockFilesDirectory(this)
+            lockFilesDirectory = analysis.runtimeService.getLockFilesDirectory(this)
         return lockFilesDirectory
     }
 
     synchronized File getTemporaryDirectory() {
         if (temporaryDirectory == null)
-            temporaryDirectory = analysis.getRuntimeService().getTemporaryDirectory(this)
+            temporaryDirectory = analysis.runtimeService.getTemporaryDirectory(this)
         return temporaryDirectory
     }
 
     synchronized File getLoggingDirectory() {
         if (loggingDirectory == null) {
-            loggingDirectory = analysis.getRuntimeService().getLoggingDirectory(this)
+            loggingDirectory = analysis.runtimeService.getLoggingDirectory(this)
             assert (null != loggingDirectory)
         }
         return loggingDirectory
@@ -469,12 +472,12 @@ class ExecutionContext {
 
     synchronized File getAnalysisToolsDirectory() {
         if (analysisToolsDirectory == null)
-            analysisToolsDirectory = analysis.getRuntimeService().getAnalysisToolsDirectory(this)
+            analysisToolsDirectory = analysis.runtimeService.getAnalysisToolsDirectory(this)
         return analysisToolsDirectory
     }
 
     File getParameterFilename(Job job) {
-        new File(getExecutionDirectory(), "${job.getJobName()}_${job.jobCreationCounter}${Constants.PARAMETER_FILE_SUFFIX}")
+        new File(executionDirectory, "${job.jobName}_${job.jobCreationCounter}${Constants.PARAMETER_FILE_SUFFIX}")
     }
 
 
@@ -504,7 +507,7 @@ class ExecutionContext {
     }
 
     List<Job> getStartedJobs() {
-        return jobsForProcess.findAll { Job job -> job != null && !job.isFakeJob() && !job.getJobState().dummy }
+        return jobsForProcess.findAll { Job job -> job != null && !job.fakeJob && !job.getJobState().dummy }
     }
 
     void setExecutedJobs(List<Job> previousJobs) {
@@ -514,7 +517,7 @@ class ExecutionContext {
     }
 
     void addExecutedJob(Job job) {
-        if ((job.getJobState() == JobState.DUMMY || job.getJobState() == JobState.UNKNOWN) && !processingFlag.contains(ProcessingFlag.STORE_DUMMY_JOBS))
+        if ((job.jobState == JobState.DUMMY || job.jobState == JobState.UNKNOWN) && !processingFlag.contains(ProcessingFlag.STORE_DUMMY_JOBS))
             return
         jobsForProcess.add(job)
     }
@@ -535,9 +538,9 @@ class ExecutionContext {
             for (BEJob job : jobsForProcess) {
                 ReadOutJob rj = (ReadOutJob) job
 
-                def state = rj.getJobState()
-                if (state.isPlannedOrRunning()) {
-                    if (state.isRunning())
+                def state = rj.jobState
+                if (state.plannedOrRunning) {
+                    if (state.running)
                         return true
                     else {
                         //Check previous jobs... Or just wait for the next step???
@@ -550,14 +553,14 @@ class ExecutionContext {
         //Query current jobs, i.e. on recheck
         List<String> jobIDsForQuery = new LinkedList<>()
         for (BEJob job : jobsForProcess) {
-            BEJobResult runResult = job.getRunResult()
-            if (runResult != null && runResult.getJobID().getId() != null) {
-                jobIDsForQuery.add(runResult.getJobID().getId())
+            BEJobResult runResult = job.runResult
+            if (runResult != null && runResult.jobID.id != null) {
+                jobIDsForQuery.add(runResult.jobID.id)
             }
         }
-        Map<BEJob, JobState> map = Roddy.getJobManager().queryJobStatus(jobsForProcess as List<BEJob>)
+        Map<BEJob, JobState> map = Roddy.jobManager.queryJobStatus(jobsForProcess as List<BEJob>)
         for (JobState js : map.values()) {
-            if (js.isPlannedOrRunning())
+            if (js.plannedOrRunning)
                 return true
         }
 
@@ -573,11 +576,11 @@ class ExecutionContext {
     }
 
     List<File> getLogFilesForExecutedJobs() {
-        return Roddy.jobManager.queryExtendedJobStateById(getExecutedJobs()*.jobID).collect { it.value.logFile }
+        return Roddy.jobManager.queryExtendedJobStateById(executedJobs*.jobID).collect { it.value.logFile }
     }
 
     List<File> getAdditionalLogFiles() {
-        return getRuntimeService().getAdditionalLogFilesForContext(this)
+        return runtimeService.getAdditionalLogFilesForContext(this)
     }
 
     /**
@@ -701,16 +704,19 @@ class ExecutionContext {
 
     boolean fileIsExecutable(File file, String variableName = null) {
         if (!(fileIsAccessible(file, variableName))) return;
-        if (!FileSystemAccessProvider.getInstance().isExecutable(file)) {
-            addError(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("File '${file}' is not executable${variableName ? ": " + variableName : "."}"))
+        if (!FileSystemAccessProvider.instance.isExecutable(file)) {
+            addError(ExecutionContextError.EXECUTION_SETUP_INVALID.
+                    expand("File '${file}' is not executable${variableName ? ": " + variableName : "."}"))
             return false
         }
         return true
     }
 
     boolean directoryIsAccessible(File directory, String variableName = null) {
-        if (valueIsEmpty(directory, variableName) || !FileSystemAccessProvider.getInstance().checkDirectory(directory, this, false)) {
-            addError(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("Directory '${directory}' not accessible${variableName ? ": " + variableName : "."}"))
+        if (valueIsEmpty(directory, variableName)
+                || !FileSystemAccessProvider.instance.checkDirectory(directory, this, false)) {
+            addError(ExecutionContextError.EXECUTION_SETUP_INVALID.
+                    expand("Directory '${directory}' not accessible${variableName ? ": " + variableName : "."}"))
             return false
         }
         return true
@@ -727,7 +733,9 @@ class ExecutionContext {
 
     @Override
     String toString() {
-        return String.format("Context [%s-%s:%s, %s]", project.getName(), analysis, dataSet, InfoObject.formatTimestamp(timestamp))
+        return String.format("Context [%s-%s:%s, %s]",
+                project.configurationName, analysis,
+                dataSet, InfoObject.formatTimestamp(timestamp))
     }
 
 }

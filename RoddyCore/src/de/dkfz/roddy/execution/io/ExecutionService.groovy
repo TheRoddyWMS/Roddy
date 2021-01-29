@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+ * Copyright (c) 2021 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
@@ -20,9 +20,9 @@ import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.BEExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.*
-import de.dkfz.roddy.execution.jobs.cluster.lsf.LSFCommand
-import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommand
-import de.dkfz.roddy.execution.jobs.cluster.sge.SGECommand
+import de.dkfz.roddy.execution.jobs.cluster.lsf.LSFSubmissionCommand
+import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSSubmissionCommand
+import de.dkfz.roddy.execution.jobs.cluster.sge.SGESubmissionCommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.plugins.LibrariesFactory
@@ -249,11 +249,11 @@ abstract class ExecutionService implements BEExecutionService {
      * @return
      */
     String validSubmissionCommandOutputWithRandomJobId(Command command) {
-        if (command instanceof LSFCommand) {
+        if (command instanceof LSFSubmissionCommand) {
             return String.format("<0%04d>", System.nanoTime() % 10000)
-        } else if (command instanceof PBSCommand) {
+        } else if (command instanceof PBSSubmissionCommand) {
             return String.format("0x%04X", System.nanoTime() % 10000)
-        } else if (command instanceof SGECommand) {
+        } else if (command instanceof SGESubmissionCommand) {
             return String.format("dummy 0%04d", System.nanoTime() % 10000)
         } else if (command instanceof DirectCommand) {
             return String.format("dummy 0%04d", System.nanoTime() % 10000)
@@ -840,7 +840,7 @@ abstract class ExecutionService implements BEExecutionService {
         final FileSystemAccessProvider provider = FileSystemAccessProvider.instance
         final String separator = Constants.ENV_LINESEPARATOR
 
-        List<Command> commandCalls = context.getCommandCalls() ?: new LinkedList<Command>()
+        List<Command> commandCalls = context.getCommandCalls() ?: ([] as List<Command>)
         StringBuilder realCalls = new StringBuilder()
         List<BEJobID> jobIDs = new LinkedList<>()
         int cnt = 0

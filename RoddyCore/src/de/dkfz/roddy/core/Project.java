@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+ * Copyright (c) 2021 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
@@ -22,7 +22,7 @@ import java.util.List;
  */
 public class Project implements Serializable {
 
-    private static final LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(Project.class.getSimpleName());
+    private static final LoggerWrapper logger = LoggerWrapper.getLogger(Project.class.getSimpleName());
 
     /**
      * A list of analyses related to this project
@@ -54,7 +54,11 @@ public class Project implements Serializable {
         return configuration;
     }
 
-    public String getName() {
+    /**
+     * Get the project configuration name. The configuration name is used to load the correct configurations for the
+     * analysis.
+     */
+    public String getConfigurationName() {
         return configuration.getName();
     }
 

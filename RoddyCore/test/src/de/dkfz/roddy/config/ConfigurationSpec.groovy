@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+ * Copyright (c) 2021 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
@@ -17,7 +17,9 @@ import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_INTEGER
 class ConfigurationSpec extends Specification {
 
     PreloadedConfiguration mockContent(String name, PreloadedConfiguration parent) {
-        return new PreloadedConfiguration(parent, Configuration.ConfigurationType.OTHER, name, "", "", null, "", ResourceSetSize.s, [], [], null, "")
+        return new PreloadedConfiguration(
+                parent, Configuration.ConfigurationType.OTHER, name, "", "", null, "", ResourceSetSize.s,
+                [], [], null, "")
     }
 
     void testGetResourcesSize() {

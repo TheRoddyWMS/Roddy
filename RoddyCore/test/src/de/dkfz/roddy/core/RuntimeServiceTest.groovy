@@ -9,7 +9,6 @@ package de.dkfz.roddy.core
 
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.RunMode
-import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
@@ -56,7 +55,10 @@ class RuntimeServiceTest {
 
     @Before
     void setup() {
-        final Configuration mockupConfig = new Configuration(new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null))
+        final Configuration mockupConfig = new Configuration(
+                new PreloadedConfiguration(
+                        null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l,
+                        null, null, null, null))
         mockedContext = contextResource.createSimpleContext(RuntimeServiceTest.class, setDirectories(mockupConfig), new RuntimeService())
     }
 
@@ -74,7 +76,7 @@ class RuntimeServiceTest {
         return value.
                 replace("\${${ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY}}", outputBaseDirectory.toString()).
                 replace("\${${ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY}}", inputBaseDirectory.toString()).
-                replace("\${${Constants.PROJECT_NAME}}", mockedContext.project.name).
+                replace("\${${Constants.PROJECT_NAME}}", mockedContext.project.configurationName).
                 replace("\${${Constants.DATASET}}", mockedContext.dataSet.id)
     }
 

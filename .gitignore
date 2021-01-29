@@ -35,4 +35,8 @@ manifest.tmp
 *~
 coverage/
 
+.classpath
+.project
+.settings/
+bin/
 

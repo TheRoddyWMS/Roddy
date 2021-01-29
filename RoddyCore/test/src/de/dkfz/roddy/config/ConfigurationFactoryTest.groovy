@@ -134,7 +134,10 @@ class ConfigurationFactoryTest {
             </configuration>
         """
         NodeChild xml = (NodeChild) new XmlSlurper().parseText(text)
-        PreloadedConfiguration pc = new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "testForDollars", "", "", xml, "", null, new File("/some/path"), text)
+        PreloadedConfiguration pc =
+                new PreloadedConfiguration(
+                        null, Configuration.ConfigurationType.OTHER, "testForDollars", "", "",
+                        xml, "", null, new File("/some/path"), text)
         Configuration cfg = ConfigurationFactory.instance.loadConfiguration(pc)
         assert cfg.hasWarnings()
         assert cfg.warnings.size() == 2

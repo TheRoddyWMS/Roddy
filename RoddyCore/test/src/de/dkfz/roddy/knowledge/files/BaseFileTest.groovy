@@ -10,7 +10,6 @@ import static de.dkfz.roddy.Constants.DEFAULT
 
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.*
-import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.loader.ConfigurationFactory as CF
 import de.dkfz.roddy.core.ContextResource
 import de.dkfz.roddy.core.ExecutionContext
@@ -84,9 +83,11 @@ class BaseFileTest {
         )
         CF.initialize(libFact.getLoadedPlugins().collect { it -> it.getConfigurationDirectory() })
 
-        final Configuration mockupConfig = new Configuration(new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, DEFAULT,
-                '', '', null, '', ResourceSetSize.l, null, null, null,
-                null), CF.instance.getConfiguration(DEFAULT)) {
+        final Configuration mockupConfig = new Configuration(
+                new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, DEFAULT,
+                        '', '', null, '', ResourceSetSize.l, null,
+                        null, null, null),
+                CF.instance.getConfiguration(DEFAULT)) {
             @Override
             File getSourceToolPath(String tool) {
                 if (tool == 'wrapinScript')

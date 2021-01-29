@@ -1,11 +1,12 @@
 /*
- * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+ * Copyright (c) 2021 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.config
 
+import groovy.transform.CompileStatic
 import groovy.util.slurpersupport.NodeChild
 
 /**
@@ -18,7 +19,7 @@ import groovy.util.slurpersupport.NodeChild
  * As soon as it is know, which configurations are required, these Configurations objects are produced using the information in the preloaded
  * configuration and the remaining XMLs.
  */
-@groovy.transform.CompileStatic
+@CompileStatic
 class PreloadedConfiguration {
     public final PreloadedConfiguration parent
     public final Configuration.ConfigurationType type
@@ -34,17 +35,16 @@ class PreloadedConfiguration {
     private File readmeFile
 
     private final List<PreloadedConfiguration> subConf
-    private final List<String> analyses
+    private final List<String> analyses = []
     public final ResourceSetSize usedresourcessize
 
     PreloadedConfiguration(PreloadedConfiguration parent, Configuration.ConfigurationType type, String name, String description,
                            String className, NodeChild configurationNode, String imports, ResourceSetSize usedresourcessize,
                            List<String> analyses, List<PreloadedConfiguration> subContent, File file, String text) {
-        this(parent, type, name, description, className, configurationNode, imports, subContent, file, text, usedresourcessize)
+        this(parent, type, name, description, className, configurationNode, imports, subContent,
+                file, text, usedresourcessize)
         if (analyses != null)
-            this.analyses = analyses
-        else
-            this.analyses = []
+            this.analyses.addAll(analyses)
     }
 
     PreloadedConfiguration(PreloadedConfiguration parent, Configuration.ConfigurationType type, String name, String description,

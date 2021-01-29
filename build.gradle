@@ -27,7 +27,7 @@ plugins {
     id 'idea'
 }
 
-group = "com.github.dkfz"
+group = "com.github.theroddywms"
 
 /**
  * -PignoreFailedTests                  Continue despite failed tests.
@@ -71,7 +71,7 @@ def getVersionName() {
 rootProject.version = getVersionName()
 
 test {
-    workingDir = System.getProperty("user.dir")
+    workingDir = projectDir
     ignoreFailures = project.hasProperty("ignoreFailedTests")
 
     testLogging {
@@ -91,14 +91,17 @@ repositories {
     maven { url "https://repo1.maven.org/maven2/" }       // Some of the remaining dependencies
 }
 
-// TODO For testing only. Needs to be changed as soon as RoddyToolLib is released.
 ext.roddyToolLibVersion = "2.2.2"
+ext.batchEuphoriaVersion = "0.0.12"
 
 configurations.all {
     resolutionStrategy.cacheChangingModulesFor(0, 'seconds')
     resolutionStrategy.cacheDynamicVersionsFor(0, 'seconds')
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-        if (details.requested.name == "RoddyToolLib") {
+        // details.useVersion is null, if Roddy is build in a multi-project build with dependency substitution.
+        // In this situation the substituted version-less development version has higher priority than the
+        // version configured via roddyToolLibVersion.
+        if (details.requested.name == "RoddyToolLib" && details.useVersion != null) {
             details.useVersion roddyToolLibVersion
             details.because "BatchEuphoria not affected by RoddyToolLib ${roddyToolLibVersion} API changes."
         }
@@ -107,9 +110,7 @@ configurations.all {
 
 dependencies {
     compile "com.github.theroddywms:RoddyToolLib:${roddyToolLibVersion}"         // MIT
-    // compile 'com.github.theroddywms:RoddyToolLib:master-SNAPSHOT'    // MIT
-    compile 'com.github.theroddywms:BatchEuphoria:0.0.7'        // MIT
-    // compile 'com.github.theroddywms:BatchEuphoria:master-SNAPSHOT'   // MIT
+    compile "com.github.theroddywms:BatchEuphoria:${batchEuphoriaVersion}"       // MIT
     compile 'org.codehaus.groovy:groovy-all:2.4.9'              // Apache 2.0
 
     compile 'org.bouncycastle:bcpg-jdk15on:1.51'                // MIT
@@ -152,7 +153,7 @@ dependencies {
     testCompile 'org.spockframework:spock-core:1.1-groovy-2.4'  // Apache 2.0
 }
 
-project.ext.developmentDistributionDir = new File(rootProject.projectDir, "dist/bin/develop")
+ext.developmentDistributionDir = new File(rootProject.projectDir, "dist/bin/develop")
 convention.add("releaseDir", new File(project.ext.developmentDistributionDir, "../" + rootProject.version).absoluteFile)
 
 sourceSets {
@@ -182,10 +183,11 @@ task cleanRuntimeLibs(type: Delete) {
 clean.dependsOn(cleanRuntimeLibs)
 
 
-task copyRuntimeLibs(type: Copy) {
+task copyRuntimeLibs(type: Copy, dependsOn: cleanRuntimeLibs) {
     into librariesDirectory
     from configurations.runtime
 }
+
 
 jar {
     baseName = "Roddy"
@@ -198,7 +200,7 @@ jar {
         attributes("Implementation-Title": baseName)
         attributes 'Implementation-Version': rootProject.version
     }
-    dependsOn cleanRuntimeLibs, copyRuntimeLibs
+    dependsOn copyRuntimeLibs
 }
 
 /** Produce 2 distribution packages:
@@ -251,20 +253,11 @@ distributions {
 roddyDistTar.dependsOn(jar)
 roddyDistZip.dependsOn(jar)
 
-// IntelliJ IDEA
-idea {
-    project {
-        setJdkName(langLevel)
-        languageLevel = langLevel
-    }
-}
-
 sphinx {
     sourceDirectory = "${project.projectDir}/docs/"
     outputDirectory = "${project.buildDir}/site/"
     warningsAsErrors = true
 }
-
 
 codenarc {
     toolVersion = "1.2.1"
@@ -272,11 +265,13 @@ codenarc {
 }
 
 codenarcMain {
-    configFile = rootProject.file("config/codenarc/codenarc.groovy")
+    configFile = project.file("config/codenarc/codenarc.groovy")
 }
 
 codenarcTest {
-    configFile = rootProject.file("config/codenarc/codenarc.groovy")
+    configFile = project.file("config/codenarc/codenarc.groovy")
 }
+
+
 
 // end of build.gradle

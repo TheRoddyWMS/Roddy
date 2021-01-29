@@ -31,7 +31,7 @@ import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_PATH
  * Converts a configuration object to bash script.
  * Created by heinold on 18.06.15.
  */
-@groovy.transform.CompileStatic
+@CompileStatic
 class BashConverter extends ConfigurationConverter {
 
     final String separator = Constants.ENV_LINESEPARATOR
@@ -411,7 +411,10 @@ class BashConverter extends ConfigurationConverter {
         }
 
         Map<String, Integer> doubletteCounter = new HashMap<String, Integer>()
-        PreloadedConfiguration userConfig = new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "userconfig_INVALIDNAME", "An imported configuration, please change the name and this description. Also set the classname and type as necessary.", null, null, "", null, null, "")
+        PreloadedConfiguration userConfig = new PreloadedConfiguration(
+                null, Configuration.ConfigurationType.OTHER, "userconfig_INVALIDNAME",
+                "An imported configuration, please change the name and this description. Also set the classname and type as necessary.",
+                null, null, "", null, null, "")
         Configuration newCfg = new Configuration(userConfig, (Map<String, Configuration>) null)
         Map<String, ConfigurationValue> cValues = newCfg.configurationValues.getMap()
         Map<String, ConfigurationValueBundle> cValueBundles = newCfg.configurationValueBundles.getMap()

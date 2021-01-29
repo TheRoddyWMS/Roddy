@@ -1,5 +1,10 @@
 # Changelist
 
+* 3.6.0
+
+  - Bumped to use BatchEuphoria 0.0.12
+  - Added `accountingProject` to use allow project accounting (for BE 0.0.12 only for LSF)
+
 * 3.5.9
 
   - The LocalExecutionService ignored errors of asychronously executed commands. 

@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.execution.jobs
 
-import de.dkfz.roddy.Constants
+
 import de.dkfz.roddy.FeatureToggles
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.*
@@ -24,6 +24,7 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.Tuple2
 import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 
 import static de.dkfz.roddy.Constants.*
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID
@@ -31,10 +32,10 @@ import static de.dkfz.roddy.config.ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT
 import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 import static de.dkfz.roddy.execution.jobs.JobConstants.PRM_TOOL_ID
 
-@groovy.transform.CompileStatic
+@CompileStatic
 class Job extends BEJob<BEJob, BEJobResult> {
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(BEJob.class.getSimpleName())
+    private static final LoggerWrapper logger = LoggerWrapper.getLogger(BEJob.class.simpleName)
 
     public static final String TOOLID_WRAPIN_SCRIPT = "wrapinScript"
     public static final String PARM_WRAPPED_SCRIPT = "WRAPPED_SCRIPT"
@@ -130,7 +131,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
 //        this.context.addExecutedJob(this)
 //    }
 
-    Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices, Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
+    Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices,
+        Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
         this(context, jobName, toolID, null, arrayIndices, inputParameters, parentFiles, filesToVerify)
     }
 
@@ -177,7 +179,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 , [:] as Map<String,String>
                 , Roddy.jobManager
                 , JobLog.toOneFile(new File(context.loggingDirectory, jobName + ".o{JOB_ID}"))
-                , null)
+                , null
+                , context.accountingProject.orElse(null))
         this.localToolPath = context.configuration.getSourceToolPath(toolID)
         this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectJobIDsFromFiles(parentFiles), jobManager))
         this.context = context
@@ -574,7 +577,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
             if (appendToJobStateLogfile)
                 this.appendToJobStateLogfile(jobManager, executionContext, runResult, null)
             Command cmd = runResult.command
-            jobDetailsLine << " => " + cmd.job.jobID.toString().padRight(10) // If we have os process id attached, we'll need some space, so pad the output.
+
+            // If we have os process id attached, we'll need some space, so pad the output.
+            jobDetailsLine << " => " + cmd.job.jobID.toString().padRight(10)
 
             // For direct execution it can be very helpful to know the id of the started process. Sometimes, sub processes
             // remain and need to be killed.
@@ -608,7 +613,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
             dbgMessage << "\tdummy job created." + ENV_LINESEPARATOR
             File tool = context.configuration.getProcessingToolPath(context, toolID)
             resetJobID(new BEFakeJobID(BEFakeJobID.FakeJobReason.NOT_EXECUTED))
-            runResult = new BEJobResult((Command) null, this, null, tool, parameters, parentFiles.collect { it.creatingJobsResult?.getJob() }.findAll { it })
+            runResult = new BEJobResult((SubmissionCommand) null, this, null, tool, parameters,
+                    parentFiles.collect { it.creatingJobsResult?.getJob() }.findAll { it })
             jobState = JobState.DUMMY
         }
 
@@ -627,7 +633,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
      */
     Configuration createJobConfiguration() {
         Configuration jobConfiguration = new Configuration(null, executionContext.configuration)
-        jobConfiguration.configurationValues.addAll(parameters.collect { String k, String v -> new ConfigurationValue(jobConfiguration, k, v) })
+        jobConfiguration.configurationValues.addAll(parameters.collect { String k, String v ->
+            new ConfigurationValue(jobConfiguration, k, v)
+        })
         return jobConfiguration
     }
 
@@ -646,7 +654,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
         String sep = ENV_LINESEPARATOR
         if (isVerbosityHigh) dbgMessage << "Rerunning job " + jobName
 
-        //Check the parents of the new files to see if one of those is invalid for the current context! A file might be validated during a dry context...
+        // Check the parents of the new files to see if one of those is invalid for the current context! A file might
+        // be validated during a dry context...
         boolean parentFileIsDirty = false
 
         if (isVerbosityHigh) dbgMessage << sep << "\tchecking parent files for validity"

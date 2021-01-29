@@ -1,3 +1,6 @@
+.. Links
+.. _`Semantic Versioning`: https://semver.org/
+
 Command line options
 ====================
 
@@ -111,8 +114,7 @@ A good way to compile Roddy is to use just
 
     ./gradlew build
 
-Roddy also provides means to compile itself (basically using gradlew again) but additionally increasing the build version number. To some 
-extend Roddy can compile and package plugins for you. For these actions the following modes are available:
+Roddy's startup script `roddy.sh` wraps this but additionally allows for increasing the build version number (patch-number, according to `Semantic Versioning`_). Furthermore, the wrapper also simplifies the compilation of plugins for you. For these actions the following modes are available:
 
 .. csv-table:: "Title"
     :Header: "Option", "Additional", "Description"

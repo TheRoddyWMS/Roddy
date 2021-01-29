@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+ * Copyright (c) 2021 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
@@ -22,7 +22,6 @@ import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.execution.jobs.GenericJobInfo as BEGenJI
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
-import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
@@ -101,22 +100,28 @@ class NativeWorkflow extends Workflow {
         }
     }
 
-    def callAndInterceptNativeWorkflow(ExecutionContext context, BatchEuphoriaJobManager targetJobManager) {
+    boolean callAndInterceptNativeWorkflow(ExecutionContext context, BatchEuphoriaJobManager targetJobManager) {
         ContextConfiguration configuration = (ContextConfiguration) context.configuration
         AnalysisConfiguration aCfg = configuration.getAnalysisConfiguration()
 
-        // In normal cases commands are executed by the default factory. In this case we want the command to be executed directly.
+        // In normal cases commands are executed by the default factory. In this case we want the command to be
+        // executed directly.
         String toolID = aCfg.getNativeToolID()
-        String jobManagerAbbreviation = AvailableClusterSystems.values().find { it.className == targetJobManager.class.name }.name().toUpperCase()
+        String jobManagerAbbreviation = AvailableClusterSystems.values().find {
+            it.className == targetJobManager.class.name
+        }.name().toUpperCase()
         def nativeScriptID = "nativeWrapperFor${jobManagerAbbreviation}"
         String nativeWorkflowScriptWrapper = configuration.getProcessingToolPath(context, nativeScriptID).absolutePath
-        Job wrapperJob = new Job(context, context.getTimestampString() + "_nativeJobWrapper:" + toolID, toolID, null)
+        Job wrapperJob = new Job(
+                context, context.getTimestampString() + "_nativeJobWrapper:" + toolID, toolID, null)
 
-        DirectSynchronousExecutionJobManager dcfac = new DirectSynchronousExecutionJobManager(ExecutionService.getInstance(), JobManagerOptions.create().build())
+        DirectSynchronousExecutionJobManager dcfac = new DirectSynchronousExecutionJobManager(
+                ExecutionService.instance, JobManagerOptions.create().build())
         DirectCommand wrapperJobCommand = new DirectCommand(dcfac, wrapperJob, [], nativeWorkflowScriptWrapper)
-        String submissionCommand = targetJobManager.getSubmissionCommand()
+        String submissionCommand = targetJobManager.submissionCommand
         if (submissionCommand == null) {
-            context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("There is no submission command for this type of command factory."))
+            context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.
+                    expand("There is no submission command for this type of command factory."))
             return false
         }
 
