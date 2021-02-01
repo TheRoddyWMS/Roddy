@@ -1,4 +1,5 @@
-[![Build Status - Travis](https://travis-ci.org/TheRoddyWMS/Roddy.svg?branch=master)](https://travis-ci.org/TheRoddyWMS/Roddy)
+[![Build Status](https://travis-ci.com/TheRoddyWMS/Roddy.svg?branch=master)](https://travis-ci.com/TheRoddyWMS/Roddy) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FTheRoddyWMS%2FRoddy.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FTheRoddyWMS%2FRoddy?ref=badge_shield)
+
 # What is Roddy? 
 
 Roddy is a framework for development and management of workflows on a batch processing cluster. It has been developed at the German Cancer Research Center (DKFZ) in Heidelberg in the eilslabs group and is used by a number of in-house workflows such as the [PanCancer Alignment Workflow](https://github.com/DKFZ-ODCF/AlignmentAndQCWorkflows) and the [ACEseq workflow](https://github.com/eilslabs/ACEseqWorkflow). The development is now continued in the Omics IT and Data Management Core Facility (ODCF) at the DKFZ.
