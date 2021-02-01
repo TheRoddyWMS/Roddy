@@ -251,7 +251,7 @@ class ExecutionContext {
     }
 
     Map<String, Object> getDefaultJobParameters(String TOOLID) {
-        return getRuntimeService().getDefaultJobParameters(this, TOOLID)
+        return runtimeService.getDefaultJobParameters(this, TOOLID)
     }
 
     String createJobName(BaseFile p, String TOOLID) {
@@ -259,7 +259,7 @@ class ExecutionContext {
     }
 
     String createJobName(BaseFile p, String TOOLID, boolean reduceLevel) {
-        return getRuntimeService().createJobName(this, p, TOOLID, reduceLevel)
+        return runtimeService.createJobName(this, p, TOOLID, reduceLevel)
     }
 
     File getInputDirectory() {
@@ -271,7 +271,7 @@ class ExecutionContext {
     }
 
     RuntimeService getRuntimeService() {
-        return analysis.getRuntimeService()
+        return analysis.runtimeService
     }
 
     ExecutionContextLevel getExecutionContextLevel() {
@@ -386,19 +386,19 @@ class ExecutionContext {
      */
     synchronized File getExecutionDirectory() {
         if (executionDirectory == null)
-            executionDirectory = analysis.runtimeService.getExecutionDirectory(this)
+            executionDirectory = runtimeService.getExecutionDirectory(this)
         return executionDirectory
     }
 
     File getFileForAnalysisToolsArchiveOverview() {
         if (!md5OverviewFile)
-            md5OverviewFile = analysis.runtimeService.getAnalysedMD5OverviewFile(this)
+            md5OverviewFile = runtimeService.getAnalysedMD5OverviewFile(this)
         return md5OverviewFile
     }
 
     synchronized File getCommonExecutionDirectory() {
         if (!commonExecutionDirectory)
-            commonExecutionDirectory = analysis.runtimeService.getCommonExecutionDirectory(this)
+            commonExecutionDirectory = runtimeService.getCommonExecutionDirectory(this)
         return commonExecutionDirectory
     }
 
@@ -452,19 +452,19 @@ class ExecutionContext {
 
     synchronized File getLockFilesDirectory() {
         if (lockFilesDirectory == null)
-            lockFilesDirectory = analysis.runtimeService.getLockFilesDirectory(this)
+            lockFilesDirectory = runtimeService.getLockFilesDirectory(this)
         return lockFilesDirectory
     }
 
     synchronized File getTemporaryDirectory() {
         if (temporaryDirectory == null)
-            temporaryDirectory = analysis.runtimeService.getTemporaryDirectory(this)
+            temporaryDirectory = runtimeService.getTemporaryDirectory(this)
         return temporaryDirectory
     }
 
     synchronized File getLoggingDirectory() {
         if (loggingDirectory == null) {
-            loggingDirectory = analysis.runtimeService.getLoggingDirectory(this)
+            loggingDirectory = runtimeService.getLoggingDirectory(this)
             assert (null != loggingDirectory)
         }
         return loggingDirectory
@@ -472,7 +472,7 @@ class ExecutionContext {
 
     synchronized File getAnalysisToolsDirectory() {
         if (analysisToolsDirectory == null)
-            analysisToolsDirectory = analysis.runtimeService.getAnalysisToolsDirectory(this)
+            analysisToolsDirectory = runtimeService.getAnalysisToolsDirectory(this)
         return analysisToolsDirectory
     }
 
