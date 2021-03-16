@@ -117,10 +117,10 @@ class Analysis {
             _analysisConfiguration = new ContextConfiguration((AnalysisConfiguration) this.configuration,
                                                               (ProjectConfiguration) this.project.configuration)
             [
-                    (Constants.USERNAME)    : username,
-                    (Constants.USERGROUP)   : usergroup,
-                    (Constants.USERHOME)    : FileSystemAccessProvider.instance.userDirectory.absolutePath,
-                    (Constants.PROJECT_NAME): project.configurationName,
+                    (Constants.USERNAME)                  : username,
+                    (Constants.USERGROUP)                 : usergroup,
+                    (Constants.USERHOME)                  : FileSystemAccessProvider.instance.userDirectory.absolutePath,
+                    (Constants.PROJECT_CONFIGURATION_NAME): project.configurationName,
             ].each { String k, String v ->
                 _analysisConfiguration.configurationValues << new ConfigurationValue(_analysisConfiguration, k, v)
             }

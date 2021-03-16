@@ -247,7 +247,7 @@ class Configuration implements ContainerParent<Configuration>, ConfigurationIssu
         } else if (this.preloadedConfiguration.type.ordinal() < ConfigurationType.PROJECT.ordinal()) {
             // This is not a project configuration and not a variant.
         } else if (this.preloadedConfiguration.type.ordinal() > ConfigurationType.PROJECT.ordinal()) {
-            //Return the parents getProjectName(). This is recursive and should lead to the project configuration.
+            // Return the parent.projectName. This is recursive and should lead to the project configuration.
             String tempName = null
             for (Configuration parent : parents) {
                 String tName = parent.projectName

@@ -180,7 +180,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 , Roddy.jobManager
                 , JobLog.toOneFile(new File(context.loggingDirectory, jobName + ".o{JOB_ID}"))
                 , null
-                , context.accountingProject.orElse(null))
+                , context.accountingName.orElse(null))
         this.localToolPath = context.configuration.getSourceToolPath(toolID)
         this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectJobIDsFromFiles(parentFiles), jobManager))
         this.context = context

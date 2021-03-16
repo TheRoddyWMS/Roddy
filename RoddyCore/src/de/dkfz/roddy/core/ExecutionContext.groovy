@@ -20,7 +20,7 @@ import groovy.transform.CompileStatic
 import java.util.logging.Level
 
 /**
- * An ExecutionContect is the runtime context for an analysis and a DataSet.<br />
+ * An ExecutionContext is the runtime context for an analysis and a DataSet.<br />
  * It keeps track of context relevant information like:<br />
  * <ul>
  * <li>Created files</li>
@@ -375,8 +375,10 @@ class ExecutionContext {
         this.executingUser = p
     }
 
-    Optional<String> getAccountingProject() {
-        Optional.ofNullable(configurationValues.getString("accountingProject", null))
+    Optional<String> getAccountingName() {
+        Optional.ofNullable(configurationValues.
+                getString(ConfigurationConstants.CVALUE_ACCOUNTING_NAME,
+                        null))
     }
 
     /**

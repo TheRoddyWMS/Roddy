@@ -7,7 +7,7 @@
 package de.dkfz.roddy;
 
 /**
- * Several publically available constants for the Roddy framework
+ * Several public constants for the Roddy framework.
  * The build strings are automatically updated on command line compilation.
  */
 public class Constants {
@@ -74,7 +74,7 @@ public class Constants {
     public static final String PARAMETER_FILE = "PARAMETER_FILE";
     public static final String ANALYSIS_DIR = "ANALYSIS_DIR";
     public static final String PARAMETER_FILE_SUFFIX = ".parameters";
-    public static final String PROJECT_NAME = "projectName";
+    public static final String PROJECT_CONFIGURATION_NAME = "projectName";
     public static final String DATASET = "dataSet";
     public static final String DATASET_HR = "dataset";
     public static final String DATASET_CAP = "DATASET";

@@ -76,7 +76,7 @@ class RuntimeServiceTest {
         return value.
                 replace("\${${ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY}}", outputBaseDirectory.toString()).
                 replace("\${${ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY}}", inputBaseDirectory.toString()).
-                replace("\${${Constants.PROJECT_NAME}}", mockedContext.project.configurationName).
+                replace("\${${Constants.PROJECT_CONFIGURATION_NAME}}", mockedContext.project.configurationName).
                 replace("\${${Constants.DATASET}}", mockedContext.dataSet.id)
     }
 
