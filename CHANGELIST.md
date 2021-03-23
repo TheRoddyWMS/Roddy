@@ -3,14 +3,14 @@
 * 3.6.0
 
   - Bumped to use BatchEuphoria 0.0.12
-  - Added `accountingProject` to use allow project accounting (for BE 0.0.12 only for LSF)
+  - Added `accountingName` to allow project accounting in cluster (for BE 0.0.12)
 
 * 3.5.9
 
-  - The LocalExecutionService ignored errors of asychronously executed commands. 
+  - The LocalExecutionService ignored errors of asynchronously executed commands. 
     Now errors Roddy detects errors and reports their standard and error output.
   - LocalExecutionService always executes commands via `bash -c` (before it
-    did so only if the process was sychronously executed)
+    did so only if the process was synchronously executed)
   - Update of RoddyToolLib to fix error handling in asynchronous execution and
     with multi-threading and command-output processing (StringBuilder->StringBuffer)
 
