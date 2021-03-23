@@ -33,7 +33,6 @@ Roddy can exit with a range of exit codes which are:
     "241", "Unknown SSH host. Change the hostname, it is possibly wrong."
     "240", "SSH setup is not valid. Please follow the instructions and check your application ini file."
     "239", "Fatal error during SSH setup. Please contact us in this case."
-    
     "100", "Someone uses a wrong exit code somewhere in Roddy. Exit codes should be in class ExitReasons (if possible) and must be in the range [1;255]."
 
 In any case, we try to provide you a good explanation about what happened wrong and how you can solve it. If you find

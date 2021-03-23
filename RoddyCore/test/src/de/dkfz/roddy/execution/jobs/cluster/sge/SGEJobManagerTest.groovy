@@ -31,7 +31,9 @@ class SGEJobManagerTest {
         ResourceSet rset2 = new ResourceSet(ResourceSetSize.l, null, null, 1, new TimeUnit("h"), null, null, null)
         ResourceSet rset3 = new ResourceSet(ResourceSetSize.l, new BufferValue(1, BufferUnit.G), 2, null, null as TimeUnit, null, null, null)
 
-        Configuration cfg = new Configuration(new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "", ResourceSetSize.l, null, null, null, null))
+        Configuration cfg = new Configuration(
+                new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "test", "", "", null, "",
+                        ResourceSetSize.l, null, null, null, null))
 
         BatchEuphoriaJobManager cFactory = null; //new SGEJobManager(false);
         ProcessingParameters test = (ProcessingParameters) cFactory.convertResourceSet(null, rset1)

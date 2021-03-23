@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+ * Copyright (c) 2021 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
@@ -229,22 +229,25 @@ class Configuration implements ContainerParent<Configuration>, ConfigurationIssu
     }
 
     /**
-     * If the configuration is a project configuration then the name of the project will be returned.
-     * Variants do not alter the project name and use the name of the first project found in their parents.
-     * If the project name is not set this returns the configurations simple name (i.e. project, but not qcpipeline.project)
-     * TODO: Implement and verify rules: A project can extend a project and a workflow. A variant can extend a project or a variant.
+     * Given a configuration, get the specified field from the configuration or any of its parents. The priority is as
+     * follows.
      *
-     * @return The projects name or null.
+     * 1. field from the configuration itself, if it is a project configuration
+     * 2. "null" for any non-project configuration of lower priority than project (according to ConfigurationType)
+     * 3. the first non-null value for any parent-configuration, which are queried in a recursive, depth-first way
+     *    in the order of the `parent` field.
+     *
+     * @return The project name or null.
      */
     String getProjectName() {
-        //Search the configuration from which to take the name.
+        // Search the configuration from which to take the name.
         String projectName = null
         if (this.getConfigurationLevel() == ConfigurationType.PROJECT) {
             projectName = configurationValues.get('projectName', name).toString()
         } else if (this.preloadedConfiguration.type.ordinal() < ConfigurationType.PROJECT.ordinal()) {
-            //This is not a project configuration and not a variant.
+            // This is not a project configuration and not a variant.
         } else if (this.preloadedConfiguration.type.ordinal() > ConfigurationType.PROJECT.ordinal()) {
-            //Return the parents getProjectName(). This is recursive and should lead to the project configuration.
+            // Return the parent.projectName. This is recursive and should lead to the project configuration.
             String tempName = null
             for (Configuration parent : parents) {
                 String tName = parent.projectName

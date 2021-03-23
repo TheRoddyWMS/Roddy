@@ -96,6 +96,7 @@ class Analysis {
         return groupID
     }
 
+
     private ContextConfiguration _analysisConfiguration = null
 
     /**
@@ -116,10 +117,10 @@ class Analysis {
             _analysisConfiguration = new ContextConfiguration((AnalysisConfiguration) this.configuration,
                                                               (ProjectConfiguration) this.project.configuration)
             [
-                    (Constants.USERNAME)    : username,
-                    (Constants.USERGROUP)   : usergroup,
-                    (Constants.USERHOME)    : FileSystemAccessProvider.instance.userDirectory.absolutePath,
-                    (Constants.PROJECT_NAME): project.name,
+                    (Constants.USERNAME)                  : username,
+                    (Constants.USERGROUP)                 : usergroup,
+                    (Constants.USERHOME)                  : FileSystemAccessProvider.instance.userDirectory.absolutePath,
+                    (Constants.PROJECT_CONFIGURATION_NAME): project.configurationName,
             ].each { String k, String v ->
                 _analysisConfiguration.configurationValues << new ConfigurationValue(_analysisConfiguration, k, v)
             }
@@ -204,7 +205,8 @@ class Analysis {
 
             ExecutionContext context =
                     new ExecutionContext(FileSystemAccessProvider.instance.callWhoAmI(), this, ds, level,
-                            ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null, creationCheckPoint)
+                            ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this),
+                            null, creationCheckPoint)
 
             executeRun(context, preventLoggingOnQueryStatus)
             runs.add(context)
@@ -649,7 +651,8 @@ class Analysis {
         for (DataSet ds : dataSets) {
 
             ExecutionContext context = new ExecutionContext(FileSystemAccessProvider.instance.callWhoAmI(), this,
-                    ds, ExecutionContextLevel.CLEANUP, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this), null)
+                    ds, ExecutionContextLevel.CLEANUP, ds.getOutputFolderForAnalysis(this), ds.getInputFolderForAnalysis(this),
+                    null)
 
             if (analysisConfiguration.hasCleanupScript()) {
                 withErrorReporting(context, false, {

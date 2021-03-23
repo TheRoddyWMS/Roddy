@@ -61,5 +61,5 @@ Beware that you may have multiple execution store directories if Roddy was run w
 
 If you are paranoid, you should always restart your analysis completely, if you intend to change any of the above mentioned factors like configurations, etc. If you know what you do, you may decide differently and change parameters even for an individual dataset, but then you should document what you do. It is really easy to mess up the configuration by changing a configuration value in a file. Better use versioned configuration files.
 
-Of course similar problems arise if you have multiple samples processed by different workflow runs and you need a homogenously processed data set.
+Of course similar problems arise if you have multiple samples processed by different workflow runs and you need a homogeneously processed data set.
 

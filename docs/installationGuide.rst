@@ -1,12 +1,12 @@
 .. Links
-.. _`GitHub project site`: https://github.com/eilslabs/Roddy
+.. _`GitHub project site`: https://github.com/TheRoddyWMS/Roddy
 .. _`JRE v1.8.*`: https://java.com/de/download/linux_manual.jsp
 .. _`JDK v1.8.*`: http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
 .. _`Groovy 2.3.*`: http://groovy-lang.org/download.html
 .. _`Maven Groovy repository`: http://repo1.maven.org/maven2/org/codehaus/groovy/groovy-binary/
 .. _`GroovyServ` : https://kobo.github.io/groovyserv/
 .. _`SDKMan` : http://sdkman.io/
-.. _`Github Releases` : https://github.com/eilslabs/Roddy/releases
+.. _`Github Releases` : https://github.com/TheRoddyWMS/Roddy/releases
 
 .. Document
 
@@ -169,7 +169,7 @@ If you want to build Roddy yourself, clone the repository. The repository alread
 
 .. code-block:: bash
 
-    git clone https://github.com/eilslabs/Roddy.git
+    git clone https://github.com/TheRoddyWMS/Roddy.git
     cd Roddy
     git checkout develop
     pushd dist/plugins
@@ -240,12 +240,12 @@ IntelliJ
 4. Import the five source repositories via "File" -> "Project Structure" -> "+" (Module pane). For import select the `build.gradle` from the specific repository.
 5. Open the Gradle tasks window by clicking on the Gradle symbol on the task bar. If there is no Gradle symbol in the tool bars of IntelliJ, select "View" -> "Tool Windows" -> "Gradle".
 6. Configure the composite Gradle builds by right-clicking on the gradle project.
-7. Now if you go to the Gradle toolbar and select the `build` target of Roddy, RoddyToolLib, BatchEuphoria and Roddy itself will be build with Gradle.
+7. Now, if you go to the Gradle toolbar and select the `build` target of Roddy, RoddyToolLib, BatchEuphoria and Roddy itself will be build with Gradle.
 
 Setting up plugins in the project
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-After these initial steps you can add your Roddy plugins to you project. We usually clone the plugin repositories into a dedicated `plugins_R3.0/` directory just beneath the root project directory (the now not so empty project that you initially created). This directory is then used for the `usePluginVersion` command-line option or in the `applicationProperties.ini`. The only exception are the `DefaultPlugin` and `PluginBase` that need to be in the `Roddy/dist/plugins` directory.
+After these initial steps you can add your Roddy plugins to you project. We usually clone the plugin repositories into a dedicated `plugins/` directory just beneath the root project directory (the now not so empty project that you initially created). This directory is then used for the `usePluginVersion` command-line option or in the `applicationProperties.ini`. The only exception are the `DefaultPlugin` and `PluginBase` that need to be in the `Roddy/dist/plugins` directory.
 
 In IntelliJ then add the repository to your project as a module, ideally by directly importing the `.iml` file from the repository. Make sure that the plugin modules depends on the PluginBase, Roddy_main and maybe RoddyToolLib_main modules.
 

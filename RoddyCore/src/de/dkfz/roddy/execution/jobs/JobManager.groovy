@@ -22,7 +22,7 @@ class JobManager {
     private BatchEuphoriaJobManager jobManager
     
     static JobManager getInstance() {
-        return new JobManager(Roddy.getJobManager())
+        return new JobManager(Roddy.jobManager)
     }
 
     JobManager(BatchEuphoriaJobManager jobManager) {

@@ -27,6 +27,7 @@ Debugging Options
 
 The following options set specific debugging options for Bash
 
+* debugWrapInScript: Toggle debugging of the wrapper script (DefaultPlugin).
 * debugOptionsUsePipefail: `set -o pipefail`
 * debugOptionsUseVerboseOutput: `set -v`
 * debugOptionsUseExecuteOutput: `set -x`
@@ -50,17 +51,20 @@ Additionally, all configuration variables are reached through from the command-l
 Access Rights
 -------------
 
+Note that we suggest you manage the access rights for output files not via Roddy, but by setting proper access rights on the directory path to Roddy's output files.
+
 * processOptionsSetUserGroup
 * processOptionsSetUserMask
 * processOptionsQueryEnv
 * processOptionsQueryID
-* outputAccessRightsForDirectories
-* outputAllowAccessRightsModification";
-* outputAccessRights
-* outputFileGroup
-* outputUMask
+* outputAllowAccessRightsModification": Whether or not access rights are are managed by Roddy. Some environments may not allow this and produce errors for every access rights modification attempt.
+* outputFileGroup: Group ownership of output files.
+* outputAccessRights: Exact access rights, output files should have.
+* outputAccessRightsForDirectories: Exact access rights, output directories should have.
+* outputUMask: Umask for output files
 
 Other Variables
 ---------------
 
-* usedResourcesSize
+* usedResourcesSize: Five resource sets can be defined and with this variable. Use the following abbreviations: t(iny/est), s(mall), m(edium), l(arge) xl (extra large). The resource sets are defined in the plugin XML, but can also be overridden by XMLs provided via `additionalImports` CLI parameter.
+* accountingName: A name used to associate every job with a accounting information in the cluster system, if this is possible.

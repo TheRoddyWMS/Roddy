@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+ * Copyright (c) 2021 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
@@ -25,7 +25,6 @@ import de.dkfz.roddy.knowledge.nativeworkflows.NativeWorkflow
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.plugins.SyntheticPluginInfo
-
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
@@ -47,14 +46,16 @@ import java.util.logging.Level
 
 import static de.dkfz.roddy.StringConstants.*
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_PATH
-import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_PATH
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING
 
 /**
  * Factory for loading, importing, exporting and writing configuration files.
- * @author michael
+ *
+ * Parameters that affect the loading of the configurations need to be modelled as attributes to the "configuration"
+ * tag. Parameters that affect the configuration of workflows, but also those that may affect the execution, such as
+ * user name, user group, accounting name (for cluster quotas) are modelled as cvalues.
  */
-@groovy.transform.CompileStatic
+@CompileStatic
 class ConfigurationFactory {
 
     public static final String XMLTAG_EXECUTIONSERVICE_SSHUSER = "executionServiceSSHUser"
@@ -82,7 +83,6 @@ class ConfigurationFactory {
     @Deprecated // substitute by a version that returns the singleton
     static void initialize(List<File> configurationDirectories = null) {
         singleton = new ConfigurationFactory(configurationDirectories)
-
     }
 
     static ConfigurationFactory getInstance() {
@@ -177,7 +177,8 @@ class ConfigurationFactory {
             try {
                 def icc = loadInformationalConfigurationContent(file)
 
-                File readmeFile = RoddyIOHelperMethods.assembleLocalPath(pluginsByFile[file].directory, "README." + icc.id + ".md")
+                File readmeFile = RoddyIOHelperMethods.
+                        assembleLocalPath(pluginsByFile[file].directory, "README." + icc.id + ".md")
                 if (readmeFile.exists())
                     icc.setReadmeFile(readmeFile)
 
@@ -197,7 +198,7 @@ class ConfigurationFactory {
 
             } catch (ParseException ex) {
                 logger.rare("File ${file} is not a valid Roddy configuration file. Skipped!")
-            } catch (org.xml.sax.SAXParseException ex) {
+            } catch (SAXParseException ex) {
                 throw new ProjectLoaderException("The validation of a configuration file ${file.absolutePath} failed.")
             } catch (Exception ex) {
                 logger.severe("An unknown exception occured during the attempt to load a configuration file:\n\t${file.absolutePath} cannot be loaded.\n\t${ex.toString()}")
@@ -212,7 +213,7 @@ class ConfigurationFactory {
     }
 
     /**
-     * Returns a list of all availabe analysis configurations.
+     * Returns a list of all available analysis configurations.
      * Returns an empty list if no configurations is known.
      * @return
      */
@@ -221,7 +222,7 @@ class ConfigurationFactory {
     }
 
     /**
-     * Returns a list of all availabe project configurations.
+     * Returns a list of all available project configurations.
      * Returns an empty list if no configurations is known.
      * @return
      */
@@ -230,7 +231,7 @@ class ConfigurationFactory {
     }
 
     /**
-     * Returns a list of all availabe configurations of the given type.
+     * Returns a list of all available configurations of the given type.
      * Returns an empty list if no configurations is known.
      * @return
      */
@@ -304,13 +305,16 @@ class ConfigurationFactory {
      * @param configurationNode
      * @return
      */
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic(TypeCheckingMode.SKIP)
     private PreloadedConfiguration _preloadConfiguration(File file, String text, NodeChild configurationNode, PreloadedConfiguration parent) {
-        NodeChild.metaClass.extract = { String id, String defaultValue -> return extractAttributeText((NodeChild) delegate, id, defaultValue) }
-        List<PreloadedConfiguration> subConf = new LinkedList<PreloadedConfiguration>()
+        NodeChild.metaClass.extract = { String id, String defaultValue ->
+            extractAttributeText((NodeChild) delegate, id, defaultValue)
+        }
+        List<PreloadedConfiguration> subConf = []
         PreloadedConfiguration icc
 
-        Configuration.ConfigurationType type = extractAttributeText(configurationNode, "configurationType", parent != null ? parent.type.name().toUpperCase() : Configuration.ConfigurationType.OTHER.name()).toUpperCase()
+        ConfigurationType type = extractAttributeText(configurationNode, "configurationType",
+                parent != null ? parent.type.name().toUpperCase() : Configuration.ConfigurationType.OTHER.name()).toUpperCase()
         String cls = extractAttributeText(configurationNode, "class", Project.class.name)
         String name = extractAttributeText(configurationNode, "name")
         String description = extractAttributeText(configurationNode, "description")
@@ -325,10 +329,15 @@ class ConfigurationFactory {
             } else {
                 analyses = parent.getListOfAnalyses()
             }
-            ResourceSetSize setSize = ResourceSetSize.valueOf(extractAttributeText(configurationNode, "usedresourcessize", "l"))
-            icc = new PreloadedConfiguration(parent, type, name, description, cls, configurationNode, imports, setSize, analyses, subConf, file, text)
+            ResourceSetSize setSize = ResourceSetSize.valueOf(
+                    extractAttributeText(configurationNode, "usedresourcessize", "l"))
+            icc = new PreloadedConfiguration(
+                    parent, type, name, description, cls, configurationNode, imports, setSize,
+                    analyses, subConf, file, text)
         } else {
-            icc = new PreloadedConfiguration(parent, type, name, description, cls, configurationNode, imports, subConf, file, text)
+            icc = new PreloadedConfiguration(
+                    parent, type, name, description, cls, configurationNode, imports,
+                    subConf, file, text)
         }
 
         for (subConfiguration in configurationNode.subconfigurations.configuration) {
@@ -338,7 +347,7 @@ class ConfigurationFactory {
         return icc
     }
 
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic(TypeCheckingMode.SKIP)
     private List<String> _loadPreloadedConfigurationAnalyses(NodeChildren analyses) {
         List<String> listOfanalyses = []
         for (analysis in analyses.analysis) {
@@ -465,7 +474,7 @@ class ConfigurationFactory {
      * @param parentConfig A (optionally) available parent configuration.
      * @return A new configuration object
      */
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic(TypeCheckingMode.SKIP)
     private Configuration createConfigurationObject(PreloadedConfiguration icc, NodeChild configurationNode, Configuration parentConfig) {
         Configuration config
         if (icc.type >= ConfigurationType.PROJECT) {
@@ -509,8 +518,8 @@ class ConfigurationFactory {
                 ((AnalysisConfiguration) config).setJobManagerFactory(jobManagerClass)
             }
             if (brawlWorkflow) {
-                ((de.dkfz.roddy.config.AnalysisConfiguration) config).setBrawlWorkflow(brawlWorkflow)
-                ((de.dkfz.roddy.config.AnalysisConfiguration) config).setBrawlBaseWorkflow(brawlBaseWorkflow)
+                ((AnalysisConfiguration) config).setBrawlWorkflow(brawlWorkflow)
+                ((AnalysisConfiguration) config).setBrawlBaseWorkflow(brawlBaseWorkflow)
             }
 
         } else {
@@ -519,7 +528,7 @@ class ConfigurationFactory {
         return config
     }
 
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic(TypeCheckingMode.SKIP)
     private void readValueBundles(NodeChild configurationNode, Configuration config) {
         Map<String, ConfigurationValueBundle> cvBundles = config.getConfigurationValueBundles().getMap()
 
@@ -534,7 +543,7 @@ class ConfigurationFactory {
         }
     }
 
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic(TypeCheckingMode.SKIP)
     private static Map<String, FilenamePattern> readFilenamePatterns(NodeChild configurationNode) {
         Map<String, FilenamePattern> filenamePatterns = [:]
 
@@ -571,7 +580,7 @@ class ConfigurationFactory {
         return filenamePatterns
     }
 
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic(TypeCheckingMode.SKIP)
     static FilenamePattern readDerivedFromFilenamePattern(String pkg, NodeChild filename) {
         String classSimpleName = filename.@class.text()
         String fnDerivedFrom = filename.@derivedFrom.text()
@@ -661,7 +670,7 @@ class ConfigurationFactory {
         new OnMethodFilenamePattern(_cls, calledClass, method, pattern, selectionTag)
     }
 
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic(TypeCheckingMode.SKIP)
     static FilenamePattern readOnScriptParameterFilenamePattern(String pkg, NodeChild filename) {
         String scriptParameter = filename.@onScriptParameter.text()
         String pattern = filename.@pattern.text()
@@ -695,7 +704,7 @@ class ConfigurationFactory {
         return fp
     }
 
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic(TypeCheckingMode.SKIP)
     static FilenamePattern readOnToolFilenamePattern(String pkg, NodeChild filename) {
         Class<FileObject> _cls = loadPatternClass(pkg, filename.@class.text(), BaseFile).x
         String scriptName = filename.@onTool.text()
@@ -705,7 +714,7 @@ class ConfigurationFactory {
         return fp
     }
 
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic(TypeCheckingMode.SKIP)
     static FilenamePattern readFileStageFilenamePattern(String pkg, String filestagesbase, NodeChild filename) {
         Class<FileObject> _cls = loadPatternClass(pkg, filename.@class.text(), BaseFile).x
         String fileStage = filename.@fileStage.text()
@@ -744,7 +753,7 @@ class ConfigurationFactory {
         return fp
     }
 
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic(TypeCheckingMode.SKIP)
     boolean readProcessingTools(NodeChild configurationNode, Configuration config) {
         Map<String, ToolEntry> toolEntries = config.getTools().getMap()
         boolean hasErrors = false

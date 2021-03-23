@@ -2,9 +2,9 @@ Cheat sheet
 ===========
 
 This page is for those amongst you, that need to rush in or just need a
-fresreshment, when it comes to Roddy usage. We will mostly list useful
+refreshment when it comes to Roddy usage. We will mostly list useful
 commands and that’s it. No big explanations or other things. If you
-need this, open up the :doc:`walkthrough`.
+need more information, open up the :doc:`walkthrough`.
 
 Create a new project
 ~~~~~~~~~~~~~~~~~~~~

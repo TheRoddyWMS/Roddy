@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+ * Copyright (c) 2021 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
@@ -34,15 +34,18 @@ class LocalExecutionService extends ExecutionService {
 
     @Override
     String getUsername() {
-        return SystemProperties.getUserName()
+        return SystemProperties.userName
     }
 
     @Override
     void addSpecificSettingsToConfiguration(Configuration configuration) {
         //Disable several things which don't work.
-        configuration.getConfigurationValues().add(new ConfigurationValue(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, "false"))
-        configuration.getConfigurationValues().add(new ConfigurationValue(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERMASK, "false"))
-        configuration.getConfigurationValues().add(new ConfigurationValue(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_QUERY_ID, "false"))
+        configuration.getConfigurationValues().
+                add(new ConfigurationValue(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, "false"))
+        configuration.getConfigurationValues().
+                add(new ConfigurationValue(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERMASK, "false"))
+        configuration.getConfigurationValues().
+                add(new ConfigurationValue(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_QUERY_ID, "false"))
     }
 
     @Override
@@ -83,8 +86,8 @@ class LocalExecutionService extends ExecutionService {
         } else {
             ProcessBuilder processBuilder = new ProcessBuilder(["bash", "-c", command])
             Process process = processBuilder.start()
-            Future<List<String>> stdout = asyncReadStringStream(process.getInputStream())
-            Future<List<String>> stderr = asyncReadStringStream(process.getErrorStream())
+            Future<List<String>> stdout = asyncReadStringStream(process.inputStream)
+            Future<List<String>> stderr = asyncReadStringStream(process.errorStream)
             Future<Integer> exitCode = CompletableFuture.supplyAsync({
                 int exitCode = 0
                 String message = null

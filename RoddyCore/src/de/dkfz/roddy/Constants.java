@@ -7,7 +7,7 @@
 package de.dkfz.roddy;
 
 /**
- * Several publically available constants for the Roddy framework
+ * Several public constants for the Roddy framework.
  * The build strings are automatically updated on command line compilation.
  */
 public class Constants {
@@ -16,8 +16,8 @@ public class Constants {
     // Application constants
     /////////////////////////
 
-    public static final String APP_CURRENT_VERSION_STRING = "3.5.9";
-    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Wed Oct 21 17:08:57 CEST 2020";
+    public static final String APP_CURRENT_VERSION_STRING = "3.6.0";
+    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Fri Jan 29 16:39:01 CET 2021";
     public static final String APP_PROPERTY_JOB_MANAGER_CLASS = "jobManagerClass";
     public static final String APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS = "fileSystemAccessManagerClass";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_CLASS = "executionServiceClass";
@@ -74,7 +74,7 @@ public class Constants {
     public static final String PARAMETER_FILE = "PARAMETER_FILE";
     public static final String ANALYSIS_DIR = "ANALYSIS_DIR";
     public static final String PARAMETER_FILE_SUFFIX = ".parameters";
-    public static final String PROJECT_NAME = "projectName";
+    public static final String PROJECT_CONFIGURATION_NAME = "projectName";
     public static final String DATASET = "dataSet";
     public static final String DATASET_HR = "dataset";
     public static final String DATASET_CAP = "DATASET";

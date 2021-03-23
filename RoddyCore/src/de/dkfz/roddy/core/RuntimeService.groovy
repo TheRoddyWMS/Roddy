@@ -516,11 +516,8 @@ class RuntimeService {
      * </ul>
      */
     boolean isFileValid(BaseFile baseFile) {
-
-        //Parents valid?
-        boolean parentsValid = true
         for (BaseFile bf in baseFile.parentFiles) {
-            if (bf.isTemporaryFile()) continue //We do not check the existence of parent files which are temporary.
+            if (bf.isTemporaryFile()) continue
             if (bf.isSourceFile()) continue
             if (!bf.isFileValid()) {
                 return false
@@ -547,7 +544,6 @@ class RuntimeService {
         }
 
         try {
-            //Does it exist and is it readable?
             if (result && !baseFile.isFileReadable()) {
                 result = false
             }
@@ -563,11 +559,6 @@ class RuntimeService {
             }
         } catch (Exception ex) {
             result = false
-        }
-
-        // TODO? If the file is not valid then also temporary parent files should be invalidated! Or at least checked.
-        if (!result) {
-            // Something is missing here! Michael?
         }
 
         return result

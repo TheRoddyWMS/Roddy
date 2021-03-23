@@ -80,4 +80,6 @@ public class ConfigurationConstants {
 
     public static final String CFG_USED_RESOURCES_SIZE = "usedResourcesSize";
 
+    public static final String CVALUE_ACCOUNTING_NAME = "accountingName";
+
 }

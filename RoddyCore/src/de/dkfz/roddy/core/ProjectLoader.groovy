@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+ * Copyright (c) 2021 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
@@ -17,7 +17,9 @@ import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.config.validation.XSDValidator
 import de.dkfz.roddy.execution.io.MetadataTableFactory
 import de.dkfz.roddy.plugins.*
+import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
+import groovy.transform.CompileStatic
 
 import java.lang.reflect.InvocationTargetException
 import java.nio.channels.FileLock
@@ -28,10 +30,10 @@ import static de.dkfz.roddy.Constants.RODDY_CONFIGURATION_MAGICSTRING
  * The project factory converts a configuration to a project/analysis. It stores a reference to already loaded projects and reuses them if possible.
  * A project can have multiple analyses
  */
-@groovy.transform.CompileStatic
+@CompileStatic
 class ProjectLoader {
 
-    private static final de.dkfz.roddy.tools.LoggerWrapper logger = de.dkfz.roddy.tools.LoggerWrapper.getLogger(ProjectLoader.class.getSimpleName());
+    private static final LoggerWrapper logger = LoggerWrapper.getLogger(ProjectLoader.class.simpleName)
 
     /**
      * Cache necessary for RMI... TODO Better into libraries factory?

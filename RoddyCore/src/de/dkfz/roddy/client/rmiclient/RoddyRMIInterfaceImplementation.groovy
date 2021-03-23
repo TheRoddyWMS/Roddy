@@ -23,7 +23,6 @@ import de.dkfz.roddy.execution.jobs.JobState;
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
-import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 import java.rmi.RemoteException
 
@@ -32,79 +31,79 @@ import java.rmi.RemoteException
  * Created by heinold on 07.09.16.
  */
 @CompileStatic
-public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
+class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
 
-    public static class DataSetInfoObject implements Serializable {
+    static class DataSetInfoObject implements Serializable {
 
-        final long classversion = 1;
+        final long classversion = 1
 
-        String id;
-        String project;
-        File path;
+        String id
+        String project
+        File path
 
         DataSetInfoObject(DataSet ds) {
             this.id = ds.id
-            this.project = ds.getProject().getName()
-            this.path = ds.getOutputBaseFolder()
+            this.project = ds.project.configurationName
+            this.path = ds.outputBaseFolder
         }
     }
 
-    public static class ExtendedDataSetInfoObject implements Serializable {
+    static class ExtendedDataSetInfoObject implements Serializable {
 
-        final long classversion = 1;
+        final long classversion = 1
 
         DataSetInfoObject dataSetInfoObject;
 
         ExtendedDataSetInfoObject(DataSet ds) {
-            this.dataSetInfoObject = new DataSetInfoObject(ds);
+            this.dataSetInfoObject = new DataSetInfoObject(ds)
         }
     }
 
-    public static class JobInfoObject implements Serializable {
+    static class JobInfoObject implements Serializable {
 
-        final long classversion = 1;
+        final long classversion = 1
 
-        String jobId;
-        String jobName;
-        String toolId;
+        String jobId
+        String jobName
+        String toolId
         File logFile
 
-        JobState jobState;
-        boolean isFakeJob;
+        JobState jobState
+        boolean isFakeJob
 
-        Map<String, String> parameters;
+        Map<String, String> parameters
         Map<File, String> parentFiles
 
         JobInfoObject(Job job) {
-            jobId = job.getJobID()
-            jobName = job.getJobName()
-            toolId = job.getToolID()
-            logFile = job.getLogFile()
+            jobId = job.jobID
+            jobName = job.jobName
+            toolId = job.toolID
+            logFile = job.logFile
 
-            jobState = job.getJobState()
-            isFakeJob = job.isFakeJob()
+            jobState = job.jobState
+            isFakeJob = job.fakeJob
 
-            parameters = job.getParameters()
-            parentFiles = job.getParentFiles().collectEntries { return [it.absolutePath, it.class.name] }
+            parameters = job.parameters
+            parentFiles = job.parentFiles.collectEntries { return [it.absolutePath, it.class.name] }
         }
 
-        public boolean isFakeJob() {
+        boolean isFakeJob() {
             return isFakeJob
         }
 
         Map<String, String> getParameters() {
-            return parameters;
+            return parameters
         }
 
         boolean hasLogFile() {
-            return logFile;
+            return logFile
         }
     }
 
 
-    public static class ExtendedDataSetInfoObjectCollection implements Serializable {
+    static class ExtendedDataSetInfoObjectCollection implements Serializable {
 
-        final long classversion = 1;
+        final long classversion = 1
 
         DataSetInfoObject dataset;
 
@@ -114,13 +113,13 @@ public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
 
     }
 
-    public static class ExecutionContextInfoObject implements Serializable {
+    static class ExecutionContextInfoObject implements Serializable {
 
-        final long classversion = 1;
+        final long classversion = 1
 
-        String datasetId;
-        String projectId;
-        String analysisId;
+        String datasetId
+        String projectId
+        String analysisId
 
         File executionDirectory
         File inputDirectory
@@ -132,40 +131,40 @@ public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
         ExecutionContextLevel executionContextLevel
         ExecutionContextSubLevel executionContextSubLevel
 
-        List<JobInfoObject> executedJobs;
-        List<ExecutionContextError> errors;
+        List<JobInfoObject> executedJobs
+        List<ExecutionContextError> errors
 
         ExecutionContextInfoObject(ExecutionContext context) {
-            datasetId = context.getDataSet().getId()
-            projectId = context.getAnalysis().getProject().getName()
-            analysisId = context.getAnalysis().getName()
-            executionDirectory = context.getExecutionDirectory()
-            inputDirectory = context.getInputDirectory()
-            outputDirectory = context.getOutputDirectory()
-            executingUser = context.getExecutingUser()
+            datasetId = context.dataSet.id
+            projectId = context.analysis.project.configurationName
+            analysisId = context.analysis.name
+            executionDirectory = context.executionDirectory
+            inputDirectory = context.inputDirectory
+            outputDirectory = context.outputDirectory
+            executingUser = context.executingUser
 
-            executionDate = context.getTimestamp();
-            executionDateHumanReadable = InfoObject.formatTimestampReadable(context.getTimestamp());
-            executionContextLevel = context.getExecutionContextLevel()
-            executionContextSubLevel = context.getDetailedExecutionContextLevel();
+            executionDate = context.timestamp
+            executionDateHumanReadable = InfoObject.formatTimestampReadable(context.getTimestamp())
+            executionContextLevel = context.executionContextLevel
+            executionContextSubLevel = context.detailedExecutionContextLevel
 
-            executedJobs = context.getStartedJobs().collect { new JobInfoObject(it) }
-            errors = context.getErrors()
+            executedJobs = context.startedJobs.collect { new JobInfoObject(it) }
+            errors = context.errors
         }
 
         ExecutionContextInfoObject(AnalysisProcessingInformation api) {
-            this(api.getDetailedProcessingInfo())
+            this(api.detailedProcessingInfo)
 
             executionDirectory = api.execPath
-            executionDate = api.getExecutionDate()
-            executionDateHumanReadable = api.getExecutionDateHumanReadable()
+            executionDate = api.executionDate
+            executionDateHumanReadable = api.executionDateHumanReadable
         }
 
     }
 
-    private static LoggerWrapper logger = LoggerWrapper.getLogger(RoddyRMIInterfaceImplementation.class.name);
+    private static LoggerWrapper logger = LoggerWrapper.getLogger(RoddyRMIInterfaceImplementation.class.name)
 
-    public final long interfaceClassVersion = 1;
+    public final long interfaceClassVersion = 1
 
     private Map<String, Analysis> analysesById = [:]
 
@@ -175,21 +174,21 @@ public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
     boolean ping(boolean keepalive) throws RemoteException {
         println("ping ($keepalive)")
         if (keepalive)
-            RoddyRMIServer.touchServer();
-        return RoddyRMIServer.isActive();
+            RoddyRMIServer.touchServer()
+        return RoddyRMIServer.active
     }
 
     @Override
     void close() {
-        RoddyRMIServer.stopServer();
+        RoddyRMIServer.stopServer()
     }
 
     @Override
     long getInterfaceClassVersion() throws RemoteException {
-        return interfaceClassVersion;
+        return interfaceClassVersion
     }
 
-    public static String reformatAnalysisId(String analysisId) {
+    static String reformatAnalysisId(String analysisId) {
         return analysisId.split("::")[0]
     }
 
@@ -202,10 +201,10 @@ public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
         analysisId = reformatAnalysisId(analysisId); // ensure, that long id's also work.
         if (!analysesById.containsKey(analysisId)) {
             // We correct the analysisId and load it a bit differently than usual
-            String project = Roddy.getCommandLineCall().getArguments()[1].split("[@]")[0]
-            analysesById[analysisId] = RoddyCLIClient.loadAnalysisOrFail("${project}@${analysisId}");
+            String project = Roddy.commandLineCall.arguments[1].split("[@]")[0]
+            analysesById[analysisId] = RoddyCLIClient.loadAnalysisOrFail("${project}@${analysisId}")
         }
-        return analysesById[analysisId];
+        return analysesById[analysisId]
     }
 
     public Map<String, DataSet> getDataSetsForAnalysis(String analysisId) {
@@ -213,10 +212,11 @@ public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
         synchronized (dataSetsByAnalysisAndId) {
             Analysis analysis = loadAnalysis(analysisId)
             if (!analysis)
-                return [:];
+                return [:]
             if (!dataSetsByAnalysisAndId[analysisId])
-                dataSetsByAnalysisAndId[analysisId] = analysis.getRuntimeService().getListOfPossibleDataSets(analysis).collectEntries { DataSet it -> [it.id, it] } as Map<String, DataSet>
-            return dataSetsByAnalysisAndId[analysisId];
+                dataSetsByAnalysisAndId[analysisId] = analysis.runtimeService.getListOfPossibleDataSets(analysis).
+                        collectEntries { DataSet it -> [it.id, it] } as Map<String, DataSet>
+            return dataSetsByAnalysisAndId[analysisId]
         }
     }
 
@@ -228,20 +228,24 @@ public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
     def withServer(String message = "", def defaultResult, Closure c) {
         if (message)
             logger.postAlwaysInfo(message)
-        RoddyRMIServer.touchServer();
-        def result = defaultResult;
+        RoddyRMIServer.touchServer()
+        def result = defaultResult
         try {
             result = c()
-            RoddyRMIServer.touchServer();
+            RoddyRMIServer.touchServer()
         } catch (Exception ex) {
-            logger.postAlwaysInfo("Error in RMI Server call:\n" + RoddyIOHelperMethods.getStackTraceAsString(ex));
+            logger.postAlwaysInfo("Error in RMI Server call:\n" + RoddyIOHelperMethods.getStackTraceAsString(ex))
         }
-        return result;
+        return result
     }
 
     @Override
     List<DataSetInfoObject> listdatasets(String analysisId) {
-        return withServer("listdatasets for $analysisId", [], { getDataSetsForAnalysis(analysisId).values().collect { new DataSetInfoObject(it) } }) as List<DataSetInfoObject>;
+        return withServer("listdatasets for $analysisId", [],
+                { getDataSetsForAnalysis(analysisId).values().collect {
+                        new DataSetInfoObject(it)
+                    }
+                }) as List<DataSetInfoObject>
     }
 
     @Override
@@ -250,14 +254,14 @@ public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
             Analysis analysis = loadAnalysis(analysisId);
             DataSet ds = getDataSetsForAnalysis(analysisId)[id]
 
-            ExtendedDataSetInfoObjectCollection ioc = new ExtendedDataSetInfoObjectCollection();
+            ExtendedDataSetInfoObjectCollection ioc = new ExtendedDataSetInfoObjectCollection()
             ioc.dataset = new DataSetInfoObject(ds);
 
-            List<AnalysisProcessingInformation> processingInformation = ds.getProcessingInformation(analysis);
+            List<AnalysisProcessingInformation> processingInformation = ds.getProcessingInformation(analysis)
 
             ioc.list = ds.getProcessingInformation(analysis).collect {
                 AnalysisProcessingInformation api ->
-                    new ExecutionContextInfoObject(api);
+                    new ExecutionContextInfoObject(api)
             }
             return ioc
         }) as ExtendedDataSetInfoObjectCollection
@@ -277,25 +281,36 @@ public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
         return withServer(false, {
             if (queryDataSetState(id, analysisId) == JobState.RUNNING) return false
             def analysis = loadAnalysis(analysisId)
-            return ExecutionContext.createAnalysisWorkflowObject(analysis).checkExecutability(analysis.run([id], ExecutionContextLevel.QUERY_STATUS)[0]);
-        });
+            return ExecutionContext.createAnalysisWorkflowObject(analysis).
+                    checkExecutability(analysis.run([id], ExecutionContextLevel.QUERY_STATUS)[0])
+        })
     }
 
     @Override
     List<ExecutionContextInfoObject> run(List<String> datasetIds, String analysisId) throws RemoteException {
-        return withServer([], { loadAnalysis(analysisId).run(datasetIds, ExecutionContextLevel.RUN).collect { new ExecutionContextInfoObject(it) }; }) as List<ExecutionContextInfoObject>
+        return withServer([], {
+            loadAnalysis(analysisId).run(datasetIds, ExecutionContextLevel.RUN).collect {
+                new ExecutionContextInfoObject(it)
+            }
+        }) as List<ExecutionContextInfoObject>
     }
 
     @Override
     List<ExecutionContextInfoObject> testrun(List<String> datasetIds, String analysisId) {
-        return withServer([], { loadAnalysis(analysisId).run(datasetIds, ExecutionContextLevel.QUERY_STATUS).collect { new ExecutionContextInfoObject(it) }; }) as List<ExecutionContextInfoObject>;
+        return withServer([], {
+            loadAnalysis(analysisId).run(datasetIds, ExecutionContextLevel.QUERY_STATUS).collect {
+                new ExecutionContextInfoObject(it)
+            }
+        }) as List<ExecutionContextInfoObject>
     }
 
     @Override
     List<ExecutionContextInfoObject> rerun(List<String> datasetIds, String analysisId) throws RemoteException {
         return withServer([], {
             Analysis analysis = loadAnalysis(analysisId);
-            return analysis.rerun(analysis.run(datasetIds, ExecutionContextLevel.QUERY_STATUS), false).collect { new ExecutionContextInfoObject(it) };
+            return analysis.rerun(analysis.run(datasetIds, ExecutionContextLevel.QUERY_STATUS), false).collect {
+                new ExecutionContextInfoObject(it)
+            }
         }) as List<ExecutionContextInfoObject>
     }
 
@@ -303,22 +318,26 @@ public class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
     List<ExecutionContextInfoObject> testrerun(List<String> datasetIds, String analysisId) throws RemoteException {
         return withServer([], {
             Analysis analysis = loadAnalysis(analysisId);
-            return analysis.rerun(analysis.run(datasetIds, ExecutionContextLevel.QUERY_STATUS), true).collect { new ExecutionContextInfoObject(it) };
+            return analysis.rerun(analysis.run(datasetIds, ExecutionContextLevel.QUERY_STATUS), true).collect {
+                new ExecutionContextInfoObject(it)
+            }
         }) as List<ExecutionContextInfoObject>
     }
 
     @Override
     Map<String, JobState> queryJobState(List<BEJob> jobs) throws RemoteException {
-        return withServer([:], { Roddy.getJobManager().queryJobStatus(jobs); }) as Map<String, JobState>
+        return withServer([:], { Roddy.getJobManager().queryJobStatus(jobs) }) as Map<String, JobState>
     }
 
     @Override
     List<String> readLocalFile(String path) throws RemoteException {
-        return withServer([], { new File(path).readLines(); }) as List<String>;
+        return withServer([], { new File(path).readLines() }) as List<String>
     }
 
     @Override
     List<String> readRemoteFile(String path) throws RemoteException {
-        return withServer([], { Arrays.asList(FileSystemAccessProvider.getInstance().loadTextFile(new File(path))) ?: new String[0] }) as List<String>;
+        return withServer([], {
+            Arrays.asList(FileSystemAccessProvider.instance.loadTextFile(new File(path))) ?: new String[0]
+        }) as List<String>
     }
 }

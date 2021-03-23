@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+ * Copyright (c) 2021 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
@@ -22,7 +22,6 @@ import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.execution.jobs.GenericJobInfo as BEGenJI
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
-import de.dkfz.roddy.knowledge.nativeworkflows.GenericJobInfo
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
@@ -61,7 +60,7 @@ class NativeWorkflow extends Workflow {
     boolean execute(ExecutionContext context) {
         logger.severe("You are using the Native Workflow interface. This might be unstable")
 
-        ExecutionContextLevel level = context.getExecutionContextLevel()
+        ExecutionContextLevel level = context.executionContextLevel
 
         if (level != ExecutionContextLevel.RUN && level != ExecutionContextLevel.RERUN) {
             logger.always("The run mode ${level} is not allowed for native workflows.")
@@ -83,7 +82,7 @@ class NativeWorkflow extends Workflow {
     }
 
     BatchEuphoriaJobManager tryLoadTargetJobManager(ExecutionContext context) {
-        ContextConfiguration configuration = (ContextConfiguration) context.getConfiguration()
+        ContextConfiguration configuration = (ContextConfiguration) context.configuration
         AnalysisConfiguration aCfg = configuration.getAnalysisConfiguration()
 
         try {
@@ -101,22 +100,28 @@ class NativeWorkflow extends Workflow {
         }
     }
 
-    def callAndInterceptNativeWorkflow(ExecutionContext context, BatchEuphoriaJobManager targetJobManager) {
-        ContextConfiguration configuration = (ContextConfiguration) context.getConfiguration()
+    boolean callAndInterceptNativeWorkflow(ExecutionContext context, BatchEuphoriaJobManager targetJobManager) {
+        ContextConfiguration configuration = (ContextConfiguration) context.configuration
         AnalysisConfiguration aCfg = configuration.getAnalysisConfiguration()
 
-        // In normal cases commands are executed by the default factory. In this case we want the command to be executed directly.
+        // In normal cases commands are executed by the default factory. In this case we want the command to be
+        // executed directly.
         String toolID = aCfg.getNativeToolID()
-        String jobManagerAbbreviation = AvailableClusterSystems.values().find { it.className == targetJobManager.class.name }.name().toUpperCase()
+        String jobManagerAbbreviation = AvailableClusterSystems.values().find {
+            it.className == targetJobManager.class.name
+        }.name().toUpperCase()
         def nativeScriptID = "nativeWrapperFor${jobManagerAbbreviation}"
         String nativeWorkflowScriptWrapper = configuration.getProcessingToolPath(context, nativeScriptID).absolutePath
-        Job wrapperJob = new Job(context, context.getTimestampString() + "_nativeJobWrapper:" + toolID, toolID, null)
+        Job wrapperJob = new Job(
+                context, context.getTimestampString() + "_nativeJobWrapper:" + toolID, toolID, null)
 
-        DirectSynchronousExecutionJobManager dcfac = new DirectSynchronousExecutionJobManager(ExecutionService.getInstance(), JobManagerOptions.create().build())
+        DirectSynchronousExecutionJobManager dcfac = new DirectSynchronousExecutionJobManager(
+                ExecutionService.instance, JobManagerOptions.create().build())
         DirectCommand wrapperJobCommand = new DirectCommand(dcfac, wrapperJob, [], nativeWorkflowScriptWrapper)
-        String submissionCommand = targetJobManager.getSubmissionCommand()
+        String submissionCommand = targetJobManager.submissionCommand
         if (submissionCommand == null) {
-            context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("There is no submission command for this type of command factory."))
+            context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.
+                    expand("There is no submission command for this type of command factory."))
             return false
         }
 
@@ -136,15 +141,17 @@ class NativeWorkflow extends Workflow {
 
     private Map<String, BEGenJI> fetchAndProcessCalls(ExecutionContext context, BatchEuphoriaJobManager targetJobManager) {
 
-        ContextConfiguration configuration = (ContextConfiguration) context.getConfiguration()
+        ContextConfiguration configuration = (ContextConfiguration) context.configuration
 //Get the calls file in the temp directory.
-        String[] calls = FileSystemAccessProvider.getInstance().loadTextFile(new File(context.getTemporaryDirectory(), "calls"))
+        String[] calls = FileSystemAccessProvider.getInstance().loadTextFile(new File(context.temporaryDirectory, "calls"))
         if (calls == null)
             calls = new String[0]
         Map<String, BEGenJI> callsByID = new LinkedHashMap<>()
 
         def inlineScriptsDir = RoddyIOHelperMethods.assembleLocalPath(context.executionDirectory, "analysisTools", "inlineScripts")
-        File[] inlineScripts = FileSystemAccessProvider.instance.checkDirectory(inlineScriptsDir, false) ? FileSystemAccessProvider.getInstance().listFilesInDirectory(inlineScriptsDir) : null
+        File[] inlineScripts = FileSystemAccessProvider.instance.checkDirectory(inlineScriptsDir, false) ?
+                FileSystemAccessProvider.instance.listFilesInDirectory(inlineScriptsDir) :
+                null
         if (!inlineScripts) inlineScripts = new File[0]
 
         Map<String, List<String>> virtualDependencies = [:]
@@ -180,7 +187,7 @@ class NativeWorkflow extends Workflow {
             List<NativeJob> jobs = jInfoByJob[convertedJob].parentJobIDs.collect {
                 jobsByVirtualID[it]
             }
-            convertedJob.setNativeParentJobs(jobs)
+            convertedJob.nativeParentJobs = jobs
         }
 
         for (Job job in convertedJobs) {
@@ -188,11 +195,11 @@ class NativeWorkflow extends Workflow {
             Command command = result.command
             String id = null;
             try {
-                id = command.getJobID().getShortID();
+                id = command.jobID.shortID
             } catch (Exception ex) {
-                println(ex.getMessage())
+                println(ex.message)
             }
-            System.out.println("\tNative: " + command.getJob().getJobName() + " => " + id);
+            System.out.println("\tNative: " + command.job.jobName + " => " + id);
         }
     }
 }

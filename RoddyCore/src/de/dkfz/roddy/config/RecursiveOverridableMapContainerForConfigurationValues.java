@@ -13,7 +13,7 @@ import java.util.List;
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING;
 
 /**
- * Helps configurations to store overridable versions of configuration values and other things
+ * Helps configurations to store overridable versions of configuration values and other things.
  */
 public class RecursiveOverridableMapContainerForConfigurationValues
         extends RecursiveOverridableMapContainer<String, ConfigurationValue, Configuration> {

@@ -3,11 +3,6 @@
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
-
-/*
-* To change this template, choose Tools | Templates
-* and open the template in the editor.
-*/
 package de.dkfz.roddy.execution.io
 
 import com.jcraft.jsch.agentproxy.AgentProxy
@@ -84,10 +79,10 @@ class SSHExecutionService extends RemoteExecutionService {
             if (client == null)
                 return false
 
-            if (client.isConnected() == false)
+            if (!client.connected)
                 return false
 
-            if (client.isAuthenticated() == false)
+            if (!client.authenticated)
                 return false
 
             return true
@@ -190,7 +185,7 @@ class SSHExecutionService extends RemoteExecutionService {
         }
 
         AgentProxy getAgentProxy() {
-            Connector connector = ConnectorFactory.getDefault().createConnector()
+            Connector connector = ConnectorFactory.default.createConnector()
             if (connector != null)
                 return new AgentProxy(connector)
             return null
@@ -314,7 +309,7 @@ class SSHExecutionService extends RemoteExecutionService {
     String getUsername() {
         String userName = Roddy.applicationConfiguration.getOrSetApplicationProperty(Roddy.getRunMode(), Constants.APP_PROPERTY_EXECUTION_SERVICE_USER)
         if (userName == Constants.USERNAME) //Get the local username.
-            userName = SystemProperties.getUserName()
+            userName = SystemProperties.userName
         return userName
     }
 
@@ -376,13 +371,13 @@ class SSHExecutionService extends RemoteExecutionService {
             } finally {
                 connectionSet.release()
             }
-            String content = readStream(cmd.getInputStream())
+            String content = readStream(cmd.inputStream)
 
             cmd.join()
             session.close()
 
             // Get the exit status of the process. In case of things like caught signals (SEGV-Segmentation fault), the value is null and will be set to 256.
-            Integer exitStatus = cmd.getExitStatus()
+            Integer exitStatus = cmd.exitStatus
             if (exitStatus == null) exitStatus = 256
 
             List<String> output = new LinkedList<String>()
@@ -397,8 +392,8 @@ class SSHExecutionService extends RemoteExecutionService {
                     readStream(cmd.errorStream).readLines().each { String line -> output << "" + line }
                 } else {
                     logger.severe("Command not executed correctly, return code: " + exitStatus +
-                            (cmd.getExitSignal()
-                                    ? " Caught signal is " + cmd.getExitSignal().name()
+                            (cmd.exitSignal
+                                    ? " Caught signal is " + cmd.exitSignal.name()
                                     : "\n\tCommand Str. " + RoddyIOHelperMethods.truncateCommand(command,
                                     Roddy.applicationConfiguration.getOrSetApplicationProperty("commandLogTruncate", '80').toInteger())))
                 }
@@ -422,14 +417,14 @@ class SSHExecutionService extends RemoteExecutionService {
                     } finally {
                         connectionSet.release()
                     }
-                    String content = IOUtils.readFully(cmd.getInputStream()).toString()
+                    String content = IOUtils.readFully(cmd.inputStream).toString()
                     session.close()
 //                  measureStop(id, "async command  [sshclient:${set.id}] '" + RoddyIOHelperMethods.truncateCommand(command, Roddy.getOrSetApplicationProperty("commandLogTruncate", '20').toInteger()) + "'");
 //                  fireExecutionStoppedEvent(id, command)
                 }
             }
             Thread thread = new Thread(runnable)
-            thread.setName("SSHExecutionService::_execute()")
+            thread.name = "SSHExecutionService::_execute()"
             thread.start()
             return new ExecutionResult(true, 0, [], "")
         }
@@ -458,7 +453,7 @@ class SSHExecutionService extends RemoteExecutionService {
         SSHPoolConnectionSet service = waitForAndAcquireService()
         boolean result
         try {
-            service.sftpClient.getFileTransfer().upload(_in.absolutePath, _out.absolutePath)
+            service.sftpClient.fileTransfer.upload(_in.absolutePath, _out.absolutePath)
             result = true
         } catch (SFTPException ex) {
             if (retries < 3) {
@@ -488,15 +483,15 @@ class SSHExecutionService extends RemoteExecutionService {
         File tempZip = File.createTempFile("roddy_", ".zip")
         tempZip.deleteOnExit()
         tempZip.delete()
-        File roddyPath = _in.getParentFile().getAbsoluteFile()
+        File roddyPath = _in.parentFile.absoluteFile
 
         // TODO Get the following from the CommandSet
-        GString gString = "tar -C ${roddyPath.getAbsolutePath()} -zcvf ${tempZip.getAbsolutePath()} ${_in.getName()}"
+        GString gString = "tar -C ${roddyPath.absolutePath} -zcvf ${tempZip.absolutePath} ${_in.name}"
         Process process = gString.execute()
-        String outPath = "${_out.getAbsolutePath()}/${tempZip.getName()}"
+        String outPath = "${_out.absolutePath}/${tempZip.name}"
         boolean result = process.waitFor() &&
                 copyFile(tempZip, _out, retries) &&
-                execute("tar -C ${_out.getAbsolutePath()} -xzvf ${outPath} && rm ${outPath}", true)
+                execute("tar -C ${_out.absolutePath} -xzvf ${outPath} && rm ${outPath}", true)
         tempZip.delete()
         return result
     }
@@ -509,9 +504,9 @@ class SSHExecutionService extends RemoteExecutionService {
         SSHPoolConnectionSet service = waitForAndAcquireService()
         boolean result = true
         try {
-            FileSystemAccessProvider fp = FileSystemAccessProvider.getInstance()
-            if (rightsStr) service.sftpClient.chmod(file.getAbsolutePath(), RoddyIOHelperMethods.symbolicToIntegerAccessRights(rightsStr, FileSystemAccessProvider.getInstance().getDefaultUserMask()))
-            if (groupID) service.sftpClient.chgrp(file.getAbsolutePath(), fp.getGroupID(groupID))
+            FileSystemAccessProvider fp = FileSystemAccessProvider.instance
+            if (rightsStr) service.sftpClient.chmod(file.absolutePath, RoddyIOHelperMethods.symbolicToIntegerAccessRights(rightsStr, FileSystemAccessProvider.instance.getDefaultUserMask()))
+            if (groupID) service.sftpClient.chgrp(file.absolutePath, fp.getGroupID(groupID))
         } catch (Exception ex) {
             logger.severe("Could not set access attributes for ${file.absolutePath}")
             result = false
@@ -531,13 +526,13 @@ class SSHExecutionService extends RemoteExecutionService {
             Set<OpenMode> set = new HashSet<>()
             set.add(OpenMode.CREAT)
             set.add(OpenMode.WRITE)
-            final RemoteFile f = service.sftpClient.open(file.getAbsolutePath(), set)
+            final RemoteFile f = service.sftpClient.open(file.absolutePath, set)
             f.close()
-            FileSystemAccessProvider fp = FileSystemAccessProvider.getInstance()
+            FileSystemAccessProvider fp = FileSystemAccessProvider.instance
             if (accessRights)
-                service.sftpClient.chmod(file.getAbsolutePath(), RoddyIOHelperMethods.symbolicToIntegerAccessRights(accessRights, FileSystemAccessProvider.getInstance().getDefaultUserMask()))
+                service.sftpClient.chmod(file.absolutePath, RoddyIOHelperMethods.symbolicToIntegerAccessRights(accessRights, FileSystemAccessProvider.instance.getDefaultUserMask()))
             if (groupID)
-                service.sftpClient.chgrp(file.getAbsolutePath(), fp.getGroupID(groupID))
+                service.sftpClient.chgrp(file.absolutePath, fp.getGroupID(groupID))
         } finally {
             service.release()
 //            measureStop(id, "touch [sshclient:${service.id}]");
@@ -577,7 +572,7 @@ class SSHExecutionService extends RemoteExecutionService {
 
     @Override
     boolean appendLinesToFile(boolean atomic, File file, List<String> lines, boolean blocking) {
-        String text = lines.join(FileSystemAccessProvider.getInstance().getNewLineString())
+        String text = lines.join(FileSystemAccessProvider.instance.getNewLineString())
         appendLineToFile(atomic, file, text, blocking)
     }
 
@@ -591,9 +586,9 @@ class SSHExecutionService extends RemoteExecutionService {
             set.add(OpenMode.APPEND)
             set.add(OpenMode.CREAT)
             set.add(OpenMode.WRITE)
-            String sep = FileSystemAccessProvider.getInstance().getNewLineString()
+            String sep = FileSystemAccessProvider.instance.getNewLineString()
             String lineNew = line + (!line.endsWith(sep) ? sep : "")
-            final RemoteFile f = service.sftpClient.open(file.getAbsolutePath(), set)
+            final RemoteFile f = service.sftpClient.open(file.absolutePath, set)
             f.write(f.length(), lineNew.getBytes(), 0, lineNew.length())
             f.close()
         } finally {
@@ -649,15 +644,15 @@ class SSHExecutionService extends RemoteExecutionService {
                     long t = measureStart()
                     SSHPoolConnectionSet service = waitForAndAcquireService()
                     try {
-                        if (service.sftpClient.statExistence(file.getAbsolutePath()))
-                            service.sftpClient.get(file.getAbsolutePath(), tempFile.getAbsolutePath())
+                        if (service.sftpClient.statExistence(file.absolutePath))
+                            service.sftpClient.get(file.absolutePath, tempFile.absolutePath)
                     } finally {
                         service.release()
                     }
-                    measureStop(t, "transfer file [sshclient:${service.id}] ${file.getAbsolutePath()} from remote")
+                    measureStop(t, "transfer file [sshclient:${service.id}] ${file.absolutePath} from remote")
                     lock.lock()
                     try {
-                        if (FileSystemAccessProvider.getInstance().isCachingAllowed(file))
+                        if (FileSystemAccessProvider.instance.isCachingAllowed(file))
                             _fileToTempFileMap.put(file, tempFile)
                     } finally {
                         lock.unlock()
@@ -738,7 +733,7 @@ class SSHExecutionService extends RemoteExecutionService {
             final List<RemoteResourceInfo> ls
             service.acquire()
             try {
-                File parentDir = file.getParentFile()
+                File parentDir = file.parentFile
                 if (directoryExists(parentDir) &&
                         isFileReadable(parentDir) &&
                         isFileExecutable(parentDir)) {
@@ -824,7 +819,7 @@ class SSHExecutionService extends RemoteExecutionService {
         FileAttributes attributes = queryFileAttributes(f)
         if (attributes == null)
             return false
-        return attributes.userCanRead && attributes.getUserCanExecute()
+        return attributes.userCanRead && attributes.userCanExecute
     }
 
     @Override
@@ -842,7 +837,7 @@ class SSHExecutionService extends RemoteExecutionService {
 
 //            measureStop(id, "query attributes [sshclient:${service.id}] of ${file.absolutePath}");
 //            fireExecutionStoppedEvent(id, "");
-            FileAttributes newAttributes = new FileAttributes("" + attributes.getUID(), "" + attributes.getGID())
+            FileAttributes newAttributes = new FileAttributes("" + attributes.UID, "" + attributes.GID)
             newAttributes.setPermissions(
                     attributes.permissions.contains(net.schmizz.sshj.xfer.FilePermission.USR_R),
                     attributes.permissions.contains(net.schmizz.sshj.xfer.FilePermission.USR_W),
