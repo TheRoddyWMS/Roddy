@@ -478,8 +478,8 @@ class Analysis {
                             StringBuilder message =
                                     new StringBuilder('There were errors after preparing the workflow run for dataset ' + datasetID)
                             if (invalidPreparedFiles.size() > 0)
-                                message.append('\n\tSome files could not be written. Workflow will not execute.\n\t'
-                                                       + String.join('\t\n', invalidPreparedFiles))
+                                message.append('\n\tSome files could not be written. Workflow will not execute.\n\t' +
+                                        String.join('\t\n', invalidPreparedFiles))
                             if (!copiedAnalysisToolsAreExecutable)
                                 message.append('\n\tSome declared tools are not executable. Workflow will not execute.')
                             if (ignoreFileChecks) {
