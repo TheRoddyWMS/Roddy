@@ -621,6 +621,10 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return runResult
     }
 
+    Command getLastCommand() {
+        return lastCommand
+    }
+
     /**
      * There are several reasons, why we need a job configuration.
      * The most important reason is, that we need to replicate Roddys configuration mechanism with all it's functionality for

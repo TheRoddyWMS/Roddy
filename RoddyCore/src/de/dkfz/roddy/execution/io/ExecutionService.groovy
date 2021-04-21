@@ -18,6 +18,7 @@ import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.BEExecutionService
+import de.dkfz.roddy.execution.UnexpectedExecutionResultException
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.execution.jobs.cluster.lsf.LSFSubmissionCommand
@@ -232,15 +233,24 @@ abstract class ExecutionService implements BEExecutionService {
     List<String> executeTool(ExecutionContext context, String toolID, String jobNameExtension = "_executedScript:") {
         File path = context.configuration.getProcessingToolPath(context, toolID)
         String cmd = FileSystemAccessProvider.instance.commandSet.getExecuteScriptCommand(path)
-        return execute(cmd).resultLines
+        return execute(cmd, true, true).resultLines
     }
 
-    ExecutionResult execute(String command, boolean waitFor = true, OutputStream outputStream = null) {
+    ExecutionResult execute(String command,
+                            boolean waitFor,
+                            boolean ignoreErrors,
+                            OutputStream outputStream = null) {
         if (command) {
-            return _execute(command, waitFor, true, outputStream)
+            return _execute(command, waitFor, ignoreErrors, outputStream)
         } else {
             return new ExecutionResult(false, -1, Arrays.asList("Command not valid. String is empty."), "")
         }
+    }
+
+    @Deprecated
+    ExecutionResult execute(String command, boolean waitFor = true, OutputStream outputStream = null) {
+        // The only reason to keep this function with ignoreErrors = false is backwards compatibility.
+        return execute(command, waitFor, false, outputStream)
     }
 
     /** Create somehow valid submission IDs.
@@ -262,6 +272,11 @@ abstract class ExecutionService implements BEExecutionService {
         }
     }
 
+    /** TODO: Remove the catch-all exception. Client code in Alignment workflow
+     *        COProjectRuntimeService  may depend on this, therefore this cannot be changed now.
+     *        It's the interest of the client code to decide whether an exception should be ignared
+     *        or not.
+     */
     @Override
     ExecutionResult execute(Command command, boolean waitFor = true) {
         ExecutionContext context = ((Job) command.job).executionContext
@@ -277,7 +292,7 @@ abstract class ExecutionService implements BEExecutionService {
                 String pid = validSubmissionCommandOutputWithRandomJobId(command)
                 res = new ExecutionResult(true, 0, [pid], pid)
             } else {
-                res = execute(cmdString, waitFor, outputStream)
+                res = execute(cmdString, waitFor, false, outputStream)
             }
             command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.COMPLETED_SUCCESSFUL)
 
@@ -784,7 +799,8 @@ abstract class ExecutionService implements BEExecutionService {
                             // Unzip the file again. foundExisting stays true
                             GString command = RoddyIOHelperMethods.compressor.getDecompressionString(
                                     remoteZipFile, analysisToolsServerDir, analysisToolsServerDir)
-                            instance.execute(command, true)
+                            ExecutionResult result =
+                                    instance.execute(command, true, false)
                             boolean success = provider.
                                     setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.absolutePath), context)
                             if (!success)
@@ -808,10 +824,15 @@ abstract class ExecutionService implements BEExecutionService {
                     provider.checkFile(context.getFileForAnalysisToolsArchiveOverview(), true, context)
                     provider.appendLineToFile(true, context.getFileForAnalysisToolsArchiveOverview(), "${remoteFile.name}:${archiveMD5}", true)
 
-                    GString str = RoddyIOHelperMethods.compressor.getDecompressionString(
+                    GString command = RoddyIOHelperMethods.compressor.getDecompressionString(
                             new File(dstCommonExecutionDirectory, remoteFile.name),
                             analysisToolsServerDir, analysisToolsServerDir)
-                    instance.execute(str, true)
+                    ExecutionResult result =
+                            instance.execute(command, true, false)
+                    if (!result.successful)
+                        throw new UnexpectedExecutionResultException(
+                                "Could not execute command: $command" as String,
+                                result.resultLines)
                     boolean success = provider.
                             setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.absolutePath), context)
                     if (!success)
@@ -823,7 +844,7 @@ abstract class ExecutionService implements BEExecutionService {
                 }
                 provider.checkDirectory(dstAnalysisToolsDirectory, context, true)
                 def linkCommand = "ln -s ${analysisToolsServerDir.absolutePath}/${subFolderOnRemote} ${dstAnalysisToolsDirectory.absolutePath}/${subFolder.name}"
-                instance.execute(linkCommand, true)
+                instance.execute(linkCommand, true, false)
         }
     }
 

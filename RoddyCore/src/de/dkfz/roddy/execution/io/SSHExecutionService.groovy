@@ -491,7 +491,8 @@ class SSHExecutionService extends RemoteExecutionService {
         String outPath = "${_out.absolutePath}/${tempZip.name}"
         boolean result = process.waitFor() &&
                 copyFile(tempZip, _out, retries) &&
-                execute("tar -C ${_out.absolutePath} -xzvf ${outPath} && rm ${outPath}", true)
+                execute("tar -C ${_out.absolutePath} -xzvf ${outPath} && rm ${outPath}",
+                        true, false)
         tempZip.delete()
         return result
     }

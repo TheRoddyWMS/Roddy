@@ -15,6 +15,7 @@ import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.Workflow
 import de.dkfz.roddy.execution.BEExecutionService
+import de.dkfz.roddy.execution.UnexpectedExecutionResultException
 import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -134,7 +135,8 @@ class NativeWorkflow extends Workflow {
         System.out.println(wrapinScript + " => " + nativeWorkflowScriptWrapper)
         System.out.println(finalCommand)
 
-        ExecutionResult execute = ExecutionService.getInstance().execute(finalCommand)
+        ExecutionResult execute = ExecutionService.instance.
+                execute(finalCommand, true, false)
         logger.rare(execute.resultLines.join("\n"))
         return true
     }
@@ -142,10 +144,14 @@ class NativeWorkflow extends Workflow {
     private Map<String, BEGenJI> fetchAndProcessCalls(ExecutionContext context, BatchEuphoriaJobManager targetJobManager) {
 
         ContextConfiguration configuration = (ContextConfiguration) context.configuration
-//Get the calls file in the temp directory.
-        String[] calls = FileSystemAccessProvider.getInstance().loadTextFile(new File(context.temporaryDirectory, "calls"))
-        if (calls == null)
+        //Get the calls file in the temp directory.
+        String[] calls
+        try {
+            calls = FileSystemAccessProvider.instance.
+                    loadTextFile(new File(context.getTemporaryDirectory(), "calls"))
+        } catch(UnexpectedExecutionResultException e) {
             calls = new String[0]
+        }
         Map<String, BEGenJI> callsByID = new LinkedHashMap<>()
 
         def inlineScriptsDir = RoddyIOHelperMethods.assembleLocalPath(context.executionDirectory, "analysisTools", "inlineScripts")

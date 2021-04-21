@@ -624,14 +624,18 @@ class Analysis {
             try {
                 logger.severe('A workflow error occurred, try to rollback / abort submitted jobs.')
                 Roddy.jobManager.killJobs(context.jobsForProcess as List<BEJob>)
+                context.jobsForProcess.each { job ->
+                    logger.severe("Revoked command for job ID" + job.jobID +
+                            ": " + job.lastCommand.toBashCommandString())
+                }
             } catch (Exception ex) {
                 logger.severe('Could not abort jobs.', ex)
             }
         } else {
             logger.severe('A workflow error occurred, but strict mode is disabled and/or ' +
-                                  'RollbackOnWorkflowError is disabled. Submitted jobs will be left running.' +
-                                  '\n\tConsider to enabling Roddy strict mode by setting the feature toggles ' +
-                                  "'StrictMode' and 'RollbackOnWorkflowError'.")
+                    'RollbackOnWorkflowError is disabled. Submitted jobs will be left running.' +
+                    '\n\tConsider enabling Roddy strict mode by setting the feature toggles ' +
+                    "'StrictMode' and 'RollbackOnWorkflowError'.")
         }
     }
 

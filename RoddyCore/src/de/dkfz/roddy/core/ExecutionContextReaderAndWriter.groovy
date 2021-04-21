@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.core
 
+import de.dkfz.roddy.execution.UnexpectedExecutionResultException
 import de.dkfz.roddy.execution.jobs.BEJobID
 import de.dkfz.roddy.execution.jobs.GenericJobInfo
 import de.dkfz.roddy.execution.jobs.Job
@@ -164,13 +165,16 @@ class ExecutionContextReaderAndWriter {
      * @param context
      * @return
      */
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic(TypeCheckingMode.SKIP)
     List<Job> readJobInfoFile(ExecutionContext context) {
         List<Job> jobList = []
         final File jobInfoFile = context.getRuntimeService().getJobInfoFile(context)
-        String[] _text = FileSystemAccessProvider.getInstance().loadTextFile(jobInfoFile)
-        if (_text == null)
+        String[] _text
+        try {
+            _text = FileSystemAccessProvider.getInstance().loadTextFile(jobInfoFile)
+        } catch (UnexpectedExecutionResultException e) {
             _text = new String[0]
+        }
         String text = _text.join(EMPTY)
         if (!text)
             return jobList
@@ -285,35 +289,40 @@ class ExecutionContextReaderAndWriter {
      */
     List<Job> readJobsFromRealJobCallsFile(ExecutionContext context) {
         FileSystemAccessProvider fip = FileSystemAccessProvider.getInstance()
-        String[] jobCallFileLines = fip.loadTextFile(runtimeService.getRealCallsFile(context))
-        List<Job> jobsStartedInContext = []
+        String[] jobCallFileLines = null
+        try {
+            jobCallFileLines = fip.loadTextFile(runtimeService.getRealCallsFile(context))
+        } catch (UnexpectedExecutionResultException e) {
+        }
+
         if (jobCallFileLines == null || jobCallFileLines.size() == 0) {
             context.addErrorEntry(ExecutionContextError.READBACK_NOREALJOBCALLSFILE)
-        } else {
+        }
 
-            // Create a list of all tools accessible by a short version of their folder:
-            // /some/path/resources/../toolDir/tool.sh => toolDir/tool.sh
-            def allTools = context.configuration.tools.allValuesAsList
-            def allToolsByResourcePath = allTools.collectEntries {
-                ToolEntry tool ->
-                    File toolPath = context.configuration.getProcessingToolPath(context, tool.id)
-                    [tool.id, toolPath.parentFile.name + "/" + toolPath.name]
+        List<Job> jobsStartedInContext = []
+
+        // Create a list of all tools accessible by a short version of their folder:
+        // /some/path/resources/../toolDir/tool.sh => toolDir/tool.sh
+        def allTools = context.configuration.tools.allValuesAsList
+        def allToolsByResourcePath = allTools.collectEntries {
+            ToolEntry tool ->
+                File toolPath = context.configuration.getProcessingToolPath(context, tool.id)
+                [tool.id, toolPath.parentFile.name + "/" + toolPath.name]
+        }
+
+        //TODO Load a list of the previously created jobs and query those using qstat!
+        for (String line : jobCallFileLines) {
+            GenericJobInfo jobInfo = Roddy.getJobManager().parseGenericJobInfo(line)
+            if(jobInfo == null){
+                logger.severe("Skipped read-in of job call: ${line}")
+                continue
             }
+            // Try to find the tool id in the context. If it is not available, set "UNKNOWN"
+            String toolID = allToolsByResourcePath[jobInfo.tool.parentFile.name + "/" + jobInfo.tool.name] ?: Constants.UNKNOWN
 
-            //TODO Load a list of the previously created jobs and query those using qstat!
-            for (String line : jobCallFileLines) {
-                GenericJobInfo jobInfo = Roddy.getJobManager().parseGenericJobInfo(line)
-                if(jobInfo == null){
-                    logger.severe("Skipped read-in of job call: ${line}")
-                    continue
-                }
-                // Try to find the tool id in the context. If it is not available, set "UNKNOWN"
-                String toolID = allToolsByResourcePath[jobInfo.tool.parentFile.name + "/" + jobInfo.tool.name] ?: Constants.UNKNOWN
-
-                Job job = new Job(context, jobInfo.jobName, Constants.UNKNOWN, jobInfo.parameters as Map<String, Object>,
-                        new LinkedList<BaseFile>(), new LinkedList<BaseFile>())
-                jobsStartedInContext.add(job)
-            }
+            Job job = new Job(context, jobInfo.jobName, Constants.UNKNOWN, jobInfo.parameters as Map<String, Object>,
+                    new LinkedList<BaseFile>(), new LinkedList<BaseFile>())
+            jobsStartedInContext.add(job)
         }
         return jobsStartedInContext
     }
