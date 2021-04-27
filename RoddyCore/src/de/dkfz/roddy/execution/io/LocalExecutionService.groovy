@@ -52,18 +52,6 @@ class LocalExecutionService extends ExecutionService {
         return true
     }
 
-    /** Read from an InputStream asynchronously using the executorService.
-        May throw an UncheckedIOException.
-     **/
-    private CompletableFuture<List<String>> asyncReadStringStream(
-            InputStream inputStream,
-            ExecutorService executorService = executorService) {
-        return CompletableFuture.supplyAsync({
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))
-            reader.lines().toArray() as List<String>
-        } as Supplier<List<String>>, executorService)
-    }
-
     /**
      * @param command        The command to execute. Note, this is always executed with Bash as the command interpreter.
      * @param waitFor        Whether to do synchronous (true) or asynchronous execution. Asynchronous execution
@@ -86,12 +74,17 @@ class LocalExecutionService extends ExecutionService {
             List<String> bashCommand = ["bash", "-c", command]
             ProcessBuilder processBuilder = new ProcessBuilder(bashCommand)
             Process process = processBuilder.start()
-            Future<List<String>> stdout = asyncReadStringStream(process.inputStream)
-            Future<List<String>> stderr = asyncReadStringStream(process.errorStream)
-            Future<Integer> exitCode = CompletableFuture.supplyAsync({
+            Future<List<String>> stdoutF =
+                    LocalExecutionHelper.asyncReadStringStream(process.inputStream, executorService)
+            Future<List<String>> stderrF =
+                    LocalExecutionHelper.asyncReadStringStream(process.errorStream, executorService)
+            Future<Integer> exitCodeF = CompletableFuture.supplyAsync({
                 process.waitFor()
             } as Supplier<Integer>, executorService)
-            return new AsyncExecutionResult(bashCommand, exitCode, stdout, stderr)
+            return new AsyncExecutionResult(
+                    bashCommand,
+                    LocalExecutionHelper.getProcessID(process),
+                    exitCodeF, stdoutF, stderrF)
         }
     }
 

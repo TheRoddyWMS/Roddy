@@ -45,9 +45,9 @@ public class RoddyRMIInterfaceImplementationTest {
         }
 
         @Override
-        protected ExecutionResult _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream) {
-            ExecutionResult list = super._execute(string, waitFor, ignoreErrors, outputStream);
-            executedCommands << string;
+        protected ExecutionResult _execute(String command, boolean waitFor, boolean ignoreErrors, OutputStream outputStream) {
+            ExecutionResult list = super._execute(command, waitFor, ignoreErrors, outputStream);
+            executedCommands << command;
             return list;
         }
     }

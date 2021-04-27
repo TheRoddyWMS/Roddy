@@ -416,8 +416,8 @@ class Analysis {
             logger.always(e.message)
             context.addError(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.message))
         } catch (Exception e) {
-            logger.always("An unhandled exception of type '" + e.class.canonicalName + "' occurred: '" + e.localizedMessage + "'")
-            logger.always(e.message + Constants.ENV_LINESEPARATOR + getStackTraceAsString(e))
+            logger.always("An unhandled exception of type '" + e.class.canonicalName + "' occurred: '" + e.message + "'")
+            logger.sometimes(e.message + Constants.ENV_LINESEPARATOR + getStackTraceAsString(e))
             context.addError(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.message))
         } finally {
             // Look up errors when jobs are executed directly and when there were any started jobs.
@@ -443,7 +443,12 @@ class Analysis {
         boolean printed = printConfigurationErrorsAndWarnings(context)
         printed |= printMessagesForContext(context)
         if (printed)
-            logger.always("\nPlease check extended logs in " + logger.getCentralLogFile() + " for more details.")
+            logger.always(["",
+                           "Please check extended logs in " + logger.getCentralLogFile() +
+                                   " for more details.",
+                           "IMPORTANT: When reporting a bug, report this extended logs file " +
+                                   "together with the command output!"
+            ].join("\n"))
     }
 
     /**
@@ -586,7 +591,12 @@ class Analysis {
      * @param context
      */
     private void finallyStartJobsOfContext(ExecutionContext context) throws BEException {
-        Roddy.getJobManager().startHeldJobs(context.getExecutedJobs() as List<BEJob>)
+        Roddy.getJobManager().startHeldJobs(context.executedJobs.findAll {
+            // Jobs may not be resumable if they were executed directly with the
+            // DirectSynchronousJobExecutionManager. In this case trying to resume them
+            // will fail, thus failing the whole workflow.
+            it.resumable
+        } as List<BEJob>)
     }
 
     /**
@@ -662,7 +672,7 @@ class Analysis {
                 withErrorReporting(context, false, {
                     String cleanupScript = analysisConfiguration.cleanupScript
                     if (cleanupScript != null && cleanupScript != "") {
-                        Job cleanupJob = new Job(context, "cleanupScript", cleanupScript, null)
+                        Job cleanupJob = new Job(context, "cleanupScript", cleanupScript, null, true)
                         try {
                             ExecutionService.instance.writeFilesForExecution(context)
                             cleanupJob.run()

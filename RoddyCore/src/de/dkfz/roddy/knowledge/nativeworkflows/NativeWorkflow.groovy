@@ -49,7 +49,9 @@ class NativeWorkflow extends Workflow {
      */
     class NativeJob extends Job {
         NativeJob(Job wrappedJob) {
-            super(wrappedJob.context, wrappedJob.jobName, wrappedJob.toolID, null, wrappedJob.allRawInputParameters, wrappedJob.parentFiles, wrappedJob.filesToVerify)
+            super(wrappedJob.context, wrappedJob.jobName, wrappedJob.toolID, null,
+                    wrappedJob.allRawInputParameters, wrappedJob.parentFiles,
+                    wrappedJob.filesToVerify, wrappedJob.resumable)
         }
 
         void setNativeParentJobs(List<NativeJob> nativeParentJobs) {
@@ -114,7 +116,7 @@ class NativeWorkflow extends Workflow {
         def nativeScriptID = "nativeWrapperFor${jobManagerAbbreviation}"
         String nativeWorkflowScriptWrapper = configuration.getProcessingToolPath(context, nativeScriptID).absolutePath
         Job wrapperJob = new Job(
-                context, context.getTimestampString() + "_nativeJobWrapper:" + toolID, toolID, null)
+                context, context.getTimestampString() + "_nativeJobWrapper:" + toolID, toolID, null, true)
 
         DirectSynchronousExecutionJobManager dcfac = new DirectSynchronousExecutionJobManager(
                 ExecutionService.instance, JobManagerOptions.create().build())
@@ -137,7 +139,7 @@ class NativeWorkflow extends Workflow {
 
         ExecutionResult execute = ExecutionService.instance.
                 execute(finalCommand, true, false)
-        logger.rare(execute.resultLines.join("\n"))
+        logger.rare(execute.stdout.join("\n"))
         return true
     }
 

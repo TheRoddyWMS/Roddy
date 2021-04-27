@@ -125,7 +125,6 @@ class BaseFileTest {
         assert obj instanceof BaseFile
     }
 
-    @Ignore('What is the difference between generic creation and manual creation? What does this test add that is not already tested elsewhere?')
     @Test
     void testConstructForGenericCreationWithParentFile() {
         BaseFile parentObject = ContextResource.makeTestBaseFileInstance(mockedContext, 'parentFile')
@@ -135,8 +134,9 @@ class BaseFileTest {
         String selectionTag = null
         FileStageSettings fileStageSettings = null
         BEJobResult jobResult = null
-        BaseFile file = BaseFile.constructGeneric(GenericFile, parentObject, null, toolEntry, toolID,
-                parameterID, selectionTag, fileStageSettings, jobResult)
+        BaseFile file = BaseFile.constructGeneric(GenericFile, parentObject, null as List,
+                toolEntry, toolID, parameterID, selectionTag, null,
+                fileStageSettings, jobResult)
         assert file && file.class == GenericFile
         assert file.executionContext == mockedContext
     }

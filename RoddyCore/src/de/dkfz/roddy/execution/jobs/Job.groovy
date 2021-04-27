@@ -84,91 +84,47 @@ class Job extends BEJob<BEJob, BEJobResult> {
      */
     public final List<BaseFile> filesToVerify
 
-    Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices, Map<String, Object> parameters, List<BaseFile> parentFiles) {
-        this(context, jobName, toolID, arrayIndices, parameters, parentFiles, null)
+    /**
+     *
+     */
+    public final Boolean resumable
+
+    Job(ExecutionContext context,
+        String jobName,
+        String toolID,
+        Map<String, Object> parameters,
+        List<BaseFile> parentFiles,
+        List<BaseFile> filesToVerify) {
+        this(context, jobName, toolID, parameters, parentFiles, filesToVerify, true)
     }
 
-    Job(ExecutionContext context, String jobName, String toolID, Map<String, Object> parameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
-        this(context, jobName, toolID, null, parameters, parentFiles, filesToVerify)
+    Job(ExecutionContext context,
+        String jobName,
+        String toolID,
+        Map<String, Object> parameters,
+        Boolean resumable) {
+        this(context, jobName, toolID, parameters, null, null, resumable)
     }
 
-    Job(ExecutionContext context, String jobName, String toolID, Map<String, Object> parameters, List<BaseFile> parentFiles) {
-        this(context, jobName, toolID, null, parameters, parentFiles, null)
+    Job(ExecutionContext context,
+        String jobName,
+        String toolID,
+        Map<String, Object> inputParameters,
+        List<BaseFile> parentFiles,
+        List<BaseFile> filesToVerify,
+        Boolean resumable) {
+        this(context, jobName, toolID, null,
+                inputParameters, parentFiles, filesToVerify, resumable)
     }
 
-    Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices, List<BaseFile> filesToVerify, Map<String, Object> parameters) {
-        this(context, jobName, toolID, arrayIndices, parameters, null, filesToVerify)
-    }
-
-    Job(ExecutionContext context, String jobName, List<BaseFile> filesToVerify, String toolID, Map<String, Object> parameters) {
-        this(context, jobName, toolID, null, parameters, null, filesToVerify)
-    }
-
-    Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices, Map<String, Object> parameters) {
-        this(context, jobName, toolID, arrayIndices, parameters, null, null)
-    }
-
-    Job(ExecutionContext context, String jobName, String toolID, Map<String, Object> parameters) {
-        this(context, jobName, toolID, null, parameters, null, null)
-    }
-
-//    /**
-//     * This is for job implementations which do the writeConfigurationFile on their own.
-//     */
-//    protected BEJob(String jobName, ExecutionContext context, String toolID, Map<String, String> parameters, List<String> arrayIndices, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
-//        super(jobName
-//                , context.configuration.getProcessingToolPath(context, toolID)
-//                , toolID != null && toolID.trim().length() > 0 ? context.configuration.getProcessingToolMD5(toolID): null
-//                , arrayIndices
-//                , parameters
-//                , collectParentJobsFromFiles(parentFiles)
-//                , collectJobIDsFromFiles(parentFiles)
-//                , Roddy.jobManager)
-//        this.toolID = toolID
-//        this.context = context
-//        this.parentFiles = parentFiles
-//        this.filesToVerify = filesToVerify
-//        this.context.addExecutedJob(this)
-//    }
-
-    Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices,
-        Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
-        this(context, jobName, toolID, null, arrayIndices, inputParameters, parentFiles, filesToVerify)
-    }
-
-    private static List<BEJobID> jobs2jobIDs(List<BEJob> jobs) {
-        if (null == jobs) {
-            return new LinkedList<BEJobID>()
-        } else {
-            return jobs.collect { it.runResult.jobID }
-        }
-    }
-
-    private static List<BEJob> reconcileParentJobInformation(List<BEJob> parentJobs, 
-                                                             List<BEJobID> parentJobIDs,
-                                                             BatchEuphoriaJobManager jobManager) {
-        List<BEJob> pJobs
-        if ((null != parentJobIDs && !parentJobIDs.isEmpty()) &&
-                (null != parentJobs && !parentJobs.isEmpty())) {
-            def validJobs = jobsWithUniqueValidJobId(parentJobs)
-            def validIds = uniqueValidJobIDs(parentJobIDs).collect { it.toString() }
-            def idsOfValidJobs = jobs2jobIDs(validJobs).collect { it.toString() }
-            if (validIds != idsOfValidJobs) {
-                throw new RuntimeException("parentJobBEJob needs to be called with one of parentJobs, parentJobIDs, or parentJobsIDs and *corresponding* parentJobs.")
-            }
-            pJobs = validJobs
-        } else if (null == parentJobIDs && null == parentJobs) {
-            pJobs = new LinkedList<BEJob>()
-        } else if (null != parentJobs) {
-            pJobs = jobsWithUniqueValidJobId(parentJobs)
-        } else {
-            pJobs = uniqueValidJobIDs(parentJobIDs).collect { new BEJob(it, jobManager) }
-        }
-        return pJobs
-    }
-
-    Job(ExecutionContext context, String jobName, String toolID, String inlineScript, List<String> arrayIndices, Map<String, Object> inputParameters,
-        List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
+    Job(ExecutionContext context,
+        String jobName,
+        String toolID,
+        String inlineScript,
+        Map<String, Object> inputParameters,
+        List<BaseFile> parentFiles,
+        List<BaseFile> filesToVerify,
+        Boolean resumable) {
         super(new BEJobID()
                 , jobName
                 , context.configuration.getProcessingToolPath(context, TOOLID_WRAPIN_SCRIPT)
@@ -185,6 +141,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectJobIDsFromFiles(parentFiles), jobManager))
         this.context = context
         this.toolID = toolID
+        this.resumable = resumable
 
         Map<String, Object> defaultParameters = context.getDefaultJobParameters(toolID)
 
@@ -219,6 +176,37 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         this.filesToVerify = filesToVerify ?: new LinkedList<BaseFile>()
         this.context.addExecutedJob(this)
+    }
+
+    private static List<BEJobID> jobs2jobIDs(List<BEJob> jobs) {
+        if (null == jobs) {
+            return new LinkedList<BEJobID>()
+        } else {
+            return jobs.collect { it.runResult.jobID }
+        }
+    }
+
+    private static List<BEJob> reconcileParentJobInformation(List<BEJob> parentJobs,
+                                                             List<BEJobID> parentJobIDs,
+                                                             BatchEuphoriaJobManager jobManager) {
+        List<BEJob> pJobs
+        if ((null != parentJobIDs && !parentJobIDs.isEmpty()) &&
+                (null != parentJobs && !parentJobs.isEmpty())) {
+            def validJobs = jobsWithUniqueValidJobId(parentJobs)
+            def validIds = uniqueValidJobIDs(parentJobIDs).collect { it.toString() }
+            def idsOfValidJobs = jobs2jobIDs(validJobs).collect { it.toString() }
+            if (validIds != idsOfValidJobs) {
+                throw new RuntimeException("parentJobBEJob needs to be called with one of parentJobs, parentJobIDs, or parentJobsIDs and *corresponding* parentJobs.")
+            }
+            pJobs = validJobs
+        } else if (null == parentJobIDs && null == parentJobs) {
+            pJobs = new LinkedList<BEJob>()
+        } else if (null != parentJobs) {
+            pJobs = jobsWithUniqueValidJobId(parentJobs)
+        } else {
+            pJobs = uniqueValidJobIDs(parentJobIDs).collect { new BEJob(it, jobManager) }
+        }
+        return pJobs
     }
 
     static ResourceSet getResourceSetFromConfiguration(String toolID, ExecutionContext context) {
@@ -589,7 +577,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             System.out.println(jobDetailsLine.toString())
             if (!cmd.jobID) {
                 context.addErrorEntry(ExecutionContextError.EXECUTION_SUBMISSION_FAILURE.expand("Please check your submission command manually.\n\t  Is your access group set properly? [${context.getAnalysis().getUsergroup()}]\n\t  Can the submission binary handle your binary?\n\t  Is your submission system offline?"))
-                logger.postSometimesInfo("Command: ${runResult.command}\nStatus Code: ${runResult.executionResult.exitCode}, Output:\n${runResult.executionResult.resultLines.join("\n")}")
+                logger.postSometimesInfo("Command: ${runResult.executionResult.toStatusLine()}")
                 if (Roddy.getFeatureToggleValue(FeatureToggles.BreakSubmissionOnError)) {
                     context.abortJobSubmission()
                 }

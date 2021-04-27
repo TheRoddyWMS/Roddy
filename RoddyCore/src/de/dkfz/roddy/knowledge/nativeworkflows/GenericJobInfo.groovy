@@ -66,22 +66,14 @@ class GenericJobInfo {
         }
     }
 
-//    GenericJobInfo(ExecutionContext executionContext, String jobName, String toolID, String id, Map<String, String> parameters, List<String> parentJobIDs) {
-//
-//        this.executionContext = executionContext
-//        this.jobName = jobName
-//        this.toolID = toolID
-//        this.id = id
-//        this.parameters = parameters
-//        this.parentJobIDs = parentJobIDs
-//    }
-
     ExecutionContext getExecutionContext() {
         return executionContext
     }
 
     Job toJob() {
-        return new Job(executionContext, jobName, toolID, inlineScript, null, parameters as Map<String, Object>, null, new LinkedList<BaseFile>())
+        return new Job(executionContext, jobName, toolID, inlineScript,
+                parameters as Map<String, Object>, null as List<BaseFile>,
+                new LinkedList<BaseFile>(), true)
     }
 
     @Override

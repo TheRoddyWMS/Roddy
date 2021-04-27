@@ -30,6 +30,7 @@ import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
+import de.dkfz.roddy.tools.shell.bash.Service as BashService
 import groovy.transform.CompileStatic
 
 import java.text.ParseException
@@ -146,7 +147,7 @@ abstract class ExecutionService implements BEExecutionService {
 
     void destroy() {}
 
-    protected abstract ExecutionResult _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream)
+    protected abstract ExecutionResult _execute(String command, boolean waitFor, boolean ignoreErrors, OutputStream outputStream)
 
     /**
      * Directly pass parameters to a tool script to be executed remotely. Use this method if you have a script in your plugin
@@ -170,7 +171,12 @@ abstract class ExecutionService implements BEExecutionService {
         parameters[DISABLE_DEBUG_OPTIONS_FOR_TOOLSCRIPT] = "true"
         parameters[CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW] = context.temporaryDirectory
 
-        Job wrapperJob = new Job(context, context.timestampString + "_directTool:" + toolID, toolID, parameters)
+        Job wrapperJob = new Job(
+                context,
+                context.timestampString + "_directTool:" + toolID,
+                toolID,
+                parameters,
+                false)
         DirectSynchronousExecutionJobManager jobManager =
                 new DirectSynchronousExecutionJobManager(instance, JobManagerOptions.create().build())
         wrapperJob.setJobManager(jobManager)
@@ -202,7 +208,7 @@ abstract class ExecutionService implements BEExecutionService {
         if (lines != null) {
 
             if (!result.successful)
-                throw new ExecutionException("Execution failed. Output was: '" + result.resultLines.orElse([]).join("\n") + "'", null)
+                throw new ExecutionException("Execution failed. ${result.executionResult.toStatusMessage()}", null)
 
             // Depending on which debug options are set, it is possible (set -v), that "Wrapped script ended"
             // is found before "Starting wrapped script". It is however safe to compare the whole "Starting wrapped script"
@@ -233,7 +239,7 @@ abstract class ExecutionService implements BEExecutionService {
     List<String> executeTool(ExecutionContext context, String toolID, String jobNameExtension = "_executedScript:") {
         File path = context.configuration.getProcessingToolPath(context, toolID)
         String cmd = FileSystemAccessProvider.instance.commandSet.getExecuteScriptCommand(path)
-        return execute(cmd, true, true).resultLines
+        return execute(cmd, true, true).stdout
     }
 
     ExecutionResult execute(String command,
@@ -243,14 +249,16 @@ abstract class ExecutionService implements BEExecutionService {
         if (command) {
             return _execute(command, waitFor, ignoreErrors, outputStream)
         } else {
-            return new ExecutionResult(false, -1, Arrays.asList("Command not valid. String is empty."), "")
+            return new ExecutionResult([command], false, -1,
+                    [], Arrays.asList("Command not valid. String is empty."),
+                    "")
         }
     }
 
     @Deprecated
-    ExecutionResult execute(String command, boolean waitFor = true, OutputStream outputStream = null) {
+    ExecutionResult execute(String command, boolean waitFor = true) {
         // The only reason to keep this function with ignoreErrors = false is backwards compatibility.
-        return execute(command, waitFor, false, outputStream)
+        return execute(command, waitFor, false)
     }
 
     /** Create somehow valid submission IDs.
@@ -273,8 +281,8 @@ abstract class ExecutionService implements BEExecutionService {
     }
 
     /** TODO: Remove the catch-all exception. Client code in Alignment workflow
-     *        COProjectRuntimeService  may depend on this, therefore this cannot be changed now.
-     *        It's the interest of the client code to decide whether an exception should be ignared
+     *        COProjectRuntimeService may depend on this, therefore this cannot be changed now.
+     *        It's the interest of the client code to decide whether an exception should be ignored
      *        or not.
      */
     @Override
@@ -290,7 +298,8 @@ abstract class ExecutionService implements BEExecutionService {
 
             if (context.executionContextLevel == ExecutionContextLevel.TESTRERUN) {
                 String pid = validSubmissionCommandOutputWithRandomJobId(command)
-                res = new ExecutionResult(true, 0, [pid], pid)
+                res = new ExecutionResult([command.toBashCommandString()], true,
+                        0, [pid], [], pid)
             } else {
                 res = execute(cmdString, waitFor, false, outputStream)
             }
@@ -518,8 +527,10 @@ abstract class ExecutionService implements BEExecutionService {
         //The application ini
         provider.copyFile(Roddy.propertiesFilePath, new File(executionDirectory, Constants.APP_PROPERTIES_FILENAME), context)
         provider.writeTextFile(new File(executionDirectory, "roddyCall.sh"),
-                Roddy.applicationDirectory.absolutePath + "/roddy.sh " + 
-                        Roddy.getCommandLineCall().arguments.join(StringConstants.WHITESPACE) + "\n",
+                Roddy.applicationDirectory.absolutePath + "/roddy.sh \\\n" +
+                        Roddy.getCommandLineCall().arguments.
+                                collect { "\t" + BashService.escape(it) }.
+                                join(" \\\n") + "\n",
                 context)
 
         //Current configs xml files (default, user, pipeline config file)
@@ -831,8 +842,8 @@ abstract class ExecutionService implements BEExecutionService {
                             instance.execute(command, true, false)
                     if (!result.successful)
                         throw new UnexpectedExecutionResultException(
-                                "Could not execute command: $command" as String,
-                                result.resultLines)
+                                "Could not execute command: ${result.toStatusMessage()}" as String,
+                                result.stdout)
                     boolean success = provider.
                             setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.absolutePath), context)
                     if (!success)
