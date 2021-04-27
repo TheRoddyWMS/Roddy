@@ -2,12 +2,13 @@
 
 * 3.6.1
 
-  - Better error reporting for submission errors
   - Bugfix: Failure to pass job resuming step (e.g. via `bresume`), with jobs that cannot be resumed (e.g. in the Bam2FastqPlugin).
   - The command in `roddyCall.sh` is now properly escaped and suited for direct copy-paste to the command-line
-  - Stack-traces are now only reported to the `.tsv` log in the `.roddy/` directory and a message is reported to provide this file to the maintainers for bug-reports
+  - Stack-traces are now only reported to the `.tsv` log in the `.roddy/` directory, and a message is reported to provide this file to the maintainers for bug-reports
+  - Better error reporting for submission errors
   - Bumped used BatchEuphoria to 0.0.13
   - Bumped used RoddyToolLib to 2.3.0
+  - Deprecated all `Job` constructors except for the main constructor, which is now used throughout the Roddy core code. Note that the extension of `Job` with a `resumable` field is really a hack.  
 
 * 3.6.0
 

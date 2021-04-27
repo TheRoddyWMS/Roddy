@@ -586,16 +586,18 @@ class Analysis {
     }
 
     /**
-     * Will start all the jobs in the context.
+     * Will start all the jobs in the context, unless they have already been started.
      *
      * @param context
      */
     private void finallyStartJobsOfContext(ExecutionContext context) throws BEException {
         Roddy.getJobManager().startHeldJobs(context.executedJobs.findAll {
-            // Jobs may not be resumable if they were executed directly with the
-            // DirectSynchronousJobExecutionManager. In this case trying to resume them
-            // will fail, thus failing the whole workflow.
-            it.resumable
+            // Jobs cannot be resumed, if they are not `SUSPENDED` or on `HOLD` (dependent on
+            // job-manager). when run with the `DirectSynchronousJobExecutionManager`.
+            // Note that jobs can be in DUMMY state here! The are filtered out later by
+            // `BEJob.jobsWithUniqueValidJobId`
+            it.jobState == JobState.SUSPENDED ||
+                    it.jobState == JobState.HOLD
         } as List<BEJob>)
     }
 
@@ -672,7 +674,14 @@ class Analysis {
                 withErrorReporting(context, false, {
                     String cleanupScript = analysisConfiguration.cleanupScript
                     if (cleanupScript != null && cleanupScript != "") {
-                        Job cleanupJob = new Job(context, "cleanupScript", cleanupScript, null, true)
+                        Job cleanupJob = new Job(
+                                context,
+                                "cleanupScript",
+                                cleanupScript,
+                                null as String,
+                                null,
+                                null,
+                                null)
                         try {
                             ExecutionService.instance.writeFilesForExecution(context)
                             cleanupJob.run()

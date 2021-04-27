@@ -85,46 +85,125 @@ class Job extends BEJob<BEJob, BEJobResult> {
     public final List<BaseFile> filesToVerify
 
     /**
-     *
+     * TODO No apparent usage of this constructor. Leave it in only for backwards-compatibility.
      */
-    public final Boolean resumable
+    @Deprecated
+    Job(ExecutionContext context,
+        String jobName,
+        String toolID,
+        List<String> arrayIndices,
+        Map<String, Object> parameters,
+        List<BaseFile> parentFiles) {
+        this(context, jobName, toolID, null as String,
+                parameters, parentFiles, null)
+    }
 
+    /**
+     * TODO Used in Alignment and COWorkflows plugins. Replace by main constructor.
+     */
+    @Deprecated
     Job(ExecutionContext context,
         String jobName,
         String toolID,
         Map<String, Object> parameters,
         List<BaseFile> parentFiles,
         List<BaseFile> filesToVerify) {
-        this(context, jobName, toolID, parameters, parentFiles, filesToVerify, true)
+        this(context, jobName, toolID, null as String,
+                parameters, parentFiles, filesToVerify)
     }
 
+    /**
+     * TODO Used in Alignment workflow (Common & Samtools). Replace by main constructor.
+     */
+    @Deprecated
     Job(ExecutionContext context,
         String jobName,
         String toolID,
         Map<String, Object> parameters,
-        Boolean resumable) {
-        this(context, jobName, toolID, parameters, null, null, resumable)
+        List<BaseFile> parentFiles) {
+        this(context, jobName, toolID, null as String,
+                parameters, parentFiles, null)
     }
 
+    /**
+     * TODO No apparent usage of this constructor. Leave it in only for backwards-compatibility.
+     */
+    @Deprecated
     Job(ExecutionContext context,
         String jobName,
         String toolID,
-        Map<String, Object> inputParameters,
-        List<BaseFile> parentFiles,
+        List<String> arrayIndices,
         List<BaseFile> filesToVerify,
-        Boolean resumable) {
-        this(context, jobName, toolID, null,
-                inputParameters, parentFiles, filesToVerify, resumable)
+        Map<String, Object> parameters) {
+        this(context, jobName, toolID, null as String,
+                parameters, null, filesToVerify)
     }
 
+    /**
+     * TODO No apparent usage of this constructor. Leave it in only for backwards-compatibility.
+     */
+    @Deprecated
+    Job(ExecutionContext context,
+        String jobName,
+        List<BaseFile> filesToVerify,
+        String toolID,
+        Map<String, Object> parameters) {
+        this(context, jobName, toolID, null as String,
+                parameters, null, filesToVerify)
+    }
+
+    /**
+     * TODO No apparent usage of this constructor. Leave it in only for backwards-compatibility.
+     */
+    @Deprecated
+    Job(ExecutionContext context,
+        String jobName,
+        String toolID,
+        List<String> arrayIndices,
+        Map<String, Object> parameters) {
+        this(context, jobName, toolID, null as String,
+                parameters,null, null)
+    }
+
+    /**
+     * TODO No apparent usage of this constructor. Leave it in only for backwards-compatibility.
+     */
+    @Deprecated
+    Job(ExecutionContext context,
+        String jobName,
+        String toolID,
+        Map<String, Object> parameters) {
+        this(context, jobName, toolID, null as String,
+                parameters,null, null)
+    }
+
+    /**
+     * TODO: Used only in ACEseq plugin. Replace single called from ACEseqMethods by main
+     *       constructor call.
+     */
+    @Deprecated
+    Job(ExecutionContext context,
+        String jobName,
+        String toolID,
+        List<String> arrayIndices,
+        Map<String, Object> inputParameters,
+        List<BaseFile> parentFiles,
+        List<BaseFile> filesToVerify) {
+        this(context, jobName, toolID, null as String,
+                inputParameters, parentFiles, filesToVerify)
+    }
+
+    /**
+     * Main constructor.
+     * TODO The number of parameters is large. Consider using a builder!
+     */
     Job(ExecutionContext context,
         String jobName,
         String toolID,
         String inlineScript,
         Map<String, Object> inputParameters,
         List<BaseFile> parentFiles,
-        List<BaseFile> filesToVerify,
-        Boolean resumable) {
+        List<BaseFile> filesToVerify) {
         super(new BEJobID()
                 , jobName
                 , context.configuration.getProcessingToolPath(context, TOOLID_WRAPIN_SCRIPT)
@@ -141,7 +220,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
         this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectJobIDsFromFiles(parentFiles), jobManager))
         this.context = context
         this.toolID = toolID
-        this.resumable = resumable
 
         Map<String, Object> defaultParameters = context.getDefaultJobParameters(toolID)
 
@@ -418,7 +496,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
     }
 
     /**
-     * Stores a new job jobState info to an execution contexts job jobState log file.
+     * Stores a new job jobState info to an execution context's job jobState log file.
      *
      * @param job
      */
@@ -438,7 +516,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
                     jobInfoLine = jobStateInfoLine(jobId, "UNSTARTED", millis, toolID)
                 else if (job.jobState == JobState.ABORTED)
                     jobInfoLine = jobStateInfoLine(jobId, "ABORTED", millis, toolID)
-                // TODO Issue 222: COMPLETED_SUCCESSFUL is set by BE.ExecutionService, when the execution result is successful, i.e. the qsub, not when the job finished successfully on the cluster!
+                // TODO Issue 222: COMPLETED_SUCCESSFUL is set by BE.ExecutionService, when the
+                //      execution result is successful, i.e. the qsub, not when the job finished
+                //      successfully on the cluster!
 //                else if (job.jobState == JobState.COMPLETED_SUCCESSFUL)
 //                    jobInfoLine = jobStateInfoLine(jobId, "0", millis, toolID)
                 else if (job.jobState == JobState.FAILED)

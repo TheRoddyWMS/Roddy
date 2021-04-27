@@ -320,8 +320,9 @@ class ExecutionContextReaderAndWriter {
             // Try to find the tool id in the context. If it is not available, set "UNKNOWN"
             String toolID = allToolsByResourcePath[jobInfo.tool.parentFile.name + "/" + jobInfo.tool.name] ?: Constants.UNKNOWN
 
-            Job job = new Job(context, jobInfo.jobName, Constants.UNKNOWN, jobInfo.parameters as Map<String, Object>,
-                    new LinkedList<BaseFile>(), new LinkedList<BaseFile>())
+            Job job = new Job(context, jobInfo.jobName, Constants.UNKNOWN, null as String,
+                    jobInfo.parameters as Map<String, Object>, new LinkedList<BaseFile>(),
+                    new LinkedList<BaseFile>())
             jobsStartedInContext.add(job)
         }
         return jobsStartedInContext

@@ -73,7 +73,7 @@ class GenericJobInfo {
     Job toJob() {
         return new Job(executionContext, jobName, toolID, inlineScript,
                 parameters as Map<String, Object>, null as List<BaseFile>,
-                new LinkedList<BaseFile>(), true)
+                new LinkedList<BaseFile>())
     }
 
     @Override
