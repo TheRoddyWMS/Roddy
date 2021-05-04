@@ -524,7 +524,6 @@ abstract class ExecutionService implements BEExecutionService {
 
         //Current config
         String configText = ConfigurationConverter.convertAutomatically(context, cfg)
-        provider.writeTextFile(context.runtimeService.getConfigurationFile(context), configText, context)
 
         //The application ini
         provider.copyFile(Roddy.propertiesFilePath, new File(executionDirectory, Constants.APP_PROPERTIES_FILENAME), context)
@@ -535,9 +534,6 @@ abstract class ExecutionService implements BEExecutionService {
                                 join(" \\\n") + "\n",
                 context)
 
-        //Current configs xml files (default, user, pipeline config file)
-        String configXML = new XMLConverter().convert(context, cfg)
-        provider.writeTextFile(context.runtimeService.getXMLConfigurationFile(context), configXML, context)
         context.detailedExecutionContextLevel = ExecutionContextSubLevel.RUN_RUN
     }
 
@@ -568,15 +564,13 @@ abstract class ExecutionService implements BEExecutionService {
         }
 
         if (!context.fileIsAccessible(runtimeService.getJobStateLogFile(context))) inaccessibleNecessaryFiles << "JobState logfile"
-        if (!context.fileIsAccessible(runtimeService.getConfigurationFile(context))) inaccessibleNecessaryFiles << "Runtime configuration file"
 
         // Check the ignorable files. It is still nice to see whether they are there
         if (!context.fileIsAccessible(runtimeService.getExecCacheFile(context.analysis))) inaccessibleIgnorableFiles << "Execution cache file"
         if (!context.fileIsAccessible(runtimeService.getRuntimeFile(context))) inaccessibleIgnorableFiles << "Runtime information file"
         if (!context.fileIsAccessible(new File(context.executionDirectory, Constants.APP_PROPERTIES_FILENAME))) inaccessibleIgnorableFiles << "Copy of application.ini file"
-        if (!context.fileIsAccessible(runtimeService.getXMLConfigurationFile(context))) inaccessibleIgnorableFiles << "XML configuration file"
 
-        // Return true, if the neccessary files are there and if strict mode is enabled and in this case all ignorable files exist
+        // Return true, if the necessary files are there and if strict mode is enabled and in this case all ignorable files exist
         return inaccessibleNecessaryFiles + (strict ? [] as List<String> : inaccessibleIgnorableFiles)
     }
 

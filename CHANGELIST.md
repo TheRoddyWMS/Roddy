@@ -2,13 +2,15 @@
 
 * 3.6.1
 
-  - Bugfix: Failure to pass job resuming step (e.g. via `bresume`), with jobs that cannot be resumed (e.g. in the Bam2FastqPlugin).
-  - The command in `roddyCall.sh` is now properly escaped and suited for direct copy-paste to the command-line
-  - Stack-traces are now only reported to the `.tsv` log in the `.roddy/` directory, and a message is reported to provide this file to the maintainers for bug-reports
+  - Users still seem to use the misleading and long-deprecated `runtimeConfig.sh` and `runtimeConfig.xml` files from the execution store. These files are not written anymore. 
+    > You should always use the job-specific `.parameter` files!
+  - Bugfix: Failure to pass the job resuming step (e.g. via `bresume`), with jobs that cannot be resumed (e.g. submitted via the DirectExecutionJobManager, like in the Bam2FastqPlugin).
+  - The command in `roddyCall.sh` is properly escaped and suited for direct copy-paste to the command-line
+  - Stack-traces are only reported to the `.tsv` log in the `.roddy/` directory, and a message is reported to provide this file to the maintainers for bug-reports
   - Better error reporting for submission errors
-  - Bumped used BatchEuphoria to 0.0.13
-  - Bumped used RoddyToolLib to 2.3.0
-  - Deprecated all `Job` constructors except for the main constructor, which is now used throughout the Roddy core code. Note that the extension of `Job` with a `resumable` field is really a hack.  
+  - Bumped BatchEuphoria to 0.0.13
+  - Bumped RoddyToolLib to 2.3.0
+  - Deprecated all `Job` constructors except for the main constructor, which is now used throughout the Roddy core code.  
 
 * 3.6.0
 
@@ -17,12 +19,9 @@
 
 * 3.5.9
 
-  - The LocalExecutionService ignored errors of asynchronously executed commands. 
-    Now errors Roddy detects errors and reports their standard and error output.
-  - LocalExecutionService always executes commands via `bash -c` (before it
-    did so only if the process was synchronously executed)
-  - Update of RoddyToolLib to fix error handling in asynchronous execution and
-    with multi-threading and command-output processing (StringBuilder->StringBuffer)
+  - The LocalExecutionService ignored errors of asynchronously executed commands. Now errors Roddy detects errors and reports their standard and error output.
+  - LocalExecutionService always executes commands via `bash -c` (before it did so only if the process was synchronously executed)
+  - Update of RoddyToolLib to fix error handling in asynchronous execution and with multi-threading and command-output processing (StringBuilder->StringBuffer)
 
 * 3.5.8
 
