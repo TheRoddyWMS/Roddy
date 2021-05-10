@@ -168,13 +168,11 @@ class ExecutionContextReaderAndWriter {
     @CompileStatic(TypeCheckingMode.SKIP)
     List<Job> readJobInfoFile(ExecutionContext context) {
         List<Job> jobList = []
-        final File jobInfoFile = context.getRuntimeService().getJobInfoFile(context)
-        String[] _text
-        try {
-            _text = FileSystemAccessProvider.getInstance().loadTextFile(jobInfoFile)
-        } catch (UnexpectedExecutionResultException e) {
+        final File jobInfoFile = context.runtimeService.getJobInfoFile(context)
+        String[] _text= FileSystemAccessProvider.instance.loadTextFile(jobInfoFile)
+        if (_text == null)
             _text = new String[0]
-        }
+
         String text = _text.join(EMPTY)
         if (!text)
             return jobList
@@ -228,7 +226,7 @@ class ExecutionContextReaderAndWriter {
         return jobList
     }
 
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic(TypeCheckingMode.SKIP)
     String writeJobInfoFile(ExecutionContext context) {
         final File jobInfoFile = context.getRuntimeService().getJobInfoFile(context)
         final List<BEJob> executedJobs = context.getExecutedJobs()
@@ -289,12 +287,7 @@ class ExecutionContextReaderAndWriter {
      */
     List<Job> readJobsFromRealJobCallsFile(ExecutionContext context) {
         FileSystemAccessProvider fip = FileSystemAccessProvider.getInstance()
-        String[] jobCallFileLines = null
-        try {
-            jobCallFileLines = fip.loadTextFile(runtimeService.getRealCallsFile(context))
-        } catch (UnexpectedExecutionResultException e) {
-        }
-
+        String[] jobCallFileLines = fip.loadTextFile(runtimeService.getRealCallsFile(context))
         if (jobCallFileLines == null || jobCallFileLines.size() == 0) {
             context.addErrorEntry(ExecutionContextError.READBACK_NOREALJOBCALLSFILE)
         }

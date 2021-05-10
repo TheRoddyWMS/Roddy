@@ -717,12 +717,6 @@ class FileSystemAccessProvider {
         }
     }
 
-    String getLineOfFile(File file, int lineIndex) {
-        return ExecutionService.instance.execute(commandSet.
-                getReadLineOfFileCommand(file, lineIndex), true, false).
-                firstStdoutLine
-    }
-
     boolean createFileWithDefaultAccessRights(boolean atomic, File filename, ExecutionContext context, boolean blocking) {
         ExecutionService eService = ExecutionService.instance
         try {

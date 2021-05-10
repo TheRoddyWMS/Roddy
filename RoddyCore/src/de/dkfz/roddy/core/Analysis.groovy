@@ -593,7 +593,8 @@ class Analysis {
     private void finallyStartJobsOfContext(ExecutionContext context) throws BEException {
         Roddy.getJobManager().startHeldJobs(context.executedJobs.findAll {
             // Jobs cannot be resumed, if they are not `SUSPENDED` or on `HOLD` (dependent on
-            // job-manager). when run with the `DirectSynchronousJobExecutionManager`.
+            // job-manager). If run with the `DirectSynchronousJobExecutionManager` they will
+            // never be suspended or on hold.
             // Note that jobs can be in DUMMY state here! The are filtered out later by
             // `BEJob.jobsWithUniqueValidJobId`
             it.jobState == JobState.SUSPENDED ||

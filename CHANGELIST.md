@@ -6,7 +6,7 @@
     > You should always use the job-specific `.parameter` files!
   - Bugfix: Failure to pass the job resuming step (e.g. via `bresume`), with jobs that cannot be resumed (e.g. submitted via the DirectExecutionJobManager, like in the Bam2FastqPlugin).
   - The command in `roddyCall.sh` is properly escaped and suited for direct copy-paste to the command-line
-  - Stack-traces are only reported to the `.tsv` log in the `.roddy/` directory, and a message is reported to provide this file to the maintainers for bug-reports
+  - Stack-traces are now only reported to the `.tsv` log in the `.roddy/` directory, and a message is reported to provide this file to the maintainers for bug-reports. If you need more than the default 32 extended log-files, increase the value of `maximumLogFilesPerPrefix` in you `applicationProperties.ini`. Extended log files can get into the megabyte-range of sizes.
   - Better error reporting for submission errors
   - Bumped BatchEuphoria to 0.0.13
   - Bumped RoddyToolLib to 2.3.0
