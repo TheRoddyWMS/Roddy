@@ -276,9 +276,13 @@ class RuntimeService {
 
     private String getExecutionDirFilePrefixString(ExecutionContext run) {
         try {
-            return String.format("%s%s", run.getExecutionDirectory().getAbsolutePath(), FileSystemAccessProvider.getInstance().getPathSeparator())
+            return String.format("%s%s",
+                    run.executionDirectory.absolutePath,
+                    FileSystemAccessProvider.instance.pathSeparator)
         } catch (Exception ex) {
-            return String.format("%s%s", run.getExecutionDirectory().getAbsolutePath(), FileSystemAccessProvider.getInstance().getPathSeparator())
+            return String.format("%s%s",
+                    run.executionDirectory.absolutePath,
+                    FileSystemAccessProvider.instance.pathSeparator)
         }
     }
 

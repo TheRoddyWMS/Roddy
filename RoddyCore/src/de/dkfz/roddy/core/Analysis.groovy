@@ -444,8 +444,12 @@ class Analysis {
         printed |= printMessagesForContext(context)
         if (printed)
             logger.always(["",
-                           "Please check extended logs in " + logger.getCentralLogFile() +
+                           "Please check extended logs in " + logger.centralLogFile +
                                    " for more details.",
+                           "Consider increasing maximumLogFilesPerPrefix in the" +
+                                   " applicationProperties.ini to keep more than " +
+                                   LoggerWrapper.DEFAULT_MAXIMUM_LOGFILES_PER_PREFIX +
+                                   " extended log-files.",
                            "IMPORTANT: When reporting a bug, report this extended logs file " +
                                    "together with the command output!"
             ].join("\n"))
