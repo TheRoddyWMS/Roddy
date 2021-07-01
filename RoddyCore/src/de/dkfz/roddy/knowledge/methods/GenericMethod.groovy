@@ -502,7 +502,10 @@ class GenericMethod {
     }
 
     private FileObject createAndRunJob(List<BaseFile> filesToVerify, FileObject outputObject) {
-        BEJobResult jobResult = new Job(context, context.createJobName(firstInputFile, toolName), toolName, parameters, allInputFiles, filesToVerify).run()
+        BEJobResult jobResult = new Job(
+                context, context.createJobName(firstInputFile, toolName), toolName,
+                null as String, parameters, allInputFiles, filesToVerify
+        ).run()
 
         if (allCreatedObjects) {
             for (FileObject fo in allCreatedObjects) {

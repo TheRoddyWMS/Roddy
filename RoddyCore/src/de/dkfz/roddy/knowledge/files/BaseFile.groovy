@@ -171,10 +171,26 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
                 selectionTag, indexInFileGroup, fileStageSettings, jobResult))
     }
 
-    static BaseFile constructGeneric(Class<? extends BaseFile> classToConstruct, FileObject parentObject, List<FileObject> parentFiles, ToolEntry
-            creatingTool, String toolID, String parameterID, String selectionTag, FileStageSettings fileStageSettings, BEJobResult jobResult) {
-        return classToConstruct.newInstance(new ConstructionHelperForGenericCreation(parentObject, parentFiles, creatingTool, toolID, parameterID,
-                selectionTag, null, fileStageSettings, jobResult))
+    static BaseFile constructGeneric(Class<? extends BaseFile> classToConstruct,
+                                     FileObject parentObject,
+                                     List<FileObject> parentFiles,
+                                     ToolEntry creatingTool,
+                                     String toolID,
+                                     String parameterID,
+                                     String selectionTag,
+                                     FileStageSettings fileStageSettings,
+                                     BEJobResult jobResult) {
+        return classToConstruct.newInstance(
+                new ConstructionHelperForGenericCreation(
+                        parentObject,
+                        parentFiles,
+                        creatingTool,
+                        toolID,
+                        parameterID,
+                        selectionTag,
+                        null,
+                        fileStageSettings,
+                        jobResult))
     }
 
     static BaseFile constructGeneric(Class<? extends BaseFile> classToConstruct, ExecutionContext context, ToolEntry creatingTool, String toolID,

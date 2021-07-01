@@ -32,7 +32,9 @@ public class ReadOutJob extends Job {
     private final List<BEJob> parentJobs;
 
     public ReadOutJob(ExecutionContext context, String jobName, String toolID, String executedJobID, Map<String,String> parameters, List<BEJob> parentJobs) {
-        super(context, jobName, toolID, new LinkedHashMap<>(), new LinkedList<BaseFile>());
+        super(context, jobName, toolID,
+                (String)null, new LinkedHashMap<>(),
+                new LinkedList<BaseFile>(), null);
         this.parentJobs = parentJobs;
         this.readOut = true;
         this.jobID = executedJobID;

@@ -586,12 +586,9 @@ class ExecutionContext {
     }
 
     /**
-     * Deprecated sind 3.2
-     *
      * Appends an entry to the error, warnings or info list. Will internally call addError, addWarning or addInfo
      * Will treat other levels than warning, info or severe as severe!
      */
-    @Deprecated
     void addErrorEntry(ExecutionContextError error) {
         switch (error.errorLevel) {
             case Level.WARNING:

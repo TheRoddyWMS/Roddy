@@ -15,11 +15,11 @@ import de.dkfz.roddy.ExitReasons
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.SystemProperties
 import de.dkfz.roddy.config.RoddyAppConfig
-import de.dkfz.roddy.execution.io.FileAttributes
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
+import groovy.transform.CompileStatic
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.common.IOUtils
 import net.schmizz.sshj.connection.channel.OpenFailException
@@ -42,7 +42,7 @@ import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
  *
  * @author michael
  */
-@groovy.transform.CompileStatic
+@CompileStatic
 class SSHExecutionService extends RemoteExecutionService {
 
     public static final LoggerWrapper logger = LoggerWrapper.getLogger(SSHExecutionService.class.name)
@@ -357,7 +357,10 @@ class SSHExecutionService extends RemoteExecutionService {
     // claims, that the method does not override it's base method.
     // That is, why we keep it in but only as a comment.
     //    @Override
-    synchronized ExecutionResult _execute(String command, boolean waitFor = true, boolean ignoreError = false, OutputStream outputStream = null) {
+    synchronized ExecutionResult _execute(String command,
+                                          boolean waitFor = true,
+                                          boolean ignoreError = false,
+                                          OutputStream outputStream = null) {
         SSHPoolConnectionSet connectionSet = waitForService()
         SSHClient sshClient = connectionSet.client
 
@@ -401,7 +404,7 @@ class SSHExecutionService extends RemoteExecutionService {
                 content.readLines().each { String line -> output << "" + line }
             }
 
-            return new ExecutionResult(exitStatus == 0, exitStatus, output, "0")
+            return new ExecutionResult([command], exitStatus == 0, exitStatus, output, [], "0")
         } else {
             Runnable runnable = new Runnable() {
 
@@ -426,7 +429,7 @@ class SSHExecutionService extends RemoteExecutionService {
             Thread thread = new Thread(runnable)
             thread.name = "SSHExecutionService::_execute()"
             thread.start()
-            return new ExecutionResult(true, 0, [], "")
+            return new ExecutionResult([command], true, 0, [], [], "")
         }
     }
 
@@ -491,7 +494,8 @@ class SSHExecutionService extends RemoteExecutionService {
         String outPath = "${_out.absolutePath}/${tempZip.name}"
         boolean result = process.waitFor() &&
                 copyFile(tempZip, _out, retries) &&
-                execute("tar -C ${_out.absolutePath} -xzvf ${outPath} && rm ${outPath}", true)
+                execute("tar -C ${_out.absolutePath} -xzvf ${outPath} && rm ${outPath}",
+                        true, false)
         tempZip.delete()
         return result
     }
@@ -700,7 +704,7 @@ class SSHExecutionService extends RemoteExecutionService {
     File queryWorkingDirectory() {
         def rs = _execute("pwd")
         if (rs.successful)
-            return new File(rs.resultLines[1])
+            return new File(rs.stdout[1])
         return null
     }
     private static Random random = new Random()
