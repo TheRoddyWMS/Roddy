@@ -191,7 +191,7 @@ abstract class ExecutionService implements BEExecutionService {
         if (!context.executionContextLevel.allowedToSubmitJobs) {
             wrapperJob.storeJobConfigurationFile(wrapperJob.createJobConfiguration())
             wrapperJob.keepOnlyEssentialParameters()
-
+            // wrapperJob.wasSubmittedOnHold is already set in wrapperJob.run()
             result = jobManager.submitJob(wrapperJob)
         }
 
@@ -808,6 +808,10 @@ abstract class ExecutionService implements BEExecutionService {
                                     remoteZipFile, analysisToolsServerDir, analysisToolsServerDir)
                             ExecutionResult result =
                                     instance.execute(command, true, false)
+                            if (!result.successful)
+                                throw new UnexpectedExecutionResultException(
+                                        "Could not execute command: ${result.toStatusMessage()}" as String,
+                                        result.stdout)
                             boolean success = provider.
                                     setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.absolutePath), context)
                             if (!success)

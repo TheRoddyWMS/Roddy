@@ -595,14 +595,11 @@ class Analysis {
      * @param context
      */
     private void finallyStartJobsOfContext(ExecutionContext context) throws BEException {
-        Roddy.getJobManager().startHeldJobs(context.executedJobs.findAll {
-            // Jobs cannot be resumed, if they are not `SUSPENDED` or on `HOLD` (dependent on
-            // job-manager). If run with the `DirectSynchronousJobExecutionManager` they will
-            // never be suspended or on hold.
-            // Note that jobs can be in DUMMY state here! The are filtered out later by
-            // `BEJob.jobsWithUniqueValidJobId`
-            it.jobState == JobState.SUSPENDED ||
-                    it.jobState == JobState.HOLD
+        // Jobs cannot be resumed, if they are not `SUSPENDED` or on `HOLD` (dependent on
+        // job-manager). If run with the `DirectSynchronousJobExecutionManager` they will
+        // never be suspended or on hold.
+        Roddy.jobManager.startHeldJobs(context.executedJobs.findAll {
+            !it.fakeJob && it.wasSubmittedOnHold
         } as List<BEJob>)
     }
 
@@ -643,7 +640,7 @@ class Analysis {
                 Roddy.jobManager.killJobs(context.jobsForProcess as List<BEJob>)
                 context.jobsForProcess.each { job ->
                     logger.severe("Revoked command for job ID" + job.jobID +
-                            ": " + job.lastCommand.toBashCommandString())
+                            ": '" + job.lastCommand.toBashCommandString() + "'")
                 }
             } catch (Exception ex) {
                 logger.severe('Could not abort jobs.', ex)

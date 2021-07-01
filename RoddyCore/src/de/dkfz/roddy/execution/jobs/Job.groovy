@@ -85,6 +85,12 @@ class Job extends BEJob<BEJob, BEJobResult> {
     public final List<BaseFile> filesToVerify
 
     /**
+     * This value should be set after submitting the job. The null serves as a protective
+     * default value.
+     */
+    protected Boolean wasSubmittedOnHold = null
+
+    /**
      * TODO No apparent usage of this constructor. Leave it in only for backwards-compatibility.
      */
     @Deprecated
@@ -642,6 +648,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             storeJobConfigurationFile(createJobConfiguration())
             keepOnlyEssentialParameters()
             runResult = jobManager.submitJob(this)
+            wasSubmittedOnHold = jobManager.holdJobsEnabled
             if (appendToJobStateLogfile)
                 this.appendToJobStateLogfile(jobManager, executionContext, runResult, null)
             Command cmd = runResult.command
@@ -684,6 +691,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             runResult = new BEJobResult((SubmissionCommand) null, this, null, tool, parameters,
                     parentFiles.collect { it.creatingJobsResult?.getJob() }.findAll { it })
             jobState = JobState.DUMMY
+            wasSubmittedOnHold = false
         }
 
         return runResult
@@ -823,12 +831,13 @@ class Job extends BEJob<BEJob, BEJobResult> {
     }
 
     private File _logFile = null
-/**
- * Returns the path to an existing log file.
- * If no logfile exists this returns null.
- *
- * @return
- */
+
+    /**
+     * Returns the path to an existing log file.
+     * If no logfile exists this returns null.
+     *
+     * @return
+     */
     synchronized File getLogFile() {
         if (_logFile == null)
             _logFile = this.executionContext.runtimeService.getLogFileForJob(this);
@@ -865,6 +874,10 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
     File getLocalToolPath() {
         return localToolPath
+    }
+
+    Boolean getWasSubmittedOnHold() {
+        return wasSubmittedOnHold
     }
 
 }
