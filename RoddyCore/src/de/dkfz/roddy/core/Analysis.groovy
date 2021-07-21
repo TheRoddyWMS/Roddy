@@ -417,7 +417,9 @@ class Analysis {
             context.addError(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.message))
         } catch (Exception e) {
             logger.always("An unhandled exception of type '" + e.class.canonicalName + "' occurred: '" + e.message + "'")
-            logger.sometimes(e.message + Constants.ENV_LINESEPARATOR + getStackTraceAsString(e))
+            // OTP depends on stack-traces for error-state recognition. Therefore, keep plotting
+            // the stack-traces with logger.always().
+            logger.always(e.message + Constants.ENV_LINESEPARATOR + getStackTraceAsString(e))
             context.addError(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.message))
         } finally {
             // Look up errors when jobs are executed directly and when there were any started jobs.
