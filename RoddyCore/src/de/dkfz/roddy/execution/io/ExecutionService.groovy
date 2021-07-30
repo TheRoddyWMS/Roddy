@@ -13,7 +13,6 @@ import de.dkfz.roddy.config.ConfigurationConstants
 import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.config.converters.ConfigurationConverter
-import de.dkfz.roddy.config.converters.XMLConverter
 import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.core.*
@@ -34,6 +33,7 @@ import de.dkfz.roddy.tools.shell.bash.Service as BashService
 import groovy.transform.CompileStatic
 
 import java.text.ParseException
+import java.time.Duration
 import java.util.concurrent.ExecutionException
 import java.util.logging.Level
 
@@ -147,7 +147,10 @@ abstract class ExecutionService implements BEExecutionService {
 
     void destroy() {}
 
-    protected abstract ExecutionResult _execute(String command, boolean waitFor, boolean ignoreErrors, OutputStream outputStream)
+    protected abstract ExecutionResult _execute(String command,
+                                                boolean waitFor = true,
+                                                Duration timeout = Duration.ZERO,
+                                                OutputStream outputStream = null)
 
     /**
      * Directly pass parameters to a tool script to be executed remotely. Use this method if you have a script in your plugin
@@ -200,7 +203,8 @@ abstract class ExecutionService implements BEExecutionService {
             throw new IOException("Job log file ${jobLog} does not exist")
 
         Long jobLogSize = FileSystemAccessProvider.instance.fileSize(jobLog)
-        Long maximumJobLogSize = context.configurationValues.get("maximumJobLogSize", (1024 * 1024 * 10).toString()).toLong()
+        Long maximumJobLogSize = context.configurationValues.
+                get("maximumJobLogSize", (1024 * 1024 * 10).toString()).toLong()
         if (jobLogSize > maximumJobLogSize)
             throw new IOException("Job log file of ${jobLogSize} byte is larger than permitted size ${maximumJobLogSize}")
 
@@ -241,26 +245,20 @@ abstract class ExecutionService implements BEExecutionService {
     List<String> executeTool(ExecutionContext context, String toolID, String jobNameExtension = "_executedScript:") {
         File path = context.configuration.getProcessingToolPath(context, toolID)
         String cmd = FileSystemAccessProvider.instance.commandSet.getExecuteScriptCommand(path)
-        return execute(cmd, true, true).stdout
+        return execute(cmd, true).stdout
     }
 
     ExecutionResult execute(String command,
-                            boolean waitFor,
-                            boolean ignoreErrors,
+                            boolean waitFor = true,
+                            Duration timeout = Duration.ZERO,
                             OutputStream outputStream = null) {
         if (command) {
-            return _execute(command, waitFor, ignoreErrors, outputStream)
+            return _execute(command, waitFor, timeout, outputStream)
         } else {
             return new ExecutionResult([command], false, -1,
                     [], Arrays.asList("Command not valid. String is empty."),
                     "")
         }
-    }
-
-    @Deprecated
-    ExecutionResult execute(String command, boolean waitFor = true) {
-        // The only reason to keep this function with ignoreErrors = false is backwards compatibility.
-        return execute(command, waitFor, false)
     }
 
     /** Create somehow valid submission IDs.
@@ -282,13 +280,26 @@ abstract class ExecutionService implements BEExecutionService {
         }
     }
 
+    @Override
+    ExecutionResult execute(Command command, Duration timeout) {
+        execute(command, true, timeout)
+    }
+
+    @Deprecated
+    @Override
+    ExecutionResult execute(String command, Duration timeout) {
+        execute(command, true, timeout)
+    }
+
     /** TODO: Remove the catch-all exception. Client code in Alignment workflow
      *        COProjectRuntimeService may depend on this, therefore this cannot be changed now.
      *        It's the interest of the client code to decide whether an exception should be ignored
      *        or not.
      */
     @Override
-    ExecutionResult execute(Command command, boolean waitFor = true) {
+    ExecutionResult execute(Command command,
+                            boolean waitFor = true,
+                            Duration timeout = Duration.ZERO) {
         ExecutionContext context = ((Job) command.job).executionContext
         ExecutionResult res
 
@@ -300,10 +311,10 @@ abstract class ExecutionService implements BEExecutionService {
 
             if (context.executionContextLevel == ExecutionContextLevel.TESTRERUN) {
                 String pid = validSubmissionCommandOutputWithRandomJobId(command)
-                res = new ExecutionResult([command.toBashCommandString()], true,
+                res = new ExecutionResult([cmdString], true,
                         0, [pid], [], pid)
             } else {
-                res = execute(cmdString, waitFor, false, outputStream)
+                res = execute(cmdString, waitFor, timeout, outputStream)
             }
             command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.COMPLETED_SUCCESSFUL)
 
@@ -807,7 +818,7 @@ abstract class ExecutionService implements BEExecutionService {
                             GString command = RoddyIOHelperMethods.compressor.getDecompressionString(
                                     remoteZipFile, analysisToolsServerDir, analysisToolsServerDir)
                             ExecutionResult result =
-                                    instance.execute(command, true, false)
+                                    instance.execute(command, true)
                             if (!result.successful)
                                 throw new UnexpectedExecutionResultException(
                                         "Could not execute command: ${result.toStatusMessage()}" as String,
@@ -839,7 +850,7 @@ abstract class ExecutionService implements BEExecutionService {
                             new File(dstCommonExecutionDirectory, remoteFile.name),
                             analysisToolsServerDir, analysisToolsServerDir)
                     ExecutionResult result =
-                            instance.execute(command, true, false)
+                            instance.execute(command, true)
                     if (!result.successful)
                         throw new UnexpectedExecutionResultException(
                                 "Could not execute command: ${result.toStatusMessage()}" as String,
@@ -855,7 +866,7 @@ abstract class ExecutionService implements BEExecutionService {
                 }
                 provider.checkDirectory(dstAnalysisToolsDirectory, context, true)
                 def linkCommand = "ln -s ${analysisToolsServerDir.absolutePath}/${subFolderOnRemote} ${dstAnalysisToolsDirectory.absolutePath}/${subFolder.name}"
-                instance.execute(linkCommand, true, false)
+                instance.execute(linkCommand, true)
         }
     }
 
@@ -902,7 +913,8 @@ abstract class ExecutionService implements BEExecutionService {
             repeatCalls.append(repeatCallLine.substring(1))
         }
 
-        context.setDetailedExecutionContextLevel(ExecutionContextSubLevel.RUN_FINALIZE_CREATE_BINARYFILES)
+        context.detailedExecutionContextLevel =
+                ExecutionContextSubLevel.RUN_FINALIZE_CREATE_BINARYFILES
 
         RuntimeService rService = context.runtimeService
         final File realCallFile = rService.getRealCallsFile(context)

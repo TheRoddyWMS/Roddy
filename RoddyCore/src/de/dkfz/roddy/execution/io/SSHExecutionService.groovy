@@ -19,9 +19,9 @@ import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
+import de.dkfz.roddy.tools.Tuple3
 import groovy.transform.CompileStatic
 import net.schmizz.sshj.SSHClient
-import net.schmizz.sshj.common.IOUtils
 import net.schmizz.sshj.connection.channel.OpenFailException
 import net.schmizz.sshj.connection.channel.direct.Session
 import net.schmizz.sshj.sftp.*
@@ -31,10 +31,18 @@ import net.schmizz.sshj.userauth.method.AuthMethod
 import net.schmizz.sshj.xfer.scp.SCPDownloadClient
 import net.schmizz.sshj.xfer.scp.SCPFileTransfer
 import org.apache.commons.io.filefilter.WildcardFileFilter
+import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
+import java.time.Duration
+import java.time.temporal.TemporalUnit
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
+import java.util.function.Supplier
 
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 
@@ -353,83 +361,85 @@ class SSHExecutionService extends RemoteExecutionService {
         return result.toString("UTF-8")
     }
 
-    // This method actually overrides a base class. But if we keep the @Override, the Groovy (or Java) compiler constantly
-    // claims, that the method does not override it's base method.
-    // That is, why we keep it in but only as a comment.
-    //    @Override
-    synchronized ExecutionResult _execute(String command,
-                                          boolean waitFor = true,
-                                          boolean ignoreError = false,
-                                          OutputStream outputStream = null) {
-        SSHPoolConnectionSet connectionSet = waitForService()
-        SSHClient sshClient = connectionSet.client
+    private static final ExecutorService executorService = Executors.newCachedThreadPool()
 
-        if (waitFor) {
+    @Override
+    ExecutionResult _execute(String command,
+                             boolean waitFor = true,
+                             Duration timeout = Duration.ZERO,
+                             OutputStream outputStream = null) {
+        _execute(command, waitFor, timeout, outputStream, executorService)
+    }
+
+    /**
+     * An com.hierynomus:sshj:0.23.0 and JSCH Agent 0.0.9 (-> net.schmizz:sshj:0.10.0) compatibility
+     * problem prevents the usage of Command.join(long, TimeUnit) from working. The best solution is
+     * probably to get rid of the whole SSHJ/JSCH stack and instead use mina-sshd, which is not
+     * completely outdated and actively maintained (and can use the SSH-agent and execute with timeouts.
+     *
+     * The solution taken now uses the Linux command `timeout`.
+     *
+     * @param command
+     * @param waitFor
+     * @param timeout
+     * @param outputStream
+     * @param executorService
+     * @return
+     */
+    ExecutionResult _execute(String command,
+                             boolean waitFor = true,
+                             Duration timeout = Duration.ZERO,
+                             OutputStream outputStream = null,
+                             ExecutorService executorService) {
+
+        CompletableFuture<Tuple3<Integer,List<String>, List<String>>> processF = CompletableFuture.supplyAsync({
+            SSHPoolConnectionSet connectionSet = waitForService()
+            SSHClient sshClient = connectionSet.client
+
+            // Append a newgrp (Philip: better "newgrp -"!) to each command, so that all
+            // command context in the proper group context.
             connectionSet.acquire()
             Session session = sshClient.startSession()
-            Session.Command cmd
-
+            List<String> stdout
+            List<String> stderr
+            Integer exitCode
             try {
-                cmd = session.exec(command)
+                Session.Command executingCommand
+                if (timeout != Duration.ZERO) {
+                    // TODO Remove this workaround. Try switching to mina-sshd.
+                    Long seconds = Math.round(Math.ceil(timeout.toNanos() / 1000000000.0d))
+                    Long killSeconds = 60
+                    String timeoutCommand = "timeout --preserve-status -s TERM -k ${killSeconds}s ${seconds}s"
+                    executingCommand = session.exec("${timeoutCommand} ${command}")
+                } else {
+                    executingCommand = session.exec(command)
+                }
+                if (outputStream) {
+                    stdout = LocalExecutionHelper.readStringStream(executingCommand.inputStream, outputStream)
+                } else {
+                    stdout = LocalExecutionHelper.readStringStream(executingCommand.inputStream)
+                }
+                stderr = LocalExecutionHelper.readStringStream(executingCommand.errorStream)
+
+                executingCommand.join()
+                exitCode = executingCommand.exitStatus
             } finally {
                 connectionSet.release()
-            }
-            String content = readStream(cmd.inputStream)
-
-            cmd.join()
-            session.close()
-
-            // Get the exit status of the process. In case of things like caught signals (SEGV-Segmentation fault), the value is null and will be set to 256.
-            Integer exitStatus = cmd.exitStatus
-            if (exitStatus == null) exitStatus = 256
-
-            List<String> output = new LinkedList<String>()
-//            output << "" + exitStatus;
-
-            if (exitStatus > 0) {
-                if (ignoreError) {
-                    // In case the command is ignored, a warning is sent out instead of a severe error.
-                    logger.warning("Command not executed correctly, return code: " + exitStatus + ", error was ignored on purpose.")
-                    logger.rare("Ignored failed command was: '${command}'")
-                    content.readLines().each { String line -> output << "" + line }
-                    readStream(cmd.errorStream).readLines().each { String line -> output << "" + line }
-                } else {
-                    logger.severe("Command not executed correctly, return code: " + exitStatus +
-                            (cmd.exitSignal
-                                    ? " Caught signal is " + cmd.exitSignal.name()
-                                    : "\n\tCommand Str. " + RoddyIOHelperMethods.truncateCommand(command,
-                                    Roddy.applicationConfiguration.getOrSetApplicationProperty("commandLogTruncate", '80').toInteger())))
-                }
-            } else {
-                content.readLines().each { String line -> output << "" + line }
+                session.close()
             }
 
-            return new ExecutionResult([command], exitStatus == 0, exitStatus, output, [], "0")
+            new Tuple3<Integer,List<String>, List<String>>(exitCode, stdout, stderr)
+        } as Supplier<Tuple3<Integer,List<String>, List<String>>>, executorService)
+
+        AsyncExecutionResult result = new AsyncExecutionResult([command], null as Integer,
+            processF.thenApply { it.x as Integer },
+            processF.thenApply { it.y as List<String> },
+            processF.thenApply { it.z as List<String> })
+
+        if (waitFor) {
+            return result.asExecutionResult()
         } else {
-            Runnable runnable = new Runnable() {
-
-                @Override
-                void run() {
-//                  long id = fireExecutionStartedEvent(command)
-                    // Append a newgrp (Philip: better "newgrp -"!) to each command, so that all command context in the proper group context.
-                    connectionSet.acquire()
-                    Session session = sshClient.startSession()
-                    Session.Command cmd
-                    try {
-                        cmd = session.exec(command)
-                    } finally {
-                        connectionSet.release()
-                    }
-                    String content = IOUtils.readFully(cmd.inputStream).toString()
-                    session.close()
-//                  measureStop(id, "async command  [sshclient:${set.id}] '" + RoddyIOHelperMethods.truncateCommand(command, Roddy.getOrSetApplicationProperty("commandLogTruncate", '20').toInteger()) + "'");
-//                  fireExecutionStoppedEvent(id, command)
-                }
-            }
-            Thread thread = new Thread(runnable)
-            thread.name = "SSHExecutionService::_execute()"
-            thread.start()
-            return new ExecutionResult([command], true, 0, [], [], "")
+            return result
         }
     }
 
@@ -495,7 +505,7 @@ class SSHExecutionService extends RemoteExecutionService {
         boolean result = process.waitFor() &&
                 copyFile(tempZip, _out, retries) &&
                 execute("tar -C ${_out.absolutePath} -xzvf ${outPath} && rm ${outPath}",
-                        true, false)
+                        true)
         tempZip.delete()
         return result
     }

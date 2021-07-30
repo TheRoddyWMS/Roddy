@@ -8,11 +8,8 @@ package de.dkfz.roddy.execution.io
 
 import groovy.transform.CompileStatic
 
-import java.io.File
-import java.io.OutputStream
-import java.io.Serializable
-import java.util.LinkedList
-import java.util.List
+import java.time.Duration
+
 /**
  * A dummy execution service which returns empty things and positive results.
  */
@@ -23,7 +20,9 @@ class NoNoExecutionService extends ExecutionService {
     }
 
     @Override
-    protected ExecutionResult _execute(String command, boolean waitFor, boolean ignoreErrors, OutputStream outputStream) {
+    protected ExecutionResult _execute(String command, boolean waitFor,
+                                       Duration timeout = Duration.ZERO,
+                                       OutputStream outputStream) {
         return new ExecutionResult([command], true, 0,
                 new LinkedList<>(), new LinkedList<>(), "")
     }

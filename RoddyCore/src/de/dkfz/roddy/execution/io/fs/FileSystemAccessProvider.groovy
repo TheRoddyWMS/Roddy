@@ -163,7 +163,7 @@ class FileSystemAccessProvider {
     }
 
     private boolean runFileTestCommand(String cmd) {
-        ExecutionResult er = ExecutionService.instance.execute(cmd, true, false)
+        ExecutionResult er = ExecutionService.instance.execute(cmd, true)
         return er.firstStdoutLine == commandSet.getReadabilityTestPositiveResult()
     }
 
@@ -186,7 +186,7 @@ class FileSystemAccessProvider {
 
     Long fileSize(File f) {
         def res = ExecutionService.instance.execute(
-                commandSet.getFileSizeCommand(f), true, true)
+                commandSet.getFileSizeCommand(f), true)
         if (res.successful)
             return Long.parseLong(res.firstStdoutLine)
         else
@@ -233,7 +233,7 @@ class FileSystemAccessProvider {
             else
                 return eService.execute(
                         commandSet.getExecutabilityTestCommand(f),
-                        true, true).
+                        true).
                         firstStdoutLine == commandSet.getReadabilityTestPositiveResult()
         }
     }
@@ -251,7 +251,7 @@ class FileSystemAccessProvider {
         if (!ExecutionService.instance.canListFiles()) {
             String cmd = commandSet.getListDirectoriesInDirectoryCommand(f, filters)
             ExecutionResult er =
-                    ExecutionService.instance.execute(cmd, true, false)
+                    ExecutionService.instance.execute(cmd, true)
             res = er.stdout
             res.each({ String folder -> folders.add(new File(folder)) })
         } else {
@@ -294,7 +294,7 @@ class FileSystemAccessProvider {
             else {
                 List<File> files = [];
                 String cmd = commandSet.getListFilesInDirectoryCommand(f, filters)
-                ExecutionResult er = eService.execute(cmd, true, false)
+                ExecutionResult er = eService.execute(cmd, true)
                 if (er.successful) {
                     for (String l : er.stdout) {
                         files << new File(l)
@@ -310,7 +310,7 @@ class FileSystemAccessProvider {
     List<File> listFilesUsingWildcards(File baseFolder, String wildcards) {
         ExecutionResult result = ExecutionService.instance.
                 execute(commandSet.getFindFilesUsingWildcardsCommand(baseFolder, wildcards),
-                        true, false)
+                        true)
         result.stdout.collect {
             new File(it)
         } as List<File>
@@ -329,7 +329,7 @@ class FileSystemAccessProvider {
         ExecutionResult result = ExecutionService.instance.
                 execute(commandSet.getListFullDirectoryContentRecursivelyCommand(
                         baseFolder, -1, FileType.FILES, false),
-                        true, false)
+                        true)
 
         List<File> foundFiles = result.stdout.collect { new File(it) } as List<File>
 
@@ -386,7 +386,7 @@ class FileSystemAccessProvider {
         } else {
             cmd = commandSet.getCheckDirectoryCommand(f)
         }
-        ExecutionResult er = ExecutionService.instance.execute(cmd, true, false)
+        ExecutionResult er = ExecutionService.instance.execute(cmd, true)
         return (er.firstStdoutLine == commandSet.readabilityTestPositiveResult)
     }
 
@@ -437,7 +437,7 @@ class FileSystemAccessProvider {
                 _userHome = new File(jHomeVar)
             } else {
                 String cmd = commandSet.userDirectoryCommand
-                ExecutionResult er = eService.execute(cmd, true, false)
+                ExecutionResult er = eService.execute(cmd, true)
                 _userHome = new File(er.firstStdoutLine)
             }
         }
@@ -447,7 +447,7 @@ class FileSystemAccessProvider {
     private String getSingleCommandValueOnValueIsNull(String _value, String command, String cacheEventID) {
         if (_value == null) {
             ExecutionResult er = ExecutionService.instance.
-                    execute(command, true, false)
+                    execute(command, true)
             _value = er.firstStdoutLine
         }
         return _value
@@ -473,7 +473,7 @@ class FileSystemAccessProvider {
         // Result could be a single line or several lines. So just combine and split again. This way, we are safe.
         new ComplexLine(ExecutionService.instance.
                 execute(commandSet.listOfGroupsCommand,
-                        true, false).stdout.join(' ')).splitBy(' ') as List<String>
+                        true).stdout.join(' ')).splitBy(' ') as List<String>
     }
 
     String getMyGroup() {
@@ -489,8 +489,7 @@ class FileSystemAccessProvider {
         synchronized (_groupIDsByGroup) {
             if (!_groupIDsByGroup.containsKey(groupID)) {
                 ExecutionResult er = ExecutionService.instance.
-                        execute(commandSet.getGroupIDCommand(groupID),
-                                true, false)
+                        execute(commandSet.getGroupIDCommand(groupID), true)
                 _groupIDsByGroup[groupID] = er.firstStdoutLine.toInteger()
             }
 
@@ -504,7 +503,7 @@ class FileSystemAccessProvider {
 
     private String _getOwnerOfPath(File file) {
         String cmd = commandSet.getOwnerOfPathCommand(file)
-        ExecutionResult er = ExecutionService.instance.execute(cmd, true, false)
+        ExecutionResult er = ExecutionService.instance.execute(cmd, true)
         return er.firstStdoutLine
     }
 
@@ -566,8 +565,7 @@ class FileSystemAccessProvider {
         if (eService.canCopyFiles()) {
             return eService.copyFile(_in, _out)
         } else {
-            return eService.execute(commandSet.getCopyFileCommand(_in, _out),
-                    true, false)
+            return eService.execute(commandSet.getCopyFileCommand(_in, _out), true)
         }
     }
 
@@ -580,8 +578,7 @@ class FileSystemAccessProvider {
         if (eService.canCopyFiles()) {
             return eService.moveFile(_from, _to);
         } else {
-            return eService.execute(commandSet.getMoveFileCommand(_from, _to),
-                    true, false);
+            return eService.execute(commandSet.getMoveFileCommand(_from, _to), true);
         }
     }
 
@@ -594,8 +591,7 @@ class FileSystemAccessProvider {
         if (eService.canCopyFiles()) {
             return eService.copyDirectory(_in, _out)
         } else {
-            def executionResult = eService.execute(commandSet.getCopyDirectoryCommand(_in, _out),
-                    true, false)
+            def executionResult = eService.execute(commandSet.getCopyDirectoryCommand(_in, _out), true)
             return executionResult.successful
         }
 
@@ -618,7 +614,7 @@ class FileSystemAccessProvider {
 
         ExecutionService eService = ExecutionService.instance
         String command = commandSet.getCheckChangeOfPermissionsPossibilityCommand(outputDirectory, myGroup)
-        def executionResult = eService.execute(command, true, false)
+        def executionResult = eService.execute(command, true)
         return executionResult.successful &&
                 executionResult.firstStdoutLine &&
                 executionResult.firstStdoutLine == BashCommandSet.TRUE
@@ -648,7 +644,7 @@ class FileSystemAccessProvider {
      */
     boolean setAccessRightsRecursively(File path, String accessStringDirectories, String accessStringFiles, String group) {
         commandSet.getSetAccessRightsRecursivelyCommand(path, accessStringDirectories, accessStringFiles, group)
-                .map { ExecutionService.instance.execute(it, false, false).successful }
+                .map { ExecutionService.instance.execute(it, false).successful }
                 .orElse(true)
     }
 
@@ -675,7 +671,7 @@ class FileSystemAccessProvider {
             return eService.modifyAccessRights(file, accessString, group)
         } else {
             return commandSet.getSetAccessRightsCommand(file, accessString, group)
-                    .map { eService.execute(it, true, false).successful }
+                    .map { eService.execute(it, true).successful }
                     .orElse(true)
         }
     }
@@ -708,7 +704,7 @@ class FileSystemAccessProvider {
                 return file.readLines().toArray(new String[0])
             } else {
                 return eService.execute(commandSet.
-                        getReadOutTextFileCommand(file), true, false).
+                        getReadOutTextFileCommand(file), true).
                         stdout.toArray(new String[0])
             }
         } catch (Exception ex) {
@@ -804,7 +800,7 @@ class FileSystemAccessProvider {
         if (eService.canDeleteFiles()) {
             return eService.removeDirectory(directory)
         } else {
-            return eService.execute(commandSet.getRemoveDirectoryCommand(directory), true, false)
+            return eService.execute(commandSet.getRemoveDirectoryCommand(directory), true)
         }
     }
 
@@ -824,7 +820,7 @@ class FileSystemAccessProvider {
         if (!_default_umask) {
             String command = commandSet.getUsermaskCommand
             ExecutionResult executionResult =
-                    ExecutionService.instance.execute(command, true, false)
+                    ExecutionService.instance.execute(command, true)
             _default_umask = Integer.decode(executionResult.firstStdoutLine)
         }
         return _default_umask
