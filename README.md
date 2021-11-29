@@ -10,7 +10,7 @@ Roddy is a framework for development and management of workflows on a batch proc
 
 # Documentation
 
-You can find the documentation at [Read the Docs](http://roddy-documentation.readthedocs.io), including [detailed installation instructions](http://roddy-documentation.readthedocs.io/installationGuide.html).
+You can find the documentation at [Read the Docs](http://roddy-documentation.readthedocs.io), including [detailed installation instructions](https://roddy-documentation.readthedocs.io/en/latest/installationGuide.html).
 
 # Workflows
 
