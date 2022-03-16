@@ -117,8 +117,8 @@ The installation of specific plugin version needs to be done in directories name
 On the long run, this manual plugin installation mechanism may get automatized.
 
 
-[Optional] Setup GroovyServ
----------------------------
+[Optional] Setup GroovyServ (deprecated)
+----------------------------------------
 
 Roddy uses Groovy, however, Groovy is a bit slow to start. So Roddy 3.0+ supports `GroovyServ`_, which can be used by you to speed things up.
 GroovyServ tremendously decreases the startup time of Groovy applications and Roddy will try to download and set it up automatically. If that fails or
