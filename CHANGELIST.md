@@ -1,3 +1,57 @@
+# Versioning Scheme
+
+Roddy uses semantic versioning at least since version 3. Earlier versions use the same `x.y.z` format but the version increases were not done according to the rules defined for semantic versioning. 
+
+## Semantic Versioning of Roddy
+
+As workflow management system, Roddy has the following APIs:
+
+* the interface with the workflows (plugin XMLs, Groovy API, etc.)
+* the interface with the caller (user)
+
+The focus for deciding on the correct version level to increase is on the user-interface. The following changes trigger the respective bump
+
+1. **major**: Any change that causes the user to take action to continue with his/her work.
+    * parameter name
+    * parameter value interpretation
+    * output change related to job name reporting (required for OTP)
+    * plugin API change causing incompatibility of old plugins
+    * names of files in the `roddyExecutionStore` as far as produced by Roddy itself (`jobStateLogfile.txt`, `*.parameter`, `*.o%j`)
+2. **minor**: Any change that adds a functionality but does not require an action by the user.
+    * plugin API extensions that do not affect old plugins
+    * new parameters or features
+3. **patch**: Any change that is functionally neutral. This includes documentation updates, most error reporting changes, refactorings, and stability-improving bugfixes.
+    * safety measures, such as parameter value validation (e.g. parsing)
+    * stability fixes
+    * improved error messages and reporting (except for the job-name reporting mentioned above)
+    * refactorings
+
+## Semantic Versioning of Roddy Workflows
+
+Workflows have the following APIs:
+
+  * the interface of the workflow with the workflow management system
+  * the interface with the user
+
+The focus for workflows is on the interface with the user. Workflow system updates are rare and version increases are complicated by the need to maintain multiple long-term support versions on version branches. Therefore, in past cases, special rules were applied.
+
+1. **major**: Any change that causes the user to take action to continue with his/her work.
+    * workflow parameter name or removed parameters
+    * certain default configuration values
+    * changes in the semantics of a configuration parameter or the interpretation of inputs, e.g. because of algorithm changes
+    * renamed columns in output TSVs
+    * reordering of columns in a TSV file with header or adding columns between existing columns
+    * remove/rename output files
+2. **minor**: Any change that adds a functionality but does not require an action by the user.
+    * safety measures, such as parameter value validation (e.g. parsing)
+    * new parameters or features
+3. **patch**: Any change that is functionally neutral. This includes documentation updates, most error reporting changes, refactorings, and stability-improving bugfixes.
+    * stability and bug fixes that allow running the workflow on data on which it previously failed
+    * improved error messages and reporting (except for the job-name reporting mentioned above)
+    * refactorings
+
+Note, that some changes may break fragile user code and thus potentially lead to wrong analysis results. This is, e.g., the case if the data user cuts out columns of a TSV without checking the header.
+
 # Changelist
 
 * 3.6.1
