@@ -54,8 +54,8 @@ class ConfigurationIssue {
         ),
         inproperVariableExpression(
                 ConfigurationIssueLevel.CVALUE_WARNING,
-                "Variables in your configuration appear to misuse variable references. For variable references \${variable identifier} nesting like '\${\${innerVar}}' is forbidden and it must not be empty.",
-                "Variable '#REPLACE_0#' defined in '#REPLACE_1#' may use malformatted variable references. For variables references like \${variable identifier} nesting like '\${\${innerVar}}' is forbidden and it must not be empty."
+                "Variables in your configuration appear to misuse variable references. For variable references nesting like '\${\${innerVar}}' is forbidden.",
+                "Variable '#REPLACE_0#' defined in '#REPLACE_1#' may use malformatted variable references. For variables references nesting like '\${\${innerVar}}' is forbidden."
         )
 
         final ConfigurationIssueLevel level
