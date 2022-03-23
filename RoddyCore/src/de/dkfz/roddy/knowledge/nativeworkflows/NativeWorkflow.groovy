@@ -15,6 +15,7 @@ import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.Workflow
 import de.dkfz.roddy.execution.BEExecutionService
+import de.dkfz.roddy.execution.UnexpectedExecutionResultException
 import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -48,7 +49,9 @@ class NativeWorkflow extends Workflow {
      */
     class NativeJob extends Job {
         NativeJob(Job wrappedJob) {
-            super(wrappedJob.context, wrappedJob.jobName, wrappedJob.toolID, null, wrappedJob.allRawInputParameters, wrappedJob.parentFiles, wrappedJob.filesToVerify)
+            super(wrappedJob.context, wrappedJob.jobName, wrappedJob.toolID, null as String,
+                    wrappedJob.allRawInputParameters, wrappedJob.parentFiles,
+                    wrappedJob.filesToVerify)
         }
 
         void setNativeParentJobs(List<NativeJob> nativeParentJobs) {
@@ -113,7 +116,8 @@ class NativeWorkflow extends Workflow {
         def nativeScriptID = "nativeWrapperFor${jobManagerAbbreviation}"
         String nativeWorkflowScriptWrapper = configuration.getProcessingToolPath(context, nativeScriptID).absolutePath
         Job wrapperJob = new Job(
-                context, context.getTimestampString() + "_nativeJobWrapper:" + toolID, toolID, null)
+                context, context.getTimestampString() + "_nativeJobWrapper:" + toolID, toolID,
+                null as String, null, null, null)
 
         DirectSynchronousExecutionJobManager dcfac = new DirectSynchronousExecutionJobManager(
                 ExecutionService.instance, JobManagerOptions.create().build())
@@ -134,18 +138,21 @@ class NativeWorkflow extends Workflow {
         System.out.println(wrapinScript + " => " + nativeWorkflowScriptWrapper)
         System.out.println(finalCommand)
 
-        ExecutionResult execute = ExecutionService.getInstance().execute(finalCommand)
-        logger.rare(execute.resultLines.join("\n"))
+        ExecutionResult execute = ExecutionService.instance.
+                execute(finalCommand, true, false)
+        logger.rare(execute.stdout.join("\n"))
         return true
     }
 
     private Map<String, BEGenJI> fetchAndProcessCalls(ExecutionContext context, BatchEuphoriaJobManager targetJobManager) {
 
         ContextConfiguration configuration = (ContextConfiguration) context.configuration
-//Get the calls file in the temp directory.
-        String[] calls = FileSystemAccessProvider.getInstance().loadTextFile(new File(context.temporaryDirectory, "calls"))
+        //Get the calls file in the temp directory.
+        String[] calls = FileSystemAccessProvider.instance.
+                loadTextFile(new File(context.temporaryDirectory, "calls"))
         if (calls == null)
             calls = new String[0]
+
         Map<String, BEGenJI> callsByID = new LinkedHashMap<>()
 
         def inlineScriptsDir = RoddyIOHelperMethods.assembleLocalPath(context.executionDirectory, "analysisTools", "inlineScripts")

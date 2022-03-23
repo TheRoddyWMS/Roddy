@@ -31,8 +31,6 @@ import org.apache.commons.io.filefilter.WildcardFileFilter
 class RuntimeService {
     private static LoggerWrapper logger = LoggerWrapper.getLogger(RuntimeService.class.getSimpleName())
     public static final String FILENAME_RUNTIME_INFO = "versionsInfo.txt"
-    public static final String FILENAME_RUNTIME_CONFIGURATION = "runtimeConfig.sh"
-    public static final String FILENAME_RUNTIME_CONFIGURATION_XML = "runtimeConfig.xml"
     public static final String FILENAME_REALJOBCALLS = "realJobCalls.txt"
     public static final String FILENAME_REPEATABLEJOBCALLS = "repeatableJobCalls.sh"
     public static final String FILENAME_EXECUTEDJOBS_INFO = "executedJobs.txt"
@@ -278,18 +276,14 @@ class RuntimeService {
 
     private String getExecutionDirFilePrefixString(ExecutionContext run) {
         try {
-            return String.format("%s%s", run.getExecutionDirectory().getAbsolutePath(), FileSystemAccessProvider.getInstance().getPathSeparator())
+            return String.format("%s%s",
+                    run.executionDirectory.absolutePath,
+                    FileSystemAccessProvider.instance.pathSeparator)
         } catch (Exception ex) {
-            return String.format("%s%s", run.getExecutionDirectory().getAbsolutePath(), FileSystemAccessProvider.getInstance().getPathSeparator())
+            return String.format("%s%s",
+                    run.executionDirectory.absolutePath,
+                    FileSystemAccessProvider.instance.pathSeparator)
         }
-    }
-
-    File getConfigurationFile(ExecutionContext run) {
-        return new File(getExecutionDirFilePrefixString(run) + FILENAME_RUNTIME_CONFIGURATION)
-    }
-
-    File getXMLConfigurationFile(ExecutionContext run) {
-        return new File(getExecutionDirFilePrefixString(run) + FILENAME_RUNTIME_CONFIGURATION_XML)
     }
 
     File getRealCallsFile(ExecutionContext run) {

@@ -18,6 +18,7 @@ import de.dkfz.roddy.config.loader.ConfigurationFactory
 import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.core.*
 import de.dkfz.roddy.execution.BEExecutionService
+import de.dkfz.roddy.execution.UnexpectedExecutionResultException
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.execution.jobs.cluster.lsf.LSFSubmissionCommand
@@ -29,6 +30,7 @@ import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.plugins.PluginInfo
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
+import de.dkfz.roddy.tools.shell.bash.Service as BashService
 import groovy.transform.CompileStatic
 
 import java.text.ParseException
@@ -145,7 +147,7 @@ abstract class ExecutionService implements BEExecutionService {
 
     void destroy() {}
 
-    protected abstract ExecutionResult _execute(String string, boolean waitFor, boolean ignoreErrors, OutputStream outputStream)
+    protected abstract ExecutionResult _execute(String command, boolean waitFor, boolean ignoreErrors, OutputStream outputStream)
 
     /**
      * Directly pass parameters to a tool script to be executed remotely. Use this method if you have a script in your plugin
@@ -169,7 +171,14 @@ abstract class ExecutionService implements BEExecutionService {
         parameters[DISABLE_DEBUG_OPTIONS_FOR_TOOLSCRIPT] = "true"
         parameters[CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW] = context.temporaryDirectory
 
-        Job wrapperJob = new Job(context, context.timestampString + "_directTool:" + toolID, toolID, parameters)
+        Job wrapperJob = new Job(
+                context,
+                context.timestampString + "_directTool:" + toolID,
+                toolID,
+                null as String,
+                parameters,
+                null,
+                null)
         DirectSynchronousExecutionJobManager jobManager =
                 new DirectSynchronousExecutionJobManager(instance, JobManagerOptions.create().build())
         wrapperJob.setJobManager(jobManager)
@@ -182,7 +191,7 @@ abstract class ExecutionService implements BEExecutionService {
         if (!context.executionContextLevel.allowedToSubmitJobs) {
             wrapperJob.storeJobConfigurationFile(wrapperJob.createJobConfiguration())
             wrapperJob.keepOnlyEssentialParameters()
-
+            // wrapperJob.wasSubmittedOnHold is already set in wrapperJob.run()
             result = jobManager.submitJob(wrapperJob)
         }
 
@@ -201,7 +210,7 @@ abstract class ExecutionService implements BEExecutionService {
         if (lines != null) {
 
             if (!result.successful)
-                throw new ExecutionException("Execution failed. Output was: '" + result.resultLines.orElse([]).join("\n") + "'", null)
+                throw new ExecutionException("Execution failed. ${result.executionResult.toStatusMessage()}", null)
 
             // Depending on which debug options are set, it is possible (set -v), that "Wrapped script ended"
             // is found before "Starting wrapped script". It is however safe to compare the whole "Starting wrapped script"
@@ -232,15 +241,26 @@ abstract class ExecutionService implements BEExecutionService {
     List<String> executeTool(ExecutionContext context, String toolID, String jobNameExtension = "_executedScript:") {
         File path = context.configuration.getProcessingToolPath(context, toolID)
         String cmd = FileSystemAccessProvider.instance.commandSet.getExecuteScriptCommand(path)
-        return execute(cmd).resultLines
+        return execute(cmd, true, true).stdout
     }
 
-    ExecutionResult execute(String command, boolean waitFor = true, OutputStream outputStream = null) {
+    ExecutionResult execute(String command,
+                            boolean waitFor,
+                            boolean ignoreErrors,
+                            OutputStream outputStream = null) {
         if (command) {
-            return _execute(command, waitFor, true, outputStream)
+            return _execute(command, waitFor, ignoreErrors, outputStream)
         } else {
-            return new ExecutionResult(false, -1, Arrays.asList("Command not valid. String is empty."), "")
+            return new ExecutionResult([command], false, -1,
+                    [], Arrays.asList("Command not valid. String is empty."),
+                    "")
         }
+    }
+
+    @Deprecated
+    ExecutionResult execute(String command, boolean waitFor = true) {
+        // The only reason to keep this function with ignoreErrors = false is backwards compatibility.
+        return execute(command, waitFor, false)
     }
 
     /** Create somehow valid submission IDs.
@@ -262,6 +282,11 @@ abstract class ExecutionService implements BEExecutionService {
         }
     }
 
+    /** TODO: Remove the catch-all exception. Client code in Alignment workflow
+     *        COProjectRuntimeService may depend on this, therefore this cannot be changed now.
+     *        It's the interest of the client code to decide whether an exception should be ignored
+     *        or not.
+     */
     @Override
     ExecutionResult execute(Command command, boolean waitFor = true) {
         ExecutionContext context = ((Job) command.job).executionContext
@@ -275,9 +300,10 @@ abstract class ExecutionService implements BEExecutionService {
 
             if (context.executionContextLevel == ExecutionContextLevel.TESTRERUN) {
                 String pid = validSubmissionCommandOutputWithRandomJobId(command)
-                res = new ExecutionResult(true, 0, [pid], pid)
+                res = new ExecutionResult([command.toBashCommandString()], true,
+                        0, [pid], [], pid)
             } else {
-                res = execute(cmdString, waitFor, outputStream)
+                res = execute(cmdString, waitFor, false, outputStream)
             }
             command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.COMPLETED_SUCCESSFUL)
 
@@ -498,18 +524,16 @@ abstract class ExecutionService implements BEExecutionService {
 
         //Current config
         String configText = ConfigurationConverter.convertAutomatically(context, cfg)
-        provider.writeTextFile(context.runtimeService.getConfigurationFile(context), configText, context)
 
         //The application ini
         provider.copyFile(Roddy.propertiesFilePath, new File(executionDirectory, Constants.APP_PROPERTIES_FILENAME), context)
         provider.writeTextFile(new File(executionDirectory, "roddyCall.sh"),
-                Roddy.applicationDirectory.absolutePath + "/roddy.sh " + 
-                        Roddy.getCommandLineCall().arguments.join(StringConstants.WHITESPACE) + "\n",
+                Roddy.applicationDirectory.absolutePath + "/roddy.sh \\\n" +
+                        Roddy.getCommandLineCall().arguments.
+                                collect { "\t" + BashService.escape(it) }.
+                                join(" \\\n") + "\n",
                 context)
 
-        //Current configs xml files (default, user, pipeline config file)
-        String configXML = new XMLConverter().convert(context, cfg)
-        provider.writeTextFile(context.runtimeService.getXMLConfigurationFile(context), configXML, context)
         context.detailedExecutionContextLevel = ExecutionContextSubLevel.RUN_RUN
     }
 
@@ -540,15 +564,13 @@ abstract class ExecutionService implements BEExecutionService {
         }
 
         if (!context.fileIsAccessible(runtimeService.getJobStateLogFile(context))) inaccessibleNecessaryFiles << "JobState logfile"
-        if (!context.fileIsAccessible(runtimeService.getConfigurationFile(context))) inaccessibleNecessaryFiles << "Runtime configuration file"
 
         // Check the ignorable files. It is still nice to see whether they are there
         if (!context.fileIsAccessible(runtimeService.getExecCacheFile(context.analysis))) inaccessibleIgnorableFiles << "Execution cache file"
         if (!context.fileIsAccessible(runtimeService.getRuntimeFile(context))) inaccessibleIgnorableFiles << "Runtime information file"
         if (!context.fileIsAccessible(new File(context.executionDirectory, Constants.APP_PROPERTIES_FILENAME))) inaccessibleIgnorableFiles << "Copy of application.ini file"
-        if (!context.fileIsAccessible(runtimeService.getXMLConfigurationFile(context))) inaccessibleIgnorableFiles << "XML configuration file"
 
-        // Return true, if the neccessary files are there and if strict mode is enabled and in this case all ignorable files exist
+        // Return true, if the necessary files are there and if strict mode is enabled and in this case all ignorable files exist
         return inaccessibleNecessaryFiles + (strict ? [] as List<String> : inaccessibleIgnorableFiles)
     }
 
@@ -784,7 +806,12 @@ abstract class ExecutionService implements BEExecutionService {
                             // Unzip the file again. foundExisting stays true
                             GString command = RoddyIOHelperMethods.compressor.getDecompressionString(
                                     remoteZipFile, analysisToolsServerDir, analysisToolsServerDir)
-                            instance.execute(command, true)
+                            ExecutionResult result =
+                                    instance.execute(command, true, false)
+                            if (!result.successful)
+                                throw new UnexpectedExecutionResultException(
+                                        "Could not execute command: ${result.toStatusMessage()}" as String,
+                                        result.stdout)
                             boolean success = provider.
                                     setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.absolutePath), context)
                             if (!success)
@@ -808,10 +835,15 @@ abstract class ExecutionService implements BEExecutionService {
                     provider.checkFile(context.getFileForAnalysisToolsArchiveOverview(), true, context)
                     provider.appendLineToFile(true, context.getFileForAnalysisToolsArchiveOverview(), "${remoteFile.name}:${archiveMD5}", true)
 
-                    GString str = RoddyIOHelperMethods.compressor.getDecompressionString(
+                    GString command = RoddyIOHelperMethods.compressor.getDecompressionString(
                             new File(dstCommonExecutionDirectory, remoteFile.name),
                             analysisToolsServerDir, analysisToolsServerDir)
-                    instance.execute(str, true)
+                    ExecutionResult result =
+                            instance.execute(command, true, false)
+                    if (!result.successful)
+                        throw new UnexpectedExecutionResultException(
+                                "Could not execute command: ${result.toStatusMessage()}" as String,
+                                result.stdout)
                     boolean success = provider.
                             setDefaultAccessRightsRecursively(new File(analysisToolsServerDir.absolutePath), context)
                     if (!success)
@@ -823,7 +855,7 @@ abstract class ExecutionService implements BEExecutionService {
                 }
                 provider.checkDirectory(dstAnalysisToolsDirectory, context, true)
                 def linkCommand = "ln -s ${analysisToolsServerDir.absolutePath}/${subFolderOnRemote} ${dstAnalysisToolsDirectory.absolutePath}/${subFolder.name}"
-                instance.execute(linkCommand, true)
+                instance.execute(linkCommand, true, false)
         }
     }
 

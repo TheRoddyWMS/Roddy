@@ -416,7 +416,9 @@ class Analysis {
             logger.always(e.message)
             context.addError(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.message))
         } catch (Exception e) {
-            logger.always("An unhandled exception of type '" + e.class.canonicalName + "' occurred: '" + e.localizedMessage + "'")
+            logger.always("An unhandled exception of type '" + e.class.canonicalName + "' occurred: '" + e.message + "'")
+            // OTP depends on stack-traces for error-state recognition. Therefore, keep plotting
+            // the stack-traces with logger.always().
             logger.always(e.message + Constants.ENV_LINESEPARATOR + getStackTraceAsString(e))
             context.addError(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.message))
         } finally {
@@ -443,7 +445,16 @@ class Analysis {
         boolean printed = printConfigurationErrorsAndWarnings(context)
         printed |= printMessagesForContext(context)
         if (printed)
-            logger.always("\nPlease check extended logs in " + logger.getCentralLogFile() + " for more details.")
+            logger.always(["",
+                           "Please check extended logs in " + logger.centralLogFile +
+                                   " for more details.",
+                           "Consider increasing maximumLogFilesPerPrefix in the" +
+                                   " applicationProperties.ini to keep more than " +
+                                   LoggerWrapper.DEFAULT_MAXIMUM_LOGFILES_PER_PREFIX +
+                                   " extended log-files.",
+                           "IMPORTANT: When reporting a bug, report this extended logs file " +
+                                   "together with the command output!"
+            ].join("\n"))
     }
 
     /**
@@ -478,8 +489,8 @@ class Analysis {
                             StringBuilder message =
                                     new StringBuilder('There were errors after preparing the workflow run for dataset ' + datasetID)
                             if (invalidPreparedFiles.size() > 0)
-                                message.append('\n\tSome files could not be written. Workflow will not execute.\n\t'
-                                                       + String.join('\t\n', invalidPreparedFiles))
+                                message.append('\n\tSome files could not be written. Workflow will not execute.\n\t' +
+                                        String.join('\t\n', invalidPreparedFiles))
                             if (!copiedAnalysisToolsAreExecutable)
                                 message.append('\n\tSome declared tools are not executable. Workflow will not execute.')
                             if (ignoreFileChecks) {
@@ -581,12 +592,17 @@ class Analysis {
     }
 
     /**
-     * Will start all the jobs in the context.
+     * Will start all the jobs in the context, unless they have already been started.
      *
      * @param context
      */
     private void finallyStartJobsOfContext(ExecutionContext context) throws BEException {
-        Roddy.getJobManager().startHeldJobs(context.getExecutedJobs() as List<BEJob>)
+        // Jobs cannot be resumed, if they are not `SUSPENDED` or on `HOLD` (dependent on
+        // job-manager). If run with the `DirectSynchronousJobExecutionManager` they will
+        // never be suspended or on hold.
+        Roddy.jobManager.startHeldJobs(context.executedJobs.findAll {
+            !it.fakeJob && it.wasSubmittedOnHold
+        } as List<BEJob>)
     }
 
     /**
@@ -624,14 +640,18 @@ class Analysis {
             try {
                 logger.severe('A workflow error occurred, try to rollback / abort submitted jobs.')
                 Roddy.jobManager.killJobs(context.jobsForProcess as List<BEJob>)
+                context.jobsForProcess.each { job ->
+                    logger.severe("Revoked command for job ID" + job.jobID +
+                            ": '" + job.lastCommand.toBashCommandString() + "'")
+                }
             } catch (Exception ex) {
                 logger.severe('Could not abort jobs.', ex)
             }
         } else {
             logger.severe('A workflow error occurred, but strict mode is disabled and/or ' +
-                                  'RollbackOnWorkflowError is disabled. Submitted jobs will be left running.' +
-                                  '\n\tConsider to enabling Roddy strict mode by setting the feature toggles ' +
-                                  "'StrictMode' and 'RollbackOnWorkflowError'.")
+                    'RollbackOnWorkflowError is disabled. Submitted jobs will be left running.' +
+                    '\n\tConsider enabling Roddy strict mode by setting the feature toggles ' +
+                    "'StrictMode' and 'RollbackOnWorkflowError'.")
         }
     }
 
@@ -658,7 +678,14 @@ class Analysis {
                 withErrorReporting(context, false, {
                     String cleanupScript = analysisConfiguration.cleanupScript
                     if (cleanupScript != null && cleanupScript != "") {
-                        Job cleanupJob = new Job(context, "cleanupScript", cleanupScript, null)
+                        Job cleanupJob = new Job(
+                                context,
+                                "cleanupScript",
+                                cleanupScript,
+                                null as String,
+                                null,
+                                null,
+                                null)
                         try {
                             ExecutionService.instance.writeFilesForExecution(context)
                             cleanupJob.run()

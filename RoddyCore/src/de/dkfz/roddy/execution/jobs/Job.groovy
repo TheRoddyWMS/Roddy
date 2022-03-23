@@ -84,91 +84,132 @@ class Job extends BEJob<BEJob, BEJobResult> {
      */
     public final List<BaseFile> filesToVerify
 
-    Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices, Map<String, Object> parameters, List<BaseFile> parentFiles) {
-        this(context, jobName, toolID, arrayIndices, parameters, parentFiles, null)
+    /**
+     * This value should be set after submitting the job. The null serves as a protective
+     * default value.
+     */
+    protected Boolean wasSubmittedOnHold = null
+
+    /**
+     * TODO No apparent usage of this constructor. Leave it in only for backwards-compatibility.
+     */
+    @Deprecated
+    Job(ExecutionContext context,
+        String jobName,
+        String toolID,
+        List<String> arrayIndices,
+        Map<String, Object> parameters,
+        List<BaseFile> parentFiles) {
+        this(context, jobName, toolID, null as String,
+                parameters, parentFiles, null)
     }
 
-    Job(ExecutionContext context, String jobName, String toolID, Map<String, Object> parameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
-        this(context, jobName, toolID, null, parameters, parentFiles, filesToVerify)
+    /**
+     * TODO Used in Alignment and COWorkflows plugins. Replace by main constructor.
+     */
+    @Deprecated
+    Job(ExecutionContext context,
+        String jobName,
+        String toolID,
+        Map<String, Object> parameters,
+        List<BaseFile> parentFiles,
+        List<BaseFile> filesToVerify) {
+        this(context, jobName, toolID, null as String,
+                parameters, parentFiles, filesToVerify)
     }
 
-    Job(ExecutionContext context, String jobName, String toolID, Map<String, Object> parameters, List<BaseFile> parentFiles) {
-        this(context, jobName, toolID, null, parameters, parentFiles, null)
+    /**
+     * TODO Used in Alignment workflow (Common & Samtools). Replace by main constructor.
+     */
+    @Deprecated
+    Job(ExecutionContext context,
+        String jobName,
+        String toolID,
+        Map<String, Object> parameters,
+        List<BaseFile> parentFiles) {
+        this(context, jobName, toolID, null as String,
+                parameters, parentFiles, null)
     }
 
-    Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices, List<BaseFile> filesToVerify, Map<String, Object> parameters) {
-        this(context, jobName, toolID, arrayIndices, parameters, null, filesToVerify)
+    /**
+     * TODO No apparent usage of this constructor. Leave it in only for backwards-compatibility.
+     */
+    @Deprecated
+    Job(ExecutionContext context,
+        String jobName,
+        String toolID,
+        List<String> arrayIndices,
+        List<BaseFile> filesToVerify,
+        Map<String, Object> parameters) {
+        this(context, jobName, toolID, null as String,
+                parameters, null, filesToVerify)
     }
 
-    Job(ExecutionContext context, String jobName, List<BaseFile> filesToVerify, String toolID, Map<String, Object> parameters) {
-        this(context, jobName, toolID, null, parameters, null, filesToVerify)
+    /**
+     * TODO No apparent usage of this constructor. Leave it in only for backwards-compatibility.
+     */
+    @Deprecated
+    Job(ExecutionContext context,
+        String jobName,
+        List<BaseFile> filesToVerify,
+        String toolID,
+        Map<String, Object> parameters) {
+        this(context, jobName, toolID, null as String,
+                parameters, null, filesToVerify)
     }
 
-    Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices, Map<String, Object> parameters) {
-        this(context, jobName, toolID, arrayIndices, parameters, null, null)
+    /**
+     * TODO No apparent usage of this constructor. Leave it in only for backwards-compatibility.
+     */
+    @Deprecated
+    Job(ExecutionContext context,
+        String jobName,
+        String toolID,
+        List<String> arrayIndices,
+        Map<String, Object> parameters) {
+        this(context, jobName, toolID, null as String,
+                parameters,null, null)
     }
 
-    Job(ExecutionContext context, String jobName, String toolID, Map<String, Object> parameters) {
-        this(context, jobName, toolID, null, parameters, null, null)
+    /**
+     * TODO No apparent usage of this constructor. Leave it in only for backwards-compatibility.
+     */
+    @Deprecated
+    Job(ExecutionContext context,
+        String jobName,
+        String toolID,
+        Map<String, Object> parameters) {
+        this(context, jobName, toolID, null as String,
+                parameters,null, null)
     }
 
-//    /**
-//     * This is for job implementations which do the writeConfigurationFile on their own.
-//     */
-//    protected BEJob(String jobName, ExecutionContext context, String toolID, Map<String, String> parameters, List<String> arrayIndices, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
-//        super(jobName
-//                , context.configuration.getProcessingToolPath(context, toolID)
-//                , toolID != null && toolID.trim().length() > 0 ? context.configuration.getProcessingToolMD5(toolID): null
-//                , arrayIndices
-//                , parameters
-//                , collectParentJobsFromFiles(parentFiles)
-//                , collectJobIDsFromFiles(parentFiles)
-//                , Roddy.jobManager)
-//        this.toolID = toolID
-//        this.context = context
-//        this.parentFiles = parentFiles
-//        this.filesToVerify = filesToVerify
-//        this.context.addExecutedJob(this)
-//    }
-
-    Job(ExecutionContext context, String jobName, String toolID, List<String> arrayIndices,
-        Map<String, Object> inputParameters, List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
-        this(context, jobName, toolID, null, arrayIndices, inputParameters, parentFiles, filesToVerify)
+    /**
+     * TODO: Used only in ACEseq plugin. Replace single called from ACEseqMethods by main
+     *       constructor call.
+     */
+    @Deprecated
+    Job(ExecutionContext context,
+        String jobName,
+        String toolID,
+        List<String> arrayIndices,
+        Map<String, Object> inputParameters,
+        List<BaseFile> parentFiles,
+        List<BaseFile> filesToVerify) {
+        this(context, jobName, toolID, null as String,
+                inputParameters, parentFiles, filesToVerify)
     }
 
-    private static List<BEJobID> jobs2jobIDs(List<BEJob> jobs) {
-        if (null == jobs) {
-            return new LinkedList<BEJobID>()
-        } else {
-            return jobs.collect { it.runResult.jobID }
-        }
-    }
-
-    private static List<BEJob> reconcileParentJobInformation(List<BEJob> parentJobs, 
-                                                             List<BEJobID> parentJobIDs,
-                                                             BatchEuphoriaJobManager jobManager) {
-        List<BEJob> pJobs
-        if ((null != parentJobIDs && !parentJobIDs.isEmpty()) &&
-                (null != parentJobs && !parentJobs.isEmpty())) {
-            def validJobs = jobsWithUniqueValidJobId(parentJobs)
-            def validIds = uniqueValidJobIDs(parentJobIDs).collect { it.toString() }
-            def idsOfValidJobs = jobs2jobIDs(validJobs).collect { it.toString() }
-            if (validIds != idsOfValidJobs) {
-                throw new RuntimeException("parentJobBEJob needs to be called with one of parentJobs, parentJobIDs, or parentJobsIDs and *corresponding* parentJobs.")
-            }
-            pJobs = validJobs
-        } else if (null == parentJobIDs && null == parentJobs) {
-            pJobs = new LinkedList<BEJob>()
-        } else if (null != parentJobs) {
-            pJobs = jobsWithUniqueValidJobId(parentJobs)
-        } else {
-            pJobs = uniqueValidJobIDs(parentJobIDs).collect { new BEJob(it, jobManager) }
-        }
-        return pJobs
-    }
-
-    Job(ExecutionContext context, String jobName, String toolID, String inlineScript, List<String> arrayIndices, Map<String, Object> inputParameters,
-        List<BaseFile> parentFiles, List<BaseFile> filesToVerify) {
+    /**
+     * Main constructor.
+     * TODO The number of parameters is large. Consider using a builder!
+     */
+    Job(ExecutionContext context,
+        String jobName,
+        String toolID,
+        String inlineScript,
+        Map<String, Object> inputParameters,
+        List<BaseFile> parentFiles,
+        List<BaseFile> filesToVerify) {
         super(new BEJobID()
                 , jobName
                 , context.configuration.getProcessingToolPath(context, TOOLID_WRAPIN_SCRIPT)
@@ -219,6 +260,37 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         this.filesToVerify = filesToVerify ?: new LinkedList<BaseFile>()
         this.context.addExecutedJob(this)
+    }
+
+    private static List<BEJobID> jobs2jobIDs(List<BEJob> jobs) {
+        if (null == jobs) {
+            return new LinkedList<BEJobID>()
+        } else {
+            return jobs.collect { it.runResult.jobID }
+        }
+    }
+
+    private static List<BEJob> reconcileParentJobInformation(List<BEJob> parentJobs,
+                                                             List<BEJobID> parentJobIDs,
+                                                             BatchEuphoriaJobManager jobManager) {
+        List<BEJob> pJobs
+        if ((null != parentJobIDs && !parentJobIDs.isEmpty()) &&
+                (null != parentJobs && !parentJobs.isEmpty())) {
+            def validJobs = jobsWithUniqueValidJobId(parentJobs)
+            def validIds = uniqueValidJobIDs(parentJobIDs).collect { it.toString() }
+            def idsOfValidJobs = jobs2jobIDs(validJobs).collect { it.toString() }
+            if (validIds != idsOfValidJobs) {
+                throw new RuntimeException("parentJobBEJob needs to be called with one of parentJobs, parentJobIDs, or parentJobsIDs and *corresponding* parentJobs.")
+            }
+            pJobs = validJobs
+        } else if (null == parentJobIDs && null == parentJobs) {
+            pJobs = new LinkedList<BEJob>()
+        } else if (null != parentJobs) {
+            pJobs = jobsWithUniqueValidJobId(parentJobs)
+        } else {
+            pJobs = uniqueValidJobIDs(parentJobIDs).collect { new BEJob(it, jobManager) }
+        }
+        return pJobs
     }
 
     static ResourceSet getResourceSetFromConfiguration(String toolID, ExecutionContext context) {
@@ -430,7 +502,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
     }
 
     /**
-     * Stores a new job jobState info to an execution contexts job jobState log file.
+     * Stores a new job jobState info to an execution context's job jobState log file.
      *
      * @param job
      */
@@ -450,7 +522,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
                     jobInfoLine = jobStateInfoLine(jobId, "UNSTARTED", millis, toolID)
                 else if (job.jobState == JobState.ABORTED)
                     jobInfoLine = jobStateInfoLine(jobId, "ABORTED", millis, toolID)
-                // TODO Issue 222: COMPLETED_SUCCESSFUL is set by BE.ExecutionService, when the execution result is successful, i.e. the qsub, not when the job finished successfully on the cluster!
+                // TODO Issue 222: COMPLETED_SUCCESSFUL is set by BE.ExecutionService, when the
+                //      execution result is successful, i.e. the qsub, not when the job finished
+                //      successfully on the cluster!
 //                else if (job.jobState == JobState.COMPLETED_SUCCESSFUL)
 //                    jobInfoLine = jobStateInfoLine(jobId, "0", millis, toolID)
                 else if (job.jobState == JobState.FAILED)
@@ -574,6 +648,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             storeJobConfigurationFile(createJobConfiguration())
             keepOnlyEssentialParameters()
             runResult = jobManager.submitJob(this)
+            wasSubmittedOnHold = jobManager.holdJobsEnabled
             if (appendToJobStateLogfile)
                 this.appendToJobStateLogfile(jobManager, executionContext, runResult, null)
             Command cmd = runResult.command
@@ -589,7 +664,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             System.out.println(jobDetailsLine.toString())
             if (!cmd.jobID) {
                 context.addErrorEntry(ExecutionContextError.EXECUTION_SUBMISSION_FAILURE.expand("Please check your submission command manually.\n\t  Is your access group set properly? [${context.getAnalysis().getUsergroup()}]\n\t  Can the submission binary handle your binary?\n\t  Is your submission system offline?"))
-                logger.postSometimesInfo("Command: ${runResult.command}\nStatus Code: ${runResult.executionResult.exitCode}, Output:\n${runResult.executionResult.resultLines.join("\n")}")
+                logger.postSometimesInfo("Command: ${runResult.executionResult.toStatusLine()}")
                 if (Roddy.getFeatureToggleValue(FeatureToggles.BreakSubmissionOnError)) {
                     context.abortJobSubmission()
                 }
@@ -616,9 +691,14 @@ class Job extends BEJob<BEJob, BEJobResult> {
             runResult = new BEJobResult((SubmissionCommand) null, this, null, tool, parameters,
                     parentFiles.collect { it.creatingJobsResult?.getJob() }.findAll { it })
             jobState = JobState.DUMMY
+            wasSubmittedOnHold = false
         }
 
         return runResult
+    }
+
+    Command getLastCommand() {
+        return lastCommand
     }
 
     /**
@@ -751,12 +831,13 @@ class Job extends BEJob<BEJob, BEJobResult> {
     }
 
     private File _logFile = null
-/**
- * Returns the path to an existing log file.
- * If no logfile exists this returns null.
- *
- * @return
- */
+
+    /**
+     * Returns the path to an existing log file.
+     * If no logfile exists this returns null.
+     *
+     * @return
+     */
     synchronized File getLogFile() {
         if (_logFile == null)
             _logFile = this.executionContext.runtimeService.getLogFileForJob(this);
@@ -793,6 +874,10 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
     File getLocalToolPath() {
         return localToolPath
+    }
+
+    Boolean getWasSubmittedOnHold() {
+        return wasSubmittedOnHold
     }
 
 }

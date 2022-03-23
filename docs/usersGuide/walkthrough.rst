@@ -380,6 +380,8 @@ above command will do that for the pid set by you. Is everything right?
 Good, then you can go on and start a process. If not, you need to check
 your configuration files.
 
+    Note that since Roddy 3 both printruntimeconfig and printidlessruntimeconfig can only report part of the configuration, namely the configuration that is common to all cluster jobs. The same is true for the :bash:`runtimeConfig.sh` and :bash:`runtimeConfig.xml` files, which are deprecated. Dependent on the implementation of the workflow, it is well possible, that some variables are overridden before cluster job submission. Therefore, the only true reference to the actual variable settings in cluster jobs are the :bash:`*.parameter` files and the environment-setup scripts, because these are the files that are actually used for setting up the environment for the cluster jobs.
+
 Run a project
 -------------
 
