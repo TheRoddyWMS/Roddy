@@ -42,7 +42,7 @@ apply plugin: 'application'
 apply plugin: 'distribution'
 apply plugin: 'groovy'
 apply plugin: 'kr.motd.sphinx'  // Apache 2.0
-apply plugin: 'codenarc'
+//apply plugin: 'codenarc'
 
 // Java settings
 ext.langLevel = "1.8"
@@ -259,18 +259,18 @@ sphinx {
     warningsAsErrors = true
 }
 
-codenarc {
-    toolVersion = "1.2.1"
-    ignoreFailures = true
-}
-
-codenarcMain {
-    configFile = project.file("config/codenarc/codenarc.groovy")
-}
-
-codenarcTest {
-    configFile = project.file("config/codenarc/codenarc.groovy")
-}
+//codenarc {
+//    toolVersion = "1.2.1"
+//    ignoreFailures = true
+//}
+//
+//codenarcMain {
+//    configFile = project.file("config/codenarc/codenarc.groovy")
+//}
+//
+//codenarcTest {
+//    configFile = project.file("config/codenarc/codenarc.groovy")
+//}
 
 
 
