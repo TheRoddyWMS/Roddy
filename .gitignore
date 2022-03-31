@@ -21,14 +21,9 @@ dist/bin/develop/lib/
 
 # Most plugins in dist/plugins
 dist/plugins/*
-!dist/plugins/Template
-!dist/plugins/NativeWorkflowTestPlugin
-!dist/plugins/TestPluginWithJarFile
-!dist/plugins/TestPluginWithoutJarFile
 
-# All versioned Roddy directories (except 'develop')
-dist/bin/*
-!dist/bin/develop
+# All versioned Roddy directories
+dist/bin/
 
 # Other files
 manifest.tmp
