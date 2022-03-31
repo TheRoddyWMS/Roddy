@@ -474,7 +474,7 @@ if __name__ == "__main__":
     #         plugin_versions: Mapping[str, str],
     #         parameters: Mapping[str, str]) -> \
     #         Mapping[str, Mapping[str, Optional[str]]]
-    analyzer = ExecutionStoreAnalyzer(imported_module.ConfigSummary().run)
+    analyzer = ExecutionStoreAnalyzer(imported_module.ConfigSummary().summarize)
 
     per_roddy_store = []
     for roddy_execution_store_dir in directories:

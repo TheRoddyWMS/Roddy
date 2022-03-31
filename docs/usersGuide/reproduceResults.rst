@@ -63,3 +63,105 @@ If you are paranoid, you should always restart your analysis completely, if you 
 
 Of course similar problems arise if you have multiple samples processed by different workflow runs and you need a homogeneously processed data set.
 
+To cope somewhat with this problem, a Python script is included in the Roddy distribution. It is located in the root directory of the Roddy installation, just besides the ``roddy.sh``.
+
+The script relies on a Python file with code for summarizing the configuration in the ``.parameter`` files found in the ``roddyExecutionStore/exec_*`` directories. At the time of writing only the AlignmentAndQCWorkflows plugin had such a file called ``ConfigSummary.py`` (the file name does not matter though). A call of the ``group-configs.py`` may look similar to the following:
+
+.. code-block:: bash
+
+    python3 group-configs.py \
+        /path/to/plugin/ConfigSummary.py \
+        $(find /path/to/data -name "roddyExecutionStore")
+
+This will return some diagnostic/runtime information on standard error and a JSON formatted report on standard output. E.g. you may pipe the standard output through ``jq`` to get a colored and nicely formatted report.
+
+The JSON output will look similar to this:
+
+.. code-block:: json
+
+    [
+      {
+        "contexts": [
+          "/path/to/data/roddyExecutionStore/exec_220325_112945616_user_WGS"
+        ],
+        "parameters": {
+          "workflow": {
+            "id": "qcAnalysis"
+          },
+          "roddy": {
+            "Roddy": "3.5.9",
+            "AlignmentAndQCWorkflows": "develop",
+            "COWorkflows": "1.2.76-0",
+            "PluginBase": "1.2.1-0",
+            "DefaultPlugin": "1.2.2-0"
+          },
+          "base": {
+            "PERL_VERSION": "5.20.2",
+            "PYTHON_VERSION": "2.7.9",
+            "R_VERSION": "3.4.0",
+            "SAMTOOLS_VERSION": "0.1.19"
+          },
+          "adapter_trimming": {},
+          "fastqc": {},
+          "duplication_marking": {
+            "markDuplicatesVariant": "sambamba",
+            "SAMBAMBA_MARKDUP_VERSION": "0.6.5",
+            "SAMBAMBA_MARKDUP_OPTS": "\"-t 1 -l 0 --hash-table-size=2000000 --overflow-list-size=1000000 --io-buffer-size=64\""
+          },
+          "sorting": {
+            "useBioBamBamSort": "false",
+            "SAMPESORT_MEMSIZE": "2000000000",
+            "SAMTOOLS_VERSION": "0.1.19"
+          },
+          "qc": {
+            "INSERT_SIZE_LIMIT": "1000",
+            "SAMBAMBA_FLAGSTATS_VERSION": "0.4.6"
+          },
+          "aceseq_qc": {
+            "runACEseqQc": "false",
+            "HTSLIB_VERSION": "0.2.5",
+            "VCFTOOLS_VERSION": "0.1.10"
+          },
+          "fingerprinting": {
+            "runFingerprinting": "false"
+          },
+          "alignment": {
+            "BWA_VERSION": "0.7.15",
+            "BWA_MEM_THREADS": "8",
+            "BWA_MEM_OPTIONS": "\" -T 0 \"",
+            "INDEX_PREFIX": "/path/to/assembly/assembly.fa"
+          },
+          "bwa_post_alt": {
+            "runBwaPostAltJs": "true",
+            "K8_BINARY": "/path/to/software/bwa.kit/k8",
+            "ALT_FILE": "/path/to/assembly/assembly.fa.alt",
+            "bwaPostAltJsPath": "/path/to/software/bwa.kit/bwa-postalt.js",
+            "bwaPostAltJsMinPaRatio": "1.0",
+            "bwaPostAltJsHla": "false"
+          },
+          "wes": {},
+          "wgbs": {}
+        }
+      }
+    ]
+
+
+Content of the config summary module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``ConfigSummary.py`` must contain a Class ``ConfigSummary`` with a method ``summarize`` that has the following signature:
+
+.. code-block:: Python
+
+    def summarize(self,
+                  plugin_versions: Mapping[str, str],
+                  parameters: Mapping[str, str]) -> \
+                      Mapping[str, Mapping[str, Optional[str]]]
+
+The ``summarize`` method takes as input a dictionary of plugin-versions as read from a ``roddyExecutionStore`` and the parameters extracted from a single ``.parameters`` file. It then returns a dictionary structure representing the summarized configuration and will be inserted in the ``parameters`` field of the result JSON (see previous section). The plugin developer can decide to include or exclude configurations, e.g. to not include parameters that are irrelevant, if a feature is turned off.
+
+The ``group-configs.py`` script takes these per-parameter-file summaries and checks that they are consistent within each ``exec_*`` directory (i.e. for a single execution of the workflow) to guard against including manually changed configurations.
+
+After that the validated configurations are simply grouped by identity and a list of configuration variants is returned together with all ``exec_*`` directories in which they are applied.
+
+Note that with this approach it is possible to recognize whether the workflow was run multiple times on the same directory (using the same ``roddyExecutionStore``), but it is not possible to tell which files were produced during which run. The script does no analysis of the log-files. Plugin versions are exclusively identified by the ``versionInfo.txt`` file, no MD5 sums or similar to unambiguously identify the plugin version. You should therefore only rely on this script, if you only have unmodified, persistently named plugin versions.
