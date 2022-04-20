@@ -82,22 +82,50 @@ jobs: # a collection of steps
       - run:
           name: "Publish Release on GitHub"
           command: |
-            ghr -t "$GITHUB_TOKEN" -u "$CIRCLE_PROJECT_USERNAME" -r "$CIRCLE_PROJECT_REPONAME" -c "$CIRCLE_SHA1" -delete "$CIRCLE_TAG" ./gradleBuilds/distributions/*.zip
+            # Retrieve version
+            VERSION=$(ls ./gradleBuild/distributions/Roddy-*.zip | sed -r 's/.*Roddy-([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+(-.+)?).zip/\1/')
+            
+            # Ensure buildversion.txt is up to date
+            buildVersionTxt=$(cat RoddyCore/buildversion.txt | tr '\n' '.' | sed -r s/\.$//)
+            if [[ "$VERSION" != "$buildVersionTxt" ]]; then
+              echo "buildversion.txt not updated" >> /dev/stderr
+              exit 1
+            fi
+            
+            # Do the actual release
+            ghr -t "$GITHUB_TOKEN" -u "$CIRCLE_PROJECT_USERNAME" -r "$CIRCLE_PROJECT_REPONAME" -c "$CIRCLE_SHA1" -n "$VERSION" "$VERSION" ./gradleBuilds/distributions/*.zip
 
 workflows:
   version: 2
-  workflow:
+  build:
     jobs:
       - pre-build
       - build-and-test:
           requires:
             - pre-build
+  release:
+    jobs:
+      - pre-build:
+          filters:
+            branches: # ignore any commit on any branch by default
+              ignore: /.*/
+            tags: # unless they match the pattern
+              only: /^\d+\.\d+\.\d+$/
+      - build-and-test:
+          requires:
+            - pre-build
+          filters:
+            branches:  # ignore any commit on any branch by default
+              ignore: /.*/
+            tags:  # unless they match the pattern
+              only: /^\d+\.\d+\.\d+$/
       - publish-github-release:
+          context:
+            - TheRoddyWMS
           requires:
             - build-and-test
-          filters:  # Only publish for proper version tags on the master branch.
-            branches:
-              only: master
-            tags:
+          filters:
+            branches:  # ignore any commit on any branch by default
+              ignore: /.*/
+            tags:  # unless they match the pattern
               only: /^\d+\.\d+\.\d+$/
-
