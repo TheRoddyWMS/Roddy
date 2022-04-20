@@ -437,7 +437,7 @@ class SSHExecutionService extends RemoteExecutionService {
             processF.thenApply { it.z as List<String> })
 
         if (waitFor) {
-            return result.asExecutionResult()
+            return result.asSynchronousExecutionResult()
         } else {
             return result
         }
