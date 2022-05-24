@@ -1,3 +1,5 @@
+.. _`jq` : https://stedolan.github.io/jq/
+
 Reproduce Roddy Results
 =======================
 
@@ -73,7 +75,10 @@ The script relies on a Python file with code for summarizing the configuration i
         /path/to/plugin/ConfigSummary.py \
         $(find /path/to/data -name "roddyExecutionStore")
 
-This will return some diagnostic/runtime information on standard error and a JSON formatted report on standard output. E.g. you may pipe the standard output through ``jq`` to get a colored and nicely formatted report.
+You need at least Python 3.7 for this and the package "more_itertools". You can also run unit test
+(with ``pytest -v group-configs.py``).
+
+This will return some diagnostic/runtime information on standard error and a JSON formatted report on standard output. E.g. you may pipe the standard output through `jq`_ to get a colored and nicely formatted report.
 
 The JSON output will look similar to this:
 

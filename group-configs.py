@@ -1,6 +1,6 @@
 #!/bin/env python3
 #
-# Copyright (c) 2021 German Cancer Research Center (DKFZ).
+# Copyright (c) 2022 German Cancer Research Center (DKFZ).
 #
 # Distributed under the MIT License (license terms are at https://github.com/DKFZ-ODCF/AlignmentAndQCWorkflows).
 #
@@ -17,7 +17,11 @@
 #
 # Run the unit-tests with `pytest group-configs.py`
 #
-# Requirements: python2, more_itertools, pytest (for testing)
+# Requirements: python > 3.7, more_itertools
+#
+# Running the tests (needs pytest):
+#
+# $ pytest -v group-configs.py
 #
 # Disclaimer: The plugin underwent quite some changes over the years. Use at your own responsibility.
 #             If you find errors, please file a bug report, such that the script gets improved.
@@ -35,7 +39,6 @@ from typing import Dict, List, Tuple, Union, Optional, TextIO, Mapping, Callable
 import json
 import logging
 import re
-from abc import ABCMeta, abstractmethod
 from io import StringIO
 from more_itertools import flatten
 import importlib
