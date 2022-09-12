@@ -395,9 +395,6 @@ class SSHExecutionService extends RemoteExecutionService {
         CompletableFuture<Tuple3<Integer,List<String>, List<String>>> processF = CompletableFuture.supplyAsync({
             SSHPoolConnectionSet connectionSet = waitForService()
             SSHClient sshClient = connectionSet.client
-
-            // Append a newgrp (Philip: better "newgrp -"!) to each command, so that all
-            // command context in the proper group context.
             connectionSet.acquire()
             Session session = sshClient.startSession()
             List<String> stdout
