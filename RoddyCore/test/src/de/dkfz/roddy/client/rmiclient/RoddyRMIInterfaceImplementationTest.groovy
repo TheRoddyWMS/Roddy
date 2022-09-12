@@ -19,8 +19,9 @@ import groovy.transform.CompileStatic
 import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.junit.ClassRule
-import org.junit.Rule;
 import org.junit.Test
+
+import java.time.Duration
 
 /**
  * Test class with integration tests for the RMI interface.
@@ -45,8 +46,9 @@ public class RoddyRMIInterfaceImplementationTest {
         }
 
         @Override
-        protected ExecutionResult _execute(String command, boolean waitFor, boolean ignoreErrors, OutputStream outputStream) {
-            ExecutionResult list = super._execute(command, waitFor, ignoreErrors, outputStream);
+        protected ExecutionResult _execute(String command, boolean waitFor,
+                                           Duration timeout, OutputStream outputStream) {
+            ExecutionResult list = super._execute(command, waitFor, timeout, outputStream);
             executedCommands << command;
             return list;
         }

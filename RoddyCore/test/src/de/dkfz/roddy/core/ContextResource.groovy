@@ -20,9 +20,10 @@ import org.junit.rules.ExternalResource
 import org.junit.rules.TemporaryFolder
 
 import java.nio.file.Paths
+import java.time.Duration
 import java.util.concurrent.TimeoutException
 
-@groovy.transform.CompileStatic
+@CompileStatic
 class TestWorkflow extends Workflow {
 
     @Override
@@ -193,7 +194,8 @@ class ContextResource extends ExternalResource {
             }
 
             @Override
-            protected Map<BEJobID, JobState> queryJobStates(List list) {
+            protected Map<BEJobID, JobState> queryJobStates(List list,
+                                                            Duration timeout = Duration.ZERO) {
                 return null
             }
 
@@ -250,7 +252,8 @@ class ContextResource extends ExternalResource {
             }
 
             @Override
-            Map<BEJobID, GenericJobInfo> queryExtendedJobStateById(List list) {
+            Map<BEJobID, GenericJobInfo> queryExtendedJobStateById(List list,
+                                                                   Duration timeout = Duration.ZERO) {
                 return null
             }
 

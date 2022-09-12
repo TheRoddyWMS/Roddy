@@ -5,6 +5,9 @@ import de.dkfz.roddy.core.ContextResource
 import org.junit.Rule
 import spock.lang.Specification
 
+import java.time.Duration
+import java.util.concurrent.TimeoutException
+
 class LocalExecutionServiceSpec extends Specification {
 
     @Rule
@@ -83,5 +86,30 @@ class LocalExecutionServiceSpec extends Specification {
         res.stderr.size() == 1
         res.resultLines.size() == 1
     }
+
+    def "execute synchronously and run into timeout to get RuntimeException(cause=TimeoutException)"() {
+        when:
+        ExecutionResult res = es.execute("sleep 10; echo 'error' >> /dev/stderr; true",
+                true, new Duration(1, 0))
+
+        then:
+        def e = thrown(RuntimeException)
+        e.cause instanceof TimeoutException
+    }
+
+    def "execute asynchronously and run into timeout to get RuntimeException(cause=TimeoutException)"() {
+        given:
+        ExecutionResult res = es.execute("sleep 10; echo 'error' >> /dev/stderr; true",
+                false, new Duration(1, 0))
+
+        when:
+        res.exitCode
+
+        then:
+        def e = thrown(RuntimeException)
+        e.cause instanceof TimeoutException
+    }
+
+
 
 }

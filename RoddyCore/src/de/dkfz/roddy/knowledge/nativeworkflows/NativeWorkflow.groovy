@@ -139,7 +139,7 @@ class NativeWorkflow extends Workflow {
         System.out.println(finalCommand)
 
         ExecutionResult execute = ExecutionService.instance.
-                execute(finalCommand, true, false)
+                execute(finalCommand, true)
         logger.rare(execute.stdout.join("\n"))
         return true
     }

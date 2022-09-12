@@ -8,8 +8,11 @@
   - patch: Bugfix: Failure to pass the job resuming step (e.g. via `bresume`), with jobs that cannot be resumed (e.g. submitted via the DirectExecutionJobManager, like in the Bam2FastqPlugin).
     
   - patch: The command in `roddyCall.sh` is properly escaped and suited for direct copy-paste to the command-line
-    
+  
+  - patch: Bugfix: Did not handle subsequent variable references in cvalue validation correctly.
+  
   - patch: Better error reporting for submission errors
+  
   - patch: Bumped BatchEuphoria to 0.0.13
     
   - patch: Bumped RoddyToolLib to 2.3.0

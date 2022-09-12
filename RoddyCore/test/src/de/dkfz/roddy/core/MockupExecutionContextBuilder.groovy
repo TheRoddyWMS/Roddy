@@ -14,6 +14,7 @@ import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
 import groovy.transform.CompileStatic
 
+import java.time.Duration
 import java.util.concurrent.TimeoutException
 
 /**
@@ -156,7 +157,8 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            protected Map<BEJobID, JobState> queryJobStates(List list) {
+            protected Map<BEJobID, JobState> queryJobStates(List list,
+                                                            Duration timeout = Duration.ZERO) {
                 return null
             }
 
@@ -213,7 +215,8 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-            Map<BEJobID, GenericJobInfo> queryExtendedJobStateById(List list) {
+            Map<BEJobID, GenericJobInfo> queryExtendedJobStateById(List list,
+                                                                   Duration timeout = Duration.ZERO) {
                 return null
             }
 

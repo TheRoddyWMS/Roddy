@@ -13,11 +13,9 @@ import de.dkfz.roddy.config.ConfigurationValue
 import de.dkfz.roddy.tools.LoggerWrapper
 import groovy.transform.CompileStatic
 
-import java.util.concurrent.CompletableFuture
+import java.time.Duration
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import java.util.concurrent.Future
-import java.util.function.Supplier
 
 /**
  * The local execution service executes commands on the local machine. For this groovy's execute() method is used.
@@ -65,27 +63,11 @@ class LocalExecutionService extends ExecutionService {
      */
     @Override
     protected ExecutionResult _execute(String command,
-                                       boolean waitFor,
-                                       boolean ignoreErrors,
+                                       boolean waitFor = true,
+                                       Duration timeout = Duration.ZERO,
                                        OutputStream outputStream = null) {
-        if (waitFor) {
-            return LocalExecutionHelper.executeCommandWithExtendedResult(command, outputStream)
-        } else {
-            List<String> bashCommand = ["bash", "-c", command]
-            ProcessBuilder processBuilder = new ProcessBuilder(bashCommand)
-            Process process = processBuilder.start()
-            Future<List<String>> stdoutF =
-                    LocalExecutionHelper.asyncReadStringStream(process.inputStream, executorService)
-            Future<List<String>> stderrF =
-                    LocalExecutionHelper.asyncReadStringStream(process.errorStream, executorService)
-            Future<Integer> exitCodeF = CompletableFuture.supplyAsync({
-                process.waitFor()
-            } as Supplier<Integer>, executorService)
-            return new AsyncExecutionResult(
-                    bashCommand,
-                    LocalExecutionHelper.getProcessID(process),
-                    exitCodeF, stdoutF, stderrF)
-        }
+        return LocalExecutionHelper.executeCommandWithExtendedResult(
+                command, waitFor, timeout)
     }
 
     /**
