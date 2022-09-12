@@ -542,7 +542,7 @@ class ExecutionContext {
 
                 def state = rj.jobState
                 if (state.plannedOrRunning) {
-                    if (state.running)
+                    if (state.runningOrStarted)
                         return true
                     else {
                         //Check previous jobs... Or just wait for the next step???

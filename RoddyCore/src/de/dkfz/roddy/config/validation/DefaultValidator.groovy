@@ -100,7 +100,7 @@ class DefaultValidator extends ConfigurationValueValidator {
         return result
     }
 
-    static final String VARIABLE = '([^\\\\{][$][{]([\\w[-]_]){1,}[}])|(^[$][{]([\\w[-]_]){1,}[}])'
+    static final String VARIABLE = '(^|(?<=[^\\\\{]))[$][{]([\\w[-]_]){1,}[}]'
     static final String VARIABLE_START = '([^\\\\|^{][$][{])|(^[$][{])'
 
     boolean areVariablesProperlyDefined(ConfigurationValue cv) {
@@ -115,7 +115,7 @@ class DefaultValidator extends ConfigurationValueValidator {
         boolean result = countOfVariables == countOfStartedVariables
 
         if (!result) {
-            super.warnings << new ConfigurationIssue(inproperVariableExpression, cv.id, cv?.configuration?.file?.toString())
+            super.warnings << new ConfigurationIssue(malformedVariableExpression, cv.id, cv?.configuration?.file?.toString())
         }
 
         return result

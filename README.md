@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/TheRoddyWMS/Roddy.svg?branch=master)](https://travis-ci.com/TheRoddyWMS/Roddy) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FTheRoddyWMS%2FRoddy.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FTheRoddyWMS%2FRoddy?ref=badge_shield)
+[![CircleCI](https://circleci.com/gh/TheRoddyWMS/Roddy/tree/master.svg?style=svg)](https://circleci.com/gh/TheRoddyWMS/Roddy/tree/master) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FTheRoddyWMS%2FRoddy.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FTheRoddyWMS%2FRoddy?ref=badge_shield)
 
 # What is Roddy? 
 

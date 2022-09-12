@@ -97,9 +97,14 @@ class DefaultValidatorSpec extends RoddyTestSpec {
         'abc${var}v${var}' | CVALUE_TYPE_STRING | true     | []                                         | []
         '\\${c}'           | CVALUE_TYPE_STRING | true     | []                                         | []
         '\\${c'            | CVALUE_TYPE_STRING | true     | []                                         | []
-        'abc${${var}}'     | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla', 'null')] | []
-        'abc${'            | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla', 'null')] | []
-        'ab${c'            | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla', 'null')] | []
-        '${}'              | CVALUE_TYPE_STRING | false    | [inproperVariableExpression.expand('bla', 'null')] | []
+        '${a}'             | CVALUE_TYPE_STRING | true     | []                                         | []
+        '${a}  ${b}'       | CVALUE_TYPE_STRING | true     | []                                         | []
+        '\\${a}${b}'       | CVALUE_TYPE_STRING | true     | []                                         | []
+        '${a}\\${b}'       | CVALUE_TYPE_STRING | true     | []                                         | []
+        '${a}${b}'         | CVALUE_TYPE_STRING | true     | []                                         | []
+        'abc${${var}}'     | CVALUE_TYPE_STRING | false    | [malformedVariableExpression.expand('bla', 'null')] | []
+        'abc${'            | CVALUE_TYPE_STRING | false    | [malformedVariableExpression.expand('bla', 'null')] | []
+        'ab${c'            | CVALUE_TYPE_STRING | false    | [malformedVariableExpression.expand('bla', 'null')] | []
+        '${}'              | CVALUE_TYPE_STRING | false    | [malformedVariableExpression.expand('bla', 'null')] | []
     }
 }

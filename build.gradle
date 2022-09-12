@@ -91,8 +91,8 @@ repositories {
     maven { url "https://repo1.maven.org/maven2/" }       // Some of the remaining dependencies
 }
 
-ext.roddyToolLibVersion = "2.3.0"
-ext.batchEuphoriaVersion = "0.0.13"
+ext.roddyToolLibVersion = "2.4.0"
+ext.batchEuphoriaVersion = "0.0.14"
 
 configurations.all {
     resolutionStrategy.cacheChangingModulesFor(0, 'seconds')

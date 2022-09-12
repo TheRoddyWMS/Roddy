@@ -52,10 +52,10 @@ class ConfigurationIssue {
                 "Variables in your configuration mismatch regarding their type and value. See the extended logs for more information.",
                 "The value of variable named '#REPLACE_0#' defined in '#REPLACE_1#' is not of its declared type '#REPLACE_2#'."
         ),
-        inproperVariableExpression(
+        malformedVariableExpression(
                 ConfigurationIssueLevel.CVALUE_WARNING,
                 "Variables in your configuration appear to misuse variable references. For variable references \${variable identifier} nesting like '\${\${innerVar}}' is forbidden and it must not be empty.",
-                "Variable '#REPLACE_0#' defined in '#REPLACE_1#' may use malformatted variable references. For variables references like \${variable identifier} nesting like '\${\${innerVar}}' is forbidden and it must not be empty."
+                "Variable '#REPLACE_0#' defined in '#REPLACE_1#' may use malformed variable references. For variables references like \${variable identifier} nesting like '\${\${innerVar}}' is forbidden and it must not be empty."
         )
 
         final ConfigurationIssueLevel level
