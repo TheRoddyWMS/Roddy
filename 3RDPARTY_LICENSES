@@ -91,7 +91,6 @@ Applies to
 * com.jcraft:jsch.agentproxy.core
 * com.jcraft:jsch.agentproxy.pageant
 * com.jcraft:jzlib
-* com.thoughtworks.xstream:xstream
 
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
