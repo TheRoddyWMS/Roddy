@@ -2,8 +2,8 @@
 
 * 3.7.0
 
-  - minor: Updated to BatchEuphoria 0.1.0, which includes SLURM support. This means Roddy now supports SLURM.
-  - minor: Bumped some dependencies, many of them because of security vulnerabilities. com.thoughtworks.xstream:xstream:1.4.19 has vulnerabilities, but is not used anymore and therefore removed from the dependencies. The SSH libraries and old BouncyCastle encryption libraries have some security issues but an update is beyond the scope of this release. The best long-term solution would probably be to switch to Apache Mina. 
+  - minor: Updated to BatchEuphoria 0.1.0, which includes SLURM support. This means, Roddy now supports SLURM.
+  - minor: Bumped some dependencies, many of them because of security vulnerabilities. com.thoughtworks.xstream:xstream:1.4.19 has vulnerabilities, but is not used anymore and therefore removed from the dependencies. The SSH libraries and old BouncyCastle encryption libraries have some security issues, but an update is beyond the scope of this release. The best long-term solution would probably be to switch to Apache Mina. 
 
 * 3.6.1
 
