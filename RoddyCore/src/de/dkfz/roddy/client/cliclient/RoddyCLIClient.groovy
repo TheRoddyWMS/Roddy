@@ -372,7 +372,7 @@ class RoddyCLIClient {
 
         ExecutionContext context = new ExecutionContext("DUMMY", analysis, null,
                 ExecutionContextLevel.QUERY_STATUS, null, null,
-                new File("/tmp/Roddy_DUMMY_Directory"), "DUMMY_PROJECT_NAME") {
+                new File("/tmp/Roddy_DUMMY_Directory")) {
             @Override
             String getOutputGroupString() {
                 return "NOGROUP"
@@ -442,7 +442,7 @@ class RoddyCLIClient {
         try {
             availableProjectConfigurations = ConfigurationFactory.getInstance().getAvailableProjectConfigurations();
         } catch (ConfigurationLoaderException ex) {
-            // This exception can occurr and is e.g. catched for testrun/run/rerun... during loadAnalysis. Here we just catch it and "ignore" it.
+            // This exception can occur and is e.g. caught for testrun/run/rerun... during loadAnalysis. Here we just catch it and "ignore" it.
             // The loader will print a nice error message.
 
             logger.severe(ex.message)
