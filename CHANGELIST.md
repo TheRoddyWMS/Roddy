@@ -2,7 +2,7 @@
 
 * 3.7.1
 
-  - patch: Fixed printreducedruntimeconfig target
+  - patch: Fixed printidlessruntimeconfig target
 
 * 3.7.0
 
