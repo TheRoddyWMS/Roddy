@@ -1,5 +1,9 @@
 # Changelist
 
+* 3.7.1
+
+  - patch: Fixed printreducedruntimeconfig target
+
 * 3.7.0
 
   - minor: Updated to BatchEuphoria 0.1.0, which includes SLURM support. This means, Roddy now supports SLURM.
