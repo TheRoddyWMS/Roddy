@@ -792,24 +792,26 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         if (isVerbosityHigh) dbgMessage << "\tverifying specified files" << sep
 
-        //TODO what about the case if no verifiable files where specified? Or if the know files count does not match
-        for (BaseFile fp : filesToVerify) {
-            //See if we know the file... so this way we can use the BaseFiles verification method.
+        // TODO what about the case if no verifiable files where specified? Or if the know files count does not match
+        for (BaseFile jobFile : filesToVerify) {
+            // See if we know the file... so this way we can use the BaseFiles verification method.
             List<BaseFile> knownFiles = context.getAllFilesInRun()
-            for (BaseFile bf : knownFiles) {
+            for (BaseFile contextFile : knownFiles) {
                 for (int i = 0; i < 3; i++) {
-                    if (fp == null || bf == null || fp.absolutePath == null || bf.path == null)
+                    if (jobFile == null || contextFile == null
+                            || jobFile.absolutePath == null || contextFile.path == null)
                         try {
-                            logger.severe("Taking a short nap because a file does not seem to be finished.")
+                            logger.severe("Taking a short nap because a file does not seem to be finished." +
+                                          "context/declared file = $contextFile; job file = $jobFile")
                             Thread.sleep(100)
                         } catch (InterruptedException e) {
                             e.printStackTrace()
                         }
                 }
-                if (fp.absolutePath.equals(bf.path.absolutePath)) {
-                    if (!bf.isFileValid()) {
+                if (jobFile.absolutePath.equals(contextFile.path.absolutePath)) {
+                    if (!contextFile.isFileValid()) {
                         fileUnverified = true
-                        if (isVerbosityHigh) dbgMessage << "\tfile " << bf.path.getName() << " could not be verified!" << sep
+                        if (isVerbosityHigh) dbgMessage << "\tfile " << contextFile.path.getName() << " could not be verified!" << sep
                     }
                     knownFilesCnt++
                     break
