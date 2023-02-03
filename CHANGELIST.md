@@ -1,5 +1,8 @@
 # Changelist
 
+* 3.7.2
+  - patch: Bumped BatchEuphoria version to 0.1.1: A newer LSF release is pickier on the position of the `-o` parameter in `bjobs`. Adapted to this upstream change. Probably code will still work with older LSF versions.
+
 * 3.7.1
 
   - patch: Fixed printidlessruntimeconfig target
@@ -33,6 +36,9 @@
   - minor: Added `accountingName` to allow project accounting in cluster (for BE 0.0.12)
     
   - patch: Bumped to use BatchEuphoria 0.0.12
+
+* 3.5.10
+  - patch: Bumped BatchEuphoria version to 0.0.7-1: A newer LSF release is pickier on the position of the `-o` parameter in `bjobs`. Adapted to this upstream change. Probably code will still work with older LSF versions.
 
 * 3.5.9
 
