@@ -1,0 +1,132 @@
+# Adapted from https://circleci.com/docs/2.0/language-java/
+version: 2.1
+executors:
+  docker-executor:
+    docker:
+      - image: circleci/openjdk:8u312-jdk  # contains both `zip` and `jar`
+jobs: # a collection of steps
+  pre-build:
+    executor: docker-executor
+    resource_class: small
+    steps:
+      - checkout
+      - restore_cache:
+          key: v1-sdkman-{{ checksum "build.gradle" }}
+      - run:
+          name: Install requirements
+          command: |
+            curl -s get.sdkman.io | bash
+            source "$HOME/.sdkman/bin/sdkman-init.sh"
+            echo sdkman_auto_answer=true > ~/.sdkman/etc/config
+            sdk install groovy 2.4.21
+            sdk use     groovy 2.4.21
+            groovy --version
+      - save_cache:
+          paths:
+            - ~/.sdkman
+          key: v1-sdkman-{{ checksum "build.gradle" }}
+
+  build-and-test:
+    executor: docker-executor
+    resource_class: small
+    environment:
+      # Configure the JVM and Gradle to avoid OOM errors
+      _JAVA_OPTIONS: "-Xmx1800m"
+      GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2"
+    steps:
+      - checkout # check out source code to working directory
+      # Read about caching dependencies: https://circleci.com/docs/2.0/caching/
+      - restore_cache:
+          key: v1-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+      - restore_cache:
+          key: v1-gradle-cache-{{ checksum "build.gradle" }}
+      - restore_cache:
+          key: v1-sdkman-{{ checksum "build.gradle" }}
+      - run:
+          name: Run tests
+          command: |
+            source "$HOME/.sdkman/bin/sdkman-init.sh"
+            sdk use groovy 2.4.21
+            groovy --version
+            # We need at least these two plugins for the tests.
+            git clone https://github.com/TheRoddyWMS/Roddy-Default-Plugin.git dist/plugins/DefaultPlugin
+            git clone https://github.com/TheRoddyWMS/Roddy-Base-Plugin.git dist/plugins/PluginBase
+            ./gradlew test build $GRADLE_ARGS
+      - save_cache:
+          paths:
+            - ~/.gradle/wrapper
+          key: v1-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+      - save_cache:
+          paths:
+            - ~/.gradle/caches
+          key: v1-gradle-cache-{{ checksum "build.gradle" }}
+      - store_test_results:
+          # Upload test results for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
+          path: gradleBuild/test-results/test
+      - store_artifacts: # Upload test results for display in Artifacts: https://circleci.com/docs/2.0/artifacts/
+          path: gradleBuild/test-results/test
+          when: always
+      - persist_to_workspace: # Pass artifact over to next job via workspace.
+          root: "."
+          paths:
+            - "gradleBuild/distributions/*.zip"
+            - "RoddyCore/buildversion.txt"
+
+  # See https://circleci.com/docs/2.0/deployment-integrations/ for deploy examples
+  publish-github-release:  # https://circleci.com/blog/publishing-to-github-releases-via-circleci/
+    docker:
+      - image: cibuilds/github:0.13
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: "."
+      - run:
+          name: "Publish Release on GitHub"
+          command: |
+            # Retrieve version
+            VERSION=$(ls ./gradleBuild/distributions/Roddy-*.zip | sed -r 's/.*Roddy-([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+(-.+)?).zip/\1/')
+            
+            # Ensure buildversion.txt is up to date
+            buildVersionTxt=$(cat ./RoddyCore/buildversion.txt | tr '\n' '.' | sed -r s/\.$//)
+            if [[ "$VERSION" != "$buildVersionTxt" ]]; then
+              echo "buildversion.txt not updated" >> /dev/stderr
+              exit 1
+            fi
+            
+            # Do the actual release
+            ghr -t "$GITHUB_TOKEN" -u "$CIRCLE_PROJECT_USERNAME" -r "$CIRCLE_PROJECT_REPONAME" -c "$CIRCLE_SHA1" -n "$VERSION" "$VERSION" ./gradleBuild/distributions/
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - pre-build
+      - build-and-test:
+          requires:
+            - pre-build
+  release:
+    jobs:
+      - pre-build:
+          filters:
+            branches: # ignore any commit on any branch by default
+              ignore: /.*/
+            tags: # unless they match the pattern
+              only: /^\d+\.\d+\.\d+$/
+      - build-and-test:
+          requires:
+            - pre-build
+          filters:
+            branches:  # ignore any commit on any branch by default
+              ignore: /.*/
+            tags:  # unless they match the pattern
+              only: /^\d+\.\d+\.\d+$/
+      - publish-github-release:
+          context:
+            - TheRoddyWMS
+          requires:
+            - build-and-test
+          filters:
+            branches:  # ignore any commit on any branch by default
+              ignore: /.*/
+            tags:  # unless they match the pattern
+              only: /^\d+\.\d+\.\d+$/
