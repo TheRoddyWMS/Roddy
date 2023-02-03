@@ -92,7 +92,7 @@ repositories {
 }
 
 ext.roddyToolLibVersion = "2.4.0"
-ext.batchEuphoriaVersion = "0.1.0"
+ext.batchEuphoriaVersion = "0.1.1"
 
 configurations.all {
     resolutionStrategy.cacheChangingModulesFor(0, 'seconds')
