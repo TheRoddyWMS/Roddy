@@ -9,12 +9,12 @@
  
 This is a pre-release merge request, therefore
 
+ * [ ] Stakeholders agree on the content of the release, or are not affected by the change
  * [ ] All changes planned to be included in the release are merged into the release branch.
  * [ ] All changes since the last version are documented in the change-log. Specifically
    * [ ] Changes included in the release are described.
    * [ ] Deprecation is justified.
    * [ ] The resulting new version number is shown.
- * [ ] Stakeholders agree on the validity of the changes, or are not affected by the change
  * [ ] The version number has been adapted in the code
     1. [ ] `buildinfo.txt` was modified to release number
     2. [ ] `INCREASE_BUILD_VERSION=false roddy.sh compile` was run to update `RoddyCore/src/de/dkfz/roddy/Constants.java`
