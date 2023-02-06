@@ -2,11 +2,20 @@
 
 ## Check
 
- * [ ] The correct target branch is selected for merging? :sweat_smile:
+ * [ ] Stakeholders agree on the validity of the changes, or are not affected by the change
  * [ ] The merge request title concisely describes the changes
- * [ ] The `README.md` concisely describes the changes classified as major, minor, patch.
- * [ ] If a release is planned, Roddy's release procedure was followed 
-     1. [ ] `buildinfo.txt` was modified to release number
-     2. [ ] `roddy.sh compile` was run to update `RoddyCore/src/de/dkfz/roddy/Constants.java`
-     3. [ ] Both files were checked in after modification
+ * [ ] Changes are described in the ChangeLog and classified according to [semantic versioning](#SemanticVersioning) into "major", "minor", "patch" levels.
+ * [ ] The correct target branch is selected for merging :sweat_smile:
  
+This is a pre-release merge request, therefore
+
+ * [ ] Stakeholders agree on the content of the release, or are not affected by the change
+ * [ ] All changes planned to be included in the release are merged into the release branch.
+ * [ ] All changes since the last version are documented in the change-log. Specifically
+   * [ ] Changes included in the release are described.
+   * [ ] Deprecation is justified.
+   * [ ] The resulting new version number is shown.
+ * [ ] The version number has been adapted in the code
+    1. [ ] `buildinfo.txt` was modified to release number
+    2. [ ] `INCREASE_BUILD_VERSION=false roddy.sh compile` was run to update `RoddyCore/src/de/dkfz/roddy/Constants.java`
+    3. [ ] Both files were checked in after modification

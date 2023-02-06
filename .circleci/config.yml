@@ -84,9 +84,10 @@ jobs: # a collection of steps
           name: "Publish Release on GitHub"
           command: |
             # Retrieve version
-            VERSION=$(ls ./gradleBuild/distributions/Roddy-*.zip | sed -r 's/.*Roddy-([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+(-.+)?).zip/\1/')
+            FULL_VERSION=$(ls ./gradleBuild/distributions/Roddy-*.zip | sed -r 's/.*Roddy-([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+(-test[[:digit:]]+)?).zip/\1/')
+            VERSION=$(echo "$FULL_VERSION" | sed -r 's/([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+)(-test[[:digit:]]+)?/\1/')
             
-            # Ensure buildversion.txt is up to date
+            # Ensure buildversion.txt is up to date. Only version is supported.
             buildVersionTxt=$(cat ./RoddyCore/buildversion.txt | tr '\n' '.' | sed -r s/\.$//)
             if [[ "$VERSION" != "$buildVersionTxt" ]]; then
               echo "buildversion.txt not updated" >> /dev/stderr
@@ -94,7 +95,7 @@ jobs: # a collection of steps
             fi
             
             # Do the actual release
-            ghr -t "$GITHUB_TOKEN" -u "$CIRCLE_PROJECT_USERNAME" -r "$CIRCLE_PROJECT_REPONAME" -c "$CIRCLE_SHA1" -n "$VERSION" "$VERSION" ./gradleBuild/distributions/
+            ghr -t "$GITHUB_TOKEN" -u "$CIRCLE_PROJECT_USERNAME" -r "$CIRCLE_PROJECT_REPONAME" -c "$CIRCLE_SHA1" -n "$FULL_VERSION" "$FULL_VERSION" ./gradleBuild/distributions/
 
 workflows:
   version: 2
@@ -111,7 +112,7 @@ workflows:
             branches: # ignore any commit on any branch by default
               ignore: /.*/
             tags: # unless they match the pattern
-              only: /^\d+\.\d+\.\d+$/
+              only: /^\d+\.\d+\.\d+(-test\d+)?$/
       - build-and-test:
           requires:
             - pre-build
@@ -119,7 +120,7 @@ workflows:
             branches:  # ignore any commit on any branch by default
               ignore: /.*/
             tags:  # unless they match the pattern
-              only: /^\d+\.\d+\.\d+$/
+              only: /^\d+\.\d+\.\d+(-test\d+)?$/
       - publish-github-release:
           context:
             - TheRoddyWMS
@@ -129,4 +130,4 @@ workflows:
             branches:  # ignore any commit on any branch by default
               ignore: /.*/
             tags:  # unless they match the pattern
-              only: /^\d+\.\d+\.\d+$/
+              only: /^\d+\.\d+\.\d+(-test\d+)?$/
