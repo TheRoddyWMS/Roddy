@@ -1,5 +1,11 @@
 # Changelist
 
+* 3.7.3
+  - patch: Pure maintenance release
+  - patch: Fix reported release number
+  - patch: Fix deprecation warnings in `build.gradle`
+  - patch: Allow release with optional subpatch-level suffixes matching the pattern `-test_.+`. This is obviously for testing only.
+
 * 3.7.2
   - patch: Bumped BatchEuphoria version to 0.1.1: A newer LSF release is pickier on the position of the `-o` parameter in `bjobs`. Adapted to this upstream change. Probably code will still work with older LSF versions.
 

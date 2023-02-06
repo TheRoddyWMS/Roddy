@@ -84,7 +84,7 @@ jobs: # a collection of steps
           name: "Publish Release on GitHub"
           command: |
             # Retrieve version
-            VERSION=$(ls ./gradleBuild/distributions/Roddy-*.zip | sed -r 's/.*Roddy-([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+)(-.+)?.zip/\1/')
+            VERSION=$(ls ./gradleBuild/distributions/Roddy-*.zip | sed -r 's/.*Roddy-([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+)(-test_.+)?.zip/\1/')
             
             # Ensure buildversion.txt is up to date.
             buildVersionTxt=$(cat ./RoddyCore/buildversion.txt | tr '\n' '.' | sed -r s/\.$//)
@@ -111,7 +111,7 @@ workflows:
             branches: # ignore any commit on any branch by default
               ignore: /.*/
             tags: # unless they match the pattern
-              only: /^\d+\.\d+\.\d+(-.+)?$/
+              only: /^\d+\.\d+\.\d+(-test_.+)?$/
       - build-and-test:
           requires:
             - pre-build
@@ -119,7 +119,7 @@ workflows:
             branches:  # ignore any commit on any branch by default
               ignore: /.*/
             tags:  # unless they match the pattern
-              only: /^\d+\.\d+\.\d+(-.+)?$/
+              only: /^\d+\.\d+\.\d+(-test_.+)?$/
       - publish-github-release:
           context:
             - TheRoddyWMS
@@ -129,4 +129,4 @@ workflows:
             branches:  # ignore any commit on any branch by default
               ignore: /.*/
             tags:  # unless they match the pattern
-              only: /^\d+\.\d+\.\d+(-.+)?$/
+              only: /^\d+\.\d+\.\d+(-test_.+)?$/
