@@ -1,5 +1,9 @@
 # Changelist
 
+* 3.7.4
+  - patch: Change reported error for pattern that cannot be matched to file into warning
+  - patch: Fix problem with parameter-list interpretation during Roddy startup due to incorrect Bash expression 
+
 * 3.7.3
   - patch: Pure maintenance release
   - patch: Fix reported release number

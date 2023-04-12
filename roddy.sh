@@ -11,10 +11,10 @@ declare -a fullParameterList=( "$@" )
 export fullParameterList
 
 
-export GROOVY_BINARY=groovy
+export GROOVY_BINARY="${GROOVY_BINARY:-"$(which groovy)"}"
 
 # Default Roddy Java options
-RODDY_JAVA_OPTS=${RODDY_JAVA_OPTS:-${JAVA_OPTS:--Xms64m -Xmx1g}}
+RODDY_JAVA_OPTS="${RODDY_JAVA_OPTS:-${JAVA_OPTS:--Xms64m -Xmx1g}}"
 
 # OFS is the original field separator
 export OFS=$IFS
