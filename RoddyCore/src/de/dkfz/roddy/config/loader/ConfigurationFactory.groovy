@@ -573,7 +573,7 @@ class ConfigurationFactory {
                     }
                     filenamePatterns.put(fp.getID(), fp)
                 } catch (Exception ex) {
-                    logger.severe("Error during filename pattern processing (ignored): ${ex.message}: " + (new groovy.xml.StreamingMarkupBuilder().bindNode(filename) as String))
+                    logger.severe("Warning during filename pattern processing: ${ex.message}: " + (new groovy.xml.StreamingMarkupBuilder().bindNode(filename) as String))
                 }
             }
         }
