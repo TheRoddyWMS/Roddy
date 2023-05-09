@@ -2,7 +2,8 @@
 
 * 3.7.4
   - patch: Change reported error for pattern that cannot be matched to file into warning
-  - patch: Fix problem with parameter-list interpretation during Roddy startup due to incorrect Bash expression 
+  - patch: Fix problem with parameter-list interpretation during Roddy startup due to incorrect Bash expression
+  - patch: Security-related bumps of some related libraries (org.bouncycastle, org.slf4j) 
 
 * 3.7.3
   - patch: Pure maintenance release
@@ -15,41 +16,28 @@
   - patch: Bumped BatchEuphoria version to 0.1.1: A newer LSF release is pickier on the position of the `-o` parameter in `bjobs`. Adapted to this upstream change. Probably code will still work with older LSF versions.
 
 * 3.7.1
-
   - patch: Fixed printidlessruntimeconfig target
 
 * 3.7.0
-
   - minor: Updated to BatchEuphoria 0.1.0, which includes SLURM support. This means, Roddy now supports SLURM.
   - minor: Bumped some dependencies, many of them because of security vulnerabilities. com.thoughtworks.xstream:xstream:1.4.19 has vulnerabilities, but is not used anymore and therefore removed from the dependencies. The SSH libraries and old BouncyCastle encryption libraries have some security issues, but an update is beyond the scope of this release. The best long-term solution would probably be to switch to Apache Mina. 
 
 * 3.6.1
-
   - patch: Users still seem to use the misleading and long-deprecated `runtimeConfig.sh` and `runtimeConfig.xml` files from the execution store. These files are not written anymore. 
     > You should always use the job-specific `.parameter` files!
-    
   - patch: Bugfix: Failure to pass the job resuming step (e.g. via `bresume`), with jobs that cannot be resumed (e.g. submitted via the DirectExecutionJobManager, like in the Bam2FastqPlugin).
-    
   - patch: The command in `roddyCall.sh` is properly escaped and suited for direct copy-paste to the command-line
-  
   - patch: Bugfix: Did not handle subsequent variable references in cvalue validation correctly.
-  
   - patch: Better error reporting for submission errors
-  
   - patch: Bumped BatchEuphoria to 0.0.13
-    
   - patch: Bumped RoddyToolLib to 2.3.0
-    
   - patch: Deprecated all `Job` constructors except for the main constructor, which is now used throughout the Roddy core code.  
 
 * 3.6.0
-
   - minor: Added `accountingName` to allow project accounting in cluster (for BE 0.0.12) 
-
   - patch: Bumped to use BatchEuphoria 0.0.12
 
 * 3.5.11
-
     - patch: Pure maintenance release
     - patch: Fix reported release number
     - patch: Allow release with optional subpatch-level suffixes matching the pattern `-test\d+`. This is obviously for testing only.
@@ -59,262 +47,164 @@
   - patch: Bumped BatchEuphoria version to 0.0.7-1: A newer LSF release is pickier on the position of the `-o` parameter in `bjobs`. Adapted to this upstream change. Probably code will still work with older LSF versions.
 
 * 3.5.9
-
   - patch: The LocalExecutionService ignored errors of asynchronously executed commands. Now errors Roddy detects errors and reports their standard and error output.
-    
   - patch: LocalExecutionService always executes commands via `bash -c` (before it did so only if the process was synchronously executed)
-    
   - patch: Update of RoddyToolLib to fix error handling in asynchronous execution and with multi-threading and command-output processing (StringBuilder->StringBuffer)
 
 * 3.5.8
-
   - patch: Bugfix: Project XML validation didn't exit != 0 in strict mode
-    
   - patch: Refactorings and more tests
-    
   - patch: Reduced verbosity of some file access error messages
-    
   - patch: CI now uses Java 8.0.252-open (sdkman) and Groovy 2.4.19 for building
 
 * 3.5.7
-
   - patch: Refactorings and few more tests
 
 * 3.5.6
-
   - patch: Bugfix: Delete submitted but suspended jobs upon exception in plugin
-    
   - patch: Updated Travis CI config to use Java and Groovy version via SDKMAN! 
 
 * 3.5.5
-
   - patch: Improved error messages for nested variable errors (more information to diagnose the cause)
-    
   - patch: Bugfix: nested variable error with job manager without queues (e.g. DirectSynchronousExecutionJobManager)
 
 * 3.5.4
-
   - patch: Bugfix: real and repeatable job calls files did not contain command but object reference
 
 * 3.5.3
-
   - patch: Bugfix: Quote selectionTag in string to visualize also empty selection tags.
-    
   - patch: Bugfix: Fail on auto-filename check
-    
   - patch: Upgrade from BatchEuphoria 0.0.6 to 0.0.7
     - Fixes date parsing issues in LSF
     - Reduced memory consumption with LSF, if many jobs ran in the monitored time interval
 
 * 3.5.2
-  
   - patch: Bugfix: Fixed multi-threading bug for parallel execution of jobs in older SNV workflow plugins. This bug may have caused missed processing of chromosomes.
-    
   - patch: Bugfix: Use the job creation counter as additional information to make the auto filenames unique (development feature)
-    
   - patch: Bugfix: Exit on "derivedfrom" filename pattern despite matched pattern
    
 * 3.5.1
-
   - patch: Fixed variable reference for RODDY_ variables responsible for a sporadic bug due to incorrectly sorted parameter file
 
 * 3.5.0
-
   - patch: Fixed non-quoting of variables with spaces. Now they are quoted and thus correctly interpreted as string variables instead of Bash array variables that are not correctly exported due to the Bash bug.
-    
   - patch: Added escaping of not already quoted variables containing double quotes as quoting these could yield wrong results (e.g. in the context of named Bash bug).
-    
   - minor: Allow for "selectionTag" in filename patterns and output file tags
-    
   - patch: Correctly processes selectionTag for onScriptParameter filename pattern matching
-    
   - minor: Added feature toggle `StrictOnScriptParameterSelectionTag` with default `false`; with `false` default selection tag values always match; with `true`, which is planned to be the Roddy 4, "default" selection tag values in output file declarations only match "default" selection tags in filename patterns
-    
   - minor: Improved parsing of `--cvalues` command-line argument solving issues with colons ':' in configuration variables
-    
   - minor: Removed ModifiedVariablePassing feature toggle
-    
   - patch: Fixed a new regression with not quoting bash/map variables in the job-parameter files
   - patch: Lots of minor improvements of (error) output and behaviour
-    
   - patch: Updated BatchEuphoria dependency
-    
   - minor: Added `testRunVariableWidth` application property to change the width of the printing of job-parameter names. Defaults to old values 25.
-    
   - patch: Update to Gradle 5.1.1
-    
   - patch: Update to RoddyToolLib 2.1.1 
   
 * 3.4.2
-
   - patch: Fix a bug which made CValue.toFile() output wrong paths
   
 * 3.4.1
-
   - patch: Add JSON configuration file loader and tests
   
 * 3.4.0
-
   - minor: Improved validation of configuration values.
-    
   - minor: ForbidSubmissionOnRunning was re-enabled and turned on by default.
-    
   - patch: Created ExitReasons class for usage within Roddy and plugins. The class stores different exit codes and messages.
-    
   - patch: Bugfixes for local job execution and cluster job submission
-    
   - patch: Updated to BatchEuphoria 0.0.6.
-    
   - minor: Follow symbolic links when listing files in directories, e.g. collecting dataset names.
-    
   - patch: Added a base class for Spock tests: RoddyTestSpec.
-    
   - patch: Updated copyright notices.
-    
   - patch: Improved test coverage.
 
 * 3.3.4 (ReleaseBranch_3.3)
-
   - patch: Fixed variable reference for RODDY_ variables responsible for a sporadic bug due to incorrectly sorted parameter file
 
 * 3.3.3
-
   - patch: Further improved error reporting
-    
   - patch: Increased default JVM memory size to 1G
-    
   - patch: Improved robustness
 
 * 3.3.2
-
   - patch: Improved directory checks
-    
   - patch: Improved error reporting
 
 * 3.3.1
-
   - patch: Updated to RoddyToolLib 2.0.0
-    
   - patch: Updated to BatchEuphoria 0.0.5
-    
   - patch: Fixed autofilename bug
 
 * 3.3.0 (misreports itself as 3.2.3)
-
   - patch: Bugfixes to get Sophia 2.0.0 running
-    
   - patch: Added more (longer) tuple classes for jobs with more inputs/outputs
-    
   - patch: Mis-tagged this release as 3.2.3!
 
 * 3.2.2
-
   - patch: Fixed context warnings that were mis-represented as errors
-    
   - patch: Bugfixes to get BamToFastqPlugin running
-    
   - patch: Fixed FailOnAutoFilenames feature toggle usage
-    
   - patch: Improved error reporting (e.g. report .roddy/ logfile, configuration errors)
-    
   - patch: Fixed bug in remote file-existence checks
-    
   - patch: Sphinxs documentation with plantuml plugin support
 
 * 3.2.1
-
   - patch: FileOnErroneousDryRuns feature toggle
-    
   - patch: Extended plugin API
-    
   - patch: Fixed rare MD5 file check bug during tool compression: locally modified plugins could result in always uploading known plugin versions
-    
   - patch: Improved error reporting
 
 * 3.2.0
-
   - patch: Improved loading of cohorts and supercohorts
-    
   - patch: Improved cyclic dependency detection in configuration variables
-    
   - patch: testrerun shows all configuration again
-    
   - patch: Stricter conversion of Sphinx documentation
-    
   - minor: Allow FileGroup in tool tuple output
-    
   - minor: Allow selectiontag in FileGroup
 
 * 3.1.0
-
   - minor: Improved cohort handling
-  
   - minor: Supercohorts
-   
   - patch: RoddyToolLib 1.0.0
-  
   - patch: ContextResource for simpler test writing
-  
   - patch: No JDK version check for plugins anymore
-  
   - patch: Improved unknown libdir problem during roddy.sh compile
 
 * 3.0.11
-
   - patch: Fix printidlessruntimeconfig
-  
   - patch: Backported ContextResource from 3.1.0 version bump
-  
   - patch: IO-dir checks also in other modes but run
 
 * 3.0.10
-
   - patch: Backported tool-compression bug related to MD5 sum creation from 3.2.1 
 
 * 3.0.9
-
   - patch: Update to RoddyToolLib 2.0.0
 
 * 3.0.8
-
   - patch: Boolean configuration value `1` was incorrectly interpreted as `false`. Fixed to be interpreted as `true`. Added warnings that on the long run only "true" and "false" will be allowed values for Booleans.
-
   - patch: Grid Engine Support restored
-
   - patch: Bugfixes
-  
   - patch: Start-up script reads `INCREASE_BUILD_VERSION` (true, false) variable defaulting to true, to allow turning off automatic build-number increase.
-  
   - patch: Basic implementation of a new Brawl DSL based on Groovy. 
-  
   - patch: Removed `preventJobExecution` configuration variable
 
 * 3.0.1-3.0.7
-
   - patch: Bugfix releases
-  
   - patch: TheRoddyWMS organization
 
 * 3.0.4 
 
 * 3.0.0
-
   - Many bugfixes and error message improvements
-
   - Split-off BatchEuphoria and RoddyToolLib from RoddyCore. BatchEuphoria has LSF support
-
   - Sphinx-based documentation (for ReadTheDocs.org) 
-
   - building with Gradle
-  
   - continuous integration with Travis and deployment to Github Releases
-  
   - improved structure and content of output (show plugin directories and loaded XMLs)
 
 * 2.3.187
-
   - Many bugfixes
-  
   - Improved error messages
 
 * 2.3.133
