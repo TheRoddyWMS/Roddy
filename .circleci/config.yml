@@ -15,7 +15,7 @@ jobs: # a collection of steps
       - run:
           name: Install requirements
           command: |
-            curl -s get.sdkman.io | bash
+            curl -s "https://get.sdkman.io" | bash
             source "$HOME/.sdkman/bin/sdkman-init.sh"
             echo sdkman_auto_answer=true > ~/.sdkman/etc/config
             sdk install groovy 2.4.21
