@@ -556,7 +556,7 @@ class ConfigurationFactoryTest {
         assert res.groupClass == GenericFileGroup.class
         assert res.genericFileClass.name.endsWith("ASyntheticClass")
         assert res.passOptions == ToolFileGroupParameter.PassOptions.PARAMETERS
-        assert res.indexOptions == ToolFileGroupParameter.IndexOptions.STRING
+        assert res.indexOptions == ToolFileGroupParameter.IndexOptions.STRINGS
     }
 
     @Test

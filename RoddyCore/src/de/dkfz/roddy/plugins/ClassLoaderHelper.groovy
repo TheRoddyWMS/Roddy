@@ -86,12 +86,17 @@ class ClassLoaderHelper {
             return foundCoreClass
 
         // This part of the code depends on the existence of jar on the system!
-        // Java normally ships jar with it and we check jar on startup. So this should pose no problems.
+        // Java normally ships `jar` with it and we check jar on startup. So this should pose no problems.
         List<String> listOfClasses = []
         synchronized (LibrariesFactory.instance.loadedPlugins) {
             LibrariesFactory.instance.loadedPlugins.each {
                 PluginInfo plugin ->
                     if (!classListCacheByPlugin.containsKey(plugin)) {
+                        // But be aware, that `jar` needs to be in the PATH. If you have no global, OS-wide JDK
+                        // installed, but ,e.g., use SDKMAN!, you may want to copy the PATH variable into Gradle
+                        // with `./gradlew build -DPATH=$PATH`.
+                        //
+                        // System.err.println("env".execute().inputStream.readLines())
                         String text = LocalExecutionHelper.
                                 execute("jar tvf ${LibrariesFactory.instance.loadedJarsByPlugin[plugin]}")
                         classListCacheByPlugin[plugin] = text.readLines();

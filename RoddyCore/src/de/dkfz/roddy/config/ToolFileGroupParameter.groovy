@@ -40,7 +40,7 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameterOfFiles {
 
     enum IndexOptions {
         NUMERIC,
-        STRING;
+        STRINGS;
 
         static IndexOptions from(@Nonnull String string) {
             string.toUpperCase() as IndexOptions
