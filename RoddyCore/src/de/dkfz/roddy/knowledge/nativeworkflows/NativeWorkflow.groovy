@@ -15,7 +15,7 @@ import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.Workflow
 import de.dkfz.roddy.execution.BEExecutionService
-import de.dkfz.roddy.execution.UnexpectedExecutionResultException
+import de.dkfz.roddy.execution.Executable
 import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -29,6 +29,7 @@ import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
 
 import java.lang.reflect.Constructor
+import java.nio.file.Paths
 
 /**
  * A Native Workflow encapsulates a (shell /perl /python) script which submits cluster jobs.
@@ -49,9 +50,12 @@ class NativeWorkflow extends Workflow {
      */
     class NativeJob extends Job {
         NativeJob(Job wrappedJob) {
-            super(wrappedJob.context, wrappedJob.jobName, wrappedJob.toolID, null as String,
-                    wrappedJob.allRawInputParameters, wrappedJob.parentFiles,
-                    wrappedJob.filesToVerify)
+            super(wrappedJob.context,
+                  wrappedJob.jobName,
+                  wrappedJob.toolCommand,
+                  wrappedJob.allRawInputParameters,
+                  wrappedJob.parentFiles,
+                  wrappedJob.filesToVerify)
         }
 
         void setNativeParentJobs(List<NativeJob> nativeParentJobs) {
@@ -114,14 +118,18 @@ class NativeWorkflow extends Workflow {
             it.className == targetJobManager.class.name
         }.name().toUpperCase()
         def nativeScriptID = "nativeWrapperFor${jobManagerAbbreviation}"
-        String nativeWorkflowScriptWrapper = configuration.getProcessingToolPath(context, nativeScriptID).absolutePath
+        String nativeWorkflowScriptWrapper = configuration.getExecutedToolPath(context, nativeScriptID).absolutePath
         Job wrapperJob = new Job(
-                context, context.getTimestampString() + "_nativeJobWrapper:" + toolID, toolID,
-                null as String, null, null, null)
+                context,
+                context.getTimestampString() + "_nativeJobWrapper:" + toolID,
+                context.getToolCommand(toolID),
+                null,
+                null,
+                null)
 
         DirectSynchronousExecutionJobManager dcfac = new DirectSynchronousExecutionJobManager(
                 ExecutionService.instance, JobManagerOptions.create().build())
-        DirectCommand wrapperJobCommand = new DirectCommand(dcfac, wrapperJob, [], nativeWorkflowScriptWrapper)
+        DirectCommand wrapperJobCommand = new DirectCommand(dcfac, wrapperJob, [])
         String submissionCommand = targetJobManager.submissionCommand
         if (submissionCommand == null) {
             context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.
@@ -133,7 +141,7 @@ class NativeWorkflow extends Workflow {
         String finalCommand = "SUBMISSION_COMMAND=" + submissionCommand + " " + wrapperJobCommand.toString()
 
         // Replace the wrapinscript with the nativeWorkflowWrapperScript
-        String wrapinScript = configuration.getProcessingToolPath(context, "wrapinScript").absolutePath
+        String wrapinScript = configuration.getExecutedToolPath(context, "wrapinScript").absolutePath
         finalCommand = finalCommand.replace(wrapinScript, nativeWorkflowScriptWrapper)
         System.out.println(wrapinScript + " => " + nativeWorkflowScriptWrapper)
         System.out.println(finalCommand)
@@ -199,7 +207,7 @@ class NativeWorkflow extends Workflow {
 
         for (Job job in convertedJobs) {
             BEJobResult result = job.run()
-            Command command = result.command
+            BECommand command = result.beCommand
             String id = null;
             try {
                 id = command.jobID.shortID

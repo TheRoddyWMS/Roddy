@@ -92,7 +92,8 @@ class ClassLoaderHelper {
             LibrariesFactory.instance.loadedPlugins.each {
                 PluginInfo plugin ->
                     if (!classListCacheByPlugin.containsKey(plugin)) {
-                        String text = LocalExecutionHelper.execute("jar tvf ${LibrariesFactory.instance.loadedJarsByPlugin[plugin]}")
+                        String text = LocalExecutionHelper.
+                                execute("jar tvf ${LibrariesFactory.instance.loadedJarsByPlugin[plugin]}")
                         classListCacheByPlugin[plugin] = text.readLines();
                     }
                     for (String line in classListCacheByPlugin[plugin]) {

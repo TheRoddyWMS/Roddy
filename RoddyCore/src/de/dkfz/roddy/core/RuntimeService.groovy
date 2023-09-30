@@ -465,9 +465,6 @@ class RuntimeService {
         return getOutputAnalysisBaseDirectoryCV(context.analysis).toFile(context)
     }
 
-
-
-
     File getAnalysisToolsDirectory(ExecutionContext executionContext) {
         File analysisToolsDirectory = new File(getExecutionDirectory(executionContext), DIRNAME_ANALYSIS_TOOLS)
         return analysisToolsDirectory

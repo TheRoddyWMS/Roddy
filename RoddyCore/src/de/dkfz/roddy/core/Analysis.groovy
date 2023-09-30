@@ -12,6 +12,7 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.config.*
+import de.dkfz.roddy.execution.Executable
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.BEJob
@@ -20,6 +21,8 @@ import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.tools.LoggerWrapper
 import groovy.transform.CompileStatic
 import org.apache.commons.io.filefilter.WildcardFileFilter
+
+import java.nio.file.Paths
 
 import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate
 import static de.dkfz.roddy.tools.RoddyIOHelperMethods.getStackTraceAsString
@@ -681,8 +684,7 @@ class Analysis {
                         Job cleanupJob = new Job(
                                 context,
                                 "cleanupScript",
-                                cleanupScript,
-                                null as String,
+                                context.getToolCommand(cleanupScript),
                                 null,
                                 null,
                                 null)

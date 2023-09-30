@@ -32,6 +32,8 @@ import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.shell.bash.Service as BashService
 import groovy.transform.CompileStatic
 
+import javax.annotation.Nonnull
+import javax.annotation.Nullable
 import java.text.ParseException
 import java.time.Duration
 import java.util.concurrent.ExecutionException
@@ -168,7 +170,9 @@ abstract class ExecutionService implements BEExecutionService {
      * @param jobNameExtension
      * @return
      */
-    List<String> runDirect(ExecutionContext context, String toolID, Map<String, Object> parameters = null) {
+    List<String> runDirect(@Nonnull ExecutionContext context,
+                           @Nonnull String toolID,
+                           @Nullable Map<String, Object> parameters = null) {
 
         if (!parameters) parameters = [:]
         parameters[DISABLE_DEBUG_OPTIONS_FOR_TOOLSCRIPT] = "true"
@@ -177,8 +181,7 @@ abstract class ExecutionService implements BEExecutionService {
         Job wrapperJob = new Job(
                 context,
                 context.timestampString + "_directTool:" + toolID,
-                toolID,
-                null as String,
+                context.getToolCommand(toolID),
                 parameters,
                 null,
                 null)
@@ -243,7 +246,7 @@ abstract class ExecutionService implements BEExecutionService {
     }
 
     List<String> executeTool(ExecutionContext context, String toolID, String jobNameExtension = "_executedScript:") {
-        File path = context.configuration.getProcessingToolPath(context, toolID)
+        File path = context.configuration.getExecutedToolPath(context, toolID)
         String cmd = FileSystemAccessProvider.instance.commandSet.getExecuteScriptCommand(path)
         return execute(cmd, true).stdout
     }
@@ -266,7 +269,7 @@ abstract class ExecutionService implements BEExecutionService {
      * @param command
      * @return
      */
-    String validSubmissionCommandOutputWithRandomJobId(Command command) {
+    String validSubmissionCommandOutputWithRandomJobId(BECommand command) {
         if (command instanceof LSFSubmissionCommand) {
             return String.format("<0%04d>", System.nanoTime() % 10000)
         } else if (command instanceof PBSSubmissionCommand) {
@@ -281,7 +284,7 @@ abstract class ExecutionService implements BEExecutionService {
     }
 
     @Override
-    ExecutionResult execute(Command command, Duration timeout) {
+    ExecutionResult execute(BECommand command, Duration timeout) {
         execute(command, true, timeout)
     }
 
@@ -297,7 +300,7 @@ abstract class ExecutionService implements BEExecutionService {
      *        or not.
      */
     @Override
-    ExecutionResult execute(Command command,
+    ExecutionResult execute(BECommand command,
                             boolean waitFor = true,
                             Duration timeout = Duration.ZERO) {
         ExecutionContext context = ((Job) command.job).executionContext
@@ -328,9 +331,9 @@ abstract class ExecutionService implements BEExecutionService {
         return res
     }
 
-    protected FileOutputStream createServiceBasedOutputStream(Command command, boolean waitFor) { return null }
+    protected FileOutputStream createServiceBasedOutputStream(BECommand command, boolean waitFor) { return null }
 
-    protected void finalizeServiceBasedOutputStream(Command command, OutputStream outputStream) {}
+    protected void finalizeServiceBasedOutputStream(BECommand command, OutputStream outputStream) {}
 
     static long measureStart() { return System.nanoTime() }
 
@@ -593,7 +596,7 @@ abstract class ExecutionService implements BEExecutionService {
     boolean checkCopiedAnalysisTools(ExecutionContext context) {
         boolean checked = true
         for (ToolEntry tool in context.configuration.tools.allValuesAsList) {
-            File toolPath = context.configuration.getProcessingToolPath(context, tool.id)
+            File toolPath = context.configuration.getExecutedToolPath(context, tool.id)
             checked &= context.fileIsExecutable(toolPath)
         }
         return checked
@@ -883,14 +886,14 @@ abstract class ExecutionService implements BEExecutionService {
         final FileSystemAccessProvider provider = FileSystemAccessProvider.instance
         final String separator = Constants.ENV_LINESEPARATOR
 
-        List<Command> commandCalls = context.getCommandCalls() ?: ([] as List<Command>)
+        List<BECommand> commandCalls = context.getCommandCalls() ?: ([] as List<BECommand>)
         StringBuilder realCalls = new StringBuilder()
         List<BEJobID> jobIDs = new LinkedList<>()
         int cnt = 0
         Map<String, String> jobIDReplacement = new HashMap<String, String>()
         StringBuilder repeatCalls = new StringBuilder()
 
-        for (Command c : commandCalls) {
+        for (BECommand c : commandCalls) {
             BEJobID eID = c.getJobID()
             if (eID != null) {
                 jobIDs.add(eID)
@@ -899,7 +902,7 @@ abstract class ExecutionService implements BEExecutionService {
                 }
             }
         }
-        for (Command c : commandCalls) {
+        for (BECommand c : commandCalls) {
             BEJobID eID = c.getJobID()
             String cmdStr = c.toBashCommandString()
             realCalls.append(eID).append(", ").append(cmdStr).append(separator)

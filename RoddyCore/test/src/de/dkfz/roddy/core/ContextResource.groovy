@@ -189,7 +189,7 @@ class ContextResource extends ExternalResource {
 
             @Override
 
-            protected Command createCommand(BEJob beJob) {
+            protected BECommand createCommand(BEJob beJob) {
                 return null
             }
 

@@ -35,3 +35,4 @@ coverage/
 .settings/
 bin/
 
+__pycache__/

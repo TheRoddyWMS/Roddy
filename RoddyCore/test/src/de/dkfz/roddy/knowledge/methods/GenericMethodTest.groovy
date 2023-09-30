@@ -87,7 +87,7 @@ class GenericMethodTest {
 
     @Test
     void testCreateOutputFileGroupWithStringFGIndex() {
-        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, derivedFileClass, 'APARM', ToolFileGroupParameter.PassOptions.parameters, ToolFileGroupParameter.IndexOptions.strings, DEFAULT_SELECTIONTAG)
+        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, derivedFileClass, 'APARM', ToolFileGroupParameter.PassOptions.PARAMETERS, ToolFileGroupParameter.IndexOptions.STRING, DEFAULT_SELECTIONTAG)
         FileGroup fg = new GenericMethod('testTool', null, getBaseFile(), stringIndices).createOutputFileGroup(tfg) as FileGroup
         assert fg.filesInGroup.size() == stringIndices.size()
         for (int i = 0; i < stringIndices.size(); i++) {
@@ -97,13 +97,13 @@ class GenericMethodTest {
 
     @Test(expected = NegativeArraySizeException)
     void testCreateOutputFileGroupWithNegativeIndexValues() {
-        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, fileBaseClass, 'APARM', ToolFileGroupParameter.PassOptions.parameters, ToolFileGroupParameter.IndexOptions.strings, DEFAULT_SELECTIONTAG)
+        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, fileBaseClass, 'APARM', ToolFileGroupParameter.PassOptions.PARAMETERS, ToolFileGroupParameter.IndexOptions.STRING, DEFAULT_SELECTIONTAG)
         new GenericMethod('testTool', null, getBaseFile(), -1).createOutputFileGroup(tfg) as FileGroup
     }
 
     @Test(expected = RuntimeException)
     void testCreateOutputFileGroupWithMissingIndexValues() {
-        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, fileBaseClass, 'APARM', ToolFileGroupParameter.PassOptions.parameters, ToolFileGroupParameter.IndexOptions.strings, DEFAULT_SELECTIONTAG)
+        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, fileBaseClass, 'APARM', ToolFileGroupParameter.PassOptions.PARAMETERS, ToolFileGroupParameter.IndexOptions.STRING, DEFAULT_SELECTIONTAG)
         new GenericMethod('testTool', null, getBaseFile(), []).createOutputFileGroup(tfg) as FileGroup
     }
 

@@ -34,7 +34,6 @@ group = "com.github.theroddywms"
  * -PallowDirtyRepo=true                Continue release despite dirty repo.
  * -Pchecked=false                      Turn off -F Xlint:unchecked
  */
-
 ext.allowDirtyRepo = (project.hasProperty("allowDirty") && project.allowDirty == "true")
 
 // apply plugin: "java"
@@ -92,7 +91,7 @@ repositories {
 }
 
 ext.roddyToolLibVersion = "2.4.0"
-ext.batchEuphoriaVersion = "0.1.1"
+ext.batchEuphoriaVersion = "0.1.3"
 
 configurations.all {
     resolutionStrategy.cacheChangingModulesFor(0, 'seconds')

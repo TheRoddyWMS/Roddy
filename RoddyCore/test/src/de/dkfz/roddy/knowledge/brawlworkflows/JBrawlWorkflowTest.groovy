@@ -96,7 +96,7 @@ public class JBrawlWorkflowTest {
                         (new GenericFileGroup([] as List)).class as Class<FileGroup>,
                         testFileClass,
                         "FUZZY_GROUP",
-                        ToolFileGroupParameter.PassOptions.parameters, Constants.DEFAULT));
+                        ToolFileGroupParameter.PassOptions.PARAMETERS, Constants.DEFAULT));
         cc.getTools().add(loadFastqFiles)
 
         String[] _l = callPrepareAndFormatLine("""set inputfiles = loadfilesWith "${LOAD_FASTQ_FILES}"()'""").split("[ ]")

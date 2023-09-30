@@ -6,19 +6,12 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.execution.UnexpectedExecutionResultException
-import de.dkfz.roddy.execution.jobs.BEJobID
-import de.dkfz.roddy.execution.jobs.GenericJobInfo
-import de.dkfz.roddy.execution.jobs.Job
-import de.dkfz.roddy.execution.jobs.JobConstants
-import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
-import de.dkfz.roddy.execution.jobs.BEJob
-import de.dkfz.roddy.execution.jobs.LoadedJob
+import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.LoadedFile
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -27,9 +20,10 @@ import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.NodeChild
 import groovy.xml.MarkupBuilder
 
-import static de.dkfz.roddy.StringConstants.EMPTY
-import static de.dkfz.roddy.StringConstants.SPLIT_COLON
-import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
+import java.nio.file.Path
+import java.nio.file.Paths
+
+import static de.dkfz.roddy.StringConstants.*
 
 /**
  * The class provides methods to:
@@ -165,7 +159,7 @@ class ExecutionContextReaderAndWriter {
      * @param context
      * @return
      */
-    @CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic(TypeCheckingMode.SKIP)  // Needed for XMLSlurper :(
     List<Job> readJobInfoFile(ExecutionContext context) {
         List<Job> jobList = []
         final File jobInfoFile = context.runtimeService.getJobInfoFile(context)
@@ -182,12 +176,12 @@ class ExecutionContextReaderAndWriter {
         try {
             for (job in jobinfo.jobs.job) {
                 String jobID = job.@id.text()
-                String jobToolID = job.tool.@toolid.text()
-                String jobToolMD5 = job.tool.@md5
+                String jobToolID = job.getScript.@toolid.text()
+                String jobToolMD5 = job.getScript.@md5
                 String jobName = job.@name.text()
                 Map<String, String> jobsParameters = [:]
                 List<LoadedFile> loadedFiles = []
-                List<String> parentJobsIDs = []
+                List<BEJobID> parentJobsIDs = []
 
                 for (parameter in job.parameters.parameter) {
                     String name = parameter.@name.text()
@@ -200,9 +194,14 @@ class ExecutionContextReaderAndWriter {
                 for (file in job.filesbyjob.file) {
                     String fileid = file.@id.text()
                     String path = file.@path.text()
-                    String cls = file.@class.text()
-                    List<String> _parentFiles = Arrays.asList(file.@parentfiles.text().split(SPLIT_COMMA))
-                    LoadedFile rb = new LoadedFile(new File(path), jobID, context, _parentFiles, cls)
+                    String clsString = file.@class.text()
+                    List<LoadedFile> _parentFiles =
+                            Arrays.asList((file.@parentfiles.text() as String).split(SPLIT_COMMA)).collect {
+                                filename ->
+                                    new LoadedFile(new File(filename), null, context,
+                                            null, null)
+                            }
+                    LoadedFile rb = new LoadedFile(new File(path), jobID, context, _parentFiles, clsString)
                     loadedFiles << rb
                 }
 
@@ -210,9 +209,23 @@ class ExecutionContextReaderAndWriter {
                     String id = dependency.@id.text()
                     String fileid = dependency.@fileid.text()
                     String filepath = dependency.@filepath.text()
-                    parentJobsIDs << id
+                    parentJobsIDs << new BEJobID(id)
                 }
-                jobList << new LoadedJob(context, jobName, jobID, jobToolID, jobToolMD5, jobsParameters, loadedFiles, parentJobsIDs)
+                Path localPath
+                Path executionPath
+
+                jobList << new LoadedJob(
+                        context,
+                        jobName,
+                        jobID,
+                        new ToolCommand(
+                                jobToolID,
+                                jobToolMD5,
+                                localPath,
+                                executionPath),
+                        jobsParameters,
+                        loadedFiles,
+                        parentJobsIDs)
             }
         } catch (Exception ex) {
             logger.warning("Could not read in xml file " + ex.toString())
@@ -240,7 +253,7 @@ class ExecutionContextReaderAndWriter {
                     try {
                         if (ej.isFakeJob()) continue //Skip fake jobs.
                         job(id: ej.getJobID(), name: ej.jobName) {
-                            String commandString = ej.runResult.command != null ? ej.runResult.command.toString() : ""
+                            String commandString = ej.runResult.beCommand != null ? ej.runResult.beCommand.toString() : ""
                             calledcommand(command: commandString)
                             tool(id: ej.getToolID(), md5: ej.getToolMD5())
                             parameters {
@@ -299,7 +312,7 @@ class ExecutionContextReaderAndWriter {
         def allTools = context.configuration.tools.allValuesAsList
         def allToolsByResourcePath = allTools.collectEntries {
             ToolEntry tool ->
-                File toolPath = context.configuration.getProcessingToolPath(context, tool.id)
+                File toolPath = context.configuration.getExecutedToolPath(context, tool.id)
                 [tool.id, toolPath.parentFile.name + "/" + toolPath.name]
         }
 
@@ -311,10 +324,15 @@ class ExecutionContextReaderAndWriter {
                 continue
             }
             // Try to find the tool id in the context. If it is not available, set "UNKNOWN"
-            String toolID = allToolsByResourcePath[jobInfo.tool.parentFile.name + "/" + jobInfo.tool.name] ?: Constants.UNKNOWN
+            String toolResourcePath = Paths.get(jobInfo.tool.parentFile.name, jobInfo.tool.name)
+            String toolID = allToolsByResourcePath[toolResourcePath.toString()] ?: Constants.UNKNOWN
 
-            Job job = new Job(context, jobInfo.jobName, Constants.UNKNOWN, null as String,
-                    jobInfo.parameters as Map<String, Object>, new LinkedList<BaseFile>(),
+            Job job = new Job(
+                    context,
+                    jobInfo.jobName,
+                    new UnknownToolCommand(jobInfo.tool.name),
+                    jobInfo.parameters as Map<String, Object>,
+                    new LinkedList<BaseFile>(),
                     new LinkedList<BaseFile>())
             jobsStartedInContext.add(job)
         }

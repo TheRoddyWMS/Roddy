@@ -685,7 +685,7 @@ class ConfigurationFactory {
             toolName = splitResult[0]
             parameterName = splitResult[1]
 
-            if (toolName.equals("[ANY]") || toolName.equals("")) {
+            if (toolName == "[ANY]" || toolName == "") {
                 //only param OR [ANY] tool and param
                 toolName = null
             } else if (toolName.startsWith("[")) {
@@ -757,7 +757,7 @@ class ConfigurationFactory {
     boolean readProcessingTools(NodeChild configurationNode, Configuration config) {
         Map<String, ToolEntry> toolEntries = config.getTools().getMap()
         boolean hasErrors = false
-        for (NodeChild tool in configurationNode.processingTools.tool) {
+        for (NodeChild tool in configurationNode.processingTools.getScript) {
             String toolID = tool.@name.text()
             logger.postRareInfo("Processing tool ${toolID}")
             def toolReader = new ProcessingToolReader(tool, config)

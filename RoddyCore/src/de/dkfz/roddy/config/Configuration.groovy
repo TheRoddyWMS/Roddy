@@ -6,6 +6,9 @@
 
 package de.dkfz.roddy.config
 
+import java.nio.file.Path
+import java.nio.file.Paths
+
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 
 import de.dkfz.roddy.config.loader.ConfigurationFactory
@@ -372,16 +375,19 @@ class Configuration implements ContainerParent<Configuration>, ConfigurationIssu
     /**
      * The actual path to the copy of the tool on the execution host (which can be local or remote).
      */
-    File getProcessingToolPath(ExecutionContext context, String tool) throws ConfigurationError {
+    File getExecutedToolPath(ExecutionContext context, String tool) throws ConfigurationError {
         ToolEntry te
         try {
             te = tools.getValue(tool);
         } catch (ConfigurationError e) {
             throw new ConfigurationError("Unknown tool ID", tool, e)
         }
-        File toolPath = new File(new File(new File(context.executionDirectory, RuntimeService.DIRNAME_ANALYSIS_TOOLS), te.basePathId),
-                                 te.path)
-        return toolPath
+        Path toolPath = Paths.get(
+                context.executionDirectory.toString(),
+                RuntimeService.DIRNAME_ANALYSIS_TOOLS,
+                te.basePathId,
+                te.path)
+        return toolPath.toFile()
     }
 
     String getProcessingToolMD5(String tool) throws ConfigurationError {

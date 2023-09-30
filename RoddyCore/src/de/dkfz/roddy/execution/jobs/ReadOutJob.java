@@ -7,8 +7,10 @@
 package de.dkfz.roddy.execution.jobs;
 
 import de.dkfz.roddy.core.ExecutionContext;
+import de.dkfz.roddy.execution.CommandI;
 import de.dkfz.roddy.knowledge.files.BaseFile;
 
+import javax.annotation.Nonnull;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,19 +31,27 @@ public class ReadOutJob extends Job {
      */
     public final String jobID;
 
-    private final List<BEJob> parentJobs;
+    private final List<BEJobID> parentJobsIds;
 
-    public ReadOutJob(ExecutionContext context, String jobName, String toolID, String executedJobID, Map<String,String> parameters, List<BEJob> parentJobs) {
-        super(context, jobName, toolID,
-                (String)null, new LinkedHashMap<>(),
-                new LinkedList<BaseFile>(), null);
-        this.parentJobs = parentJobs;
+    public ReadOutJob(@Nonnull ExecutionContext context,
+                      @Nonnull String jobName,
+                      @Nonnull ToolCommand command,
+                      String executedJobID,
+                      Map<String,String> parameters,   // Not implemented? Wrong Type!
+                      List<BEJobID> parentJobsIds) {
+        super(context,
+              jobName,
+              command,
+              new LinkedHashMap<>(),
+              new LinkedList<BaseFile>(),
+              new LinkedList<BaseFile>());
+        this.parentJobsIds = parentJobsIds;
         this.readOut = true;
         this.jobID = executedJobID;
     }
 
     /**
-     * Returns the read out jobs id.
+     * Returns the read jobs id.
      * @return
      */
     @Override
@@ -50,7 +60,7 @@ public class ReadOutJob extends Job {
     }
 
     @Override
-    public String getToolID() {
+    public String getToolId() {
         String[] split = jobName.split("_");
         return split[split.length - 1];
     }

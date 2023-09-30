@@ -43,7 +43,7 @@ class BashConverter extends ConfigurationConverter {
         cfg.configurationValues.addAll(cfg.tools.allValuesAsList.collect {
             ToolEntry te ->
                 new ConfigurationValue(createVariableName("TOOL_", te.getID()),
-                        cfg.getProcessingToolPath(context, te.getID()).absolutePath)
+                        cfg.getExecutedToolPath(context, te.getID()).absolutePath)
         })
 
         StringBuilder text = createNewDocumentStringBuilder(context, cfg)
@@ -116,7 +116,7 @@ class BashConverter extends ConfigurationConverter {
         for (ToolEntry te : cfg.getTools().getAllValuesAsList()) {
             String id = te.getID()
             String valueName = createVariableName("TOOL_", id)
-            text << valueName << '="' << cfg.getProcessingToolPath(context, id) << '"' << separator
+            text << valueName << '="' << cfg.getExecutedToolPath(context, id) << '"' << separator
         }
         return text
     }

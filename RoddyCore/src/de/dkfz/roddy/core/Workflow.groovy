@@ -19,6 +19,8 @@ import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.methods.GenericMethod
 import groovy.transform.CompileStatic
 
+import javax.annotation.Nonnull
+import javax.annotation.Nullable
 import java.lang.reflect.Method
 import java.util.concurrent.ExecutionException
 
@@ -253,7 +255,8 @@ abstract class Workflow {
      * @param parameters
      * @return
      */
-    final List<String> callDirect(String toolID, Map<String, Object> parameters) {
+    final List<String> callDirect(@Nonnull String toolID,
+                                  @Nullable Map<String, Object> parameters) {
         return ExecutionService.getInstance().runDirect(context, toolID, parameters)
     }
 
@@ -281,7 +284,8 @@ abstract class Workflow {
     /**
      * Introduced in BrawlWorkflow because of some issues with Groovy and the call method. Just for code completeness
      */
-    final List<String> runDirect(String toolID, Map<String, Object> parameters) {
+    final List<String> runDirect(@Nonnull String toolID,
+                                 @Nullable Map<String, Object> parameters) {
         return ExecutionService.getInstance().runDirect(context, toolID, parameters);
     }
 
@@ -352,7 +356,8 @@ abstract class Workflow {
      * @param _class Defaults to BaseFile.STANDARD_FILE_CLASS
      * @return
      */
-    final List<BaseFile> getSourceFilesUsingTool(String toolID, String _class = BaseFile.STANDARD_FILE_CLASS)
+    final List<BaseFile> getSourceFilesUsingTool(@Nonnull String toolID,
+                                                 @Nonnull String _class = BaseFile.STANDARD_FILE_CLASS)
             throws ExecutionException {
         return BaseFile.getSourceFilesUsingTool(context, toolID, _class)
     }
@@ -405,13 +410,16 @@ abstract class Workflow {
     }
 
     @Deprecated
-    final List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID, String _class)
+    final List<BaseFile> getSourceFilesUsingTool(@Nonnull ExecutionContext context,
+                                                 @Nonnull String toolID,
+                                                 @Nonnull String _class)
             throws ExecutionException {
         return BaseFile.getSourceFilesUsingTool(context, toolID, _class)
     }
 
     @Deprecated
-    final List<BaseFile> getSourceFilesUsingTool(ExecutionContext context, String toolID)
+    final List<BaseFile> getSourceFilesUsingTool(@Nonnull ExecutionContext context,
+                                                 @Nonnull String toolID)
             throws ExecutionException {
         return getSourceFilesUsingTool(context, toolID, BaseFile.STANDARD_FILE_CLASS)
     }

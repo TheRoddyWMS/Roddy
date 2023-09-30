@@ -272,7 +272,7 @@ class GenericMethod {
         parameters[PRM_WORKFLOW_ID] = context.analysis.configuration.getName()
         if (toolName) {
             parameters[PRM_TOOL_ID] = toolName
-            parameters[PRM_TOOLS_DIR] = configuration.getProcessingToolPath(context, toolName).getParent()
+            parameters[PRM_TOOLS_DIR] = configuration.getExecutedToolPath(context, toolName).getParent()
         }
 
         // Assemble additional parameters
@@ -344,7 +344,7 @@ class GenericMethod {
                 ToolFileGroupParameter _tp = toolParameter as ToolFileGroupParameter;
                 if (!allInputValues[i].class == _tp.groupClass)
                     logger.severe("Class mismatch for ${allInputValues[i]} should be of class ${_tp.groupClass}.");
-                if (_tp.passOptions == ToolFileGroupParameter.PassOptions.parameters) {
+                if (_tp.passOptions == ToolFileGroupParameter.PassOptions.PARAMETERS) {
                     int cnt = 0;
                     for (BaseFile bf in (List<BaseFile>) ((FileGroup) allInputValues[i]).getFilesInGroup()) {
                         parameters[_tp.scriptParameterName + "_" + cnt] = bf;
@@ -479,7 +479,7 @@ class GenericMethod {
             }
             parameters.remove(tfg.scriptParameterName)
         }
-        if (tfg.passOptions == ToolFileGroupParameter.PassOptions.parameters) {
+        if (tfg.passOptions == ToolFileGroupParameter.PassOptions.PARAMETERS) {
             int cnt = 0;
             for (BaseFile bf in (List<BaseFile>) filesInGroup) {
                 parameters[tfg.scriptParameterName + "_" + cnt] = bf;
@@ -503,8 +503,12 @@ class GenericMethod {
 
     private FileObject createAndRunJob(List<BaseFile> filesToVerify, FileObject outputObject) {
         BEJobResult jobResult = new Job(
-                context, context.createJobName(firstInputFile, toolName), toolName,
-                null as String, parameters, allInputFiles, filesToVerify
+                context,
+                context.createJobName(firstInputFile, toolName),
+                context.getToolCommand(toolName),
+                parameters,
+                allInputFiles,
+                filesToVerify
         ).run()
 
         if (allCreatedObjects) {

@@ -10,6 +10,7 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.FeatureToggles
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.*
+import de.dkfz.roddy.execution.Executable
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
@@ -17,7 +18,10 @@ import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import groovy.transform.CompileStatic
 
+import javax.annotation.Nonnull
 import java.util.logging.Level
+
+import static de.dkfz.roddy.Constants.UNKNOWN
 
 /**
  * An ExecutionContext is the runtime context for an analysis and a DataSet.<br />
@@ -27,6 +31,7 @@ import java.util.logging.Level
  * <li>Executed jobs and commands</li>
  * <li>BEJob states</li>
  * <li>Log files</li>
+ * <li>Context-dependent access to configuration, and plain configuration access</li>
  * </ul>
  * It also contains information about context specific settings like:<br />
  * <ul>
@@ -39,6 +44,15 @@ import java.util.logging.Level
  * The context also allows you to access logfiles, command, jobs etc via getter methods
  * <p>
  * The context is finally used to context the stored analysis for the stored dataset.
+ * <br>
+ * This is much too much functionality for a single class. Needs to be split up into multiple classes.
+ * <ul>
+ *     <li>File IO (directories, files, locks, buffers) only because of logging needs. Keep it with FileSystemAccessProvider.</li>
+ *     <li>Loggging using standard logging framework removes the need to centralize here.</li>
+ * </ul>
+ * On the other hand, keep global state, like BEJob states and executed jobs and commands here (for now).
+ * Overall, clarify the exact purpose of RuntimeService, ExecutionContext, FileSystemAccessProvider, Configuration and
+ * clean up all the mess!
  *
  * @author michael
  */
@@ -74,7 +88,7 @@ class ExecutionContext {
     /**
      * Stores a list of all calls which were passed to the job system within this context.
      */
-    private final List<Command> commandCalls = new LinkedList<Command>().asSynchronized()
+    private final List<BECommand> commandCalls = new LinkedList<BECommand>().asSynchronized()
     /**
      * This is some sort of synchronization checkpoint marker.
      * Contexts which were started with the same
@@ -250,8 +264,22 @@ class ExecutionContext {
         return workflow
     }
 
-    Map<String, Object> getDefaultJobParameters(String TOOLID) {
+    Map<String, Object> getDefaultJobParameters(@Nonnull String TOOLID) {
         return runtimeService.getDefaultJobParameters(this, TOOLID)
+    }
+
+    String getToolMd5(@Nonnull String toolId) {
+        return configuration.getProcessingToolMD5(toolId)
+    }
+
+    ResourceSet getResourceSetFromConfiguration(String toolID) {
+        // TODO However the semantics of values null, "", and UNKNOWN are. Use ToolId class and forbid null ToolId.
+        if (!toolID || toolID.trim() == "" || toolID == UNKNOWN) {
+            return new EmptyResourceSet()
+        } else {
+            ToolEntry te = configuration.tools.getValue(toolID)
+            return te.getResourceSet(configuration) ?: new EmptyResourceSet()
+        }
     }
 
     String createJobName(BaseFile p, String TOOLID) {
@@ -569,11 +597,11 @@ class ExecutionContext {
         return false
     }
 
-    void addCalledCommand(Command command) {
+    void addCalledCommand(BECommand command) {
         commandCalls.add(command)
     }
 
-    List<Command> getCommandCalls() {
+    List<BECommand> getCommandCalls() {
         return commandCalls
     }
 
@@ -693,6 +721,9 @@ class ExecutionContext {
         return false
     }
 
+    // TODO The following methods use the EC only for logging! Move this stuff to the FileSystemAccessProvider!
+    //      But the ExecutionContext is not only context but also log accumulator. Better use plain logging framework.
+
     boolean fileIsAccessible(File file, String variableName = null) {
         if (valueIsEmpty(file, variableName) || !FileSystemAccessProvider.getInstance().checkFile(file, false, this)) {
             addError(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("File '${file}' not accessible${variableName ? ": " + variableName : "."}"))
@@ -735,6 +766,14 @@ class ExecutionContext {
         return String.format("Context [%s-%s:%s, %s]",
                 project.configurationName, analysis,
                 dataSet, InfoObject.formatTimestamp(timestamp))
+    }
+
+    ToolCommand getToolCommand(@Nonnull String toolId) {
+        new ToolCommand(toolId,
+                        new Executable(
+                                configuration.getExecutedToolPath(this, toolId).toPath(),
+                                getToolMd5(toolId)),
+                        configuration.getSourceToolPath(toolId).toPath())
     }
 
 }

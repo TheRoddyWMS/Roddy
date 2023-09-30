@@ -10,6 +10,8 @@ import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
 import groovy.transform.CompileStatic
 
+import javax.annotation.Nonnull
+
 /**
  * Parameters for generic tools (tools which are not programmatically set!).
  * Parameters can be for in and for output.
@@ -28,17 +30,30 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameterOfFiles {
     public final String selectiontag
 
     enum PassOptions {
-        parameters,
-        array
+        PARAMETERS,
+        ARRAY;
+
+        static PassOptions from(@Nonnull String string) {
+            string.toUpperCase() as PassOptions
+        }
     }
 
     enum IndexOptions {
-        numeric,
-        strings
+        NUMERIC,
+        STRING;
+
+        static IndexOptions from(@Nonnull String string) {
+            string.toUpperCase() as IndexOptions
+        }
     }
 
     @Deprecated
-    ToolFileGroupParameter(Class<FileGroup> groupClass, List<ToolFileParameter> children, String scriptParameterName, PassOptions passas = PassOptions.parameters, IndexOptions indexOptions = IndexOptions.numeric, String selectiontag) {
+    ToolFileGroupParameter(Class<FileGroup> groupClass,
+                           List<ToolFileParameter> children,
+                           String scriptParameterName,
+                           PassOptions passas = PassOptions.PARAMETERS,
+                           IndexOptions indexOptions = IndexOptions.NUMERIC,
+                           String selectiontag) {
         super(scriptParameterName)
         this.groupClass = groupClass
         this.passOptions = passas
@@ -48,7 +63,12 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameterOfFiles {
         this.selectiontag = selectiontag
     }
 
-    ToolFileGroupParameter(Class<FileGroup> groupClass, Class<BaseFile> genericFileClass, String scriptParameterName, PassOptions passas = PassOptions.parameters, IndexOptions indexOptions = IndexOptions.numeric, String selectiontag) {
+    ToolFileGroupParameter(Class<FileGroup> groupClass,
+                           Class<BaseFile> genericFileClass,
+                           String scriptParameterName,
+                           PassOptions passas = PassOptions.PARAMETERS,
+                           IndexOptions indexOptions = IndexOptions.NUMERIC,
+                           String selectiontag) {
         super(scriptParameterName)
         this.groupClass = groupClass
         this.passOptions = passas
@@ -62,7 +82,13 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameterOfFiles {
      * Copy constructor
      */
     @Deprecated
-    ToolFileGroupParameter(String scriptParameterName, Class<FileGroup> groupClass, Class<BaseFile> genericFileClass, PassOptions passOptions, IndexOptions indexOptions, List<ToolFileParameter> files, String selectiontag) {
+    ToolFileGroupParameter(String scriptParameterName,
+                           Class<FileGroup> groupClass,
+                           Class<BaseFile> genericFileClass,
+                           PassOptions passOptions,
+                           IndexOptions indexOptions,
+                           List<ToolFileParameter> files,
+                           String selectiontag) {
         super(scriptParameterName)
         this.selectiontag = selectiontag
         this.groupClass = groupClass
@@ -73,13 +99,20 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameterOfFiles {
     }
 
     @Override
-    public ToolFileGroupParameter clone() {
-        return new ToolFileGroupParameter(scriptParameterName, groupClass, genericFileClass, passOptions, indexOptions, files?.collect { ToolFileParameter tfp -> tfp.clone() }, selectiontag)
+    ToolFileGroupParameter clone() {
+        return new ToolFileGroupParameter(
+                scriptParameterName,
+                groupClass,
+                genericFileClass,
+                passOptions,
+                indexOptions,
+                files?.collect { ToolFileParameter tfp -> tfp.clone() },
+                selectiontag)
     }
 
     @Override
     boolean equals(o) {
-        //Backed by test
+        // Backed by test
         if (this.is(o)) return true
         if (getClass() != o.class) return false
         if (!super.equals(o)) return false
@@ -120,17 +153,17 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameterOfFiles {
     }
 
     @Override
-    public boolean hasSelectionTag() {
+    boolean hasSelectionTag() {
         return false
     }
 
     @Override
-    public List<ToolEntry.ToolParameterOfFiles> getAllFiles() {
+    List<ToolEntry.ToolParameterOfFiles> getAllFiles() {
         return files.collect { it.getAllFiles() }.flatten() as List<ToolEntry.ToolParameterOfFiles>
     }
 
     @Override
-    public List<ToolEntry.ToolParameterOfFiles> getFiles() {
+    List<ToolEntry.ToolParameterOfFiles> getFiles() {
         return files as List<ToolEntry.ToolParameterOfFiles>
     }
 

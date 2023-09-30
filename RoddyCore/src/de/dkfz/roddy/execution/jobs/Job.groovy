@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2017 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+ * Copyright (c) 2023 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.execution.jobs
-
 
 import de.dkfz.roddy.FeatureToggles
 import de.dkfz.roddy.Roddy
@@ -25,6 +24,9 @@ import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.Tuple2
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+
+import javax.annotation.Nonnull
+import javax.annotation.Nullable
 
 import static de.dkfz.roddy.Constants.*
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID
@@ -47,14 +49,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
     public final ExecutionContext context
 
     /**
-     * The local tool path
+     * The tool command you want to call.
      */
-    private final File localToolPath
-
-    /**
-     * The tool you want to call.
-     */
-    private final String toolID
+    private final AnyToolCommand toolCommand
 
     /**
      * Keeps a list of all unchanged, initial parameters, including default job parameters.
@@ -77,7 +74,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
     /**
      * Command object of last execution.
      */
-    protected transient Command lastCommand
+    protected transient BECommand lastCommand
 
     /**
      * The list contains files which should be validated for a job restart.
@@ -100,7 +97,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         List<String> arrayIndices,
         Map<String, Object> parameters,
         List<BaseFile> parentFiles) {
-        this(context, jobName, toolID, null as String,
+        this(context, jobName, context.getToolCommand(toolID),
                 parameters, parentFiles, null)
     }
 
@@ -114,7 +111,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         Map<String, Object> parameters,
         List<BaseFile> parentFiles,
         List<BaseFile> filesToVerify) {
-        this(context, jobName, toolID, null as String,
+        this(context, jobName, context.getToolCommand(toolID),
                 parameters, parentFiles, filesToVerify)
     }
 
@@ -127,7 +124,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         String toolID,
         Map<String, Object> parameters,
         List<BaseFile> parentFiles) {
-        this(context, jobName, toolID, null as String,
+        this(context, jobName, context.getToolCommand(toolID),
                 parameters, parentFiles, null)
     }
 
@@ -141,7 +138,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         List<String> arrayIndices,
         List<BaseFile> filesToVerify,
         Map<String, Object> parameters) {
-        this(context, jobName, toolID, null as String,
+        this(context, jobName, context.getToolCommand(toolID),
                 parameters, null, filesToVerify)
     }
 
@@ -154,7 +151,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         List<BaseFile> filesToVerify,
         String toolID,
         Map<String, Object> parameters) {
-        this(context, jobName, toolID, null as String,
+        this(context, jobName, context.getToolCommand(toolID),
                 parameters, null, filesToVerify)
     }
 
@@ -167,7 +164,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         String toolID,
         List<String> arrayIndices,
         Map<String, Object> parameters) {
-        this(context, jobName, toolID, null as String,
+        this(context, jobName, context.getToolCommand(toolID),
                 parameters,null, null)
     }
 
@@ -179,7 +176,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         String jobName,
         String toolID,
         Map<String, Object> parameters) {
-        this(context, jobName, toolID, null as String,
+        this(context, jobName, context.getToolCommand(toolID),
                 parameters,null, null)
     }
 
@@ -195,39 +192,50 @@ class Job extends BEJob<BEJob, BEJobResult> {
         Map<String, Object> inputParameters,
         List<BaseFile> parentFiles,
         List<BaseFile> filesToVerify) {
-        this(context, jobName, toolID, null as String,
+        this(context, jobName, context.getToolCommand(toolID),
                 inputParameters, parentFiles, filesToVerify)
     }
 
+
+
+
+
     /**
      * Main constructor.
-     * TODO The number of parameters is large. Consider using a builder!
+     *
+     * @param context           the execution context that carries Roddy's global state
+     * @param jobName           the name of the job on the cluster (if it will be run on the cluster)
+     * @param toolCommand           a CommandI object. Usually this should be `Executable(toolId)` or `Code` object..
+     *                          Job will executed this command with a defined environment (PARAMETER_FILE) and
+     *                          possibly nested in a container runtime call (singularity exec).
+     * @param inputParameters   ?
+     * @param parentFiles       ?
+     * @param filesToVerify     ?
      */
-    Job(ExecutionContext context,
-        String jobName,
-        String toolID,
-        String inlineScript,
-        Map<String, Object> inputParameters,
-        List<BaseFile> parentFiles,
-        List<BaseFile> filesToVerify) {
-        super(new BEJobID()
-                , jobName
-                , context.configuration.getProcessingToolPath(context, TOOLID_WRAPIN_SCRIPT)
-                , inlineScript
-                , inlineScript ? null : getToolMD5(TOOLID_WRAPIN_SCRIPT, context)
-                , getResourceSetFromConfiguration(toolID, context)
-                , []
-                , [:] as Map<String,String>
+    Job(@Nonnull ExecutionContext context,
+        @Nonnull String jobName,
+        @Nonnull AnyToolCommand toolCommand,
+        @Nullable Map<String, Object> inputParameters,
+        @Nullable List<BaseFile> parentFiles,
+        @Nullable List<BaseFile> filesToVerify) {
+        super(BEJobID.unknown
                 , Roddy.jobManager
+                , jobName
+                , toolCommand.command.orElse(null)
+                , context.getResourceSetFromConfiguration(toolCommand.toolId)
+                , []
+                , [:] as Map<String, String>
                 , JobLog.toOneFile(new File(context.loggingDirectory, jobName + ".o{JOB_ID}"))
                 , null
                 , context.accountingName.orElse(null))
-        this.localToolPath = context.configuration.getSourceToolPath(toolID)
-        this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectJobIDsFromFiles(parentFiles), jobManager))
+        this.addParentJobs(reconcileParentJobInformation(
+                collectParentJobsFromFiles(parentFiles),
+                collectJobIDsFromFiles(parentFiles),
+                jobManager))
         this.context = context
-        this.toolID = toolID
+        this.toolCommand = toolCommand
 
-        Map<String, Object> defaultParameters = context.getDefaultJobParameters(toolID)
+        Map<String, Object> defaultParameters = context.getDefaultJobParameters(toolCommand.toolId)
 
         if (inputParameters != null)
             defaultParameters.putAll(inputParameters)
@@ -249,9 +257,12 @@ class Job extends BEJob<BEJob, BEJobResult> {
         parameters.putAll(convertResourceSetToParameters())
         reportedParameters.putAll(parameters)
 
-        this.parameters[PARM_WRAPPED_SCRIPT] = context.configuration.getProcessingToolPath(context, toolID).absolutePath
-        this.parameters[PARM_WRAPPED_SCRIPT_MD5] = getToolMD5(toolID, context)
-        this.parameters[PARM_JOBCREATIONCOUNTER] = jobCreationCounter.toString()
+        this.parameters[PARM_WRAPPED_SCRIPT] =
+                context.configuration.getExecutedToolPath(context, toolCommand.toolId).absolutePath
+        this.parameters[PARM_WRAPPED_SCRIPT_MD5] =
+                context.getToolMd5(toolCommand.toolId)
+        this.parameters[PARM_JOBCREATIONCOUNTER] =
+                jobCreationCounter.toString()
 
         if (inputParameters != null)
             initialInputParameters.putAll(inputParameters)
@@ -293,19 +304,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return pJobs
     }
 
-    static ResourceSet getResourceSetFromConfiguration(String toolID, ExecutionContext context) {
-        if (!toolID || toolID == UNKNOWN) {
-            return new EmptyResourceSet()
-        } else {
-            ToolEntry te = context.configuration.tools.getValue(toolID)
-            return te.getResourceSet(context.configuration) ?: new EmptyResourceSet()
-        }
-    }
-
-    static String getToolMD5(String toolID, ExecutionContext context) throws ConfigurationError {
-        toolID != null && toolID.trim().length() > 0 ? context.configuration.getProcessingToolMD5(toolID) : null
-    }
-
     static List<BEJob> collectParentJobsFromFiles(List<BaseFile> parentFiles) {
         if (!parentFiles) return []
         List<BEJob> parentJobs = parentFiles.collect {
@@ -316,7 +314,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return parentJobs
     }
 
-    static List<BEJobID> collectJobIDsFromFiles(List<BaseFile> parentFiles) {
+    private static List<BEJobID> collectJobIDsFromFiles(List<BaseFile> parentFiles) {
         List<BEJobID> dIDs = []
         if (parentFiles != null) {
             for (BaseFile bf : parentFiles) {
@@ -428,7 +426,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         }
     }
 
-    Map<String, String> convertResourceSetToParameters() {
+    private Map<String, String> convertResourceSetToParameters() {
         def rs = resourceSet
         Map<String, String> rsParameters = [:]
         if (rs == null) return rsParameters
@@ -507,28 +505,28 @@ class Job extends BEJob<BEJob, BEJobResult> {
      * @param job
      */
     @CompileDynamic
-    void appendToJobStateLogfile(BatchEuphoriaJobManager jobManager, ExecutionContext executionContext, BEJobResult res, OutputStream out = null) {
+    private void appendToJobStateLogfile(BatchEuphoriaJobManager jobManager, ExecutionContext executionContext, BEJobResult res, OutputStream out = null) {
         if (!jobManager.holdJobsEnabled && !jobManager instanceof DirectSynchronousExecutionJobManager) {
             throw new RuntimeException("Appending to JobManager ${ConfigurationConstants.RODDY_JOBSTATE_LOGFILE} not supported when JobManager does not submit on hold: '${jobManager.class.name}")
         }
         if (res.successful) {
-            def job = res.command.job
+            def job = res.beCommand.job
             String jobInfoLine
             String millis = "" + System.currentTimeMillis()
             millis = millis.substring(0, millis.length() - 3)
             String jobId = job.jobID
             if (jobId != null) {
                 if (job.jobState == JobState.UNSTARTED)
-                    jobInfoLine = jobStateInfoLine(jobId, "UNSTARTED", millis, toolID)
+                    jobInfoLine = jobStateInfoLine(jobId, "UNSTARTED", millis, toolId)
                 else if (job.jobState == JobState.ABORTED)
-                    jobInfoLine = jobStateInfoLine(jobId, "ABORTED", millis, toolID)
+                    jobInfoLine = jobStateInfoLine(jobId, "ABORTED", millis, toolId)
                 // TODO Issue 222: COMPLETED_SUCCESSFUL is set by BE.ExecutionService, when the
                 //      execution result is successful, i.e. the qsub, not when the job finished
                 //      successfully on the cluster!
 //                else if (job.jobState == JobState.COMPLETED_SUCCESSFUL)
 //                    jobInfoLine = jobStateInfoLine(jobId, "0", millis, toolID)
                 else if (job.jobState == JobState.FAILED)
-                    jobInfoLine = jobStateInfoLine(jobId, "" + res.executionResult.exitCode, millis, toolID)
+                    jobInfoLine = jobStateInfoLine(jobId, "" + res.executionResult.exitCode, millis, toolId)
                 else
                     jobInfoLine = null
             } else {
@@ -550,7 +548,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
      * @param job
      */
     @CompileDynamic
-    void appendToJobStateLogfile(DirectSynchronousExecutionJobManager jobManager,
+    private void appendToJobStateLogfile(DirectSynchronousExecutionJobManager jobManager,
                                  ExecutionContext executionContext,
                                  BEJobResult res,
                                  OutputStream outputStream = null) {
@@ -582,7 +580,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             if (null != res.job.jobID) {
                 // That is indeed funny here: on our cluster, the following line did not work without the forced toString(), however
                 // on our local machine it always worked! Don't know why it worked for PBS... Now we force-convert the parameters.
-                String jobInfoLine = jobStateInfoLine("" + res.job.jobID, code, millis, toolID)
+                String jobInfoLine = jobStateInfoLine("" + res.job.jobID, code, millis, toolId)
                 FileSystemAccessProvider.instance.
                         appendLineToFile(true,
                                 executionContext.runtimeService.getJobStateLogFile(executionContext),
@@ -651,7 +649,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             wasSubmittedOnHold = jobManager.holdJobsEnabled
             if (appendToJobStateLogfile)
                 this.appendToJobStateLogfile(jobManager, executionContext, runResult, null)
-            Command cmd = runResult.command
+            BECommand cmd = runResult.beCommand
 
             // If we have os process id attached, we'll need some space, so pad the output.
             jobDetailsLine << " => " + cmd.job.jobID.toString().padRight(10)
@@ -686,9 +684,12 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         } else {
             dbgMessage << "\tdummy job created." + ENV_LINESEPARATOR
-            File tool = context.configuration.getProcessingToolPath(context, toolID)
             resetJobID(new BEFakeJobID(BEFakeJobID.FakeJobReason.NOT_EXECUTED))
-            runResult = new BEJobResult((SubmissionCommand) null, this, null, tool, parameters,
+            runResult = new BEJobResult(
+                    null as SubmissionCommand,
+                    this,
+                    null,
+                    parameters,
                     parentFiles.collect { it.creatingJobsResult?.getJob() }.findAll { it })
             jobState = JobState.DUMMY
             wasSubmittedOnHold = false
@@ -697,7 +698,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return runResult
     }
 
-    Command getLastCommand() {
+    BECommand getLastCommand() {
         return lastCommand
     }
 
@@ -870,12 +871,12 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return allValid
     }
 
-    String getToolID() {
-        return toolID
+    AnyToolCommand getToolCommand() {
+        toolCommand
     }
 
-    File getLocalToolPath() {
-        return localToolPath
+    String getToolId() {
+        return toolCommand.toolId
     }
 
     Boolean getWasSubmittedOnHold() {

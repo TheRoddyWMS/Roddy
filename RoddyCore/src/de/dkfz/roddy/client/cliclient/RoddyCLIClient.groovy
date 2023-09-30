@@ -635,7 +635,7 @@ class RoddyCLIClient {
                 String resources = ' Resources are either not specified, could not be found or could not be handled by the JobManager for this tool '
 
                 try {
-                    ToolEntry tool = configuration.tools.getValue(job.toolID)
+                    ToolEntry tool = configuration.tools.getValue(job.toolId)
                     ResourceSet resourceSet = tool.getResourceSet(configuration)
                     if (!(resourceSet instanceof EmptyResourceSet)) {
                         ProcessingParameters convertResourceSet = Roddy.jobManager.convertResourceSet(job, resourceSet)
@@ -645,7 +645,7 @@ class RoddyCLIClient {
                 } catch (Exception ex) {
                 }
 
-                sb << "    #FYELLOW#${job.jobID}:#CLEAR# ${job.toolID} [${resources}]" << SEPARATOR
+                sb << "    #FYELLOW#${job.jobID}:#CLEAR# ${job.toolId} [${resources}]" << SEPARATOR
 
                 for (k in job.reportedParameters.keySet()) {
                     String _k = k
