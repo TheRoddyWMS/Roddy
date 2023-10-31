@@ -11,6 +11,7 @@ import de.dkfz.roddy.FeatureToggles
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.execution.BindSpec
+import de.dkfz.roddy.execution.Command
 import de.dkfz.roddy.execution.Executable
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.*
@@ -19,7 +20,7 @@ import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-
+import de.dkfz.roddy.execution.jobs.Command as BECommand
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.logging.Level
@@ -91,7 +92,7 @@ class ExecutionContext {
     /**
      * Stores a list of all calls which were passed to the job system within this context.
      */
-    private final List<Command> commandCalls = new LinkedList<Command>().asSynchronized()
+    private final List<BECommand> commandCalls = new LinkedList<BECommand>().asSynchronized()
     /**
      * This is some sort of synchronization checkpoint marker.
      * Contexts which were started with the same
@@ -452,7 +453,7 @@ class ExecutionContext {
      *
      *  @return    List of environment variable names
      *  */
-    List<String> getRoddyContainerExportedVariables() {
+    List<String> getRoddyContainerCopyVariables() {
     [       // General variables
             "USER",                    // Not sure, whether that is necessary.
 
@@ -729,11 +730,11 @@ class ExecutionContext {
         return false
     }
 
-    void addCalledCommand(Command command) {
+    void addCalledCommand(BECommand command) {
         commandCalls.add(command)
     }
 
-    List<Command> getCommandCalls() {
+    List<BECommand> getCommandCalls() {
         return commandCalls
     }
 
@@ -911,6 +912,12 @@ class ExecutionContext {
                                 configuration.getProcessingToolPath(this, toolId).toPath(),
                                 getToolMd5(toolId)),
                         configuration.getSourceToolPath(toolId).toPath())
+    }
+
+    Command getWrapInCommand() {
+        new Command(new Executable(
+                configuration.getProcessingToolPath(this, Constants.TOOLID_WRAPIN_SCRIPT).toPath(),
+                getToolMd5(Constants.TOOLID_WRAPIN_SCRIPT)))
     }
 
 }

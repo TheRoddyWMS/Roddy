@@ -85,6 +85,8 @@ public class Constants {
 
     public static final String AUTO_FILENAME_SUFFIX = ".auto";
 
+    public static final String TOOLID_WRAPIN_SCRIPT = "wrapinScript";
+
     /////////////////////////
     // Bash configs
     /////////////////////////

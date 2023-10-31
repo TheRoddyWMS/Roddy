@@ -23,7 +23,9 @@ abstract class AnyToolCommand {
 
 /** A ToolCommand is similar to a CommandI, but has a `toolId` and a `localPath`.
  *
- *  The `toolId` is used in cases  ???????????????????????????????????????????????????????
+ *  The toolId is used to track the actual tool-command name. Roddy will use the toolId to lift the path to the tool
+ *  from the configurations, and invoke the tool with this path via the wrapInScript.sh. The command itself,
+ *  can be more complex, but obviously should be related to the toolId.
  *
  *  The `localPath` is needed if the script with the code for the command is to be uploaded to a remote site.
  *  The target path will be taken from the executable path in the CommandI object.
