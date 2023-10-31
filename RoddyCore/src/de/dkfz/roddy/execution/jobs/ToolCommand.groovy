@@ -21,7 +21,12 @@ abstract class AnyToolCommand {
     }
 }
 
-/** A ToolCommand is similar to a CommandI, but has a toolId.
+/** A ToolCommand is similar to a CommandI, but has a `toolId` and a `localPath`.
+ *
+ *  The `toolId` is used in cases  ???????????????????????????????????????????????????????
+ *
+ *  The `localPath` is needed if the script with the code for the command is to be uploaded to a remote site.
+ *  The target path will be taken from the executable path in the CommandI object.
  */
 class ToolCommand extends AnyToolCommand {
 

@@ -15,8 +15,6 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
-import de.dkfz.roddy.core.JobExecutionEnvironment
-import de.dkfz.roddy.execution.ApptainerCommandBuilder
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.Command as BECommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
@@ -41,7 +39,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(BEJob.class.simpleName)
 
-    public static final String TOOLID_WRAPIN_SCRIPT = "wrapinScript"
     public static final String PARM_WRAPPED_SCRIPT = "WRAPPED_SCRIPT"
     public static final String PARM_WRAPPED_SCRIPT_MD5 = "WRAPPED_SCRIPT_MD5"
 
@@ -204,7 +201,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
      *
      * @param context           the execution context that carries Roddy's global state
      * @param jobName           the name of the job on the cluster (if it will be run on the cluster)
-     * @param toolCommand           a CommandI object. Usually this should be `Executable(toolId)` or `Code` object..
+     * @param toolCommand       a CommandI object. Usually this should be `Executable(toolId)` or `Code` object..
      *                          Job will executed this command with a defined environment (PARAMETER_FILE) and
      *                          possibly nested in a container runtime call (singularity exec).
      * @param inputParameters   ?
@@ -220,7 +217,11 @@ class Job extends BEJob<BEJob, BEJobResult> {
         super(BEJobID.newUnknown
               , Roddy.jobManager
               , jobName
-              , getEffectiveToolCommand(context, toolCommand).map { it.command }.orElse(null)
+              , EffectiveToolCommandBuilder.
+                    from(context).
+                    build(toolCommand).
+                    map { ToolCommand it -> it.command }.
+                    orElse(null)
               , context.getResourceSetFromConfiguration(toolCommand.toolId)
               , []
               , [:] as Map<String, String>
@@ -235,8 +236,12 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 collectJobIDsFromFiles(parentFiles),
                 jobManager))
         this.context = context
-        this.toolCommand = getEffectiveToolCommand(context, toolCommand)
+        this.toolCommand = EffectiveToolCommandBuilder.
+                from(context).
+                build(toolCommand).
+                orElse(null)
 
+        // Set and validate the job parameters
         Map<String, Object> defaultParameters = context.getDefaultJobParameters(toolCommand.toolId)
 
         if (inputParameters != null)
@@ -259,12 +264,16 @@ class Job extends BEJob<BEJob, BEJobResult> {
         parameters.putAll(convertResourceSetToParameters())
         reportedParameters.putAll(parameters)
 
+        // Used by the DirectSynchronousExecutionJobManager and job.
+        this.parameters[PARM_JOBCREATIONCOUNTER] =
+                jobCreationCounter.toString()
+
+        // Needed by the wrapInScript.sh defined in the DefaultPlugin.
         this.parameters[PARM_WRAPPED_SCRIPT] =
                 context.configuration.getProcessingToolPath(context, toolCommand.toolId).absolutePath
         this.parameters[PARM_WRAPPED_SCRIPT_MD5] =
                 context.getToolMd5(toolCommand.toolId)
-        this.parameters[PARM_JOBCREATIONCOUNTER] =
-                jobCreationCounter.toString()
+
 
         if (inputParameters != null)
             initialInputParameters.putAll(inputParameters)
@@ -360,45 +369,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
         }
         return Math.abs(template.hashCode()) as Integer
     }
-
-    /** The effective command, after the possible application of wrapping into a container.
-     *  As of now, the information for the binding/mounts and the container engine and arguments are
-     *  taken from the global configuration (i.e. one container image far all jobs). This could be moved
-     *  into the tool-declarations (maybe as resources?).
-     *
-     *  NOTE: The method is static and takes the ExecutionContext as parameter, because it is called in the
-     *        constructor, before the Job.executionContext has been set. */
-    @CompileDynamic
-    private static AnyToolCommand getEffectiveToolCommand(@NotNull ExecutionContext context,
-                                                          @NotNull AnyToolCommand toolCommand) {
-        if (toolCommand instanceof ToolCommand) {
-            if ([JobExecutionEnvironment.apptainer, JobExecutionEnvironment.simpleName].
-                    contains(context.jobExecutionEnvironment)) {
-                ApptainerCommandBuilder builder = ApptainerCommandBuilder
-                        .create()
-                        .withAddedBindingSpecs(context.userContainerMounts + context.roddyMounts)
-                        .withAddedEngineArgs(context.userContainerEngineArguments)
-                        .withApptainerExecutable(context.containerEnginePath)
-                        .withWorkingDir(context.outputDirectory.toPath())
-                        .withAddedExportedEnvironmentVariables(context.roddyContainerExportedVariables)
-                new ToolCommand(
-                        toolCommand.toolId,
-                        builder.build(context.containerImage).
-                                cliAppend(toolCommand.command.get(), true),
-                        // The second cliAppend is highlighted in IntelliJ, which apparently cannot detect the
-                        // abstract data type shape of the CommandI hierarchy (maybe for a reason, because there
-                        // is no `sealed` keyword in Groovy (like in Scala) to indicate that CommandI and
-                        // CommandReferenceI will not have any further subclasses than the already listed final
-                        // subclasses.
-                        toolCommand.localPath)
-            } else {
-                toolCommand
-            }
-        } else {
-            toolCommand
-        }
-    }
-
 
     /** The auto filename is generated from the raw job parameters as background information.
      *  If feature toggle FailOnAutoFilename is set, this method will fail with a RuntimeException.

@@ -5,7 +5,7 @@
  */
 package de.dkfz.roddy.knowledge.brawlworkflows
 
-import de.dkfz.roddy.Constants
+
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.Configuration
@@ -20,6 +20,7 @@ import de.dkfz.roddy.core.ContextResource
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.execution.jobs.EffectiveToolCommandBuilder
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
@@ -125,8 +126,8 @@ class BrawlCallingWorkflowTest {
         cPreloaded.setAccessible(true)
         cPreloaded.set(context.analysis.configuration, preloaded)
         // Create tools in storage. This is not done automatically in tests.
-        def wrapper = cfg.getProcessingToolPath(context, Job.TOOLID_WRAPIN_SCRIPT)
-        def entry = new ToolEntry(Job.TOOLID_WRAPIN_SCRIPT, "brawlWorkflow", wrapper.absolutePath)
+        def wrapper = cfg.getProcessingToolPath(context, EffectiveToolCommandBuilder.TOOLID_WRAPIN_SCRIPT)
+        def entry = new ToolEntry(EffectiveToolCommandBuilder.TOOLID_WRAPIN_SCRIPT, "brawlWorkflow", wrapper.absolutePath)
         entry.inlineScript = """
             source \$$Constants.PARAMETER_FILE
             echo "######################################################### Starting wrapped script ###########################################################"

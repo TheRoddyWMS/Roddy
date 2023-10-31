@@ -904,7 +904,8 @@ class ExecutionContext {
                 dataSet, InfoObject.formatTimestamp(timestamp))
     }
 
-    ToolCommand getToolCommand(@NotNull String toolId) {
+    ToolCommand getToolCommand(@NotNull String toolId)
+            throws ConfigurationError {
         new ToolCommand(toolId,
                         new Executable(
                                 configuration.getProcessingToolPath(this, toolId).toPath(),
