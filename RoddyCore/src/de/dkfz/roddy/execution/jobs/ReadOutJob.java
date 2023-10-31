@@ -9,6 +9,7 @@ package de.dkfz.roddy.execution.jobs;
 import de.dkfz.roddy.core.ExecutionContext;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
@@ -25,14 +26,14 @@ public class ReadOutJob extends Job {
     /**
      * The clusters job id, only for readOut jobs.
      */
-    public final String jobID;
+    public final @Nullable String jobID;
 
     private final List<BEJobID> parentJobsIds;
 
     public ReadOutJob(@NotNull ExecutionContext context,
                       @NotNull String jobName,
-                      @NotNull ToolCommand command,
-                      String executedJobID,
+                      @NotNull ToolIdCommand command,
+                      @Nullable String executedJobID,
                       Map<String,String> parameters,   // Not implemented? Wrong Type!
                       List<BEJobID> parentJobsIds) {
         super(context,

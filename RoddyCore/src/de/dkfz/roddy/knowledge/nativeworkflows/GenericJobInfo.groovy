@@ -9,20 +9,15 @@ package de.dkfz.roddy.knowledge.nativeworkflows
 import de.dkfz.roddy.config.ResourceSet
 import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.config.ToolEntry
+import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.Code
-import de.dkfz.roddy.execution.CommandI
-import de.dkfz.roddy.execution.Executable
+import de.dkfz.roddy.execution.jobs.GenericJobInfo as BEGenJI
 import de.dkfz.roddy.execution.jobs.Job
 import de.dkfz.roddy.execution.jobs.ToolCommand
-import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.tools.BufferUnit
-import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.execution.jobs.GenericJobInfo as BEGenJI
 import de.dkfz.roddy.tools.BufferValue
 import de.dkfz.roddy.tools.TimeUnit
 import groovy.transform.CompileStatic
-
-import java.nio.file.Paths
 
 /**
  * Created by michael on 06.02.15.

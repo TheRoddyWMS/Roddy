@@ -9,6 +9,7 @@ package de.dkfz.roddy.execution.jobs;
 import de.dkfz.roddy.core.ExecutionContext;
 import de.dkfz.roddy.execution.CommandI;
 import de.dkfz.roddy.knowledge.files.LoadedFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -21,10 +22,10 @@ public class LoadedJob extends ReadOutJob {
     /** This is probably only for the debugger. */
     private List<LoadedFile> loadedFiles;
 
-    public LoadedJob(ExecutionContext context,
-                     String jobName,
+    public LoadedJob(@NotNull ExecutionContext context,
+                     @NotNull String jobName,
                      String jobID,
-                     ToolCommand command,
+                     @NotNull ToolIdCommand command,
                      Map<String, String> parameters,
                      List<LoadedFile> loadedFiles,
                      List<BEJobID> parentJobIDs) {

@@ -220,7 +220,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         super(BEJobID.newUnknown
               , Roddy.jobManager
               , jobName
-              , getEffectiveToolCommand(context, toolCommand).command.orElse(null)
+              , getEffectiveToolCommand(context, toolCommand).map { it.command }.orElse(null)
               , context.getResourceSetFromConfiguration(toolCommand.toolId)
               , []
               , [:] as Map<String, String>
@@ -370,8 +370,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
      *        constructor, before the Job.executionContext has been set. */
     @CompileDynamic
     private static AnyToolCommand getEffectiveToolCommand(@NotNull ExecutionContext context,
-                                                          @NotNull AnyToolCommand originalToolCommand) {
-        if (originalToolCommand instanceof ToolCommand) {
+                                                          @NotNull AnyToolCommand toolCommand) {
+        if (toolCommand instanceof ToolCommand) {
             if ([JobExecutionEnvironment.apptainer, JobExecutionEnvironment.simpleName].
                     contains(context.jobExecutionEnvironment)) {
                 ApptainerCommandBuilder builder = ApptainerCommandBuilder
@@ -382,20 +382,20 @@ class Job extends BEJob<BEJob, BEJobResult> {
                         .withWorkingDir(context.outputDirectory.toPath())
                         .withAddedExportedEnvironmentVariables(context.roddyContainerExportedVariables)
                 new ToolCommand(
-                        originalToolCommand.toolId,
+                        toolCommand.toolId,
                         builder.build(context.containerImage).
-                                cliAppend(originalToolCommand.command.get(), true),
+                                cliAppend(toolCommand.command.get(), true),
                         // The second cliAppend is highlighted in IntelliJ, which apparently cannot detect the
                         // abstract data type shape of the CommandI hierarchy (maybe for a reason, because there
                         // is no `sealed` keyword in Groovy (like in Scala) to indicate that CommandI and
                         // CommandReferenceI will not have any further subclasses than the already listed final
                         // subclasses.
-                        originalToolCommand.localPath)
+                        toolCommand.localPath)
             } else {
-                originalToolCommand
+                toolCommand
             }
         } else {
-            originalToolCommand
+            toolCommand
         }
     }
 
@@ -944,11 +944,11 @@ class Job extends BEJob<BEJob, BEJobResult> {
     }
 
     AnyToolCommand getToolCommand() {
-        toolCommand
+        this.toolCommand
     }
 
     String getToolID() {
-        return toolCommand.toolId
+        return this.toolCommand.toolId
     }
 
     Boolean getWasSubmittedOnHold() {

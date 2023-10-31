@@ -10,6 +10,7 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.ToolEntry
+import de.dkfz.roddy.execution.Executable
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
@@ -211,18 +212,12 @@ class ExecutionContextReaderAndWriter {
                     String filepath = dependency.@filepath.text()
                     parentJobsIDs << new BEJobID(id)
                 }
-                Path localPath
-                Path executionPath
 
                 jobList << new LoadedJob(
                         context,
                         jobName,
                         jobID,
-                        new ToolCommand(
-                                jobToolID,
-                                jobToolMD5,
-                                localPath,
-                                executionPath),
+                        new ToolIdCommand(jobToolID, jobToolID),
                         jobsParameters,
                         loadedFiles,
                         parentJobsIDs)
@@ -337,7 +332,7 @@ class ExecutionContextReaderAndWriter {
             Job job = new Job(
                     context,
                     jobInfo.jobName,
-                    new UnknownToolCommand(jobInfo.tool.name),
+                    new ToolIdCommand(jobInfo.tool.name),
                     jobInfo.parameters as Map<String, Object>,
                     new LinkedList<BaseFile>(),
                     new LinkedList<BaseFile>())
