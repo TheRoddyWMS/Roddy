@@ -65,7 +65,7 @@ class EffectiveToolCommandBuilder {
     private Optional<ToolCommand> getEffectiveToolCommandImpl(@NotNull UnknownToolCommand toolCommand) {
         Preconditions.checkArgument(
                 !context.executionContextLevel.allowedToSubmitJobs,
-                "UnkwownToolCommand should not occur for ${context.executionContextLevel}")
+                "UnknownToolCommand should not occur for ${context.executionContextLevel}")
         Optional.empty()
     }
 

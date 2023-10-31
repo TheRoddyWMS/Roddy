@@ -96,7 +96,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         ExecutionContextLevel.CLEANUP   | _
         ExecutionContextLevel.RERUN     | _
         ExecutionContextLevel.RUN       | _
-        ExecutionContextLevel.ABORTED   | _     // But see comment on ABORTED
+        ExecutionContextLevel.ABORTED   | _
     }
 
     def "sg without apptainer"() {
@@ -170,7 +170,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         new ToolCommand("toolId", new Executable(Paths.get("test.sh")), Paths.get("test.sh")) | _
     }
 
-    def "apptainer with code should fail"() {
+    def "apptainer with code should fail with context error but return Optional.empty()"() {
         given:
         ExecutionContext ctx = Mock(ExecutionContext)
         ctx.jobExecutionEnvironment >> JobExecutionEnvironment.apptainer
