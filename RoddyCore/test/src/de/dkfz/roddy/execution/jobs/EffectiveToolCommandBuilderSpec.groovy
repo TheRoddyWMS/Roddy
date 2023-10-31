@@ -1,6 +1,7 @@
 package de.dkfz.roddy.execution.jobs
 
 import de.dkfz.roddy.core.ExecutionContext
+import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.JobExecutionEnvironment
 import de.dkfz.roddy.execution.Code
@@ -8,9 +9,9 @@ import de.dkfz.roddy.execution.Executable
 import de.dkfz.roddy.execution.Command
 import spock.lang.Shared
 import spock.lang.Specification
-import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 import java.nio.file.Paths
+import java.util.logging.Level
 
 class EffectiveToolCommandBuilderSpec extends Specification {
 
@@ -38,7 +39,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         1 * ctx.getToolCommand(toolId) >> someToolCommand
         result.get().command instanceof Command
         result.get().command.executablePath.toString() == "someWrapper"
-        result.get().command.toList() == ["someWrapper"]
+        result.get().command.toCommandSegmentList() == ["someWrapper"]
     }
 
     def "simple command is replaced by wrapper call"() {
@@ -54,7 +55,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         result.isPresent()
         result.get().command instanceof Command
         result.get().command.executablePath.toString() == "someWrapper"
-        result.get().command.toList() == ["someWrapper"]
+        result.get().command.toCommandSegmentList() == ["someWrapper"]
     }
 
     def "unknown tool command but not QUERY_STATUS mode throws"(level) {
@@ -78,7 +79,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         ExecutionContextLevel.UNSET          | _
     }
 
-    def "unknown tool command does not throw if submission is prohibited"(level) {
+    def "unknown tool command throws if submission is prohibited"(level) {
         given:
         ExecutionContext ctx = Mock(ExecutionContext)
         ctx.getExecutionContextLevel() >> level
@@ -112,7 +113,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         then:
         result.present
         result.get().command instanceof Command
-        result.get().command.toList() == ["someWrapper"]
+        result.get().command.toCommandSegmentList() == ["someWrapper"]
     }
 
     def "sg with apptainer"() {
@@ -136,7 +137,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         then:
         result.present
         result.get().command instanceof Command
-        result.get().command.toList() ==
+        result.get().command.toCommandSegmentList() ==
             ["sg", "someGroup", "-c", "apptainer\\ exec\\ --env\\ sgWasCalled=true\\ -W\\ /tmp\\ someImage\\ someWrapper"]
     }
 
@@ -160,7 +161,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         then:
         result.present
         result.get().command instanceof Command
-        result.get().command.toList() ==
+        result.get().command.toCommandSegmentList() ==
         ["apptainer", "exec", "--env", "sgWasCalled=true", "-W", "/tmp", "someImage", "someWrapper"]
 
         where:
@@ -184,12 +185,12 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         EffectiveToolCommandBuilder builder = new EffectiveToolCommandBuilder(ctx)
 
         when:
-        builder.build(new ToolCommand("toolId",
-                                      new Code("echo"),
-                                      Paths.get("localScript")))
-
+        Optional<ToolCommand> result = builder.build(new ToolCommand("toolId",
+                                                                     new Code("echo"),
+                                                                     Paths.get("localScript")))
         then:
-        final UnsupportedOperationException exception = thrown()
+        result == Optional.empty()
+        1 * ctx.addError(_)
     }
 
     def "not implemented for ToolCommands with Command objects"() {

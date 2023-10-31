@@ -85,7 +85,7 @@ class ToolIdCommand extends AnyToolCommand {
  */
 class UnknownToolCommand extends AnyToolCommand {
 
-    UnknownToolCommand(@NotNull toolId) {
+    UnknownToolCommand(@NotNull String toolId) {
         super(toolId)
     }
 

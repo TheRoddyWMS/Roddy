@@ -101,7 +101,6 @@ class EffectiveToolCommandBuilder {
                     "Tried to submit inline script ${toolCommand.toolId} to execute " +
                     "with $context.jobExecutionEnvironment",
                     Level.SEVERE))
-            throw new UnsupportedOperationException("Feeding Code inline scipts into containers is not supported.")
             // Note: This could be implemented, e.g. dealing with code via local files. But I'm not doing it, because
             //       the feature anyway is not used by anyone.
             Optional.empty()
