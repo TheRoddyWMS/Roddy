@@ -24,8 +24,9 @@ import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import de.dkfz.roddy.tools.Tuple2
+import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 
-import javax.annotation.Nonnull
 import java.util.concurrent.ExecutionException
 
 import static de.dkfz.roddy.Constants.DEFAULT
@@ -44,7 +45,7 @@ import static de.dkfz.roddy.config.FilenamePatternDependency.*
  *
  * @author michael
  */
-@groovy.transform.CompileStatic
+@CompileStatic
 abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
 
     private static LoggerWrapper logger = LoggerWrapper.getLogger(BaseFile)
@@ -271,9 +272,9 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
     /** Run a tool to return a filename that will be instantiated as file object of STANDARD_FILE_CLASS by default.
      *  The tool should return exactly one line with the path to the file. Otherwise the method throws an UnexpectedExecutionResultException.
      *  If the command could not get successfully executed an ExecutionException is propagated. */
-    static BaseFile getSourceFileUsingTool(@Nonnull ExecutionContext context,
-                                           @Nonnull String toolID,
-                                           @Nonnull String _class = STANDARD_FILE_CLASS)
+    static BaseFile getSourceFileUsingTool(@NotNull ExecutionContext context,
+                                           @NotNull String toolID,
+                                           @NotNull String _class = STANDARD_FILE_CLASS)
             throws UnexpectedExecutionResultException, ExecutionException {
         List<String> executionOutput = ExecutionService.instance.runDirect(context, toolID)
         if (executionOutput.size() != 1) {
@@ -285,9 +286,9 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
 
     /** Run a tool to returns a list of filenames that will be instantiated as file objects of STANDARD_FILE_CLASS by default.
      *  The tool should return an arbitrary number of lines with filenames. If no line is returned, an empty list is returned. */
-    static List<BaseFile> getSourceFilesUsingTool(@Nonnull ExecutionContext context,
-                                                  @Nonnull String toolID,
-                                                  @Nonnull String _class = STANDARD_FILE_CLASS)
+    static List<BaseFile> getSourceFilesUsingTool(@NotNull ExecutionContext context,
+                                                  @NotNull String toolID,
+                                                  @NotNull String _class = STANDARD_FILE_CLASS)
             throws ExecutionException {
         return ExecutionService.instance.runDirect(context, toolID).collect {
             getSourceFile(context, it, _class)

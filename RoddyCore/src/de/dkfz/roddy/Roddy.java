@@ -158,10 +158,12 @@ public class Roddy {
         return displayShortWorkflowList;
     }
 
+    /** Only used in the context of configuration free runs */
     public static String getCustomBaseInputDirectory() {
         return baseInputDirectory;
     }
 
+    /** Only used in the context of configuration free runs */
     public static String getCustomBaseOutputDirectory() {
         return baseOutputDirectory;
     }

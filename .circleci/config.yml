@@ -3,6 +3,7 @@ version: 2.1
 executors:
   docker-executor:
     docker:
+      # Version for Gradle 5.1 should be JDK 11 (e.g. circleci/openjdk:11.0.13-jdk-buster)?
       - image: circleci/openjdk:8u312-jdk  # contains both `zip` and `jar`
 jobs: # a collection of steps
   pre-build:

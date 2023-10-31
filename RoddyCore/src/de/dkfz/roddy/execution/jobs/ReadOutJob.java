@@ -7,12 +7,8 @@
 package de.dkfz.roddy.execution.jobs;
 
 import de.dkfz.roddy.core.ExecutionContext;
-import de.dkfz.roddy.execution.CommandI;
-import de.dkfz.roddy.knowledge.files.BaseFile;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,18 +29,15 @@ public class ReadOutJob extends Job {
 
     private final List<BEJobID> parentJobsIds;
 
-    public ReadOutJob(@Nonnull ExecutionContext context,
-                      @Nonnull String jobName,
-                      @Nonnull ToolCommand command,
+    public ReadOutJob(@NotNull ExecutionContext context,
+                      @NotNull String jobName,
+                      @NotNull ToolCommand command,
                       String executedJobID,
                       Map<String,String> parameters,   // Not implemented? Wrong Type!
                       List<BEJobID> parentJobsIds) {
         super(context,
               jobName,
-              command,
-              new LinkedHashMap<>(),
-              new LinkedList<BaseFile>(),
-              new LinkedList<BaseFile>());
+              command);
         this.parentJobsIds = parentJobsIds;
         this.readOut = true;
         this.jobID = executedJobID;
@@ -60,7 +53,7 @@ public class ReadOutJob extends Job {
     }
 
     @Override
-    public String getToolId() {
+    public String getToolID() {
         String[] split = jobName.split("_");
         return split[split.length - 1];
     }

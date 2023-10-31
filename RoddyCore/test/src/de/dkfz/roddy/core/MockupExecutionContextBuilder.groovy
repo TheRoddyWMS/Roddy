@@ -152,7 +152,7 @@ public class MockupExecutionContextBuilder {
 
             @Override
 
-            protected BECommand createCommand(BEJob beJob) {
+            protected Command createCommand(BEJob beJob) {
                 return null
             }
 

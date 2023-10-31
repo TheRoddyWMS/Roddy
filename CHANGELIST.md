@@ -54,10 +54,11 @@ Note, that some changes may break fragile user code and thus potentially lead to
 
 # Changelist
 
-* 3.7.4
+* 3.8.0
+  - minor: Singularity support. Jobs can now be run in singularity containers. Only a single image for a whole workflow is currently supported.
   - patch: Change reported error for pattern that cannot be matched to file into warning
   - patch: Fix problem with parameter-list interpretation during Roddy startup due to incorrect Bash expression
-  - patch: Security-related bumps of some related libraries (org.bouncycastle, org.slf4j) 
+  - patch: Security-related bumps of some related libraries (org.bouncycastle, org.slf4j)
 
 * 3.7.3
   - patch: Pure maintenance release

@@ -89,9 +89,7 @@ class GenericJobInfo {
                 executionContext,
                 jobName,
                 command,
-                parameters as Map<String, Object>,
-                new LinkedList<BaseFile>(),
-                new LinkedList<BaseFile>())
+                parameters as Map<String, Object>)
     }
 
     @Override

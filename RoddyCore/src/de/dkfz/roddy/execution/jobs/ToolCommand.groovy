@@ -1,26 +1,25 @@
 package de.dkfz.roddy.execution.jobs
 
+import com.google.common.base.Preconditions
 import de.dkfz.roddy.execution.CommandI
+import org.jetbrains.annotations.NotNull
 
-import javax.annotation.Nonnull
 import java.nio.file.Path
 
 abstract class AnyToolCommand {
 
     private String toolId
 
-    AnyToolCommand(@Nonnull String toolId) {
-        assert toolId != null
+    AnyToolCommand(@NotNull String toolId) {
+        Preconditions.checkArgument(toolId != null)
         this.toolId = toolId
     }
 
-    @Nonnull String getToolId() {
+    @NotNull String getToolId() {
         toolId
     }
 
-    @Nonnull Optional<CommandI> getCommand() {
-        Optional.empty()
-    }
+    abstract Optional<CommandI> getCommand()
 
 }
 
@@ -32,9 +31,9 @@ class ToolCommand extends AnyToolCommand {
 
     private Path localPath
 
-    ToolCommand(@Nonnull String toolId,
-                @Nonnull CommandI command,
-                @Nonnull Path localPath) {
+    ToolCommand(@NotNull String toolId,
+                @NotNull CommandI command,
+                @NotNull Path localPath) {
         super(toolId)
         this.command = command
         this.localPath = localPath
@@ -55,14 +54,17 @@ class ToolCommand extends AnyToolCommand {
 }
 
 
-
 /** If the information about formerly run jobs was read from an execution store, but the corresponding tool
  *  could not be found in the configuration, an UnknownCommand marks this fact.
  */
 class UnknownToolCommand extends AnyToolCommand {
 
-    UnknownToolCommand(@Nonnull String toolId) {
+    UnknownToolCommand(@NotNull String toolId) {
         super(toolId)
+    }
+
+    Optional<CommandI> getCommand() {
+        Optional.empty()
     }
 
 }

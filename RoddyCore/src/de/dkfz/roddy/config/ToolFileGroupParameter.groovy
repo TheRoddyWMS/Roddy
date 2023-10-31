@@ -9,8 +9,7 @@ package de.dkfz.roddy.config
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
 import groovy.transform.CompileStatic
-
-import javax.annotation.Nonnull
+import org.jetbrains.annotations.NotNull
 
 /**
  * Parameters for generic tools (tools which are not programmatically set!).
@@ -33,7 +32,7 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameterOfFiles {
         PARAMETERS,
         ARRAY;
 
-        static PassOptions from(@Nonnull String string) {
+        static PassOptions from(@NotNull String string) {
             string.toUpperCase() as PassOptions
         }
     }
@@ -42,7 +41,7 @@ class ToolFileGroupParameter extends ToolEntry.ToolParameterOfFiles {
         NUMERIC,
         STRINGS;
 
-        static IndexOptions from(@Nonnull String string) {
+        static IndexOptions from(@NotNull String string) {
             string.toUpperCase() as IndexOptions
         }
     }

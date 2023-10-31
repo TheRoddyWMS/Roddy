@@ -34,6 +34,13 @@ import org.apache.commons.io.filefilter.WildcardFileFilter
  * A configuration can import from other configurations (only first configurationType of file)
  * A configuration can inherit from other configurations
  *
+ * TODO: Remove error handling. That should be in the execution context.
+ * TODO: Remove all methods with side effects (like MD5 calculation). This should be a plain configuration.
+ *       Instead put th effects into a validation class.
+ * TODO: Remove all methods that do validation or value calculations on configurations. This should be in
+ *       a separate validation class, or even in two classes for validation and simplified access of derived
+ *       values.
+ *
  * @author michael
  */
 @CompileStatic
@@ -350,7 +357,7 @@ class Configuration implements ContainerParent<Configuration>, ConfigurationIssu
     }
 
     File getSourceToolPath(String tool) throws ConfigurationError {
-        List<PluginInfo> pluginInfos = LibrariesFactory.getInstance().getLoadedPlugins()
+        List<PluginInfo> pluginInfos = LibrariesFactory.instance.loadedPlugins
         LinkedHashMap<String, File> availableBasePaths = [:]
         for (PluginInfo pluginInfo : pluginInfos) {
             availableBasePaths.putAll(pluginInfo.toolsDirectories)
@@ -375,7 +382,7 @@ class Configuration implements ContainerParent<Configuration>, ConfigurationIssu
     /**
      * The actual path to the copy of the tool on the execution host (which can be local or remote).
      */
-    File getExecutedToolPath(ExecutionContext context, String tool) throws ConfigurationError {
+    File getProcessingToolPath(ExecutionContext context, String tool) throws ConfigurationError {
         ToolEntry te
         try {
             te = tools.getValue(tool);
@@ -452,7 +459,7 @@ class Configuration implements ContainerParent<Configuration>, ConfigurationIssu
 
     boolean hasErrors() {
         if (errors.size() > 0) return true
-        for (Configuration parent : parents) { // Could be made shorter, but this is rather efficient as it breaks as soon as an error was found.
+        for (Configuration parent : parents) {
             if (parent.hasErrors()) return true
         }
         return configurationValues.allValuesAsList.any { it.hasErrors() }
@@ -475,7 +482,7 @@ class Configuration implements ContainerParent<Configuration>, ConfigurationIssu
 
     boolean hasWarnings() {
         if (warnings.size() > 0) return true
-        for (Configuration parent : parents) { // Could be made shorter, but this is rather efficient as it breaks as soon as an error was found.
+        for (Configuration parent : parents) {
             if (parent.hasWarnings()) return true
         }
         return configurationValues.allValuesAsList.any { it.hasWarnings() }

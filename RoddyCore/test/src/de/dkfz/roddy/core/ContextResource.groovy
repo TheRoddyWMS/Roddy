@@ -150,15 +150,15 @@ class ContextResource extends ExternalResource {
                     'de.dkfz.roddy.core.TestWorkflow',
                     testRuntimeService.getClass().toString(), null, [], [], '')
 
-            final Analysis analysis = new Analysis('Test', project, new RuntimeService(), analysisConfig)
+            final Analysis analysis = new Analysis('Test', project, testRuntimeService, analysisConfig)
 
             final DataSet dataSet = new DataSet(analysis, 'TEST_PID', getTestOutputDirectory('TEST_PID'))
 
-            result = new ExecutionContext(SystemProperties.getUserName(), analysis, dataSet, ExecutionContextLevel.UNSET,
+            result = new ExecutionContext(SystemProperties.userName, analysis, dataSet, ExecutionContextLevel.UNSET,
                     testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime())
 
         } else {
-            result = new ExecutionContext(SystemProperties.getUserName(), null, null, ExecutionContextLevel.UNSET,
+            result = new ExecutionContext(SystemProperties.userName, null, null, ExecutionContextLevel.UNSET,
                     testOutputDirectory, testInputDirectory, testExecutionDirectory, System.nanoTime())
         }
         return result
@@ -189,7 +189,7 @@ class ContextResource extends ExternalResource {
 
             @Override
 
-            protected BECommand createCommand(BEJob beJob) {
+            protected Command createCommand(BEJob beJob) {
                 return null
             }
 

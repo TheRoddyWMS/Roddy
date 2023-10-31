@@ -17,8 +17,8 @@ import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 
-import javax.annotation.Nonnull
 import java.util.logging.Level
 
 import static de.dkfz.roddy.Constants.UNKNOWN
@@ -88,7 +88,7 @@ class ExecutionContext {
     /**
      * Stores a list of all calls which were passed to the job system within this context.
      */
-    private final List<BECommand> commandCalls = new LinkedList<BECommand>().asSynchronized()
+    private final List<Command> commandCalls = new LinkedList<Command>().asSynchronized()
     /**
      * This is some sort of synchronization checkpoint marker.
      * Contexts which were started with the same
@@ -247,7 +247,7 @@ class ExecutionContext {
      * @return
      */
     static Workflow createContextWorkflowObject(Analysis analysis, ExecutionContext context) {
-        Class workflowClass = LibrariesFactory.getInstance().searchForClass(analysis.configuration.getWorkflowClass())
+        Class workflowClass = LibrariesFactory.instance.searchForClass(analysis.configuration.workflowClass)
         Workflow workflow
         if (workflowClass.name.endsWith('$py')) {
             // Jython creates a class called Workflow$py with a constructor with a single (unused) String parameter.
@@ -264,30 +264,30 @@ class ExecutionContext {
         return workflow
     }
 
-    Map<String, Object> getDefaultJobParameters(@Nonnull String TOOLID) {
-        return runtimeService.getDefaultJobParameters(this, TOOLID)
+    Map<String, Object> getDefaultJobParameters(@NotNull String toolId) {
+        return runtimeService.getDefaultJobParameters(this, toolId)
     }
 
-    String getToolMd5(@Nonnull String toolId) {
+    String getToolMd5(@NotNull String toolId) {
         return configuration.getProcessingToolMD5(toolId)
     }
 
-    ResourceSet getResourceSetFromConfiguration(String toolID) {
+    ResourceSet getResourceSetFromConfiguration(String toolId) {
         // TODO However the semantics of values null, "", and UNKNOWN are. Use ToolId class and forbid null ToolId.
-        if (!toolID || toolID.trim() == "" || toolID == UNKNOWN) {
+        if (!toolId || toolId.trim() == "" || toolId == UNKNOWN) {
             return new EmptyResourceSet()
         } else {
-            ToolEntry te = configuration.tools.getValue(toolID)
+            ToolEntry te = configuration.tools.getValue(toolId)
             return te.getResourceSet(configuration) ?: new EmptyResourceSet()
         }
     }
 
-    String createJobName(BaseFile p, String TOOLID) {
-        return createJobName(p, TOOLID, false)
+    String createJobName(BaseFile p, String toolId) {
+        return createJobName(p, toolId, false)
     }
 
-    String createJobName(BaseFile p, String TOOLID, boolean reduceLevel) {
-        return runtimeService.createJobName(this, p, TOOLID, reduceLevel)
+    String createJobName(BaseFile p, String toolId, boolean reduceLevel) {
+        return runtimeService.createJobName(this, p, toolId, reduceLevel)
     }
 
     File getInputDirectory() {
@@ -296,6 +296,10 @@ class ExecutionContext {
 
     File getOutputDirectory() {
         return outputDirectory
+    }
+
+    File getRoddyScratchDir() {
+        return new File(configurationValues.get(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW).toString())
     }
 
     RuntimeService getRuntimeService() {
@@ -441,13 +445,15 @@ class ExecutionContext {
         // Include an additional check, if the target filesystem allows the modification and disable this, if necessary.
         if (checkedIfAccessRightsCanBeSet != null)
             return checkedIfAccessRightsCanBeSet
-        boolean modAllowed = configurationValues.getBoolean(ConfigurationConstants.CFG_ALLOW_ACCESS_RIGHTS_MODIFICATION, true)
+        boolean modAllowed = configurationValues.getBoolean(
+                ConfigurationConstants.CFG_ALLOW_ACCESS_RIGHTS_MODIFICATION, true)
         if (modAllowed && checkedIfAccessRightsCanBeSet == null) {
             checkedIfAccessRightsCanBeSet = FileSystemAccessProvider.instance.checkIfAccessRightsCanBeSet(this)
             if (!checkedIfAccessRightsCanBeSet) {
                 modAllowed = false
                 addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.
-                        expand("Access rights modification was disabled. The test on the file system raised an error.", Level.WARNING))
+                        expand("Access rights modification was disabled. The test on the file " +
+                                "system raised an error.", Level.WARNING))
             }
         }
         return modAllowed
@@ -457,7 +463,7 @@ class ExecutionContext {
         return FileSystemAccessProvider.instance
     }
 
-    String getOutputDirectoryAccess() {
+    String getOutputDirectoryAccessRights() {
         if (!isAccessRightsModificationAllowed()) return null
         configurationValues.get(ConfigurationConstants.CFG_OUTPUT_ACCESS_RIGHTS_FOR_DIRECTORIES,
                 fileSystemAccessProvider.commandSet.defaultAccessRightsString).toString()
@@ -510,7 +516,6 @@ class ExecutionContext {
         new File(executionDirectory, "${job.jobName}_${job.jobCreationCounter}${Constants.PARAMETER_FILE_SUFFIX}")
     }
 
-
     void addFile(BaseFile file) {
         if (!processingFlag.contains(ProcessingFlag.STORE_FILES))
             return
@@ -537,7 +542,9 @@ class ExecutionContext {
     }
 
     List<Job> getStartedJobs() {
-        return jobsForProcess.findAll { Job job -> job != null && !job.fakeJob && !job.getJobState().dummy }
+        return jobsForProcess.findAll { Job job ->
+            job != null && !job.fakeJob && !job.getJobState().dummy
+        }
     }
 
     void setExecutedJobs(List<Job> previousJobs) {
@@ -547,7 +554,8 @@ class ExecutionContext {
     }
 
     void addExecutedJob(Job job) {
-        if ((job.jobState == JobState.DUMMY || job.jobState == JobState.UNKNOWN) && !processingFlag.contains(ProcessingFlag.STORE_DUMMY_JOBS))
+        if ((job.jobState == JobState.DUMMY || job.jobState == JobState.UNKNOWN) &&
+                !processingFlag.contains(ProcessingFlag.STORE_DUMMY_JOBS))
             return
         jobsForProcess.add(job)
     }
@@ -580,7 +588,7 @@ class ExecutionContext {
             }
         }
 
-        //Query current jobs, i.e. on recheck
+        // Query current jobs, i.e. on recheck
         List<String> jobIDsForQuery = new LinkedList<>()
         for (BEJob job : jobsForProcess) {
             BEJobResult runResult = job.runResult
@@ -597,11 +605,11 @@ class ExecutionContext {
         return false
     }
 
-    void addCalledCommand(BECommand command) {
+    void addCalledCommand(Command command) {
         commandCalls.add(command)
     }
 
-    List<BECommand> getCommandCalls() {
+    List<Command> getCommandCalls() {
         return commandCalls
     }
 
@@ -629,7 +637,9 @@ class ExecutionContext {
                 addError(error)
                 break
             default:
-                logger.warning("The message '${error.description}' had an unknown level ${error.errorLevel} and will be treated as an error.")
+                logger.warning(
+                        "The message '${error.description}' had an unknown level ${error.errorLevel} and" +
+                        "will be treated as an error.")
                 addError(error)
         }
     }
@@ -725,15 +735,17 @@ class ExecutionContext {
     //      But the ExecutionContext is not only context but also log accumulator. Better use plain logging framework.
 
     boolean fileIsAccessible(File file, String variableName = null) {
-        if (valueIsEmpty(file, variableName) || !FileSystemAccessProvider.getInstance().checkFile(file, false, this)) {
-            addError(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("File '${file}' not accessible${variableName ? ": " + variableName : "."}"))
+        if (valueIsEmpty(file, variableName) ||
+                !FileSystemAccessProvider.instance.checkFile(file, false, this)) {
+            addError(ExecutionContextError.EXECUTION_SETUP_INVALID.expand(
+                    "File '${file}' not accessible${variableName ? ": " + variableName : "."}"))
             return false
         }
         return true
     }
 
     boolean fileIsExecutable(File file, String variableName = null) {
-        if (!(fileIsAccessible(file, variableName))) return;
+        if (!(fileIsAccessible(file, variableName))) return
         if (!FileSystemAccessProvider.instance.isExecutable(file)) {
             addError(ExecutionContextError.EXECUTION_SETUP_INVALID.
                     expand("File '${file}' is not executable${variableName ? ": " + variableName : "."}"))
@@ -768,10 +780,10 @@ class ExecutionContext {
                 dataSet, InfoObject.formatTimestamp(timestamp))
     }
 
-    ToolCommand getToolCommand(@Nonnull String toolId) {
+    ToolCommand getToolCommand(@NotNull String toolId) {
         new ToolCommand(toolId,
                         new Executable(
-                                configuration.getExecutedToolPath(this, toolId).toPath(),
+                                configuration.getProcessingToolPath(this, toolId).toPath(),
                                 getToolMd5(toolId)),
                         configuration.getSourceToolPath(toolId).toPath())
     }

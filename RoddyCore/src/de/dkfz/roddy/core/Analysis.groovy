@@ -6,13 +6,13 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.FeatureToggles
+import com.google.common.base.Preconditions
 import de.dkfz.roddy.BEException
 import de.dkfz.roddy.Constants
+import de.dkfz.roddy.FeatureToggles
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.config.*
-import de.dkfz.roddy.execution.Executable
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.BEJob
@@ -21,8 +21,6 @@ import de.dkfz.roddy.execution.jobs.JobState
 import de.dkfz.roddy.tools.LoggerWrapper
 import groovy.transform.CompileStatic
 import org.apache.commons.io.filefilter.WildcardFileFilter
-
-import java.nio.file.Paths
 
 import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate
 import static de.dkfz.roddy.tools.RoddyIOHelperMethods.getStackTraceAsString
@@ -144,7 +142,7 @@ class Analysis {
     File getInputBaseDirectory() {
         if (inputBaseDirectory == null)
             inputBaseDirectory = runtimeService.getInputBaseDirectory(this)
-        assert (inputBaseDirectory != null)
+        Preconditions.checkArgument(inputBaseDirectory != null)
         return inputBaseDirectory
     }
 
@@ -155,7 +153,7 @@ class Analysis {
      */
     File getOutputBaseDirectory() {
         File outputBaseDirectory = runtimeService.getOutputBaseDirectory(this)
-        assert (outputBaseDirectory != null)
+        Preconditions.checkArgument(outputBaseDirectory != null)
         return outputBaseDirectory
     }
 
@@ -483,14 +481,20 @@ class Analysis {
                 boolean successfullyExecuted = false
                 try {
                     boolean execute = true
-                    if (context.executionContextLevel.allowedToSubmitJobs) { // Only do these checks, if we are not in query mode!
-                        List<String> invalidPreparedFiles = ExecutionService.instance.checkForInaccessiblePreparedFiles(context)
-                        boolean copiedAnalysisToolsAreExecutable = ExecutionService.instance.checkCopiedAnalysisTools(context)
-                        boolean ignoreFileChecks = Roddy.isOptionSet(RoddyStartupOptions.disablestrictfilechecks)
-                        execute &= ignoreFileChecks || (invalidPreparedFiles.size() == 0 && copiedAnalysisToolsAreExecutable)
+                    if (context.executionContextLevel.allowedToSubmitJobs) {
+                        // Only do these checks, if we are not in query mode!
+                        List<String> invalidPreparedFiles =
+                                ExecutionService.instance.checkForInaccessiblePreparedFiles(context)
+                        boolean copiedAnalysisToolsAreExecutable =
+                                ExecutionService.instance.checkCopiedAnalysisTools(context)
+                        boolean ignoreFileChecks =
+                                Roddy.isOptionSet(RoddyStartupOptions.disablestrictfilechecks)
+                        execute &= ignoreFileChecks ||
+                                (invalidPreparedFiles.size() == 0 && copiedAnalysisToolsAreExecutable)
                         if (!execute) {
                             StringBuilder message =
-                                    new StringBuilder('There were errors after preparing the workflow run for dataset ' + datasetID)
+                                    new StringBuilder('There were errors after preparing the workflow run for dataset '
+                                            + datasetID)
                             if (invalidPreparedFiles.size() > 0)
                                 message.append('\n\tSome files could not be written. Workflow will not execute.\n\t' +
                                         String.join('\t\n', invalidPreparedFiles))
@@ -518,8 +522,8 @@ class Analysis {
                     if (context.executionContextLevel == ExecutionContextLevel.QUERY_STATUS) { // Clean up
                         // Query file validity of all files
                         FileSystemAccessProvider.instance.validateAllFilesInContext(context)
-                        if (context.getExecutionDirectory().getName().contains(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX))
-                            FileSystemAccessProvider.instance.removeDirectory(context.getExecutionDirectory())
+                        if (context.executionDirectory.name.contains(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX))
+                            FileSystemAccessProvider.instance.removeDirectory(context.executionDirectory)
                     } else {
                         if (!successfullyExecuted)
                             maybeAbortStartedJobsOfContext(context)
@@ -684,10 +688,7 @@ class Analysis {
                         Job cleanupJob = new Job(
                                 context,
                                 "cleanupScript",
-                                context.getToolCommand(cleanupScript),
-                                null,
-                                null,
-                                null)
+                                context.getToolCommand(cleanupScript))
                         try {
                             ExecutionService.instance.writeFilesForExecution(context)
                             cleanupJob.run()

@@ -16,8 +16,8 @@ public class Constants {
     // Application constants
     /////////////////////////
 
-    public static final String APP_CURRENT_VERSION_STRING = "3.7.3";
-    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Mon Feb 06 09:54:32 CET 2023";
+    public static final String APP_CURRENT_VERSION_STRING = "3.8.0";
+    public static final String APP_CURRENT_VERSION_BUILD_DATE = "Thu Nov 02 16:33:48 CET 2023";
     public static final String APP_PROPERTY_JOB_MANAGER_CLASS = "jobManagerClass";
     public static final String APP_PROPERTY_FILESYSTEM_ACCESS_MANAGER_CLASS = "fileSystemAccessManagerClass";
     public static final String APP_PROPERTY_EXECUTION_SERVICE_CLASS = "executionServiceClass";

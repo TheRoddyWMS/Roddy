@@ -16,7 +16,7 @@ import org.junit.Test
  * Created by heinold on 14.07.16.
  */
 @CompileStatic
-class BECommandTest {
+class CommandTest {
 
     @Rule
     final public ContextResource contextResource = new ContextResource()
@@ -24,7 +24,7 @@ class BECommandTest {
     @Test
     @Ignore("Test to create")
     void testGetParametersForParameterFile() {
-        def context = contextResource.createSimpleContext(BECommandTest)
+        def context = contextResource.createSimpleContext(CommandTest)
 //        Command mock = new Command(new FakeBEJob(context), context, "MockupCommand", [
 //                "ParmA": "Value",
 //                "arr"  : "(a b c )",

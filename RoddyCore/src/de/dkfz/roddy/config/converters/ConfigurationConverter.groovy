@@ -4,27 +4,23 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.roddy.config.converters;
+package de.dkfz.roddy.config.converters
 
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationConstants
-import de.dkfz.roddy.config.ConfigurationValue;
-import de.dkfz.roddy.core.ExecutionContext;
+import de.dkfz.roddy.config.ConfigurationValue
+import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
+import groovy.transform.CompileStatic
 
-import java.util.logging.Logger
-
-import static de.dkfz.roddy.StringConstants.COLON
-import static de.dkfz.roddy.StringConstants.EMPTY
-import static de.dkfz.roddy.StringConstants.SPLIT_UNDERSCORE
-import static de.dkfz.roddy.StringConstants.UNDERSCORE;
+import static de.dkfz.roddy.StringConstants.*
 
 /**
  * Base class for all kinds of configuration conversion / export classes.
  * Created by heinold on 18.06.15.
  */
-@groovy.transform.CompileStatic
+@CompileStatic
 public abstract class ConfigurationConverter {
     public static final LoggerWrapper logger = LoggerWrapper.getLogger(ConfigurationConverter.class.getSimpleName());
 

@@ -170,7 +170,9 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
      */
     public V getValue(K id) throws ConfigurationError {
         if (!hasValue(id))
-            throw new ConfigurationError("Value for '" + id.toString() + "' could not be found in containers", id.toString());
+            throw new ConfigurationError(
+                    "Value for '" + id.toString() +
+                    "' could not be found in configuration", id.toString());
         return _getValueUnchecked(id);
     }
 

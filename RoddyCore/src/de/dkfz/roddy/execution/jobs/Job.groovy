@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.execution.jobs
 
+import com.google.common.base.Preconditions
 import de.dkfz.roddy.FeatureToggles
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.*
@@ -14,6 +15,11 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
+import de.dkfz.roddy.execution.ApptainerCommandBuilder
+import de.dkfz.roddy.execution.BindSpec
+import de.dkfz.roddy.execution.jobs.Command as BECommand
+import de.dkfz.roddy.execution.Command
+import de.dkfz.roddy.execution.Executable
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
@@ -24,9 +30,10 @@ import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.Tuple2
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 
-import javax.annotation.Nonnull
-import javax.annotation.Nullable
+import java.nio.file.Path
+import java.nio.file.Paths
 
 import static de.dkfz.roddy.Constants.*
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID
@@ -49,7 +56,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
     public final ExecutionContext context
 
     /**
-     * The tool command you want to call.
+     * The tool command you want to call. This is not necessarily the same as in the execution context, e.g.
+     * if the job command should be wrapped into a container call.
      */
     private final AnyToolCommand toolCommand
 
@@ -98,7 +106,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         Map<String, Object> parameters,
         List<BaseFile> parentFiles) {
         this(context, jobName, context.getToolCommand(toolID),
-                parameters, parentFiles, null)
+                parameters, parentFiles)
     }
 
     /**
@@ -125,7 +133,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         Map<String, Object> parameters,
         List<BaseFile> parentFiles) {
         this(context, jobName, context.getToolCommand(toolID),
-                parameters, parentFiles, null)
+                parameters, parentFiles)
     }
 
     /**
@@ -139,7 +147,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         List<BaseFile> filesToVerify,
         Map<String, Object> parameters) {
         this(context, jobName, context.getToolCommand(toolID),
-                parameters, null, filesToVerify)
+                parameters, [], filesToVerify)
     }
 
     /**
@@ -152,7 +160,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         String toolID,
         Map<String, Object> parameters) {
         this(context, jobName, context.getToolCommand(toolID),
-                parameters, null, filesToVerify)
+                parameters, [], filesToVerify)
     }
 
     /**
@@ -165,7 +173,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         List<String> arrayIndices,
         Map<String, Object> parameters) {
         this(context, jobName, context.getToolCommand(toolID),
-                parameters,null, null)
+                parameters)
     }
 
     /**
@@ -177,7 +185,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         String toolID,
         Map<String, Object> parameters) {
         this(context, jobName, context.getToolCommand(toolID),
-                parameters,null, null)
+                parameters)
     }
 
     /**
@@ -196,10 +204,6 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 inputParameters, parentFiles, filesToVerify)
     }
 
-
-
-
-
     /**
      * Main constructor.
      *
@@ -212,28 +216,31 @@ class Job extends BEJob<BEJob, BEJobResult> {
      * @param parentFiles       ?
      * @param filesToVerify     ?
      */
-    Job(@Nonnull ExecutionContext context,
-        @Nonnull String jobName,
-        @Nonnull AnyToolCommand toolCommand,
-        @Nullable Map<String, Object> inputParameters,
-        @Nullable List<BaseFile> parentFiles,
-        @Nullable List<BaseFile> filesToVerify) {
-        super(BEJobID.unknown
-                , Roddy.jobManager
-                , jobName
-                , toolCommand.command.orElse(null)
-                , context.getResourceSetFromConfiguration(toolCommand.toolId)
-                , []
-                , [:] as Map<String, String>
-                , JobLog.toOneFile(new File(context.loggingDirectory, jobName + ".o{JOB_ID}"))
-                , null
-                , context.accountingName.orElse(null))
+    Job(@NotNull ExecutionContext context,
+        @NotNull String jobName,
+        @NotNull AnyToolCommand toolCommand,
+        Map<String, Object> inputParameters = [:],
+        List<BaseFile> parentFiles = [],
+        List<BaseFile> filesToVerify = []) {
+        super(BEJobID.newUnknown
+              , Roddy.jobManager
+              , jobName
+              , getEffectiveToolCommand(context, toolCommand).command.orElse(null)
+              , context.getResourceSetFromConfiguration(toolCommand.toolId)
+              , []
+              , [:] as Map<String, String>
+              , JobLog.toOneFile(new File(context.loggingDirectory, jobName + ".o{JOB_ID}"))
+              , null
+              , context.accountingName.orElse(null))
+        Preconditions.checkArgument(context != null)
+        Preconditions.checkArgument(jobName != null)
+        Preconditions.checkArgument(toolCommand != null)
         this.addParentJobs(reconcileParentJobInformation(
                 collectParentJobsFromFiles(parentFiles),
                 collectJobIDsFromFiles(parentFiles),
                 jobManager))
         this.context = context
-        this.toolCommand = toolCommand
+        this.toolCommand = getEffectiveToolCommand(context, toolCommand)
 
         Map<String, Object> defaultParameters = context.getDefaultJobParameters(toolCommand.toolId)
 
@@ -258,7 +265,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         reportedParameters.putAll(parameters)
 
         this.parameters[PARM_WRAPPED_SCRIPT] =
-                context.configuration.getExecutedToolPath(context, toolCommand.toolId).absolutePath
+                context.configuration.getProcessingToolPath(context, toolCommand.toolId).absolutePath
         this.parameters[PARM_WRAPPED_SCRIPT_MD5] =
                 context.getToolMd5(toolCommand.toolId)
         this.parameters[PARM_JOBCREATIONCOUNTER] =
@@ -291,7 +298,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
             def validIds = uniqueValidJobIDs(parentJobIDs).collect { it.toString() }
             def idsOfValidJobs = jobs2jobIDs(validJobs).collect { it.toString() }
             if (validIds != idsOfValidJobs) {
-                throw new RuntimeException("parentJobBEJob needs to be called with one of parentJobs, parentJobIDs, or parentJobsIDs and *corresponding* parentJobs.")
+                throw new RuntimeException(
+                        "parentJobBEJob needs to be called with one of parentJobs, parentJobIDs, or " +
+                                "parentJobsIDs and *corresponding* parentJobs.")
             }
             pJobs = validJobs
         } else if (null == parentJobIDs && null == parentJobs) {
@@ -304,7 +313,12 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return pJobs
     }
 
-    static List<BEJob> collectParentJobsFromFiles(List<BaseFile> parentFiles) {
+    String getToolMD5() throws ConfigurationError {
+        context.getToolMd5(toolID)
+    }
+
+
+    static private List<BEJob> collectParentJobsFromFiles(List<BaseFile> parentFiles) {
         if (!parentFiles) return []
         List<BEJob> parentJobs = parentFiles.collect {
             BaseFile bf -> bf?.creatingJobsResult?.job
@@ -351,6 +365,127 @@ class Job extends BEJob<BEJob, BEJobResult> {
         }
         return Math.abs(template.hashCode()) as Integer
     }
+
+
+    private static String getJobExecutionEnvironment(ExecutionContext ctx) {
+        String envName = ctx.configurationValues.
+                get("jobExecutionEnvironment", "bash").
+                toString().
+                trim()
+        if (["bash", "singularity", "apptainer"].contains(envName)) {
+            envName
+        } else {
+            ctx.addError(ExecutionContextError.EXECUTION_SETUP_INVALID.
+                    expand("Unknown jobExecutionEnvironment name: $envName"))
+        }
+    }
+
+    /** You can set the path to the container engine. If it is not set use the name (apptainer, singularity)
+     *  and hope it is the name of the executable and in the PATH variable on the execution host.
+     */
+    private static Path getContainerEnginePath(ExecutionContext ctx) {
+        String pathStr = ctx.configurationValues.get("containerEnginePath", "").toString()
+        if (pathStr.size() > 0) {
+            Paths.get(pathStr)
+        } else {
+            Paths.get(getJobExecutionEnvironment(ctx))
+        }
+    }
+
+    private static List<String> getContainerEngineArguments(ExecutionContext ctx) {
+        ctx.configurationValues.get("apptainerArguments", "").toStringList(",")
+    }
+
+    /** All directories to which the container needs access need to be mounted into the container
+     *  This includes, for example:
+     *
+     *    * Additional software environments (virtualenv, conda, etc.)
+     *    * Reference data directories (reference genomes, annotations, etc.)
+     *
+     * Roddy has no way in the moment to know these directories. The variables could be declared as such in
+     * the plugins, but they are not (yet). Therefore, for now we require that the user declares them in
+     * the configuration files. All these directories are mounted read-only.
+     */
+    private static List<BindSpec> getContainerMounts(ExecutionContext ctx) {
+        ctx.configurationValues.
+                get("containerMounts", "").
+                toStringList().
+                collect { pathStr -> new BindSpec(Paths.get(pathStr)) }
+    }
+
+    /** Additionally, to the directories explicitly requested by the caller, Roddy will also mount all necessary
+     *  directories into the container that it knows of. These are
+     *
+     *    * outputBaseDirectory (RW)
+     *    * inputBaseDirectory (RO)
+     *    * scratchDirectory (RW)
+     *
+     *  The path to the scratch directory is usually provided as a variable whose value is only known after the job is
+     *  started, e.g. `/scratch/$USER/$LSB_JOBID/`.
+     *
+     *  Note that this does *not* include the plugin directories, because these are copied into the roddyExecutionStore,
+     *  that is created on the remote side.
+     */
+    private static List<BindSpec> getRoddyMounts(ExecutionContext ctx) {
+        [new BindSpec(
+                ctx.runtimeService.getOutputBaseDirectory(ctx).toPath(),
+                ctx.runtimeService.getOutputBaseDirectory(ctx).toPath(),
+                BindSpec.Mode.RW),
+        new BindSpec(
+                ctx.runtimeService.getInputBaseDirectory(ctx).toPath(),
+                ctx.runtimeService.getInputBaseDirectory(ctx).toPath(),
+                BindSpec.Mode.RO),
+        new BindSpec(
+                ctx.roddyScratchDir.toPath(),
+                ctx.roddyScratchDir.toPath(),
+                BindSpec.Mode.RW),
+        new BindSpec(
+                ctx.analysisToolsDirectory.toPath(),
+                ctx.analysisToolsDirectory.toPath(),
+                BindSpec.Mode.RO)]
+    }
+
+    /** The effective command, after the possible application of wrapping into a container.
+     *  As of now, the information for the binding/mounts and the container engine and arguments are
+     *  taken from the global configuration (i.e. one container image far all jobs). This could be moved
+     *  into the tool-declarations (maybe as resources?). */
+    @CompileDynamic
+    private static AnyToolCommand getEffectiveToolCommand(
+            @NotNull ExecutionContext context,
+            @NotNull AnyToolCommand originalToolCommand) {
+        if (originalToolCommand instanceof ToolCommand) {
+            if (["singularity", "apptainer"].contains(getJobExecutionEnvironment(context))) {
+                ApptainerCommandBuilder builder =
+                        new ApptainerCommandBuilder(
+                                getContainerMounts(context) + getRoddyMounts(context),
+                                getContainerEngineArguments(context),
+                                getContainerEnginePath(context))
+                // Additionally to the pure apptainer call, wrap the call to the tool script into a call to
+                // bash, including --norc and --noprofile, to prevent leakage of the user environment into
+                // the container. Otherwise, if the working directory is one of the user-requested paths, bash
+                // will load the .bashrc, .profile, etc., and the code in the container runs with the CLI
+                // environment of the user.
+                Command bashCommand = new Command(
+                        new Executable(Paths.get("/bin/bash")),
+                        ["--norc", "--noprofile"])
+                new ToolCommand(
+                        originalToolCommand.toolId,
+                        builder.build().
+                                cliAppend(bashCommand, false).
+                                cliAppend(originalToolCommand.command.get(), true),
+                        // The second cliAppend is highlighted in IntelliJ, which apparently cannot detect the
+                        // abstract data type shape of the CommandI hierarchy (maybe for a reason, because there
+                        // is no `sealed` keyword in Groovy to indicate that CommandI and CommandReferenceI will not
+                        // have any further subclasses than the already listed final subclasses.
+                        originalToolCommand.localPath)
+            } else {
+                originalToolCommand
+            }
+        } else {
+            originalToolCommand
+        }
+    }
+
 
     /** The auto filename is generated from the raw job parameters as background information.
      *  If feature toggle FailOnAutoFilename is set, this method will fail with a RuntimeException.
@@ -517,16 +652,16 @@ class Job extends BEJob<BEJob, BEJobResult> {
             String jobId = job.jobID
             if (jobId != null) {
                 if (job.jobState == JobState.UNSTARTED)
-                    jobInfoLine = jobStateInfoLine(jobId, "UNSTARTED", millis, toolId)
+                    jobInfoLine = jobStateInfoLine(jobId, "UNSTARTED", millis, toolID)
                 else if (job.jobState == JobState.ABORTED)
-                    jobInfoLine = jobStateInfoLine(jobId, "ABORTED", millis, toolId)
+                    jobInfoLine = jobStateInfoLine(jobId, "ABORTED", millis, toolID)
                 // TODO Issue 222: COMPLETED_SUCCESSFUL is set by BE.ExecutionService, when the
                 //      execution result is successful, i.e. the qsub, not when the job finished
                 //      successfully on the cluster!
 //                else if (job.jobState == JobState.COMPLETED_SUCCESSFUL)
 //                    jobInfoLine = jobStateInfoLine(jobId, "0", millis, toolID)
                 else if (job.jobState == JobState.FAILED)
-                    jobInfoLine = jobStateInfoLine(jobId, "" + res.executionResult.exitCode, millis, toolId)
+                    jobInfoLine = jobStateInfoLine(jobId, "" + res.executionResult.exitCode, millis, toolID)
                 else
                     jobInfoLine = null
             } else {
@@ -580,7 +715,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             if (null != res.job.jobID) {
                 // That is indeed funny here: on our cluster, the following line did not work without the forced toString(), however
                 // on our local machine it always worked! Don't know why it worked for PBS... Now we force-convert the parameters.
-                String jobInfoLine = jobStateInfoLine("" + res.job.jobID, code, millis, toolId)
+                String jobInfoLine = jobStateInfoLine("" + res.job.jobID, code, millis, toolID)
                 FileSystemAccessProvider.instance.
                         appendLineToFile(true,
                                 executionContext.runtimeService.getJobStateLogFile(executionContext),
@@ -649,7 +784,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             wasSubmittedOnHold = jobManager.holdJobsEnabled
             if (appendToJobStateLogfile)
                 this.appendToJobStateLogfile(jobManager, executionContext, runResult, null)
-            BECommand cmd = runResult.beCommand
+            de.dkfz.roddy.execution.jobs.Command cmd = runResult.beCommand
 
             // If we have os process id attached, we'll need some space, so pad the output.
             jobDetailsLine << " => " + cmd.job.jobID.toString().padRight(10)
@@ -698,7 +833,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return runResult
     }
 
-    BECommand getLastCommand() {
+    de.dkfz.roddy.execution.jobs.Command getLastCommand() {
         return lastCommand
     }
 
@@ -875,7 +1010,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         toolCommand
     }
 
-    String getToolId() {
+    String getToolID() {
         return toolCommand.toolId
     }
 

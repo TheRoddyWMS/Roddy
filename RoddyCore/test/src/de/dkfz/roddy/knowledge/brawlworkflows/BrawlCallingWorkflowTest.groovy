@@ -103,7 +103,7 @@ class BrawlCallingWorkflowTest {
             }
 
             @Override
-            File getExecutedToolPath(ExecutionContext context, String tool) throws ConfigurationError {
+            File getProcessingToolPath(ExecutionContext context, String tool) throws ConfigurationError {
                 return RoddyIOHelperMethods.assembleLocalPath(context.getAnalysisToolsDirectory(), "brawlWorkflow", "${tool}.sh")
             }
 
@@ -124,7 +124,7 @@ class BrawlCallingWorkflowTest {
         cPreloaded.setAccessible(true)
         cPreloaded.set(context.analysis.configuration, preloaded)
         // Create tools in storage. This is not done automatically in tests.
-        def wrapper = cfg.getExecutedToolPath(context, Job.TOOLID_WRAPIN_SCRIPT)
+        def wrapper = cfg.getProcessingToolPath(context, Job.TOOLID_WRAPIN_SCRIPT)
         def entry = new ToolEntry(Job.TOOLID_WRAPIN_SCRIPT, "brawlWorkflow", wrapper.absolutePath)
         entry.inlineScript = """
             source \$PARAMETER_FILE 
@@ -134,19 +134,19 @@ class BrawlCallingWorkflowTest {
          """
         wrapper << entry.inlineScript
 
-        cfg.getExecutedToolPath(context, "ToolA") << """
+        cfg.getProcessingToolPath(context, "ToolA") << """
                         #!/bin/bash
                         echo /tmp/aFile                   
                         """
 
-        cfg.getExecutedToolPath(context, "ToolB") << """
+        cfg.getProcessingToolPath(context, "ToolB") << """
                         #!/bin/bash
                         echo "\${OUT_FILE}"
                         """
 
         wrapper.setExecutable(true)
-        cfg.getExecutedToolPath(context, "ToolA").setExecutable(true)
-        cfg.getExecutedToolPath(context, "ToolB").setExecutable(true)
+        cfg.getProcessingToolPath(context, "ToolA").setExecutable(true)
+        cfg.getProcessingToolPath(context, "ToolB").setExecutable(true)
 
         cfg.tools << entry
         cfg.configurationValues << new ConfigurationValue("activeBrawlWorkflow", temp.absolutePath)

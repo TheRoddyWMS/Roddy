@@ -1,9 +1,9 @@
 package de.dkfz.roddy.execution.jobs
 
+import com.google.common.base.Preconditions
 import de.dkfz.roddy.Constants
 import groovy.transform.CompileStatic
-
-import javax.annotation.Nonnull
+import org.jetbrains.annotations.NotNull
 
 
 @CompileStatic
@@ -32,8 +32,8 @@ class ToolId implements ToolIdI {
 
     private String id
 
-    ToolId(@Nonnull String id) {
-        assert id != null
+    ToolId(@NotNull String id) {
+        Preconditions.checkArgument(id != null)
         this.id = id
     }
 

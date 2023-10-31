@@ -276,8 +276,8 @@ public class AnalysisConfigurationProxy extends AnalysisConfiguration {
     }
 
     @Override
-    public File getExecutedToolPath(ExecutionContext context, String tool) throws ConfigurationError {
-        return checkAnalysisConfig().getExecutedToolPath(context, tool);
+    public File getProcessingToolPath(ExecutionContext context, String tool) throws ConfigurationError {
+        return checkAnalysisConfig().getProcessingToolPath(context, tool);
     }
 
     @Override

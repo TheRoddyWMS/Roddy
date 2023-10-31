@@ -129,7 +129,7 @@ class ExecutionContextReaderAndWriter {
      */
     ExecutionContext getInitialContext(AnalysisProcessingInformation api) {
 
-        FileSystemAccessProvider fip = FileSystemAccessProvider.getInstance()
+        FileSystemAccessProvider fip = FileSystemAccessProvider.instance
 
         File executionDirectory = api.getExecPath()
 
@@ -176,8 +176,8 @@ class ExecutionContextReaderAndWriter {
         try {
             for (job in jobinfo.jobs.job) {
                 String jobID = job.@id.text()
-                String jobToolID = job.getScript.@toolid.text()
-                String jobToolMD5 = job.getScript.@md5
+                String jobToolID = job.tool.@toolid.text()
+                String jobToolMD5 = job.tool.@md5
                 String jobName = job.@name.text()
                 Map<String, String> jobsParameters = [:]
                 List<LoadedFile> loadedFiles = []
@@ -241,42 +241,46 @@ class ExecutionContextReaderAndWriter {
 
     @CompileStatic(TypeCheckingMode.SKIP)
     String writeJobInfoFile(ExecutionContext context) {
-        final File jobInfoFile = context.getRuntimeService().getJobInfoFile(context)
-        final List<BEJob> executedJobs = context.getExecutedJobs()
+        final File jobInfoFile = context.runtimeService.getJobInfoFile(context)
+        final List<Job> executedJobs = context.executedJobs
 
         def writer = new StringWriter()
         def xml = new MarkupBuilder(writer)
 
         xml.jobinfo {
             jobs {
-                for (BEJob ej in executedJobs) {
+                for (Job ej in executedJobs) {
                     try {
-                        if (ej.isFakeJob()) continue //Skip fake jobs.
-                        job(id: ej.getJobID(), name: ej.jobName) {
-                            String commandString = ej.runResult.beCommand != null ? ej.runResult.beCommand.toString() : ""
+                        if (ej.fakeJob) continue //Skip fake jobs.
+                        job(id: ej.jobID, name: ej.jobName) {
+                            String commandString =
+                                    ej.runResult.beCommand != null ? ej.runResult.beCommand.toString() : ""
                             calledcommand(command: commandString)
-                            tool(id: ej.getToolID(), md5: ej.getToolMD5())
+                            tool(id: ej.toolID, md5: ej.toolMD5)
                             parameters {
-                                ej.getParameters().each {
+                                ej.parameters.each {
                                     String k, String v ->
                                         parameter(name: k, value: v)
                                 }
                             }
                             filesbyjob {
-                                for (BaseFile bf in ej.getFilesToVerify()) {
-                                    String pfiles = bf.getParentFiles().collect({ BaseFile baseFile -> baseFile.absolutePath.hashCode() }).join(",")
-                                    file(class: bf.class.name, id: bf.absolutePath.hashCode(), path: bf.absolutePath, parentfiles: pfiles)
+                                for (BaseFile bf in ej.filesToVerify) {
+                                    String pfiles = bf.parentFiles.collect { BaseFile baseFile ->
+                                        baseFile.absolutePath.hashCode()
+                                    }.join(",")
+                                    file(class: bf.class.name, id: bf.absolutePath.hashCode(),
+                                            path: bf.absolutePath, parentfiles: pfiles)
                                 }
                             }
                             dependendies {
-                                for (BaseFile bf in ej.getParentFiles()) {
-                                    if (bf.isSourceFile())
+                                for (BaseFile bf in ej.parentFiles) {
+                                    if (bf.sourceFile)
                                         continue
                                     if (bf.creatingJobsResult == null)
                                         continue
                                     String depJobID
                                     try {
-                                        depJobID = bf.getCreatingJobsResult().getJob().getJobID()
+                                        depJobID = bf.creatingJobsResult.job.jobID
                                     } catch (Exception ex) {
                                         depJobID = "Error"
                                     }
@@ -285,12 +289,15 @@ class ExecutionContextReaderAndWriter {
                             }
                         }
                     } catch (Exception ex) {
-                        logger.severe("An error occurred, when the job info xml file was written. These errors are not vital but should be handled properly", ex)
+                        logger.severe(
+                                "An error occurred, when the job info xml file was written. " + 
+                                "These errors are not vital but should be handled properly", 
+                                ex)
                     }
                 }
             }
         }
-        FileSystemAccessProvider.getInstance().writeTextFile(jobInfoFile, writer.toString(), context)
+        FileSystemAccessProvider.instance.writeTextFile(jobInfoFile, writer.toString(), context)
     }
 
     /**
@@ -299,7 +306,7 @@ class ExecutionContextReaderAndWriter {
      * @param jobsStartedInContext
      */
     List<Job> readJobsFromRealJobCallsFile(ExecutionContext context) {
-        FileSystemAccessProvider fip = FileSystemAccessProvider.getInstance()
+        FileSystemAccessProvider fip = FileSystemAccessProvider.instance
         String[] jobCallFileLines = fip.loadTextFile(runtimeService.getRealCallsFile(context))
         if (jobCallFileLines == null || jobCallFileLines.size() == 0) {
             context.addErrorEntry(ExecutionContextError.READBACK_NOREALJOBCALLSFILE)
@@ -312,7 +319,7 @@ class ExecutionContextReaderAndWriter {
         def allTools = context.configuration.tools.allValuesAsList
         def allToolsByResourcePath = allTools.collectEntries {
             ToolEntry tool ->
-                File toolPath = context.configuration.getExecutedToolPath(context, tool.id)
+                File toolPath = context.configuration.getProcessingToolPath(context, tool.id)
                 [tool.id, toolPath.parentFile.name + "/" + toolPath.name]
         }
 
@@ -345,7 +352,7 @@ class ExecutionContextReaderAndWriter {
      * @param jobsStartedInContext
      */
     Map<String, JobState> readInJobStateLogFile(ExecutionContext context) {
-        FileSystemAccessProvider fip = FileSystemAccessProvider.getInstance()
+        FileSystemAccessProvider fip = FileSystemAccessProvider.instance
         File jobStatesLogFile = context.getRuntimeService().getJobStateLogFile(context)
         String[] jobStateList = fip.loadTextFile(jobStatesLogFile)
 
@@ -364,7 +371,7 @@ class ExecutionContextReaderAndWriter {
                 if (split.length < 2) continue
 
                 String id = split[0]
-                JobState status = null // TODO: Roddy.getJobManager().parseJobState(split[1])
+                JobState status = null // TODO: Roddy.jobManager.parseJobState(split[1])
                 long timestamp = 0
                 if (split.length == 3)
                     timestamp = Long.parseLong(split[2])

@@ -365,8 +365,8 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
     }
 
     private List<String> _bashArrayToStringList() {
-        String vTemp = value.trim()[1 .. -3].trim() //Split away () and leading or trailing white characters.
-        String[] temp = vTemp.split(SPLIT_WHITESPACE) //Split by white character
+        String vTemp = value.trim()[1 .. -3].trim() // Split away () and leading or trailing white characters.
+        String[] temp = vTemp.split(SPLIT_WHITESPACE) // Split by white character
 
         // Ignore leading and trailing brackets
         List<String> resultStrings = [] as LinkedList<String>
@@ -395,12 +395,18 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         return toStringList(",", new String[0])
     }
 
-    List<String> toStringList(String delimiter, String[] ignoreStrings) {
+    /** Parse the parameter into a string list.
+     *
+     * @param delimiters      If the parameter is declared as bashArray, then the delimiter is ignored.
+     * @param ignoreStrings
+     * @return
+     */
+    List<String> toStringList(String delimiters, String[] ignoreStrings) {
         if (CVALUE_TYPE_BASH_ARRAY == type) {
             return _bashArrayToStringList()
         }
 
-        String[] temp = value.split(SBRACKET_LEFT + delimiter + SBRACKET_RIGHT)
+        String[] temp = value.split(SBRACKET_LEFT + delimiters + SBRACKET_RIGHT)
         List<String> tempList = [] as LinkedList<String>
         List<String> ignorable = Arrays.asList(ignoreStrings)
 

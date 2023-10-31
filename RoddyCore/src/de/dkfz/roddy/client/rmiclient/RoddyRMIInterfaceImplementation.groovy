@@ -77,7 +77,7 @@ class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
         JobInfoObject(Job job) {
             jobId = job.jobID
             jobName = job.jobName
-            toolId = job.toolId
+            toolId = job.toolID
             logFile = job.logFile
 
             jobState = job.jobState
