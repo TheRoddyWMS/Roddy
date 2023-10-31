@@ -10,6 +10,7 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.FeatureToggles
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.*
+import de.dkfz.roddy.execution.BindSpec
 import de.dkfz.roddy.execution.Executable
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.*
@@ -417,7 +418,7 @@ class ExecutionContext {
 
     JobExecutionEnvironment getJobExecutionEnvironment() {
         String envName = configurationValues.
-                get("jobExecutionEnvironment", "bash").
+                get(ConfigurationConstants.CVALUE_JOB_EXECUTION_ENVIRONMENT, "bash").
                 toString().
                 trim()
         try {
@@ -428,6 +429,113 @@ class ExecutionContext {
             JobExecutionEnvironment.bash
         }
     }
+
+
+    /** You can set the path to the container engine. If it is not set then we use the name (apptainer, singularity)
+     *  as relative path and hope it is the name of the executable and in the PATH variable on the execution host.
+     *
+     *  This should be the path on the remote system, if the jobs are executed remotely.
+     */
+    Path getContainerEnginePath() {
+        String pathStr = configurationValues.
+                get(ConfigurationConstants.CVALUE_CONTAINER_ENGINE_PATH, "").toString()
+        if (pathStr.size() > 0) {
+            Paths.get(pathStr)
+        } else {
+            jobExecutionEnvironment.toPath()
+        }
+    }
+
+    /** Container engine arguments as needed to run the container, even when running in a "contained" mode.
+     *  Some variables are provided to the remote process via the submission command line (e.g. PARAMETER_FILE),
+     *  others are defined by the execution system (e.g. LSB_JOBID). Here we collect this information.
+     *
+     *  @return    List of environment variable names
+     *  */
+    List<String> getRoddyContainerExportedVariables() {
+    [       // General variables
+            "USER",                    // Not sure, whether that is necessary.
+
+            // The variables created in the cluster job by the JobManager.
+            Roddy.jobManager.jobIdVariable,
+            Roddy.jobManager.jobNameVariable,
+            Roddy.jobManager.queueVariable,
+
+            // The variables that BatchEuphoria adds to the submission command.
+            ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT,
+            Constants.APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT,
+            JobConstants.PRM_TOOL_ID,
+            Constants.PARAMETER_FILE]
+    }
+
+
+
+    /** Container engine arguments selected by the user as cvalues */
+    List<String> getUserContainerEngineArguments() {
+        configurationValues.
+                get(ConfigurationConstants.CVALUE_APPTAINER_ARGUMENTS, "").toStringList(",")
+    }
+
+    /** All directories to which the container needs access need to be mounted into the container
+     *  This includes, for example:
+     *
+     *    * Additional software environments (virtualenv, conda, etc.)
+     *    * Reference data directories (reference genomes, annotations, etc.)
+     *
+     * In the moment, Roddy has no way to know these directories. The variables could be declared as such in
+     * the plugins, but they are not (yet). Therefore, for now we need to ask the user to declare them in
+     * the configuration files. All these directories are mounted read-only.
+     */
+    List<BindSpec> getUserContainerMounts() {
+        configurationValues.
+                get(ConfigurationConstants.CVALUE_CONTAINER_MOUNTS, "").
+                toStringList().
+                collect { pathStr -> new BindSpec(Paths.get(pathStr)) }
+    }
+
+    String getContainerImage() {
+        configurationValues.
+            get(ConfigurationConstants.CVALUE_CONTAINER_IMAGE).
+            toString()
+    }
+
+        /** Additionally, to the directories explicitly requested by the caller, Roddy will also mount all necessary
+     *  directories into the container that it knows of. These are
+     *
+     *    * outputBaseDirectory (RW)
+     *    * inputBaseDirectory (RO)
+     *    * scratchDirectory (RW)
+     *
+     *  The path to the scratch directory is usually provided as a variable whose value is only known after the job is
+     *  started, e.g. `/scratch/$USER/$LSB_JOBID/`.
+     *
+     *  Note that this does *not* include the plugin directories, because these are copied into the roddyExecutionStore,
+     *  that is created on the remote side.
+     */
+    List<BindSpec> getRoddyMounts() {
+        [new BindSpec(
+                runtimeService.getOutputBaseDirectory(this).toPath(),
+                runtimeService.getOutputBaseDirectory(this).toPath(),
+                BindSpec.Mode.RW),
+        new BindSpec(
+                runtimeService.getInputBaseDirectory(this).toPath(),
+                runtimeService.getInputBaseDirectory(this).toPath(),
+                BindSpec.Mode.RO),
+        new BindSpec(
+                roddyScratchDir.toPath(),
+                /** NOTE: This will create problems, if the user want to use a different scratch directory.
+                 *        Apptainer could not create the directory itself, or the container directories, like it
+                 *        would on the DKFZ/ODCF cluster.
+                 */
+                roddyScratchDir.toPath(),
+                BindSpec.Mode.RW),
+        new BindSpec(
+                analysisToolsDirectory.toPath(),
+                analysisToolsDirectory.toPath(),
+                BindSpec.Mode.RO)]
+    }
+
+
 
     /**
      * Returns the execution directory for this context. If it was not set this is done here.

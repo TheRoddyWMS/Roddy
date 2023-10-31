@@ -17,11 +17,8 @@ import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.JobExecutionEnvironment
 import de.dkfz.roddy.execution.ApptainerCommandBuilder
-import de.dkfz.roddy.execution.BindSpec
-import de.dkfz.roddy.execution.jobs.Command as BECommand
-import de.dkfz.roddy.execution.Command
-import de.dkfz.roddy.execution.Executable
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.execution.jobs.Command as BECommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.knowledge.files.BaseFile
@@ -32,9 +29,6 @@ import de.dkfz.roddy.tools.Tuple2
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-
-import java.nio.file.Path
-import java.nio.file.Paths
 
 import static de.dkfz.roddy.Constants.*
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID
@@ -367,108 +361,35 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return Math.abs(template.hashCode()) as Integer
     }
 
-    /** You can set the path to the container engine. If it is not set then we use the name (apptainer, singularity)
-     *  as relative path and hope it is the name of the executable and in the PATH variable on the execution host.
-     *
-     *  This should be the path on the remote system, if the jobs are executed remotely.
-     */
-    private static Path getContainerEnginePath(ExecutionContext ctx) {
-        String pathStr = ctx.configurationValues.
-                get(ConfigurationConstants.CVALUE_CONTAINER_ENGINE_PATH, "").toString()
-        if (pathStr.size() > 0) {
-            Paths.get(pathStr)
-        } else {
-            ctx.jobExecutionEnvironment.toPath()
-        }
-    }
-
-    private static List<String> getContainerEngineArguments(ExecutionContext ctx) {
-        ctx.configurationValues.
-                get(ConfigurationConstants.CVALUE_APPTAINER_ARGUMENTS, "").toStringList(",")
-    }
-
-    /** All directories to which the container needs access need to be mounted into the container
-     *  This includes, for example:
-     *
-     *    * Additional software environments (virtualenv, conda, etc.)
-     *    * Reference data directories (reference genomes, annotations, etc.)
-     *
-     * Roddy has no way in the moment to know these directories. The variables could be declared as such in
-     * the plugins, but they are not (yet). Therefore, for now we require that the user declares them in
-     * the configuration files. All these directories are mounted read-only.
-     */
-    private static List<BindSpec> getContainerMounts(ExecutionContext ctx) {
-        ctx.configurationValues.
-                get(ConfigurationConstants.CVALUE_CONTAINER_MOUNTS, "").
-                toStringList().
-                collect { pathStr -> new BindSpec(Paths.get(pathStr)) }
-    }
-
-    /** Additionally, to the directories explicitly requested by the caller, Roddy will also mount all necessary
-     *  directories into the container that it knows of. These are
-     *
-     *    * outputBaseDirectory (RW)
-     *    * inputBaseDirectory (RO)
-     *    * scratchDirectory (RW)
-     *
-     *  The path to the scratch directory is usually provided as a variable whose value is only known after the job is
-     *  started, e.g. `/scratch/$USER/$LSB_JOBID/`.
-     *
-     *  Note that this does *not* include the plugin directories, because these are copied into the roddyExecutionStore,
-     *  that is created on the remote side.
-     */
-    private static List<BindSpec> getRoddyMounts(ExecutionContext ctx) {
-        [new BindSpec(
-                ctx.runtimeService.getOutputBaseDirectory(ctx).toPath(),
-                ctx.runtimeService.getOutputBaseDirectory(ctx).toPath(),
-                BindSpec.Mode.RW),
-        new BindSpec(
-                ctx.runtimeService.getInputBaseDirectory(ctx).toPath(),
-                ctx.runtimeService.getInputBaseDirectory(ctx).toPath(),
-                BindSpec.Mode.RO),
-        new BindSpec(
-                ctx.roddyScratchDir.toPath(),
-                ctx.roddyScratchDir.toPath(),
-                BindSpec.Mode.RW),
-        new BindSpec(
-                ctx.analysisToolsDirectory.toPath(),
-                ctx.analysisToolsDirectory.toPath(),
-                BindSpec.Mode.RO)]
-    }
-
     /** The effective command, after the possible application of wrapping into a container.
      *  As of now, the information for the binding/mounts and the container engine and arguments are
      *  taken from the global configuration (i.e. one container image far all jobs). This could be moved
-     *  into the tool-declarations (maybe as resources?). */
+     *  into the tool-declarations (maybe as resources?).
+     *
+     *  NOTE: The method is static and takes the ExecutionContext as parameter, because it is called in the
+     *        constructor, before the Job.executionContext has been set. */
     @CompileDynamic
-    private static AnyToolCommand getEffectiveToolCommand(
-            @NotNull ExecutionContext context,
-            @NotNull AnyToolCommand originalToolCommand) {
+    private static AnyToolCommand getEffectiveToolCommand(@NotNull ExecutionContext context,
+                                                          @NotNull AnyToolCommand originalToolCommand) {
         if (originalToolCommand instanceof ToolCommand) {
             if ([JobExecutionEnvironment.apptainer, JobExecutionEnvironment.simpleName].
                     contains(context.jobExecutionEnvironment)) {
-                ApptainerCommandBuilder builder =
-                        new ApptainerCommandBuilder(
-                                getContainerMounts(context) + getRoddyMounts(context),
-                                getContainerEngineArguments(context),
-                                getContainerEnginePath(context))
-                // Additionally to the pure apptainer call, wrap the call to the tool script into a call to
-                // bash, including --norc and --noprofile, to prevent leakage of the user environment into
-                // the container. Otherwise, if the working directory is one of the user-requested paths, bash
-                // will load the .bashrc, .profile, etc., and the code in the container runs with the CLI
-                // environment of the user.
-                Command bashCommand = new Command(
-                        new Executable(Paths.get("/bin/bash")),
-                        ["--norc", "--noprofile"])
+                ApptainerCommandBuilder builder = ApptainerCommandBuilder
+                        .create()
+                        .withAddedBindingSpecs(context.userContainerMounts + context.roddyMounts)
+                        .withAddedEngineArgs(context.userContainerEngineArguments)
+                        .withApptainerExecutable(context.containerEnginePath)
+                        .withWorkingDir(context.outputDirectory.toPath())
+                        .withAddedExportedEnvironmentVariables(context.roddyContainerExportedVariables)
                 new ToolCommand(
                         originalToolCommand.toolId,
-                        builder.build().
-                                cliAppend(bashCommand, false).
+                        builder.build(context.containerImage).
                                 cliAppend(originalToolCommand.command.get(), true),
                         // The second cliAppend is highlighted in IntelliJ, which apparently cannot detect the
                         // abstract data type shape of the CommandI hierarchy (maybe for a reason, because there
-                        // is no `sealed` keyword in Groovy to indicate that CommandI and CommandReferenceI will not
-                        // have any further subclasses than the already listed final subclasses.
+                        // is no `sealed` keyword in Groovy (like in Scala) to indicate that CommandI and
+                        // CommandReferenceI will not have any further subclasses than the already listed final
+                        // subclasses.
                         originalToolCommand.localPath)
             } else {
                 originalToolCommand
@@ -796,7 +717,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             wasSubmittedOnHold = jobManager.holdJobsEnabled
             if (appendToJobStateLogfile)
                 this.appendToJobStateLogfile(jobManager, executionContext, runResult, null)
-            de.dkfz.roddy.execution.jobs.Command cmd = runResult.beCommand
+            BECommand cmd = runResult.beCommand
 
             // If we have os process id attached, we'll need some space, so pad the output.
             jobDetailsLine << " => " + cmd.job.jobID.toString().padRight(10)
@@ -848,13 +769,13 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return runResult
     }
 
-    de.dkfz.roddy.execution.jobs.Command getLastCommand() {
+    BECommand getLastCommand() {
         return lastCommand
     }
 
     /**
      * There are several reasons, why we need a job configuration.
-     * The most important reason is, that we need to replicate Roddys configuration mechanism with all
+     * The most important reason is, that we need to replicate Roddy's configuration mechanism with all
      * it's functionality for any target system (Bash so far). If we don't do it, we will suffer from:
      * - wrong values
      * - wrong resolved value dependencies
