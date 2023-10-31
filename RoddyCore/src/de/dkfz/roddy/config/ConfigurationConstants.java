@@ -82,4 +82,10 @@ public class ConfigurationConstants {
 
     public static final String CVALUE_ACCOUNTING_NAME = "accountingName";
 
+    public static final String CVALUE_CONTAINER_ENGINE_PATH = "containerEnginePath";
+
+    public static final String CVALUE_APPTAINER_ARGUMENTS = "apptainerArguments";
+
+    public static final String CVALUE_CONTAINER_MOUNTS = "containerMounts";
+
 }

@@ -19,6 +19,8 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.logging.Level
 
 import static de.dkfz.roddy.Constants.UNKNOWN
@@ -411,6 +413,20 @@ class ExecutionContext {
         Optional.ofNullable(configurationValues.
                 getString(ConfigurationConstants.CVALUE_ACCOUNTING_NAME,
                         null))
+    }
+
+    JobExecutionEnvironment getJobExecutionEnvironment() {
+        String envName = configurationValues.
+                get("jobExecutionEnvironment", "bash").
+                toString().
+                trim()
+        try {
+            JobExecutionEnvironment.from(envName)
+        } catch (IllegalArgumentException ex) {
+            addError(ExecutionContextError.EXECUTION_SETUP_INVALID.
+                    expand("Unknown jobExecutionEnvironment name: '$envName'. WARNING Continuing with 'bash'"))
+            JobExecutionEnvironment.bash
+        }
     }
 
     /**

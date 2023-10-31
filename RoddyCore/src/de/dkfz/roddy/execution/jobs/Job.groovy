@@ -15,6 +15,7 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
+import de.dkfz.roddy.core.JobExecutionEnvironment
 import de.dkfz.roddy.execution.ApptainerCommandBuilder
 import de.dkfz.roddy.execution.BindSpec
 import de.dkfz.roddy.execution.jobs.Command as BECommand
@@ -366,34 +367,24 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return Math.abs(template.hashCode()) as Integer
     }
 
-
-    private static String getJobExecutionEnvironment(ExecutionContext ctx) {
-        String envName = ctx.configurationValues.
-                get("jobExecutionEnvironment", "bash").
-                toString().
-                trim()
-        if (["bash", "singularity", "apptainer"].contains(envName)) {
-            envName
-        } else {
-            ctx.addError(ExecutionContextError.EXECUTION_SETUP_INVALID.
-                    expand("Unknown jobExecutionEnvironment name: $envName"))
-        }
-    }
-
-    /** You can set the path to the container engine. If it is not set use the name (apptainer, singularity)
-     *  and hope it is the name of the executable and in the PATH variable on the execution host.
+    /** You can set the path to the container engine. If it is not set then we use the name (apptainer, singularity)
+     *  as relative path and hope it is the name of the executable and in the PATH variable on the execution host.
+     *
+     *  This should be the path on the remote system, if the jobs are executed remotely.
      */
     private static Path getContainerEnginePath(ExecutionContext ctx) {
-        String pathStr = ctx.configurationValues.get("containerEnginePath", "").toString()
+        String pathStr = ctx.configurationValues.
+                get(ConfigurationConstants.CVALUE_CONTAINER_ENGINE_PATH, "").toString()
         if (pathStr.size() > 0) {
             Paths.get(pathStr)
         } else {
-            Paths.get(getJobExecutionEnvironment(ctx))
+            ctx.jobExecutionEnvironment.toPath()
         }
     }
 
     private static List<String> getContainerEngineArguments(ExecutionContext ctx) {
-        ctx.configurationValues.get("apptainerArguments", "").toStringList(",")
+        ctx.configurationValues.
+                get(ConfigurationConstants.CVALUE_APPTAINER_ARGUMENTS, "").toStringList(",")
     }
 
     /** All directories to which the container needs access need to be mounted into the container
@@ -408,7 +399,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
      */
     private static List<BindSpec> getContainerMounts(ExecutionContext ctx) {
         ctx.configurationValues.
-                get("containerMounts", "").
+                get(ConfigurationConstants.CVALUE_CONTAINER_MOUNTS, "").
                 toStringList().
                 collect { pathStr -> new BindSpec(Paths.get(pathStr)) }
     }
@@ -454,7 +445,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
             @NotNull ExecutionContext context,
             @NotNull AnyToolCommand originalToolCommand) {
         if (originalToolCommand instanceof ToolCommand) {
-            if (["singularity", "apptainer"].contains(getJobExecutionEnvironment(context))) {
+            if ([JobExecutionEnvironment.apptainer, JobExecutionEnvironment.simpleName].
+                    contains(context.jobExecutionEnvironment)) {
                 ApptainerCommandBuilder builder =
                         new ApptainerCommandBuilder(
                                 getContainerMounts(context) + getRoddyMounts(context),
@@ -580,7 +572,10 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return createJobName(bf, toolName, reduceLevel, null)
     }
 
-    static String createJobName(BaseFile bf, String toolName, boolean reduceLevel, List<BaseFile> inputFilesForSizeCalculation) {
+    static String createJobName(BaseFile bf,
+                                String toolName,
+                                boolean reduceLevel,
+                                List<BaseFile> inputFilesForSizeCalculation) {
         ExecutionContext rp = bf.executionContext
         String runtime = rp.timestampString
         StringBuilder sb = new StringBuilder()
@@ -595,7 +590,10 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return sb.toString()
     }
 
-    static String createJobName(FileGroup fg, String toolName, boolean reduceLevel, List<BaseFile> inputFilesForSizeCalculation) {
+    static String createJobName(FileGroup fg,
+                                String toolName,
+                                boolean reduceLevel,
+                                List<BaseFile> inputFilesForSizeCalculation) {
         BaseFile bf = (BaseFile) fg.filesInGroup.get(0)
         return createJobName(bf, toolName, reduceLevel, inputFilesForSizeCalculation)
     }
@@ -619,8 +617,10 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 if (val == null) {
                     val = NO_VALUE
                     bf.executionContext.addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.
-                            expand("A value named " + name.value +
-                                    " cannot be found in the jobs parameter list for a file of ${bf.class.name}. The value is set to <NO_VALUE>"))
+                            expand("A value named " +
+                                    name.value +
+                                    " cannot be found in the jobs parameter list for a file of ${bf.class.name}. " +
+                                    "The value is set to <NO_VALUE>"))
                 }
                 absolutePath = absolutePath.replace(command.fullString, val)
             }
@@ -640,9 +640,13 @@ class Job extends BEJob<BEJob, BEJobResult> {
      * @param job
      */
     @CompileDynamic
-    private void appendToJobStateLogfile(BatchEuphoriaJobManager jobManager, ExecutionContext executionContext, BEJobResult res, OutputStream out = null) {
+    private void appendToJobStateLogfile(BatchEuphoriaJobManager jobManager,
+                                         ExecutionContext executionContext,
+                                         BEJobResult res,
+                                         OutputStream out = null) {
         if (!jobManager.holdJobsEnabled && !jobManager instanceof DirectSynchronousExecutionJobManager) {
-            throw new RuntimeException("Appending to JobManager ${ConfigurationConstants.RODDY_JOBSTATE_LOGFILE} not supported when JobManager does not submit on hold: '${jobManager.class.name}")
+            throw new RuntimeException("Appending to JobManager ${ConfigurationConstants.RODDY_JOBSTATE_LOGFILE} " +
+                    "not supported when JobManager does not submit on hold: '${jobManager.class.name}")
         }
         if (res.successful) {
             def job = res.beCommand.job
@@ -684,12 +688,13 @@ class Job extends BEJob<BEJob, BEJobResult> {
      */
     @CompileDynamic
     private void appendToJobStateLogfile(DirectSynchronousExecutionJobManager jobManager,
-                                 ExecutionContext executionContext,
-                                 BEJobResult res,
-                                 OutputStream outputStream = null) {
+                                         ExecutionContext executionContext,
+                                         BEJobResult res,
+                                         OutputStream outputStream = null) {
 //        if (res.command.isBlockingCommand()) {
 //            assert (null != outputStream)
-//            File logFile = (res.command.getTag(COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext).runtimeService.getLogFileForCommand(res.command)
+//            File logFile = (res.command.getTag(COMMAND_TAG_EXECUTION_CONTEXT)
+//                              as ExecutionContext).runtimeService.getLogFileForCommand(res.command)
 //
 //            // Use reflection to get access to the hidden path field :p The stream object does not natively give
 //            // access to it and I do not want to create a new class just for this.
@@ -713,8 +718,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 code = "FAILED" // E
 
             if (null != res.job.jobID) {
-                // That is indeed funny here: on our cluster, the following line did not work without the forced toString(), however
-                // on our local machine it always worked! Don't know why it worked for PBS... Now we force-convert the parameters.
+                // That is indeed funny here: on our cluster, the following line did not work without the
+                // forced toString(), however on our local machine it always worked! Don't know why it worked
+                // for PBS... Now we force-convert the parameters.
                 String jobInfoLine = jobStateInfoLine("" + res.job.jobID, code, millis, toolID)
                 FileSystemAccessProvider.instance.
                         appendLineToFile(true,
@@ -729,12 +735,14 @@ class Job extends BEJob<BEJob, BEJobResult> {
 //        }
     }
 
-    /** Keep only the essential command line configurations for the job, due to argument length restrictions (e.g. -env in LSF).
-     *
+    /** Keep only the essential command line configurations for the job, due to argument length restrictions
+     *  (e.g. -env in LSF).
      */
     void keepOnlyEssentialParameters() {
         Set<String> nonEssentialParameters = parameters.keySet().findAll { key ->
-            ![PARAMETER_FILE, CONFIG_FILE, DEBUG_WRAP_IN_SCRIPT, APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT, PRM_TOOL_ID].contains(key)
+            ![PARAMETER_FILE, CONFIG_FILE, DEBUG_WRAP_IN_SCRIPT,
+              APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT, PRM_TOOL_ID
+            ].contains(key)
         }
         parameters.keySet().removeAll(nonEssentialParameters)
     }
@@ -749,11 +757,14 @@ class Job extends BEJob<BEJob, BEJobResult> {
         StringBuilder dbgMessage = new StringBuilder()
         StringBuilder jobDetailsLine = new StringBuilder()
 
-        //Remove duplicate job ids as PBS qsub cannot handle duplicate keys => job will hold forever as it releases the dependency queue linearly.
+        // Remove duplicate job ids as PBS qsub cannot handle duplicate keys => job will hold forever as it
+        // releases the dependency queue linearly.
         this.parameters[RODDY_PARENT_JOBS] = parameterObjectToString(RODDY_PARENT_JOBS, parentJobIDs.unique()*.id)
         this.parameters[PARAMETER_FILE] = parameterObjectToString(PARAMETER_FILE, parameterFile)
-        // The CONFIG_FILE variable is set to the same value as the PARAMETER_FILE to keep older scripts working with job-specific only environments.
-        this.parameters[CONFIG_FILE] = this.parameters[PARAMETER_FILE]  // TODO Deprecated. Remove this line in Roddy 4.0. No config file.
+        // The CONFIG_FILE variable is set to the same value as the PARAMETER_FILE to keep older scripts working
+        // with job-specific only environments.
+        // TODO Deprecated. Remove this line in Roddy 4.0. No config file.
+        this.parameters[CONFIG_FILE] = this.parameters[PARAMETER_FILE]
 
         boolean debugWrapInScript = false
         if (configuration.configurationValues.hasValue(DEBUG_WRAP_IN_SCRIPT)) {
@@ -763,7 +774,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         if (Roddy.applicationConfiguration.containsKey(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT)) {
             this.parameters.put(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT,
-                    Roddy.applicationConfiguration.getOrSetApplicationProperty(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT, ""))
+                    Roddy.applicationConfiguration.getOrSetApplicationProperty(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT,
+                            ""))
         }
 
         // See if the job should be executed
@@ -789,14 +801,17 @@ class Job extends BEJob<BEJob, BEJobResult> {
             // If we have os process id attached, we'll need some space, so pad the output.
             jobDetailsLine << " => " + cmd.job.jobID.toString().padRight(10)
 
-            // For direct execution it can be very helpful to know the id of the started process. Sometimes, sub processes
-            // remain and need to be killed.
+            // For direct execution it can be very helpful to know the id of the started process.
+            // Sometimes, sub processes remain and need to be killed.
             if (cmd instanceof DirectCommand)
                 jobDetailsLine << " [OS Process ID: ${runResult.executionResult.processID}]"
 
             System.out.println(jobDetailsLine.toString())
             if (!cmd.jobID) {
-                context.addErrorEntry(ExecutionContextError.EXECUTION_SUBMISSION_FAILURE.expand("Please check your submission command manually.\n\t  Is your access group set properly? [${context.getAnalysis().getUsergroup()}]\n\t  Can the submission binary handle your binary?\n\t  Is your submission system offline?"))
+                context.addErrorEntry(ExecutionContextError.EXECUTION_SUBMISSION_FAILURE.
+                        expand("Please check your submission command manually.\n\t  Is your access group " +
+                                "set properly? [${context.getAnalysis().getUsergroup()}]\n\t  Can the submission " +
+                                "binary handle your binary?\n\t  Is your submission system offline?"))
                 logger.postSometimesInfo("Command: ${runResult.executionResult.toStatusLine()}")
                 if (Roddy.getFeatureToggleValue(FeatureToggles.BreakSubmissionOnError)) {
                     context.abortJobSubmission()
@@ -839,8 +854,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
     /**
      * There are several reasons, why we need a job configuration.
-     * The most important reason is, that we need to replicate Roddys configuration mechanism with all it's functionality for
-     * any target system (Bash so far). If we don't do it, we will suffer from:
+     * The most important reason is, that we need to replicate Roddys configuration mechanism with all
+     * it's functionality for any target system (Bash so far). If we don't do it, we will suffer from:
      * - wrong values
      * - wrong resolved value dependencies
      * - mistakenly overriden values
@@ -871,13 +886,14 @@ class Job extends BEJob<BEJob, BEJobResult> {
         if (isVerbosityHigh) dbgMessage << "Rerunning job " + jobName
 
         // Check the parents of the new files to see if one of those is invalid for the current context! A file might
-        // be validated during a dry context...
+        // be validated during a dirty context...
         boolean parentFileIsDirty = false
 
         if (isVerbosityHigh) dbgMessage << sep << "\tchecking parent files for validity"
         for (BaseFile pf : parentFiles) {
             if (!pf.isFileValid()) {
-                if (isVerbosityHigh) dbgMessage << sep << "\tfile " << pf.path.getName() << " is dirty or does not exist." << sep
+                if (isVerbosityHigh)
+                    dbgMessage << sep << "\tfile " << pf.path.getName() << " is dirty or does not exist." << sep
                 parentFileIsDirty = true
             }
         }
@@ -891,7 +907,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             knownFilesCnt = res.y
         }
 
-        boolean parentJobIsDirty = parentJobs.collect { BEJob job -> job.isDirty }.any { boolean dirty -> dirty }
+        boolean parentJobIsDirty = parentJobs.any { BEJob job -> job.isDirty }
 
         boolean knownFilesCountMismatch = knownFilesCnt != filesToVerify.size()
 

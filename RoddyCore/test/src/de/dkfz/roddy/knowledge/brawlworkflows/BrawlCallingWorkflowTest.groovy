@@ -26,6 +26,7 @@ import groovy.transform.CompileStatic
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
+import de.dkfz.roddy.Constants
 
 import java.lang.reflect.Field
 
@@ -127,9 +128,9 @@ class BrawlCallingWorkflowTest {
         def wrapper = cfg.getProcessingToolPath(context, Job.TOOLID_WRAPIN_SCRIPT)
         def entry = new ToolEntry(Job.TOOLID_WRAPIN_SCRIPT, "brawlWorkflow", wrapper.absolutePath)
         entry.inlineScript = """
-            source \$PARAMETER_FILE 
+            source \$$Constants.PARAMETER_FILE
             echo "######################################################### Starting wrapped script ###########################################################"
-            source \$WRAPPED_SCRIPT
+            source \$$Job.PARM_WRAPPED_SCRIPT
             echo "######################################################### Wrapped script ended ##############################################################"
          """
         wrapper << entry.inlineScript
