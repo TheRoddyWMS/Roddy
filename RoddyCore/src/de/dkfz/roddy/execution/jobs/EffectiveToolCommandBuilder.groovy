@@ -13,7 +13,6 @@ import de.dkfz.roddy.execution.Executable
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 import java.nio.file.Paths
 import java.util.logging.Level
@@ -86,8 +85,8 @@ class EffectiveToolCommandBuilder {
      *  We therefore retrieve the information from the execution context, if possible. */
     private Optional<ToolCommand> getEffectiveToolCommandImpl(@NotNull ToolIdCommand toolCommand)
             throws ConfigurationError {
-        Optional.of(wrappedInContainerCommand(context.getToolCommand(toolCommand.toolId),
-                                              context.wrapInCommand))
+        Optional.of(scriptWrappedCommand(context.getToolCommand(toolCommand.toolId),
+                                         context.wrapInCommand))
     }
 
     /** A Code command (string) is fed into a submission command in different way than reference (path) to
@@ -102,7 +101,7 @@ class EffectiveToolCommandBuilder {
                     "Tried to submit inline script ${toolCommand.toolId} to execute " +
                     "with $context.jobExecutionEnvironment",
                     Level.SEVERE))
-            throw new NotImplementedException()
+            throw new UnsupportedOperationException("Feeding Code inline scipts into containers is not supported.")
             // Note: This could be implemented, e.g. dealing with code via local files. But I'm not doing it, because
             //       the feature anyway is not used by anyone.
             Optional.empty()
@@ -124,67 +123,77 @@ class EffectiveToolCommandBuilder {
                                                               @NotNull Executable executable) {
         // Note that the actual executable is replaced by the wrapInScript. We do not cliAppend it, because
         // it is not necessary and would actually be misleading, because it wouldn't be used anyway.
-        Optional.of(wrappedInContainerCommand(toolCommand,
-                                              context.wrapInCommand))
+        Optional.of(scriptWrappedCommand(toolCommand,
+                                         context.wrapInCommand))
     }
 
+
+    /**
+     * Wrap in container call, and maybe `sg` call to change the group.
+     *
+     * The resulting wrapping will be a combination of commands wrapped into each other.
+     *
+     *   bsub ... sg ... apptainer ... wrapInScript.sh
+     *
+     * Only few parameters like PARAMETER_FILE, LSB_JOBID, LSB_JOBNAME, etc. need to be forwarded
+     * into the apptainer/singularity container. The wrapper then sets up the environment with from
+     * the baseEnvironmentScript, jobEnvironmentScript, and PARAMETER_FILE and runs the wrapped script.
+     *
+     * Note that the working directory is set to the output directory, which is different from the
+     * non-wrapped situation, where it is (and as of now) remains the $HOME directory. The reasons are
+     *
+     *    (1) usually $HOME won't be in the container and
+     *    (2) what is the sense of using $HOME anyway? For better isolation we don't want to mess with home.
+     **/
     private @NotNull ToolCommand wrappedInContainerCommand(@NotNull ToolCommand toolCommand,
                                                            @NotNull CommandReferenceI command) {
+        ApptainerCommandBuilder builder = ApptainerCommandBuilder
+                .create()
+                .withAddedBindingSpecs(context.userContainerMounts + context.roddyMounts)
+                .withAddedEngineArgs(context.userContainerEngineArguments)
+                .withApptainerExecutable(context.containerEnginePath)
+                .withWorkingDir(context.outputDirectory.toPath())
+                .withCopiedEnvironmentVariables(context.roddyContainerCopyVariables)
+
+        Optional<Command> groupChangeCommand =
+                Optional.ofNullable(context.outputGroupString).map { String outputFileGroup ->
+                    new Command(new Executable(Paths.get("sg")), [outputFileGroup, "-c"])
+                }
+
+        // We have to prevent interference with the group-change code in different versions of the wrapInScript.sh.
+        // If the outputFileGroup is changed, we need to change the group to the target group **outside** of
+        // apptainer/singularity (no `sg` in the container), **and** we have to set a flag on the apptainer/
+        // singularity command that indicates that the group-change was done. This depends a bit on the
+        // version of the default plugin. New versions only try to change the group, if the outputFileGroup is
+        // actually different from the current primary group. Older versions, however, (e.g., 1.2.2-5) us a flag
+        // sgWasCalled that needs to be set to true.
+        // For the apptainer/singularity use case we always change the group outside, so we just deactivate the
+        // group-change code in the wrapInScrip.sh
+        builder = builder.withAddedEnvironmentVariables(["sgWasCalled": "true"])
+
+        groupChangeCommand.map { Command sg ->
+            new ToolCommand(
+                toolCommand.toolId,    // keep the toolId
+                sg.cliAppend(          // wrap in change of primary group
+                        builder.build(context.containerImage).   // call command in container context, ...
+                            cliAppend(command, false, true), // ... and quote for apptainer
+                        false, true),       // ... and quote for `sg $group -c`
+                toolCommand.localPath)
+        }.orElse(new ToolCommand(
+                toolCommand.toolId,    // keep the toolId
+                builder.build(context.containerImage).   // call command in container context, ...
+                        cliAppend(command, false, true), // ... and quote for apptainer
+                toolCommand.localPath))
+    }
+
+    /** We currently only support command calls as wrapped in wrapInScrip.sh. This is constructed here. */
+    private @NotNull ToolCommand scriptWrappedCommand(@NotNull ToolCommand toolCommand,
+                                                      @NotNull CommandReferenceI command) {
         Preconditions.checkArgument(toolCommand != null)
         Preconditions.checkArgument(command != null)
         if ([JobExecutionEnvironment.apptainer, JobExecutionEnvironment.singularity].
                 contains(context.jobExecutionEnvironment)) {
-            // The resulting wrapping will be a combination of commands wrapped into each other.
-            //
-            //   bsub ... sg ... apptainer ... wrapInScript.sh
-            //
-            // Only few parameters like PARAMETER_FILE, LSB_JOBID, LSB_JOBNAME, etc. need to be forwarded
-            // into the apptainer/singularity container. The wrapper then sets up the environment with from
-            // the baseEnvironmentScript, jobEnvironmentScript, and PARAMETER_FILE and runs the wrapped script.
-            //
-            // Note that the working directory is set to the output directory, which is different from the
-            // non-wrapped situation, where it is (and as of now) remains the $HOME directory. The reasons are
-            //
-            //    (1) usually $HOME won't be in the container and
-            //    (2) what is the sense of using $HOME anyway? For better isolation we don't want to mess with home.
-            //
-            ApptainerCommandBuilder builder = ApptainerCommandBuilder
-                    .create()
-                    .withAddedBindingSpecs(context.userContainerMounts + context.roddyMounts)
-                    .withAddedEngineArgs(context.userContainerEngineArguments)
-                    .withApptainerExecutable(context.containerEnginePath)
-                    .withWorkingDir(context.outputDirectory.toPath())
-                    .withCopiedEnvironmentVariables(context.roddyContainerCopyVariables)
-
-            Optional<Command> groupChangeCommand =
-                    Optional.ofNullable(context.outputGroupString).map { String outputFileGroup ->
-                        new Command(new Executable(Paths.get("sg")), [outputFileGroup, "-c"])
-                    }
-
-            // We have to prevent interference with the group-change code in different versions of the wrapInScript.sh.
-            // If the outputFileGroup is changed, we need to change the group to the target group **outside** of
-            // apptainer/singularity (no `sg` in the container), **and** we have to set a flag on the apptainer/
-            // singularity command that indicates that the group-change was done. This depends a bit on the
-            // version of the default plugin. New versions only try to change the group, if the outputFileGroup is
-            // actually different from the current primary group. Older versions, however, (e.g., 1.2.2-5) us a flag
-            // sgWasCalled that needs to be set to true.
-            // For the apptainer/singularity use case we always change the group outside, so we just deactivate the
-            // group-change code in the wrapInScrip.sh
-            builder = builder.withAddedEnvironmentVariables(["sgWasCalled": "true"])
-
-            groupChangeCommand.map { Command sg ->
-                new ToolCommand(
-                    toolCommand.toolId,    // keep the toolId
-                    sg.cliAppend(          // wrap in change of primary group
-                            builder.build(context.containerImage).   // call command in container context, ...
-                                cliAppend(command, false, true), // ... and quote for apptainer
-                            false, true),       // ... and quote for `sg $group -c`
-                    toolCommand.localPath)
-            }.orElse(new ToolCommand(
-                    toolCommand.toolId,    // keep the toolId
-                    builder.build(context.containerImage).   // call command in container context, ...
-                            cliAppend(command, false, true), // ... and quote for apptainer
-                    toolCommand.localPath))
+            wrappedInContainerCommand(toolCommand, command)
         } else {
             // Here we need to use the wrapInScript.sh directly. It also handles the group change, such that no `sg`
             // call is necessary, here. We return the wrapInScript.sh directly, but leave the toolId as is.
@@ -201,7 +210,7 @@ class EffectiveToolCommandBuilder {
      *  path or toolID, but it is not possible to run commands with parameters. */
     private Optional<ToolCommand> getEffectiveToolCommandImpl(@NotNull ToolCommand toolCommand,
                                                               @NotNull Command command) {
-        throw new NotImplementedException()
+        throw new UnsupportedOperationException("Cannot execute commands with parameters via wrapper script.")
     }
 
 }

@@ -8,7 +8,13 @@ package de.dkfz.roddy.knowledge.brawlworkflows
 import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.RunMode
-import de.dkfz.roddy.config.*
+import de.dkfz.roddy.config.Configuration
+import de.dkfz.roddy.config.ConfigurationError
+import de.dkfz.roddy.config.ConfigurationValue
+import de.dkfz.roddy.config.PreloadedConfiguration
+import de.dkfz.roddy.config.ResourceSetSize
+import de.dkfz.roddy.config.RoddyAppConfig
+import de.dkfz.roddy.config.ToolEntry
 import de.dkfz.roddy.core.ContextResource
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.ExecutionService
@@ -76,7 +82,7 @@ class BrawlCallingWorkflowTest {
                 // Or implicit like Snakemake? Later maybe
             '''
         def preloaded = new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "Myname", "", "",
-                null, null, ResourceSetSize.l, null, null, null, null)
+                                                   null, null, ResourceSetSize.l, null, null, null, null)
         Configuration cfg = new Configuration(
                 preloaded
         ) {
@@ -113,8 +119,11 @@ class BrawlCallingWorkflowTest {
         Field appProperties = Roddy.class.getDeclaredField("applicationProperties")
         appProperties.setAccessible(true)
         appProperties.set(null, new RoddyAppConfig())
-        Roddy.getApplicationConfiguration().setApplicationProperty(Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY, context.getTemporaryDirectory().absolutePath);
-        Field cPreloaded = context.analysis.configuration.class.superclass.superclass.getDeclaredField("preloadedConfiguration")
+        Roddy.applicationConfiguration.setApplicationProperty(
+                Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY,
+                context.getTemporaryDirectory().absolutePath)
+        Field cPreloaded = context.analysis.configuration.class.superclass.superclass.
+                getDeclaredField("preloadedConfiguration")
         cPreloaded.setAccessible(true)
         cPreloaded.set(context.analysis.configuration, preloaded)
         // Create tools in storage. This is not done automatically in tests.

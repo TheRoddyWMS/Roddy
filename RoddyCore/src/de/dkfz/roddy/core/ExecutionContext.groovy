@@ -49,14 +49,6 @@ import static de.dkfz.roddy.Constants.UNKNOWN
  * <p>
  * The context is finally used to context the stored analysis for the stored dataset.
  * <br>
- * This is much too much functionality for a single class. Needs to be split up into multiple classes.
- * <ul>
- *     <li>File IO (directories, files, locks, buffers) only because of logging needs. Keep it with FileSystemAccessProvider.</li>
- *     <li>Loggging using standard logging framework removes the need to centralize here.</li>
- * </ul>
- * On the other hand, keep global state, like BEJob states and executed jobs and commands here (for now).
- * Overall, clarify the exact purpose of RuntimeService, ExecutionContext, FileSystemAccessProvider, Configuration and
- * clean up all the mess!
  *
  * @author michael
  */

@@ -70,7 +70,7 @@ class ToolIdCommand extends AnyToolCommand {
                   @Nullable String md5 = null) {
         super(toolId)
         Preconditions.checkArgument(md5 == null || md5.length() == 32 && !md5.toLowerCase().any {
-            !"0123457689abcdef".contains(it)
+            !"0123456789abcdef".contains(it)
         }, "Not a valid MD5: '$md5'")
         this.md5 = md5
     }

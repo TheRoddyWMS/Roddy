@@ -189,7 +189,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
                                       Paths.get("localScript")))
 
         then:
-        final NotImplementedException exception = thrown()
+        final UnsupportedOperationException exception = thrown()
     }
 
     def "not implemented for ToolCommands with Command objects"() {
@@ -203,7 +203,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
                                 new Command(new Executable(Paths.get("test.sh")), []),
                                 Paths.get("test.sh")))
         then:
-        final NotImplementedException exception = thrown()
+        final UnsupportedOperationException exception = thrown()
     }
 
     def "code commands should not be wrapped, but communicated as is to BatchEuphoria"() {
