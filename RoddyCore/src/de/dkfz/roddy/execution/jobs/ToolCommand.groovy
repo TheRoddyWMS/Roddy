@@ -69,9 +69,8 @@ class ToolIdCommand extends AnyToolCommand {
     ToolIdCommand(@NotNull String toolId,
                   @Nullable String md5 = null) {
         super(toolId)
-        Preconditions.checkArgument(md5 == null || md5.length() == 32 && !md5.toLowerCase().any {
-            !"0123456789abcdef".contains(it)
-        }, "Not a valid MD5: '$md5'")
+        Preconditions.checkArgument(md5 == null || md5.matches('^[a-fA-F0-9]{32}$'),
+                                    "Not a valid MD5: '$md5'")
         this.md5 = md5
     }
 

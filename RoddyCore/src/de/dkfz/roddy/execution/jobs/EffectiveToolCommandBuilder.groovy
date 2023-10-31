@@ -53,6 +53,7 @@ class EffectiveToolCommandBuilder {
      *
      *  */
     Optional<ToolCommand> build(@NotNull AnyToolCommand toolCommand) {
+        Preconditions.checkArgument(toolCommand != null)
         getEffectiveToolCommandImpl(toolCommand)
     }
 
@@ -65,7 +66,6 @@ class EffectiveToolCommandBuilder {
         Preconditions.checkArgument(
                 !context.executionContextLevel.allowedToSubmitJobs,
                 "UnkwownToolCommand should not occur for ${context.executionContextLevel}")
-        // Not sure whether here we should be `context.addWarning()`?
         Optional.empty()
     }
 
