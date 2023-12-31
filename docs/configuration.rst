@@ -14,3 +14,4 @@ Configuration topics
     config/configFilenamesAndToolEntries
     config/metadata
     config/roddyConfigurationValues
+    config/singularity

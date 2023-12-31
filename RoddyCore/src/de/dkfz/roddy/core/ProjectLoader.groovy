@@ -134,7 +134,8 @@ class ProjectLoader {
     /**
      * Load an analysis with a set project/analysis identifier.
      *
-     * @param configurationIdentifier Something like [project.subproject.subproject]@[analysisID] where analysisID will be used to find the correct analysis.
+     * @param configurationIdentifier Something like [project.subproject.subproject]@[analysisID] where analysisID will
+     *        be used to find the correct analysis.
      * @return An analysis object containing linking a project and an analysis configuration.
      */
     Analysis loadAnalysisAndProject(String configurationIdentifier) {
