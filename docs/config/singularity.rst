@@ -42,12 +42,12 @@ Note that Singularity does not resolve symlinks, and Roddy does not help you to 
                 description="Global parameters for `apptainer exec`. For instance '--contain'. Can be comma-separated list (type='string') or a type='bashArray'."/>
     </configurationvalues>
 
-Minimal Container
------------------
+Minimal Container (DKFZ-only)
+-----------------------------
 
 The Roddy repository contains a ``Dockerfile`` in ``containers/dkfz_minimal`` to build a minimal container for the tasks.
 This is basically, a plain CentOS 7.9 (yeah, "legacy") with some additional packages, like they are available in the DKFZ/ODCF cluster environment.
-It is called "minimal" because it does not contain any reference data or software -- just the basic operating system that is needed to execute exactly the legacy software stack at our institution.
+It is called "minimal" because it does not contain any reference data or software -- just the basic operating system that is needed to execute exactly the legacy software stack at our institution -- including the module system.
 Therefore, using this container, the DKFZ/ODCF Roddy workflows can be executed as if they are executed in our cluster, provided that all the additional data and software are mounted into the container.
 
 The container can be build with
@@ -68,4 +68,4 @@ Finally, for running the container, you first have to convert it into a Singular
 
     singularity build dkfz_minimal_$version.sif docker-daemon://ghcr.io/theroddywms/dkfz_minimal:$version
 
-Place the dkfz_minimal_$version.sif in your cluster on a shared filesystem and enter the path as value for the ``containerImage`` configuration value.
+Place the ``dkfz_minimal_$version.sif`` in your cluster on a shared filesystem and enter the path as value for the ``containerImage`` configuration value.
