@@ -36,3 +36,5 @@ coverage/
 bin/
 
 __pycache__/
+
+*.sif
