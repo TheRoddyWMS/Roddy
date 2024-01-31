@@ -6,10 +6,12 @@
 
 package de.dkfz.roddy.client;
 
+import groovy.transform.CompileStatic;
+
 /**
  * Created by michael on 31.03.15.
  */
-@groovy.transform.CompileStatic
+@CompileStatic
 public enum RoddyStartupModeScopes {
 
     /**
@@ -37,7 +39,9 @@ public enum RoddyStartupModeScopes {
      * This scope starts all modes and also initializes the Job Manager
      * custom job manager, execution service, filesystem access provider
      */
-    SCOPE_FULL_WITHJOBMANAGER(true);
+    SCOPE_FULL_WITHJOBMANAGER(true)
+
+    ;
 
     public final boolean needsJobManager;
 

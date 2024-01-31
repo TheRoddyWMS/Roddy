@@ -379,7 +379,7 @@ class Analysis {
         boolean contextRightsSettings = ExecutionService.instance.checkAccessRightsSettings(context)
         boolean contextPermissions = ExecutionService.instance.checkContextDirectoriesAndFiles(context)
         boolean configurationValidity =
-                Roddy.strictModeEnabled && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors) ? !configuration.hasLoadErrors() : true
+                Roddy.strictModeEnabled && !Roddy.isOptionSet(RoddyStartupOptions.ignoreConfigurationErrors) ? !configuration.hasLoadErrors() : true
 
         // The setup of the workflow and the executability check may require the execution store, e.g. for
         // synchronously called jobs to gather data from the remote side.
@@ -488,7 +488,7 @@ class Analysis {
                         boolean copiedAnalysisToolsAreExecutable =
                                 ExecutionService.instance.checkCopiedAnalysisTools(context)
                         boolean ignoreFileChecks =
-                                Roddy.isOptionSet(RoddyStartupOptions.disablestrictfilechecks)
+                                Roddy.isOptionSet(RoddyStartupOptions.disableStrictFileChecks)
                         execute &= ignoreFileChecks ||
                                 (invalidPreparedFiles.size() == 0 && copiedAnalysisToolsAreExecutable)
                         if (!execute) {
@@ -620,7 +620,7 @@ class Analysis {
     private void cleanUpAndFinishWorkflowRun(ExecutionContext context) {
         //First, check if there were any executed jobs. If not, we can safely delete the the context directory.
         if (context.startedJobs.size() == 0) {
-            if (Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.forcekeepexecutiondirectory)) {
+            if (Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.forceKeepExecutionDirectory)) {
                 logger.always('There were no started jobs, but Roddy will keep the execution directory as forcekeepexecutiondirectory was set.')
             } else {
                 logger.always('There were no started jobs, the execution directory will be removed.')

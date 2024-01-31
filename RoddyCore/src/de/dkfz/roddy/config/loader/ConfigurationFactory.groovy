@@ -911,7 +911,7 @@ class ConfigurationFactory {
         for (NodeChild cvalueNode in configurationNode.configurationvalues.cvalue) {
             //TODO Code deduplication! Also in readCVBundle.
             ConfigurationValue cvalue = readConfigurationValue(cvalueNode, config)
-            if (!Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.ignorecvalueduplicates) &&
+            if (!Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.ignoreCValueDuplicates) &&
                     configurationValues.containsKey(cvalue.id)) {
                 String cval0 = configurationValues[cvalue.id].value
                 String cval1 = cvalue.value

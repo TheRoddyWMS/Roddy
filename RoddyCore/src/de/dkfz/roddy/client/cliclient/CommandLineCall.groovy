@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.client.cliclient
 
+import groovy.transform.CompileStatic
+
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 import static de.dkfz.roddy.client.RoddyStartupModes.help
 
@@ -23,7 +25,7 @@ import org.petitparser.parser.Parser
  * A helper class for command line calls.
  * Options and parameters are extracted and put into an object of this class.
  */
-@groovy.transform.CompileStatic
+@CompileStatic
 class CommandLineCall {
 
     private static final Parser cvaluesParser = CommandLineParameterParser.cvalueParameterExpr.end("malformed content")
@@ -46,7 +48,7 @@ class CommandLineCall {
         if (mode.isPresent()) {
             return mode.get()
         } else {
-            logger.postAlwaysInfo("The startupmode '${putativeModeSpec}' is not known.")
+            logger.postAlwaysInfo("The startup mode '${putativeModeSpec}' is not known.")
             return help
         }
     }
@@ -94,8 +96,10 @@ class CommandLineCall {
     }
 
     /** Check whether the parsed option is indeed accepted as option by Roddy. Errors are accumulated
-     *  in the error argument. */
-    private static Optional<MapEntry> handle(final Parameter parameter, final List<String> errors) {
+     *  in the error argument.
+     *  Note the return type is a MapEntry with (RoddyStartupOptions, String), but MapEntry is untyped :(. */
+    private static Optional<MapEntry> handle(final Parameter parameter,
+                                                                          final List<String> errors) {
         Optional<RoddyStartupOptions> opt = RoddyStartupOptions.fromString(parameter.name)
         if (opt.isPresent()) {
             return processParameter(opt.get(), parameter, errors).
@@ -144,6 +148,7 @@ class CommandLineCall {
                 errors << "Could not parse option string '" + optArg + "': ${parseResult.message}"
             } else {
                 handle(parseResult.get() as Parameter, errors).map { MapEntry entry ->
+                    // Cast necessary because the returned MapEntry is untyped.
                     parsedOptions.put(entry.key as RoddyStartupOptions, entry.value as Parameter)
                 }
             }
@@ -155,6 +160,7 @@ class CommandLineCall {
         // Guard against empty parameter list. Assume help is requested.
         if (args.empty)
             args = [help.toString()]
+
         this.arguments = args
 
         // Store all parameters (do not start with '--') and remove the startup mode.
