@@ -19,7 +19,7 @@ There are a number of configuration values that need to be set to get this featu
   * `containerEnginePath` needs to be set to the path of the container engine. By default this is the name of the engine as provided in `jobExecutionEnvironment`, e.g. "singularity". Thus it is assumed that the "singularity" executable is available in the environment (e.g. of `bsub`).
   * `containerImage` needs to be set to the path of the container image.
   * `containerMounts` needs to be set to a list of paths to mount into the container. This should be of the format `(mount1 mount2 mount3)`. Note that you don't have to add the `inputBaseDirectory` and `outputBaseDirectory`, because these are added automatically. Be careful with symlinks, as Roddy does not resolve them (neither locally nor remotely).
-  * `apptainerParameters` can be used to pass global parameters to `apptainer exec`. For instance `--contain`, which is advisable to unsure a proper separation between the compute nodes' environment and the analysis environment.
+  * `apptainerArguments` can be used to pass global parameters to `apptainer exec`. For instance `--contain`, which is advisable to unsure a proper separation between the compute nodes' environment and the analysis environment.
 
 Singularity containers work with setting `outputFileGroup`. We simply change the primary group *before* invoking the `singularity` command.
 
@@ -38,7 +38,7 @@ Note that Singularity does not resolve symlinks, and Roddy does not help you to 
                 description="Path to a singularity/apptainer container."/>
         <cvalue name="containerMounts" value="( /your/software/ /software /your/virtualenvs/ /software/modules/3.2.10 /your/miniconda3 /your/annotation/data /your/reference/genome /true/symlinked/path )" type="bashArray"
                 description="List of paths to mount into the container. Can be comma-separated list (type='string') or a type='bashArray'. All these paths are mounted read-only. This should be of the format '(mount1 mount2 mount3)'. Note that you dont have to add the inputBaseDirectory and outputBaseDirectory, because these are added automatically. Be careful with symlinks, as Roddy does not resolve them (neither locally nor remotely)."/>
-        <cvalue name="apptainerParameters" value="--contain" type="string"
+        <cvalue name="apptainerArguments" value="--contain" type="string"
                 description="Global parameters for `apptainer exec`. For instance '--contain'. Can be comma-separated list (type='string') or a type='bashArray'."/>
     </configurationvalues>
 

@@ -211,12 +211,16 @@ class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
         analysisId = reformatAnalysisId(analysisId)
         synchronized (dataSetsByAnalysisAndId) {
             Analysis analysis = loadAnalysis(analysisId)
-            if (!analysis)
+            if (analysis) {
+                if (!dataSetsByAnalysisAndId[analysisId]) {
+                    dataSetsByAnalysisAndId[analysisId] =
+                            analysis.runtimeService.getListOfPossibleDataSets(analysis).
+                                    collectEntries { DataSet it -> [it.id, it] } as Map<String, DataSet>
+                }
+                return dataSetsByAnalysisAndId[analysisId]
+            } else {
                 return [:]
-            if (!dataSetsByAnalysisAndId[analysisId])
-                dataSetsByAnalysisAndId[analysisId] = analysis.runtimeService.getListOfPossibleDataSets(analysis).
-                        collectEntries { DataSet it -> [it.id, it] } as Map<String, DataSet>
-            return dataSetsByAnalysisAndId[analysisId]
+            }
         }
     }
 

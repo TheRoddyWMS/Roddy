@@ -160,7 +160,7 @@ class ConfigurationFactory {
                 messageForDuplicates << "\t" << id << ([" found in:"] + pathsForCfgs[id]).join("\n\t\t") << "\n"
             }
             messageForDuplicates << "\n" <<
-                    (["This is not allowed! Check your configuration directories for files containing using same ids:"]
+                    (["This is not allowed! Check your configuration directories for files containing same ids:"]
                             + configurationDirectories.collect { it.absolutePath }).join("\n\t")
 
             throw new ConfigurationLoaderException(messageForDuplicates.toString())

@@ -195,7 +195,7 @@ class RuntimeService {
         }
 
         if (selectedDatasets.size() == 0)
-            logger.postAlwaysInfo("There were no available datasets for the provided pattern.")
+            logger.postAlwaysInfo("After filtering with dataset pattern no datasets remained!")
         return selectedDatasets
     }
 
