@@ -253,8 +253,6 @@ public class Roddy {
         List<String> list = Arrays.asList(args);
         CommandLineCall clc = new CommandLineCall(list);
         commandLineCall = clc;
-        if (clc.isMalformed())
-            exit(ExitReasons.malformedCommandLine.getCode());
 
         // Initialize the logger with an initial setup. At this point we don't know about things like the logger settings
         // or the used app ini file. However, all the following methods rely on an existing valid logger setup.

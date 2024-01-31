@@ -58,19 +58,6 @@ class CommandLineCallTest extends Specification {
         'a:valA,b:${a}'            | CVALUE_TYPE_STRING      |   2  | 'b'  | 'valA'
     }
 
-    def "get typed configuration values from command-line call (failure)"(String parameter) {
-        when:
-        CommandLineCall clc = new CommandLineCall(['run', 'prj@ana', parameter])
-
-        then:
-        clc.malformed
-
-        where:
-        parameter       | _
-        '--cvalues'     | _
-        '--cvalues=a'   | _
-    }
-
 
     def "split by non escaped character"(String query, List<String> split) {
         when:

@@ -39,17 +39,21 @@ class CommandLineCall {
     private final List<String> arguments
     private final List<String> parameters
     private Map<RoddyStartupOptions, Parameter> optionsMap
-    final boolean malformed
 
     static RoddyStartupModes parseStartupMode(List<String> args) {
         // The following implies that parameters (without '--') and options (with '--') can be freely mixed.
         String putativeModeSpec = args.find { String arg -> !arg.startsWith('--') }
-        Optional<RoddyStartupModes> mode = RoddyStartupModes.fromString(putativeModeSpec)
-        if (mode.isPresent()) {
-            return mode.get()
-        } else {
-            logger.postAlwaysInfo("The startup mode '${putativeModeSpec}' is not known.")
+        if (putativeModeSpec == null) {
+            logger.severe("No startup mode provided.")
             return help
+        } else {
+            Optional<RoddyStartupModes> mode = RoddyStartupModes.fromString(putativeModeSpec);
+            if (mode.isPresent()) {
+                return mode.get()
+            } else {
+                logger.severe("The startup mode '${putativeModeSpec}' is not known.")
+                return help
+            }
         }
     }
 
@@ -175,9 +179,6 @@ class CommandLineCall {
         Tuple2<Map<RoddyStartupOptions, Parameter>, List<String>> options = parseOptions(args)
         if (options.y) {
             logger.severe(options.y.join("\n\t"))
-            malformed = true
-        } else {
-            malformed = false
         }
         this.optionsMap = options.x
     }
