@@ -11,6 +11,8 @@ import spock.lang.Specification
 
 import java.nio.file.Paths
 
+import static de.dkfz.roddy.execution.EscapableString.*
+
 class EffectiveToolCommandBuilderSpec extends Specification {
 
     @Shared
@@ -37,7 +39,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         1 * ctx.getToolCommand(toolId) >> someToolCommand
         result.get().command instanceof Command
         (result.get().command as Command).executablePath.toString() == "someWrapper"
-        (result.get().command as Command).toCommandSegmentList() == ["someWrapper"]
+        (result.get().command as Command).toCommandSegmentList() == [u("someWrapper")]
     }
 
     def "simple command is replaced by wrapper call"() {
@@ -53,7 +55,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         result.isPresent()
         result.get().command instanceof Command
         (result.get().command as Command).executablePath.toString() == "someWrapper"
-        (result.get().command as Command).toCommandSegmentList() == ["someWrapper"]
+        (result.get().command as Command).toCommandSegmentList() == [u("someWrapper")]
     }
 
     def "unknown tool command but not QUERY_STATUS mode throws"(level) {
@@ -111,7 +113,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         then:
         result.present
         result.get().command instanceof Command
-        (result.get().command as Command).toCommandSegmentList() == ["someWrapper"]
+        (result.get().command as Command).toCommandSegmentList() == [u("someWrapper")]
     }
 
     def "sg with apptainer"() {
@@ -135,7 +137,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         then:
         result.present
         result.get().command instanceof Code
-        result.get().command.toCommandString() ==
+        forBash((result.get().command as Code).toEscapableString(true)) ==
                 "#!/bin/bash\n" +
                 "sg someGroup -c apptainer\\ exec\\ --env\\ sgWasCalled\\=true\\ -W\\ /tmp\\ someImage\\ someWrapper\n"
     }
@@ -160,9 +162,9 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         then:
         result.present
         result.get().command instanceof Code
-        result.get().command.toCommandString() ==
+        forBash(result.get().command.toEscapableString()) ==
                 "#!/bin/bash\n" +
-                "apptainer exec --env sgWasCalled\\=true -W /tmp someImage someWrapper\n"
+                "apptainer exec --env sgWasCalled=true -W /tmp someImage someWrapper"
 
         where:
         toolCommand                                                                           | _

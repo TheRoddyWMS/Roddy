@@ -18,6 +18,7 @@ import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.config.validation.ValidationError
 import de.dkfz.roddy.config.validation.WholeConfigurationValidator
 import de.dkfz.roddy.core.*
+import de.dkfz.roddy.execution.AnyEscapableString
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.SSHExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -33,6 +34,7 @@ import groovy.transform.CompileStatic
 
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_PATH
+import static de.dkfz.roddy.execution.EscapableString.*
 
 /**
  * Command line client for roddy.
@@ -669,7 +671,8 @@ class RoddyCLIClient {
                             Math.max(7, Roddy.applicationConfiguration.getOrSetIntegerApplicationProperty(Constants.APP_PROPERTY_TESTRUN_VARIABLE_WIDTH, 25))
                     if (k.length() > variablePrintWidth)
                         _k = k.substring(0, variablePrintWidth - 2) + '..'
-                    String parm = job.reportedParameters.get(k, '').replace(ec.executionDirectory.absolutePath, '[ exDir]')
+                    String parm = forBash(job.reportedParameters.get(k, c())).
+                            replace(ec.executionDirectory.absolutePath, '[ exDir]')
                     parm = parm.replace(ec.outputDirectory.absolutePath, '[outDir]')
                     parm = parm.replace(ec.inputDirectory.absolutePath, '[ inDir]')
                     if (parm.startsWith('parameterArray') && parm != 'parameterArray=()') {

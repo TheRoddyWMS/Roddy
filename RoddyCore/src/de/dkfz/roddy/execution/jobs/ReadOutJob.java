@@ -13,6 +13,8 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
+import static de.dkfz.roddy.execution.EscapableString.*;
+
 /**
  * Objects of this class are created if information on previous jobs are read out from the file system.
  * They represent executed jobs!
@@ -55,7 +57,7 @@ public class ReadOutJob extends Job {
 
     @Override
     public String getToolID() {
-        String[] split = jobName.split("_");
+        String[] split = getJobName().split("_");
         return split[split.length - 1];
     }
 }

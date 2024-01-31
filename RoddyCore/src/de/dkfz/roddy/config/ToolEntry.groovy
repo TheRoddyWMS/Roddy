@@ -66,7 +66,7 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
         }
     }
 
-    static abstract class ToolParameter<T extends ToolParameter> {
+    static abstract class ToolParameter<T extends ToolParameter> implements Cloneable {
         public final String scriptParameterName;
 
         ToolParameter(String scriptParameterName) {
@@ -89,7 +89,7 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
             return scriptParameterName != null ? scriptParameterName.hashCode() : 0;
         }
 
-        abstract T clone();
+        abstract T clone() throws CloneNotSupportedException;
     }
 
     static abstract class ToolParameterOfFiles extends ToolParameter<ToolParameterOfFiles> {

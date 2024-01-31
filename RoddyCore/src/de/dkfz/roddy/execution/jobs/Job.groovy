@@ -15,6 +15,7 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
+import de.dkfz.roddy.execution.AnyEscapableString
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.Command as BECommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
@@ -33,6 +34,8 @@ import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_PLACEHOLDER_ROD
 import static de.dkfz.roddy.config.ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT
 import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 import static de.dkfz.roddy.execution.jobs.JobConstants.PRM_TOOL_ID
+
+import static de.dkfz.roddy.execution.EscapableString.*
 
 @CompileStatic
 class Job extends BEJob<BEJob, BEJobResult> {
@@ -62,7 +65,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
      * Keeps a list of all parameters after conversion and before removing them from the final parameter list
      * (See keepOnlyEssentialParameters). The value is used for testrun and testrerun output.
      */
-    final Map<String, String> reportedParameters = [:]
+    final Map<String, AnyEscapableString> reportedParameters = [:]
 
     /**
      * Provide a list of files if you want to generate job dependencies.
@@ -216,7 +219,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         List<BaseFile> filesToVerify = []) {
         super(BEJobID.newUnknown
               , Roddy.jobManager
-              , jobName
+              , u(jobName)
               , EffectiveToolCommandBuilder.
                     from(context).
                     build(toolCommand).
@@ -224,10 +227,10 @@ class Job extends BEJob<BEJob, BEJobResult> {
                     orElse(null)
               , context.getResourceSetFromConfiguration(toolCommand.toolId)
               , []
-              , [:] as Map<String, String>
+              , [:] as Map<String, AnyEscapableString>
               , JobLog.toOneFile(new File(context.loggingDirectory, jobName + ".o{JOB_ID}"))
               , null
-              , context.accountingName.orElse(null))
+              , e(context.accountingName.orElse(null)))
         Preconditions.checkArgument(context != null)
         Preconditions.checkArgument(jobName != null)
         Preconditions.checkArgument(toolCommand != null)
@@ -254,9 +257,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
             if (_v == null) {
                 context.addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.
                         expand("The parameter " + k + " has no valid value and will be set to ${NO_VALUE}."))
-                this.parameters[k] = NO_VALUE
+                this.parameters[k] = e(NO_VALUE)
             } else {
-                String newParameters = parameterObjectToString(k, _v)
+                AnyEscapableString newParameters = u(parameterObjectToString(k, _v))
                 this.parameters.put(k, newParameters)
             }
         }
@@ -265,14 +268,13 @@ class Job extends BEJob<BEJob, BEJobResult> {
         reportedParameters.putAll(parameters)
 
         // Used by the DirectSynchronousExecutionJobManager and job.
-        this.parameters[PARM_JOBCREATIONCOUNTER] =
-                jobCreationCounter.toString()
+        this.parameters[PARM_JOBCREATIONCOUNTER] = u(jobCreationCounter.toString())
 
         // Needed by the wrapInScript.sh defined in the DefaultPlugin.
         this.parameters[PARM_WRAPPED_SCRIPT] =
-                context.configuration.getProcessingToolPath(context, toolCommand.toolId).absolutePath
+                e(context.configuration.getProcessingToolPath(context, toolCommand.toolId).absolutePath)
         this.parameters[PARM_WRAPPED_SCRIPT_MD5] =
-                context.getToolMd5(toolCommand.toolId)
+                e(context.getToolMd5(toolCommand.toolId))
 
 
         if (inputParameters != null)
@@ -444,18 +446,18 @@ class Job extends BEJob<BEJob, BEJobResult> {
         }
     }
 
-    private Map<String, String> convertResourceSetToParameters() {
+    private Map<String, AnyEscapableString> convertResourceSetToParameters() {
         def rs = resourceSet
-        Map<String, String> rsParameters = [:]
+        Map<String, AnyEscapableString> rsParameters = [:]
         if (rs == null) return rsParameters
 
-        if (rs.memSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_MEM"] = rs.mem.toString()
-        if (rs.coresSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_CORES"] = rs.cores.toString()
-        if (rs.nodesSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_NODES"] = rs.nodes.toString()
-        if (rs.queueSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_QUEUE"] = rs.queue.toString()
-        if (rs.walltimeSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_WALLTIME"] = rs.walltime.toString()
-        if (rs.additionalNodeFlagSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_NODEFLAGS"] = rs.additionalNodeFlag.toString()
-        if (rs.storageSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_STORAGE"] = rs.storage.toString()
+        if (rs.memSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_MEM"] = u(rs.mem.toString())
+        if (rs.coresSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_CORES"] = u(rs.cores.toString())
+        if (rs.nodesSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_NODES"] = u(rs.nodes.toString())
+        if (rs.queueSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_QUEUE"] = u(rs.queue.toString())
+        if (rs.walltimeSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_WALLTIME"] = e(rs.walltime.toString())
+        if (rs.additionalNodeFlagSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_NODEFLAGS"] = e(rs.additionalNodeFlag.toString())
+        if (rs.storageSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_STORAGE"] = u(rs.storage.toString())
         return rsParameters
     }
 
@@ -650,23 +652,23 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         // Remove duplicate job ids as PBS qsub cannot handle duplicate keys => job will hold forever as it
         // releases the dependency queue linearly.
-        this.parameters[RODDY_PARENT_JOBS] = parameterObjectToString(RODDY_PARENT_JOBS, parentJobIDs.unique()*.id)
-        this.parameters[PARAMETER_FILE] = parameterObjectToString(PARAMETER_FILE, parameterFile)
+        this.parameters[RODDY_PARENT_JOBS] = u(parameterObjectToString(RODDY_PARENT_JOBS, parentJobIDs.unique()*.id))
+        this.parameters[PARAMETER_FILE] = u(parameterObjectToString(PARAMETER_FILE, parameterFile))
         // The CONFIG_FILE variable is set to the same value as the PARAMETER_FILE to keep older scripts working
         // with job-specific only environments.
         // TODO Deprecated. Remove this line in Roddy 4.0. No config file.
-        this.parameters[CONFIG_FILE] = this.parameters[PARAMETER_FILE]
+        this.parameters[CONFIG_FILE] = u(this.parameters[PARAMETER_FILE])
 
         boolean debugWrapInScript = false
         if (configuration.configurationValues.hasValue(DEBUG_WRAP_IN_SCRIPT)) {
             debugWrapInScript = configuration.configurationValues.getBoolean(DEBUG_WRAP_IN_SCRIPT)
         }
-        this.parameters.put(DEBUG_WRAP_IN_SCRIPT, parameterObjectToString(DEBUG_WRAP_IN_SCRIPT, debugWrapInScript))
+        this.parameters.put(DEBUG_WRAP_IN_SCRIPT, e(parameterObjectToString(DEBUG_WRAP_IN_SCRIPT, debugWrapInScript)))
 
         if (Roddy.applicationConfiguration.containsKey(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT)) {
             this.parameters.put(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT,
-                    Roddy.applicationConfiguration.getOrSetApplicationProperty(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT,
-                            ""))
+                    e(Roddy.applicationConfiguration.getOrSetApplicationProperty(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT,
+                            "")))
         }
 
         // See if the job should be executed
@@ -755,8 +757,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
      */
     Configuration createJobConfiguration() {
         Configuration jobConfiguration = new Configuration(null, executionContext.configuration)
-        jobConfiguration.configurationValues.addAll(parameters.collect { String k, String v ->
-            new ConfigurationValue(jobConfiguration, k, v)
+        jobConfiguration.configurationValues.addAll(parameters.collect { String k, AnyEscapableString v ->
+            new ConfigurationValue(jobConfiguration, k, forBash(v))
         })
         return jobConfiguration
     }

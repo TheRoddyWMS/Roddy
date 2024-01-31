@@ -19,6 +19,7 @@ import groovy.transform.CompileStatic
 import org.junit.Ignore
 import org.junit.Test
 
+import static de.dkfz.roddy.execution.EscapableString.*
 /**
  */
 @CompileStatic
@@ -37,13 +38,13 @@ class SGEJobManagerTest {
 
         BatchEuphoriaJobManager cFactory = null; //new SGEJobManager(false);
         ProcessingParameters test = (ProcessingParameters) cFactory.convertResourceSet(null, rset1)
-        assert test.getProcessingCommandString().trim().equals("-V -l s_data=1024M")
+        assert forBash(test.getProcessingCommandString()).trim().equals("-V -l s_data=1024M")
 
         test = (ProcessingParameters) cFactory.convertResourceSet(null, rset2)
-        assert test.getProcessingCommandString().equals(" -V")
+        assert forBash(test.getProcessingCommandString()).equals(" -V")
 
         test = (ProcessingParameters) cFactory.convertResourceSet(null, rset3)
-        assert test.getProcessingCommandString().equals(" -V -l s_data=1024M")
+        assert forBash(test.getProcessingCommandString()).equals(" -V -l s_data=1024M")
     }
 
 

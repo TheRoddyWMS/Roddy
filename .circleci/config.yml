@@ -52,7 +52,7 @@ jobs: # a collection of steps
             # We need at least these two plugins for the tests.
             git clone https://github.com/TheRoddyWMS/Roddy-Default-Plugin.git dist/plugins/DefaultPlugin
             git clone https://github.com/TheRoddyWMS/Roddy-Base-Plugin.git dist/plugins/PluginBase
-            ./gradlew test build $GRADLE_ARGS
+            ./gradlew build test $GRADLE_ARGS
       - save_cache:
           paths:
             - ~/.gradle/wrapper

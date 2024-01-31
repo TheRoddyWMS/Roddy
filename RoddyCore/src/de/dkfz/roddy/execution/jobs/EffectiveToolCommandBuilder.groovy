@@ -7,12 +7,14 @@ import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.JobExecutionEnvironment
 import de.dkfz.roddy.execution.ApptainerCommandBuilder
 import de.dkfz.roddy.execution.Code
+import de.dkfz.roddy.execution.CommandI
 import de.dkfz.roddy.execution.CommandReferenceI
 import de.dkfz.roddy.execution.Command
 import de.dkfz.roddy.execution.Executable
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import static de.dkfz.roddy.execution.EscapableString.*
 
 import java.nio.file.Paths
 import java.util.logging.Level
@@ -155,7 +157,8 @@ class EffectiveToolCommandBuilder {
 
         Optional<Command> groupChangeCommand =
                 Optional.ofNullable(context.outputGroupString).map { String outputFileGroup ->
-                    new Command(new Executable(Paths.get("sg")), [outputFileGroup, "-c"])
+                    new Command(new Executable(Paths.get("sg")),
+                                [e(outputFileGroup), u("-c")])
                 }
 
         // We have to prevent interference with the group-change code in different versions of the wrapInScript.sh.
@@ -167,20 +170,20 @@ class EffectiveToolCommandBuilder {
         // sgWasCalled that needs to be set to true.
         // For the apptainer/singularity use case we always change the group outside, so we just deactivate the
         // group-change code in the wrapInScrip.sh
-        builder = builder.withAddedEnvironmentVariables(["sgWasCalled": "true"])
+        builder = builder.withAddedEnvironmentVariables(["sgWasCalled": u("true")])
 
-        return new ToolCommand(
-                toolCommand.toolId,    // keep the toolId
-                new Code(
-                    (groupChangeCommand.map { Command sg ->
-                        sg.cliAppend(
-                            builder.build(context.containerImage).cliAppend(command, false),
-                            true)
-                    }.orElse(
-                        builder.build(context.containerImage).cliAppend(command, false)
-                    )).toCommandString() + "\n",
-                    new Executable(Paths.get("/bin/bash"))),
-                 toolCommand.localPath)
+        CommandI scriptCommand = groupChangeCommand.map { Command sg ->
+            sg.cliAppend(
+                builder.build(context.containerImage).cliAppend(command, false),
+                true)
+        }.orElseGet {
+            builder.build(context.containerImage).cliAppend(command, false)
+        }
+
+        return new ToolCommand(toolCommand.toolId,    // keep the toolId
+                               new Code(scriptCommand.toEscapableString(),
+                                        new Executable(Paths.get("/bin/bash"))),
+                               toolCommand.localPath)
     }
 
     /** We currently only support command calls as wrapped in wrapInScrip.sh. This is constructed here. */

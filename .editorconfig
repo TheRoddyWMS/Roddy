@@ -49,7 +49,7 @@ ij_visual_guides = none
 ij_haml_keep_indents_on_empty_lines = false
 
 [*.java]
-ij_visual_guides = none
+ij_visual_guides = 100, 120
 ij_java_align_consecutive_assignments = false
 ij_java_align_consecutive_variable_declarations = false
 ij_java_align_group_field_declarations = false
@@ -942,7 +942,7 @@ ij_visual_guides = none
 ij_vtl_keep_indents_on_empty_lines = false
 
 [{*.gant,*.gradle,*.groovy,*.gson,*.gy,*.nf}]
-ij_visual_guides = none
+ij_visual_guides = 100, 120
 ij_groovy_align_group_field_declarations = false
 ij_groovy_align_multiline_array_initializer_expression = true
 ij_groovy_align_multiline_assignment = false

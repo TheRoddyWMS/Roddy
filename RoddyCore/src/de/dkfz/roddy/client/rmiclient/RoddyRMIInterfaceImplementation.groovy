@@ -16,6 +16,7 @@ import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.ExecutionContextSubLevel
 import de.dkfz.roddy.core.InfoObject
+import de.dkfz.roddy.execution.AnyEscapableString
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.Job
@@ -71,7 +72,7 @@ class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
         JobState jobState
         boolean isFakeJob
 
-        Map<String, String> parameters
+        Map<String, AnyEscapableString> parameters
         Map<File, String> parentFiles
 
         JobInfoObject(Job job) {
@@ -91,7 +92,7 @@ class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
             return isFakeJob
         }
 
-        Map<String, String> getParameters() {
+        Map<String, AnyEscapableString> getParameters() {
             return parameters
         }
 

@@ -245,7 +245,7 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
                 blacklistID++;
                 somethingChanged = true;
             }
-            if (oldValue != src) somethingChanged = true;
+            if (!oldValue.equals(src)) somethingChanged = true;
         }
 
         for(String key : blacklist.keySet()) {
