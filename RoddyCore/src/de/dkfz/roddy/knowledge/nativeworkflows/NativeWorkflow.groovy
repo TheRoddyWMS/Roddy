@@ -105,11 +105,12 @@ class NativeWorkflow extends Workflow {
         }
     }
 
-    boolean callAndInterceptNativeWorkflow(ExecutionContext context, BatchEuphoriaJobManager targetJobManager) {
+    boolean callAndInterceptNativeWorkflow(ExecutionContext context,
+                                           BatchEuphoriaJobManager targetJobManager) {
         ContextConfiguration configuration = (ContextConfiguration) context.configuration
         AnalysisConfiguration aCfg = configuration.getAnalysisConfiguration()
 
-        // In normal cases commands are executed by the default factory. In this case we want the command to be
+        // In normal cases, commands are executed by the default factory. In this case, we want the command to be
         // executed directly.
         String toolID = aCfg.getNativeToolID()
         String jobManagerAbbreviation = AvailableClusterSystems.values().find {
@@ -124,8 +125,9 @@ class NativeWorkflow extends Workflow {
 
         DirectSynchronousExecutionJobManager dcfac = new DirectSynchronousExecutionJobManager(
                 ExecutionService.instance, JobManagerOptions.create().build())
-        DirectCommand wrapperJobCommand = new DirectCommand(dcfac, wrapperJob, [])
-        String submissionCommand = targetJobManager.submissionCommand
+        DirectCommand wrapperJobCommand = dcfac.createCommand(wrapperJob)
+        // The cast to SubmissionCommand is only necessary, because of the overall faulty design.
+        String submissionCommand = (targetJobManager.createCommand(wrapperJob) as SubmissionCommand).submissionExecutableName
         if (submissionCommand == null) {
             context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.
                     expand("There is no submission command for this type of command factory."))
@@ -147,7 +149,8 @@ class NativeWorkflow extends Workflow {
         return true
     }
 
-    private Map<String, BEGenJI> fetchAndProcessCalls(ExecutionContext context, BatchEuphoriaJobManager targetJobManager) {
+    private Map<String, BEGenJI> fetchAndProcessCalls(ExecutionContext context,
+                                                      BatchEuphoriaJobManager targetJobManager) {
 
         ContextConfiguration configuration = (ContextConfiguration) context.configuration
         //Get the calls file in the temp directory.

@@ -56,6 +56,7 @@ Note, that some changes may break fragile user code and thus potentially lead to
 
 * 3.8.0
   - minor: Singularity support. Jobs can now be run in singularity containers. Only a single image for a whole workflow is currently supported.
+     * This is only implemented and tested for LSF and SLURM, not tested for PBS and SGE, and not implemented at all for the REST-based submission to LSF and the direct execution job manager.
   - minor: Added `group-config.py` script that allows to compile version information reports (JSON) from execution stores.
   - minor: Commandline startup-modes (run, rerun, help, etc.) are now case-insensitive and "use" and "used" prefixes are ignored.
   - patch: Change reported error for pattern that cannot be matched to file into warning
