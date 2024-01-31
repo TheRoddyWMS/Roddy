@@ -126,7 +126,6 @@ class EffectiveToolCommandBuilder {
                                          context.wrapInCommand))
     }
 
-
     /**
      * Wrap in container call, and maybe `sg` call to change the group.
      *
@@ -170,19 +169,18 @@ class EffectiveToolCommandBuilder {
         // group-change code in the wrapInScrip.sh
         builder = builder.withAddedEnvironmentVariables(["sgWasCalled": "true"])
 
-        groupChangeCommand.map { Command sg ->
-            new ToolCommand(
+        return new ToolCommand(
                 toolCommand.toolId,    // keep the toolId
-                sg.cliAppend(          // wrap in change of primary group
-                        builder.build(context.containerImage).   // call command in container context, ...
-                            cliAppend(command, false, true), // ... and quote for apptainer
-                        false, true),       // ... and quote for `sg $group -c`
-                toolCommand.localPath)
-        }.orElse(new ToolCommand(
-                toolCommand.toolId,    // keep the toolId
-                builder.build(context.containerImage).   // call command in container context, ...
-                        cliAppend(command, false, true), // ... and quote for apptainer
-                toolCommand.localPath))
+                new Code(
+                    (groupChangeCommand.map { Command sg ->
+                        sg.cliAppend(
+                            builder.build(context.containerImage).cliAppend(command, false),
+                            true)
+                    }.orElse(
+                        builder.build(context.containerImage).cliAppend(command, false)
+                    )).toCommandString() + "\n",
+                    new Executable(Paths.get("/bin/bash"))),
+                 toolCommand.localPath)
     }
 
     /** We currently only support command calls as wrapped in wrapInScrip.sh. This is constructed here. */

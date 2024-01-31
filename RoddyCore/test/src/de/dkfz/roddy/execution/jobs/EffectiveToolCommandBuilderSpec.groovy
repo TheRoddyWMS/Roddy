@@ -1,17 +1,15 @@
 package de.dkfz.roddy.execution.jobs
 
 import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.JobExecutionEnvironment
 import de.dkfz.roddy.execution.Code
-import de.dkfz.roddy.execution.Executable
 import de.dkfz.roddy.execution.Command
+import de.dkfz.roddy.execution.Executable
 import spock.lang.Shared
 import spock.lang.Specification
 
 import java.nio.file.Paths
-import java.util.logging.Level
 
 class EffectiveToolCommandBuilderSpec extends Specification {
 
@@ -29,7 +27,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         ExecutionContext ctx = Mock(ExecutionContext.class)
         ctx.wrapInCommand >> someWrapper
         ctx.getToolCommand(_) >> someToolCommand
-        EffectiveToolCommandBuilder builder = new EffectiveToolCommandBuilder(ctx)
+        EffectiveToolCommandBuilder builder = EffectiveToolCommandBuilder.from(ctx)
 
         when:
         Optional<ToolCommand> result = builder.build(new ToolIdCommand(toolId))
@@ -38,15 +36,15 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         result.isPresent()
         1 * ctx.getToolCommand(toolId) >> someToolCommand
         result.get().command instanceof Command
-        result.get().command.executablePath.toString() == "someWrapper"
-        result.get().command.toCommandSegmentList() == ["someWrapper"]
+        (result.get().command as Command).executablePath.toString() == "someWrapper"
+        (result.get().command as Command).toCommandSegmentList() == ["someWrapper"]
     }
 
     def "simple command is replaced by wrapper call"() {
         given:
         ExecutionContext ctx = Mock(ExecutionContext.class)
         ctx.wrapInCommand >> someWrapper
-        EffectiveToolCommandBuilder builder = new EffectiveToolCommandBuilder(ctx)
+        EffectiveToolCommandBuilder builder = EffectiveToolCommandBuilder.from(ctx)
 
         when:
         Optional<ToolCommand> result = builder.build(someToolCommand)
@@ -54,15 +52,15 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         then:
         result.isPresent()
         result.get().command instanceof Command
-        result.get().command.executablePath.toString() == "someWrapper"
-        result.get().command.toCommandSegmentList() == ["someWrapper"]
+        (result.get().command as Command).executablePath.toString() == "someWrapper"
+        (result.get().command as Command).toCommandSegmentList() == ["someWrapper"]
     }
 
     def "unknown tool command but not QUERY_STATUS mode throws"(level) {
         given:
         ExecutionContext ctx = Mock(ExecutionContext)
         ctx.getExecutionContextLevel() >> level
-        EffectiveToolCommandBuilder builder = new EffectiveToolCommandBuilder(ctx)
+        EffectiveToolCommandBuilder builder = EffectiveToolCommandBuilder.from(ctx)
 
         when:
         builder.build(new UnknownToolCommand("unknown"))
@@ -83,7 +81,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         given:
         ExecutionContext ctx = Mock(ExecutionContext)
         ctx.getExecutionContextLevel() >> level
-        EffectiveToolCommandBuilder builder = new EffectiveToolCommandBuilder(ctx)
+        EffectiveToolCommandBuilder builder = EffectiveToolCommandBuilder.from(ctx)
 
         when:
         builder.build(new UnknownToolCommand("unknown"))
@@ -105,7 +103,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         ctx.jobExecutionEnvironment >> JobExecutionEnvironment.bash
         ctx.outputGroupString >> "someGroup"
         ctx.wrapInCommand >> someWrapper
-        EffectiveToolCommandBuilder builder = new EffectiveToolCommandBuilder(ctx)
+        EffectiveToolCommandBuilder builder = EffectiveToolCommandBuilder.from(ctx)
 
         when:
         Optional<ToolCommand> result = builder.build(someToolCommand)
@@ -113,7 +111,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         then:
         result.present
         result.get().command instanceof Command
-        result.get().command.toCommandSegmentList() == ["someWrapper"]
+        (result.get().command as Command).toCommandSegmentList() == ["someWrapper"]
     }
 
     def "sg with apptainer"() {
@@ -129,16 +127,17 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         ctx.userContainerMounts >> []
         ctx.outputDirectory >> new File("/tmp")
         ctx.wrapInCommand >> someWrapper
-        EffectiveToolCommandBuilder builder = new EffectiveToolCommandBuilder(ctx)
+        EffectiveToolCommandBuilder builder = EffectiveToolCommandBuilder.from(ctx)
 
         when:
         Optional<ToolCommand> result = builder.build(someToolCommand)
 
         then:
         result.present
-        result.get().command instanceof Command
-        result.get().command.toCommandSegmentList() ==
-            ["sg", "someGroup", "-c", "apptainer\\ exec\\ --env\\ sgWasCalled=true\\ -W\\ /tmp\\ someImage\\ someWrapper"]
+        result.get().command instanceof Code
+        result.get().command.toCommandString() ==
+                "#!/bin/bash\n" +
+                "sg someGroup -c apptainer\\ exec\\ --env\\ sgWasCalled\\=true\\ -W\\ /tmp\\ someImage\\ someWrapper\n"
     }
 
     def "no sg with apptainer()"(toolCommand) {
@@ -153,16 +152,17 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         ctx.userContainerMounts >> []
         ctx.outputDirectory >> new File("/tmp")
         ctx.wrapInCommand >> someWrapper
-        EffectiveToolCommandBuilder builder = new EffectiveToolCommandBuilder(ctx)
+        EffectiveToolCommandBuilder builder = EffectiveToolCommandBuilder.from(ctx)
 
         when:
         Optional<ToolCommand> result = builder.build(toolCommand)
 
         then:
         result.present
-        result.get().command instanceof Command
-        result.get().command.toCommandSegmentList() ==
-        ["apptainer", "exec", "--env", "sgWasCalled=true", "-W", "/tmp", "someImage", "someWrapper"]
+        result.get().command instanceof Code
+        result.get().command.toCommandString() ==
+                "#!/bin/bash\n" +
+                "apptainer exec --env sgWasCalled\\=true -W /tmp someImage someWrapper\n"
 
         where:
         toolCommand                                                                           | _
@@ -182,7 +182,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         ctx.userContainerMounts >> []
         ctx.outputDirectory >> new File("/tmp")
         ctx.wrapInCommand >> someWrapper
-        EffectiveToolCommandBuilder builder = new EffectiveToolCommandBuilder(ctx)
+        EffectiveToolCommandBuilder builder = EffectiveToolCommandBuilder.from(ctx)
 
         when:
         Optional<ToolCommand> result = builder.build(new ToolCommand("toolId",
@@ -196,7 +196,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
     def "not implemented for ToolCommands with Command objects"() {
         given:
         ExecutionContext mock = Mock(ExecutionContext.class)
-        EffectiveToolCommandBuilder builder = new EffectiveToolCommandBuilder(mock)
+        EffectiveToolCommandBuilder builder = EffectiveToolCommandBuilder.from(mock)
 
         when:
         builder.build(
@@ -210,7 +210,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
     def "code commands should not be wrapped, but communicated as is to BatchEuphoria"() {
         given:
         ExecutionContext mock = Mock(ExecutionContext.class)
-        EffectiveToolCommandBuilder builder = new EffectiveToolCommandBuilder(mock)
+        EffectiveToolCommandBuilder builder = EffectiveToolCommandBuilder.from(mock)
         ToolCommand codeToolCommand = new ToolCommand("test",
                                                       new Code("echo"),
                                                       Paths.get("test.sh"))
