@@ -268,27 +268,32 @@ public class Roddy {
         initializeFeatureToggles();
         time("initialize mode, print arguments");
         performInitialSetup(args, clc.startupMode);
-        time("initial");
-        parseAdditionalStartupOptions(clc);
-        time("parseopt");
-        loadPropertiesFile();
-        time("loadprop");
 
-        // Reset the logger with the new settings but keep the old logfile.
-        File clf = LoggerWrapper.getCentralLogFile();
-        LoggerWrapper.setup(applicationProperties);
-        LoggerWrapper.setCentralLogFile(clf);
+        if (clc.startupMode != RoddyStartupModes.help) {
+            time("parseopt");
+            parseAdditionalStartupOptions(clc);
+            time("loadprop");
+            loadPropertiesFile();
 
-        if (!initializeServices(clc.startupMode)) {
-            logger.postAlwaysInfo("Could not initialize services. Roddy will not execute jobs.");
-            performCLIExit(clc.startupMode, 1);
+            time("initservice");
+
+            // Reset the logger with the new settings but keep the old logfile.
+            File clf = LoggerWrapper.getCentralLogFile();
+            LoggerWrapper.setup(applicationProperties);
+            LoggerWrapper.setCentralLogFile(clf);
+
+            if (!initializeServices(clc.startupMode)) {
+                logger.postAlwaysInfo("Could not initialize services. Roddy will not execute jobs.");
+                performCLIExit(clc.startupMode, 1);
+            }
+
+            if (!jobExecutionRequirementsFulfilled())
+                exit(ExitReasons.unfulfilledRequirements.getCode());
+
         }
 
-        if (!jobExecutionRequirementsFulfilled())
-            exit(ExitReasons.unfulfilledRequirements.getCode());
-
         time("initserv");
-        parseRoddyStartupModeAndRun(clc);
+        start(clc);
         time("parsemode");
         performCLIExit(clc.startupMode);
 
@@ -750,7 +755,7 @@ public class Roddy {
         return jobManager;
     }
 
-    private static void parseRoddyStartupModeAndRun(CommandLineCall clc) {
+    private static void start(CommandLineCall clc) {
         if (clc.startupMode == RoddyStartupModes.rmi)
             RoddyRMIServer.startServer(clc);
         else

@@ -42,6 +42,7 @@ class CommandLineCall {
 
     static RoddyStartupModes parseStartupMode(List<String> args) {
         // The following implies that parameters (without '--') and options (with '--') can be freely mixed.
+        // Note, however, that the roddy.sh and helper scripts also constrain this.
         String putativeModeSpec = args.find { String arg -> !arg.startsWith('--') }
         if (putativeModeSpec == null) {
             logger.severe("No startup mode provided.")
@@ -167,13 +168,14 @@ class CommandLineCall {
 
         this.arguments = args
 
+        startupMode = parseStartupMode(args)
+
         // Store all parameters (do not start with '--') and remove the startup mode.
         List<String> allParameters = args.findAll { String arg -> !arg.startsWith('--') } as ArrayList<String>
         if (allParameters.size() > 1)
             this.parameters = allParameters[1..-1]
         else
             this.parameters = []
-        startupMode = parseStartupMode(args)
 
         // Now process the options (that start with '--').
         Tuple2<Map<RoddyStartupOptions, Parameter>, List<String>> options = parseOptions(args)

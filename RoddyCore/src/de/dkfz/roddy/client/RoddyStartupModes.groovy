@@ -211,10 +211,10 @@ enum RoddyStartupModes {
                  "[--config={file}]",
                  "Shows a list of available configuration files in all configured paths."],
                 [showFeaturetoggles,
-                 "",
+                 "[--config={file}]",
                  "Shows a list of available feature toggles."],
                 [prepareProjectConfig,
-                 "",
+                 "[--config={file}]",
                  "Create or update a project xml file and an application properties ini file."],
                 [pluginInfo,
                  "[--config={file}]",
@@ -294,33 +294,33 @@ enum RoddyStartupModes {
                            "Common additional options. Option names are case-insensitive." +
                             Constants.ENV_LINESEPARATOR)
         System.out.println([
-                "    --config={file}                 - Use {file} as the application configuration.",
+                "    --useconfig={file}              - Use {file} as the application configuration.",  // config
                 "    --c={file}                         The order is: full path, .roddy folder, Roddy directory.",
-                "    --verbosityLevel={1,3,5}        - Set how much Roddy will print to the console, 1 is default, 3 is more, 5 is a lot.",
+                "    --verbositylevel={1,3,5}        - Set how much Roddy will print to the console, 1 is default, 3 is more, 5 is a lot.",   // verbosityLevel
                 "    --v                                Set verbosity to 3.",
                 "    --vv                               Set verbosity to 5.",
-                "    --ioDir=[fileIn],{fileOut}      - Use fileIn/fileOut as the base input and output directories for your project.",
+                "    --useiodir=[fileIn],{fileOut}   - Use fileIn/fileOut as the base input and output directories for your project.",  // ioDir
                 "                                       If fileOut is not specified, fileIn is used for that as well.",
                 "                                       format can be: tsv, csv or excel",
-                "    --metadataTable={file},[format]",
+                "    --usemetadatatable={file},[format]",  // metadataTable
                 "                                    - Tell Roddy to use an input table to load metadata and input data and available datasets.",
                 "                                      Format can be 'tsv', 'csv' or 'excel'. By default 'tsv' is assumed.",
-                "    --waitForJobs                   - Let Roddy wait for all submitted jobs to finish.",
-                "    --disableTrackOnlyUserJobs      - By default, Roddy will only track jobs of the current user. The switch tells Roddy to track all jobs.",
-                "    --disableStrictFilechecks       - Tell Roddy to ignore missing files. By default, Roddy checks if all necessary files exist.",
-                "    --ignoreConfigurationErrors     - Tell Roddy to ignore configuration errors. By default, Roddy will exit if configuration errors are detected.",
-                "    --ignoreCValueDuplicates        - Tell Roddy to ignore duplicate configuration values within the same configuration value block.",
+                "    --waitforjobs                   - Let Roddy wait for all submitted jobs to finish.",  // waitForJobs
+                "    --disabletrackonlyuserjobs      - By default, Roddy will only track jobs of the current user. The switch tells Roddy to track all jobs.",   // disableTrackOnlyUserJobs
+                "    --disablestrictfilechecks       - Tell Roddy to ignore missing files. By default, Roddy checks if all necessary files exist.",  // disableStrictFilechecks
+                "    --ignoreconfigurationerrors     - Tell Roddy to ignore configuration errors. By default, Roddy will exit if configuration errors are detected.",  // ignoreConfigurationErrors
+                "    --ignorecvalueduplicates        - Tell Roddy to ignore duplicate configuration values within the same configuration value block.",  // ignoreCValueDuplicates
                 "                                       errors. By default, Roddy will exit if duplicates are found.",
-                "    --forceNativePluginConversion   - Tell Roddy to override any existing converted Native plugin. By default Roddy will prevent this.",
-                "    --forceKeepExecutionDirectory   - Tell Roddy to keep execution directories. By default Roddy will delete them, if no jobs were executed in a run.",
-                "    --roddyVersion=(version no)     - Use a specific roddy version.",
-                "    --featureToggleConfig={file}    - Some development and backward-compatibility options can be set here. See showFeatureToggles mode.",
+                "    --forcenativepluginconversion   - Tell Roddy to override any existing converted Native plugin. By default Roddy will prevent this.",  // forceNativePluginConversion
+                "    --forcekeepexecutiondirectory   - Tell Roddy to keep execution directories. By default Roddy will delete them, if no jobs were executed in a run.",  // forceKeepExecutionDirectory
+                "    --useRoddyVersion=(version no)  - Use a specific roddy version.",  // roddyVersion
+                "    --usefeaturetoggleconfig={file} - Some development and backward-compatibility options can be set here. See showFeatureToggles mode.",
                 "    --rv=(version no)",
-                "    --pluginVersion=(...,...)       - Supply a list of used plugins and versions.",
+                "    --usePluginVersion=(...,...)     - Supply a list of used plugins and versions.",  // pluginVersion
                 "    --configurationDirectories={path},... ",
-                "                                    - Supply a list of configuration directories.",
-                "    --pluginDirectories={path},...  - Supply a list of plugin directories.",
-                "    --resourcesSize={s,m,l,xl}      - Override the used resources size configured in the plugin- or project configuration.",
+                "                                    - Supply a list of configuration directories.",  // configurationDirectories
+                "    --pluginDirectories={path},...  - Supply a list of plugin directories.",  // pluginDirectories
+                "    --resourcessize={s,m,l,xl}      - Override the used resources size configured in the plugin- or project configuration.",  // resourcesSize
         ].join(Constants.ENV_LINESEPARATOR)
         )
 

@@ -57,7 +57,7 @@ Note, that some changes may break fragile user code and thus potentially lead to
 * 3.8.0
   - minor: Singularity support. Jobs can now be run in singularity containers. Only a single image for a whole workflow is currently supported.
   - minor: Added `group-config.py` script that allows to compile version information reports (JSON) from execution stores.
-  - minor: Commandline run-modes (run, rerun, help) and parameters are now case-insensitive and "use" and "used" prefixes are ignored. E.g., `--useRoddyVersion` now works like `--roddyversion`. This change is backwards-compatible. Furthermore, the names of the fields in the `applicationProperties.ini` remain unchanged. By convention, you should always use only camel-case options without any "use" or "used" prefix.
+  - minor: Commandline startup-modes (run, rerun, help, etc.) are now case-insensitive and "use" and "used" prefixes are ignored.
   - patch: Change reported error for pattern that cannot be matched to file into warning
   - patch: Fix problem with parameter-list interpretation during Roddy startup due to incorrect Bash expression
   - patch: Security-related bumps of some related libraries (org.bouncycastle, org.slf4j)
