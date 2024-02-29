@@ -3,29 +3,33 @@ Singularity/Apptainer Job Containers
 
 Since version 3.8.0 Roddy can execute jobs in Singularity/Apptainer containers.
 
-When submitting a task to the cluster (or executing it locally) with Singularity, the ``wrapInScript.sh`` is not executed natively, but instead the call is wrapped in a Singularity call.
-
-The only differences to the execution without Singularity are
-
-1. The ``wrapInScript.sh`` is not executed natively, but instead the call is wrapped in a Singularity call.
-2. Input and output directories have to be mounted into the container.
+When submitting a task to the cluster (or executing it locally) with Singularity or Apptainer, the ``wrapInScript.sh`` is not executed natively, but instead the call is wrapped in a Singularity call.
 
 Configuration
 -------------
 
 There are a number of configuration values that need to be set to get this feature working:
 
-  * `jobExecutionEnvironment` needs to be set to `singularity` or `apptainer`.
-  * `containerEnginePath` needs to be set to the path of the container engine. By default this is the name of the engine as provided in `jobExecutionEnvironment`, e.g. "singularity". Thus it is assumed that the "singularity" executable is available in the environment (e.g. of `bsub`).
-  * `containerImage` needs to be set to the path of the container image.
-  * `containerMounts` needs to be set to a list of paths to mount into the container. This should be of the format `(mount1 mount2 mount3)`. Note that you don't have to add the `inputBaseDirectory` and `outputBaseDirectory`, because these are added automatically. Be careful with symlinks, as Roddy does not resolve them (neither locally nor remotely).
-  * `apptainerArguments` can be used to pass global parameters to `apptainer exec`. For instance `--contain`, which is advisable to unsure a proper separation between the compute nodes' environment and the analysis environment.
+  * ``jobExecutionEnvironment`` needs to be set to ``singularity`` or ``apptainer``.
+  * ``containerEnginePath`` needs to be set to the path of the container engine. By default this is the name of the engine as provided in ``jobExecutionEnvironment``, e.g. "singularity". Thus it is assumed that the "singularity" executable is available in the environment (e.g. of ``bsub``).
+  * ``containerImage`` needs to be set to the path of the container image.
+  * ``containerMounts`` needs to be set to a list of paths to mount into the container. This should be of the format ``(mount1 mount2 mount3)``. Note that you don't have to add the ``inputBaseDirectory`` and ``outputBaseDirectory``, because these are added automatically. Be careful with symlinks, as Roddy does not resolve them (neither locally nor remotely).
+  * ``apptainerArguments`` can be used to pass global parameters to ``apptainer exec``. For instance ``--contain``, which is advisable to unsure a proper separation between the compute nodes' environment and the analysis environment.
 
-Singularity containers work with setting `outputFileGroup`. We simply change the primary group *before* invoking the `singularity` command.
+Singularity containers work with setting ``outputFileGroup``. We simply change the primary group *before* invoking the ``singularity`` command.
 
-Furthermore, all variables that you can use in your bioinformatic job's top-level scripts that you use without Singularity containers, also are available in Singularity containers. By contrast, only a very limited number of environment variables on the executing environment are available.
+Furthermore, all variables that you can use in your bioinformatic job's top-level scripts that you use without Singularity containers, also are available in Singularity containers.
+By contrast, only a very limited number of environment variables of the executing environment are available.
+This is to achieve a good isolation of the container environment.
 
-Note that Singularity does not resolve symlinks, and Roddy does not help you to automatically resolve symlinks as mount points. This means, if your need to access files you should manually check that paths containing symlinks will be properly mounted into the container at the positions they are expected by your workflow.
+.. note::
+
+    Singularity does not resolve symlinks, and Roddy does not help you to automatically resolve symlinks as mount points.
+    The only exception are the ``inputBaseDirectory`` and ``outputBaseDirectory`` which are automatically mounted into the container.
+
+    This means, if your need to access files you have to add them needed mounts to your ``containerMounts`` manually.
+
+    Special care has to be taken for symlinks. For instance, if you access the tool ``x`` at path ``/your/software/x``, but ``software/`` is a symlink to path ``/anotherDir/software``, then you need to add both paths ``/your`` and ``/anotherDir`` to your ``containerMounts`` variable! Thus, both, the symlink origin ``/your/software`` and the symlink target ``/anotherDir/software`` are available in the container at the expected positions.
 
 .. code-block:: XML
 
