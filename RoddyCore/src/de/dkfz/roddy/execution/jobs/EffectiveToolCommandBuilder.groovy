@@ -165,14 +165,11 @@ class EffectiveToolCommandBuilder {
         // If the outputFileGroup is changed, we need to change the group to the target group **outside** of
         // apptainer/singularity (no `sg` in the container), **and** we have to set a flag on the apptainer/
         // singularity command that indicates that the group-change was done. This depends a bit on the
-        // version of the default plugin. New versions only try to change the group, if the outputFileGroup is
-        // actually different from the current primary group. Older versions, however, a flag needs to be set
-        // to "true". The flag is "sgWasCalled" for DefaultPlugin 1.2.2-5, and "newGrpIsCalled" for DefaultPlugin
-        // <= 1.2.2-4. For the apptainer/singularity use case we always change the group outside, so we just
+        // version of the default plugin. We *always* change the group outside, so we just
         // deactivate the group-change code in the wrapInScrip.sh
         builder = builder.
-                withAddedEnvironmentVariables(["sgWasCalled": u("true")]).
-                withAddedEnvironmentVariables(["newGrpIsCalled": u("true")])
+                withAddedEnvironmentVariables(["sgWasCalled": u("true")]).    // DefaultPlugin >= 1.2.2-5
+                withAddedEnvironmentVariables(["newGrpIsCalled": u("true")])  // DefaultPlugin <= 1.2.2-4
 
         CommandI scriptCommand = groupChangeCommand.map { Command sg ->
             sg.cliAppend(

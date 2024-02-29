@@ -1,7 +1,7 @@
-Singularity Job Containers
-==========================
+Singularity/Apptainer Job Containers
+====================================
 
-Since version 3.8.0 Roddy can execute jobs in Singularity containers.
+Since version 3.8.0 Roddy can execute jobs in Singularity/Apptainer containers.
 
 When submitting a task to the cluster (or executing it locally) with Singularity, the ``wrapInScript.sh`` is not executed natively, but instead the call is wrapped in a Singularity call.
 
@@ -54,6 +54,7 @@ The container can be build with
 
 .. code-block:: bash
 
+    cd $repoDir/containers/dkfz_minimal
     docker build -t ghcr.io/theroddywms/dkfz_minimal:$version -f Dockerfile .
 
 If you do not want to build the container yourself, you can also download a pre-built container from the GitHub Container Registry:
@@ -69,3 +70,15 @@ Finally, for running the container, you first have to convert it into a Singular
     singularity build dkfz_minimal_$version.sif docker-daemon://ghcr.io/theroddywms/dkfz_minimal:$version
 
 Place the ``dkfz_minimal_$version.sif`` in your cluster on a shared filesystem and enter the path as value for the ``containerImage`` configuration value.
+
+Build Your Own Container
+------------------------
+
+Roddy calls the singularity container with `singularity exec` or `apptainer exec` and exports few variables that are needed by the `wrapInScript.sh`.
+The `wrapInScript.sh` has the following requirements
+
+* Bash (prefer a recent version)
+* `lockfile` (from `procmail`)
+* Optionally `strace`
+
+As long as your container starts the wrapper script with Bash and contains the `lockfile` command, it should work.
