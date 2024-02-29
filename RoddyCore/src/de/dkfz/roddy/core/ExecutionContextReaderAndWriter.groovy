@@ -10,7 +10,7 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.ToolEntry
-import de.dkfz.roddy.execution.Executable
+import de.dkfz.roddy.execution.AnyEscapableString
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
@@ -21,7 +21,6 @@ import groovy.transform.TypeCheckingMode
 import groovy.util.slurpersupport.NodeChild
 import groovy.xml.MarkupBuilder
 
-import java.nio.file.Path
 import java.nio.file.Paths
 
 import static de.dkfz.roddy.StringConstants.*
@@ -249,13 +248,13 @@ class ExecutionContextReaderAndWriter {
                         if (ej.fakeJob) continue //Skip fake jobs.
                         job(id: ej.jobID, name: ej.jobName) {
                             String commandString =
-                                    ej.runResult.beCommand != null ? ej.runResult.beCommand.toString() : ""
+                                    ej.runResult.beCommand != null ? ej.runResult.beCommand.toBashCommandString() : ""
                             calledcommand(command: commandString)
                             tool(id: ej.toolID, md5: ej.toolMD5)
                             parameters {
                                 ej.parameters.each {
-                                    String k, String v ->
-                                        parameter(name: k, value: v)
+                                    String k, AnyEscapableString v ->
+                                        parameter(name: k, value: fromBash(v))
                                 }
                             }
                             filesbyjob {

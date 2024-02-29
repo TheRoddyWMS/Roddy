@@ -230,7 +230,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
               , [:] as Map<String, AnyEscapableString>
               , JobLog.toOneFile(new File(context.loggingDirectory, jobName + ".o{JOB_ID}"))
               , null
-              , e(context.accountingName.orElse(null)))
+              , context.accountingName.map { e(it) }.orElse(null))
         Preconditions.checkArgument(context != null)
         Preconditions.checkArgument(jobName != null)
         Preconditions.checkArgument(toolCommand != null)
