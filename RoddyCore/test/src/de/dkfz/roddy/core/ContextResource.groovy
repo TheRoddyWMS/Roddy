@@ -107,6 +107,11 @@ class ContextResource extends ExternalResource {
                 return getTestLoggingDirectory(testClassName)
             }
 
+            @Override
+            File getAnalysisToolsDirectory(ExecutionContext executionContext) {
+                return new File("/some/analysisToolsDirectory")
+            }
+
         }
     }
 

@@ -294,6 +294,10 @@ class ExecutionContext {
         return outputDirectory
     }
 
+    File getRoddyScratchBaseDir() {
+        return new File(configurationValues.get(Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY).toString())
+    }
+
     File getRoddyScratchDir() {
         return new File(configurationValues.get(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW).toString())
     }
@@ -492,18 +496,13 @@ class ExecutionContext {
             toString()
     }
 
-        /** Additionally, to the directories explicitly requested by the caller, Roddy will also mount all necessary
+    /** Additionally, to the directories explicitly requested by the caller, Roddy will also mount all necessary
      *  directories into the container that it knows of. These are
      *
      *    * outputBaseDirectory (RW)
      *    * inputBaseDirectory (RO)
-     *    * scratchDirectory (RW)
-     *
-     *  The path to the scratch directory is usually provided as a variable whose value is only known after the job is
-     *  started, e.g. `/scratch/$USER/$LSB_JOBID/`.
-     *
-     *  Note that this does *not* include the plugin directories, because these are copied into the roddyExecutionStore,
-     *  that is created on the remote side.
+     *    * scratchBaseDirectory (RW)
+     *    * analysisToolsDirectory (RO), which contains the plugin code
      */
     List<BindSpec> getRoddyMounts() {
         [new BindSpec(
@@ -515,16 +514,12 @@ class ExecutionContext {
                 runtimeService.getInputBaseDirectory(this).toPath(),
                 BindSpec.Mode.RO),
         new BindSpec(
-                roddyScratchDir.toPath(),
-                /** NOTE: This will create problems, if the user want to use a different scratch directory.
-                 *        Apptainer could not create the directory itself, or the container directories, like it
-                 *        would on the DKFZ/ODCF cluster.
-                 */
-                roddyScratchDir.toPath(),
+                roddyScratchBaseDir.toPath(),
+                roddyScratchBaseDir.toPath(),
                 BindSpec.Mode.RW),
         new BindSpec(
-                analysisToolsDirectory.toPath(),
-                analysisToolsDirectory.toPath(),
+                getAnalysisToolsDirectory().toPath(),
+                getAnalysisToolsDirectory().toPath(),
                 BindSpec.Mode.RO)]
     }
 
