@@ -137,9 +137,12 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         then:
         result.present
         result.get().command instanceof Code
+        // It is important for DefaultPlugin < 1.3 that `sgWasCalled=true` and for < 1.2.2-4 that
+        // `newGrpIsCalled=true`. Newer versions of the plugin compare the actual primary group
+        // against the desired target group.
         forBash((result.get().command as Code).toEscapableString(true)) ==
                 "#!/bin/bash\n" +
-                "sg someGroup -c apptainer\\ exec\\ --env\\ sgWasCalled\\=true\\ -W\\ /tmp\\ someImage\\ someWrapper\n"
+                "sg someGroup -c apptainer\\ exec\\ --env\\ sgWasCalled\\=true\\ --env\\ newGrpIsCalled\\=true\\ -W\\ /tmp\\ someImage\\ someWrapper\n"
     }
 
     def "no sg with apptainer()"(toolCommand) {
@@ -162,9 +165,10 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         then:
         result.present
         result.get().command instanceof Code
+        // It is OK to set `sgWasCalled=false` because the primary group is not being changed.
         forBash(result.get().command.toEscapableString()) ==
                 "#!/bin/bash\n" +
-                "apptainer exec --env sgWasCalled=true -W /tmp someImage someWrapper"
+                "apptainer exec --env sgWasCalled=true --env newGrpIsCalled=true -W /tmp someImage someWrapper"
 
         where:
         toolCommand                                                                           | _
