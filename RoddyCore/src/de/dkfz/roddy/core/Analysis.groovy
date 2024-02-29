@@ -142,7 +142,8 @@ class Analysis {
     File getInputBaseDirectory() {
         if (inputBaseDirectory == null)
             inputBaseDirectory = runtimeService.getInputBaseDirectory(this)
-        Preconditions.checkArgument(inputBaseDirectory != null)
+        Preconditions.checkArgument(inputBaseDirectory != null,
+                                    "inputBaseDirectory cannot be null")
         return inputBaseDirectory
     }
 
@@ -153,7 +154,8 @@ class Analysis {
      */
     File getOutputBaseDirectory() {
         File outputBaseDirectory = runtimeService.getOutputBaseDirectory(this)
-        Preconditions.checkArgument(outputBaseDirectory != null)
+        Preconditions.checkArgument(outputBaseDirectory != null,
+                                    "outputBaseDirectory cannot be null")
         return outputBaseDirectory
     }
 
@@ -490,7 +492,7 @@ class Analysis {
                         boolean ignoreFileChecks =
                                 Roddy.isOptionSet(RoddyStartupOptions.disableStrictFileChecks)
                         execute &= ignoreFileChecks ||
-                                (invalidPreparedFiles.size() == 0 && copiedAnalysisToolsAreExecutable)
+                                (invalidPreparedFiles.isEmpty() && copiedAnalysisToolsAreExecutable)
                         if (!execute) {
                             StringBuilder message =
                                     new StringBuilder('There were errors after preparing the workflow run for dataset '

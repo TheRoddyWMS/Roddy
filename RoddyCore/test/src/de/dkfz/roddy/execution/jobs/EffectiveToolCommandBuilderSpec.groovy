@@ -111,7 +111,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         Optional<ToolCommand> result = builder.build(someToolCommand)
 
         then:
-        result.present
+        result.isPresent()
         result.get().command instanceof Command
         (result.get().command as Command).toCommandSegmentList() == [u("someWrapper")]
     }
@@ -135,7 +135,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         Optional<ToolCommand> result = builder.build(someToolCommand)
 
         then:
-        result.present
+        result.isPresent()
         result.get().command instanceof Code
         // It is important for DefaultPlugin < 1.3 that `sgWasCalled=true` and for < 1.2.2-4 that
         // `newGrpIsCalled=true`. Newer versions of the plugin compare the actual primary group
@@ -163,7 +163,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         Optional<ToolCommand> result = builder.build(toolCommand)
 
         then:
-        result.present
+        result.isPresent()
         result.get().command instanceof Code
         // It is OK to set `sgWasCalled=false` because the primary group is not being changed.
         forBash(result.get().command.toEscapableString()) ==
