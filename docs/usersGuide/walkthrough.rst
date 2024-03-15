@@ -121,8 +121,19 @@ Usually, you just need to change the following settings:
    SSH and no keyfiles
 -  CLI.executionServiceStorePassword - If you want to store the
    password, put in true, however, the password is stored in plain-text!
--  scratchBaseDirectory - A path to a preferably fast local storage on the
-   execution hosts. E.g. /local/$USER
+-  scratchBaseDirectory - A path on the execution hosts. E.g. `/local/$USER`.
+   This path must exist on the execution host before a job is started and must
+   be writable for the user executing the jobs on the execution host. If you
+   running jobs in containers, the path will be attempted to be bound into
+   the container, which fails, if the directory does not exist. The path
+   may contain shell variable references referring to variables on the
+   execution host. If variables are in the format `${varName}` then Roddy
+   will try to resolve the variable on the submission side with values from
+   the configuration values. If that fails, the reference remains unresolved
+   and may be resolved on the execution side. If the variable is in the format
+   `$varName` then Roddy will not try to resolve the variable from the configuration
+   values.
+
 
 You might remember or store away the above options for future usage
 as its likely, that they won't change too often. For you the more important

@@ -29,6 +29,7 @@ To run Roddy you need at least
 - zip/unzip
 - bash
 - the tool `lockfile` (usually in the procmail mail-processing-package (v3.22), only needed on job execution hosts)
+- the `pstree` tool (e.g. in the "psmisc" package in CentOS).
 
 As Roddy is Linux based, you will be able to find most of these in your OS package manager. For the JDK and Groovy, -- both required on the host on which you run Roddy -- you may want to use `SDKMan`_. The following will get you going:
 
@@ -116,8 +117,8 @@ The installation of specific plugin version needs to be done in directories name
 On the long run, this manual plugin installation mechanism may get automatized.
 
 
-[Optional] Setup GroovyServ
----------------------------
+[Optional] Setup GroovyServ (deprecated)
+----------------------------------------
 
 Roddy uses Groovy, however, Groovy is a bit slow to start. So Roddy 3.0+ supports `GroovyServ`_, which can be used by you to speed things up.
 GroovyServ tremendously decreases the startup time of Groovy applications and Roddy will try to download and set it up automatically. If that fails or

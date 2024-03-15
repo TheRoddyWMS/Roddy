@@ -14,49 +14,99 @@ import java.util.logging.Level;
  */
 public class ExecutionContextError implements Serializable {
 
-    public static final ExecutionContextError EXECUTION_SETUP_INVALID = new ExecutionContextError("The workflow setup is not correct.", Level.SEVERE);
+    public static final ExecutionContextError EXECUTION_SETUP_INVALID = new ExecutionContextError(
+            "The workflow setup is not correct.",
+            Level.SEVERE);
 
-    public static final ExecutionContextError EXECUTION_SCRIPT_INVALID = new ExecutionContextError("A script file is not valid.", Level.SEVERE);
+    public static final ExecutionContextError EXECUTION_SCRIPT_INVALID = new ExecutionContextError(
+            "A script file is not valid.",
+            Level.SEVERE);
 
-    public static final ExecutionContextError EXECUTION_SCRIPT_NOTFOUND = new ExecutionContextError("A script file could not be found in the configuration or the id is invalid.", Level.SEVERE);
+    public static final ExecutionContextError EXECUTION_SCRIPT_NOTFOUND = new ExecutionContextError(
+            "A script file could not be found in the configuration or the id is invalid.",
+            Level.SEVERE);
 
-    public static final ExecutionContextError EXECUTION_BASEPATH_NOTFOUND = new ExecutionContextError("A base path could not be found in the configuration or the id is invalid.", Level.SEVERE);
+    public static final ExecutionContextError EXECUTION_BASEPATH_NOTFOUND = new ExecutionContextError(
+            "A base path could not be found in the configuration or the id is invalid.",
+            Level.SEVERE);
 
-    public static final ExecutionContextError EXECUTION_PATH_NOTFOUND = new ExecutionContextError("A path could not be found.", Level.SEVERE);
+    public static final ExecutionContextError EXECUTION_PATH_NOTFOUND = new ExecutionContextError(
+            "A path could not be found.",
+            Level.SEVERE);
 
-    public static final ExecutionContextError EXECUTION_PATH_NOTFOUND_WARN = new ExecutionContextError("A path could not be found.", Level.WARNING);
+    public static final ExecutionContextError EXECUTION_PATH_NOTFOUND_WARN = new ExecutionContextError(
+            "A path could not be found.",
+            Level.WARNING);
 
-    public static final ExecutionContextError EXECUTION_PATH_INACCESSIBLE = new ExecutionContextError("A path could not be accessed.", Level.SEVERE);
+    public static final ExecutionContextError EXECUTION_PATH_INACCESSIBLE = new ExecutionContextError(
+            "A path could not be accessed.",
+            Level.SEVERE);
 
-    public static final ExecutionContextError EXECUTION_PATH_NOTWRITABLE = new ExecutionContextError("A path is not writable.", Level.SEVERE);
+    public static final ExecutionContextError EXECUTION_PATH_NOTWRITABLE = new ExecutionContextError(
+            "A path is not writable.",
+            Level.SEVERE);
 
-    public static final ExecutionContextError EXECUTION_FILECREATION_PATH_NOTSET= new ExecutionContextError("A file object has no valid path.", Level.SEVERE);
+    public static final ExecutionContextError EXECUTION_FILECREATION_PATH_NOTSET= new ExecutionContextError(
+            "A file object has no valid path.",
+            Level.SEVERE);
 
-    public static final ExecutionContextError EXECUTION_FILECREATION_NOCONSTRUCTOR= new ExecutionContextError("There is no constructor for automatic file name creation available.", Level.SEVERE);
+    public static final ExecutionContextError EXECUTION_FILECREATION_NOCONSTRUCTOR= new ExecutionContextError(
+            "There is no constructor for automatic file name creation available.",
+            Level.SEVERE);
 
-    public static final ExecutionContextError EXECUTION_FILECREATION_FIELDINACCESSIBLE = new ExecutionContextError("A field / variable is not accessible in the target object.", Level.SEVERE);
+    public static final ExecutionContextError EXECUTION_FILECREATION_FIELDINACCESSIBLE = new ExecutionContextError(
+            "A field / variable is not accessible in the target object.",
+            Level.SEVERE);
 
-    public static final ExecutionContextError EXECUTION_BINARY_INVALID = new ExecutionContextError("A binary file is not valid.", Level.SEVERE);
+    public static final ExecutionContextError EXECUTION_BINARY_INVALID = new ExecutionContextError(
+            "A binary file is not valid.",
+            Level.SEVERE);
 
-    public static final ExecutionContextError EXECUTION_JOBFAILED = new ExecutionContextError("The execution of a job failed.", Level.SEVERE);
+    public static final ExecutionContextError EXECUTION_JOBFAILED = new ExecutionContextError(
+            "The execution of a job failed.",
+            Level.SEVERE);
 
-    public static final ExecutionContextError EXECUTION_NOINPUTDATA = new ExecutionContextError("No input data was found.", Level.SEVERE);
+    public static final ExecutionContextError EXECUTION_NOINPUTDATA = new ExecutionContextError(
+            "No input data was found.",
+            Level.SEVERE);
 
-    public static final ExecutionContextError EXECUTION_UNCAUGHTERROR = new ExecutionContextError("An uncaught error occurred during a run.", Level.SEVERE);
+    public static final ExecutionContextError EXECUTION_UNCAUGHTERROR = new ExecutionContextError(
+            "An uncaught error occurred during a run.",
+            Level.SEVERE);
 
-    public static final ExecutionContextError EXECUTION_SUBMISSION_FAILURE = new ExecutionContextError("The job submission did not work, aborting job submission.", Level.SEVERE);
+    public static final ExecutionContextError EXECUTION_SUBMISSION_FAILURE = new ExecutionContextError(
+            "The job submission did not work, aborting job submission.",
+            Level.SEVERE);
 
-    public static final ExecutionContextError READBACK_NOREALJOBCALLSFILE = new ExecutionContextError("The created calls log file is missing => No information about created jobs is available.", Level.SEVERE);
+    public static final ExecutionContextError READBACK_NOREALJOBCALLSFILE = new ExecutionContextError(
+            "The created calls log file is missing => No information about created jobs is available.",
+            Level.SEVERE);
 
-    public static final ExecutionContextError READBACK_NOJOBSTATESFILE = new ExecutionContextError("The job jobState log file is missing => No information about job states is available.", Level.WARNING);
+    public static final ExecutionContextError READBACK_NOJOBSTATESFILE = new ExecutionContextError(
+            "The job jobState log file is missing => No information about job states is available.",
+            Level.WARNING);
 
-    public static final ExecutionContextError READBACK_NOBINARYSERIALIZEDJOBS = new ExecutionContextError("The binary file with serialized job objects is missing => No extended job info is available.", Level.WARNING);
+    public static final ExecutionContextError READBACK_NOBINARYSERIALIZEDJOBS = new ExecutionContextError(
+            "The binary file with serialized job objects is missing " +
+                    "=> No extended job info is available.",
+            Level.WARNING);
 
-    public static final ExecutionContextError READBACK_NOEXECUTEDJOBSFILE = new ExecutionContextError("The xml document with information about started jobs is missing => No extended job info is available.", Level.WARNING);
+    public static final ExecutionContextError READBACK_NOEXECUTEDJOBSFILE = new ExecutionContextError(
+            "The xml document with information about started jobs is missing " +
+                    "=> No extended job info is available.",
+            Level.WARNING);
 
-    public static final ExecutionContextError EXECUTION_GETJOBNAME_NOT_POSSIBLE = new ExecutionContextError("Roddy was not able to apply a jobname pattern for a basefile.", Level.SEVERE);
+    public static final ExecutionContextError EXECUTION_GETJOBNAME_NOT_POSSIBLE = new ExecutionContextError(
+            "Roddy was not able to apply a jobname pattern for a basefile.",
+            Level.SEVERE);
 
-    public static final ExecutionContextError EXECUTION_PARAMETER_ISNULL_NOTUSABLE = new ExecutionContextError("A parameter cannot be used because it has a value of null.", Level.SEVERE);
+    public static final ExecutionContextError EXECUTION_PARAMETER_ISNULL_NOTUSABLE = new ExecutionContextError(
+            "A parameter cannot be used because it has a value of null.",
+            Level.SEVERE);
+
+    public static final ExecutionContextError CANNOT_WRAP_INLINE_SCRIPT_IN_CONTAINER_CALL = new ExecutionContextError(
+            "Inline scripts cannot be wrapped by a container.",
+            Level.SEVERE);
 
 
     public final String description;

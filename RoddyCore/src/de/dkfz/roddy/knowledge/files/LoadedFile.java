@@ -7,6 +7,7 @@
 package de.dkfz.roddy.knowledge.files;
 
 import de.dkfz.roddy.core.ExecutionContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -28,7 +29,11 @@ public class LoadedFile {
 
     private String baseFileImplClass;
 
-    public LoadedFile(File path, String createdByJob, ExecutionContext context, List<LoadedFile> parentFiles, String baseFileImplClass) {
+    public LoadedFile(@NotNull File path,
+                      String createdByJob,
+                      @NotNull ExecutionContext context,
+                      List<LoadedFile> parentFiles,
+                      @NotNull String baseFileImplClass) {
         this.path = path;
         this.createdByJob = createdByJob;
         this.context = context;

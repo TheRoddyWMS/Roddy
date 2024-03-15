@@ -26,7 +26,7 @@ public class ToolTupleParameter extends ToolEntry.ToolParameterOfFiles {
     }
 
     @Override
-    public ToolTupleParameter clone() {
+    public ToolTupleParameter clone() throws CloneNotSupportedException {
         List<ToolEntry.ToolParameterOfFiles> _files = new LinkedList<>();
         for (ToolEntry.ToolParameterOfFiles tf : files) _files.add(tf.clone());
         return new ToolTupleParameter(_files);

@@ -3,6 +3,7 @@ version: 2.1
 executors:
   docker-executor:
     docker:
+      # Version for Gradle 5.1 should be JDK 11 (e.g. circleci/openjdk:11.0.13-jdk-buster)?
       - image: circleci/openjdk:8u312-jdk  # contains both `zip` and `jar`
 jobs: # a collection of steps
   pre-build:
@@ -51,7 +52,7 @@ jobs: # a collection of steps
             # We need at least these two plugins for the tests.
             git clone https://github.com/TheRoddyWMS/Roddy-Default-Plugin.git dist/plugins/DefaultPlugin
             git clone https://github.com/TheRoddyWMS/Roddy-Base-Plugin.git dist/plugins/PluginBase
-            ./gradlew test build $GRADLE_ARGS
+            ./gradlew build test $GRADLE_ARGS
       - save_cache:
           paths:
             - ~/.gradle/wrapper

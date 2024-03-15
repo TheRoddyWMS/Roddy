@@ -71,8 +71,7 @@ function getValueFromConfigOrCommandLine() {
   local var="none"
   local startIndex
 
-  IFS=""
-  for i in "${fullParameterList[@]}"; do
+  for i in ${fullParameterList[@]}; do
     if [[ $i == --${valueNameOnCLI}*  ]]; then
       startIndex=$(expr 2 + ${#valueNameOnCLI} + 1)
       var=${i:$startIndex:800}
@@ -84,7 +83,6 @@ function getValueFromConfigOrCommandLine() {
   if [[ ${var-none} == none ]]; then
     var=$(grepFromConfigFile $valueNameInCfg $customconfigfile)
   fi
-  IFS=$OFS
   echo $var
 }
 

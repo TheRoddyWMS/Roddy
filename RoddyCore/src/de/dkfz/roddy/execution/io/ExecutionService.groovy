@@ -31,6 +31,7 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.shell.bash.Service as BashService
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 
 import java.text.ParseException
 import java.time.Duration
@@ -168,7 +169,9 @@ abstract class ExecutionService implements BEExecutionService {
      * @param jobNameExtension
      * @return
      */
-    List<String> runDirect(ExecutionContext context, String toolID, Map<String, Object> parameters = null) {
+    List<String> runDirect(@NotNull ExecutionContext context,
+                           @NotNull String toolID,
+                           Map<String, Object> parameters = null) {
 
         if (!parameters) parameters = [:]
         parameters[DISABLE_DEBUG_OPTIONS_FOR_TOOLSCRIPT] = "true"
@@ -177,11 +180,8 @@ abstract class ExecutionService implements BEExecutionService {
         Job wrapperJob = new Job(
                 context,
                 context.timestampString + "_directTool:" + toolID,
-                toolID,
-                null as String,
-                parameters,
-                null,
-                null)
+                context.getToolCommand(toolID),
+                parameters)
         DirectSynchronousExecutionJobManager jobManager =
                 new DirectSynchronousExecutionJobManager(instance, JobManagerOptions.create().build())
         wrapperJob.setJobManager(jobManager)

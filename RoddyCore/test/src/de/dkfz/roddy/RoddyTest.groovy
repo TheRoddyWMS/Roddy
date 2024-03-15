@@ -7,6 +7,7 @@
 package de.dkfz.roddy
 
 import de.dkfz.roddy.client.RoddyStartupModes
+import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.client.cliclient.CommandLineCall
 import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.execution.jobs.cluster.pbs.PBSJobManager
@@ -59,22 +60,48 @@ class RoddyTest {
         temporarySettingsDirectory.deleteDir()
     }
 
+    @Test
+    void testArgumentParsingAndProcessing() {
+        Field f = Roddy.class.getDeclaredField("commandLineCall")
+        f.setAccessible(true)
+        f.set(null, new CommandLineCall(["testrun", "a@b"]))
+
+        assert !Roddy.commandLineCall.isOptionSet(RoddyStartupOptions.additionalImports)
+
+        f.set(null, new CommandLineCall(["testrun", "a@b",
+                                         "--usedresourcessize=xl",
+                                         "--config=/path/to/config",
+                                         "--additionalImports=/path/to/imports",
+                                         "--useRoddyVersion=develop"]))
+
+        assert Roddy.commandLineCall.isOptionSet(RoddyStartupOptions.resourcesSize)
+        assert Roddy.commandLineCall.isOptionSet(RoddyStartupOptions.config)
+        assert Roddy.commandLineCall.isOptionSet(RoddyStartupOptions.additionalImports)
+        assert Roddy.commandLineCall.isOptionSet(RoddyStartupOptions.roddyVersion)
+
+    }
 
     @Test
     void testGetUsedResourceSize() {
+        Field f = Roddy.class.getDeclaredField("commandLineCall")
+        f.setAccessible(true)
+
         // Nothing in.
+        f.set(null, new CommandLineCall(["testrun", "a@b"]))
         assert Roddy.getUsedResourcesSize() == null
 
         // Wrongly set => null
-        Field f = Roddy.class.getDeclaredField("commandLineCall")
-        f.setAccessible(true)
-        f.set(null, new CommandLineCall(["testrun", "a@b", "--usedresourcessize=xlff"]))
+        f.set(null, new CommandLineCall(["testrun", "a@b", "--usedresourcessize=FFFxl"]))
 
         assert Roddy.getUsedResourcesSize() == null
 
-        // Right set
-        f.set(null, new CommandLineCall(["testrun", "a@b", "--usedresourcessize=l"]))
+        // Correctly set
+        f.set(null, new CommandLineCall(["testrun", "a@b", "--resourcesSize=l"]))
         assert Roddy.getUsedResourcesSize() == ResourceSetSize.l
+
+        // Correctly set
+        f.set(null, new CommandLineCall(["testrun", "a@b", "--usedresourcessize=xl"]))
+        assert Roddy.getUsedResourcesSize() == ResourceSetSize.xl
     }
 
     @Ignore

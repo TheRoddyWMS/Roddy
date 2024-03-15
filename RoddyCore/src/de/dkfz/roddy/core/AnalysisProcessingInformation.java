@@ -11,10 +11,11 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * This class stores all process relevant information for a dataset.
- * These information contain (previous) runs
+ * These information contain (previous) runs.
  */
 public class AnalysisProcessingInformation extends InfoObject {
 
@@ -94,11 +95,16 @@ public class AnalysisProcessingInformation extends InfoObject {
     }
 
     @Override
-    public String toString() {
-        return String.format("AnalysisProcessingInformation with timestamp %s for path %s and analysis %s", InfoObject.formatTimestamp(getTimeStamp()), execPath.getAbsolutePath(), analysis.getName());
+    public int hashCode() {
+        return Objects.hash(analysis, execPath, dataSet);
     }
 
-//    public void addListener(AnalysisProcessingInformationListener apil) {
-//        this.listeners.add(apil);
-//    }
+    @Override
+    public String toString() {
+        return String.format("AnalysisProcessingInformation with timestamp %s for path %s and analysis %s",
+                             InfoObject.formatTimestamp(getTimeStamp()),
+                             execPath.getAbsolutePath(),
+                             analysis.getName());
+    }
+
 }

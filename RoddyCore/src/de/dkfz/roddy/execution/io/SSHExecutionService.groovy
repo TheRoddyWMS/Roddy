@@ -341,11 +341,6 @@ class SSHExecutionService extends RemoteExecutionService {
     SSHExecutionService() {
     }
 
-    @Override
-    boolean isLocalService() {
-        return false
-    }
-
     private SSHPoolConnectionSet waitForService() {
         if (!connectionPool.check())
             connectionPool.initialize()

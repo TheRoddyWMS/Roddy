@@ -82,4 +82,17 @@ public class ConfigurationConstants {
 
     public static final String CVALUE_ACCOUNTING_NAME = "accountingName";
 
+    public static final String CVALUE_JOB_EXECUTION_ENVIRONMENT = "jobExecutionEnvironment";
+
+    public static final String CVALUE_CONTAINER_ENGINE_PATH = "containerEnginePath";
+
+    public static final String CVALUE_APPTAINER_ARGUMENTS = "apptainerArguments";
+
+    public static final String CVALUE_CONTAINER_MOUNTS = "containerMounts";
+
+    /** Note: The containerImage value can be any string that is understood by the engine provided via
+     *  jobExecutionEnvironment as an image. So it can be a docker-daemon: URL, a file path, or whatever.
+     */
+    public static final String CVALUE_CONTAINER_IMAGE = "containerImage";
+
 }

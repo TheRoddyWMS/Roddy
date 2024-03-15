@@ -29,7 +29,9 @@ public enum ExecutionContextLevel implements Serializable {
     TESTRERUN(false,false),
     /**
      * Allowed after run/rerun
-     * Tells the system that submitting jobs is not allowed any more
+     * Tells the system that submitting jobs is not allowed anymore
+     *
+     * Philip: Not sure why this is `allowedToSubmitJobs` despite the comment above.
      */
     ABORTED(false, true),
     /**

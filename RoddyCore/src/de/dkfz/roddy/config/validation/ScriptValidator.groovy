@@ -12,6 +12,7 @@ import de.dkfz.roddy.config.AnalysisConfiguration
 import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.core.ExecutionContextError
+import groovy.transform.CompileStatic
 
 import static de.dkfz.roddy.config.ConfigurationConstants.*
 import static de.dkfz.roddy.StringConstants.*
@@ -23,21 +24,23 @@ import static de.dkfz.roddy.StringConstants.*
  *  - TODO Access to scripts on runtime? Or is this for the ExecutionContext
  *  - Variable usage and declaration
  */
-@groovy.transform.CompileStatic
+@CompileStatic
 class ScriptValidator extends ConfigurationValidator {
 
     private List<File> listOfCalledScripts = []
 
     private Map<File, String> toolIDsByScript = [:]
 
-    // Create a list of special characters which can occur in the complex variable syntax. The name is always in front of one of those.
+    // Create a list of special characters which can occur in the complex variable syntax. The name is always
+    // in front of one of those.
     // TODO This list has to be configurable, some can also be coming from the command factory.
     // Keep a list of blacklistet variables, those are not checked.
     public final List<String> blacklist = []
 
     ScriptValidator(Configuration cfg) {
         super(cfg)
-        blacklist = (cfg.configurationValues.get("blacklistForScriptValidation").toStringList() + Roddy.jobManager.environmentVariableGlobs)
+        blacklist = (cfg.configurationValues.get("blacklistForScriptValidation").toStringList() +
+                Roddy.jobManager.environmentVariableGlobs)
     }
 
     @Override

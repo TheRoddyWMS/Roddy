@@ -10,6 +10,9 @@ package de.dkfz.roddy.config;
  * Created by heinold on 21.02.17.
  */
 public class UnknownConfigurationFileTypeException extends Exception {
+
+    static final long serialVersionUID = 987698762369712143L;
+
     public UnknownConfigurationFileTypeException(String message) {
         super(message);
     }

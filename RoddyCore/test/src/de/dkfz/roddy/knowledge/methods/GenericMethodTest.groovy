@@ -6,11 +6,13 @@
 
 package de.dkfz.roddy.knowledge.methods
 
-import static de.dkfz.roddy.config.FilenamePattern.DEFAULT_SELECTIONTAG
-
+import de.dkfz.roddy.RunMode
 import de.dkfz.roddy.config.*
 import de.dkfz.roddy.core.ContextResource
 import de.dkfz.roddy.core.ExecutionContext
+import de.dkfz.roddy.execution.io.ExecutionService
+import de.dkfz.roddy.execution.io.NoNoExecutionService
+import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.knowledge.files.FileObject
@@ -22,6 +24,8 @@ import org.junit.ClassRule
 import org.junit.Test
 
 import java.lang.reflect.Constructor
+
+import static de.dkfz.roddy.config.FilenamePattern.DEFAULT_SELECTIONTAG
 
 /**
  * Created by heinold on 19.01.16.
@@ -41,6 +45,8 @@ class GenericMethodTest {
 
     @BeforeClass
     static void setup() {
+        ExecutionService.initializeService(NoNoExecutionService, RunMode.UI)
+        FileSystemAccessProvider.initializeProvider(true)
 
         fileBaseClass = LibrariesFactory.instance.loadRealOrSyntheticClass('FileBaseClass', BaseFile.name)
         derivedFileClass = LibrariesFactory.instance.loadRealOrSyntheticClass('DerivedFileClass', BaseFile.name)
@@ -87,7 +93,7 @@ class GenericMethodTest {
 
     @Test
     void testCreateOutputFileGroupWithStringFGIndex() {
-        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, derivedFileClass, 'APARM', ToolFileGroupParameter.PassOptions.parameters, ToolFileGroupParameter.IndexOptions.strings, DEFAULT_SELECTIONTAG)
+        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, derivedFileClass, 'APARM', ToolFileGroupParameter.PassOptions.PARAMETERS, ToolFileGroupParameter.IndexOptions.STRINGS, DEFAULT_SELECTIONTAG)
         FileGroup fg = new GenericMethod('testTool', null, getBaseFile(), stringIndices).createOutputFileGroup(tfg) as FileGroup
         assert fg.filesInGroup.size() == stringIndices.size()
         for (int i = 0; i < stringIndices.size(); i++) {
@@ -95,15 +101,24 @@ class GenericMethodTest {
         }
     }
 
-    @Test(expected = NegativeArraySizeException)
-    void testCreateOutputFileGroupWithNegativeIndexValues() {
-        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, fileBaseClass, 'APARM', ToolFileGroupParameter.PassOptions.parameters, ToolFileGroupParameter.IndexOptions.strings, DEFAULT_SELECTIONTAG)
-        new GenericMethod('testTool', null, getBaseFile(), -1).createOutputFileGroup(tfg) as FileGroup
+    @Test(expected = IllegalArgumentException)
+    void testCreateOutputFileGroupWithIllegalArgumentException() {
+        def tfg = new ToolFileGroupParameter(
+                GenericFileGroup as Class<FileGroup>,
+                fileBaseClass,
+                'APARM',
+                ToolFileGroupParameter.PassOptions.PARAMETERS,
+                ToolFileGroupParameter.IndexOptions.STRINGS,
+                DEFAULT_SELECTIONTAG)
+        new GenericMethod('testTool',
+                null,
+                getBaseFile(),
+                -1).createOutputFileGroup(tfg) as FileGroup
     }
 
     @Test(expected = RuntimeException)
     void testCreateOutputFileGroupWithMissingIndexValues() {
-        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, fileBaseClass, 'APARM', ToolFileGroupParameter.PassOptions.parameters, ToolFileGroupParameter.IndexOptions.strings, DEFAULT_SELECTIONTAG)
+        def tfg = new ToolFileGroupParameter(GenericFileGroup as Class<FileGroup>, fileBaseClass, 'APARM', ToolFileGroupParameter.PassOptions.PARAMETERS, ToolFileGroupParameter.IndexOptions.STRINGS, DEFAULT_SELECTIONTAG)
         new GenericMethod('testTool', null, getBaseFile(), []).createOutputFileGroup(tfg) as FileGroup
     }
 

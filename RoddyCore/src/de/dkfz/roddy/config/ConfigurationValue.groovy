@@ -365,16 +365,16 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
     }
 
     private List<String> _bashArrayToStringList() {
-        String vTemp = value.trim()[1 .. -3].trim() //Split away () and leading or trailing white characters.
-        String[] temp = vTemp.split(SPLIT_WHITESPACE) //Split by white character
+        String vTemp = value.trim()[1 .. -3].trim() // Split away () and leading or trailing white characters.
+        String[] temp = vTemp.split(SPLIT_WHITESPACE) // Split by white character
 
         // Ignore leading and trailing brackets
         List<String> resultStrings = [] as LinkedList<String>
 
         for (int i = 0; i < temp.length; i++) {
 
-            //Detect if value is a range { .. }
-            //TODO Enable array of this form {1..N}C = 1C 2C 3C 4C .. NC
+            // Detect if value is a range { .. }
+            // TODO Enable array of this form {1..N}C = 1C 2C 3C 4C .. NC
             if (temp[i].startsWith(BRACE_LEFT) && temp[i].contains(BRACE_RIGHT) && temp[i].contains(DOUBLESTOP)) {
                 String[] rangeTemp = temp[i].split(SPLIT_DOUBLESTOP)
                 int start = Integer.parseInt(rangeTemp[0].replace(BRACE_LEFT, EMPTY).trim())
@@ -382,8 +382,8 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
                 for (int j = start; j <= end; j++) {
                     resultStrings.add(EMPTY + j)
                 }
-            } else {
-                //Just append the value.
+            } else if (temp[i].length() > 0) {
+                // Just append the non-empty value.
                 resultStrings.add(temp[i])
             }
         }
@@ -395,23 +395,29 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         return toStringList(",", new String[0])
     }
 
-    List<String> toStringList(String delimiter, String[] ignoreStrings) {
+    /** Parse the parameter into a string list.
+     *
+     * @param delimiters      If the parameter is declared as bashArray, then the delimiter is ignored.
+     * @param ignoreStrings
+     * @return
+     */
+    List<String> toStringList(String delimiters, String[] ignoreStrings) {
         if (CVALUE_TYPE_BASH_ARRAY == type) {
             return _bashArrayToStringList()
-        }
+        } else {
+            String[] temp = value.split(SBRACKET_LEFT + delimiters + SBRACKET_RIGHT)
+            List<String> tempList = [] as LinkedList<String>
+            List<String> ignorable = Arrays.asList(ignoreStrings)
 
-        String[] temp = value.split(SBRACKET_LEFT + delimiter + SBRACKET_RIGHT)
-        List<String> tempList = [] as LinkedList<String>
-        List<String> ignorable = Arrays.asList(ignoreStrings)
-
-        for (String _t : temp) {
-            String trimmed = _t.trim()
-            if (trimmed.length() == 0) continue
-            if (ignorable.contains(trimmed))
-                continue
-            tempList.add(trimmed)
+            for (String _t : temp) {
+                String trimmed = _t.trim()
+                if (trimmed.length() == 0) continue
+                if (ignorable.contains(trimmed))
+                    continue
+                tempList.add(trimmed)
+            }
+            return tempList
         }
-        return tempList
     }
 
     @Override
