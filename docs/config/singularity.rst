@@ -13,7 +13,7 @@ There are a number of configuration values that need to be set to get this featu
   * ``jobExecutionEnvironment`` needs to be set to ``singularity`` or ``apptainer``.
   * ``containerEnginePath`` needs to be set to the path of the container engine. By default this is the name of the engine as provided in ``jobExecutionEnvironment``, e.g. "singularity". Thus it is assumed that the "singularity" executable is available in the environment (e.g. of ``bsub``).
   * ``containerImage`` needs to be set to the path of the container image.
-  * ``containerMounts`` needs to be set to a list of paths to mount into the container. This should be of the format ``(mount1 mount2 mount3)``. Note that you don't have to add the ``inputBaseDirectory`` and ``outputBaseDirectory``, because these are added automatically. Be careful with symlinks, as Roddy does not resolve them (neither locally nor remotely).
+  * ``containerMounts`` needs to be set to a list of paths to mount into the container or mount specifications, each of the form ``hostPath:containerPath:mode``. The overall variable value should be of the format ``(mount1 mount2 mount3)``. Note that you don't have to add the ``inputBaseDirectory`` and ``outputBaseDirectory`` to ``containerMounts``, because these are added automatically. Be careful with symlinks, as Roddy does not resolve them (neither locally nor remotely).
   * ``apptainerArguments`` can be used to pass global parameters to ``apptainer exec``. For instance ``--contain``, which is advisable to unsure a proper separation between the compute nodes' environment and the analysis environment.
 
 Singularity containers work with setting ``outputFileGroup``. We simply change the primary group *before* invoking the ``singularity`` command.
@@ -25,11 +25,28 @@ This is to achieve a good isolation of the container environment.
 .. note::
 
     Singularity does not resolve symlinks, and Roddy does not help you to automatically resolve symlinks as mount points.
-    The only exception are the ``inputBaseDirectory`` and ``outputBaseDirectory`` which are automatically mounted into the container.
 
-    This means, if your need to access files you have to add them needed mounts to your ``containerMounts`` manually.
+    This means, if your need to access files you have to add them needed manually add symlink targets as mounts to your ``containerMounts``.
 
-    Special care has to be taken for symlinks. For instance, if you access the tool ``x`` at path ``/your/software/x``, but ``software/`` is a symlink to path ``/anotherDir/software``, then you need to add both paths ``/your`` and ``/anotherDir`` to your ``containerMounts`` variable! Thus, both, the symlink origin ``/your/software`` and the symlink target ``/anotherDir/software`` are available in the container at the expected positions.
+    For instance, if you access the tool ``x`` at path ``/your/software/x``, but ``/your/software`` is a symlink to path ``/anotherDir/software/``, then you need to add both paths ``/your`` and ``/anotherDir`` to your ``containerMounts`` variable!
+    This way, both, the symlink origin ``/your/software`` and the symlink target ``/anotherDir/software`` are available in the container at the expected positions.
+    If the tool ``x`` is than accessed from within the container, this can be done via the ``/your/software/x`` path as expected.
+
+.. note::
+
+    It is possible to map a host-path to a distinct container-path, which is useful to decouple the paths on the host system from the paths used in the workflow configuration.
+
+    Using this feature, you can, for instance, move a legacy software stack directory installed on the host system with Conda or virtualenv (which both have the installation paths hardcoded in the environment and cannot be moved without breaking them!) to another directory without having to reinstall all packages.
+    Of course, usually, you will strive to install all the software dependencies within the container, right? ;D
+
+    It is important to remember that Roddy will not modify any paths in your configuration values, and that workflow plugin code (implemented, e.g. in Groovy) will run in the host environment, while, if you use Singularity, the workflow jobs will run in the container environment.
+    This means that if configuration values are used in environments.
+
+    For instance, you have a reference file ``/hostPath/to/genome.fasta`` and check the accessibility of this file at submission time from the Groovy code in workflow plugin, which will be done in  the host environment.
+    Then later, if the same file is used in a cluster job that is wrapped by a Singularity call, then the file will be accessed from the container environment, and will not be available, if you map the ``/hostPath/to/`` to a different path in the container.
+
+    This limitation can be worked around with a host- and container-related variables, which, however, adds complexity to the workflow configuration.
+
 
 .. code-block:: XML
 

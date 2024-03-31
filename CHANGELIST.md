@@ -58,6 +58,7 @@ Note, that some changes may break fragile user code and thus potentially lead to
   - minor: Singularity support. Jobs can now be run in singularity containers. Currently, only a single image for a whole workflow is supported.
     > This is only implemented and tested for LSF and SLURM, not tested for PBS and SGE, and not implemented at all for the REST-based submission to LSF and the direct execution job manager.
   - minor: Added `group-config.py` script that allows to compile version information reports (JSON) from execution stores.
+  - minor: Stricter parsing of `bashArray`. Enclosing characters must now be true `(` and `)` parenthesis. Previously, any character was allow! This is not API breaking change, because if you used anything but parentheses, it would not have been a `bashArray`. Roddy now just complains correctly.
   - patch: Change reported error for pattern that cannot be matched to file into warning
   - patch: Fix problem with parameter-list interpretation during Roddy startup due to incorrect Bash expression
   - patch: Security-related bumps of some related libraries (org.bouncycastle, org.slf4j)
