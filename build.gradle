@@ -7,7 +7,13 @@ import java.nio.file.Paths
  */
 
 // TODO Put git short hash into manifests
+<<<<<<< Updated upstream
 // TODO How to compile plugins? Can this be done with gradle as well?
+=======
+// TODO How to compile Roddy plugins? Can this be done with gradle as well?
+
+import org.cyclonedx.gradle.CycloneDxTask
+>>>>>>> Stashed changes
 
 buildscript {
     repositories {
@@ -271,8 +277,50 @@ codenarc {
     ignoreFailures = true
 }
 
+<<<<<<< Updated upstream
 codenarcMain {
     configFile = rootProject.file("config/codenarc/codenarc.groovy")
+=======
+//codenarc {
+//    toolVersion = "1.2.1"
+//    ignoreFailures = true
+//}
+//
+//codenarcMain {
+//    configFile = project.file("config/codenarc/codenarc.groovy")
+//}
+//
+//codenarcTest {
+//    configFile = project.file("config/codenarc/codenarc.groovy")
+//}
+
+cyclonedxBom {
+        destination = file("${project.buildDir}/reports/cyclonedx")
+}
+
+task developmentBom(type: CycloneDxTask) {
+    group = "reporting"
+    description = "Creates a CycloneDX SBOM for the development environment."
+
+    destination = file("${project.buildDir}/reports/cyclonedx")
+    outputName = 'developmentBom'
+    includeConfigs = ['testRuntimeClasspath', 'pmd']
+    schemaVersion = "1.4"
+    includeLicenseText = false
+    projectType = "application"
+}
+
+task productionBom(type: CycloneDxTask) {
+    group = "reporting"
+    description = "Creates a CycloneDX SBOM for the production environment."
+
+    destination = file("${project.buildDir}/reports/cyclonedx")
+    outputName = 'productionBom'
+    includeConfigs = ['runtimeClasspath']
+    schemaVersion = "1.4"
+    includeLicenseText = false
+    projectType = "application"
+>>>>>>> Stashed changes
 }
 
 codenarcTest {
