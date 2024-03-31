@@ -281,6 +281,16 @@ codenarcTest {
     configFile = rootProject.file("config/codenarc/codenarc.groovy")
 }
 
+task listConfigurations {
+    group = "reporting"
+    description = "List all configurations, as needed for discerning development and production configurations by the SBOM tasks."
+    doLast {
+        configurations.each { Configuration c ->
+            println c.name
+        }
+    }
+}
+
 task allBoms() {
     // a grouping task to execute the CycloneDxTask for each configuration
     group = "reporting"
