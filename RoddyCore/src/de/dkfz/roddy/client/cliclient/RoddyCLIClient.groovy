@@ -18,7 +18,7 @@ import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.config.validation.ValidationError
 import de.dkfz.roddy.config.validation.WholeConfigurationValidator
 import de.dkfz.roddy.core.*
-import de.dkfz.roddy.execution.AnyEscapableString
+import de.dkfz.roddy.tools.AnyEscapableString
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.SSHExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -34,7 +34,7 @@ import groovy.transform.CompileStatic
 
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_PATH
-import static de.dkfz.roddy.execution.EscapableString.*
+import static de.dkfz.roddy.tools.EscapableString.*
 
 /**
  * Command line client for roddy.

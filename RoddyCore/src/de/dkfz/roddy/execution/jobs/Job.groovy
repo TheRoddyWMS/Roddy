@@ -15,7 +15,7 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
-import de.dkfz.roddy.execution.AnyEscapableString
+import de.dkfz.roddy.tools.AnyEscapableString
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.Command as BECommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
@@ -35,7 +35,7 @@ import static de.dkfz.roddy.config.ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT
 import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 import static de.dkfz.roddy.execution.jobs.JobConstants.PRM_TOOL_ID
 
-import static de.dkfz.roddy.execution.EscapableString.*
+import static de.dkfz.roddy.tools.EscapableString.*
 
 @CompileStatic
 class Job extends BEJob<BEJob, BEJobResult> {

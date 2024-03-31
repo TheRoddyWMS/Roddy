@@ -16,7 +16,7 @@ import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.ExecutionContextSubLevel
 import de.dkfz.roddy.core.InfoObject
-import de.dkfz.roddy.execution.AnyEscapableString
+import de.dkfz.roddy.tools.AnyEscapableString
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.Job

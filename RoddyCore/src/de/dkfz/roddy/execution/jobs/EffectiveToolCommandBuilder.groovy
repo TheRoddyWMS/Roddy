@@ -20,7 +20,7 @@ import de.dkfz.roddy.execution.Executable
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-import static de.dkfz.roddy.execution.EscapableString.*
+import static de.dkfz.roddy.tools.EscapableString.*
 
 import java.nio.file.Paths
 import java.util.logging.Level

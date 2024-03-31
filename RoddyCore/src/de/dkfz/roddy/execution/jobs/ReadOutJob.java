@@ -13,8 +13,6 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
-import static de.dkfz.roddy.execution.EscapableString.*;
-
 /**
  * Objects of this class are created if information on previous jobs are read out from the file system.
  * They represent executed jobs!

@@ -19,7 +19,7 @@ import groovy.transform.CompileStatic
 import org.junit.Ignore
 import org.junit.Test
 
-import static de.dkfz.roddy.execution.EscapableString.*
+import static de.dkfz.roddy.tools.EscapableString.*
 /**
  */
 @CompileStatic
