@@ -7,13 +7,9 @@ import java.nio.file.Paths
  */
 
 // TODO Put git short hash into manifests
-<<<<<<< Updated upstream
-// TODO How to compile plugins? Can this be done with gradle as well?
-=======
 // TODO How to compile Roddy plugins? Can this be done with gradle as well?
 
 import org.cyclonedx.gradle.CycloneDxTask
->>>>>>> Stashed changes
 
 buildscript {
     repositories {
@@ -29,7 +25,8 @@ buildscript {
 }
 
 plugins {
-    id 'org.ajoberstar.grgit' version '1.7.2'                                  // Apache 2.0
+    id 'org.ajoberstar.grgit' version '1.7.2'
+    id 'org.cyclonedx.bom' version '1.8.2'
     id 'idea'
 }
 
@@ -271,60 +268,40 @@ sphinx {
     warningsAsErrors = true
 }
 
-
 codenarc {
     toolVersion = "1.2.1"
     ignoreFailures = true
 }
 
-<<<<<<< Updated upstream
 codenarcMain {
     configFile = rootProject.file("config/codenarc/codenarc.groovy")
-=======
-//codenarc {
-//    toolVersion = "1.2.1"
-//    ignoreFailures = true
-//}
-//
-//codenarcMain {
-//    configFile = project.file("config/codenarc/codenarc.groovy")
-//}
-//
-//codenarcTest {
-//    configFile = project.file("config/codenarc/codenarc.groovy")
-//}
-
-cyclonedxBom {
-        destination = file("${project.buildDir}/reports/cyclonedx")
-}
-
-task developmentBom(type: CycloneDxTask) {
-    group = "reporting"
-    description = "Creates a CycloneDX SBOM for the development environment."
-
-    destination = file("${project.buildDir}/reports/cyclonedx")
-    outputName = 'developmentBom'
-    includeConfigs = ['testRuntimeClasspath', 'pmd']
-    schemaVersion = "1.4"
-    includeLicenseText = false
-    projectType = "application"
-}
-
-task productionBom(type: CycloneDxTask) {
-    group = "reporting"
-    description = "Creates a CycloneDX SBOM for the production environment."
-
-    destination = file("${project.buildDir}/reports/cyclonedx")
-    outputName = 'productionBom'
-    includeConfigs = ['runtimeClasspath']
-    schemaVersion = "1.4"
-    includeLicenseText = false
-    projectType = "application"
->>>>>>> Stashed changes
 }
 
 codenarcTest {
     configFile = rootProject.file("config/codenarc/codenarc.groovy")
 }
+
+task allBoms() {
+    // a grouping task to execute the CycloneDxTask for each configuration
+    group = "reporting"
+}
+
+rootProject.configurations.each { configuration ->
+    String name = configuration.name
+    task "${name}Bom"(type: CycloneDxTask) {
+        group = "reporting"
+        description = "Creates a CycloneDX SBOM for the configuration ${name}."
+
+        destination = file("${project.buildDir}/reports/cyclonedx")
+        outputName = name
+        includeConfigs = [name]
+        schemaVersion = "1.5"
+        outputFormat="json"
+        includeLicenseText = false
+        projectType = "application"
+    }
+    allBoms.dependsOn tasks.getByName("${name}Bom")
+}
+
 
 // end of build.gradle
