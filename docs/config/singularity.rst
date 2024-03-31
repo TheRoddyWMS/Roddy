@@ -41,7 +41,7 @@ This is to achieve a good isolation of the container environment.
         <cvalue name="containerImage" value="/path/to/job-containers/dkfz_minimal.sif" type="path"
                 description="Path to a singularity/apptainer container."/>
         <cvalue name="containerMounts" value="( /your/software/ /software /your/virtualenvs/ /software/modules/3.2.10 /your/miniconda3 /your/annotation/data /your/reference/genome /true/symlinked/path )" type="bashArray"
-                description="List of paths to mount into the container. Can be comma-separated list (type='string') or a type='bashArray'. All these paths are mounted read-only. This should be of the format '(mount1 mount2 mount3)'. Note that you dont have to add the inputBaseDirectory and outputBaseDirectory, because these are added automatically. Be careful with symlinks, as Roddy does not resolve them (neither locally nor remotely)."/>
+                description="List of paths to mount into the container. Can be comma-separated list (type='string') or a type='bashArray' (i.e. '(mount1 mount2 mount3)'). Note that you don't have to add the inputBaseDirectory and outputBaseDirectory, because these are added automatically. Be careful with symlinks, because Roddy does not resolve them, and filesystems mounted into other filesystems."/>
         <cvalue name="apptainerArguments" value="--contain" type="string"
                 description="Global parameters for `apptainer exec`. For instance '--contain'. Can be comma-separated list (type='string') or a type='bashArray'."/>
     </configurationvalues>
