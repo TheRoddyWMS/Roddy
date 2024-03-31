@@ -40,8 +40,8 @@ This is to achieve a good isolation of the container environment.
                 description="The path to the container engine. By default this is the name of the engine as provided in jobExecutionEnvironment."/>
         <cvalue name="containerImage" value="/path/to/job-containers/dkfz_minimal.sif" type="path"
                 description="Path to a singularity/apptainer container."/>
-        <cvalue name="containerMounts" value="( /your/software/ /software /your/virtualenvs/ /software/modules/3.2.10 /your/miniconda3 /your/annotation/data /your/reference/genome /true/symlinked/path )" type="bashArray"
-                description="List of paths to mount into the container. Can be comma-separated list (type='string') or a type='bashArray' (i.e. '(mount1 mount2 mount3)'). Note that you don't have to add the inputBaseDirectory and outputBaseDirectory, because these are added automatically. Be careful with symlinks, because Roddy does not resolve them, and filesystems mounted into other filesystems."/>
+        <cvalue name="containerMounts" value="( /your/software/ /software /your/virtualenvs/ /software/modules/3.2.10 /your/miniconda3:/containerInternal/miniconda3 /your/annotation/data /your/reference/genome:/containerInternal/ref:rw /true/symlinked/path )" type="bashArray"
+                description="List of mount mount specifications. Can be comma-separated list (type='string') or a type='bashArray' (i.e. '(mount1 mount2 mount3)'). Paths must not contain any whitespaces (escaping or quoting is not implemented). Can be a specification of the form `/hostPath:/containerPath` or `/hostPath:/containerPath:rw`, similar to the format used by Apptainer. Note that you don't have to add the inputBaseDirectory and outputBaseDirectory, because these are added automatically. Be careful with symlinks, because Roddy does not resolve them, and filesystems mounted into other filesystems."/>
         <cvalue name="apptainerArguments" value="--contain" type="string"
                 description="Global parameters for `apptainer exec`. For instance '--contain'. Can be comma-separated list (type='string') or a type='bashArray'."/>
     </configurationvalues>

@@ -111,7 +111,40 @@ class ExecutionContextTest {
         assert roddyMounts[3].hostPath == Paths.get("/some/analysisToolsDirectory")
         assert roddyMounts[3].containerPath == Paths.get("/some/analysisToolsDirectory")
         assert roddyMounts[3].mode == BindSpec.Mode.RO
+    }
 
+    @Test
+    void userBindSpecs() throws Exception {
+        def context = createEmptyContext()
+        String testScratch = "/testScratch"
+        context.configurationValues.add(new ConfigurationValue(Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY,
+                                                               testScratch))
+        String outBase = "/outBase"
+        context.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY,
+                                                               outBase))
+        String inBase = "/inBase"
+        context.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY,
+                                                               inBase))
+
+        context.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CVALUE_CONTAINER_MOUNTS,
+                                                               "(/hostPathA /hostPathB:/containerPathB /hostPathC:/containerPathC:rw)",
+                                                               "bashArray"))
+
+        List<BindSpec> userMounts = context.userContainerMounts
+
+        assert userMounts.size() == 3
+
+        assert userMounts[0].hostPath == Paths.get("/hostPathA")
+        assert userMounts[0].containerPath == Paths.get("/hostPathA")
+        assert userMounts[0].mode == BindSpec.Mode.RO
+
+        assert userMounts[1].hostPath == Paths.get("/hostPathB")
+        assert userMounts[1].containerPath == Paths.get("/containerPathB")
+        assert userMounts[1].mode == BindSpec.Mode.RO
+
+        assert userMounts[2].hostPath == Paths.get("/hostPathC")
+        assert userMounts[2].containerPath == Paths.get("/containerPathC")
+        assert userMounts[2].mode == BindSpec.Mode.RW
     }
 
 }

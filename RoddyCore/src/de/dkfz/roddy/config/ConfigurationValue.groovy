@@ -18,6 +18,10 @@ import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import groovy.transform.CompileStatic
+import groovyjarjarantlr.StringUtils
+import jdk.internal.org.objectweb.asm.tree.analysis.Value
+import jdk.nashorn.internal.runtime.regexp.joni.exception.ValueException
+import org.codehaus.groovy.util.StringUtil
 
 import static de.dkfz.roddy.StringConstants.*
 import static de.dkfz.roddy.config.ConfigurationConstants.*
@@ -364,13 +368,17 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         return !valid
     }
 
-    private List<String> _bashArrayToStringList() {
-        String vTemp = value.trim()[1 .. -3].trim() // Split away () and leading or trailing white characters.
-        String[] temp = vTemp.split(SPLIT_WHITESPACE) // Split by white character
+    private List<String> _bashArrayToStringList()
+            throws ConfigurationError {
+        String trimmed = value.trim()
+        if (!trimmed.startsWith(PAREN_LEFT) || !trimmed.endsWith(PAREN_RIGHT)) {
+            throw new ConfigurationError("Bash array value does not start with '(' or end with ')'")
+        }
+        String stripped = StringUtils.stripBack(StringUtils.stripFront(trimmed, "( "), ") ")
 
-        // Ignore leading and trailing brackets
-        List<String> resultStrings = [] as LinkedList<String>
+        String[] temp = stripped.split(SPLIT_WHITESPACE) // Split by white character
 
+        List <String> resultStrings = [] as LinkedList<String>
         for (int i = 0; i < temp.length; i++) {
 
             // Detect if value is a range { .. }

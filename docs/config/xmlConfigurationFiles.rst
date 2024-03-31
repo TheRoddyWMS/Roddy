@@ -140,6 +140,8 @@ The configuration value itself is defined as a cvalue element. Each element can 
 
   - *path* indicates, that the variable is a path or a part of a path.
 
+  - *bashArray* of the form `( a b c )` will be interpreted as list of values. For Roddy < 3.8 the array must be enclosed by `( ` and ` )`, i.e. **including the spaces**! An arbitrary number of surrounding spaces, outside the parentheses, were allowed. The value parser was slightly improved in version 3.8 and now also accepts `(a b c)`, with an arbitrary number of spaces outside of the parentheses, and directly inwards of the parenthesis. Additionally, >=3.8 versions check that the are indeed opening and closing parentheses, while prior versions just accepted (actually) any character.
+
 Nice to know - Order of evaluation in Roddy
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

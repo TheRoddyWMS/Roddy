@@ -3,6 +3,7 @@ package de.dkfz.roddy.execution.jobs
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.JobExecutionEnvironment
+import de.dkfz.roddy.execution.BindSpec
 import de.dkfz.roddy.execution.Code
 import de.dkfz.roddy.execution.Command
 import de.dkfz.roddy.execution.Executable
@@ -126,7 +127,11 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         ctx.roddyContainerCopyVariables >> []
         ctx.containerImage >> "someImage"
         ctx.roddyMounts >> []
-        ctx.userContainerMounts >> []
+        ctx.userContainerMounts >> [
+                new BindSpec(Paths.get("/hostPath"),
+                             Paths.get("/containerPath"),
+                             BindSpec.Mode.RW)
+        ]
         ctx.outputDirectory >> new File("/tmp")
         ctx.wrapInCommand >> someWrapper
         EffectiveToolCommandBuilder builder = EffectiveToolCommandBuilder.from(ctx)
@@ -142,7 +147,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         // against the desired target group.
         forBash((result.get().command as Code).toEscapableString(true)) ==
                 "#!/bin/bash\n" +
-                "sg someGroup -c apptainer\\ exec\\ --env\\ sgWasCalled\\=true\\ --env\\ newGrpIsCalled\\=true\\ -W\\ /tmp\\ someImage\\ someWrapper\n"
+                "sg someGroup -c apptainer\\ exec\\ -B\\ /hostPath:/containerPath:rw\\ --env\\ sgWasCalled\\=true\\ --env\\ newGrpIsCalled\\=true\\ -W\\ /tmp\\ someImage\\ someWrapper\n"
     }
 
     def "no sg with apptainer()"(toolCommand) {
@@ -213,7 +218,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
         final UnsupportedOperationException exception = thrown()
     }
 
-    def "code commands should not be wrapped, but communicated as is to BatchEuphoria"() {
+    def "code commands should not be wrapped, but communicated to BatchEuphoria as is"() {
         given:
         ExecutionContext mock = Mock(ExecutionContext.class)
         EffectiveToolCommandBuilder builder = EffectiveToolCommandBuilder.from(mock)

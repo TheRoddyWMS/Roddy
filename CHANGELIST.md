@@ -55,12 +55,13 @@ Note, that some changes may break fragile user code and thus potentially lead to
 # Changelist
 
 * 3.8.0
-  - minor: Singularity support. Jobs can now be run in singularity containers. Only a single image for a whole workflow is currently supported.
+  - minor: Singularity support. Jobs can now be run in singularity containers. Currently, only a single image for a whole workflow is supported.
     > This is only implemented and tested for LSF and SLURM, not tested for PBS and SGE, and not implemented at all for the REST-based submission to LSF and the direct execution job manager.
   - minor: Added `group-config.py` script that allows to compile version information reports (JSON) from execution stores.
   - patch: Change reported error for pattern that cannot be matched to file into warning
   - patch: Fix problem with parameter-list interpretation during Roddy startup due to incorrect Bash expression
   - patch: Security-related bumps of some related libraries (org.bouncycastle, org.slf4j)
+  - patch: Added `listConfigurations`, `allBoms`, and a `...Bom` task for every Gradle configuration set. The `allBoms` and `...Bom` tasks generate JSON CycloneDX SBOMs in `gradleBuild/reports/cyclonedx`.
 
 * 3.7.3
   - patch: Pure maintenance release
@@ -99,6 +100,10 @@ Note, that some changes may break fragile user code and thus potentially lead to
     - patch: Fix reported release number
     - patch: Allow release with optional subpatch-level suffixes matching the pattern `-test\d+`. This is obviously for testing only.
     - patch: Updated PR-template with separated PR and release sections
+
+* ReleaseBranch_3.5.10
+
+  - patch: Added `listConfigurations`, `allBoms`, and a `...Bom` task for every Gradle configuration set. The `allBoms` and `...Bom` tasks generate JSON CycloneDX SBOMs in `gradleBuild/reports/cyclonedx`.
 
 * 3.5.10
   - patch: Bumped BatchEuphoria version to 0.0.7-1: A newer LSF release is pickier on the position of the `-o` parameter in `bjobs`. Adapted to this upstream change. Probably code will still work with older LSF versions.

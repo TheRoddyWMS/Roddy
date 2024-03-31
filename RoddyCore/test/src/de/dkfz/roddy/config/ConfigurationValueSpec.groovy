@@ -74,10 +74,11 @@ class ConfigurationValueSpec extends RoddyTestSpec {
         where:
         value               | expectedValue
         ''                  | []
-        'a'                 | ["a"]
+        '()'                | []
+        '(a)'               | ["a"]
         '( a b )'           | ["a", "b"]
         '(  a  b  )'        | ["a", "b"]
-//        '(a  b)'            | ["a", "b"]     // The parser really sucks ... but not gonna change it significantly.
+        '(a  b)'            | ["a", "b"]
 
     }
 }

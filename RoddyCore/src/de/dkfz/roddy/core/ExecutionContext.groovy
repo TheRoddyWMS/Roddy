@@ -481,13 +481,35 @@ class ExecutionContext {
      *
      * In the moment, Roddy has no way to know these directories. The variables could be declared as such in
      * the plugins, but they are not (yet). Therefore, for now we need to ask the user to declare them in
-     * the configuration files. All these directories are mounted read-only.
+     * the configuration files.
+     *
+     * Bind specifications are in the commonly known format (Docker, Apptainer),
+     *
+     *   /host/path((|:/container/path)|:/container/path:(ro|rw))?
+     *
+     * * If no target path is given, the same path as the host-path is used in the container.
+     * * If no mode is given, "ro" will be assumed.
      */
+    private static BindSpec fromBindSpecString(String bindSpecString) {
+        String[] parts = bindSpecString.split(":")
+        if (parts.size() == 1) {
+            return new BindSpec(Paths.get(parts[0]))
+        } else if (parts.size() == 2) {
+            return new BindSpec(Paths.get(parts[0]),
+                                Paths.get(parts[1]))
+        } else if (parts.size() == 3) {
+            return new BindSpec(Paths.get(parts[0]),
+                                Paths.get(parts[1]),
+                                BindSpec.Mode.from(parts[2]))
+        } else {
+            throw new IllegalArgumentException("Invalid bind specification: " + bindSpecString)
+        }
+    }
     List<BindSpec> getUserContainerMounts() {
         configurationValues.
                 get(ConfigurationConstants.CVALUE_CONTAINER_MOUNTS, "").
-                toStringList().
-                collect { pathStr -> new BindSpec(Paths.get(pathStr)) }
+                toStringList(' ').
+                collect { fromBindSpecString(it) }
     }
 
     String getContainerImage() {
