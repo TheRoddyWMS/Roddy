@@ -1,5 +1,13 @@
 # Changelist
 
+* ReleaseBranch_3.5.10
+
+  - patch: Added `listConfigurations`, `allBoms`, and a `...Bom` task for every Gradle configuration set. The `allBoms` and `...Bom` tasks generate JSON CycloneDX SBOMs in `gradleBuild/reports/cyclonedx`. 
+
+* 3.5.10
+
+  - patch: Bumped BatchEuphoria version to 0.0.7-1: A newer LSF release is pickier on the position of the `-o` parameter in `bjobs`. Adapted to this upstream change. Probably code will still work with older LSF versions.
+
 * 3.5.9
 
   - The LocalExecutionService ignored errors of asychronously executed commands. 
