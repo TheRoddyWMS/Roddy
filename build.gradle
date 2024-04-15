@@ -7,7 +7,9 @@ import java.nio.file.Paths
  */
 
 // TODO Put git short hash into manifests
-// TODO How to compile plugins? Can this be done with gradle as well?
+// TODO How to compile Roddy plugins? Can this be done with gradle as well?
+
+import org.cyclonedx.gradle.CycloneDxTask
 
 buildscript {
     repositories {
@@ -23,7 +25,8 @@ buildscript {
 }
 
 plugins {
-    id 'org.ajoberstar.grgit' version '1.7.2'                                  // Apache 2.0
+    id 'org.ajoberstar.grgit' version '1.7.2'
+    id 'org.cyclonedx.bom' version '1.8.2'
     id 'idea'
 }
 
@@ -265,7 +268,6 @@ sphinx {
     warningsAsErrors = true
 }
 
-
 codenarc {
     toolVersion = "1.2.1"
     ignoreFailures = true
@@ -278,5 +280,38 @@ codenarcMain {
 codenarcTest {
     configFile = rootProject.file("config/codenarc/codenarc.groovy")
 }
+
+task listConfigurations {
+    group = "reporting"
+    description = "List all configurations, as needed for discerning development and production configurations by the SBOM tasks."
+    doLast {
+        configurations.each { Configuration c ->
+            println c.name
+        }
+    }
+}
+
+task allBoms() {
+    // a grouping task to execute the CycloneDxTask for each configuration
+    group = "reporting"
+}
+
+rootProject.configurations.each { configuration ->
+    String name = configuration.name
+    task "${name}Bom"(type: CycloneDxTask) {
+        group = "reporting"
+        description = "Creates a CycloneDX SBOM for the configuration ${name}."
+
+        destination = file("${project.buildDir}/reports/cyclonedx")
+        outputName = name
+        includeConfigs = [name]
+        schemaVersion = "1.5"
+        outputFormat="json"
+        includeLicenseText = false
+        projectType = "application"
+    }
+    allBoms.dependsOn tasks.getByName("${name}Bom")
+}
+
 
 // end of build.gradle
