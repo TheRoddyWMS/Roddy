@@ -100,7 +100,7 @@ repositories {
     maven { url "https://repo1.maven.org/maven2/" }       // Some of the remaining dependencies
 }
 
-ext.roddyToolLibVersion = "2.4.1"
+ext.roddyToolLibVersion = "2.5.0"
 ext.batchEuphoriaVersion = "0.2.0"
 ext.jschVersion = "0.0.9"
 
