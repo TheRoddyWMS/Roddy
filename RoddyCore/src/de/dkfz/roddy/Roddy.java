@@ -767,9 +767,6 @@ public class Roddy {
     }
 
     private static void performCLIExit(RoddyStartupModes option, int exitCode) {
-        if (commandLineCall.getOptionList().contains(RoddyStartupOptions.disallowExit))
-            return;
-
         if (!option.needsJobManager())
             return;
 

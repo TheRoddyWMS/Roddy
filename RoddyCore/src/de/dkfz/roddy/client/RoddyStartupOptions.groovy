@@ -78,8 +78,8 @@ enum RoddyStartupOptions {
 
     repository(true),
 
-    detailed(),
-    disallowExit()
+    /** checkWorkflowStatus: If detailed is set, information about all started jobs and their status is shown. **/
+    detailed()
 
     ;
 

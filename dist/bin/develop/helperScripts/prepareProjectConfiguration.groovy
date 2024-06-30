@@ -13,18 +13,18 @@ import de.dkfz.roddy.core.InfoObject
  */
 
 //@groovy.transform.CompileStatic
-public class ConfigurationPreparator {
+class ConfigurationPreparator {
 
     enum Modes {
         create,
         update
     }
 
-    public static File getScriptFolder() {
+    static File getScriptFolder() {
         return new File(getClass().protectionDomain.codeSource.location.path).parentFile
     }
 
-    public void doIt(CommandLineCall clc) {
+    void doIt(CommandLineCall clc) {
 
         Modes mode = clc.getArguments()[0] as Modes;
         File basePath = clc.getArguments().size() > 2 ? new File(clc.getArguments().get(1)) : null;
@@ -54,7 +54,7 @@ public class ConfigurationPreparator {
         }
         targetConfigFolder.mkdirs();
 
-        boolean useRepo = clc.isOptionSet(RoddyStartupOptions.userepository);
+        boolean useRepo = clc.isOptionSet(RoddyStartupOptions.repository);
 
         if(useRepo) {
             // Copy all files from a specific repository and adapt them.
