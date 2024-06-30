@@ -15,7 +15,7 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
-import de.dkfz.roddy.tools.AnyEscapableString
+import de.dkfz.roddy.tools.EscapableString
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.Command as BECommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
@@ -35,7 +35,7 @@ import static de.dkfz.roddy.config.ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT
 import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 import static de.dkfz.roddy.execution.jobs.JobConstants.PRM_TOOL_ID
 
-import static de.dkfz.roddy.tools.EscapableString.*
+import static de.dkfz.roddy.tools.EscapableString.Shortcuts.*
 
 @CompileStatic
 class Job extends BEJob<BEJob, BEJobResult> {
@@ -65,7 +65,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
      * Keeps a list of all parameters after conversion and before removing them from the final parameter list
      * (See keepOnlyEssentialParameters). The value is used for testrun and testrerun output.
      */
-    final Map<String, AnyEscapableString> reportedParameters = [:]
+    final Map<String, EscapableString> reportedParameters = [:]
 
     /**
      * Provide a list of files if you want to generate job dependencies.
@@ -227,7 +227,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
                     orElse(null)
               , context.getResourceSetFromConfiguration(toolCommand.toolId)
               , []
-              , [:] as Map<String, AnyEscapableString>
+              , [:] as Map<String, EscapableString>
               , JobLog.toOneFile(new File(context.loggingDirectory, jobName + ".o{JOB_ID}"))
               , null
               , context.accountingName.map { e(it) }.orElse(null))
@@ -259,7 +259,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
                         expand("The parameter " + k + " has no valid value and will be set to ${NO_VALUE}."))
                 this.parameters[k] = e(NO_VALUE)
             } else {
-                AnyEscapableString newParameters = u(parameterObjectToString(k, _v))
+                EscapableString newParameters = u(parameterObjectToString(k, _v))
                 this.parameters.put(k, newParameters)
             }
         }
@@ -446,9 +446,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
         }
     }
 
-    private Map<String, AnyEscapableString> convertResourceSetToParameters() {
+    private Map<String, EscapableString> convertResourceSetToParameters() {
         def rs = resourceSet
-        Map<String, AnyEscapableString> rsParameters = [:]
+        Map<String, EscapableString> rsParameters = [:]
         if (rs == null) return rsParameters
 
         if (rs.memSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_MEM"] = u(rs.mem.toString())
@@ -757,7 +757,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
      */
     Configuration createJobConfiguration() {
         Configuration jobConfiguration = new Configuration(null, executionContext.configuration)
-        jobConfiguration.configurationValues.addAll(parameters.collect { String k, AnyEscapableString v ->
+        jobConfiguration.configurationValues.addAll(parameters.collect { String k, EscapableString v ->
             new ConfigurationValue(jobConfiguration, k, forBash(v))
         })
         return jobConfiguration

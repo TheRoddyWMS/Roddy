@@ -10,7 +10,7 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.config.ToolEntry
-import de.dkfz.roddy.tools.AnyEscapableString
+import de.dkfz.roddy.tools.EscapableString
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
@@ -253,7 +253,7 @@ class ExecutionContextReaderAndWriter {
                             tool(id: ej.toolID, md5: ej.toolMD5)
                             parameters {
                                 ej.parameters.each {
-                                    String k, AnyEscapableString v ->
+                                    String k, EscapableString v ->
                                         parameter(name: k, value: fromBash(v))
                                 }
                             }

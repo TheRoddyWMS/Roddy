@@ -12,7 +12,7 @@ import spock.lang.Specification
 
 import java.nio.file.Paths
 
-import static de.dkfz.roddy.tools.EscapableString.*
+import static de.dkfz.roddy.tools.EscapableString.Shortcuts.*
 
 class EffectiveToolCommandBuilderSpec extends Specification {
 
