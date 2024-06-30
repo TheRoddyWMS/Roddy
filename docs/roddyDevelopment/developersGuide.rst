@@ -33,16 +33,19 @@ We know, that we have a lot of issues in our codebase, but we listen to every im
 Development model
 ~~~~~~~~~~~~~~~~~
 
-For development we follow the standard `Github flow`_ with feature branches
+For development we mostly follow the standard `Github flow`_ with feature branches
 getting merged directly back into the master branch. Releasing in simply done
 by putting a tag on the master branch and let the continuous integration
-pipeline (Travis) deploy a release archive to Github releases
+pipeline (Travis) deploy a release archive to Github releases.
+
+This is extended by release branches in case bug-fixes need to be backported to older versions. Release branches names must match the regular expression ``ReleaseBranch_\d+\.\d+(\.\d+)?``.
+
 
 Settings for Groovy classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We will not accept Groovy classes without the @CompileStatic annotation. If you are in the rare situation that you need dynamic dispatch on more than
-the object (this) itself, you can mark the affected methods with @CompileDynamic.
+We will not accept Groovy classes without the ``@CompileStatic`` annotation. If you are in the rare situation that you need dynamic dispatch on more than
+the object (this) itself, you can mark the affected methods with ``@CompileDynamic``.
 
 API documentation
 ~~~~~~~~~~~~~~~~~
@@ -54,25 +57,31 @@ Roddy versioning scheme
 
 We are using `semantic versioning`_.
 
-Roddy version numbers consist of three entries: $major.$minor.$build.
-The build number is also sometimes called patch number.
+Roddy version numbers consist of three numbers: ``$major.$minor.$build``.
+The ``$build`` number is also sometimes called patch number.
 
-The $major entry is used to mark API-breaking changes in the Roddy core
+The ``$major`` number is used to mark API-breaking changes in the Roddy core
 functions. Backward compatibility is not granted and Roddy
-will not execute plugins built with different $major versions.
+will not execute plugins built with different ``$major`` versions.
 
-The $minor entry marks smaller changes which extend the Roddy API.
+The ``$minor`` number marks additions and new features that extend the Roddy API, but do not break the existing API.
 Backward compatibility of Roddy to the plugin should not be affected, such
 that your old plugins should run with the newer Roddy version.
 
-The combination of $major.$minor can somehow be seen as the API level
+The ``$build`` number marks small changes that have no influence on the operation of Roddy, except that they may make Roddy work in situations in which terminated with an error before, e.g., in case of bugs.
+
+.. Note:: The repository contains old tags that end in ``-1``, ``b`` or ``b1``. These are old development tags that were used during the earlier development of Roddy.
+
+The combination of ``$major.$minor`` can be seen as the API level
 of Roddy. For a “full API level” the plugin versions of “PluginBase” and
 “DefaultPlugin” need to be considered as well.
 
+Roddy plugin versioning scheme
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Basically the same versioning convention applies to the plugins, but note
 that we advise authors to base the plugin versions not on the Roddy core
-versions, but only on the semantics of the analysis. The details have not
-yet been fully worked out, but basically this means,
+versions, but only on the semantics of the analysis. At least, if your plugin produces different results, and you want to express this to your users, bump the version number accordingly. For instance,
 
   * modified output files warrant a major level increase
   * added output files warrant a minor level increase

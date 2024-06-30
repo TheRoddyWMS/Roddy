@@ -8,9 +8,14 @@ Roddy is a framework for development and management of workflows on a batch proc
 
 > No new features will be implemented for Roddy! We will continue to fix bugs occurring with currently existing workflows. On the long run, existing workflows should be migrated to other workflow management systems. 
 
+> NOTE: Roddy is for research-use only (RUO).
+
 # Documentation
 
-You can find the documentation at [Read the Docs](http://roddy-documentation.readthedocs.io), including [detailed installation instructions](https://roddy-documentation.readthedocs.io/en/latest/installationGuide.html).
+You can find the documentation at [Read the Docs](http://roddy-documentation.readthedocs.io), including 
+
+* [detailed installation instructions](https://roddy-documentation.readthedocs.io/en/latest/installationGuide.html)
+* [contributors documentation](https://roddy-documentation.readthedocs.io/en/stable/roddyDevelopment/developersGuide.html)
 
 # Workflows
 
@@ -31,3 +36,16 @@ The following plugins are available as support for the workflows:
   * [COWorkflowBasePlugin](https://github.com/DKFZ-ODCF/COWorkflowsBasePlugin) with basic control code for many of the workflows
   * [PluginBase](https://github.com/TheRoddyWMS/Roddy-Base-Plugin) just the plugin base-class from which other plugins are derived
   * [DefaultPlugin](https://github.com/TheRoddyWMS/Roddy-Default-Plugin) with the `wrapInScript.sh` that wraps all Roddy cluster jobs
+
+# Change Log
+
+The change log can be found [here](CHANGELIST.md).
+
+# Licence
+
+## License
+
+By contributing your code, you agree to license your contribution under the terms of the MIT License:
+
+http://opensource.org/licenses/mit-license.html
+https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt

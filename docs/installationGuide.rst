@@ -15,6 +15,7 @@ Installation guide
 
 There are several minor versions of Roddy, which can be downloaded and installed in the same directory.
 Minor versions mark changes in the Roddy API. Usually Roddy plugins are only compatible to a specific minor version.
+The full documentation of the how version numbers are used with roddy can be found in the :doc:`roddyDevelopment/developersGuide`.
 Installations for the different versions differ a bit, so we list all versions here.
 
 Premises
