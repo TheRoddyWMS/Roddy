@@ -103,7 +103,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
     def "sg without apptainer"() {
         given:
         ExecutionContext ctx = Mock(ExecutionContext)
-        ctx.jobExecutionEnvironment >> JobExecutionEnvironment.bash
+        ctx.jobExecutionEnvironmentOrBash >> JobExecutionEnvironment.bash
         ctx.outputGroupString >> "someGroup"
         ctx.wrapInCommand >> someWrapper
         EffectiveToolCommandBuilder builder = EffectiveToolCommandBuilder.from(ctx)
@@ -120,7 +120,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
     def "sg with apptainer"() {
         given:
         ExecutionContext ctx = Mock(ExecutionContext)
-        ctx.jobExecutionEnvironment >> JobExecutionEnvironment.apptainer
+        ctx.jobExecutionEnvironmentOrBash >> JobExecutionEnvironment.apptainer
         ctx.outputGroupString >> "someGroup"
         ctx.userContainerEngineArguments >> []
         ctx.containerEnginePath >> Paths.get("apptainer")
@@ -153,7 +153,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
     def "no sg with apptainer()"(toolCommand) {
         given:
         ExecutionContext ctx = Mock(ExecutionContext)
-        ctx.jobExecutionEnvironment >> JobExecutionEnvironment.apptainer
+        ctx.jobExecutionEnvironmentOrBash >> JobExecutionEnvironment.apptainer
         ctx.userContainerEngineArguments >> []
         ctx.containerEnginePath >> Paths.get("apptainer")
         ctx.roddyContainerCopyVariables >> []
@@ -184,7 +184,7 @@ class EffectiveToolCommandBuilderSpec extends Specification {
     def "apptainer with code should fail with context error but return Optional.empty()"() {
         given:
         ExecutionContext ctx = Mock(ExecutionContext)
-        ctx.jobExecutionEnvironment >> JobExecutionEnvironment.apptainer
+        ctx.jobExecutionEnvironmentOrBash >> JobExecutionEnvironment.apptainer
         ctx.userContainerEngineArguments >> []
         ctx.containerEnginePath >> Paths.get("apptainer")
         ctx.roddyContainerCopyVariables >> []

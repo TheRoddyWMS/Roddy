@@ -13,7 +13,7 @@ User options
 
 If you do not intend to develop Roddy or Roddy plugins, you can stop reading after this part.
 
-.. admonition:: Generalized paramaters since version 3.8.0
+.. admonition:: Generalized parameters since version 3.8.0
 
     Since version 3.8.0, Roddy's parameters -- both startup modes (``run``, ``rerun``, etc.) and options (``--useconfig``, etc.) are matched case sensitively and all "use" or "used" prefixes are removed.
     For example, ``--useconfig`` is now ``--config`` and ``--usePluginVersion`` is now ``--pluginVersion``.

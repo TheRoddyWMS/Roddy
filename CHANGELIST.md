@@ -63,6 +63,14 @@ Note, that some changes may break fragile user code and thus potentially lead to
   - patch: Fix problem with parameter-list interpretation during Roddy startup due to incorrect Bash expression
   - patch: Security-related bumps of some related libraries (org.bouncycastle, org.slf4j)
   - patch: Added `listConfigurations`, `allBoms`, and a `...Bom` task for every Gradle configuration set. The `allBoms` and `...Bom` tasks generate JSON CycloneDX SBOMs in `gradleBuild/reports/cyclonedx`.
+  - patch: Some refactorings.
+    * Renamed internal names of many CLI options, to get away from options that are hard to read, because all concatenated lower-case words, or that start with the filler-word "use". Could not change on the external interface though, because of backward compatibility.
+    * Code layout changes, to reduce endlessly long lines, which are hard to read even if one does not have to scroll horizontally.
+    * Replaced many getX calls probably originating from old Java code versions into Groovy-idiomatic property access.
+    * Lazy error handling sucks
+      * Added `org.jetbrains.annotations.NotNull` annotations. But I could not get the runtime checks to work, probably because of too old Groovy version.
+      * Added `Precondition` checks to still get some runtime checks (at the cost of additional code, though).
+    * Some problems with the start-up scripts were fixed.
 
 * 3.7.3
   - patch: Pure maintenance release

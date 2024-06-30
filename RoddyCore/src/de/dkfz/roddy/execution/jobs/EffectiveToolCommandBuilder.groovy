@@ -104,10 +104,10 @@ class EffectiveToolCommandBuilder {
     private Optional<ToolCommand> getEffectiveToolCommandImpl(@NotNull ToolCommand toolCommand,
                                                               @NotNull Code command) {
         if ([JobExecutionEnvironment.apptainer, JobExecutionEnvironment.simpleName].
-                contains(context.jobExecutionEnvironment)) {
+                contains(context.jobExecutionEnvironmentOrBash)) {
             context.addError(ExecutionContextError.CANNOT_WRAP_INLINE_SCRIPT_IN_CONTAINER_CALL.expand(
                     "Tried to submit inline script ${toolCommand.toolId} to execute " +
-                    "with $context.jobExecutionEnvironment",
+                    "with $context.jobExecutionEnvironmentOrBash",
                     Level.SEVERE))
             // Note: This could be implemented, e.g. dealing with code via local files. But I'm not doing it, because
             //       the feature anyway is not used by anyone.
@@ -197,7 +197,7 @@ class EffectiveToolCommandBuilder {
         Preconditions.checkArgument(toolCommand != null)
         Preconditions.checkArgument(command != null)
         if ([JobExecutionEnvironment.apptainer, JobExecutionEnvironment.singularity].
-                contains(context.jobExecutionEnvironment)) {
+                contains(context.jobExecutionEnvironmentOrBash)) {
             wrappedInContainerCommand(toolCommand, command)
         } else {
             // Here we need to use the wrapInScript.sh directly. It also handles the group change, such that no `sg`

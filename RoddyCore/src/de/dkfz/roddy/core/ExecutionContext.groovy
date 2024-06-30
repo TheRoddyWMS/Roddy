@@ -413,7 +413,7 @@ class ExecutionContext {
                         null))
     }
 
-    JobExecutionEnvironment getJobExecutionEnvironment() {
+    JobExecutionEnvironment getJobExecutionEnvironmentOrBash() {
         String envName = configurationValues.
                 get(ConfigurationConstants.CVALUE_JOB_EXECUTION_ENVIRONMENT, "bash").
                 toString().
@@ -439,7 +439,7 @@ class ExecutionContext {
         if (pathStr.size() > 0) {
             Paths.get(pathStr)
         } else {
-            jobExecutionEnvironment.toPath()
+            jobExecutionEnvironmentOrBash.toPath()
         }
     }
 
