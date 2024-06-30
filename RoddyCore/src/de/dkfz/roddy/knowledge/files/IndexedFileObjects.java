@@ -36,7 +36,7 @@ public class IndexedFileObjects<F extends FileObject> extends FileObject {
         return indices;
     }
 
-    public Map<String, F> getIndexedObjects() {
+    public Map<String, F> getIndexedFileObjects() {
         return indexedObjects;
     }
 
