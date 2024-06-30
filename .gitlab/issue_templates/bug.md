@@ -29,14 +29,13 @@ Describe what behavior you observed. In particular, include
 
 If necessary, also describe the expected behavior. 
 
-The more information you provide, the easier it will be to understand the problem! 
-
+The more information you provide, the easier it will be to understand the problem!
 --> 
 
 ## Severity 
 
 <!--
-Describp the impact of the bug in detail and classify the criticality.
+Describe the impact of the bug in detail and classify the criticality.
 
 If that is not possible, yet, discuss this with the stakeholders, and then update the information here. 
 
@@ -52,7 +51,8 @@ Criticality:
 ## Reporter 
 
 <!-- 
-Who reported the bug? Add ticket system link or similar, if possible. --> 
+Who reported the bug? Add ticket system link or similar, if possible. 
+--> 
 
 
 
@@ -61,6 +61,6 @@ Finally, don't change the following (unless you are developer).
 
 This will automatically add a “bug::candidate” label.
 
-A reclassification of bug criticality will happen later.
+A relabeling of bug criticality will happen later.
 -->
 /label ~”bug::candidate”

@@ -18,7 +18,7 @@ Reference related issues by number
 
 ## Checklist 
 
-Approval should only happen, if all the following checks are satisfied: 
+As a reviewer, you can copy this into a comment, and tick off the steps that you have done.
 
 ```
 * [ ] All changes planned to be included in the release, are actually included
@@ -26,5 +26,5 @@ Approval should only happen, if all the following checks are satisfied:
 * [ ] Documentation is updated 
 * [ ] Changelog for release is complete (see change-list in the repository), including version number
 * [ ] Change descriptions 
-* [ ] Changes are validated and validation is documented (e.g., links to logs) 
+* [ ] Changes are tested and tests are documented (e.g., links to logs) 
 ```

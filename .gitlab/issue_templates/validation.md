@@ -1,13 +1,13 @@
 ## Validation
 
 <!--
-The released version of the software that is to be validated
+The released version of the software that is to be validated.
 -->
 
 Release version: 
 
 <!--
-For the release version that is to be validated, list all merge-requests merged since the last validated release using the !n notation.
+For the version that is to be validated, list all merge-requests that were merged since the last validated release using the `!n` notation.
 Shortly describe the change in the merge request.
 Indicate for each, whether the change has been validated already or not.
 --> 

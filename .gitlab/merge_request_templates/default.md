@@ -25,7 +25,7 @@ As a reviewer, you can copy this into a comment, and tick off the steps that you
 * [ ] Merge request title is descriptive 
 * [ ] Changelog is complete 
 * [ ] Source code is appropriately commented (“why”-comments) 
-* [ ] Changes are validated and validation is documented (e.g., links to logs) 
-* [ ] Externally provided (e.g., manual) verifications/validations have been reviewed 
+* [ ] Changes are tested and tests are documented (e.g., links to logs) 
+* [ ] Externally provided (e.g., manual) test results have been reviewed 
 * [ ] Documentation was updated 
 ```
