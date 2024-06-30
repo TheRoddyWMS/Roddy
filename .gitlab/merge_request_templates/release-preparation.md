@@ -22,10 +22,9 @@ Approval should only happen, if all the following checks are satisfied:
 
 ```
 * [ ] All changes planned to be included in the release, are actually included
-* [ ] Changelog for release is complete (see change-list in the repository), including * [ ] Version number 
-* [ ] Change descriptions 
 * [ ] Version numbers in code are updated
 * [ ] Documentation is updated 
-* [ ] Changes are validated (DQ) and validation is documented (e.g., links 
-to logs) 
+* [ ] Changelog for release is complete (see change-list in the repository), including version number
+* [ ] Change descriptions 
+* [ ] Changes are validated and validation is documented (e.g., links to logs) 
 ```
