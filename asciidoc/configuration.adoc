@@ -1,0 +1,7 @@
+[[configuration]]
+== Configuration topics
+
+config/applicationProperties config/configurationFiles
+config/bashConfigurationFiles config/xmlConfigurationFiles
+config/configFilenamesAndToolEntries config/metadata
+config/roddyConfigurationValues
