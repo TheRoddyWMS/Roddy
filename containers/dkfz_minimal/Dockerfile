@@ -27,16 +27,11 @@ ARG https_proxy="$HTTPS_PROXY"
 ARG NO_PROXY=""
 ARG no_proxy="$NO_PROXY"
 
-RUN echo "skip_missing_names_on_install=False" >> /etc/yum.conf
-
-RUN yum -y update
-
-RUN yum -y install epel-release
-
-RUN yum repolist
-
-# Further packages used for bioinformatic analyses
-RUN yum install -y \
+RUN echo "skip_missing_names_on_install=False" >> /etc/yum.conf && \
+    yum -y update && \
+    yum -y install epel-release && \
+    yum repolist && \
+    yum install -y \
       file \
       which \
       psmisc \
