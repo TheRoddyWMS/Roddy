@@ -19,9 +19,6 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import groovy.transform.CompileStatic
 import groovyjarjarantlr.StringUtils
-import jdk.internal.org.objectweb.asm.tree.analysis.Value
-import jdk.nashorn.internal.runtime.regexp.joni.exception.ValueException
-import org.codehaus.groovy.util.StringUtil
 
 import static de.dkfz.roddy.StringConstants.*
 import static de.dkfz.roddy.config.ConfigurationConstants.*

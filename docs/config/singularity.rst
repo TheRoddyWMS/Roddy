@@ -26,9 +26,9 @@ This is to achieve a good isolation of the container environment.
 
     Singularity does not resolve symlinks, and Roddy does not help you to automatically resolve symlinks as mount points.
 
-    This means, if your need to access files you have to add them needed manually add symlink targets as mounts to your ``containerMounts``.
+    This means, if your need to access files you have to add symlink targets as mounts to your ``containerMounts``.
 
-    For instance, if you access the tool ``x`` at path ``/your/software/x``, but ``/your/software`` is a symlink to path ``/anotherDir/software/``, then you need to add both paths ``/your`` and ``/anotherDir`` to your ``containerMounts`` variable!
+    For instance, if you access the tool ``x`` at path ``/your/software/x``, but ``/your/software`` is a symlink to path ``/anotherDir/software/``, then you must add both paths ``/your`` and ``/anotherDir`` to your ``containerMounts`` variable!
     This way, both, the symlink origin ``/your/software`` and the symlink target ``/anotherDir/software`` are available in the container at the expected positions.
     If the tool ``x`` is than accessed from within the container, this can be done via the ``/your/software/x`` path as expected.
 

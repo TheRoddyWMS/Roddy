@@ -1,15 +1,15 @@
 # Versioning Scheme
 
-Roddy uses semantic versioning at least since version 3. Earlier versions use the same `x.y.z` format but the version increases were not done according to the rules defined for semantic versioning. 
+Roddy uses semantic versioning at least since version 3. Earlier versions use the same `x.y.z` format, but the version increases were not done according to the rules defined for semantic versioning. 
 
 ## Semantic Versioning of Roddy
 
-As workflow management system, Roddy has the following APIs:
+As a workflow management system, Roddy has the following APIs:
 
-* the interface with the workflows (plugin XMLs, Groovy API, etc.)
-* the interface with the caller (user)
+* Interface with the workflows (plugin XMLs, Groovy API, etc.)
+* Interface with the caller (user)
 
-The focus for deciding on the correct version level to increase is on the user-interface. The following changes trigger the respective bump
+The focus for deciding on the correct version level to increase is on the user-interface. The following changes trigger the respective bump:
 
 1. **major**: Any change that causes the user to take action to continue with his/her work.
     * parameter name
