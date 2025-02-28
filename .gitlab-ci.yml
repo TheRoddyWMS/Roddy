@@ -29,6 +29,15 @@ build:
       paths:
         - ~/.gradle/caches
   script:
+    - curl -s "https://get.sdkman.io" | bash
+    - source "$HOME/.sdkman/bin/sdkman-init.sh"
+    - echo sdkman_auto_answer=true > ~/.sdkman/etc/config
+    - sdk install groovy 2.4.21
+    - sdk use     groovy 2.4.21
+    - groovy --version
+    - # We need at least these two plugins for the tests.
+    - git clone https://github.com/TheRoddyWMS/Roddy-Default-Plugin.git dist/plugins/DefaultPlugin
+    - git clone https://github.com/TheRoddyWMS/Roddy-Base-Plugin.git dist/plugins/PluginBase
     - ./gradlew build test allBoms
   artifacts:
     paths:
