@@ -131,12 +131,12 @@ dependencies {
     implementation 'org.bouncycastle:bcprov-ext-jdk15on:1.70'          // MIT
     implementation 'org.bouncycastle:bcprov-jdk15on:1.70'              // MIT
 
-    implementation 'com.google.guava:guava:33.0.0-jre'                 // Apache 2.0
+    implementation 'com.google.guava:guava:33.2.1-jre'                 // Apache 2.0
 
     implementation 'org.apache.commons:commons-csv:1.9.0'              // Apache 2.0
     implementation 'commons-cli:commons-cli:1.5.0'                     // Apache 2.0
     implementation 'commons-codec:commons-codec:1.15'                  // Apache 2.0
-    implementation 'commons-io:commons-io:2.11.0'                      // Apache 2.0
+    implementation 'commons-io:commons-io:2.14.0'                      // Apache 2.0
     implementation 'commons-logging:commons-logging:1.2'               // Apache 2.0
 
     implementation 'com.jcraft:jzlib:1.1.3'                            // BSD
@@ -146,7 +146,7 @@ dependencies {
     implementation 'org.slf4j:slf4j-api:2.0.4'                        // MIT
     implementation 'org.slf4j:slf4j-nop:2.0.4'                        // MIT
 
-    implementation 'com.hierynomus:sshj:0.34.0'                        // Apache 2.0
+    implementation 'com.hierynomus:sshj:0.38.0'                        // Apache 2.0
     implementation 'net.vrallev.ecc:ecc-25519-java:1.0.3'
     // Apache 2.0; elliptic curve cryptography (ECC) with Curve25519
     implementation 'net.i2p.crypto:eddsa:0.3.0'                        // CC0 1.0 Universal; Ed25519
@@ -276,7 +276,7 @@ roddyDistZip.dependsOn(jar)
 
 sphinx {
     sourceDirectory = "${project.projectDir}/docs/"
-    outputDirectory = "${project.buildDir}/site/"
+    outputDirectory = "${rootProject.layout.buildDirectory.get()}/site/"
     warningsAsErrors = true
 }
 
@@ -318,7 +318,7 @@ rootProject.configurations.each { Configuration configuration ->
         group = "reporting"
         description = "Creates a CycloneDX SBOM for the configuration ${name}."
 
-        destination = file("${project.buildDir}/reports/cyclonedx")
+        destination = file("${rootProject.layout.buildDirectory.get()}/reports/cyclonedx")
         outputName = name
         includeConfigs = [name]
         schemaVersion = "1.5"
