@@ -35,7 +35,7 @@ build:
     - sdk install groovy 2.4.21
     - sdk use     groovy 2.4.21
     - groovy --version
-    - # We need at least these two plugins for the tests.
+    # We need at least these two plugins for the tests.
     - git clone https://github.com/TheRoddyWMS/Roddy-Default-Plugin.git dist/plugins/DefaultPlugin
     - git clone https://github.com/TheRoddyWMS/Roddy-Base-Plugin.git dist/plugins/PluginBase
     - ./gradlew build test allBoms
