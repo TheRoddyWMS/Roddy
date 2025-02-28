@@ -48,7 +48,7 @@ jobs: # a collection of steps
             # We need at least these two plugins for the tests.
             git clone https://github.com/TheRoddyWMS/Roddy-Default-Plugin.git dist/plugins/DefaultPlugin
             git clone https://github.com/TheRoddyWMS/Roddy-Base-Plugin.git dist/plugins/PluginBase
-            ./gradlew build test allBoms $GRADLE_ARGS
+            ./gradlew build test allBoms
       - save_cache:
           paths:
             - ~/.gradle/wrapper

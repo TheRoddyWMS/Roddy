@@ -1,0 +1,38 @@
+# Copyright (c) 2024 DKFZ.
+#
+# Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/RoddyToolLib/LICENSE).
+
+services:
+  - docker:dind
+
+variables:
+  DOCKER_HOST: "tcp://docker:2375"
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+
+stages:
+  - build
+
+build:
+  image: cimg/openjdk:8.0.322
+  stage: build
+  # Reuse Gradle files and caches between jobs
+  cache:
+    - key:
+        files:
+          - gradle/wrapper/gradle-wrapper.properties
+      paths:
+        - ~/.gradle/wrapper
+    - key:
+        files:
+          - build.gradle
+      paths:
+        - ~/.gradle/caches
+  script:
+    - ./gradlew build test allBoms
+  artifacts:
+    paths:
+      - build/test-results/test
+      - build/libs/*.jar
+      - build/reports/cyclonedx/*
+      - build/reports/tests/test/*
