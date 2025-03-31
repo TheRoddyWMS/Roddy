@@ -1,15 +1,15 @@
 == Configuration files
 
-Roddy currently supports two different types of configuration files: -
-XML based which allows to use all configuration features - Bash based
-which only allows a reduced set of configuration features
+Roddy currently supports two different types of configuration files:
+
+* XML based which allows to use all configuration features
+* Bash based which only allows a reduced set of configuration features
+
+IMPORTANT: Bash configuration files are deprecated.
 
 Normally, Roddy workflows and projects are configured with XML files.
-This document will give you all the details you need to know about those
-special files. Don’t be afraid of messing up things in configuration
-files. Roddy checks at least a part (not everything) of the files, when
-they get loaded and will inform you about structural errors as good as
-possible.
+This document will give you all the details you need to know about those special files.
+Roddy checks at least a part (not everything) of the files, when they get loaded and will inform you about structural errors as good as possible.
 
 === Types of files
 
@@ -19,33 +19,23 @@ Roddy configuration files exist in three flavours:
 * Workflow or analysis configuration files
 * Generic configuration files.
 
-All file types may contain the same content type though analysis
-configuration files will normally look different than e.g. project
-configuration files. The main difference between the different types is
-their position in the configuration inheritance tree, their filename and
-their header.
+All file types may contain the same content, although though analysis configuration files will normally look different from, e.g., project configuration files.
+The main difference between the different types is their position in the configuration inheritance tree, their filename and their header.
 
 === Filenames
 
-Roddy imposes some filename conventions to identify XML files when they
-are loaded from disk:
+Roddy imposes some filename conventions to identify XML files when they are loaded from disk:
 
-* Project configuration files look like projects*[yourfilename]*.xml
-* Workflow configuration files use the pattern
-analysis*[yourfilename]*.xml
+* Project configuration files look like `projects*[yourfilename]*.xml`
+* Workflow configuration files use the pattern `analysis*[yourfilename]*.xml`
 
-Common configuration files do not use any pattern. You can name them
-like you want, except for the above patterns.
+Common configuration files do not use any pattern. You can name them like you want, except for the above patterns.
 
 === Inheritance structure
 
 Configurations and configuration files can be linked in several ways:
 
-[arabic]
-. Subconfigurations extend their parent configuration(s)
-. Configuration files can import other configuration, this is only
-possible on the top-level of a configuration file, a subconfiguration
-cannot do this
-. Analysis configuration files can be imported as an analysis import by
-a project configuration or subconfiguration
-. An analysis can be imported by a project but not vice-versa
+. Subconfigurations extend their parent configuration(s).
+. Configuration files can import other configuration, this is only possible on the top-level of a configuration file, a subconfiguration cannot do this.
+. Analysis configuration files can be imported as an analysis import by a project configuration or subconfiguration.
+. An analysis can be imported by a project but not _vice versa_.

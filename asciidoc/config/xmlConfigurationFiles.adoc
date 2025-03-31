@@ -16,21 +16,16 @@ Each configuration file is built up after the following pattern
 </configuration>
 ----
 
-However, keep in mind, that not every section makes sense for every type
-of XML file. E.g. _availableAnalyses_ only makes sense in project XML
-files, whereas filenames and processing tools will moste likely only be
-used within analysis XML files.
+However, keep in mind, that not every section makes sense for every type of XML file. E.g. _availableAnalyses_ only makes sense in project XML files, whereas filenames and processing tools will moste likely only be used within analysis XML files.
 
 === Header
 
-Different file types use different XML headers. This is necessary to set
-the different behaviours of those file types. Furthermore, for analysis
-configuration files, headers differ for the various workflow types.
+Different file types use different XML headers. This is necessary to set the different behaviours of those file types. Furthermore, for analysis configuration files, headers differ for the various workflow types.
 Let’s start with generic configuration files.
 
-==== Brawl based workflows
+==== Brawl based workflows (deprecated)
 
-==== Script based workflows
+==== Script based workflows (deprecated)
 
 [source,XML]
 ----
@@ -55,7 +50,9 @@ Let’s start with generic configuration files.
              targetCommandFactory="de.dkfz.roddy.execution.jobs.cluster.pbs.PBSCommandFactory">
 ----
 
-==== Java based workflows
+==== JVM-based workflows
+
+These are implemented as Java, Groovy, or similar JVM-compiled code.
 
 [source,XML]
 ----
@@ -79,8 +76,8 @@ Let’s start with generic configuration files.
 
 ==== Generic / common configurations
 
-Generic configuration files keep a minimal header, which might even just
-contain the name. That's it.
+Generic configuration files keep a minimal header, which might even just contain the name.
+That's it.
 
 [source,XML]
 ----
@@ -89,12 +86,10 @@ contain the name. That's it.
 
 === Configuration values
 
-Usually you will change configuration values. When Roddy executes a
-workflow, a shell script will be created where all the configuration
-values are stored. This script can then be imported by workflow scripts.
+When Roddy executes a workflow, a shell script will be created where all the configuration values are stored.
+This script can then be imported by workflow scripts.
 
-Configuration values are embedded in a configuration values section
-like:
+Configuration values are embedded in a configuration values section like:
 
 [source,XML]
 ----
@@ -111,74 +106,58 @@ like:
 </configurationvalues>
 ----
 
-The configuration value itself is defined as a cvalue element. Each
-element can have several tags:
+The configuration value itself is defined as a `cvalue` element.
+Each element can have several tags:
 
-* _name_ - The tag is used to identify the value both in Roddy and in
-the job scripts.
+* _name_ - The tag is used to identify the value both in Roddy and in the job scripts.
 * _description_ - If you want to describe a value, do it with this tag.
-* _value_ - The actual value is store here. You can set dependencies to
-other values by enclosing the referenced value like $\{targetValue}.
-Roddy will evaluate the dependency, as soon as it is necessary.
-* _type_ - There exist several types for configuration values. The
-default value is string. Note, that the selection of the type will
-influence, how variables are interpreted and evaluated / converted.
+* _value_ - The actual value is store here. You can set dependencies to other values by enclosing the referenced value like `${targetValue}`.
+Roddy will evaluate the dependency, as soon as it is necessary, but latest when the parameter file is written.
+* _type_ - There exist several types for configuration values.
+The default value is string.
+Note, that the selection of the type will influence, how variables are interpreted and evaluated/converted.
 ** _string_ accepts any value.
 ** _int_ will accept integer values only. E.g. 1, 2, 3 or 4.
 ** _float_ will accept valid Java / Groovy float values. E.g. 1.2f 1.2
-** _double_ will accept valid Java / Groovy double values. E.g. 1.2 or
-1.2E-3.
-** _boolean_ will evaluate true (preferred), y, j, t and 1 to true and
-false (preferred), n, f and 0 to false.
+** _double_ will accept valid Java / Groovy double values. E.g. 1.2 or 1.2E-3.
+** _boolean_ will evaluate true (preferred), y, j, t and 1 to true and  false (preferred), n, f and 0 to false.
 ** _path_ indicates, that the variable is a path or a part of a path.
+** _bashArray_ will accept strings of the form `(a b c d)` where the space-separated values are interpreted as list elements.
 
 ==== Nice to know - Order of evaluation in Roddy
 
-Configuration values can be cast to their _type_ by calling any of the
-methods _toBoolean()_, _toInt()_, _toFloat()_, _toDouble()_,
-_toString()_ and _toFile()_.
+In the JVM-codeConfiguration values can be cast to their _type_ by calling any of the methods _toBoolean()_, _toInt()_, _toFloat()_, _toDouble()_, _toString()_ and _toFile()_.
 
-In contrast to the other methods, _toString()_ and _toFile()_ are quite
-complex methods which will resolve referenced variables. Moreover,
-_toFile()_ also has a particular order in which configuration objects
-are used to achieve this:
+In contrast to the other methods, _toString()_ and _toFile()_ are quite complex methods which will resolve referenced variables.
+Moreover, _toFile()_ also has a particular order in which configuration objects are used to achieve this:
 
-[arabic]
-. The first used configuration is normally the project configuration. So
-every referenced value stored in there will become evaluated.
-. The second used configuration is the analysis configuration and
-replaces USERNAME, USERGROUP, USERHOME, projectName and any other value
-attached to the analysis.
-. The last used configuration is the one from the dataset, and replaces
-pid, PID, dataSet and DATASET.
+
+// TODO This is written in a strange way. Everything should be expressed in terms of the configuration evaluation order. But this strange description here first needs to be checked, because it refers to `toFile()`.
+. The first used configuration is normally the project configuration.
+So every referenced value stored in there will become evaluated.
+. The second used configuration is the analysis configuration and replaces `USERNAME`, `USERGROUP`, `USERHOME`, `projectName` and any other value attached to the analysis.
+. The last used configuration is the one from the dataset, and replaces `pid`, `PID`, `dataSet` and `DATASET`.
 
 ==== Special values
 
-For future releases of Roddy and also for better readability of XML
-files, Roddy offers "special" variables like:
+NOTE: This is highly dependent on the plugins, not so much on the Roddy core application!
 
-*Run flags* which look like runPostProcessing, runFlagstats, runScript
+For future releases of Roddy and also for better readability of XML files, Roddy offers "special" variables like:
 
-and
+Run flags:: such as `runPostProcessing`, `runFlagstats`, `runScript`
 
-*Binaries* which look like BWA_BINARY, MBUFFER_BINARY, PYTHON_BINARY and
-so on.
+Binaries:: such as `BWA_BINARY`, `MBUFFER_BINARY`, `PYTHON_BINARY` and so on.
 
-Run flags are always considered to be boolean and are e.g. used in Brawl
-based workflows. Binary variables are or are supposed to be checked on
-workflow validation and startup in future versions. If you want to
-exchange a binary in a fast way or set a fixed binary for your scripts,
-it is also wise to store everything in configuration values.
+Run flags are always considered to be boolean and are e.g. used in Brawl based workflows.
+Binary variables are or are supposed to be checked on workflow validation and startup in future versions.
+If you want to exchange a binary in a fast way or set a fixed binary for your scripts, it is also wise to store everything in configuration values.
 
 === Tool entries and filename patterns
 
 [NOTE]
 ====
-Because of the importance and complexity of both entry types, they are
-covered in their own section `+configFilenamesAndToolEntries+`.
+Because of the importance and complexity of both entry types, they are covered in their own section xref:configFilenamesAndToolEntries.adoc[Tools and filenames].
 ====
-
-These sections are started like this:
 
 [source,XML]
 ----
@@ -200,21 +179,19 @@ These sections are started like this:
 </filenames>
 ----
 
-They contain a list and resource definitions for included workflow tools
-and patterns to create filenames based on different rules.
+They contain a list and resource definitions for included workflow tools and patterns to create filenames based on different rules.
 
 Tool entry names are automatically converted to configuration variables.
-For this to work, you need to set the tool id in camel case notation:
-camelCase. If this is done, Roddy will convert the id e.g. to
-TOOL_CAMEL_CASE. For the above example, you'd get
-TOOL_COMPRESSION_DETECTION out of compressionDetection and e.g.
-TOOL_WRAPIN_SCRIPT, TOOL_CREATE_LOCK_FILES, TOOL_STREAM_BUFFER and
-finally TOOL_NATIVE_WORKFLOW_SCRIPT_WRAPPER.
+For this to work, you need to set the tool id in camel-case notation, e.g. `camelCase`.
 
-Here comes a list of stuff taken from an old config file. It's just
-taken over and not reworked. However, a lot of the possibilities for
-filename patterns is listed here:
+If this is done, Roddy will convert the name to a `TOOL_` variable, `e.g.` `camelCase` will be converted to `TOOL_CAMEL_CASE`.
+For the above example, you'd get `TOOL_COMPRESSION_DETECTION` out of compressionDetection and, e.g., `TOOL_WRAPIN_SCRIPT`, `TOOL_CREATE_LOCK_FILES`, `TOOL_STREAM_BUFFER`, and finally `TOOL_NATIVE_WORKFLOW_SCRIPT_WRAPPER`.
 
+Here comes a list of stuff taken from an old config file.
+It's just taken over and not reworked.
+However, a lot of the possibilities for filename patterns is listed here:
+
+.This documentation from an XML.
 [source,XML]
 ----
 <!-- Filenames are always stored in the pid's output folder -->
@@ -249,17 +226,15 @@ filename patterns is listed here:
 
 ==== Special: Autofilenames and Autofiletypes
 
-Just to mention it (it is also covered in detail in the full guide),
-Roddy supports some sort of autofilenames and types. This means, if you
-just want to get things running, you can specify a tool with input and
-output files. If no filename patterns and file classes exist, Roddy will
-take care of this for you. However, the autofilenames are not the nicest
-things to have, so you should go on and create rules, if needed.
+Just to mention, Roddy supports some sort of automatic filenames and types.
+
+This means, if you just want to get things running, during development, you can specify a tool with input and output files.
+
+If no filename patterns and file classes exist, Roddy will generate automatic filenames and types.
 
 ==== Enumerations
 
-Enumerations are there to specify data types and validators for
-configuration values.
+Enumerations are there to specify data types and validators for configuration values.
 
 [source,XML]
 ----
@@ -274,6 +249,4 @@ configuration values.
 </enumeration>
 ----
 
-Looking at the default configuration value type configuration, you can
-see e.g. that path objects are validated with the FileSystemValidator
-class.
+Looking at the default configuration value type configuration, you can see, e.g.` that path objects are validated with the `FileSystemValidator` class.
