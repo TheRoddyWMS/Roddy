@@ -41,7 +41,7 @@ build:
     - ./gradlew build check allBoms
   artifacts:
     paths:
-      - build/test-results/test
-      - build/libs/*.jar
-      - build/reports/cyclonedx/*
-      - build/reports/tests/test/*
+      - "gradleBuild/distributions/*.zip"
+      - "RoddyCore/buildversion.txt"
+      - "gradleBuild/reports/cyclonedx/*"
+      - "gradleBuild/tests/test/*"
