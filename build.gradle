@@ -102,7 +102,7 @@ repositories {
 }
 
 ext.roddyToolLibVersion = "2.5.0"
-ext.batchEuphoriaVersion = "0.2.0"
+ext.batchEuphoriaVersion = "0.2.1"
 ext.jschVersion = "0.0.9"
 
 configurations.all {
