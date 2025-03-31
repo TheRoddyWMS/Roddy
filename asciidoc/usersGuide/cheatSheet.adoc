@@ -3,7 +3,7 @@
 This page is for those amongst you, that need to rush in or just need a
 refreshment when it comes to Roddy usage. We will mostly list useful
 commands and that’s it. No big explanations or other things. If you need
-more information, open up the `+walkthrough+`.
+more information, open up the xref:walkthrough.adoc[walkthrough].
 
 === Create a new project
 
@@ -12,14 +12,14 @@ lang=bash
 bash roddy.sh prepareprojectconfig create [targetprojectfolder]
 ....
 
-# Open up the applicationProperties.ini. Change:
+Open up the applicationProperties.ini. Change:
 
 ....
 - The cluster settings
 - Add the COProjectConfigurations path which you need.
 ....
 
-# Open the XML file. Change:
+Open the XML file. Change:
 
 ....
 - The project id in the header

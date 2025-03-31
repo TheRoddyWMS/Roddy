@@ -1,4 +1,6 @@
-== Brawl workflows
+== Brawl workflows (deprecated)
+
+IMPORTANT: Brawl-workflows are deprecated!
 
 Brawl is Roddys own domain specific language (DSL) for creating
 workflows. It looks a lot like the DSL of e.g. Snakemake::

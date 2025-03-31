@@ -1,0 +1,4 @@
+== Developing Roddy
+
+include::coreStructure.adoc[]
+include::developersGuide.adoc[]

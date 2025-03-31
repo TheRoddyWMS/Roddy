@@ -1,4 +1,0 @@
-[[roddyDevelopment]]
-== Developing Roddy
-
-roddyDevelopment/coreStructure.rst roddyDevelopment/developersGuide.rst

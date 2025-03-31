@@ -1,0 +1,8 @@
+== Plugin development
+
+include::pluginDevelopersGuide.adoc[]
+include::10MinutesWalkthrough.adoc[]
+include::jvmPlugins.adoc[]
+include::brawlPlugins.adoc[]
+include::nativePlugins.adoc[]
+include::writingRoddyJobs.adoc[]

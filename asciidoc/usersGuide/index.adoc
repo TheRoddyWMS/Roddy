@@ -1,0 +1,6 @@
+== Users guide
+
+include::walkthrough.adoc[]
+include::cheatSheet.adoc[]
+include::commandLineOptions.adoc[]
+include::reproduceResults.adoc[]
