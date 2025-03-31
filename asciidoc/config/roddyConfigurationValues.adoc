@@ -1,5 +1,17 @@
 == Roddy Configuration Values
 
+=== Variable value resolution
+
+For some variables you may want to refer to environment variables that are only available on the execution hosts.
+For instance, `LSB_JOBID` contains the cluster job ID during job execution in an IBM LSF cluster, and is only set on the execution hosts.
+
+You can simply refer to such variables from the `applicationProperties.ini` (or the XML configurations).
+Roddy will try to resolve all variables that it can on the submission host, but simply leaves all remaining unresolved.
+Then, during execution on the job execution environment, they may get resolved by the shell.
+
+
+=== Roddy's predefined variables
+
 The following variables are used by Roddy itself:
 
 === Path Configuration
@@ -9,12 +21,10 @@ references such as '$\{dataset}' that are filled in during the
 identification of input data during start up or filled with metadata
 values during submission.
 
-* inputBaseDirectory: This option is also set by the
---useiodir=$outputBaseDirectory,$inputBaseDirectory command-line option.
-* {blank}
-+
-outputBaseDirectory: This option is also set by the
---useiodir=$outputBaseDirectory[,$inputBaseDirectory] command-line
+* `inputBaseDirectory`: This option is also set by the
+`--useiodir=$outputBaseDirectory,$inputBaseDirectory` command-line option.
+* `outputBaseDirectory`: This option is also set by the
+`--useiodir=$outputBaseDirectory[,$inputBaseDirectory]` command-line
 option. Usually, this directory contains::
   ** one subdirectory per dataset (e.g. patient).
   ** the "execution cache file" (.roddyExecCache.txt) containing the

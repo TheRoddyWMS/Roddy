@@ -72,6 +72,7 @@ This is, e.g., the case if the data user cuts out columns of a TSV without check
     * **Patch**: Added `dkfz_minimal:1.1.0` container that contains now an almost full installation of packages present on old DKFZ CentOS 7.9 cluster nodes. Only few packages were left out. Skipped packages are marked with `#` comments in [`containers/dkfz_minimal/packages.txt`](containers/dkfz_minimal/packages.txt).
     * **Patch**: Added `dkfz_minimal:1.0.1` which fixes a missing module definition path. Thus, also `biomodal` and `workflows/husar modules` are becoming available in the container (when the DKFZ software stack is mounted). The container just adds a layer on the 1.0.0 container.
 
+
 * 3.8.0
   * **Minor**: Singularity support. Jobs can now be run in singularity containers. Currently, only a single image for a whole workflow is supported.
     > This is only implemented and tested for LSF and SLURM, not tested for PBS and SGE, and not implemented at all for the REST-based submission to LSF and the direct execution job manager.

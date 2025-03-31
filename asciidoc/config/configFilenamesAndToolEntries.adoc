@@ -1,49 +1,42 @@
 == Tools and filenames
 
-The whole workflow structure in Roddy is built around files and
-filenames. Files are used to create dependencies between steps in the
-workflow and files also enable Roddy to rerun a workflow based on
+The whole workflow structure in Roddy is built around files and filenames.
+Files are used to create dependencies between steps in the workflow and files also enable Roddy to rerun a workflow based on
 created files.
 
-As Roddy strictly separates code and configuration, filenames are
-configured. Of course you are allowed to make exceptions for e.g.
-initial files but the standard is to create rules for filenames.
+As Roddy strictly separates code and configuration, filenames are configured.
+Of course, you are allowed to make exceptions for, e.g., initial files but the standard is to create rules for filenames.
 
 So how do you tie things up?
 
-Filename patterns are used to define a single or a range of names for a
-file class.
+Filename patterns are used to define a single or a range of names for a file class.
 
 File classes are used as input and output parameters for tool entries.
 *Filename patterns are automatically applied to output files!*
 
-Tool entries tell Roddy how a script or a binary is called. Which files
-and parameters go in and which files come out and which resources will
-be used by jobs running this tool.
+Tool entries tell Roddy how a script or a binary is called. Which files and parameters go in and which files come out and which resources will be used by jobs running this tool.
 
 A complex tool entry will be shown at the end of this document.
 
 [NOTE]
 ====
-In our experience, it is a good way to create a workflow and its tools
-on a step by step base so that:
+In our experience, it is a good way to create a workflow and its tools step by step:
 
-[arabic]
-. You create a tool entry, define an initial resource set and i/o
+. Create a tool entry, define an initial resource set and i/o
 parameters.
 . Integrate the call into your workflow.
 . Setup filename patterns for the tools output files.
 . Test the new tool with _testrun_ and _testrerun_.
 . Repeat the steps for the next tool.
 
-Occasionally it might still be wise to remove the output data and test
-the whole workflow again.
+Occasionally it might still be wise to remove the output data and test the whole workflow again.
 ====
 
 [IMPORTANT]
 ====
-Remember, that Roddy does not feature job monitoring. The job structure,
-file names and patterns must be well known before the workflow starts!
+Remember, that Roddy does not monitor cluster jobs.
+It sends them off into the cluster, and uses the cluster job-dependency management ("fire-and-forget").
+Consequently, the job dependencies, file names and patterns must be known before the workflow starts!
 ====
 
 === Tool entries
@@ -66,67 +59,57 @@ Each tool entry has a header:
 <tool name='testScript' value='testScriptSleep.sh' basepath='roddyTests'>
 ----
 
-* The value of the _name_ attribute is used to call or manage the tool
-in a workflow. Before a workflow starts, the names of all tools are
-converted to configuration values so that you will have easy access to
-them from your scripts. As explained in the configuration section, a job
-name will be converted from camel case notation to All caps notation
-using underscore as the word separator. In addition _TOOL__ will be used
-as a prefix. So the tool name _testScript_ would be named
-_TOOL_TEST_SCRIPT_ in your job.
-* The value of the _value_ attribute holds the script or binary name of
-the executed file.
-* The value of the _basepath_ attribute points to the tools folder in
-the plugins analyisTools folder.
+* The value of the _name_ attribute is used to call or manage the tool in a workflow.
+Before a workflow starts, the names of all tools are converted to configuration values so that you will have easy access to
+them from your scripts.
+As explained in the configuration section, a job name will be converted from camel-case notation to all-caps notation
+using underscore as the word separator.
+In addition, _TOOL__ will be used as a prefix. So the tool name _testScript_ would be named _TOOL_TEST_SCRIPT_ in your job.
+* The value of the _value_ attribute holds the script or binary name of the executed file.
+* The value of the _basepath_ attribute points to the tools folder in the plugins `analyisTools` folder.
 
 [IMPORTANT]
 ====
-You can, but you don't have to add resource sets and input and ouput
-parameters to a job. If you omit resource sets, the job will run with
-default resource settings. They are explained below. If you omit input
-and output parameters, you need to take care of the job call by
-yourself. Normally, Roddy will take care of this for you. If you create
-a native workflow, you will lose the rerun feature, if you omit the
-output parameters! Omitting all these parameters might sometimes make
-sense, when you just want to get easy access to a tool in your
-analysisTools folder.
+You can, but you don't have to add resource sets and input and output parameters to a job.
+If you omit resource sets, the job will run with default resource settings.
+They are explained below.
+If you omit input and output parameters, you need to take care of the job call by yourself.
+Normally, Roddy will take care of this for you.
+If you create a xref:_native_plugins_deprecated[native workflow], you will lose the rerun feature, if you omit the output parameters!
+Omitting all these parameters might sometimes make sense, when you just want to get easy access to a tool in your `analysisTools` folder.
 ====
 
 ==== Resource sets
 
+A resource sets is a combination of resource definitions, such as memory, cores, queues, etc., identified by a name.
 Each tool can have several resource sets.
 
+A resource set definition in XML looks like this:
 [source,XML]
 ----
 <rset size="l" memory="1" cores="1" nodes="1" walltime="5"/>
 ----
 
-* The attribute _size_ can be one of _t, xs, s, m, l, xl_ and allows you
-to define resource sets for different cases. From extra small to extra
-large. _t_ is a special case and can be used for test resources.
-* Currently Roddy (or BatchEuphoria) can be used to request the
-resources _memory, cores, nodes_ and _walltime_ You can set values in
-different formats:
+* The attribute _size_ can be one of _t, xs, s, m, l, xl_ and allows you to define resource sets for different job sizes.
+From extra-small `xs` to extra large `xl`. `t` is a special case and can be used for test resources.
+* Currently, Roddy (or BatchEuphoria) can be used to request the resources `memory`, `cores`, `nodes`, and `walltime`.
+You can set values in different formats:
 +
 ____
-** The default for memory is 1GB. Valid strings for it are for example:
+** The default for memory is 1GB. Valid memory strings are for example:
 *** 1 (which is 1 GB)
-*** 1m/g/t
-*** 0.5(m/g/t) which would be 500MB
-** The default cores value is 1. Other values are natural numbers in [1;
-n]
-** The default nodes value is 1. Other values are natural numbers in [1;
-n]
+*** Use suffices to express units, e.g. `m`, `g`
+** The default cores value is 1. Other values are natural numbers in [1; n]
+** The default nodes value is 1. Other values are natural numbers in [1; n]
 ** The default walltime is 1 hour. Other values are for example:
 *** 00:10:00 which would be 10 minutes.
-*** 24:00:00 would be aligned to 01:00:00:00 which is one day. All other
-values will be aligned as well.
-*** 1h, 1d, 1h50m ... or other values in human readable format.
+*** 24:00:00 would be aligned to 01:00:00:00 which is one day.
+*** 1h, 1d, 1h50m ... or other values in human-readable format.
 ____
-+
+
 [NOTE]
 ====
-The default size for resource sets used by Roddy is _l_
+The default size for resource sets used by Roddy is `l`
 ====
 
 ==== Input types
@@ -135,82 +118,65 @@ A tool can have different input objects:
 
 * Values, like strings or numbers:
 +
-____
 [source,XML]
 ----
 <input type="string" setby="callingCode" scriptparameter="SAMPLE"/>
 ----
-
 ** The _type_ attribute tells Roddy, that a string is expected.
-** The _setby_ attribute tells Roddy, that the parameter will be set by
-the developer in the call of the job. Currently only _callingCode_ is
-valid.
-** The _scriptparameter_ value tells Roddy that a parameter with this
-name is passed to the job.
-____
+** The _setby_ attribute tells Roddy, that the parameter will be set by the developer in the call of the job.
+Currently, only _callingCode_ is valid.
+** The _scriptparameter_ value tells Roddy that a parameter with this name is passed to the job.
 * Single file objects like:
 +
-____
 [source,XML]
 ----
 <input type="file" typeof="de.dkfz.b080.co.files.LaneFile" scriptparameter="RAW_SEQUENCE_FILE" />
 <input type="file" typeof="BasicBamFile" scriptparameter="RAW_SEQUENCE_FILE" />
 ----
-
-** The type attribute tells Roddy that a file object is expected as
-input.
-** The typeof value tells Roddy the expected type of an input value.
-This check is done within the job call. If the type of the input object
-does not match, Roddy will fail. You're allowed to omit the package
-structure. Roddy will try to find the class in its core code and in the
-plugin classes. If more than two classes match, Roddy will fail and tell
-you, that this happened.
-
+** The _type_ attribute tells Roddy that a file object is expected as input.
+** The _typeof_ value tells Roddy the expected type of an input value.
+This check is done within the job call.
+If the type of the input object does not match, Roddy will fail.
+You're allowed to omit the package structure.
+Roddy will try to find the class in its core code and in the plugin classes.
+If more than two classes match, Roddy will fail and tell you, that this happened.
++
 [IMPORTANT]
 ====
-You are allowed to put in a non-existent class! If Roddy cannot find the
-class, it will create a synthetic class during runtime. This way, you
-can skip code creation and keep your code lean. You are allowed to use
-this class like any other class. However, you are not able to use the
-class directly in your Java code.
+You are allowed to put in a non-existent class! If Roddy cannot find the class, it will create a xref:_synthetic_classes[synthetic class] at runtime.
+This way, you can skip code creation and keep your code lean.
+You are allowed to refer to this class like any other class in the _typeof_ attributes in your XMLs.
+However, you are not able to use the class directly in your Java code.
 ====
-
-** Like above, the scriptparameter value tells Roddy that a parameter
+** Like above, the _scriptparameter_ value tells Roddy that a parameter
 with this name is passed to the job.
-____
 * File groups:
 +
-____
 File groups are collections of file objects. By default, file groups are
 designed to store files of the same type.
-
++
 [source,XML]
 ----
 <input type="filegroup" typeof="de.dkfz.b080.co.files.BamFileGroup" scriptparameter="INPUT_FILES" passas="array"/>
 <input type="filegroup" typeof="GenericFileGroup" scriptparameter="INPUT_FILES2" passas="array"/>
 ----
-
-** Set the _type_ to filegroup if you want to use it.
+** Set the _type_ to `filegroup` if you want to use it.
 ** _typeof_ behaves nearly the same as for file input definitions.
-However, here you need to put in a file group class. If you do not need
-a specialized or named file group, you can use the GenericFileGroup
-class.
+However, here you need to put in a file group class.
+If you do not need a specialized or named file group, you can use the `GenericFileGroup` class.
 ** TODO: _classOfContainedFiles_
-** The _passas_ attribute defines, how the files in the file group are
-passed to your job. Allowed values are:
-*** _parameters_ which will tell Roddy to create a parameter for each
-file in the group.
-*** _array_ which will tell Roddy to pass the files as an array in a
-single string.
-** The _scriptparameter_ behaves nearly like the one for files. If you
-set _array_, the parameter name will be used like it is. If you set
-_parameters_ it will be used as a prefix and the .
-____
-
+** The _passas_ attribute defines, how the files in the file group are passed to your job.
+Allowed values are:
+*** _parameters_ which will tell Roddy to create a parameter for each file in the group.
+*** _array_ which will tell Roddy to pass the files as an array in a single string.
+** The _scriptparameter_ behaves nearly like the one for files.
+If you set _array_, the parameter name will be used like it is.
+If you set _parameters_ it will be used as a prefix.
++
 [IMPORTANT]
 ====
-The order of the input parameters matters, when you pass parameters to a
-job. Roddy will check this and fail, if:
+The order of the input parameters matters, when you pass parameters to a job.
+Roddy will check this and fail, if:
 
 * the number of input parameters does not match
 * the type of input parameters does not match
@@ -219,20 +185,17 @@ job. Roddy will check this and fail, if:
 ==== Output types
 
 The output of a Roddy job is always a file or a group of files.
-Moreover, you are only allowed to have one top-level output object in
-the XML description, but this object might be one which holds other
-objects like the mentioned file groups.
+Moreover, you are only allowed to have one top-level output object in the XML description, but this object may be one which holds other objects like the mentioned file groups.
 
 If your tool does not create output files you can omit those entries.
-However, it might still be wise to create some sort of checkpoint for
-the tool so that Roddys rerun feature will work properly. The syntax for
-output objects is quite similar to the syntax for input objects, so
-we'll skip explanations for known attributes. Valid output objects are:
+However, it may still be wise to create some sort of checkpoint for the tool so that Roddys rerun feature will work properly.
+The syntax for output objects is quite similar to the syntax for input objects, so we'll skip explanations for known attributes.
+Valid output objects are:
 
 * Single file objects:
 +
-The single output file syntax is the same like for input files. Just
-change the tag name to output.
+The single output file syntax is the same as for input files.
+Just change the tag name to output.
 +
 [source,XML]
 ----
@@ -247,24 +210,23 @@ attribute like:
 <output type="file" typeof="BasicBamFile" scriptparameter="FILE_IN" filename="/tmp/somefile_${pid}.txt" />
 ----
 +
-If you do this, you will create an inline filename pattern of the
-onScriptParameter type. Just see the below section about filename
-patterns and rules for more info.
-+
-Also you can tell Roddy to omit the file existence check for workflow
-reruns by adding the check attribute with its value set to "false".
+If you do this, you will create an inline filename pattern of the _onScriptParameter_ type.
+Just see the below section about filename patterns and rules for more info.
+Also, you can tell Roddy to omit the file existence check for workflow reruns by adding the check attribute with its value set to "false".
 +
 [source,XML]
 ----
 <output type="file" typeof="BasicBamFile" scriptparameter="FILE_IN" check="false" />
 ----
++
+WARNING: Avoid this, because this also means that if the file is missing because of an error in a previous run, this may remain unnoticed by Roddy!
 * Files with children:
 +
-Files with children are a bit special. They are necessary, if you want
-to create a file which has some children. The main difference to single
-files is, that you need to create a class file! Then, for each file you
-want as a child, you need to create the field and the set / get
-accessors. We use this feature only in a handful of cases.
+Files with children can be used to model some important file, e.g., an alignment file, together with its dependent files, such as indices on the alignment file.
+Files with children are a bit special.
+The main difference to single files is, that you must create a class file!
+Then, for each file you want as a child, you need to create the field and the set/get accessors in the Java code.
+We use this feature only in a handful of cases.
 +
 [source,XML]
 ----
@@ -273,15 +235,13 @@ accessors. We use this feature only in a handful of cases.
 </output>
 ----
 +
-The example shows an output entry with one child. You can add more
-children, if you need.
+The example shows an output entry with one child. You can add more children, if you need.
 +
-The _variable_ attribute tells Roddy which field in the parent class is
-used to store the created child.
+The _variable_ attribute tells Roddy which field in the parent class is used to store the created child.
 * Tuples of files:
 +
-Tuples of files are the easiest way to create collections of file
-objects. It does not matter which types the files have.
+Tuples of files are the easiest way to create collections of file objects.
+It does not matter which types the files have.
 +
 [source,XML]
 ----
@@ -291,20 +251,20 @@ objects. It does not matter which types the files have.
 </output>
 ----
 +
-Call in Java code
+Call in Groovy code
 +
-[source,Java]
+[source,Groovy]
 ----
 // Call with output tuple
 Tuple2 fileTuple = (Tuple2) call("testScriptWithMultiOut", someFile)
 
-// Access output tuple children
-(BasicBamFile)fileTuple.value0
-(BamIndexFile)fileTuple.value1
+// Access output tuple children; note the type-cast
+fileTuple.value0 as BasicBamFile
+fileTuple.value1 as BamIndexFile
 ----
 * File groups:
 +
-Output file groups offer a lot more options than input file groups. This
+Output file groups offer a lot more options than input file groups:
 +
 [source,XML]
 ----
@@ -323,8 +283,8 @@ Output file groups offer a lot more options than input file groups. This
 
 === Filename patterns
 
-Filenames in Roddy are rule based. They are defined in the filenames
-section in your XML file.
+Filenames in Roddy are rule based.
+They are defined in the filenames section in your XML file.
 
 [source,XML]
 ----
@@ -337,82 +297,57 @@ section in your XML file.
 </filenames>
 ----
 
-There are several types of triggers for patterns available. Patterns are
-always linked to a particular _class_. By applying the _selectiontag_
-attribute to some of the trigger types, you gain a more fine grained
-control over pattern selection, if you define output objects of the same
-class multiple times in a tool.
+There are several types of triggers for patterns available.
+Patterns are always linked to a particular _class_.
+By applying the _selectiontag_ attribute to some of the trigger types, you gain a more fine-grained control over pattern selection, if you define output objects of the same class multiple times in a tool.
 
-==== onScriptParameter trigger
+==== `onScriptParameter` trigger
 
-____
---
-This trigger type links the pattern to the scriptparameter attribute of
-an output object. Valid trigger values are:
+This trigger type links the pattern to the _scriptparameter_ attribute of an output object.
+Valid trigger values are:
 
-____
-* [parameter name] - where _parameter name_ is linked to the
-scriptparameter attribute. The trigger is valid for all tools.
-* :[parameter name] - behaves like above.
-* [ANY]:[parameter name] - behaves like above. This is the long form and
-_[ANY]_ is meant to make the syntax more readable.
-* [tool id]:[parameter name] - behaves like above, except that _tool id_
-restricts the trigger to exactly one tool.
-____
+* `[parameter name]` - where _parameter name_ is linked to the scriptparameter attribute.
+The trigger is valid for all tools.
+* `:[parameter name]` - behaves like above.
+* `[ANY]:[parameter name]` - behaves like above.
+This is the long form and _[ANY]_ is meant to make the syntax more readable.
+* `[tool id]:[parameter name]` - behaves like above, except that _tool id_ restricts the trigger to exactly one tool.
 
-This trigger type will NOT accept the _selectiontag_ attribute.
+This trigger type will *not* accept the _selectiontag_ attribute!
 
---
-____
 
-==== onMethod trigger
+==== `onMethod` trigger
 
-____
---
-This trigger links the pattern to a method name or a class and a method
-name. Roddy will search all called methods using the current threads
-stack trace. The search will stop, as soon as the execute method is
-reached. Valid values are:
+This trigger links the pattern to a method name or a class and a method name.
+Roddy will search all called methods using the current threads stack trace.
+The search will stop, as soon as the execute method is reached.
+Valid values are:
 
-____
-* [methodName] - by specifying only a method name, the pattern will be
-used for any called method with this name.
-* [simple class name].[methodName] - this will accept all methods in
-classes with the given class name. The class package will be ignored.
-* [full class name].[methodName] - by setting the class and the package,
-this pattern will only be applied with a full match.
-____
+* `[methodName]` - by specifying only a method name, the pattern will be used for any called method with this name.
+* `[simple class name].[methodName]` - this will accept all methods in classes with the given class name.
+The class package will be ignored.
+* `[full class name].[methodName]` - by setting the class and the package, this pattern will only be applied with a full match.
 
-This trigger type will accept the _selectiontag_ attribute.
+This trigger type will accept the _selectiontag_ attribute!
 
---
-____
 
-==== onToolID trigger
+==== `onToolID` trigger
 
-____
-This trigger will link the pattern to a tool call. If this tool is
-called and outputs a file of the given class then this pattern might be
-used.
+This trigger will link the pattern to a tool call.
+If this tool is called and outputs a file of the given class then this pattern might be used.
 
-This trigger type will accept the _selectiontag_ attribute.
-____
+This trigger type will accept the _selectiontag_ attribute!
 
-==== derivedfrom trigger
+==== `derivedfrom` trigger
 
-____
-In some cases the name of a new file depends on the name of a parent
-file, e.g. a Bam Index file depends on a Bam file like
+In some cases the name of a new file depends on the name of a parent file, e.g., a BAM index file depends on a BAM file like
 DATASET_TIMESTAMP.merged.bam -> DATASET_TIMESTAMP.merged.bam.bai.
 
-This trigger type will accept the _selectiontag_ attribute.
-____
+This trigger type will accept the _selectiontag_ attribute.!
 
 ==== generic
 
-____
 To be done... we hardly use it.
-____
 
 [IMPORTANT]
 ====
@@ -421,15 +356,17 @@ Filename patterns are evaluated in a specific order!
 [arabic]
 . First by the type
 
-____
 * onScriptParameter -> onMethod -> onToolID -> derivedFrom -> generic
-____
 
 [arabic, start=2]
 . By the order in the configuration. First come first serve!
 ====
 
-[source,Java]
+==== Summary
+
+This is an XML template that shows the usage of all filename pattern variants:
+
+[source,xml]
 ----
 "<filename class='TestFileWithParent' derivedFrom='TestParentFile' pattern='/tmp/onderivedFile'/>"
 "<filename class='TestFileWithParent' derivedFrom='TestParentFile' pattern='/tmp/onderivedFile'/>"
@@ -451,52 +388,54 @@ ____
 
 === Synthetic classes
 
-Synthetic classes are a mechanism which allows you to use Roddys
-built-in type checking system without the need to create class files.
-Synthetic classes are automatically created during runtime in the
-following cases:
+"Synthetic" classes are a mechanism which allows you to use Roddys built-in type checking system without the need to create class files.
+Synthetic classes are automatically created during runtime in the following cases:
 
 * A filename pattern requires a specific non-existent class.
 * A tool i/o parameter needs a specific non-existent class.
-* Programmatically, if you request Roddy to load a non-existent class
-with the LibrariesFactory:
+* Programmatically, if you request Roddy to load a non-existent class with the LibrariesFactory:
 +
-[source,Java]
+[source,groovy]
 ----
-LibrariesFactory.getInstance().loadRealOrSyntheticClass(String classOfFileObject, String baseClassOfFileObject)
-LibrariesFactory.getInstance().loadRealOrSyntheticClass(String classOfFileObject, Class<FileObject> constructorClass)
-LibrariesFactory.getInstance().forceLoadSyntheticClassOrFail(String classOfFileObject, Class<FileObject> constructorClass = BaseFile.class)
-LibrariesFactory.getInstance().generateSyntheticFileClassWithParentClass(String syntheticClassName, String constructorClassName, GroovyClassLoader classLoader = null)
+LibrariesFactory.insntance.
+  loadRealOrSyntheticClass(String classOfFileObject,
+                           String baseClassOfFileObject)
+LibrariesFactory.instance.
+  loadRealOrSyntheticClass(String classOfFileObject,
+                           Class<FileObject> constructorClass)
+LibrariesFactory.instance.
+  forceLoadSyntheticClassOrFail(String classOfFileObject,
+                                Class<FileObject> constructorClass = BaseFile.class)
+LibrariesFactory.insntance.
+  generateSyntheticFileClassWithParentClass(String syntheticClassName,
+                                            String constructorClassName,
+                                            GroovyClassLoader classLoader = null)
 ----
 +
 or via the ClassLoaderHelper
 +
-[source,Java]
+[source,groovy]
 ----
-LibrariesFactory.getInstance().getClassLoaderHelper().loadRealOrSyntheticClass(String classOfFileObject, String baseClassOfFileObject)
-LibrariesFactory.getInstance().getClassLoaderHelper().loadRealOrSyntheticClass(String classOfFileObject, Class<FileObject> constructorClass)
-LibrariesFactory.getInstance().getClassLoaderHelper().generateSyntheticFileClassWithParentClass(String syntheticClassName, String constructorClassName, GroovyClassLoader classLoader = null)
-----
-
-=== Example tool entry and filename patterns
-
-[source,XML]
-----
-<a/>
+LibrariesFactory.instance.classLoaderHelper.
+  loadRealOrSyntheticClass(String classOfFileObject,
+                           String baseClassOfFileObject)
+LibrariesFactory.instance.classLoaderHelper.
+  loadRealOrSyntheticClass(String classOfFileObject,
+                           Class<FileObject> constructorClass)
+LibrariesFactory.instance.classLoaderHelper.
+  generateSyntheticFileClassWithParentClass(String syntheticClassName,
+                                            String constructorClassName,
+                                            GroovyClassLoader classLoader = null)
 ----
 
 === Overriding tool entries
 
-Sometimes, the initial specification might not be right for you. In this
-case, you are always allowed to override the existing tool entry. There
-are basically two ways: Override the resource sets only or redefine the
-whole tool.
+Sometimes, the initial specification might not be right for you.
+In this case, you are always allowed to override the existing tool entry.
+There are basically two ways: Override the resource sets only or redefine the whole tool.
 
-If you want to override the whole tool, just do it. The only thing to
-remember is, that you probably have to match the in and output parameter
-count or even the types and you have to make sure, that you put the new
-tool definition to the proper level in your configuration file
-hierarchy.
+If you want to override the whole tool, just do it.
+The only thing to remember is, that you probably have to match the in and output parameter count or even the types, and you have to make sure, that you put the new tool definition to the proper level in your configuration file hierarchy.
 
 [source,XML]
 ----
@@ -509,8 +448,7 @@ hierarchy.
 </tool>
 ----
 
-Now, if you just need to adapt the resources, you can use the
-__overrideresourcesets__=*_"true"_* attribute.
+Now, if you just need to adapt the resources, you can use the __overrideresourcesets__=*_"true"_* attribute.
 
 [source,XML]
 ----
@@ -521,6 +459,5 @@ __overrideresourcesets__=*_"true"_* attribute.
 </tool>
 ----
 
-The in- and output entries will be inherited and you'll have your tools
-setup with the new resources. Be aware that all of the old resource
-entries will void!
+The in- and output entries will be inherited, and you'll have your tools setup with the new resources.
+Be aware that all the old resource entries will void!
