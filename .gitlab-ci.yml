@@ -40,5 +40,5 @@ build:
     paths:
       - "gradleBuild/distributions/*.zip"
       - "RoddyCore/buildversion.txt"
-      - "gradleBuild/reports/cyclonedx/*"
-      - "gradleBuild/tests/test/*"
+      - "gradleBuild/reports"
+      - "gradleBuild/test-results/test"
