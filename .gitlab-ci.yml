@@ -8,13 +8,13 @@ services:
 variables:
   DOCKER_HOST: "tcp://docker:2375"
   DOCKER_DRIVER: overlay2
-  DOCKER_TLS_CERTDIR: ""
+  DOCKER_TLS_CERTDIR: "/certs"
 
 stages:
   - build
 
 build:
-  image: cimg/openjdk:8.0.322
+  image: circleci/openjdk:8u312-jdk  # has zip, tar, jar
   stage: build
   # Reuse Gradle files and caches between jobs
   cache:
@@ -38,7 +38,7 @@ build:
     # We need at least these two plugins for the tests.
     - git clone https://github.com/TheRoddyWMS/Roddy-Default-Plugin.git dist/plugins/DefaultPlugin
     - git clone https://github.com/TheRoddyWMS/Roddy-Base-Plugin.git dist/plugins/PluginBase
-    - ./gradlew build test allBoms
+    - ./gradlew build check allBoms
   artifacts:
     paths:
       - build/test-results/test
