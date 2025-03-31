@@ -18,7 +18,8 @@ import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import groovy.transform.CompileStatic
-import groovyjarjarantlr.StringUtils
+
+import java.util.regex.Matcher
 
 import static de.dkfz.roddy.StringConstants.*
 import static de.dkfz.roddy.config.ConfigurationConstants.*
@@ -367,29 +368,30 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
 
     private List<String> _bashArrayToStringList()
             throws ConfigurationError {
-        String trimmed = value.trim()
-        if (!trimmed.startsWith(PAREN_LEFT) || !trimmed.endsWith(PAREN_RIGHT)) {
+        Matcher matcher = value=~ /^\s*\((?<stripped>(.*))\)\s*$/
+        if (!matcher.matches()) {
             throw new ConfigurationError("Bash array value does not start with '(' or end with ')'")
         }
-        String stripped = StringUtils.stripBack(StringUtils.stripFront(trimmed, "( "), ") ")
+        String stripped = matcher.group('stripped')
 
-        String[] temp = stripped.split(SPLIT_WHITESPACE) // Split by white character
-
+        String[] arrayElements = stripped.split(SPLIT_WHITESPACE)
         List <String> resultStrings = [] as LinkedList<String>
-        for (int i = 0; i < temp.length; i++) {
+        for (int i = 0; i < arrayElements.length; i++) {
 
             // Detect if value is a range { .. }
             // TODO Enable array of this form {1..N}C = 1C 2C 3C 4C .. NC
-            if (temp[i].startsWith(BRACE_LEFT) && temp[i].contains(BRACE_RIGHT) && temp[i].contains(DOUBLESTOP)) {
-                String[] rangeTemp = temp[i].split(SPLIT_DOUBLESTOP)
+            if (arrayElements[i].startsWith(BRACE_LEFT)
+                    && arrayElements[i].contains(BRACE_RIGHT)
+                    && arrayElements[i].contains(DOUBLESTOP)) {
+                String[] rangeTemp = arrayElements[i].split(SPLIT_DOUBLESTOP)
                 int start = Integer.parseInt(rangeTemp[0].replace(BRACE_LEFT, EMPTY).trim())
                 int end = Integer.parseInt(rangeTemp[1].replace(BRACE_RIGHT, EMPTY).trim())
                 for (int j = start; j <= end; j++) {
                     resultStrings.add(EMPTY + j)
                 }
-            } else if (temp[i].length() > 0) {
+            } else if (arrayElements[i].length() > 0) {
                 // Just append the non-empty value.
-                resultStrings.add(temp[i])
+                resultStrings.add(arrayElements[i])
             }
         }
 

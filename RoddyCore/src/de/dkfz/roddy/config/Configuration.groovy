@@ -458,11 +458,9 @@ class Configuration implements ContainerParent<Configuration>, ConfigurationIssu
     }
 
     boolean hasErrors() {
-        if (errors.size() > 0) return true
-        for (Configuration parent : parents) {
-            if (parent.hasErrors()) return true
-        }
-        return configurationValues.allValuesAsList.any { it.hasErrors() }
+        return errors.size() > 0 ||
+               parents.any { it.hasErrors() } ||
+               configurationValues.allValuesAsList.any { it.hasErrors() }
     }
 
     void addWarning(ConfigurationIssue warning) {
@@ -481,11 +479,9 @@ class Configuration implements ContainerParent<Configuration>, ConfigurationIssu
     }
 
     boolean hasWarnings() {
-        if (warnings.size() > 0) return true
-        for (Configuration parent : parents) {
-            if (parent.hasWarnings()) return true
-        }
-        return configurationValues.allValuesAsList.any { it.hasWarnings() }
+        return warnings.size() > 0 ||
+               parents.any { it.hasWarnings() } ||
+               configurationValues.allValuesAsList.any { it.hasWarnings() }
     }
 
     boolean isInvalid() {

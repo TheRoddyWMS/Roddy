@@ -345,7 +345,7 @@ class ProcessingToolReader {
         } else {
             String pName = readAttribute(groupNode, "scriptparameter")
             if (!isInputFileGroup(groupNode)) {
-                // TODO: Enforce fileclass attributes for output filegroup <https://eilslabs-phabricator.dkfz.de/T2015>
+                // TODO: Enforce fileclass attributes for output filegroup (Phabricator T2015)
                 addLoadErr("Either the fileclass or a list of child files need to be set for a filegroup in ${toolID}")
                 return null
             } else {
@@ -364,7 +364,8 @@ class ProcessingToolReader {
                                                        String selectiontag) {
         int childCount = groupNode.children().size()
         List<ToolFileParameter> children = new LinkedList<ToolFileParameter>()
-        if (childCount == 0 && passas == ToolFileGroupParameter.PassOptions.ARRAY)
+        if (passas == ToolFileGroupParameter.PassOptions.ARRAY && childCount == 0)
+            // A file group that passes an array must have at least one file in the array.
             logger.severe("No files in the file group. Invalid configuration.")
         for (Object fileChild in groupNode.children()) {
             children << (parseToolParameter(fileChild as NodeChild, toolID) as ToolFileParameter)

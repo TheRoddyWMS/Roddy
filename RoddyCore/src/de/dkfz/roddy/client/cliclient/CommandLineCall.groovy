@@ -103,8 +103,7 @@ class CommandLineCall {
     /** Check whether the parsed option is indeed accepted as option by Roddy. Errors are accumulated
      *  in the error argument.
      *  Note the return type is a MapEntry with (RoddyStartupOptions, String), but MapEntry is untyped :(. */
-    private static Optional<MapEntry> handle(final Parameter parameter,
-                                                                          final List<String> errors) {
+    private static Optional<MapEntry> handle(final Parameter parameter, final List<String> errors) {
         Optional<RoddyStartupOptions> opt = RoddyStartupOptions.fromString(parameter.name)
         if (opt.isPresent()) {
             return processParameter(opt.get(), parameter, errors).

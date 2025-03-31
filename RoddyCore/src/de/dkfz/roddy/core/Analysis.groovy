@@ -345,7 +345,10 @@ class Analysis {
 
     /**
      */
-    ExecutionContext rerunDeferredContext(ExecutionContext oldContext, final ExecutionContextLevel executionContextLevel, long creationCheckPoint, boolean test) {
+    ExecutionContext rerunDeferredContext(ExecutionContext oldContext,
+                                          final ExecutionContextLevel executionContextLevel,
+                                          long creationCheckPoint,
+                                          boolean test) {
         ExecutionContext context = new ExecutionContext(oldContext.executingUser,
                                                         oldContext.analysis,
                                                         oldContext.dataSet,

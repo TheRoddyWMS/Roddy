@@ -46,13 +46,13 @@ When submitting code, please make every effort to follow existing conventions an
 Some basic information:
 
 * We use [Semantic Versioning 2.0](https://semver.org/).
-   * Release versions are named according to the pattern `\d\.\d\.\d(-(RC)?\d+`.
-   * The first three levels are the "major", "minor", and "patch" number. The patch number is occasionally also called "build" number.
-   * Additionally, to the major, minor, and patch numbers, a "revision" number `-\d+` can be attached.
-   * It is possible to tag release candidate using suffixes `-RC\d+`
+  * Release versions are named according to the pattern `\d\.\d\.\d(-(RC)?\d+`.
+  * The first three levels are the "major", "minor", and "patch" number. The patch number is occasionally also called "build" number.
+  * Additionally, to the major, minor, and patch numbers, a "revision" number `-\d+` can be attached.
+  * It is possible to tag release candidate using suffixes `-RC\d+`
 * We use [Github-Flow](https://githubflow.github.io/) as branching models.
-* Additionally, to the "master" branch for long-term support of older versions it is possible to have dedicated release branches.
-   * Release branches should be named according to the pattern `ReleaseBranch_\d+\.\d+(\.\d+)`.
+* Additionally, to the "master" branch for long-term support of older versions, it is possible to have dedicated release branches.
+  * Release branches should be named according to the pattern `ReleaseBranch_\d+\.\d+(\.\d+)`.
 * Issues can be marked with the following labels
   * `in progress`
   * `bug::candidate`
@@ -66,14 +66,11 @@ The change log is managed in a separate file [CHANGELOG.md](CHANGELOG.md).
 
 # License
 
-By contributing your code, you agree to license your contribution under the terms of the MIT License:
+By contributing your code, you agree to license your contribution under the terms of the [MIT License](http://opensource.org/licenses/mit-license.html) ([Roddy license](https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt)).
 
-http://opensource.org/licenses/mit-license.html
-https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt
+If you are adding a new file, it should have a header like this:
 
-If you are adding a new file it should have a header like this:
-
-```
+```groovy
 /**
  * Copyright 2024 German Cancer Research Center (DKFZ).
  * 
