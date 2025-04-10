@@ -66,13 +66,13 @@ class BashConverter extends ConfigurationConverter {
         final String separator = Constants.ENV_LINESEPARATOR
 
         StringBuilder text = new StringBuilder()
-        text << "#!/bin/bash" << separator //Add a shebang line
+        text << "#!/bin/bash" << separator // Add a shebang line
 
-        //TODO The output umask and the group should be taken from a central location.
+        // TODO The output umask and the group should be taken from a central location.
         String umask = context.getUMask()
-        String outputFileGroup = context.getOutputGroupString()
-        boolean processSetUserGroup = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, true)
-        boolean processSetUserMask = cfg.getConfigurationValues().getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERMASK, true)
+        String outputFileGroup = context.outputGroupString
+        boolean processSetUserGroup = cfg.configurationValues.getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERGROUP, true)
+        boolean processSetUserMask = cfg.configurationValues.getBoolean(ConfigurationConstants.CVALUE_PROCESS_OPTIONS_SETUSERMASK, true)
         text << separator << separator << new BashCommandSet().getCheckForInteractiveConsoleCommand() << separator << separator
         text << separator << "fi" << separator << separator
 

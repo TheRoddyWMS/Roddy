@@ -20,6 +20,8 @@ import org.junit.Test
 
 import static org.junit.Assert.assertEquals
 
+import static de.dkfz.roddy.tools.EscapableString.Shortcuts.*
+
 /**
  */
 @CompileStatic
@@ -27,18 +29,44 @@ class PBSJobManagerTest {
 
     @Test
     void testConvertToolEntryToPBSCommandParameters() {
-        ResourceSet rset1 = new ResourceSet(ResourceSetSize.l, new BufferValue(1, BufferUnit.G), 2, 1, new TimeUnit("h"), null, null, null)
-        ResourceSet rset2 = new ResourceSet(ResourceSetSize.l, null, null, 1, new TimeUnit("h"), null, null, null)
-        ResourceSet rset3 = new ResourceSet(ResourceSetSize.l, new BufferValue(1, BufferUnit.G), 2, null, null as TimeUnit, null, null, null)
+        ResourceSet rset1 = new ResourceSet(ResourceSetSize.l,
+                                            new BufferValue(1, BufferUnit.G),
+                                            2,
+                                            1,
+                                            new TimeUnit("h"),
+                                            null,
+                                            null,
+                                            null)
+        ResourceSet rset2 = new ResourceSet(ResourceSetSize.l,
+                                            null,
+                                            null,
+                                            1,
+                                            new TimeUnit("h"),
+                                            null,
+                                            null,
+                                            null)
+        ResourceSet rset3 = new ResourceSet(ResourceSetSize.l,
+                                            new BufferValue(1, BufferUnit.G),
+                                            2,
+                                            null,
+                                            null as TimeUnit,
+                                            null,
+                                            null,
+                                            null)
 
-        BatchEuphoriaJobManager cFactory = new PBSJobManager(new NoNoExecutionService(), JobManagerOptions.create().build())
-        ProcessingParameters test = (ProcessingParameters) cFactory.convertResourceSet(null, rset1)
-        assertEquals("-l mem=1024M -l walltime=00:01:00:00 -l nodes=1:ppn=2", test.getProcessingCommandString().trim())
+        BatchEuphoriaJobManager cFactory = new PBSJobManager(new NoNoExecutionService(),
+                                                             JobManagerOptions.create().build())
+        ProcessingParameters test = (ProcessingParameters) cFactory.convertResourceSet(null,
+                                                                                       rset1)
+        assertEquals("-l mem=1024M -l walltime=00:01:00:00 -l nodes=1:ppn=2",
+                     forBash(test.getProcessingCommandString()).trim())
 
         test = (ProcessingParameters) cFactory.convertResourceSet(null, rset2)
-        assertEquals("-l walltime=00:01:00:00 -l nodes=1:ppn=1", test.getProcessingCommandString())
+        assertEquals("-l walltime=00:01:00:00 -l nodes=1:ppn=1",
+                     forBash(test.getProcessingCommandString()))
 
         test = (ProcessingParameters) cFactory.convertResourceSet(null, rset3)
-        assertEquals("-l mem=1024M -l nodes=1:ppn=2", test.getProcessingCommandString())
+        assertEquals("-l mem=1024M -l nodes=1:ppn=2",
+                     forBash(test.getProcessingCommandString()))
     }
 }

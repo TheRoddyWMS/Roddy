@@ -1,0 +1,44 @@
+# Copyright (c) 2024 DKFZ.
+#
+# Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/RoddyToolLib/LICENSE).
+
+variables:
+  DOCKER_HOST: "tcp://docker:2375"
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+
+stages:
+  - build
+
+build:
+  image: circleci/openjdk:8u312-jdk  # has zip, tar, jar
+  stage: build
+  # Reuse Gradle files and caches between jobs
+  cache:
+    - key:
+        files:
+          - gradle/wrapper/gradle-wrapper.properties
+      paths:
+        - ~/.gradle/wrapper
+    - key:
+        files:
+          - build.gradle
+      paths:
+        - ~/.gradle/caches
+  script:
+    - curl -s "https://get.sdkman.io" | bash
+    - source "$HOME/.sdkman/bin/sdkman-init.sh"
+    - echo sdkman_auto_answer=true > ~/.sdkman/etc/config
+    - sdk install groovy 2.4.21
+    - sdk use     groovy 2.4.21
+    - groovy --version
+    # We need at least these two plugins for the tests.
+    - git clone https://github.com/TheRoddyWMS/Roddy-Default-Plugin.git dist/plugins/DefaultPlugin
+    - git clone https://github.com/TheRoddyWMS/Roddy-Base-Plugin.git dist/plugins/PluginBase
+    - ./gradlew build check allBoms
+  artifacts:
+    paths:
+      - "gradleBuild/distributions/*.zip"
+      - "RoddyCore/buildversion.txt"
+      - "gradleBuild/reports/cyclonedx/*"
+      - "gradleBuild/tests/test/*"

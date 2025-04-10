@@ -25,7 +25,7 @@ import javax.xml.transform.stream.StreamSource;
 public class ResourceResolver implements LSResourceResolver {
 
     /** The logger. */
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private static final Logger logger = LoggerFactory.getLogger(ResourceResolver.class.getCanonicalName());
 
     /** The schema base path. */
     private final String schemaBasePath;
@@ -81,7 +81,7 @@ public class ResourceResolver implements LSResourceResolver {
 
             // Read the resource as input stream
             String normalizedPath = getNormalizedPath(baseResourcePath, systemId);
-            InputStream resourceAsStream = this.getClass().getClassLoader()
+            InputStream resourceAsStream = Thread.currentThread().getContextClassLoader()
                     .getResourceAsStream(normalizedPath);
 
             if(resourceAsStream == null)

@@ -2,10 +2,11 @@
 
 set -o pipefail
 
-cd `dirname $0`
-parm1=${1-}
+cd "$(dirname "$0")"
+parm1="${1:-}"
 
-RODDY_JAVA_OPTS=${RODDY_JAVA_OPTS:-${JAVA_OPTS:--Xms64m -Xmx1g}}
+RODDY_JAVA_OPTS="${RODDY_JAVA_OPTS:-${JAVA_OPTS:--Xms64m -Xmx1g}}"
+GROOVY_BINARY="${GROOVY_BINARY:-"$(which groovy)"}"
 
 # Call some scripts before other steps start.
 if [[ "$parm1" == "prepareprojectconfig" ]]; then

@@ -6,9 +6,10 @@
 
 package de.dkfz.roddy.core
 
-import de.dkfz.roddy.FeatureToggles
+import com.google.common.base.Preconditions
 import de.dkfz.roddy.BEException
 import de.dkfz.roddy.Constants
+import de.dkfz.roddy.FeatureToggles
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.config.*
@@ -141,7 +142,8 @@ class Analysis {
     File getInputBaseDirectory() {
         if (inputBaseDirectory == null)
             inputBaseDirectory = runtimeService.getInputBaseDirectory(this)
-        assert (inputBaseDirectory != null)
+        Preconditions.checkArgument(inputBaseDirectory != null,
+                                    "inputBaseDirectory cannot be null")
         return inputBaseDirectory
     }
 
@@ -152,7 +154,8 @@ class Analysis {
      */
     File getOutputBaseDirectory() {
         File outputBaseDirectory = runtimeService.getOutputBaseDirectory(this)
-        assert (outputBaseDirectory != null)
+        Preconditions.checkArgument(outputBaseDirectory != null,
+                                    "outputBaseDirectory cannot be null")
         return outputBaseDirectory
     }
 
@@ -342,7 +345,10 @@ class Analysis {
 
     /**
      */
-    ExecutionContext rerunDeferredContext(ExecutionContext oldContext, final ExecutionContextLevel executionContextLevel, long creationCheckPoint, boolean test) {
+    ExecutionContext rerunDeferredContext(ExecutionContext oldContext,
+                                          final ExecutionContextLevel executionContextLevel,
+                                          long creationCheckPoint,
+                                          boolean test) {
         ExecutionContext context = new ExecutionContext(oldContext.executingUser,
                                                         oldContext.analysis,
                                                         oldContext.dataSet,
@@ -378,7 +384,7 @@ class Analysis {
         boolean contextRightsSettings = ExecutionService.instance.checkAccessRightsSettings(context)
         boolean contextPermissions = ExecutionService.instance.checkContextDirectoriesAndFiles(context)
         boolean configurationValidity =
-                Roddy.strictModeEnabled && !Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors) ? !configuration.hasLoadErrors() : true
+                Roddy.strictModeEnabled && !Roddy.isOptionSet(RoddyStartupOptions.ignoreConfigurationErrors) ? !configuration.hasLoadErrors() : true
 
         // The setup of the workflow and the executability check may require the execution store, e.g. for
         // synchronously called jobs to gather data from the remote side.
@@ -480,14 +486,20 @@ class Analysis {
                 boolean successfullyExecuted = false
                 try {
                     boolean execute = true
-                    if (context.executionContextLevel.allowedToSubmitJobs) { // Only do these checks, if we are not in query mode!
-                        List<String> invalidPreparedFiles = ExecutionService.instance.checkForInaccessiblePreparedFiles(context)
-                        boolean copiedAnalysisToolsAreExecutable = ExecutionService.instance.checkCopiedAnalysisTools(context)
-                        boolean ignoreFileChecks = Roddy.isOptionSet(RoddyStartupOptions.disablestrictfilechecks)
-                        execute &= ignoreFileChecks || (invalidPreparedFiles.size() == 0 && copiedAnalysisToolsAreExecutable)
+                    if (context.executionContextLevel.allowedToSubmitJobs) {
+                        // Only do these checks, if we are not in query mode!
+                        List<String> invalidPreparedFiles =
+                                ExecutionService.instance.checkForInaccessiblePreparedFiles(context)
+                        boolean copiedAnalysisToolsAreExecutable =
+                                ExecutionService.instance.checkCopiedAnalysisTools(context)
+                        boolean ignoreFileChecks =
+                                Roddy.isOptionSet(RoddyStartupOptions.disableStrictFileChecks)
+                        execute &= ignoreFileChecks ||
+                                (invalidPreparedFiles.isEmpty() && copiedAnalysisToolsAreExecutable)
                         if (!execute) {
                             StringBuilder message =
-                                    new StringBuilder('There were errors after preparing the workflow run for dataset ' + datasetID)
+                                    new StringBuilder('There were errors after preparing the workflow run for dataset '
+                                            + datasetID)
                             if (invalidPreparedFiles.size() > 0)
                                 message.append('\n\tSome files could not be written. Workflow will not execute.\n\t' +
                                         String.join('\t\n', invalidPreparedFiles))
@@ -515,8 +527,8 @@ class Analysis {
                     if (context.executionContextLevel == ExecutionContextLevel.QUERY_STATUS) { // Clean up
                         // Query file validity of all files
                         FileSystemAccessProvider.instance.validateAllFilesInContext(context)
-                        if (context.getExecutionDirectory().getName().contains(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX))
-                            FileSystemAccessProvider.instance.removeDirectory(context.getExecutionDirectory())
+                        if (context.executionDirectory.name.contains(ConfigurationConstants.RODDY_EXEC_DIR_PREFIX))
+                            FileSystemAccessProvider.instance.removeDirectory(context.executionDirectory)
                     } else {
                         if (!successfullyExecuted)
                             maybeAbortStartedJobsOfContext(context)
@@ -613,7 +625,7 @@ class Analysis {
     private void cleanUpAndFinishWorkflowRun(ExecutionContext context) {
         //First, check if there were any executed jobs. If not, we can safely delete the the context directory.
         if (context.startedJobs.size() == 0) {
-            if (Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.forcekeepexecutiondirectory)) {
+            if (Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.forceKeepExecutionDirectory)) {
                 logger.always('There were no started jobs, but Roddy will keep the execution directory as forcekeepexecutiondirectory was set.')
             } else {
                 logger.always('There were no started jobs, the execution directory will be removed.')
@@ -681,11 +693,7 @@ class Analysis {
                         Job cleanupJob = new Job(
                                 context,
                                 "cleanupScript",
-                                cleanupScript,
-                                null as String,
-                                null,
-                                null,
-                                null)
+                                context.getToolCommand(cleanupScript))
                         try {
                             ExecutionService.instance.writeFilesForExecution(context)
                             cleanupJob.run()

@@ -66,4 +66,19 @@ class ConfigurationValueSpec extends RoddyTestSpec {
         'a $USERHOME value'  | 'a ${USERHOME} value'
         'a $PWD value'       | "a \${$ExecutionService.RODDY_CVALUE_DIRECTORY_EXECUTION} value"
     }
+
+    def "test bashArray"(value, expectedValue) {
+        expect:
+        new ConfigurationValue("bla", value).toStringList() == expectedValue
+
+        where:
+        value               | expectedValue
+        ''                  | []
+        '()'                | []
+        '(a)'               | ["a"]
+        '( a b )'           | ["a", "b"]
+        '(  a  b  )'        | ["a", "b"]
+        '(a  b)'            | ["a", "b"]
+
+    }
 }

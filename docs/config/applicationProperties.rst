@@ -21,6 +21,8 @@ Let's have a brief look at it:
     useRoddyVersion=develop                     # Use the most development version for tests
     passEnvironment=false
     baseEnvironmentScript=[ENVIRONMENT_FILE]
+    logFilesPrefix=default                      # Prefix of extended run logs
+    maximumLogFilesPerPrefix=32                 #
 
     [DIRECTORIES]
     configurationDirectories=[FOLDER_WITH_CONFIGURATION_FILES]

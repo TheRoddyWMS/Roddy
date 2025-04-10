@@ -134,7 +134,8 @@ class ProjectLoader {
     /**
      * Load an analysis with a set project/analysis identifier.
      *
-     * @param configurationIdentifier Something like [project.subproject.subproject]@[analysisID] where analysisID will be used to find the correct analysis.
+     * @param configurationIdentifier Something like [project.subproject.subproject]@[analysisID] where analysisID will
+     *        be used to find the correct analysis.
      * @return An analysis object containing linking a project and an analysis configuration.
      */
     Analysis loadAnalysisAndProject(String configurationIdentifier) {
@@ -215,7 +216,7 @@ class ProjectLoader {
 
             // Check, if the i/o directory is set on the command line
             if (!Roddy.useCustomIODirectories())
-                throw new ProjectLoaderException("It is not possible to use the project configuration-free mode without the --${RoddyStartupOptions.useiodir.name()} option.")
+                throw new ProjectLoaderException("It is not possible to use the project configuration-free mode without the --${RoddyStartupOptions.ioDir.name()} option.")
 
             createAndWriteAutoConfigurationFile()
 
@@ -227,7 +228,7 @@ class ProjectLoader {
 
     private void createAndWriteAutoConfigurationFile() {
         // Create a temporary project configuration in ~/.roddy/configurationFreeMode
-        String configurationFileName = "projects" + projectID + "_" + analysisID + "_" + Integer.toHexString(Roddy.commandLineCall.getOptionValue(RoddyStartupOptions.useiodir).hashCode()) + ".sh"
+        String configurationFileName = "projects" + projectID + "_" + analysisID + "_" + Integer.toHexString(Roddy.commandLineCall.getOptionValue(RoddyStartupOptions.ioDir).hashCode()) + ".sh"
 
         String newProjectID = "CFreeMode_" + Integer.toHexString(configurationFileName.hashCode())
         String pluginID = projectID.replaceFirst(StringConstants.SPLIT_UNDERSCORE, StringConstants.COLON)
@@ -236,7 +237,7 @@ class ProjectLoader {
         lines << "# " + RODDY_CONFIGURATION_MAGICSTRING
         lines << "#name " + newProjectID
         lines << "#analysis " + analysisImport
-        if (Roddy.isOptionSet(RoddyStartupOptions.baseconfig)) lines << "#imports " + Roddy.commandLineCall.getOptionValue(RoddyStartupOptions.baseconfig)
+        if (Roddy.isOptionSet(RoddyStartupOptions.baseConfig)) lines << "#imports " + Roddy.commandLineCall.getOptionValue(RoddyStartupOptions.baseConfig)
 
         lines << "inputBaseDirectory=" + Roddy.customBaseInputDirectory
         lines << "outputBaseDirectory=" + Roddy.customBaseOutputDirectory

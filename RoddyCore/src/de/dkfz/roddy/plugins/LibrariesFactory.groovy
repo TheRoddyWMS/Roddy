@@ -439,6 +439,7 @@ class LibrariesFactory extends Initializable {
 
             File directory = _entry.directory;
 
+            // Parse plugin information from the directory name.
             String pluginName = _entry.pluginID;
             String[] pluginVersionInfo = _entry.version.split(StringConstants.SPLIT_MINUS) as String[];
             String pluginVersion = pluginVersionInfo[0];
@@ -451,25 +452,34 @@ class LibrariesFactory extends Initializable {
             }
             int revisionNumber = pluginRevision.toInteger();
 
-            def pluginMap = _mapOfPlugins.get(pluginName, new LinkedHashMap<String, PluginInfo>())
+            Map<String, PluginInfo> pluginMap =
+                    _mapOfPlugins.get(pluginName, new LinkedHashMap<String, PluginInfo>())
 
-            BuildInfoFileHelper biHelper = loadBuildinfoHelperObject(pluginName, pluginFullVersion, directory, _entry)
+            BuildInfoFileHelper buildInfo = loadBuildinfoHelperObject(pluginName, pluginFullVersion, directory, _entry)
 
             PluginInfo previousPlugin = pluginMap.values().size() > 0 ? pluginMap.values().last() : null;
-            boolean isRevisionOfPlugin = previousPlugin?.getMajorAndMinor() == pluginVersion && previousPlugin?.getRevision() == revisionNumber - 1;
-            boolean isCompatible = biHelper.isCompatibleTo(previousPlugin);
+
+            // Check, whether the plugin is just a newer revision.
+            boolean isRevisionOfPlugin =
+                    // Same major and minor number ...
+                    previousPlugin?.getMajorAndMinor() == pluginVersion &&
+                    // ... but higher revision number.
+                    previousPlugin?.getRevision() > revisionNumber
+
+            // Check, whether the plugin is explicitly declared to be compatible
+            boolean isCompatible = buildInfo.isCompatibleTo(previousPlugin);
 
             //Create a helper object which parses the buildinfo text file
             PluginInfo newPluginInfo
 
             if (_entry.type == PluginType.NATIVE) {
-                newPluginInfo = new NativePluginInfo(pluginName, directory, pluginFullVersion, biHelper.getDependencies())
+                newPluginInfo = new NativePluginInfo(pluginName, directory, pluginFullVersion, buildInfo.getDependencies())
             } else if (_entry.type == PluginType.RODDY) {
                 File jarFile = directory.listFiles().find { File f -> f.name.endsWith ".jar"; }
                 if (jarFile) {
-                    newPluginInfo = new JarFullPluginInfo(pluginName, directory, jarFile, pluginFullVersion, biHelper.getRoddyAPIVersion(), biHelper.getJDKVersion(), biHelper.getDependencies())
+                    newPluginInfo = new JarFullPluginInfo(pluginName, directory, jarFile, pluginFullVersion, buildInfo.getRoddyAPIVersion(), buildInfo.getJDKVersion(), buildInfo.getDependencies())
                 } else {
-                    newPluginInfo = new JarLessPluginInfo(pluginName, directory, pluginFullVersion, biHelper.getDependencies())
+                    newPluginInfo = new JarLessPluginInfo(pluginName, directory, pluginFullVersion, buildInfo.getDependencies())
                 }
             }
 

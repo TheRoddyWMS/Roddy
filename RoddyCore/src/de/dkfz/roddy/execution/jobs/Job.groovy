@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2017 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+ * Copyright (c) 2023 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
 
 package de.dkfz.roddy.execution.jobs
 
-
+import com.google.common.base.Preconditions
 import de.dkfz.roddy.FeatureToggles
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.*
@@ -15,7 +15,9 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
+import de.dkfz.roddy.tools.EscapableString
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
+import de.dkfz.roddy.execution.jobs.Command as BECommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.knowledge.files.BaseFile
@@ -25,6 +27,7 @@ import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.Tuple2
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 
 import static de.dkfz.roddy.Constants.*
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID
@@ -32,12 +35,13 @@ import static de.dkfz.roddy.config.ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT
 import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 import static de.dkfz.roddy.execution.jobs.JobConstants.PRM_TOOL_ID
 
+import static de.dkfz.roddy.tools.EscapableString.Shortcuts.*
+
 @CompileStatic
 class Job extends BEJob<BEJob, BEJobResult> {
 
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(BEJob.class.simpleName)
 
-    public static final String TOOLID_WRAPIN_SCRIPT = "wrapinScript"
     public static final String PARM_WRAPPED_SCRIPT = "WRAPPED_SCRIPT"
     public static final String PARM_WRAPPED_SCRIPT_MD5 = "WRAPPED_SCRIPT_MD5"
 
@@ -47,14 +51,10 @@ class Job extends BEJob<BEJob, BEJobResult> {
     public final ExecutionContext context
 
     /**
-     * The local tool path
+     * The tool command you want to call. This is not necessarily the same as in the execution context, e.g.
+     * if the job command should be wrapped into a container call.
      */
-    private final File localToolPath
-
-    /**
-     * The tool you want to call.
-     */
-    private final String toolID
+    private final AnyToolCommand toolCommand
 
     /**
      * Keeps a list of all unchanged, initial parameters, including default job parameters.
@@ -65,7 +65,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
      * Keeps a list of all parameters after conversion and before removing them from the final parameter list
      * (See keepOnlyEssentialParameters). The value is used for testrun and testrerun output.
      */
-    final Map<String, String> reportedParameters = [:]
+    final Map<String, EscapableString> reportedParameters = [:]
 
     /**
      * Provide a list of files if you want to generate job dependencies.
@@ -77,7 +77,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
     /**
      * Command object of last execution.
      */
-    protected transient Command lastCommand
+    protected transient BECommand lastCommand
 
     /**
      * The list contains files which should be validated for a job restart.
@@ -100,8 +100,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
         List<String> arrayIndices,
         Map<String, Object> parameters,
         List<BaseFile> parentFiles) {
-        this(context, jobName, toolID, null as String,
-                parameters, parentFiles, null)
+        this(context, jobName, context.getToolCommand(toolID),
+                parameters, parentFiles)
     }
 
     /**
@@ -114,7 +114,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         Map<String, Object> parameters,
         List<BaseFile> parentFiles,
         List<BaseFile> filesToVerify) {
-        this(context, jobName, toolID, null as String,
+        this(context, jobName, context.getToolCommand(toolID),
                 parameters, parentFiles, filesToVerify)
     }
 
@@ -127,8 +127,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
         String toolID,
         Map<String, Object> parameters,
         List<BaseFile> parentFiles) {
-        this(context, jobName, toolID, null as String,
-                parameters, parentFiles, null)
+        this(context, jobName, context.getToolCommand(toolID),
+                parameters, parentFiles)
     }
 
     /**
@@ -141,8 +141,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
         List<String> arrayIndices,
         List<BaseFile> filesToVerify,
         Map<String, Object> parameters) {
-        this(context, jobName, toolID, null as String,
-                parameters, null, filesToVerify)
+        this(context, jobName, context.getToolCommand(toolID),
+                parameters, [], filesToVerify)
     }
 
     /**
@@ -154,8 +154,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
         List<BaseFile> filesToVerify,
         String toolID,
         Map<String, Object> parameters) {
-        this(context, jobName, toolID, null as String,
-                parameters, null, filesToVerify)
+        this(context, jobName, context.getToolCommand(toolID),
+                parameters, [], filesToVerify)
     }
 
     /**
@@ -167,8 +167,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
         String toolID,
         List<String> arrayIndices,
         Map<String, Object> parameters) {
-        this(context, jobName, toolID, null as String,
-                parameters,null, null)
+        this(context, jobName, context.getToolCommand(toolID),
+                parameters)
     }
 
     /**
@@ -179,8 +179,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
         String jobName,
         String toolID,
         Map<String, Object> parameters) {
-        this(context, jobName, toolID, null as String,
-                parameters,null, null)
+        this(context, jobName, context.getToolCommand(toolID),
+                parameters)
     }
 
     /**
@@ -195,39 +195,57 @@ class Job extends BEJob<BEJob, BEJobResult> {
         Map<String, Object> inputParameters,
         List<BaseFile> parentFiles,
         List<BaseFile> filesToVerify) {
-        this(context, jobName, toolID, null as String,
+        this(context, jobName, context.getToolCommand(toolID),
                 inputParameters, parentFiles, filesToVerify)
     }
 
     /**
      * Main constructor.
-     * TODO The number of parameters is large. Consider using a builder!
+     *
+     * @param context           the execution context that carries Roddy's global state
+     * @param jobName           the name of the job on the cluster (if it will be run on the cluster)
+     * @param toolCommand       a CommandI object. Usually this should be `Executable(toolId)` or `Code` object..
+     *                          Job will executed this command with a defined environment (PARAMETER_FILE) and
+     *                          possibly nested in a container runtime call (singularity exec).
+     * @param inputParameters   ?
+     * @param parentFiles       ?
+     * @param filesToVerify     ?
      */
-    Job(ExecutionContext context,
-        String jobName,
-        String toolID,
-        String inlineScript,
-        Map<String, Object> inputParameters,
-        List<BaseFile> parentFiles,
-        List<BaseFile> filesToVerify) {
-        super(new BEJobID()
-                , jobName
-                , context.configuration.getProcessingToolPath(context, TOOLID_WRAPIN_SCRIPT)
-                , inlineScript
-                , inlineScript ? null : getToolMD5(TOOLID_WRAPIN_SCRIPT, context)
-                , getResourceSetFromConfiguration(toolID, context)
-                , []
-                , [:] as Map<String,String>
-                , Roddy.jobManager
-                , JobLog.toOneFile(new File(context.loggingDirectory, jobName + ".o{JOB_ID}"))
-                , null
-                , context.accountingName.orElse(null))
-        this.localToolPath = context.configuration.getSourceToolPath(toolID)
-        this.addParentJobs(reconcileParentJobInformation(collectParentJobsFromFiles(parentFiles), collectJobIDsFromFiles(parentFiles), jobManager))
+    Job(@NotNull ExecutionContext context,
+        @NotNull String jobName,
+        @NotNull AnyToolCommand toolCommand,
+        Map<String, Object> inputParameters = [:],
+        List<BaseFile> parentFiles = [],
+        List<BaseFile> filesToVerify = []) {
+        super(BEJobID.newUnknown
+              , Roddy.jobManager
+              , u(jobName)
+              , EffectiveToolCommandBuilder.
+                    from(context).
+                    build(toolCommand).
+                    map { ToolCommand it -> it.command }.
+                    orElse(null)
+              , context.getResourceSetFromConfiguration(toolCommand.toolId)
+              , []
+              , [:] as Map<String, EscapableString>
+              , JobLog.toOneFile(new File(context.loggingDirectory, jobName + ".o{JOB_ID}"))
+              , null
+              , context.accountingName.map { e(it) }.orElse(null))
+        Preconditions.checkArgument(context != null)
+        Preconditions.checkArgument(jobName != null)
+        Preconditions.checkArgument(toolCommand != null)
+        this.addParentJobs(reconcileParentJobInformation(
+                collectParentJobsFromFiles(parentFiles),
+                collectJobIDsFromFiles(parentFiles),
+                jobManager))
         this.context = context
-        this.toolID = toolID
+        this.toolCommand = EffectiveToolCommandBuilder.
+                from(context).
+                build(toolCommand).
+                orElse(null)
 
-        Map<String, Object> defaultParameters = context.getDefaultJobParameters(toolID)
+        // Set and validate the job parameters
+        Map<String, Object> defaultParameters = context.getDefaultJobParameters(toolCommand.toolId)
 
         if (inputParameters != null)
             defaultParameters.putAll(inputParameters)
@@ -239,9 +257,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
             if (_v == null) {
                 context.addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.
                         expand("The parameter " + k + " has no valid value and will be set to ${NO_VALUE}."))
-                this.parameters[k] = NO_VALUE
+                this.parameters[k] = e(NO_VALUE)
             } else {
-                String newParameters = parameterObjectToString(k, _v)
+                EscapableString newParameters = u(parameterObjectToString(k, _v))
                 this.parameters.put(k, newParameters)
             }
         }
@@ -249,9 +267,15 @@ class Job extends BEJob<BEJob, BEJobResult> {
         parameters.putAll(convertResourceSetToParameters())
         reportedParameters.putAll(parameters)
 
-        this.parameters[PARM_WRAPPED_SCRIPT] = context.configuration.getProcessingToolPath(context, toolID).absolutePath
-        this.parameters[PARM_WRAPPED_SCRIPT_MD5] = getToolMD5(toolID, context)
-        this.parameters[PARM_JOBCREATIONCOUNTER] = jobCreationCounter.toString()
+        // Used by the DirectSynchronousExecutionJobManager and job.
+        this.parameters[PARM_JOBCREATIONCOUNTER] = u(jobCreationCounter.toString())
+
+        // Needed by the wrapInScript.sh defined in the DefaultPlugin.
+        this.parameters[PARM_WRAPPED_SCRIPT] =
+                e(context.configuration.getProcessingToolPath(context, toolCommand.toolId).absolutePath)
+        this.parameters[PARM_WRAPPED_SCRIPT_MD5] =
+                e(context.getToolMd5(toolCommand.toolId))
+
 
         if (inputParameters != null)
             initialInputParameters.putAll(inputParameters)
@@ -280,7 +304,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
             def validIds = uniqueValidJobIDs(parentJobIDs).collect { it.toString() }
             def idsOfValidJobs = jobs2jobIDs(validJobs).collect { it.toString() }
             if (validIds != idsOfValidJobs) {
-                throw new RuntimeException("parentJobBEJob needs to be called with one of parentJobs, parentJobIDs, or parentJobsIDs and *corresponding* parentJobs.")
+                throw new RuntimeException(
+                        "parentJobBEJob needs to be called with one of parentJobs, parentJobIDs, or " +
+                                "parentJobsIDs and *corresponding* parentJobs.")
             }
             pJobs = validJobs
         } else if (null == parentJobIDs && null == parentJobs) {
@@ -293,20 +319,12 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return pJobs
     }
 
-    static ResourceSet getResourceSetFromConfiguration(String toolID, ExecutionContext context) {
-        if (!toolID || toolID == UNKNOWN) {
-            return new EmptyResourceSet()
-        } else {
-            ToolEntry te = context.configuration.tools.getValue(toolID)
-            return te.getResourceSet(context.configuration) ?: new EmptyResourceSet()
-        }
+    String getToolMD5() throws ConfigurationError {
+        context.getToolMd5(toolID)
     }
 
-    static String getToolMD5(String toolID, ExecutionContext context) throws ConfigurationError {
-        toolID != null && toolID.trim().length() > 0 ? context.configuration.getProcessingToolMD5(toolID) : null
-    }
 
-    static List<BEJob> collectParentJobsFromFiles(List<BaseFile> parentFiles) {
+    static private List<BEJob> collectParentJobsFromFiles(List<BaseFile> parentFiles) {
         if (!parentFiles) return []
         List<BEJob> parentJobs = parentFiles.collect {
             BaseFile bf -> bf?.creatingJobsResult?.job
@@ -316,7 +334,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return parentJobs
     }
 
-    static List<BEJobID> collectJobIDsFromFiles(List<BaseFile> parentFiles) {
+    private static List<BEJobID> collectJobIDsFromFiles(List<BaseFile> parentFiles) {
         List<BEJobID> dIDs = []
         if (parentFiles != null) {
             for (BaseFile bf : parentFiles) {
@@ -428,18 +446,18 @@ class Job extends BEJob<BEJob, BEJobResult> {
         }
     }
 
-    Map<String, String> convertResourceSetToParameters() {
+    private Map<String, EscapableString> convertResourceSetToParameters() {
         def rs = resourceSet
-        Map<String, String> rsParameters = [:]
+        Map<String, EscapableString> rsParameters = [:]
         if (rs == null) return rsParameters
 
-        if (rs.memSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_MEM"] = rs.mem.toString()
-        if (rs.coresSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_CORES"] = rs.cores.toString()
-        if (rs.nodesSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_NODES"] = rs.nodes.toString()
-        if (rs.queueSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_QUEUE"] = rs.queue.toString()
-        if (rs.walltimeSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_WALLTIME"] = rs.walltime.toString()
-        if (rs.additionalNodeFlagSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_NODEFLAGS"] = rs.additionalNodeFlag.toString()
-        if (rs.storageSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_STORAGE"] = rs.storage.toString()
+        if (rs.memSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_MEM"] = u(rs.mem.toString())
+        if (rs.coresSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_CORES"] = u(rs.cores.toString())
+        if (rs.nodesSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_NODES"] = u(rs.nodes.toString())
+        if (rs.queueSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_QUEUE"] = u(rs.queue.toString())
+        if (rs.walltimeSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_WALLTIME"] = e(rs.walltime.toString())
+        if (rs.additionalNodeFlagSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_NODEFLAGS"] = e(rs.additionalNodeFlag.toString())
+        if (rs.storageSet) rsParameters["RODDY_JOBRESOURCE_REQUEST_STORAGE"] = u(rs.storage.toString())
         return rsParameters
     }
 
@@ -447,7 +465,10 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return createJobName(bf, toolName, reduceLevel, null)
     }
 
-    static String createJobName(BaseFile bf, String toolName, boolean reduceLevel, List<BaseFile> inputFilesForSizeCalculation) {
+    static String createJobName(BaseFile bf,
+                                String toolName,
+                                boolean reduceLevel,
+                                List<BaseFile> inputFilesForSizeCalculation) {
         ExecutionContext rp = bf.executionContext
         String runtime = rp.timestampString
         StringBuilder sb = new StringBuilder()
@@ -462,7 +483,10 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return sb.toString()
     }
 
-    static String createJobName(FileGroup fg, String toolName, boolean reduceLevel, List<BaseFile> inputFilesForSizeCalculation) {
+    static String createJobName(FileGroup fg,
+                                String toolName,
+                                boolean reduceLevel,
+                                List<BaseFile> inputFilesForSizeCalculation) {
         BaseFile bf = (BaseFile) fg.filesInGroup.get(0)
         return createJobName(bf, toolName, reduceLevel, inputFilesForSizeCalculation)
     }
@@ -486,8 +510,10 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 if (val == null) {
                     val = NO_VALUE
                     bf.executionContext.addErrorEntry(ExecutionContextError.EXECUTION_PARAMETER_ISNULL_NOTUSABLE.
-                            expand("A value named " + name.value +
-                                    " cannot be found in the jobs parameter list for a file of ${bf.class.name}. The value is set to <NO_VALUE>"))
+                            expand("A value named " +
+                                    name.value +
+                                    " cannot be found in the jobs parameter list for a file of ${bf.class.name}. " +
+                                    "The value is set to <NO_VALUE>"))
                 }
                 absolutePath = absolutePath.replace(command.fullString, val)
             }
@@ -507,12 +533,16 @@ class Job extends BEJob<BEJob, BEJobResult> {
      * @param job
      */
     @CompileDynamic
-    void appendToJobStateLogfile(BatchEuphoriaJobManager jobManager, ExecutionContext executionContext, BEJobResult res, OutputStream out = null) {
+    private void appendToJobStateLogfile(BatchEuphoriaJobManager jobManager,
+                                         ExecutionContext executionContext,
+                                         BEJobResult res,
+                                         OutputStream out = null) {
         if (!jobManager.holdJobsEnabled && !jobManager instanceof DirectSynchronousExecutionJobManager) {
-            throw new RuntimeException("Appending to JobManager ${ConfigurationConstants.RODDY_JOBSTATE_LOGFILE} not supported when JobManager does not submit on hold: '${jobManager.class.name}")
+            throw new RuntimeException("Appending to JobManager ${ConfigurationConstants.RODDY_JOBSTATE_LOGFILE} " +
+                    "not supported when JobManager does not submit on hold: '${jobManager.class.name}")
         }
         if (res.successful) {
-            def job = res.command.job
+            def job = res.beCommand.job
             String jobInfoLine
             String millis = "" + System.currentTimeMillis()
             millis = millis.substring(0, millis.length() - 3)
@@ -550,13 +580,14 @@ class Job extends BEJob<BEJob, BEJobResult> {
      * @param job
      */
     @CompileDynamic
-    void appendToJobStateLogfile(DirectSynchronousExecutionJobManager jobManager,
-                                 ExecutionContext executionContext,
-                                 BEJobResult res,
-                                 OutputStream outputStream = null) {
+    private void appendToJobStateLogfile(DirectSynchronousExecutionJobManager jobManager,
+                                         ExecutionContext executionContext,
+                                         BEJobResult res,
+                                         OutputStream outputStream = null) {
 //        if (res.command.isBlockingCommand()) {
 //            assert (null != outputStream)
-//            File logFile = (res.command.getTag(COMMAND_TAG_EXECUTION_CONTEXT) as ExecutionContext).runtimeService.getLogFileForCommand(res.command)
+//            File logFile = (res.command.getTag(COMMAND_TAG_EXECUTION_CONTEXT)
+//                              as ExecutionContext).runtimeService.getLogFileForCommand(res.command)
 //
 //            // Use reflection to get access to the hidden path field :p The stream object does not natively give
 //            // access to it and I do not want to create a new class just for this.
@@ -580,8 +611,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 code = "FAILED" // E
 
             if (null != res.job.jobID) {
-                // That is indeed funny here: on our cluster, the following line did not work without the forced toString(), however
-                // on our local machine it always worked! Don't know why it worked for PBS... Now we force-convert the parameters.
+                // That is indeed funny here: on our cluster, the following line did not work without the
+                // forced toString(), however on our local machine it always worked! Don't know why it worked
+                // for PBS... Now we force-convert the parameters.
                 String jobInfoLine = jobStateInfoLine("" + res.job.jobID, code, millis, toolID)
                 FileSystemAccessProvider.instance.
                         appendLineToFile(true,
@@ -596,12 +628,14 @@ class Job extends BEJob<BEJob, BEJobResult> {
 //        }
     }
 
-    /** Keep only the essential command line configurations for the job, due to argument length restrictions (e.g. -env in LSF).
-     *
+    /** Keep only the essential command line configurations for the job, due to argument length restrictions
+     *  (e.g. -env in LSF).
      */
     void keepOnlyEssentialParameters() {
         Set<String> nonEssentialParameters = parameters.keySet().findAll { key ->
-            ![PARAMETER_FILE, CONFIG_FILE, DEBUG_WRAP_IN_SCRIPT, APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT, PRM_TOOL_ID].contains(key)
+            ![PARAMETER_FILE, CONFIG_FILE, DEBUG_WRAP_IN_SCRIPT,
+              APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT, PRM_TOOL_ID
+            ].contains(key)
         }
         parameters.keySet().removeAll(nonEssentialParameters)
     }
@@ -616,21 +650,25 @@ class Job extends BEJob<BEJob, BEJobResult> {
         StringBuilder dbgMessage = new StringBuilder()
         StringBuilder jobDetailsLine = new StringBuilder()
 
-        //Remove duplicate job ids as PBS qsub cannot handle duplicate keys => job will hold forever as it releases the dependency queue linearly.
-        this.parameters[RODDY_PARENT_JOBS] = parameterObjectToString(RODDY_PARENT_JOBS, parentJobIDs.unique()*.id)
-        this.parameters[PARAMETER_FILE] = parameterObjectToString(PARAMETER_FILE, parameterFile)
-        // The CONFIG_FILE variable is set to the same value as the PARAMETER_FILE to keep older scripts working with job-specific only environments.
-        this.parameters[CONFIG_FILE] = this.parameters[PARAMETER_FILE]  // TODO Deprecated. Remove this line in Roddy 4.0. No config file.
+        // Remove duplicate job ids as PBS qsub cannot handle duplicate keys => job will hold forever as it
+        // releases the dependency queue linearly.
+        this.parameters[RODDY_PARENT_JOBS] = u(parameterObjectToString(RODDY_PARENT_JOBS, parentJobIDs.unique()*.id))
+        this.parameters[PARAMETER_FILE] = u(parameterObjectToString(PARAMETER_FILE, parameterFile))
+        // The CONFIG_FILE variable is set to the same value as the PARAMETER_FILE to keep older scripts working
+        // with job-specific only environments.
+        // TODO Deprecated. Remove this line in Roddy 4.0. No config file.
+        this.parameters[CONFIG_FILE] = u(this.parameters[PARAMETER_FILE])
 
         boolean debugWrapInScript = false
         if (configuration.configurationValues.hasValue(DEBUG_WRAP_IN_SCRIPT)) {
             debugWrapInScript = configuration.configurationValues.getBoolean(DEBUG_WRAP_IN_SCRIPT)
         }
-        this.parameters.put(DEBUG_WRAP_IN_SCRIPT, parameterObjectToString(DEBUG_WRAP_IN_SCRIPT, debugWrapInScript))
+        this.parameters.put(DEBUG_WRAP_IN_SCRIPT, e(parameterObjectToString(DEBUG_WRAP_IN_SCRIPT, debugWrapInScript)))
 
         if (Roddy.applicationConfiguration.containsKey(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT)) {
             this.parameters.put(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT,
-                    Roddy.applicationConfiguration.getOrSetApplicationProperty(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT, ""))
+                    e(Roddy.applicationConfiguration.getOrSetApplicationProperty(APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT,
+                            "")))
         }
 
         // See if the job should be executed
@@ -651,19 +689,22 @@ class Job extends BEJob<BEJob, BEJobResult> {
             wasSubmittedOnHold = jobManager.holdJobsEnabled
             if (appendToJobStateLogfile)
                 this.appendToJobStateLogfile(jobManager, executionContext, runResult, null)
-            Command cmd = runResult.command
+            BECommand cmd = runResult.beCommand
 
             // If we have os process id attached, we'll need some space, so pad the output.
             jobDetailsLine << " => " + cmd.job.jobID.toString().padRight(10)
 
-            // For direct execution it can be very helpful to know the id of the started process. Sometimes, sub processes
-            // remain and need to be killed.
+            // For direct execution it can be very helpful to know the id of the started process.
+            // Sometimes, sub processes remain and need to be killed.
             if (cmd instanceof DirectCommand)
                 jobDetailsLine << " [OS Process ID: ${runResult.executionResult.processID}]"
 
             System.out.println(jobDetailsLine.toString())
             if (!cmd.jobID) {
-                context.addErrorEntry(ExecutionContextError.EXECUTION_SUBMISSION_FAILURE.expand("Please check your submission command manually.\n\t  Is your access group set properly? [${context.getAnalysis().getUsergroup()}]\n\t  Can the submission binary handle your binary?\n\t  Is your submission system offline?"))
+                context.addErrorEntry(ExecutionContextError.EXECUTION_SUBMISSION_FAILURE.
+                        expand("Please check your submission command manually.\n\t  Is your access group " +
+                                "set properly? [${context.getAnalysis().getUsergroup()}]\n\t  Can the submission " +
+                                "binary handle your binary?\n\t  Is your submission system offline?"))
                 logger.postSometimesInfo("Command: ${runResult.executionResult.toStatusLine()}")
                 if (Roddy.getFeatureToggleValue(FeatureToggles.BreakSubmissionOnError)) {
                     context.abortJobSubmission()
@@ -686,9 +727,12 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         } else {
             dbgMessage << "\tdummy job created." + ENV_LINESEPARATOR
-            File tool = context.configuration.getProcessingToolPath(context, toolID)
             resetJobID(new BEFakeJobID(BEFakeJobID.FakeJobReason.NOT_EXECUTED))
-            runResult = new BEJobResult((SubmissionCommand) null, this, null, tool, parameters,
+            runResult = new BEJobResult(
+                    null as SubmissionCommand,
+                    this,
+                    null,
+                    parameters,
                     parentFiles.collect { it.creatingJobsResult?.getJob() }.findAll { it })
             jobState = JobState.DUMMY
             wasSubmittedOnHold = false
@@ -697,14 +741,14 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return runResult
     }
 
-    Command getLastCommand() {
+    BECommand getLastCommand() {
         return lastCommand
     }
 
     /**
      * There are several reasons, why we need a job configuration.
-     * The most important reason is, that we need to replicate Roddys configuration mechanism with all it's functionality for
-     * any target system (Bash so far). If we don't do it, we will suffer from:
+     * The most important reason is, that we need to replicate Roddy's configuration mechanism with all
+     * it's functionality for any target system (Bash so far). If we don't do it, we will suffer from:
      * - wrong values
      * - wrong resolved value dependencies
      * - mistakenly overriden values
@@ -713,8 +757,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
      */
     Configuration createJobConfiguration() {
         Configuration jobConfiguration = new Configuration(null, executionContext.configuration)
-        jobConfiguration.configurationValues.addAll(parameters.collect { String k, String v ->
-            new ConfigurationValue(jobConfiguration, k, v)
+        jobConfiguration.configurationValues.addAll(parameters.collect { String k, EscapableString v ->
+            new ConfigurationValue(jobConfiguration, k, forBash(v))
         })
         return jobConfiguration
     }
@@ -735,13 +779,14 @@ class Job extends BEJob<BEJob, BEJobResult> {
         if (isVerbosityHigh) dbgMessage << "Rerunning job " + jobName
 
         // Check the parents of the new files to see if one of those is invalid for the current context! A file might
-        // be validated during a dry context...
+        // be validated during a dirty context...
         boolean parentFileIsDirty = false
 
         if (isVerbosityHigh) dbgMessage << sep << "\tchecking parent files for validity"
         for (BaseFile pf : parentFiles) {
             if (!pf.isFileValid()) {
-                if (isVerbosityHigh) dbgMessage << sep << "\tfile " << pf.path.getName() << " is dirty or does not exist." << sep
+                if (isVerbosityHigh)
+                    dbgMessage << sep << "\tfile " << pf.path.getName() << " is dirty or does not exist." << sep
                 parentFileIsDirty = true
             }
         }
@@ -755,7 +800,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             knownFilesCnt = res.y
         }
 
-        boolean parentJobIsDirty = parentJobs.collect { BEJob job -> job.isDirty }.any { boolean dirty -> dirty }
+        boolean parentJobIsDirty = parentJobs.any { BEJob job -> job.isDirty }
 
         boolean knownFilesCountMismatch = knownFilesCnt != filesToVerify.size()
 
@@ -792,24 +837,26 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         if (isVerbosityHigh) dbgMessage << "\tverifying specified files" << sep
 
-        //TODO what about the case if no verifiable files where specified? Or if the know files count does not match
-        for (BaseFile fp : filesToVerify) {
-            //See if we know the file... so this way we can use the BaseFiles verification method.
+        // TODO what about the case if no verifiable files where specified? Or if the know files count does not match
+        for (BaseFile jobFile : filesToVerify) {
+            // See if we know the file... so this way we can use the BaseFiles verification method.
             List<BaseFile> knownFiles = context.getAllFilesInRun()
-            for (BaseFile bf : knownFiles) {
+            for (BaseFile contextFile : knownFiles) {
                 for (int i = 0; i < 3; i++) {
-                    if (fp == null || bf == null || fp.absolutePath == null || bf.path == null)
+                    if (jobFile == null || contextFile == null
+                            || jobFile.absolutePath == null || contextFile.path == null)
                         try {
-                            logger.severe("Taking a short nap because a file does not seem to be finished.")
+                            logger.severe("Taking a short nap because a file does not seem to be finished." +
+                                          "context/declared file = $contextFile; job file = $jobFile")
                             Thread.sleep(100)
                         } catch (InterruptedException e) {
                             e.printStackTrace()
                         }
                 }
-                if (fp.absolutePath.equals(bf.path.absolutePath)) {
-                    if (!bf.isFileValid()) {
+                if (jobFile.absolutePath.equals(contextFile.path.absolutePath)) {
+                    if (!contextFile.isFileValid()) {
                         fileUnverified = true
-                        if (isVerbosityHigh) dbgMessage << "\tfile " << bf.path.getName() << " could not be verified!" << sep
+                        if (isVerbosityHigh) dbgMessage << "\tfile " << contextFile.path.getName() << " could not be verified!" << sep
                     }
                     knownFilesCnt++
                     break
@@ -868,12 +915,12 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return allValid
     }
 
-    String getToolID() {
-        return toolID
+    AnyToolCommand getToolCommand() {
+        this.toolCommand
     }
 
-    File getLocalToolPath() {
-        return localToolPath
+    String getToolID() {
+        return this.toolCommand.toolId
     }
 
     Boolean getWasSubmittedOnHold() {

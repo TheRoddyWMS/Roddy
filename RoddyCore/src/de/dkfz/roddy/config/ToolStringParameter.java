@@ -60,7 +60,8 @@ public class ToolStringParameter extends ToolEntry.ToolParameter<ToolStringParam
     }
 
     @Override
-    public ToolStringParameter clone() {
+    public ToolStringParameter clone() throws CloneNotSupportedException {
         return new ToolStringParameter(scriptParameterName, cValueID, setby);
     }
+
 }

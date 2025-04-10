@@ -6,13 +6,14 @@
 
 package de.dkfz.roddy.client
 
-import de.dkfz.roddy.tools.EnumHelper
+
+import groovy.transform.CompileStatic
 
 /**
  * Additional options for the Roddy startup.
  *
  */
-@groovy.transform.CompileStatic
+@CompileStatic
 enum RoddyStartupOptions {
     /**
      * An option specifically for listworkflows.
@@ -22,55 +23,49 @@ enum RoddyStartupOptions {
      * ICGCeval.dbg@genome
      * ICGCeval.dbg@exome
      */
-    shortlist,
-    extendedlist,
+    shortList(),
+    extendedList(),
     /**
      * Shows entry values and source files for e.g. printruntimeconfig
      */
-    showentrysources,
-    autocleanup,
-    useconfig(true),
+    showEntrySources(),
+    autoCleanup(),
+    config(true),
     c(true),
-    usefeaturetoggleconfig(true),
-    verbositylevel(true),
+    featureToggleConfig(true),
+    verbosityLevel(true),
     v(false), // Verbosity of 3
     vv(false), // Verbosity of 5
     debugOptions(true),
-    waitforjobs,
-    test,
-    useiodir(true),
-    usemetadatatable(true),
+    waitForJobs(),
+    test(),
+    ioDir(true),
+    metadataTable(true),
 
-    forcenativepluginconversion(false),
-    forcekeepexecutiondirectory(false),
-    ignorecvalueduplicates(false),
-    ignoreconfigurationerrors(false),
+    forceNativePluginConversion(false),
+    forceKeepExecutionDirectory(false),
+    ignoreCValueDuplicates(false),
+    ignoreConfigurationErrors(false),
 
-    /**
-     * Override project specific usedresourcessize
-     */
-    usedresourcessize(true),
-    disabletrackonlyuserjobs,
-    trackonlystartedjobs,
-    resubmitjobonerror,
-    autosubmit,
+    resourcesSize(true),
+    disableTrackOnlyUserJobs(),
+    trackOnlyStartedJobs(),
+    resubmitJobOnError(),
+    autoSubmit(),
     run(true),
-    dontrun(true),
+    dontRun(true),
     cvalues(true),
-    enabletoggles(true),
-    disabletoggles(true),
+    enableToggles(true),
+    disableToggles(true),
 
-    disablestrictfilechecks(false),
+    disableStrictFileChecks(false),
 
-    @Deprecated
-    useRoddyVersion(true),
-    useroddyversion(true),
+    roddyVersion(true),
     rv(true),
-    usePluginVersion(true),
+    pluginVersion(true),
     pluginDirectories(true),
     configurationDirectories(true),
     additionalImports(true),
-    additionalimports(true),
 
     jobManagerClass(true),
     executionServiceClass(true),
@@ -79,12 +74,14 @@ enum RoddyStartupOptions {
     executionServiceUser(true),
 
     // Only for configuration free mode! Tells Roddy which base configuration should be used for the internally created configuration.
-    baseconfig(true),
+    baseConfig(true),
 
-    userepository(true),
+    repository(true),
 
-    detailed,
-    disallowexit;
+    /** checkWorkflowStatus: If detailed is set, information about all started jobs and their status is shown. **/
+    detailed()
+
+    ;
 
     public final boolean acceptsParameters
 
@@ -96,7 +93,11 @@ enum RoddyStartupOptions {
         this.acceptsParameters = acceptsParameters
     }
 
+    // RoddyStartupOptions are matched by first stripping off any /used?/ prefix, transforming to lower case and
+    // matching against the lower case option name.
     static Optional<RoddyStartupOptions> fromString(String option) {
-        EnumHelper.castFromString(option)
+        Map<String, RoddyStartupOptions> options =
+                values().collectEntries { [it.name().toLowerCase(), it] }
+        return Optional.ofNullable(options.get(option.toLowerCase().replaceFirst(/used?/, ""), null))
     }
 }

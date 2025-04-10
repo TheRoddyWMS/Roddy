@@ -9,7 +9,6 @@ package de.dkfz.roddy.client.cliclient
 import static de.dkfz.roddy.config.ConfigurationConstants.*
 
 import de.dkfz.roddy.client.RoddyStartupModes
-import de.dkfz.roddy.config.Configuration
 import de.dkfz.roddy.config.ConfigurationValue
 import spock.lang.Specification
 
@@ -17,7 +16,8 @@ class CommandLineCallTest extends Specification {
 
     def "parse command line call"() {
         given:
-        List<String> parameters = ['run', 'prj@ana', "--cvalues=a:( a bash array ),b:1.0,c:2:double,d:'quoted string',e:1.0f,f:1"]
+        List<String> parameters = ['run', 'prj@ana',
+                                   "--cvalues=a:( a bash array ),b:1.0,c:2:double,d:'quoted string',e:1.0f,f:1"]
 
         when:
         CommandLineCall clc = new CommandLineCall(parameters)
@@ -56,19 +56,6 @@ class CommandLineCallTest extends Specification {
         'h:escaped colon\\:double' | CVALUE_TYPE_STRING      |   1  | 'h'  | 'escaped colon:double'
         'j:unescaped colon:double' | CVALUE_TYPE_DOUBLE      |   1  | 'j'  | 'unescaped colon'
         'a:valA,b:${a}'            | CVALUE_TYPE_STRING      |   2  | 'b'  | 'valA'
-    }
-
-    def "get typed configuration values from command-line call (failure)"(String parameter) {
-        when:
-        CommandLineCall clc = new CommandLineCall(['run', 'prj@ana', parameter])
-
-        then:
-        clc.malformed
-
-        where:
-        parameter       | _
-        '--cvalues'     | _
-        '--cvalues=a'   | _
     }
 
 

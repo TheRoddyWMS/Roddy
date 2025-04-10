@@ -318,7 +318,8 @@ class ConfigurationFactoryTest {
 
     @Test
     void testLoadPatternClassWithNullAndSyntheticClass() {
-        Tuple3<Class, Boolean, Integer> loadPatternClassResult = ConfigurationFactory.loadPatternClass((String) null, "ASyntheticTestClass", (Class) null)
+        Tuple3<Class, Boolean, Integer> loadPatternClassResult =
+                ConfigurationFactory.loadPatternClass((String) null, "ASyntheticTestClass", (Class) null)
         assert loadPatternClassResult != null
         assert ((Class) loadPatternClassResult.x).getName().endsWith("ASyntheticTestClass")
     }
@@ -485,8 +486,8 @@ class ConfigurationFactoryTest {
         assert tparm.files.size() == 3
         assert tparm.files.collect { ToolEntry.ToolParameterOfFiles tfp -> ((ToolFileParameter)tfp).fileClass.simpleName } == ["AFile", "BFile", "CFile"]
         assert tparm.scriptParameterName == "APARM"
-        assert tparm.passOptions == ToolFileGroupParameter.PassOptions.parameters
-        assert tparm.indexOptions == ToolFileGroupParameter.IndexOptions.numeric
+        assert tparm.passOptions == ToolFileGroupParameter.PassOptions.PARAMETERS
+        assert tparm.indexOptions == ToolFileGroupParameter.IndexOptions.NUMERIC
     }
 
     @Test
@@ -511,8 +512,8 @@ class ConfigurationFactoryTest {
         ToolFileGroupParameter tparm = new ProcessingToolReader(null, null).parseFileGroup(nc, "testTool")
         assert tparm.isGeneric()
         assert tparm.getGenericClassString() == "de.dkfz.roddy.knowledge.files.GenericFileGroup<de.dkfz.roddy.synthetic.files.TestFile>"
-        assert tparm.passOptions == ToolFileGroupParameter.PassOptions.parameters
-        assert tparm.indexOptions == ToolFileGroupParameter.IndexOptions.numeric
+        assert tparm.passOptions == ToolFileGroupParameter.PassOptions.PARAMETERS
+        assert tparm.indexOptions == ToolFileGroupParameter.IndexOptions.NUMERIC
         assert tparm.selectiontag == DEFAULT
     }
 
@@ -531,7 +532,7 @@ class ConfigurationFactoryTest {
         assert res
         assert res.groupClass == GenericFileGroup.class
         assert res.genericFileClass.name.endsWith("ASyntheticTestClass")
-        assert res.passOptions == ToolFileGroupParameter.PassOptions.parameters
+        assert res.passOptions == ToolFileGroupParameter.PassOptions.PARAMETERS
     }
 
     @Test
@@ -541,8 +542,8 @@ class ConfigurationFactoryTest {
         assert res
         assert res.groupClass == GenericFileGroup.class
         assert res.genericFileClass.name.endsWith("ASyntheticClass")
-        assert res.passOptions == ToolFileGroupParameter.PassOptions.parameters
-        assert res.indexOptions == ToolFileGroupParameter.IndexOptions.numeric
+        assert res.passOptions == ToolFileGroupParameter.PassOptions.PARAMETERS
+        assert res.indexOptions == ToolFileGroupParameter.IndexOptions.NUMERIC
         assert res.selectiontag == "abs"
     }
 
@@ -554,8 +555,8 @@ class ConfigurationFactoryTest {
         assert res
         assert res.groupClass == GenericFileGroup.class
         assert res.genericFileClass.name.endsWith("ASyntheticClass")
-        assert res.passOptions == ToolFileGroupParameter.PassOptions.parameters
-        assert res.indexOptions == ToolFileGroupParameter.IndexOptions.strings
+        assert res.passOptions == ToolFileGroupParameter.PassOptions.PARAMETERS
+        assert res.indexOptions == ToolFileGroupParameter.IndexOptions.STRINGS
     }
 
     @Test

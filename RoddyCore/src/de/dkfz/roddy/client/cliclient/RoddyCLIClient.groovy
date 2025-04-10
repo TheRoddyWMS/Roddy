@@ -29,16 +29,17 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.ScannerWrapper
 import de.dkfz.roddy.tools.versions.Version
+import groovy.transform.CompileStatic
 
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
-import static de.dkfz.roddy.client.RoddyStartupModes.*
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_PATH
+import static de.dkfz.roddy.tools.EscapableString.Shortcuts.*
 
 /**
  * Command line client for roddy.
  * Offers methods for all the command line options (i.e. listworkflows, checkstatus)
  */
-@groovy.transform.CompileStatic
+@CompileStatic
 class RoddyCLIClient {
 
     private static LoggerWrapper logger = LoggerWrapper.getLogger(RoddyCLIClient.class.getSimpleName());
@@ -72,72 +73,75 @@ class RoddyCLIClient {
         //TODO Convert to CommandLineCall
         String[] args = clc.getArguments().toArray(new String[0]);
         switch (clc.startupMode) {
-            case showreadme:
+            case RoddyStartupModes.showReadme:
                 showReadme();
                 break;
-            case showfeaturetoggles:
+            case RoddyStartupModes.showFeaturetoggles:
                 showFeatureToggles();
                 break;
-            case printappconfig:
+            case RoddyStartupModes.printAppConfig:
                 printApplicationConfiguration();
                 break;
-            case showconfigpaths:
+            case RoddyStartupModes.showConfigPaths:
                 showConfigurationPaths();
                 break;
-            case plugininfo:
+            case RoddyStartupModes.pluginInfo:
                 showPluginInfo(clc);
                 break;
-            case printpluginreadme:
+            case RoddyStartupModes.printPluginReadme:
                 printPluginReadme(clc);
                 break;
-            case printanalysisxml:
+            case RoddyStartupModes.printAnalysisXml:
                 printAnalysisXML(clc);
                 break;
-            case validateconfig:
+            case RoddyStartupModes.validateConfig:
                 validateConfiguration(args[1]);
                 break;
-            case printruntimeconfig:
+            case RoddyStartupModes.printRuntimeConfig:
                 printRuntimeConfiguration(clc);
                 break;
-            case printidlessruntimeconfig:
+            case RoddyStartupModes.printIdLessRuntimeConfig:
                 printReducedRuntimeConfiguration(clc);
                 break;
-            case listworkflows:
+            case RoddyStartupModes.listWorkflows:
                 listWorkflows(clc);
                 break;
-            case listdatasets:
+            case RoddyStartupModes.listDatasets:
                 listDatasets(clc);
                 break;
-            case autoselect:
-                RoddyCLIClient.autoselect(clc);
+            case RoddyStartupModes.autoselect:
+                autoselect(clc);
                 break;
-            case run:
-                RoddyCLIClient.run(clc);
+            case RoddyStartupModes.run:
+                run(clc);
                 break;
-            case rerun:
-                RoddyCLIClient.rerun(clc);
+            case RoddyStartupModes.rerun:
+                rerun(clc);
                 break;
-            case testrun:
-                RoddyCLIClient.testrun(clc);
+            case RoddyStartupModes.testRun:
+                testrun(clc);
                 break;
-            case testrerun:
-                RoddyCLIClient.testrerun(clc);
+            case RoddyStartupModes.testRerun:
+                testrerun(clc);
                 break;
-            case rerunstep:
+            case RoddyStartupModes.rerunStep:
                 break;
-            case checkworkflowstatus:
+            case RoddyStartupModes.checkWorkflowStatus:
                 checkWorkflowStatus(clc);
                 break;
-            case cleanup:
+            case RoddyStartupModes.cleanup:
                 cleanupWorkflow(clc);
                 break;
-            case abort:
+            case RoddyStartupModes.abort:
                 abortWorkflow(clc);
                 break;
-            case help:
+            case RoddyStartupModes.help:
+                RoddyStartupModes.printCommandLineOptions();
+                System.exit(0)
+                break;
             default:
                 RoddyStartupModes.printCommandLineOptions();
-                System.exit(0);
+                System.exit(1);
         }
     }
 
@@ -205,23 +209,34 @@ class RoddyCLIClient {
         // The checks are done before the readability tests because we need to check for the raw configuration values
         // as the next check will already use translated value
 
-        String valueInDir = analysis.configuration.configurationValues.get(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, "").value
-        String valueOutDir = analysis.configuration.configurationValues.get(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, "").value
+        String valueInDir = analysis.configuration.configurationValues.get(
+                ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, "").value
+        String valueOutDir = analysis.configuration.configurationValues.get(
+                ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, "").value
 
         if (!valueInDir && !valueOutDir) {
-            errors << "Both the input and output base directories are not set. You must set at least inputBaseDirectory or outputBaseDirectory."
+            errors <<
+                    "Both the input and output base directories are not set. " +
+                    "You must set at least inputBaseDirectory or outputBaseDirectory."
 
         } else {
 
             // Fill variable, if it is missing. Log a warning.
             if (!valueInDir) {
-                logger.always("The input base directory is not set. Taking the path of the output base directory instead.")
-                analysis.configuration.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, valueOutDir, CVALUE_TYPE_PATH))
+                logger.always(
+                        "The input base directory is not set. " +
+                        "Taking the path of the output base directory instead.")
+                analysis.configuration.configurationValues.add(new ConfigurationValue(
+                        ConfigurationConstants.CFG_INPUT_BASE_DIRECTORY, valueOutDir, CVALUE_TYPE_PATH))
             }
 
             if (!valueOutDir) {
-                logger.always("The output base directory is not set. Taking the path of the input base directory instead.")
-                analysis.configuration.configurationValues.add(new ConfigurationValue(ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, valueInDir, CVALUE_TYPE_PATH))
+                logger.always(
+                        "The output base directory is not set. " +
+                        "Taking the path of the input base directory instead.")
+                analysis.configuration.configurationValues.
+                        add(new ConfigurationValue(
+                                ConfigurationConstants.CFG_OUTPUT_BASE_DIRECTORY, valueInDir, CVALUE_TYPE_PATH))
             }
 
             // Now start with the input directory
@@ -230,7 +245,7 @@ class RoddyCLIClient {
 
             // Out dir needs to be writable
             if (!FileSystemAccessProvider.instance.isWritable(analysis.getOutputBaseDirectory()))
-                errors << (String) "The output was not writeable at path ${analysis.getOutputBaseDirectory()}."
+                errors << (String) "The output was not writeable at path '${analysis.getOutputBaseDirectory()}'."
         }
 
         if (errors)
@@ -289,11 +304,11 @@ class RoddyCLIClient {
             StringBuilder sb = new StringBuilder();
             printConfigurationLoadErrors(configuration, sb, 0, Constants.ENV_LINESEPARATOR)
             String errorText = ConsoleStringFormatter.getFormatter().formatAll(sb.toString())
-            if (Roddy.isOptionSet(RoddyStartupOptions.ignoreconfigurationerrors)) {
-                logger.severe("There were configuration errors, but they will be ignored (--${RoddyStartupOptions.ignoreconfigurationerrors.name()} is set)")
+            if (Roddy.isOptionSet(RoddyStartupOptions.ignoreConfigurationErrors)) {
+                logger.severe("There were configuration errors, but they will be ignored (--${RoddyStartupOptions.ignoreConfigurationErrors.name()} is set)")
                 System.err.println(errorText)
             } else {
-                logger.severe("There were configuration errors and Roddy will not start. Consider using --${RoddyStartupOptions.ignoreconfigurationerrors.name()} to ignore errors.")
+                logger.severe("There were configuration errors and Roddy will not start. Consider using --${RoddyStartupOptions.ignoreConfigurationErrors.name()} to ignore errors.")
                 System.err.println(errorText)
                 Roddy.exit(ExitReasons.severeConfigurationErrors.code)
             }
@@ -388,8 +403,8 @@ class RoddyCLIClient {
                 analysis.run(commandLineCall.datasetSpecifications,
                              ExecutionContextLevel.QUERY_STATUS)
 
-        if (commandLineCall.isOptionSet(RoddyStartupOptions.showentrysources)) {
-            if (commandLineCall.isOptionSet(RoddyStartupOptions.extendedlist)) {
+        if (commandLineCall.isOptionSet(RoddyStartupOptions.showEntrySources)) {
+            if (commandLineCall.isOptionSet(RoddyStartupOptions.extendedList)) {
                 for (ExecutionContext executionContext in executionContexts) {
 
                     def cvalues = executionContext.analysis.configuration.configurationValues
@@ -604,9 +619,11 @@ class RoddyCLIClient {
      */
     static void testrerun(CommandLineCall clc) {
         Analysis analysis = loadAnalysisAndCheckIoDirectoriesOrFail(clc)
+        // rerun needs an existing execution context. We first create a execution context
         List<ExecutionContext> executionContexts =
                 analysis.run(clc.getDatasetSpecifications(), ExecutionContextLevel.QUERY_STATUS, true)
-        if (testrerun) executionContexts = analysis.rerun(executionContexts, true)
+        // Only after this step, we can run rerun.
+        executionContexts = analysis.rerun(executionContexts, true)
         outputTestrunResult(executionContexts, true)
     }
 
@@ -653,7 +670,8 @@ class RoddyCLIClient {
                             Math.max(7, Roddy.applicationConfiguration.getOrSetIntegerApplicationProperty(Constants.APP_PROPERTY_TESTRUN_VARIABLE_WIDTH, 25))
                     if (k.length() > variablePrintWidth)
                         _k = k.substring(0, variablePrintWidth - 2) + '..'
-                    String parm = job.reportedParameters.get(k, '').replace(ec.executionDirectory.absolutePath, '[ exDir]')
+                    String parm = forBash(job.reportedParameters.get(k, c())).
+                            replace(ec.executionDirectory.absolutePath, '[ exDir]')
                     parm = parm.replace(ec.outputDirectory.absolutePath, '[outDir]')
                     parm = parm.replace(ec.inputDirectory.absolutePath, '[ inDir]')
                     if (parm.startsWith('parameterArray') && parm != 'parameterArray=()') {
@@ -715,7 +733,7 @@ class RoddyCLIClient {
             boolean running = dataSets.get(ds)
             boolean datasetprinted = false
             List<AnalysisProcessingInformation> listOfAPIsToPrint = []
-            if (clc.isOptionSet(RoddyStartupOptions.extendedlist)) {
+            if (clc.isOptionSet(RoddyStartupOptions.extendedList)) {
                 listOfAPIsToPrint = ds.getProcessingInformation(analysis)
             } else {
                 listOfAPIsToPrint << ds.getLatestValidProcessingInformation(analysis)
@@ -740,7 +758,7 @@ class RoddyCLIClient {
 
                 def userID = context.getExecutingUser().padRight(10).substring(0, 9)
                 def execFolder = context.getExecutionDirectory().getAbsolutePath()
-                if (clc.isOptionSet(RoddyStartupOptions.shortlist)) execFolder = execFolder.replace(outputDirectory, "[outDir]")
+                if (clc.isOptionSet(RoddyStartupOptions.shortList)) execFolder = execFolder.replace(outputDirectory, "[outDir]")
 
                 if (running) {
                     sb << "RUNNING".padRight(25) << userID << " " << execFolder << separator

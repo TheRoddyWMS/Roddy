@@ -71,8 +71,7 @@ function getValueFromConfigOrCommandLine() {
   local var="none"
   local startIndex
 
-  IFS=""
-  for i in "${fullParameterList[@]}"; do
+  for i in ${fullParameterList[@]}; do
     if [[ $i == --${valueNameOnCLI}*  ]]; then
       startIndex=$(expr 2 + ${#valueNameOnCLI} + 1)
       var=${i:$startIndex:800}
@@ -84,7 +83,6 @@ function getValueFromConfigOrCommandLine() {
   if [[ ${var-none} == none ]]; then
     var=$(grepFromConfigFile $valueNameInCfg $customconfigfile)
   fi
-  IFS=$OFS
   echo $var
 }
 
@@ -110,7 +108,7 @@ then
     _temp=`(cat ${customconfigfile} 2> /dev/null) | grep useRoddyVersion || echo 0`
     if [[ $_temp != 0 ]] && [[ $_temp != "useRoddyVersion=" ]]
     then
-        setRoddyBinaryVariables $(tryExtractRoddyVersionFromPlugin)
+        setRoddyBinaryVariables "$(tryExtractRoddyVersionFromPlugin)"
         foundPluginID=$(tryExtractPluginIDFromConfig)
     fi
 fi
@@ -127,7 +125,7 @@ do
     [[ $i == --rv=* ]] && index=5
 
     if [[ $index -gt 0 ]]; then
-        setRoddyBinaryVariables ${i:${index}:40}
+        setRoddyBinaryVariables "${i:${index}:40}"
         if [[ ! -f $RODDY_BINARY  ]]; then
             echo "${RODDY_BINARY} not found, the following versions might be available:"
             for bin in `ls -d dist/bin`; do
@@ -145,7 +143,7 @@ done
 if [[ -z ${RODDY_BINARY_DIR-} ]]
 then
     # Find the latest version available
-    setRoddyBinaryVariables $(cd dist/bin; ls -d *.*.* develop | grep -v ".zip" | sort -V | tail -n 1)
+    setRoddyBinaryVariables "$(cd dist/bin; ls -d *.*.* develop | grep -v ".zip" | sort -V | tail -n 1)"
 fi
 
 # If auto selection is enabled, the script tries to identify the proper version from the buildinfo text file of the called plugin.
@@ -175,7 +173,7 @@ if [[ $autoSelectRoddy == true && ! $parm1 == autoselect ]]; then
     # Fall back to 2.2 (the version before RoddyAPIVersion was introduced), if necessary
     foundAPIVersion=${foundAPIVersion:-2.2}
     echo "Selected Roddy API version "${foundAPIVersion}
-    setRoddyBinaryVariables $foundAPIVersion
+    setRoddyBinaryVariables "$foundAPIVersion"
 
     # Replace command line parameter =auto with =x.y.z
     # Store the fullParameterList variable to a new variable to prevent a mess up in Bashs array handling:

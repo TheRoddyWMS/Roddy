@@ -8,9 +8,7 @@ package de.dkfz.roddy.knowledge.files;
 
 import de.dkfz.roddy.core.ExecutionContext;
 
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.Set;
 import java.util.List;
 
 /**
@@ -19,12 +17,13 @@ import java.util.List;
 public class IndexedFileObjects<F extends FileObject> extends FileObject {
     protected final List<String> indices;
 
-    private final Map<String, F> indexedFileObjects;
+    private final Map<String, F> indexedObjects;
 
-    public IndexedFileObjects(List<String> indices, Map<String, F> indexedFileObjects, ExecutionContext executionContext) {
+    public IndexedFileObjects(List<String> indices, Map<String, F> indexedObjects,
+                              ExecutionContext executionContext) {
         super(executionContext);
         assert(null != indices && indices.size() > 0);
-        this.indexedFileObjects = indexedFileObjects;
+        this.indexedObjects = indexedObjects;
         this.indices = indices;
     }
 
@@ -38,7 +37,7 @@ public class IndexedFileObjects<F extends FileObject> extends FileObject {
     }
 
     public Map<String, F> getIndexedFileObjects() {
-        return indexedFileObjects;
+        return indexedObjects;
     }
 
 }

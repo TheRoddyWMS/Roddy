@@ -17,6 +17,7 @@ import de.dkfz.roddy.knowledge.files.FileGroup
 import de.dkfz.roddy.knowledge.files.FileObject
 import de.dkfz.roddy.knowledge.files.GenericFileGroup
 import de.dkfz.roddy.plugins.LibrariesFactory
+import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.junit.Ignore;
 import org.junit.Test;
@@ -26,19 +27,20 @@ import java.lang.reflect.Method
 /**
  * Created by heinold on 18.11.15.
  */
-@groovy.transform.CompileStatic
+@CompileStatic
 public class JBrawlWorkflowTest {
 
 
     public static final String LOAD_FASTQ_FILES = "loadFastqFiles"
 
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic(TypeCheckingMode.SKIP)
     private String callPrepareAndFormatLine(String line) {
         Method prepareAndReformatLine = JBrawlWorkflow.getDeclaredMethod("prepareAndReformatLine", String);
         prepareAndReformatLine.setAccessible(true);
         return prepareAndReformatLine.invoke(null, line)
     }
 
+    @Ignore("Brawl is deprecated")
     @Test
     public void testPrepareAndReformatLine() {
 
@@ -57,7 +59,7 @@ public class JBrawlWorkflowTest {
         }
     }
 
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic(TypeCheckingMode.SKIP)
     private String callAssembleCall(String[] _l, int indexOfCallee, StringBuilder temp, ContextConfiguration configuration, LinkedHashMap<String, String> knownObjects) {
         Method assembleCall = JBrawlWorkflow.class.getDeclaredMethod("_assembleCall", String[], int, StringBuilder, ContextConfiguration, LinkedHashMap);
         assembleCall.setAccessible(true);
@@ -65,14 +67,7 @@ public class JBrawlWorkflowTest {
         return (String) assembleCall.invoke(null, _l, indexOfCallee, temp, configuration, knownObjects);
     }
 
-    @Test
-    @Ignore("Test to create")
-    public void testAssembleCall() {
-//        callAssembleCall(null, 0, null, null, null);
-        assert false
-    }
-
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic(TypeCheckingMode.SKIP)
     private String callAssembleLoadFilesCall(String[] _l, int indexOfCallee, StringBuilder temp, ContextConfiguration configuration, LinkedHashMap<String, String> knownObjects) {
         Method assembleLoadFilesCall = JBrawlWorkflow.class.getDeclaredMethod("_assembleLoadFilesCall", String[], int, StringBuilder, ContextConfiguration, LinkedHashMap);
         assembleLoadFilesCall.setAccessible(true);
@@ -81,6 +76,7 @@ public class JBrawlWorkflowTest {
         return result as String;
     }
 
+    @Ignore("Brawl is deprecated")
     @Test
     public void testAssembleLoadFilesCall() {
         StringBuilder tempBuilder = new StringBuilder();
@@ -96,7 +92,7 @@ public class JBrawlWorkflowTest {
                         (new GenericFileGroup([] as List)).class as Class<FileGroup>,
                         testFileClass,
                         "FUZZY_GROUP",
-                        ToolFileGroupParameter.PassOptions.parameters, Constants.DEFAULT));
+                        ToolFileGroupParameter.PassOptions.PARAMETERS, Constants.DEFAULT));
         cc.getTools().add(loadFastqFiles)
 
         String[] _l = callPrepareAndFormatLine("""set inputfiles = loadfilesWith "${LOAD_FASTQ_FILES}"()'""").split("[ ]")

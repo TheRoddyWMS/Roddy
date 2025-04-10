@@ -15,8 +15,8 @@ import de.dkfz.roddy.config.PreloadedConfiguration
 import de.dkfz.roddy.config.ResourceSetSize
 import de.dkfz.roddy.config.RoddyAppConfig
 import de.dkfz.roddy.config.ToolEntry
-import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ContextResource
+import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -82,7 +82,7 @@ class BrawlCallingWorkflowTest {
                 // Or implicit like Snakemake? Later maybe
             '''
         def preloaded = new PreloadedConfiguration(null, Configuration.ConfigurationType.OTHER, "Myname", "", "",
-                null, null, ResourceSetSize.l, null, null, null, null)
+                                                   null, null, ResourceSetSize.l, null, null, null, null)
         Configuration cfg = new Configuration(
                 preloaded
         ) {
@@ -119,17 +119,20 @@ class BrawlCallingWorkflowTest {
         Field appProperties = Roddy.class.getDeclaredField("applicationProperties")
         appProperties.setAccessible(true)
         appProperties.set(null, new RoddyAppConfig())
-        Roddy.getApplicationConfiguration().setApplicationProperty(Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY, context.getTemporaryDirectory().absolutePath);
-        Field cPreloaded = context.analysis.configuration.class.superclass.superclass.getDeclaredField("preloadedConfiguration")
+        Roddy.applicationConfiguration.setApplicationProperty(
+                Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY,
+                context.getTemporaryDirectory().absolutePath)
+        Field cPreloaded = context.analysis.configuration.class.superclass.superclass.
+                getDeclaredField("preloadedConfiguration")
         cPreloaded.setAccessible(true)
         cPreloaded.set(context.analysis.configuration, preloaded)
         // Create tools in storage. This is not done automatically in tests.
-        def wrapper = cfg.getProcessingToolPath(context, Job.TOOLID_WRAPIN_SCRIPT)
-        def entry = new ToolEntry(Job.TOOLID_WRAPIN_SCRIPT, "brawlWorkflow", wrapper.absolutePath)
+        def wrapper = cfg.getProcessingToolPath(context, Constants.TOOLID_WRAPIN_SCRIPT)
+        def entry = new ToolEntry(Constants.TOOLID_WRAPIN_SCRIPT, "brawlWorkflow", wrapper.absolutePath)
         entry.inlineScript = """
-            source \$PARAMETER_FILE 
+            source \$$Constants.PARAMETER_FILE
             echo "######################################################### Starting wrapped script ###########################################################"
-            source \$WRAPPED_SCRIPT
+            source \$$Job.PARM_WRAPPED_SCRIPT
             echo "######################################################### Wrapped script ended ##############################################################"
          """
         wrapper << entry.inlineScript

@@ -15,7 +15,6 @@ import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.Workflow
 import de.dkfz.roddy.execution.BEExecutionService
-import de.dkfz.roddy.execution.UnexpectedExecutionResultException
 import de.dkfz.roddy.execution.io.ExecutionResult
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
@@ -49,9 +48,12 @@ class NativeWorkflow extends Workflow {
      */
     class NativeJob extends Job {
         NativeJob(Job wrappedJob) {
-            super(wrappedJob.context, wrappedJob.jobName, wrappedJob.toolID, null as String,
-                    wrappedJob.allRawInputParameters, wrappedJob.parentFiles,
-                    wrappedJob.filesToVerify)
+            super(wrappedJob.context,
+                  wrappedJob.jobName,
+                  wrappedJob.toolCommand,
+                  wrappedJob.allRawInputParameters,
+                  wrappedJob.parentFiles,
+                  wrappedJob.filesToVerify)
         }
 
         void setNativeParentJobs(List<NativeJob> nativeParentJobs) {
@@ -103,11 +105,12 @@ class NativeWorkflow extends Workflow {
         }
     }
 
-    boolean callAndInterceptNativeWorkflow(ExecutionContext context, BatchEuphoriaJobManager targetJobManager) {
+    boolean callAndInterceptNativeWorkflow(ExecutionContext context,
+                                           BatchEuphoriaJobManager targetJobManager) {
         ContextConfiguration configuration = (ContextConfiguration) context.configuration
         AnalysisConfiguration aCfg = configuration.getAnalysisConfiguration()
 
-        // In normal cases commands are executed by the default factory. In this case we want the command to be
+        // In normal cases, commands are executed by the default factory. In this case, we want the command to be
         // executed directly.
         String toolID = aCfg.getNativeToolID()
         String jobManagerAbbreviation = AvailableClusterSystems.values().find {
@@ -116,13 +119,15 @@ class NativeWorkflow extends Workflow {
         def nativeScriptID = "nativeWrapperFor${jobManagerAbbreviation}"
         String nativeWorkflowScriptWrapper = configuration.getProcessingToolPath(context, nativeScriptID).absolutePath
         Job wrapperJob = new Job(
-                context, context.getTimestampString() + "_nativeJobWrapper:" + toolID, toolID,
-                null as String, null, null, null)
+                context,
+                context.getTimestampString() + "_nativeJobWrapper:" + toolID,
+                context.getToolCommand(toolID))
 
         DirectSynchronousExecutionJobManager dcfac = new DirectSynchronousExecutionJobManager(
                 ExecutionService.instance, JobManagerOptions.create().build())
-        DirectCommand wrapperJobCommand = new DirectCommand(dcfac, wrapperJob, [], nativeWorkflowScriptWrapper)
-        String submissionCommand = targetJobManager.submissionCommand
+        DirectCommand wrapperJobCommand = dcfac.createCommand(wrapperJob)
+        // The cast to SubmissionCommand is only necessary, because of the overall faulty design.
+        String submissionCommand = (targetJobManager.createCommand(wrapperJob) as SubmissionCommand).submissionExecutableName
         if (submissionCommand == null) {
             context.addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.
                     expand("There is no submission command for this type of command factory."))
@@ -144,7 +149,8 @@ class NativeWorkflow extends Workflow {
         return true
     }
 
-    private Map<String, BEGenJI> fetchAndProcessCalls(ExecutionContext context, BatchEuphoriaJobManager targetJobManager) {
+    private Map<String, BEGenJI> fetchAndProcessCalls(ExecutionContext context,
+                                                      BatchEuphoriaJobManager targetJobManager) {
 
         ContextConfiguration configuration = (ContextConfiguration) context.configuration
         //Get the calls file in the temp directory.
@@ -199,7 +205,7 @@ class NativeWorkflow extends Workflow {
 
         for (Job job in convertedJobs) {
             BEJobResult result = job.run()
-            Command command = result.command
+            Command command = result.beCommand
             String id = null;
             try {
                 id = command.jobID.shortID

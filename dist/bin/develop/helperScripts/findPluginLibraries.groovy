@@ -1,11 +1,10 @@
-import java.nio.file.AccessDeniedException
-import java.nio.file.Paths
-
 /*
  * Copyright (c) 2016 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/TheRoddyWMS/Roddy/LICENSE.txt).
  */
+
+import java.nio.file.AccessDeniedException
 
 
 List<String> parsePluginDirectoriesParameter(String roddyDirectory, String parameterValue) {

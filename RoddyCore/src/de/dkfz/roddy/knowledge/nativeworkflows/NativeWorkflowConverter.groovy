@@ -9,7 +9,6 @@ package de.dkfz.roddy.knowledge.nativeworkflows
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.config.converters.BashConverter
-import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.plugins.NativePluginInfo
 import de.dkfz.roddy.plugins.PluginLoaderException
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -148,7 +147,7 @@ class NativeWorkflowConverter {
      */
     boolean ensureWorkflowStatusOrFail() {
         // Check if it is still the same (md5 sums and so on) and if the --forcenativepluginconversion
-        boolean forceoverride = Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.forcenativepluginconversion)
+        boolean forceoverride = Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.forceNativePluginConversion)
         if (pluginDir.exists()) {
             String md5NewImport = RoddyIOHelperMethods.getMD5OfText(importConfiguration())
             String md5ExistingXML = RoddyIOHelperMethods.getMD5OfFile(nativePluginInfo.getConvertedConfigurationFile())

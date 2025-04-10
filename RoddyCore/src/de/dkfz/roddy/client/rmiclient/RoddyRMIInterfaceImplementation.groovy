@@ -16,6 +16,7 @@ import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
 import de.dkfz.roddy.core.ExecutionContextSubLevel
 import de.dkfz.roddy.core.InfoObject
+import de.dkfz.roddy.tools.EscapableString
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.BEJob
 import de.dkfz.roddy.execution.jobs.Job
@@ -71,7 +72,7 @@ class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
         JobState jobState
         boolean isFakeJob
 
-        Map<String, String> parameters
+        Map<String, EscapableString> parameters
         Map<File, String> parentFiles
 
         JobInfoObject(Job job) {
@@ -91,7 +92,7 @@ class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
             return isFakeJob
         }
 
-        Map<String, String> getParameters() {
+        Map<String, EscapableString> getParameters() {
             return parameters
         }
 
@@ -211,12 +212,16 @@ class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
         analysisId = reformatAnalysisId(analysisId)
         synchronized (dataSetsByAnalysisAndId) {
             Analysis analysis = loadAnalysis(analysisId)
-            if (!analysis)
+            if (analysis) {
+                if (!dataSetsByAnalysisAndId[analysisId]) {
+                    dataSetsByAnalysisAndId[analysisId] =
+                            analysis.runtimeService.getListOfPossibleDataSets(analysis).
+                                    collectEntries { DataSet it -> [it.id, it] } as Map<String, DataSet>
+                }
+                return dataSetsByAnalysisAndId[analysisId]
+            } else {
                 return [:]
-            if (!dataSetsByAnalysisAndId[analysisId])
-                dataSetsByAnalysisAndId[analysisId] = analysis.runtimeService.getListOfPossibleDataSets(analysis).
-                        collectEntries { DataSet it -> [it.id, it] } as Map<String, DataSet>
-            return dataSetsByAnalysisAndId[analysisId]
+            }
         }
     }
 

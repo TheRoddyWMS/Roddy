@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.client.cliclient
 
+import groovy.transform.CompileStatic
+
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 import static de.dkfz.roddy.client.RoddyStartupModes.help
 
@@ -23,7 +25,7 @@ import org.petitparser.parser.Parser
  * A helper class for command line calls.
  * Options and parameters are extracted and put into an object of this class.
  */
-@groovy.transform.CompileStatic
+@CompileStatic
 class CommandLineCall {
 
     private static final Parser cvaluesParser = CommandLineParameterParser.cvalueParameterExpr.end("malformed content")
@@ -37,17 +39,22 @@ class CommandLineCall {
     private final List<String> arguments
     private final List<String> parameters
     private Map<RoddyStartupOptions, Parameter> optionsMap
-    final boolean malformed
 
     static RoddyStartupModes parseStartupMode(List<String> args) {
         // The following implies that parameters (without '--') and options (with '--') can be freely mixed.
+        // Note, however, that the roddy.sh and helper scripts also constrain this.
         String putativeModeSpec = args.find { String arg -> !arg.startsWith('--') }
-        Optional<RoddyStartupModes> mode = RoddyStartupModes.fromString(putativeModeSpec)
-        if (mode.isPresent()) {
-            return mode.get()
-        } else {
-            logger.postAlwaysInfo("The startupmode '${putativeModeSpec}' is not known.")
+        if (putativeModeSpec == null) {
+            logger.severe("No startup mode provided.")
             return help
+        } else {
+            Optional<RoddyStartupModes> mode = RoddyStartupModes.fromString(putativeModeSpec);
+            if (mode.isPresent()) {
+                return mode.get()
+            } else {
+                logger.severe("The startup mode '${putativeModeSpec}' is not known.")
+                return help
+            }
         }
     }
 
@@ -94,7 +101,8 @@ class CommandLineCall {
     }
 
     /** Check whether the parsed option is indeed accepted as option by Roddy. Errors are accumulated
-     *  in the error argument. */
+     *  in the error argument.
+     *  Note the return type is a MapEntry with (RoddyStartupOptions, String), but MapEntry is untyped :(. */
     private static Optional<MapEntry> handle(final Parameter parameter, final List<String> errors) {
         Optional<RoddyStartupOptions> opt = RoddyStartupOptions.fromString(parameter.name)
         if (opt.isPresent()) {
@@ -144,6 +152,7 @@ class CommandLineCall {
                 errors << "Could not parse option string '" + optArg + "': ${parseResult.message}"
             } else {
                 handle(parseResult.get() as Parameter, errors).map { MapEntry entry ->
+                    // Cast necessary because the returned MapEntry is untyped.
                     parsedOptions.put(entry.key as RoddyStartupOptions, entry.value as Parameter)
                 }
             }
@@ -155,7 +164,10 @@ class CommandLineCall {
         // Guard against empty parameter list. Assume help is requested.
         if (args.empty)
             args = [help.toString()]
+
         this.arguments = args
+
+        startupMode = parseStartupMode(args)
 
         // Store all parameters (do not start with '--') and remove the startup mode.
         List<String> allParameters = args.findAll { String arg -> !arg.startsWith('--') } as ArrayList<String>
@@ -163,15 +175,11 @@ class CommandLineCall {
             this.parameters = allParameters[1..-1]
         else
             this.parameters = []
-        startupMode = parseStartupMode(args)
 
         // Now process the options (that start with '--').
         Tuple2<Map<RoddyStartupOptions, Parameter>, List<String>> options = parseOptions(args)
         if (options.y) {
             logger.severe(options.y.join("\n\t"))
-            malformed = true
-        } else {
-            malformed = false
         }
         this.optionsMap = options.x
     }

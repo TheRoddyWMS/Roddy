@@ -1,13 +1,13 @@
-import java.nio.file.Paths
-
 /*
- * Copyright (c) 2017 German Cancer Research Center (DKFZ).
+ * Copyright (c) 2021 German Cancer Research Center (DKFZ).
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/theroddywms/Roddy/LICENSE.txt).
  */
 
 // TODO Put git short hash into manifests
-// TODO How to compile plugins? Can this be done with gradle as well?
+// TODO How to compile Roddy plugins? Can this be done with gradle as well?
+
+import org.cyclonedx.gradle.CycloneDxTask
 
 buildscript {
     repositories {
@@ -17,14 +17,16 @@ buildscript {
         mavenLocal()
         mavenCentral()
     }
-    dependencies {
-        classpath group: 'kr.motd.gradle', name: 'sphinx-gradle-plugin', version: '2.2.0'
-    }
 }
 
 plugins {
-    id 'org.ajoberstar.grgit' version '1.7.2'                                  // Apache 2.0
+    id 'org.ajoberstar.grgit' version '4.1.1'    // Apache 2.0
     id 'idea'
+    id 'pmd'
+    id 'org.cyclonedx.bom' version '1.8.2'
+    id 'maven-publish'
+    id 'kr.motd.sphinx' version '2.10.1'         // Apache 2.0
+    id 'application'
 }
 
 group = "com.github.theroddywms"
@@ -34,26 +36,34 @@ group = "com.github.theroddywms"
  * -PallowDirtyRepo=true                Continue release despite dirty repo.
  * -Pchecked=false                      Turn off -F Xlint:unchecked
  */
-
 ext.allowDirtyRepo = (project.hasProperty("allowDirty") && project.allowDirty == "true")
 
-// apply plugin: "java"
-apply plugin: 'application'
 apply plugin: 'distribution'
 apply plugin: 'groovy'
 apply plugin: 'kr.motd.sphinx'  // Apache 2.0
 //apply plugin: 'codenarc'
 
+
+application {
+    mainClass = "de.dkfz.roddy.Roddy"
+}
+
 // Java settings
-ext.langLevel = "1.8"
-sourceCompatibility = langLevel
-targetCompatibility = langLevel
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+//    toolchain {
+//        languageVersion = JavaLanguageVersion.of(8)
+//    }
+}
+
 compileJava.options.fork = true
+compileJava.options.compilerArgs = ["-release", targetCompatibility]
 
 // Set -Pchecked={true,false} on the command line to change this compiler parameter. Default: unchecked
 if (project.hasProperty("checked") && !project.checked) {
-    compileJava.options.compilerArgs = ["-Xlint:unchecked"]
-    compileGroovy.options.compilerArgs = ["-Xlint:unchecked"]
+    compileJava.options.compilerArgs += ["-Xlint:unchecked", "-Xlint:deprecation"]
+    compileGroovy.options.compilerArgs += ["-Xlint:unchecked", "-Xlint:deprecation"]
 }
 
 // The following keeps the Gradle build files separate from the ones build by IntelliJ (usually in build/).
@@ -91,8 +101,9 @@ repositories {
     maven { url "https://repo1.maven.org/maven2/" }       // Some of the remaining dependencies
 }
 
-ext.roddyToolLibVersion = "2.4.0"
-ext.batchEuphoriaVersion = "0.1.1"
+ext.roddyToolLibVersion = "2.5.0"
+ext.batchEuphoriaVersion = "0.2.1"
+ext.jschVersion = "0.0.9"
 
 configurations.all {
     resolutionStrategy.cacheChangingModulesFor(0, 'seconds')
@@ -101,62 +112,73 @@ configurations.all {
         // details.useVersion is null, if Roddy is build in a multi-project build with dependency substitution.
         // In this situation the substituted version-less development version has higher priority than the
         // version configured via roddyToolLibVersion.
-        if (details.requested.name == "RoddyToolLib" && details.useVersion != null) {
-            details.useVersion roddyToolLibVersion
-            details.because "BatchEuphoria not affected by RoddyToolLib ${roddyToolLibVersion} API changes."
+        if (details.requested.name == "RoddyToolLib") {
+            details.useVersion(roddyToolLibVersion)
+            details.because("BatchEuphoria not affected by RoddyToolLib ${roddyToolLibVersion} API changes.")
         }
     }
 }
 
 dependencies {
-    compile "com.github.theroddywms:RoddyToolLib:${roddyToolLibVersion}"         // MIT
-    compile "com.github.theroddywms:BatchEuphoria:${batchEuphoriaVersion}"       // MIT
-    compile 'org.codehaus.groovy:groovy-all:2.4.21'              // Apache 2.0
+    implementation "com.github.theroddywms:RoddyToolLib:$roddyToolLibVersion"         // MIT
+    implementation "com.github.theroddywms:BatchEuphoria:$batchEuphoriaVersion"       // MIT
+    implementation 'org.codehaus.groovy:groovy-all:2.4.21'              // Apache 2.0
 
     // Note: When updating SSHJ, check the BC version in its dependencies! E.g.
     // https://github.com/hierynomus/sshj/blob/master/build-publishing.gradle
-    compile 'org.bouncycastle:bcpg-jdk15on:1.51'                // MIT
-    compile 'org.bouncycastle:bcpkix-jdk15on:1.51'              // MIT
-    compile 'org.bouncycastle:bcprov-ext-jdk15on:1.51'          // MIT
-    compile 'org.bouncycastle:bcprov-jdk15on:1.51'              // MIT
+    implementation 'org.bouncycastle:bcpg-jdk15on:1.70'                // MIT
+    implementation 'org.bouncycastle:bcpkix-jdk15on:1.70'              // MIT
+    implementation 'org.bouncycastle:bcprov-ext-jdk15on:1.70'          // MIT
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.70'              // MIT
 
-    compile 'com.google.guava:guava:31.1-jre'                   // Apache 2.0
+    implementation 'com.google.guava:guava:33.2.1-jre'                 // Apache 2.0
 
-    compile 'org.apache.commons:commons-csv:1.9.0'              // Apache 2.0
-    compile 'commons-cli:commons-cli:1.5.0'                     // Apache 2.0
-    compile 'commons-codec:commons-codec:1.15'                  // Apache 2.0
-    compile 'commons-io:commons-io:2.11.0'                      // Apache 2.0
-    compile 'commons-logging:commons-logging:1.2'               // Apache 2.0
+    implementation 'org.apache.commons:commons-csv:1.9.0'              // Apache 2.0
+    implementation 'commons-cli:commons-cli:1.5.0'                     // Apache 2.0
+    implementation 'commons-codec:commons-codec:1.15'                  // Apache 2.0
+    implementation 'commons-io:commons-io:2.14.0'                      // Apache 2.0
+    implementation 'commons-logging:commons-logging:1.2'               // Apache 2.0
 
-    compile 'com.jcraft:jzlib:1.1.3'                            // BSD
-    compile 'com.github.markusbernhardt:proxy-vole:1.0.5'       // Apache 2.0
-    compile 'org.reflections:reflections:0.10.2'
+    implementation 'com.jcraft:jzlib:1.1.3'                            // BSD
+    implementation 'org.bidib.com.github.markusbernhardt:proxy-vole:1.0.16'      // Apache 2.0
+    implementation 'org.reflections:reflections:0.10.2'
 
-    compile 'org.slf4j:slf4j-api:2.0.3'                        // MIT
-    compile 'org.slf4j:slf4j-nop:2.0.3'                        // MIT
+    implementation 'org.slf4j:slf4j-api:2.0.4'                        // MIT
+    implementation 'org.slf4j:slf4j-nop:2.0.4'                        // MIT
 
-    compile 'com.hierynomus:sshj:0.34.0'                        // Apache 2.0
-    compile 'net.vrallev.ecc:ecc-25519-java:1.0.3'
+    implementation 'com.hierynomus:sshj:0.38.0'                        // Apache 2.0
+    implementation 'net.vrallev.ecc:ecc-25519-java:1.0.3'
     // Apache 2.0; elliptic curve cryptography (ECC) with Curve25519
-    compile 'net.i2p.crypto:eddsa:0.3.0'                        // CC0 1.0 Universal; Ed25519
+    implementation 'net.i2p.crypto:eddsa:0.3.0'                        // CC0 1.0 Universal; Ed25519
 
-    compile 'com.jcraft:jsch.agentproxy.jsch:0.0.9'               // BSD-style, http://www.jcraft.com/jsch-agent-proxy/LICENSE.txt
-    compile 'com.jcraft:jsch.agentproxy.pageant:0.0.9'            // BSD-style, http://www.jcraft.com/jsch-agent-proxy/LICENSE.txt
-    compile 'com.jcraft:jsch.agentproxy.sshj:0.0.9'               // BSD-style, http://www.jcraft.com/jsch-agent-proxy/LICENSE.txt
-    compile 'com.jcraft:jsch.agentproxy.usocket-nc:0.0.9'         // BSD-style, http://www.jcraft.com/jsch-agent-proxy/LICENSE.txt
-    compile 'com.jcraft:jsch.agentproxy.usocket-jna:0.0.9'        // BSD-style, http://www.jcraft.com/jsch-agent-proxy/LICENSE.txt
-    compile 'com.jcraft:jsch.agentproxy.connector-factory:0.0.9'  // BSD-style, http://www.jcraft.com/jsch-agent-proxy/LICENSE.txt
-    compile 'com.jcraft:jsch.agentproxy.sshagent:0.0.9'           // BSD-style, http://www.jcraft.com/jsch-agent-proxy/LICENSE.txt
+    implementation "com.jcraft:jsch.agentproxy.jsch:$jschVersion"               // BSD-style, http://www.jcraft.com/jsch-agent-proxy/LICENSE.txt
+    implementation "com.jcraft:jsch.agentproxy.pageant:$jschVersion"            // BSD-style, http://www.jcraft.com/jsch-agent-proxy/LICENSE.txt
+    implementation "com.jcraft:jsch.agentproxy.sshj:$jschVersion"               // BSD-style, http://www.jcraft.com/jsch-agent-proxy/LICENSE.txt
+    implementation "com.jcraft:jsch.agentproxy.usocket-nc:$jschVersion"         // BSD-style, http://www.jcraft.com/jsch-agent-proxy/LICENSE.txt
+    implementation "com.jcraft:jsch.agentproxy.usocket-jna:$jschVersion"        // BSD-style, http://www.jcraft.com/jsch-agent-proxy/LICENSE.txt
+    implementation "com.jcraft:jsch.agentproxy.connector-factory:$jschVersion"  // BSD-style, http://www.jcraft.com/jsch-agent-proxy/LICENSE.txt
+    implementation "com.jcraft:jsch.agentproxy.sshagent:$jschVersion"           // BSD-style, http://www.jcraft.com/jsch-agent-proxy/LICENSE.txt
 
-    compile 'com.github.petitparser.java-petitparser:petitparser-core:2.2.0'  // MIT
+    implementation 'com.github.petitparser.java-petitparser:petitparser-core:2.2.0'  // MIT
 
     // Testing libraries
-    testCompile 'junit:junit:4.13.2'                              // EPL 1.0
-    testCompile 'org.spockframework:spock-core:1.3-groovy-2.4'  // Apache 2.0
+    testImplementation 'junit:junit:4.13.2'                              // EPL 1.0
+    testImplementation 'org.spockframework:spock-core:1.3-groovy-2.4'    // Apache 2.0
+    testImplementation 'net.bytebuddy:byte-buddy:1.14.9'                 // Apache 2.0
+    testImplementation 'org.objenesis:objenesis:3.3'                     // Apache 2.0
+
+    // Runtime retention of @NotNull and annotations. Unfortunately, this only works for compilation by IntelliJ.
+    // For compilation by Gradle, we need to use an annotation processor, like SpotBugs, FindBugs, etc.
+    // Groovy's own @NullCheck annotation is only availabel for Groovy >= 3.
+    // The annotation is only used for communication.
+    implementation 'com.github.bbottema:jetbrains-runtime-annotations:1.0.1'   // Apache 2.0
 }
 
 project.ext.developmentDistributionDir = new File(rootProject.projectDir, "dist/bin/develop")
-convention.add("releaseDir", new File(project.ext.developmentDistributionDir, "../" + rootProject.version).absoluteFile)
+
+convention.add("releaseDir",
+               new File(project.ext.developmentDistributionDir,
+                        "../" + rootProject.version).absoluteFile)
 
 sourceSets {
     main {
@@ -174,8 +196,6 @@ sourceSets {
     }
 }
 
-mainClassName = "de.dkfz.roddy.Roddy"
-
 project.ext.librariesDirectory = new File(project.ext.developmentDistributionDir, "lib")
 
 task cleanRuntimeLibs(type: Delete) {
@@ -187,7 +207,7 @@ clean.dependsOn(cleanRuntimeLibs)
 
 task copyRuntimeLibs(type: Copy, dependsOn: cleanRuntimeLibs) {
     into librariesDirectory
-    from configurations.runtime
+    from configurations.runtimeClasspath
 }
 
 
@@ -199,7 +219,7 @@ jar {
     archiveFile
     manifest {
         attributes("Implementation-Vendor": "German Cancer Research Center (DKFZ)")
-        attributes 'Main-Class': mainClassName
+        attributes 'Main-Class': application.mainClass
         attributes("Implementation-Title": archivesBaseName)
         attributes 'Implementation-Version': rootProject.version
     }
@@ -214,7 +234,7 @@ jar {
 distributions {
 
     roddy {
-        baseName = "Roddy"
+        distributionBaseName = "Roddy"
         contents {
             into(rootProject.version)
             from(project.ext.developmentDistributionDir) {
@@ -222,7 +242,6 @@ distributions {
             }
             from("./") {
                 include("LICENSE")
-                include("CONTRIBUTING.md")
                 include("CONTRIBUTORS.md")
                 include("3RDPARTY_LICENSES")
                 include("CHANGELIST.md")
@@ -234,13 +253,12 @@ distributions {
     }
 
     roddyEnvironment {
-        baseName = "RoddyEnv"
+        distributionBaseName = "RoddyEnv"
         contents {
             from("./") {
                 include("roddy.sh")
                 include("README.md")
                 include("LICENSE")
-                include("CONTRIBUTING.md")
                 include("CONTRIBUTORS.md")
                 include("3RDPARTY_LICENSES")
                 include("CHANGELIST.md")
@@ -258,8 +276,12 @@ roddyDistZip.dependsOn(jar)
 
 sphinx {
     sourceDirectory = "${project.projectDir}/docs/"
-    outputDirectory = "${project.buildDir}/site/"
+    outputDirectory = "${rootProject.layout.buildDirectory.get()}/site/"
     warningsAsErrors = true
+}
+
+pmd {
+    ignoreFailures = true
 }
 
 //codenarc {
@@ -275,6 +297,36 @@ sphinx {
 //    configFile = project.file("config/codenarc/codenarc.groovy")
 //}
 
+task listConfigurations {
+    group = "reporting"
+    description = "List all configurations, as needed for discerning development and production configurations by the SBOM tasks."
+    doLast {
+        configurations.each { Configuration c ->
+            println c.name
+        }
+    }
+}
 
+task allBoms() {
+    group = "reporting"
+    description = "A grouping task to execute the CycloneDxTask for each configuration"
+}
+
+rootProject.configurations.each { Configuration configuration ->
+    String name = configuration.name
+    task "${name}Bom"(type: CycloneDxTask) {
+        group = "reporting"
+        description = "Creates a CycloneDX SBOM for the configuration ${name}."
+
+        destination = file("${rootProject.layout.buildDirectory.get()}/reports/cyclonedx")
+        outputName = name
+        includeConfigs = [name]
+        schemaVersion = "1.5"
+        outputFormat="json"
+        includeLicenseText = false
+        projectType = "application"
+    }
+    allBoms.dependsOn tasks.getByName("${name}Bom")
+}
 
 // end of build.gradle

@@ -151,8 +151,7 @@ public class MockupExecutionContextBuilder {
             }
 
             @Override
-
-            protected Command createCommand(BEJob beJob) {
+            Command createCommand(BEJob beJob) {
                 return null
             }
 
@@ -206,11 +205,6 @@ public class MockupExecutionContextBuilder {
 
             @Override
             String parseJobID(String commandOutput) {
-                return null
-            }
-
-            @Override
-            String getSubmissionCommand() {
                 return null
             }
 

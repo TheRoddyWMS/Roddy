@@ -23,7 +23,8 @@ dist/bin/develop/lib/
 dist/plugins/*
 
 # All versioned Roddy directories
-dist/bin/
+dist/bin/*
+!dist/bin/develop
 
 # Other files
 manifest.tmp
@@ -33,5 +34,8 @@ coverage/
 .classpath
 .project
 .settings/
-bin/
 
+
+__pycache__/
+
+*.sif

@@ -7,13 +7,9 @@
 package de.dkfz.roddy.config
 
 import de.dkfz.roddy.core.ExecutionContext
-import de.dkfz.roddy.core.ExecutionContextError
 import groovy.transform.CompileStatic
 
-import static de.dkfz.roddy.StringConstants.BRACE_RIGHT
-import static de.dkfz.roddy.StringConstants.EMPTY
-import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
-import static de.dkfz.roddy.StringConstants.SPLIT_EQUALS
+import static de.dkfz.roddy.StringConstants.*
 
 /**
  * Created by heinold on 10.01.17.
@@ -103,7 +99,7 @@ class FilenamePatternHelper {
         int lastIndex = 0
         for (int i = 0; i < no; i++) {
             lastIndex = temp.indexOf(commandID, lastIndex + 1);
-            cmds << extractCommand( commandID, temp, lastIndex);
+            cmds << extractCommand(commandID, temp, lastIndex);
         }
         return cmds
     }

@@ -42,8 +42,8 @@ class FileSystemAccessProvider {
      * Formerly, this class was called FileSystemInfoProvider which is just not the right name for the class.
      * So we decided to rename it to FileSystemAccessProvider. This name covers everything!
      * However, the FileSystemAccessProvider class still resides for backward compatibility.
-     * The lock is used in this class and in the FileSystemAccessProvider. It is not on a package level and also should not be!
-     * Also it must not be public or private.
+     * The lock is used in this class and in the FileSystemAccessProvider. It is not on a package level and also
+     * should not be! Also it must not be public or private.
      */
     protected static ReentrantLock fileSystemAccessProviderLock = new ReentrantLock()
 
@@ -379,7 +379,7 @@ class FileSystemAccessProvider {
     boolean checkDirectory(File f, ExecutionContext context, boolean createMissing) {
         String cmd
         if (createMissing) {
-            String outputAccessRightsForDirectories = context.outputDirectoryAccess
+            String outputAccessRightsForDirectories = context.outputDirectoryAccessRights
             String outputFileGroup = context.outputGroupString
             cmd = commandSet.getCheckDirectoryCommand(f, true, outputFileGroup,
                     outputAccessRightsForDirectories)
@@ -625,7 +625,7 @@ class FileSystemAccessProvider {
             return setAccessRightsRecursively(path, commandSet.defaultAccessRightsString,
                     commandSet.defaultAccessRightsString, myGroup)
         } else {
-            return setAccessRightsRecursively(path, context.outputDirectoryAccess,
+            return setAccessRightsRecursively(path, context.outputDirectoryAccessRights,
                     context.outputFileAccessRights, context.outputGroupString)
         }
     }

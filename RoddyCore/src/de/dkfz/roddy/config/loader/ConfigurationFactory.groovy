@@ -106,8 +106,11 @@ class ConfigurationFactory {
             File baseDir ->
                 logger.log(Level.CONFIG, "Searching for configuration files in: " + baseDir.toString())
                 if (!baseDir.canRead() || !baseDir.canExecute()) {
-                    logger.log(Level.SEVERE, "Cannot read from configuration directory ${baseDir.absolutePath}, does the folder exist und do you have access (read/execute) rights to it?")
-                    throw new ConfigurationLoaderException("Cannot access (read and execute) configuration directory '${baseDir}'")
+                    logger.log(Level.SEVERE,
+                            "Cannot read from configuration directory ${baseDir.absolutePath}, " +
+                                    "does the folder exist und do you have access (read/execute) rights to it?")
+                    throw new ConfigurationLoaderException(
+                            "Cannot access (read and execute) configuration directory '${baseDir}'")
                 }
                 File[] files = baseDir.listFiles((FileFilter) new WildcardFileFilter(["*.xml", "*.sh", "*.yml"]))
                 if (files == null) {
@@ -156,7 +159,9 @@ class ConfigurationFactory {
             for (String id in duplicateConfigurationIDs.sort().unique()) {
                 messageForDuplicates << "\t" << id << ([" found in:"] + pathsForCfgs[id]).join("\n\t\t") << "\n"
             }
-            messageForDuplicates << "\n" << (["This is not allowed! Check your configuration directories for files containing using same ids:"] + configurationDirectories.collect { it.absolutePath }).join("\n\t")
+            messageForDuplicates << "\n" <<
+                    (["This is not allowed! Check your configuration directories for files containing same ids:"]
+                            + configurationDirectories.collect { it.absolutePath }).join("\n\t")
 
             throw new ConfigurationLoaderException(messageForDuplicates.toString())
         }
@@ -201,7 +206,8 @@ class ConfigurationFactory {
             } catch (SAXParseException ex) {
                 throw new ProjectLoaderException("The validation of a configuration file ${file.absolutePath} failed.")
             } catch (Exception ex) {
-                logger.severe("An unknown exception occured during the attempt to load a configuration file:\n\t${file.absolutePath} cannot be loaded.\n\t${ex.toString()}")
+                logger.severe("An unknown exception occured during the attempt to load a configuration file:\n" +
+                        "\t${file.absolutePath} cannot be loaded.\n\t${ex.toString()}")
                 logger.sometimes(RoddyIOHelperMethods.getStackTraceAsString(ex))
                 throw ex
             }
@@ -282,19 +288,22 @@ class ConfigurationFactory {
      * @see PreloadedConfiguration
      *
      * @param file The config file.
-     * @return An object containing basic information about a configuration OR null, if the no preloaded config could be loaded.
+     * @return An object containing basic information about a configuration OR null, if the no preloaded config could
+     *         be loaded.
      */
     PreloadedConfiguration loadInformationalConfigurationContent(File file) {
         String text = loadAndPreprocessTextFromFile(file)
         if (!text) {
-            throw new ParseException("Could not identify file '${file.absolutePath}' as a Roddy configuration file." as String, 0)
+            throw new ParseException(
+                    "Could not identify file '${file.absolutePath}' as a Roddy configuration file." as String, 0)
         }
 
         NodeChild xml
         try {
             xml = (NodeChild) new XmlSlurper().parseText(text)
         } catch (SAXParseException ex) {
-            throw new ConfigurationLoaderException("Project configuration file ${file} could not be loaded, see message(s) above.");
+            throw new ConfigurationLoaderException(
+                    "Project configuration file ${file} could not be loaded, see message(s) above.");
         }
         return _preloadConfiguration(file, text, xml, null)
     }
@@ -306,15 +315,22 @@ class ConfigurationFactory {
      * @return
      */
     @CompileStatic(TypeCheckingMode.SKIP)
-    private PreloadedConfiguration _preloadConfiguration(File file, String text, NodeChild configurationNode, PreloadedConfiguration parent) {
+    private PreloadedConfiguration _preloadConfiguration(File file,
+                                                         String text,
+                                                         NodeChild configurationNode,
+                                                         PreloadedConfiguration parent) {
         NodeChild.metaClass.extract = { String id, String defaultValue ->
             extractAttributeText((NodeChild) delegate, id, defaultValue)
         }
         List<PreloadedConfiguration> subConf = []
         PreloadedConfiguration icc
 
-        ConfigurationType type = extractAttributeText(configurationNode, "configurationType",
-                parent != null ? parent.type.name().toUpperCase() : Configuration.ConfigurationType.OTHER.name()).toUpperCase()
+        ConfigurationType type = extractAttributeText(
+                configurationNode,
+                "configurationType",
+                parent != null
+                        ? parent.type.name().toUpperCase()
+                        : ConfigurationType.OTHER.name()).toUpperCase() as ConfigurationType
         String cls = extractAttributeText(configurationNode, "class", Project.class.name)
         String name = extractAttributeText(configurationNode, "name")
         String description = extractAttributeText(configurationNode, "description")
@@ -324,7 +340,9 @@ class ConfigurationFactory {
             List<String> analyses = []
 
             NodeChildren san = configurationNode.availableAnalyses
-            if (!Boolean.parseBoolean(extractAttributeText(configurationNode, XMLTAG_ATTRIBUTE_INHERITANALYSES, FALSE))) {
+            if (!Boolean.parseBoolean(extractAttributeText(
+                    configurationNode,
+                    XMLTAG_ATTRIBUTE_INHERITANALYSES, FALSE))) {
                 analyses = _loadPreloadedConfigurationAnalyses(san)
             } else {
                 analyses = parent.getListOfAnalyses()
@@ -341,7 +359,7 @@ class ConfigurationFactory {
         }
 
         for (subConfiguration in configurationNode.subconfigurations.configuration) {
-            subConf << _preloadConfiguration(file, text, subConfiguration, icc)
+            subConf << _preloadConfiguration(file, text, subConfiguration as NodeChild, icc)
         }
 
         return icc
@@ -366,8 +384,13 @@ class ConfigurationFactory {
         PreloadedConfiguration icc = availableConfigurations[usedConfiguration]
 
         if (icc == null) {
-            throw new ProjectLoaderException("The configuration identified by \"${usedConfiguration}\" cannot be found, is the identifier correct? Is the configuration available? Possible are:\n"
-                    + convertMapToFormattedTable(availableConfigurations, 1, " : ", { PreloadedConfiguration v -> v.file }).join("\n")
+            throw new ProjectLoaderException(
+                    "The configuration identified by \"${usedConfiguration}\" cannot be found, " +
+                            "is the identifier correct? Is the configuration available? Possible are:\n"
+                            + convertMapToFormattedTable(
+                            availableConfigurations, 1, " : ", {
+                                PreloadedConfiguration v -> v.file
+                            }).join("\n")
             )
         }
 
@@ -384,7 +407,10 @@ class ConfigurationFactory {
      * @return
      */
     @Deprecated
-    static List<String> convertMapToFormattedTable(Map<String, ?> map, int cntOfTabs, String tabSep, Closure closureForValue) {
+    static List<String> convertMapToFormattedTable(Map<String, ?> map,
+                                                   int cntOfTabs,
+                                                   String tabSep,
+                                                   Closure closureForValue) {
         final int keyWidth = map.keySet().collect { it.size() }.max()
         map.collect {
             def k, def v ->
@@ -418,7 +444,8 @@ class ConfigurationFactory {
 
     /**
      * Reverse - recursively load a configuration. Start with the deepest configuration object and move to the top.
-     * The reverse walk ist possible as the information about dependencies is stored in the PreloadedConfiguration objects which are created on startup.
+     * The reverse walk ist possible as the information about dependencies is stored in the PreloadedConfiguration
+     * objects which are created on startup.
      */
     private Configuration _loadConfiguration(PreloadedConfiguration icc) {
         Configuration parentConfig = icc.parent != null ? loadConfiguration(icc.parent) : null
@@ -433,17 +460,21 @@ class ConfigurationFactory {
         // Errors are always caught and a message is appended. We want to see everything, if possible.
 
         configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "cvalues",
-                "Could not read configuration values for configuration ${icc.id}", { readConfigurationValues(configurationNode, config) })
+                "Could not read configuration values for configuration ${icc.id}",
+                { readConfigurationValues(configurationNode, config) })
         configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "cvbundles",
-                "Could not read configuration value bundles for configuration ${icc.id}", { readValueBundles(configurationNode, config) })
+                "Could not read configuration value bundles for configuration ${icc.id}",
+                { readValueBundles(configurationNode, config) })
         configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "fnpatterns",
                 "Could not read filename patterns for configuration ${icc.id}", {
             config.filenamePatterns.map.putAll(readFilenamePatterns(configurationNode))
         })
         configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "enums",
-                "Could not read enumerations for configuration ${icc.id}", { readEnums(config, configurationNode) })
+                "Could not read enumerations for configuration ${icc.id}",
+                { readEnums(config, configurationNode) })
         configurationWasLoadedProperly &= withErrorEntryOnUnknownException(config, "ptools",
-                "Could not read processing tools for configuration ${icc.id}", { readProcessingTools(configurationNode, config) })
+                "Could not read processing tools for configuration ${icc.id}",
+                { readProcessingTools(configurationNode, config) })
 
         if (!configurationWasLoadedProperly) {
             logger.severe("There were errors in the configuration file ${icc.file}.")
@@ -475,15 +506,18 @@ class ConfigurationFactory {
      * @return A new configuration object
      */
     @CompileStatic(TypeCheckingMode.SKIP)
-    private Configuration createConfigurationObject(PreloadedConfiguration icc, NodeChild configurationNode, Configuration parentConfig) {
+    private Configuration createConfigurationObject(PreloadedConfiguration icc,
+                                                    NodeChild configurationNode,
+                                                    Configuration parentConfig) {
         Configuration config
         if (icc.type >= ConfigurationType.PROJECT) {
             Map<String, AnalysisConfiguration> availableAnalyses = [:]
             String runtimeServiceClass = extractAttributeText(configurationNode, "runtimeServiceClass", null)
             config = new ProjectConfiguration(icc, runtimeServiceClass, availableAnalyses, parentConfig)
-            boolean inheritAnalyses = Boolean.parseBoolean(extractAttributeText(configurationNode, XMLTAG_ATTRIBUTE_INHERITANALYSES, "false"))
+            boolean inheritAnalyses = Boolean.parseBoolean(extractAttributeText(
+                    configurationNode, XMLTAG_ATTRIBUTE_INHERITANALYSES, "false"))
             if (!inheritAnalyses) {
-                availableAnalyses.putAll(_loadAnalyses(configurationNode.availableAnalyses))
+                availableAnalyses.putAll(_loadAnalyses(configurationNode.availableAnalyses as NodeChildren))
             } else {
                 if (parentConfig instanceof ProjectConfiguration) {
                     ProjectConfiguration pcParent = (ProjectConfiguration) parentConfig
@@ -508,10 +542,14 @@ class ConfigurationFactory {
             String cleanupScript = extractAttributeText(configurationNode, "cleanupScript", "")
             String[] _listOfUsedTools = extractAttributeText(configurationNode, "listOfUsedTools").split(SPLIT_COMMA)
             String[] _usedToolFolders = extractAttributeText(configurationNode, "usedToolFolders").split(SPLIT_COMMA)
-            List<String> listOfUsedTools = _listOfUsedTools.size() > 0 && _listOfUsedTools[0] ? Arrays.asList(_listOfUsedTools) : null
-            List<String> usedToolFolders = _usedToolFolders.size() > 0 && _usedToolFolders[0] ? Arrays.asList(_usedToolFolders) : null
+            List<String> listOfUsedTools =
+                    _listOfUsedTools.size() > 0 && _listOfUsedTools[0] ? Arrays.asList(_listOfUsedTools) : null
+            List<String> usedToolFolders =
+                    _usedToolFolders.size() > 0 && _usedToolFolders[0] ? Arrays.asList(_usedToolFolders) : null
 
-            config = new AnalysisConfiguration(icc, workflowClass, runtimeServiceClass, parentConfig, listOfUsedTools, usedToolFolders, cleanupScript)
+            config = new AnalysisConfiguration(
+                    icc, workflowClass, runtimeServiceClass,
+                    parentConfig, listOfUsedTools, usedToolFolders, cleanupScript)
 
             if (workflowTool && jobManagerClass) {
                 ((AnalysisConfiguration) config).setNativeToolID(workflowTool.replace(".", "_"))
@@ -535,10 +573,10 @@ class ConfigurationFactory {
         for (NodeChild cbundle in configurationNode.configurationvalues.configurationValueBundle) {
             Map<String, ConfigurationValue> bundleValues = new LinkedHashMap<String, ConfigurationValue>()
             for (cvalue in cbundle.cvalue) {
-                ConfigurationValue _cvalue = readConfigurationValue(cvalue, config)
+                ConfigurationValue _cvalue = readConfigurationValue(cvalue as NodeChild, config)
                 bundleValues[_cvalue.id] = _cvalue
             }
-            def cBundleID = cbundle.@name.text()
+            String cBundleID = cbundle.@name.text() as String
             cvBundles[cBundleID] = new ConfigurationValueBundle(cBundleID, bundleValues)
         }
     }
@@ -569,11 +607,13 @@ class ConfigurationFactory {
                         throw new RuntimeException("filename pattern is not valid: ")
                     }
                     if (filenamePatterns.containsKey(fp.getID())) {
-                        logger.severe("Duplicate filename pattern: " + (new groovy.xml.StreamingMarkupBuilder().bindNode(filename) as String))
+                        logger.severe("Duplicate filename pattern: " +
+                                (new StreamingMarkupBuilder().bindNode(filename) as String))
                     }
                     filenamePatterns.put(fp.getID(), fp)
                 } catch (Exception ex) {
-                    logger.severe("Error during filename pattern processing (ignored): ${ex.message}: " + (new groovy.xml.StreamingMarkupBuilder().bindNode(filename) as String))
+                    logger.severe("Warning during filename pattern processing: ${ex.message}: " +
+                            (new StreamingMarkupBuilder().bindNode(filename) as String))
                 }
             }
         }
@@ -590,7 +630,8 @@ class ConfigurationFactory {
         Tuple3<Class, Boolean, Integer> parentClassResult = loadPatternClass(pkg, fnDerivedFrom)
         Tuple3<Class, Boolean, Integer> classResult = loadPatternClass(pkg, classSimpleName, parentClassResult.x)
 
-        FilenamePattern fp = new DerivedFromFilenamePattern(classResult.x, parentClassResult.x, pattern, selectionTag, parentClassResult.y, parentClassResult.z)
+        FilenamePattern fp = new DerivedFromFilenamePattern(
+                classResult.x, parentClassResult.x, pattern, selectionTag, parentClassResult.y, parentClassResult.z)
         return fp
     }
 
@@ -604,7 +645,9 @@ class ConfigurationFactory {
         else
             cls = (pkg != null ? pkg + "." : "") + className
 
-        // Test if parent class contains something like [0-9] at the end. However, this test does not extract the size of the array.
+        // Test if parent class contains something like [0-9] at the end. However, this test does not extract the
+        // size of the array.
+        //
         //        boolean doesArrays = Pattern.compile('\\[\\d\\]$').matcher("test[2]").findAll();
 
         int enforcedArraySize = -1
@@ -660,12 +703,13 @@ class ConfigurationFactory {
             try {
                 calledClass = LibrariesFactory.instance.classLoaderHelper.searchForClass(className)
             } catch (ClassNotFoundException e) {
-                throw new ConfigurationError("Could not find class for onMethod matching: '${e.message}", null as String, e)
+                throw new ConfigurationError(
+                        "Could not find class for onMethod matching: '${e.message}", null as String, e)
             }
         }
         Method method = lastMethodOfName(calledClass, methodName).orElseThrow {
-                    new ConfigurationError("Found class '${calledClass.getCanonicalName()}' matching on method pattern, " +
-                            "but it does not have requested method '$methodName'", null as String)
+                    new ConfigurationError("Found class '${calledClass.getCanonicalName()}' matching on method " +
+                            "pattern, but it does not have requested method '$methodName'", null as String)
         }
         new OnMethodFilenamePattern(_cls, calledClass, method, pattern, selectionTag)
     }
@@ -685,7 +729,7 @@ class ConfigurationFactory {
             toolName = splitResult[0]
             parameterName = splitResult[1]
 
-            if (toolName.equals("[ANY]") || toolName.equals("")) {
+            if (toolName == "[ANY]" || toolName == "") {
                 //only param OR [ANY] tool and param
                 toolName = null
             } else if (toolName.startsWith("[")) {
@@ -696,7 +740,8 @@ class ConfigurationFactory {
             throw new RuntimeException("Too many colons: ${scriptParameter}")
         }
         if (filename.@class == "") {
-            throw new RuntimeException("Missing 'class' attribute for onScriptParameter in: ${groovy.xml.XmlUtil.serialize(filename)}")
+            throw new RuntimeException("Missing 'class' attribute for onScriptParameter in: " +
+                    groovy.xml.XmlUtil.serialize(filename))
         }
         Class<FileObject> _cls = loadPatternClass(pkg, filename.@class.text(), BaseFile).x
 
@@ -730,7 +775,8 @@ class ConfigurationFactory {
         }
 
         if (!filestagesbase) {
-            throw new RuntimeException("Filestage was not specified correctly. Need a base package/class or full qualified name.")
+            throw new RuntimeException(
+                    "Filestage was not specified correctly. Need a base package/class or full qualified name.")
         }
 
         Class baseClass
@@ -765,12 +811,19 @@ class ConfigurationFactory {
             if (toolReader.hasErrors()) {
                 String xml
                 try {
-                    xml = ERROR_PRINTOUT_XML_LINEPREFIX + XmlUtil.serialize(new StreamingMarkupBuilder().bind { it -> it.faulty tool }.toString()).readLines()[1..-2].join("\n" + ERROR_PRINTOUT_XML_LINEPREFIX)
+                    xml = ERROR_PRINTOUT_XML_LINEPREFIX + XmlUtil.serialize(new StreamingMarkupBuilder().bind { it ->
+                        it.faulty tool
+                    }.toString()).readLines()[1..-2].join("\n" + ERROR_PRINTOUT_XML_LINEPREFIX)
 
                 } catch (Exception ex) {
                     xml = "Cannot display xml code for tool node."
                 }
-                config.addLoadError(new ConfigurationLoadError(config, "ConfigurationFactory - " + (toolID ?: "Tool id was not properly set"), "Tool ${toolID} could not be read. Please check the tool syntax and following errors:\n" + xml, null))
+                config.addLoadError(new ConfigurationLoadError(
+                        config,
+                        "ConfigurationFactory - " +
+                        (toolID ?: "Tool id was not properly set"),
+                        "Tool ${toolID} could not be read. Please check the tool syntax and following errors:\n" + xml,
+                        null))
                 config.addLoadErrors(toolReader.loadErrors)
                 hasErrors = true
             } else
@@ -779,7 +832,7 @@ class ConfigurationFactory {
         return !hasErrors
     }
 
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic(TypeCheckingMode.SKIP)
     private void readEnums(Configuration config, NodeChild configurationNode) {
 
         Map<String, Enumeration> enumerations = config.getEnumerations().getMap()
@@ -810,8 +863,9 @@ class ConfigurationFactory {
         }
     }
 
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
-    private Map<String, AnalysisConfiguration> _loadAnalyses(NodeChildren nAnalyses, AnalysisConfiguration parentConfiguration = null) {
+    @CompileStatic(TypeCheckingMode.SKIP)
+    private Map<String, AnalysisConfiguration> _loadAnalyses(NodeChildren nAnalyses,
+                                                             AnalysisConfiguration parentConfiguration = null) {
         Map<String, AnalysisConfiguration> availableAnalyses = [:]
         for (NodeChild analysis in nAnalyses.analysis) {
             String analysisID = extractAttributeText((NodeChild) analysis, "id")
@@ -839,7 +893,8 @@ class ConfigurationFactory {
             ac.addParent(parentConfiguration)
         }
 
-        // See if there are configurationvalues for the projects analysis entry which override the analysis configuration values.
+        // See if there are configurationvalues for the projects analysis entry which override the analysis
+        // configuration values.
         NodeChild analysis = proxy.getAnalysisNode()
         readConfigurationValues(analysis, ac)
         return ac
@@ -856,17 +911,26 @@ class ConfigurationFactory {
         for (NodeChild cvalueNode in configurationNode.configurationvalues.cvalue) {
             //TODO Code deduplication! Also in readCVBundle.
             ConfigurationValue cvalue = readConfigurationValue(cvalueNode, config)
-            if (!Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.ignorecvalueduplicates) && configurationValues.containsKey(cvalue.id)) {
-                String cval0 = configurationValues[cvalue.id].value//?.length() > 20 ? configurationValues[cvalue.id].value[0 .. 20] : configurationValues[cvalue.id].value;
-                String cval1 = cvalue.value//?.length() ? cvalue.value[0..20] : cvalue.value;
-                addFormattedErrorToConfig("Value ${cvalue.id} in the configurationvalues block in ${config.getID()} is defined more than once and might contain the wrong value.".toString(), "cvalue", cvalueNode, config)
+            if (!Roddy.getCommandLineCall().isOptionSet(RoddyStartupOptions.ignoreCValueDuplicates) &&
+                    configurationValues.containsKey(cvalue.id)) {
+                String cval0 = configurationValues[cvalue.id].value
+                String cval1 = cvalue.value
+                addFormattedErrorToConfig("Value ${cvalue.id} in the configurationvalues block in ${config.getID()} " +
+                        "is defined more than once and might contain the wrong value.".toString(),
+                        "cvalue",
+                        cvalueNode, config)
             }
             configurationValues[cvalue.id] = cvalue
         }
     }
 
     static void addFormattedErrorToConfig(String message, String id, NodeChild child, Configuration config) {
-        config.addLoadError(new ConfigurationLoadError(config, id, message + ([""] + RoddyConversionHelperMethods.toFormattedXML(child)).join("\n" + ERROR_PRINTOUT_XML_LINEPREFIX), null))
+        config.addLoadError(new ConfigurationLoadError(
+                config,
+                id,
+                message + ([""] + RoddyConversionHelperMethods.toFormattedXML(child)).
+                        join("\n" + ERROR_PRINTOUT_XML_LINEPREFIX),
+                null))
     }
 
     /**
@@ -874,7 +938,7 @@ class ConfigurationFactory {
      * @param configurationNode
      * @param config
      */
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic(TypeCheckingMode.SKIP)
     private ConfigurationValue readConfigurationValue(NodeChild cvalueNode, Configuration config) {
         String key = cvalueNode.@name.text()
         String value = cvalueNode.@value.text()
@@ -882,9 +946,15 @@ class ConfigurationFactory {
         List<String> tags = extractAttributeText(cvalueNode, "tags", null)?.split(StringConstants.COMMA)
 
         if (!cvalueNode.attributes().containsKey("name"))
-            addFormattedErrorToConfig("The key attribute must be set for a cvalue entry.", "cvalues", cvalueNode, config)
+            addFormattedErrorToConfig(
+                    "The key attribute must be set for a cvalue entry.", "cvalues",
+                    cvalueNode,
+                    config)
         if (!cvalueNode.attributes().containsKey("value"))
-            addFormattedErrorToConfig("The value attribute must be set for a cvalue entry.", "cvalues", cvalueNode, config)
+            addFormattedErrorToConfig(
+                    "The value attribute must be set for a cvalue entry.", "cvalues",
+                    cvalueNode,
+                    config)
 
         //OK, here comes some sort of valuable hack. In the past it was so, that sometimes people forgot to set
         //any directory to "path". In case of the output directories, this was a bad thing! So we know about

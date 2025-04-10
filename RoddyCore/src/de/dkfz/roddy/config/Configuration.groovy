@@ -6,6 +6,9 @@
 
 package de.dkfz.roddy.config
 
+import java.nio.file.Path
+import java.nio.file.Paths
+
 import static de.dkfz.roddy.StringConstants.SPLIT_COMMA
 
 import de.dkfz.roddy.config.loader.ConfigurationFactory
@@ -30,6 +33,13 @@ import org.apache.commons.io.filefilter.WildcardFileFilter
  * <p/>
  * A configuration can import from other configurations (only first configurationType of file)
  * A configuration can inherit from other configurations
+ *
+ * TODO: Remove error handling. That should be in the execution context.
+ * TODO: Remove all methods with side effects (like MD5 calculation). This should be a plain configuration.
+ *       Instead put th effects into a validation class.
+ * TODO: Remove all methods that do validation or value calculations on configurations. This should be in
+ *       a separate validation class, or even in two classes for validation and simplified access of derived
+ *       values.
  *
  * @author michael
  */
@@ -347,7 +357,7 @@ class Configuration implements ContainerParent<Configuration>, ConfigurationIssu
     }
 
     File getSourceToolPath(String tool) throws ConfigurationError {
-        List<PluginInfo> pluginInfos = LibrariesFactory.getInstance().getLoadedPlugins()
+        List<PluginInfo> pluginInfos = LibrariesFactory.instance.loadedPlugins
         LinkedHashMap<String, File> availableBasePaths = [:]
         for (PluginInfo pluginInfo : pluginInfos) {
             availableBasePaths.putAll(pluginInfo.toolsDirectories)
@@ -379,9 +389,12 @@ class Configuration implements ContainerParent<Configuration>, ConfigurationIssu
         } catch (ConfigurationError e) {
             throw new ConfigurationError("Unknown tool ID", tool, e)
         }
-        File toolPath = new File(new File(new File(context.executionDirectory, RuntimeService.DIRNAME_ANALYSIS_TOOLS), te.basePathId),
-                                 te.path)
-        return toolPath
+        Path toolPath = Paths.get(
+                context.executionDirectory.toString(),
+                RuntimeService.DIRNAME_ANALYSIS_TOOLS,
+                te.basePathId,
+                te.path)
+        return toolPath.toFile()
     }
 
     String getProcessingToolMD5(String tool) throws ConfigurationError {
@@ -445,11 +458,9 @@ class Configuration implements ContainerParent<Configuration>, ConfigurationIssu
     }
 
     boolean hasErrors() {
-        if (errors.size() > 0) return true
-        for (Configuration parent : parents) { // Could be made shorter, but this is rather efficient as it breaks as soon as an error was found.
-            if (parent.hasErrors()) return true
-        }
-        return configurationValues.allValuesAsList.any { it.hasErrors() }
+        return errors.size() > 0 ||
+               parents.any { it.hasErrors() } ||
+               configurationValues.allValuesAsList.any { it.hasErrors() }
     }
 
     void addWarning(ConfigurationIssue warning) {
@@ -468,11 +479,9 @@ class Configuration implements ContainerParent<Configuration>, ConfigurationIssu
     }
 
     boolean hasWarnings() {
-        if (warnings.size() > 0) return true
-        for (Configuration parent : parents) { // Could be made shorter, but this is rather efficient as it breaks as soon as an error was found.
-            if (parent.hasWarnings()) return true
-        }
-        return configurationValues.allValuesAsList.any { it.hasWarnings() }
+        return warnings.size() > 0 ||
+               parents.any { it.hasWarnings() } ||
+               configurationValues.allValuesAsList.any { it.hasWarnings() }
     }
 
     boolean isInvalid() {

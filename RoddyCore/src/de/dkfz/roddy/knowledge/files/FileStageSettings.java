@@ -7,16 +7,21 @@
 package de.dkfz.roddy.knowledge.files;
 
 import de.dkfz.roddy.core.DataSet;
+import groovy.transform.CompileStatic;
 
 import java.io.Serializable;
 
 /**
  * File stages contain information about the "detail" level / stage of a file.
  * i.e. Raw sequence files belong to the lowest stage and contain the highest level of detail (even the numeric index).
- * i.e. paired bam files are one level above raw sequences and do not have the index set but they still belong to a lane and a run
+ * i.e. paired bam files are one level above raw sequences and do not have the index set, but they still belong to a
+ *      lane and a run
  * i.e. Merged bam files only contain information about the sample and the data set.
- * @author michael
+ *
+ * TODO: The design is not good. Why does this have to be a generic class? Groovy 2.5 does not accept this code anymore
+ *       at the client sites.
  */
+@CompileStatic
 public abstract class FileStageSettings<T extends FileStageSettings> implements Serializable {
 
     protected final DataSet dataSet;

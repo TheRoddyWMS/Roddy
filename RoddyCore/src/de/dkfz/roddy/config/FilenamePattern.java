@@ -245,7 +245,7 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
                 blacklistID++;
                 somethingChanged = true;
             }
-            if (oldValue != src) somethingChanged = true;
+            if (!oldValue.equals(src)) somethingChanged = true;
         }
 
         for(String key : blacklist.keySet()) {
@@ -321,6 +321,7 @@ public abstract class FilenamePattern implements RecursiveOverridableMapContaine
             temp = fillVariablesFromSourceFileArrayValues(baseFiles, temp);
         } catch (Exception e) {
             logger.severe("Could not apply filename pattern " + pattern + " for file " + baseFiles[0]);
+            logger.rare(e.getClass().toString());
             logger.rare(RoddyIOHelperMethods.getStackTraceAsString(e));
         }
         return temp;

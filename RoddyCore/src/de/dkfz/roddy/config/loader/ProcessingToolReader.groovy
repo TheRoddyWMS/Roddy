@@ -312,11 +312,16 @@ class ProcessingToolReader {
             filegroupClass = GenericFileGroup as Class<FileGroup>
 
         ToolFileGroupParameter.PassOptions passas =
-                Enum.valueOf(ToolFileGroupParameter.PassOptions.class, extractAttributeText(groupNode, "passas",
-                        ToolFileGroupParameter.PassOptions.parameters.name()))
+                ToolFileGroupParameter.PassOptions.from(extractAttributeText(
+                        groupNode,
+                        "passas",
+                        ToolFileGroupParameter.PassOptions.PARAMETERS.name()
+                ))
         ToolFileGroupParameter.IndexOptions indexOptions =
-                Enum.valueOf(ToolFileGroupParameter.IndexOptions.class, extractAttributeText(groupNode, "indices",
-                        ToolFileGroupParameter.IndexOptions.numeric.name()))
+                ToolFileGroupParameter.IndexOptions.from(extractAttributeText(
+                        groupNode,
+                        "indices",
+                        ToolFileGroupParameter.IndexOptions.NUMERIC.name()))
         String selectiontag = extractSelectionTag(groupNode)
 
         String fileclass = extractAttributeText(groupNode, "fileclass", null)
@@ -329,14 +334,18 @@ class ProcessingToolReader {
                 addLoadErr("You have to set both the parametername and the fileclass attribute for filegroup i/o parameter in ${toolID}")
             }
 
-            Class<BaseFile> genericFileClass = LibrariesFactory.getInstance().loadRealOrSyntheticClass(fileclass, BaseFile.class.name)
-            ToolFileGroupParameter tpg = new ToolFileGroupParameter(filegroupClass, genericFileClass, pName, passas, indexOptions, selectiontag)
+            Class<BaseFile> genericFileClass =
+                    LibrariesFactory.instance.loadRealOrSyntheticClass(fileclass, BaseFile.class.name)
+            ToolFileGroupParameter tpg =
+                    new ToolFileGroupParameter(
+                            filegroupClass, genericFileClass, pName, passas, indexOptions, selectiontag)
             return tpg
         } else if (childCount) {
             return parseChildFilesForFileGroup(groupNode, passas, toolID, null, filegroupClass, indexOptions, selectiontag)
         } else {
             String pName = readAttribute(groupNode, "scriptparameter")
-            if (!isInputFileGroup(groupNode)) { // TODO: Enforce fileclass attributes for output filegroup <https://eilslabs-phabricator.dkfz.de/T2015>
+            if (!isInputFileGroup(groupNode)) {
+                // TODO: Enforce fileclass attributes for output filegroup (Phabricator T2015)
                 addLoadErr("Either the fileclass or a list of child files need to be set for a filegroup in ${toolID}")
                 return null
             } else {
@@ -346,10 +355,17 @@ class ProcessingToolReader {
     }
 
     @Deprecated
-    ToolFileGroupParameter parseChildFilesForFileGroup(NodeChild groupNode, ToolFileGroupParameter.PassOptions passas, String toolID, String pName, Class filegroupClass, ToolFileGroupParameter.IndexOptions indexOptions, String selectiontag) {
+    ToolFileGroupParameter parseChildFilesForFileGroup(NodeChild groupNode,
+                                                       ToolFileGroupParameter.PassOptions passas,
+                                                       String toolID,
+                                                       String pName,
+                                                       Class filegroupClass,
+                                                       ToolFileGroupParameter.IndexOptions indexOptions,
+                                                       String selectiontag) {
         int childCount = groupNode.children().size()
         List<ToolFileParameter> children = new LinkedList<ToolFileParameter>()
-        if (childCount == 0 && passas != ToolFileGroupParameter.PassOptions.array)
+        if (passas == ToolFileGroupParameter.PassOptions.ARRAY && childCount == 0)
+            // A file group that passes an array must have at least one file in the array.
             logger.severe("No files in the file group. Invalid configuration.")
         for (Object fileChild in groupNode.children()) {
             children << (parseToolParameter(fileChild as NodeChild, toolID) as ToolFileParameter)

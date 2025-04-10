@@ -10,14 +10,22 @@ import de.dkfz.roddy.Constants
 import de.dkfz.roddy.FeatureToggles
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.*
+import de.dkfz.roddy.execution.BindSpec
+import de.dkfz.roddy.execution.Command
+import de.dkfz.roddy.execution.Executable
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import groovy.transform.CompileStatic
-
+import org.jetbrains.annotations.NotNull
+import de.dkfz.roddy.execution.jobs.Command as BECommand
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.logging.Level
+
+import static de.dkfz.roddy.Constants.UNKNOWN
 
 /**
  * An ExecutionContext is the runtime context for an analysis and a DataSet.<br />
@@ -27,6 +35,7 @@ import java.util.logging.Level
  * <li>Executed jobs and commands</li>
  * <li>BEJob states</li>
  * <li>Log files</li>
+ * <li>Context-dependent access to configuration, and plain configuration access</li>
  * </ul>
  * It also contains information about context specific settings like:<br />
  * <ul>
@@ -39,6 +48,7 @@ import java.util.logging.Level
  * The context also allows you to access logfiles, command, jobs etc via getter methods
  * <p>
  * The context is finally used to context the stored analysis for the stored dataset.
+ * <br>
  *
  * @author michael
  */
@@ -74,7 +84,7 @@ class ExecutionContext {
     /**
      * Stores a list of all calls which were passed to the job system within this context.
      */
-    private final List<Command> commandCalls = new LinkedList<Command>().asSynchronized()
+    private final List<BECommand> commandCalls = new LinkedList<BECommand>().asSynchronized()
     /**
      * This is some sort of synchronization checkpoint marker.
      * Contexts which were started with the same
@@ -233,7 +243,7 @@ class ExecutionContext {
      * @return
      */
     static Workflow createContextWorkflowObject(Analysis analysis, ExecutionContext context) {
-        Class workflowClass = LibrariesFactory.getInstance().searchForClass(analysis.configuration.getWorkflowClass())
+        Class workflowClass = LibrariesFactory.instance.searchForClass(analysis.configuration.workflowClass)
         Workflow workflow
         if (workflowClass.name.endsWith('$py')) {
             // Jython creates a class called Workflow$py with a constructor with a single (unused) String parameter.
@@ -250,16 +260,30 @@ class ExecutionContext {
         return workflow
     }
 
-    Map<String, Object> getDefaultJobParameters(String TOOLID) {
-        return runtimeService.getDefaultJobParameters(this, TOOLID)
+    Map<String, Object> getDefaultJobParameters(@NotNull String toolId) {
+        return runtimeService.getDefaultJobParameters(this, toolId)
     }
 
-    String createJobName(BaseFile p, String TOOLID) {
-        return createJobName(p, TOOLID, false)
+    String getToolMd5(@NotNull String toolId) {
+        return configuration.getProcessingToolMD5(toolId)
     }
 
-    String createJobName(BaseFile p, String TOOLID, boolean reduceLevel) {
-        return runtimeService.createJobName(this, p, TOOLID, reduceLevel)
+    ResourceSet getResourceSetFromConfiguration(String toolId) {
+        // TODO However the semantics of values null, "", and UNKNOWN are. Use ToolId class and forbid null ToolId.
+        if (!toolId || toolId.trim() == "" || toolId == UNKNOWN) {
+            return new EmptyResourceSet()
+        } else {
+            ToolEntry te = configuration.tools.getValue(toolId)
+            return te.getResourceSet(configuration) ?: new EmptyResourceSet()
+        }
+    }
+
+    String createJobName(BaseFile p, String toolId) {
+        return createJobName(p, toolId, false)
+    }
+
+    String createJobName(BaseFile p, String toolId, boolean reduceLevel) {
+        return runtimeService.createJobName(this, p, toolId, reduceLevel)
     }
 
     File getInputDirectory() {
@@ -268,6 +292,14 @@ class ExecutionContext {
 
     File getOutputDirectory() {
         return outputDirectory
+    }
+
+    File getRoddyScratchBaseDir() {
+        return new File(configurationValues.get(Constants.APP_PROPERTY_SCRATCH_BASE_DIRECTORY).toString())
+    }
+
+    File getRoddyScratchDir() {
+        return new File(configurationValues.get(ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_SCRATCH_RAW).toString())
     }
 
     RuntimeService getRuntimeService() {
@@ -381,6 +413,140 @@ class ExecutionContext {
                         null))
     }
 
+    JobExecutionEnvironment getJobExecutionEnvironmentOrBash() {
+        String envName = configurationValues.
+                get(ConfigurationConstants.CVALUE_JOB_EXECUTION_ENVIRONMENT, "bash").
+                toString().
+                trim()
+        try {
+            JobExecutionEnvironment.from(envName)
+        } catch (IllegalArgumentException ex) {
+            addError(ExecutionContextError.EXECUTION_SETUP_INVALID.
+                    expand("Unknown jobExecutionEnvironment name: '$envName'. WARNING Continuing with 'bash'"))
+            JobExecutionEnvironment.bash
+        }
+    }
+
+
+    /** You can set the path to the container engine. If it is not set then we use the name (apptainer, singularity)
+     *  as relative path and hope it is the name of the executable and in the PATH variable on the execution host.
+     *
+     *  This should be the path on the remote system, if the jobs are executed remotely.
+     */
+    Path getContainerEnginePath() {
+        String pathStr = configurationValues.
+                get(ConfigurationConstants.CVALUE_CONTAINER_ENGINE_PATH, "").toString()
+        if (pathStr.size() > 0) {
+            Paths.get(pathStr)
+        } else {
+            jobExecutionEnvironmentOrBash.toPath()
+        }
+    }
+
+    /** Container engine arguments as needed to run the container, even when running in a "contained" mode.
+     *  Some variables are provided to the remote process via the submission command line (e.g. PARAMETER_FILE),
+     *  others are defined by the execution system (e.g. LSB_JOBID). Here we collect this information.
+     *
+     *  @return    List of environment variable names
+     *  */
+    List<String> getRoddyContainerCopyVariables() {
+    [       // General variables
+            "USER",                    // Not sure, whether that is necessary.
+
+            // The variables created in the cluster job by the JobManager.
+            Roddy.jobManager.jobIdVariable,
+            Roddy.jobManager.jobNameVariable,
+            Roddy.jobManager.queueVariable,
+
+            // The variables that BatchEuphoria adds to the submission command.
+            ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT,
+            Constants.APP_PROPERTY_BASE_ENVIRONMENT_SCRIPT,
+            JobConstants.PRM_TOOL_ID,
+            Constants.PARAMETER_FILE]
+    }
+
+
+
+    /** Container engine arguments selected by the user as cvalues */
+    List<String> getUserContainerEngineArguments() {
+        configurationValues.
+                get(ConfigurationConstants.CVALUE_APPTAINER_ARGUMENTS, "").toStringList(",")
+    }
+
+    /** All directories to which the container needs access need to be mounted into the container
+     *  This includes, for example:
+     *
+     *    * Additional software environments (virtualenv, conda, etc.)
+     *    * Reference data directories (reference genomes, annotations, etc.)
+     *
+     * In the moment, Roddy has no way to know these directories. The variables could be declared as such in
+     * the plugins, but they are not (yet). Therefore, for now we need to ask the user to declare them in
+     * the configuration files.
+     *
+     * Bind specifications are in the commonly known format (Docker, Apptainer),
+     *
+     *   /host/path((|:/container/path)|:/container/path:(ro|rw))?
+     *
+     * * If no target path is given, the same path as the host-path is used in the container.
+     * * If no mode is given, "ro" will be assumed.
+     */
+    private static BindSpec fromBindSpecString(String bindSpecString) {
+        String[] parts = bindSpecString.split(":")
+        if (parts.size() == 1) {
+            return new BindSpec(Paths.get(parts[0]))
+        } else if (parts.size() == 2) {
+            return new BindSpec(Paths.get(parts[0]),
+                                Paths.get(parts[1]))
+        } else if (parts.size() == 3) {
+            return new BindSpec(Paths.get(parts[0]),
+                                Paths.get(parts[1]),
+                                BindSpec.Mode.from(parts[2]))
+        } else {
+            throw new IllegalArgumentException("Invalid bind specification: " + bindSpecString)
+        }
+    }
+    List<BindSpec> getUserContainerMounts() {
+        configurationValues.
+                get(ConfigurationConstants.CVALUE_CONTAINER_MOUNTS, "").
+                toStringList(' ').
+                collect { fromBindSpecString(it) }
+    }
+
+    String getContainerImage() {
+        configurationValues.
+            get(ConfigurationConstants.CVALUE_CONTAINER_IMAGE).
+            toString()
+    }
+
+    /** Additionally, to the directories explicitly requested by the caller, Roddy will also mount all necessary
+     *  directories into the container that it knows of. These are
+     *
+     *    * outputBaseDirectory (RW)
+     *    * inputBaseDirectory (RO)
+     *    * scratchBaseDirectory (RW)
+     *    * analysisToolsDirectory (RO), which contains the plugin code
+     */
+    List<BindSpec> getRoddyMounts() {
+        [new BindSpec(
+                runtimeService.getOutputBaseDirectory(this).toPath(),
+                runtimeService.getOutputBaseDirectory(this).toPath(),
+                BindSpec.Mode.RW),
+        new BindSpec(
+                runtimeService.getInputBaseDirectory(this).toPath(),
+                runtimeService.getInputBaseDirectory(this).toPath(),
+                BindSpec.Mode.RO),
+        new BindSpec(
+                roddyScratchBaseDir.toPath(),
+                roddyScratchBaseDir.toPath(),
+                BindSpec.Mode.RW),
+        new BindSpec(
+                getAnalysisToolsDirectory().toPath(),
+                getAnalysisToolsDirectory().toPath(),
+                BindSpec.Mode.RO)]
+    }
+
+
+
     /**
      * Returns the execution directory for this context. If it was not set this is done here.
      *
@@ -413,13 +579,15 @@ class ExecutionContext {
         // Include an additional check, if the target filesystem allows the modification and disable this, if necessary.
         if (checkedIfAccessRightsCanBeSet != null)
             return checkedIfAccessRightsCanBeSet
-        boolean modAllowed = configurationValues.getBoolean(ConfigurationConstants.CFG_ALLOW_ACCESS_RIGHTS_MODIFICATION, true)
+        boolean modAllowed = configurationValues.getBoolean(
+                ConfigurationConstants.CFG_ALLOW_ACCESS_RIGHTS_MODIFICATION, true)
         if (modAllowed && checkedIfAccessRightsCanBeSet == null) {
             checkedIfAccessRightsCanBeSet = FileSystemAccessProvider.instance.checkIfAccessRightsCanBeSet(this)
             if (!checkedIfAccessRightsCanBeSet) {
                 modAllowed = false
                 addErrorEntry(ExecutionContextError.EXECUTION_SETUP_INVALID.
-                        expand("Access rights modification was disabled. The test on the file system raised an error.", Level.WARNING))
+                        expand("Access rights modification was disabled. The test on the file " +
+                                "system raised an error.", Level.WARNING))
             }
         }
         return modAllowed
@@ -429,7 +597,7 @@ class ExecutionContext {
         return FileSystemAccessProvider.instance
     }
 
-    String getOutputDirectoryAccess() {
+    String getOutputDirectoryAccessRights() {
         if (!isAccessRightsModificationAllowed()) return null
         configurationValues.get(ConfigurationConstants.CFG_OUTPUT_ACCESS_RIGHTS_FOR_DIRECTORIES,
                 fileSystemAccessProvider.commandSet.defaultAccessRightsString).toString()
@@ -482,7 +650,6 @@ class ExecutionContext {
         new File(executionDirectory, "${job.jobName}_${job.jobCreationCounter}${Constants.PARAMETER_FILE_SUFFIX}")
     }
 
-
     void addFile(BaseFile file) {
         if (!processingFlag.contains(ProcessingFlag.STORE_FILES))
             return
@@ -509,7 +676,9 @@ class ExecutionContext {
     }
 
     List<Job> getStartedJobs() {
-        return jobsForProcess.findAll { Job job -> job != null && !job.fakeJob && !job.getJobState().dummy }
+        return jobsForProcess.findAll { Job job ->
+            job != null && !job.fakeJob && !job.getJobState().dummy
+        }
     }
 
     void setExecutedJobs(List<Job> previousJobs) {
@@ -519,7 +688,8 @@ class ExecutionContext {
     }
 
     void addExecutedJob(Job job) {
-        if ((job.jobState == JobState.DUMMY || job.jobState == JobState.UNKNOWN) && !processingFlag.contains(ProcessingFlag.STORE_DUMMY_JOBS))
+        if ((job.jobState == JobState.DUMMY || job.jobState == JobState.UNKNOWN) &&
+                !processingFlag.contains(ProcessingFlag.STORE_DUMMY_JOBS))
             return
         jobsForProcess.add(job)
     }
@@ -552,7 +722,7 @@ class ExecutionContext {
             }
         }
 
-        //Query current jobs, i.e. on recheck
+        // Query current jobs, i.e. on recheck
         List<String> jobIDsForQuery = new LinkedList<>()
         for (BEJob job : jobsForProcess) {
             BEJobResult runResult = job.runResult
@@ -569,11 +739,11 @@ class ExecutionContext {
         return false
     }
 
-    void addCalledCommand(Command command) {
+    void addCalledCommand(BECommand command) {
         commandCalls.add(command)
     }
 
-    List<Command> getCommandCalls() {
+    List<BECommand> getCommandCalls() {
         return commandCalls
     }
 
@@ -601,7 +771,9 @@ class ExecutionContext {
                 addError(error)
                 break
             default:
-                logger.warning("The message '${error.description}' had an unknown level ${error.errorLevel} and will be treated as an error.")
+                logger.warning(
+                        "The message '${error.description}' had an unknown level ${error.errorLevel} and" +
+                        "will be treated as an error.")
                 addError(error)
         }
     }
@@ -693,16 +865,21 @@ class ExecutionContext {
         return false
     }
 
+    // TODO The following methods use the EC only for logging! Move this stuff to the FileSystemAccessProvider!
+    //      But the ExecutionContext is not only context but also log accumulator. Better use plain logging framework.
+
     boolean fileIsAccessible(File file, String variableName = null) {
-        if (valueIsEmpty(file, variableName) || !FileSystemAccessProvider.getInstance().checkFile(file, false, this)) {
-            addError(ExecutionContextError.EXECUTION_SETUP_INVALID.expand("File '${file}' not accessible${variableName ? ": " + variableName : "."}"))
+        if (valueIsEmpty(file, variableName) ||
+                !FileSystemAccessProvider.instance.checkFile(file, false, this)) {
+            addError(ExecutionContextError.EXECUTION_SETUP_INVALID.expand(
+                    "File '${file}' not accessible${variableName ? ": " + variableName : "."}"))
             return false
         }
         return true
     }
 
     boolean fileIsExecutable(File file, String variableName = null) {
-        if (!(fileIsAccessible(file, variableName))) return;
+        if (!(fileIsAccessible(file, variableName))) return
         if (!FileSystemAccessProvider.instance.isExecutable(file)) {
             addError(ExecutionContextError.EXECUTION_SETUP_INVALID.
                     expand("File '${file}' is not executable${variableName ? ": " + variableName : "."}"))
@@ -735,6 +912,21 @@ class ExecutionContext {
         return String.format("Context [%s-%s:%s, %s]",
                 project.configurationName, analysis,
                 dataSet, InfoObject.formatTimestamp(timestamp))
+    }
+
+    ToolCommand getToolCommand(@NotNull String toolId)
+            throws ConfigurationError {
+        new ToolCommand(toolId,
+                        new Executable(
+                                configuration.getProcessingToolPath(this, toolId).toPath(),
+                                getToolMd5(toolId)),
+                        configuration.getSourceToolPath(toolId).toPath())
+    }
+
+    Command getWrapInCommand() {
+        new Command(new Executable(
+                configuration.getProcessingToolPath(this, Constants.TOOLID_WRAPIN_SCRIPT).toPath(),
+                getToolMd5(Constants.TOOLID_WRAPIN_SCRIPT)))
     }
 
 }
