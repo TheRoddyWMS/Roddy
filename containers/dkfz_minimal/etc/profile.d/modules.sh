@@ -8,7 +8,7 @@ if [ -e ~/.config/modules/_use_modules_5 ]; then
     . /software/modules/5.0.1/init/profile.sh
 else
     export MODULE_VERSION=3.2.10
-    export MODULEPATH=/tbi/software/modules/packages:/tbi/software/modules/meta_modules:/software/.modules/sw:/software/.modules/meta
+    export MODULEPATH=/software/.modules/sw:/software/.modules/meta:/software/.modules/workflows
 
     module() {
             eval `/tbi/software/x86_64/modules/modules-$MODULE_VERSION/el7/Modules/$MODULE_VERSION/bin/modulecmd bash $*`;
