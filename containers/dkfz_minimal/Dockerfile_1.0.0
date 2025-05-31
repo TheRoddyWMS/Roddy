@@ -17,7 +17,7 @@ LABEL maintainer="Philip R. Kensche <p.kensche@dkfz-heidelberg.de>"
 
 LABEL org.opencontainers.image.source="https://github.com/TheRoddyWMS/Roddy"
 
-
+LABEL org.opencontainers.image.description "CentOS 7.9 container mimicking an old ODCF-DKFZ cluster node."
 
 # Capitalized versions for many tools. Minuscle version at least for apt.
 ARG HTTP_PROXY=""
