@@ -276,7 +276,7 @@ class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
     JobState queryDataSetState(String dataSetId, String analysisId) throws RemoteException {
         return withServer(JobState.UNKNOWN, {
             Map<DataSet, Boolean> status = loadAnalysis(analysisId).checkStatus([dataSetId]);
-            if (!status) return JobState.UNSUBMITTED;
+            if (!status) return JobState.UNSTARTED;
             if (status && status.values()[0]) return JobState.RUNNING;
         }) as JobState
     }
@@ -331,7 +331,7 @@ class RoddyRMIInterfaceImplementation implements RoddyRMIInterface {
 
     @Override
     Map<String, JobState> queryJobState(List<BEJob> jobs) throws RemoteException {
-        return withServer([:], { Roddy.getJobManager().queryJobStates(jobs) }) as Map<String, JobState>
+        return withServer([:], { Roddy.getJobManager().queryJobStatus(jobs) }) as Map<String, JobState>
     }
 
     @Override

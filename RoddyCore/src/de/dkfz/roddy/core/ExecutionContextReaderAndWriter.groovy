@@ -72,7 +72,7 @@ class ExecutionContextReaderAndWriter {
                 if (job.jobID == "Unknown")
                     job.setJobState(JobState.FAILED)
                 else
-                    job.setJobState(JobState.UNSUBMITTED)
+                    job.setJobState(JobState.UNSTARTED)
 
                 for (String id : statusList.keySet()) {
                     JobState status = statusList[id]
@@ -85,16 +85,16 @@ class ExecutionContextReaderAndWriter {
 
             Map<String, BEJob> unknownJobs = new LinkedHashMap<>()
             Map<String, BEJob> possiblyRunningJobs = new LinkedHashMap<>()
-            // For every job which is still unknown or possibly running get the actual jobState from the cluster
+            //For every job which is still unknown or possibly running get the actual jobState from the cluster
             for (BEJob job : jobsStartedInContext) {
-                if (job.jobState.isUnknown() || job.jobState == JobState.UNSUBMITTED) {
+                if (job.getJobState().isUnknown() || job.getJobState() == JobState.UNSTARTED) {
                     unknownJobs.put(job.getJobID().toString(), job)
-                } else if (job.jobState == JobState.STARTED) {
-                    possiblyRunningJobs.put(job.jobID.toString(), job)
+                } else if (job.getJobState() == JobState.STARTED) {
+                    possiblyRunningJobs.put(job.getJobID().toString(), job)
                 }
             }
 
-            Map<BEJob, JobState> map = Roddy.getJobManager().queryJobStates(jobsStartedInContext as List<BEJob>)
+            Map<BEJob, JobState> map = Roddy.getJobManager().queryJobStatus(jobsStartedInContext as List<BEJob>)
             for (String jobID : unknownJobs.keySet()) {
                 BEJob job = unknownJobs[jobID]
                 job.setJobState(map[job])
@@ -347,7 +347,7 @@ class ExecutionContextReaderAndWriter {
      */
     Map<String, JobState> readInJobStateLogFile(ExecutionContext context) {
         FileSystemAccessProvider fip = FileSystemAccessProvider.instance
-        File jobStatesLogFile = context.runtimeService.getJobStateLogFile(context)
+        File jobStatesLogFile = context.getRuntimeService().getJobStateLogFile(context)
         String[] jobStateList = fip.loadTextFile(jobStatesLogFile)
 
         if (jobStateList == null || jobStateList.size() == 0) {

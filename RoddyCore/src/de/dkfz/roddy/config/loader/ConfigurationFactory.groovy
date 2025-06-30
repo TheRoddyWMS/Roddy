@@ -242,7 +242,7 @@ class ConfigurationFactory {
      * @return
      */
     List<PreloadedConfiguration> getAvailableConfigurationsOfType(ConfigurationType type) {
-        return availableConfigurationsByType.get(type, [] as List<PreloadedConfiguration>)
+        return availableConfigurationsByType.get(type, [])
     }
 
     static String loadAndPreprocessTextFromFile(File file) {

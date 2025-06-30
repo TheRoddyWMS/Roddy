@@ -70,10 +70,10 @@ class CommandLineCall {
      * @param errors
      * @return
      */
-    private static Optional<? extends Parameter> processParameter(final RoddyStartupOptions option,
-                                                                  final Parameter parameter,
-                                                                  final List<String> errors) {
-        Optional<? extends Parameter> result
+    private static Optional<Parameter> processParameter(final RoddyStartupOptions option,
+                                                        final Parameter parameter,
+                                                        final List<String> errors) {
+        Optional<Parameter> result
         if (parameter instanceof ArbitraryParameter) {
             throw new RuntimeException("Oops! Parsed ArbitraryParameter in 'parseOptions()'")
         } else if (parameter instanceof ParameterWithValue) {
