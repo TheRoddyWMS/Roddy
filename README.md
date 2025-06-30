@@ -20,9 +20,9 @@ The following workflows have been developed at the DKFZ based on Roddy as workfl
   * [InDel-Calling workflow](https://github.com/DKFZ-ODCF/IndelCallingWorkflow) workflow
   * [Sophia workflow](https://github.com/DKFZ-ODCF/SophiaWorkflow) for structural variation calling
   * [RNA-seq workflow](https://github.com/DKFZ-ODCF/RNAseqWorkflow)
-  * CNVkit for copy-number variation calling on exome data (to be published)
+  * [CNVkit workflow](https://github.com/DKFZ-ODCF/CnvKitWorkflow) for copy-number variation calling on exome data (to be published)
   * Leaf-Cutter workflow
-  * [Bam-to-FASTQ](https://github.com/TheRoddyWMS/BamToFastqPlugin) plugin
+  * [Bam-to-FASTQ](https://github.com/TheRoddyWMS/BamToFastqPlugin) plugin (deprecated)
   
 The following plugins are available as support for the workflows:
 

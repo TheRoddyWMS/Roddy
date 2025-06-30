@@ -24,13 +24,16 @@ To install and run Roddy the following programs need to be installed on your com
 
 To run Roddy you need at least
 
-- Java and Groovy
-- the default plugin
-- the base plugin
-- zip/unzip
-- bash
-- the tool `lockfile` (usually in the procmail mail-processing-package (v3.22), only needed on job execution hosts)
-- the `pstree` tool (e.g. in the "psmisc" package in CentOS).
+- Java 8+
+- Groovy 2.5.19+
+- DefaultPlugin (note that this plugin requires some programs to be installed on the compute nodes!)
+- PluginBase
+- coreutils
+- zip
+- grep
+- sed
+- perl (for certain tasks)
+- Gradle (for certain tasks; should be downloaded automatically by the `gradlew` script)
 
 As Roddy is Linux based, you will be able to find most of these in your OS package manager. For the JDK and Groovy, -- both required on the host on which you run Roddy -- you may want to use `SDKMan`_. The following will get you going:
 
