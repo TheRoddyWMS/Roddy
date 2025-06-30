@@ -28,9 +28,9 @@ class ClassLoaderHelper {
 
     Map<PluginInfo, List<String>> classListCacheByPlugin = [:];
 
-    Package[] _cachedRoddyPackages = null;
+    List<Package> _cachedRoddyPackages = null;
 
-    Package[] getRoddyPackages() {
+    List<Package> getRoddyPackages() {
         if (!_cachedRoddyPackages) {
             def gcl = LibrariesFactory.instance.getGroovyClassLoader()
             Method getPackages //= gcl.class.getDeclaredMethod("getPackages")
@@ -45,9 +45,9 @@ class ClassLoaderHelper {
 
             // Make method accessible
             getPackages.setAccessible(true)
-            Package[] packageList = getPackages.invoke(gcl) as Package[]
+            List<Package> packageList = getPackages.invoke(gcl) as List<Package>
             // Invoke it and get list of all gcl loaded packages
-            Package[] roddyPackages = packageList.findAll { Package p -> p.name.startsWith(Roddy.package.name) }
+            List<Package> roddyPackages = packageList.findAll { Package p -> p.name.startsWith(Roddy.package.name) }
             // Find all Roddy packages
             _cachedRoddyPackages = roddyPackages
             return roddyPackages
@@ -144,7 +144,7 @@ class ClassLoaderHelper {
         return loadRealOrSyntheticClass(classOfFileObject, constructorClass.name);
     }
 
-    @groovy.transform.CompileStatic(TypeCheckingMode.SKIP)
+    @CompileStatic(TypeCheckingMode.SKIP)
     public static Class generateSyntheticFileClassWithParentClass(String syntheticClassName, String constructorClassName, GroovyClassLoader classLoader = null) {
         String syntheticFileClass =
                 """

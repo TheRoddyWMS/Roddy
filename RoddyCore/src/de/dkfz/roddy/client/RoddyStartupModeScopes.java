@@ -30,7 +30,7 @@ public enum RoddyStartupModeScopes {
     SCOPE_REDUCED(true),
 
     /**
-     * This scope is for modes with a full init. The job manager however will be the direct job manager.
+     * This scope is for modes with a full init. The job manager, however, will be the direct job manager.
      * direct job manager, execution service, filesystem access provider
      */
     SCOPE_FULL(true),

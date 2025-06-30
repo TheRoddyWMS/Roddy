@@ -162,10 +162,10 @@ class NativeWorkflow extends Workflow {
         Map<String, BEGenJI> callsByID = new LinkedHashMap<>()
 
         def inlineScriptsDir = RoddyIOHelperMethods.assembleLocalPath(context.executionDirectory, "analysisTools", "inlineScripts")
-        File[] inlineScripts = FileSystemAccessProvider.instance.checkDirectory(inlineScriptsDir, false) ?
+        List<File> inlineScripts = FileSystemAccessProvider.instance.checkDirectory(inlineScriptsDir, false) ?
                 FileSystemAccessProvider.instance.listFilesInDirectory(inlineScriptsDir) :
                 null
-        if (!inlineScripts) inlineScripts = new File[0]
+        if (!inlineScripts) inlineScripts = []
 
         Map<String, List<String>> virtualDependencies = [:]
 

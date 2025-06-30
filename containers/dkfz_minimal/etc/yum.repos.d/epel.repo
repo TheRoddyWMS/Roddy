@@ -1,0 +1,63 @@
+[epel]
+enabled = 0
+gpgcheck = 1
+metalink = https://mirrors.fedoraproject.org/metalink?repo=epel-7&arch=$basearch
+name = EPEL
+priority = 1
+
+[epel-dkfz]
+baseurl = https://centos.dkfz-heidelberg.de/epel/7/x86_64/
+enabled = 0
+gpgcheck = 1
+name = EPEL (DKFZ Mirror)
+priority = 1
+
+[epel-odcf]
+baseurl = http://odcf-repo.dkfz.de/epel/7/x86_64/
+enabled = 1
+gpgcheck = 1
+name = EPEL (ODCF Mirror)
+priority = 1
+
+[epel-debuginfo]
+enabled = 0
+gpgcheck = 1
+metalink = https://mirrors.fedoraproject.org/metalink?repo=epel-debug-7&arch=$basearch
+name = EPEL (Debug)
+priority = 1
+
+[epel-debuginfo-dkfz]
+baseurl = https://centos.dkfz-heidelberg.de/epel/7/x86_64/debug/
+enabled = 0
+gpgcheck = 1
+name = EPEL (Debug) (DKFZ mirror)
+priority = 1
+
+[epel-debuginfo-odcf]
+baseurl = http://odcf-repo.dkfz.de/epel/7/x86_64/debug/
+enabled = 1
+gpgcheck = 1
+name = EPEL (Debug) (ODCF mirror)
+priority = 1
+
+[epel-source]
+enabled = 0
+gpgcheck = 1
+metalink = https://mirrors.fedoraproject.org/metalink?repo=epel-source-7&arch=$basearch
+name = EPEL (Source)
+priority = 1
+
+[epel-source-dkfz]
+baseurl = https://centos.dkfz-heidelberg.de/epel/7/SRPMS/
+enabled = 0
+gpgcheck = 1
+name = EPEL (Source) (DKFZ mirror)
+priority = 1
+
+[epel-source-odcf]
+baseurl = http://odcf-repo.dkfz.de/epel/7/SRPMS/
+enabled = 1
+gpgcheck = 1
+name = EPEL (Source) (ODCF mirror)
+priority = 1
+

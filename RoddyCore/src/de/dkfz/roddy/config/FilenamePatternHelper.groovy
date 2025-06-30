@@ -83,8 +83,8 @@ class FilenamePatternHelper {
      * @param temp
      * @return
      */
-    public static List<Command> extractCommands(ExecutionContext context, String commandID, String temp) {
-        def cmds = []
+    static List<Command> extractCommands(ExecutionContext context, String commandID, String temp) {
+        List<Command> cmds = []
         // This simple method to get the no of instances is not possible! Groovy will try to compile a pattern from things like ${jobParameter
         // It seems, that $ and { trigger an internal mechanism when used with findAll.
         //        int no = temp.findAll(commandID).size()

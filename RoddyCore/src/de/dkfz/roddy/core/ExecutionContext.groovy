@@ -730,7 +730,7 @@ class ExecutionContext {
                 jobIDsForQuery.add(runResult.jobID.id)
             }
         }
-        Map<BEJob, JobState> map = Roddy.jobManager.queryJobStatus(jobsForProcess as List<BEJob>)
+        Map<BEJob, JobState> map = Roddy.jobManager.queryJobStates(jobsForProcess as List<BEJob>)
         for (JobState js : map.values()) {
             if (js.plannedOrRunning)
                 return true
@@ -748,7 +748,7 @@ class ExecutionContext {
     }
 
     List<File> getLogFilesForExecutedJobs() {
-        return Roddy.jobManager.queryExtendedJobStateById(executedJobs*.jobID).collect { it.value.logFile }
+        return Roddy.jobManager.queryExtendedJobStatesById(executedJobs*.jobID).collect { it.value.logFile }
     }
 
     List<File> getAdditionalLogFiles() {

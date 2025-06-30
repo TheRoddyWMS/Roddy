@@ -399,7 +399,7 @@ class RuntimeService {
 
     File getLogFileForJob(Job job) {
         //Returns the log files path of the job.
-        Roddy.jobManager.queryExtendedJobStateById([job.jobID]).get(job.jobID).logFile
+        Roddy.jobManager.queryExtendedJobStatesById([job.jobID]).get(job.jobID).logFile
     }
 
     boolean hasLogFileForJob(Job job) {

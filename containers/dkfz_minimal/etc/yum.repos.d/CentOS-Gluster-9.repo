@@ -1,0 +1,6 @@
+[centos-gluster9]
+baseurl = http://vault.dkfz-heidelberg.de/7.9.2009/storage/$basearch/gluster-9/
+enabled=0
+gpgcheck = 0
+name = Repository for Gluster 9 software
+

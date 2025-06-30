@@ -19,14 +19,14 @@ import groovy.transform.CompileStatic
 @CompileStatic
 class JobManager {
 
-    private BatchEuphoriaJobManager jobManager
+    private AbstractJobManager wrappedJobManager
     
     static JobManager getInstance() {
         return new JobManager(Roddy.jobManager)
     }
 
-    JobManager(BatchEuphoriaJobManager jobManager) {
-        this.jobManager = jobManager
+    JobManager(AbstractJobManager jobManager) {
+        this.wrappedJobManager = jobManager
     }
 
     static String createJobName(BaseFile baseFile, String toolID, boolean reduceLevel) {
@@ -34,6 +34,6 @@ class JobManager {
     }
 
     boolean executesWithoutJobSystem() {
-        return jobManager.executesWithoutJobSystem()
+        return wrappedJobManager.executesWithoutJobSystem()
     }
 }

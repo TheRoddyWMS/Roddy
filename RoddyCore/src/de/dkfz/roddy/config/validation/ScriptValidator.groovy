@@ -6,7 +6,7 @@
 
 package de.dkfz.roddy.config.validation
 
-import de.dkfz.roddy.Constants
+
 import de.dkfz.roddy.Roddy
 import de.dkfz.roddy.config.AnalysisConfiguration
 import de.dkfz.roddy.config.Configuration
@@ -14,8 +14,9 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.core.ExecutionContextError
 import groovy.transform.CompileStatic
 
-import static de.dkfz.roddy.config.ConfigurationConstants.*
 import static de.dkfz.roddy.StringConstants.*
+import static de.dkfz.roddy.config.ConfigurationConstants.*
+
 /**
  * This class validates scripts.
  * Checked are:
@@ -34,7 +35,7 @@ class ScriptValidator extends ConfigurationValidator {
     // Create a list of special characters which can occur in the complex variable syntax. The name is always
     // in front of one of those.
     // TODO This list has to be configurable, some can also be coming from the command factory.
-    // Keep a list of blacklistet variables, those are not checked.
+    // Keep a list of blacklisted variables, those are not checked.
     public final List<String> blacklist = []
 
     ScriptValidator(Configuration cfg) {

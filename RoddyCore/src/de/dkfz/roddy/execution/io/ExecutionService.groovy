@@ -316,7 +316,7 @@ abstract class ExecutionService implements BEExecutionService {
             } else {
                 res = execute(cmdString, waitFor, timeout, outputStream)
             }
-            command.getJob().setJobState(!res.successful ? JobState.FAILED : JobState.COMPLETED_SUCCESSFUL)
+            command.job.setJobState(!res.successful ? JobState.FAILED : JobState.COMPLETED_SUCCESSFUL)
 
             if (outputStream)
                 finalizeServiceBasedOutputStream(command, outputStream)

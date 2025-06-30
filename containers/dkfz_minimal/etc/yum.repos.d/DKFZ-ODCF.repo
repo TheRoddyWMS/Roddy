@@ -1,0 +1,15 @@
+[odcf-varia]
+name     = Various packages for ODCF
+baseurl  = http://odcf-repo.dkfz.de/odcf-varia
+proxy    = _none_
+enabled  = 1
+gpgcheck = 0
+priority = 1
+
+[odcf-admin]
+name     = Various administration packages for ODCF
+baseurl  = http://odcf-repo.dkfz.de/odcf-admin
+proxy    = _none_
+enabled  = 0
+gpgcheck = 0
+priority = 1

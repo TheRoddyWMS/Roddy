@@ -25,7 +25,7 @@ import java.util.regex.Pattern
 /**
  * Factory to load and integrate plugins.
  */
-@groovy.transform.CompileStatic
+@CompileStatic
 class LibrariesFactory extends Initializable {
     private static LoggerWrapper logger = LoggerWrapper.getLogger(LibrariesFactory.class.getSimpleName());
 
@@ -316,8 +316,8 @@ class LibrariesFactory extends Initializable {
     static PluginType determinePluginType(File directory, Map<String, List<String>> mapOfErrors = [:]) {
         logger.postRareInfo("  Parsing plugin folder: ${directory}");
 
-        List<String> errors = mapOfErrors.get(PRIMARY_ERRORS, [])
-        List<String> errorsUnimportant = mapOfErrors.get(SECONDARY_ERRORS, [])
+        List<String> errors = mapOfErrors.get(PRIMARY_ERRORS, [] as List<String>)
+        List<String> errorsUnimportant = mapOfErrors.get(SECONDARY_ERRORS, [] as List<String>)
 
         if (!directory.isDirectory()) {
             // Just return silently here.

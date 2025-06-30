@@ -15,13 +15,13 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
-import de.dkfz.roddy.tools.EscapableString
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.Command as BECommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
+import de.dkfz.roddy.tools.EscapableString
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.Tuple2
@@ -34,7 +34,6 @@ import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_PLACEHOLDER_ROD
 import static de.dkfz.roddy.config.ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT
 import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 import static de.dkfz.roddy.execution.jobs.JobConstants.PRM_TOOL_ID
-
 import static de.dkfz.roddy.tools.EscapableString.Shortcuts.*
 
 @CompileStatic
@@ -296,7 +295,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
     private static List<BEJob> reconcileParentJobInformation(List<BEJob> parentJobs,
                                                              List<BEJobID> parentJobIDs,
-                                                             BatchEuphoriaJobManager jobManager) {
+                                                             AbstractJobManager jobManager) {
         List<BEJob> pJobs
         if ((null != parentJobIDs && !parentJobIDs.isEmpty()) &&
                 (null != parentJobs && !parentJobs.isEmpty())) {
@@ -533,7 +532,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
      * @param job
      */
     @CompileDynamic
-    private void appendToJobStateLogfile(BatchEuphoriaJobManager jobManager,
+    private void appendToJobStateLogfile(AbstractJobManager jobManager,
                                          ExecutionContext executionContext,
                                          BEJobResult res,
                                          OutputStream out = null) {
@@ -548,13 +547,14 @@ class Job extends BEJob<BEJob, BEJobResult> {
             millis = millis.substring(0, millis.length() - 3)
             String jobId = job.jobID
             if (jobId != null) {
-                if (job.jobState == JobState.UNSTARTED)
-                    jobInfoLine = jobStateInfoLine(jobId, "UNSTARTED", millis, toolID)
+                if (job.jobState == JobState.UNSUBMITTED)
+                    jobInfoLine = jobStateInfoLine(jobId, JobState.UNSUBMITTED.toString(), millis, toolID)
                 else if (job.jobState == JobState.ABORTED)
-                    jobInfoLine = jobStateInfoLine(jobId, "ABORTED", millis, toolID)
-                // TODO Issue 222: COMPLETED_SUCCESSFUL is set by BE.ExecutionService, when the
-                //      execution result is successful, i.e. the qsub, not when the job finished
-                //      successfully on the cluster!
+                    jobInfoLine = jobStateInfoLine(jobId, JobState.ABORTED.toString(), millis, toolID)
+                // TODO https://odcf-gitlab.dkfz.de/ilp/odcf/components/BatchEuphoria/-/issues/117
+                //      COMPLETED_SUCCESSFUL is set by BE.ExecutionService, when the
+                //      execution result is successful, i.e. the submission (by `qsub`) -- not when
+                //      the job finished successfully on the cluster!
 //                else if (job.jobState == JobState.COMPLETED_SUCCESSFUL)
 //                    jobInfoLine = jobStateInfoLine(jobId, "0", millis, toolID)
                 else if (job.jobState == JobState.FAILED)
@@ -601,7 +601,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             String millis = "" + System.currentTimeMillis()
             millis = millis.substring(0, millis.length() - 3)
             String code = "255"
-            if (res.job.jobState == JobState.UNSTARTED)
+            if (res.job.jobState == JobState.UNSUBMITTED)
                 code = "UNSTARTED" // N
             else if (res.job.jobState == JobState.ABORTED)
                 code = "ABORTED" // A

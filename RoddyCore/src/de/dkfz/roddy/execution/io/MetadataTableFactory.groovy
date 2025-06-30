@@ -10,6 +10,7 @@ import de.dkfz.roddy.Roddy;
 import de.dkfz.roddy.StringConstants;
 import de.dkfz.roddy.client.RoddyStartupOptions
 import de.dkfz.roddy.config.ConfigurationValue
+import de.dkfz.roddy.config.RecursiveOverridableMapContainerForConfigurationValues
 import de.dkfz.roddy.config.loader.ConfigurationLoaderException
 import de.dkfz.roddy.core.Analysis
 import de.dkfz.roddy.tools.LoggerWrapper
@@ -53,9 +54,9 @@ final class MetadataTableFactory {
             String file = split[0];
             String format = split.length == 2 && !RoddyConversionHelperMethods.isNullOrEmpty(split[1]) ? split[1] : null;
 
-            def missingColValues = []
-            def mandatoryColumns = []
-            def cvalues = analysis.getConfiguration().getConfigurationValues()
+            List<String> missingColValues = []
+            List<String> mandatoryColumns = []
+            RecursiveOverridableMapContainerForConfigurationValues cvalues = analysis.getConfiguration().getConfigurationValues()
             Map<String, String> columnIDMap = cvalues.get("metadataTableColumnIDs").getValue()
                     .split(StringConstants.COMMA)
                     .collectEntries {
@@ -71,7 +72,10 @@ final class MetadataTableFactory {
             try {
                 _cachedTable = readTable(new File(file), format, columnIDMap, mandatoryColumns);
             } catch (IOException e) {
-                throw new ConfigurationLoaderException("Could not load metadata table from '$file'.\nError was '$e.message'\nEnsure that the file is accessible from the Roddy-executing system and correctly formatted.")
+                throw new ConfigurationLoaderException("Could not load metadata table from '$file'.\n" +
+                                                       "Error was '$e.message'\nEnsure that the file is " +
+                                                       "accessible from the Roddy-executing system and " +
+                                                       "correctly formatted.")
             }
         }
         return _cachedTable;
