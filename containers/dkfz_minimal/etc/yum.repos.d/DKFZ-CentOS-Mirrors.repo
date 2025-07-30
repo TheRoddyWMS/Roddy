@@ -1,0 +1,42 @@
+# CentOS-Vault.repo
+#
+# The mirror system uses the connecting IP address of the client and the
+# update status of each mirror to pick mirrors that are updated to and
+# geographically close to the client.  You should use this for CentOS updates
+# unless you are manually picking other mirrors.
+#
+# If the mirrorlist= does not work for you, as a fall back you can try the 
+# remarked out baseurl= line instead.
+#
+#
+
+[centos-base-dkfz]
+name=CentOS-7.9.2009 - Base (DKFZ mirror)
+baseurl=https://vault.dkfz-heidelberg.de/7.9.2009/os/$basearch/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+enabled=1
+
+#released updates 
+[centos-updates-dkfz]
+name=CentOS-7.9.2009 - Updates (DKFZ mirror)
+baseurl=https://vault.dkfz-heidelberg.de/7.9.2009/updates/$basearch/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+enabled=1
+
+#additional packages that may be useful
+[centos-extras-dkfz]
+name=CentOS-7.9.2009 - Extras (DKFZ mirror)
+baseurl=https://vault.dkfz-heidelberg.de/7.9.2009/extras/$basearch/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+enabled=1
+
+#additional packages that extend functionality of existing packages
+[centos-centosplus-dkfz]
+name=CentOS-7.9.2009 - Plus (DKFZ mirror)
+baseurl=https://vault.dkfz-heidelberg.de/7.9.2009/centosplus/$basearch/
+gpgcheck=1
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7

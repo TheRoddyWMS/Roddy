@@ -1,0 +1,12 @@
+# CentOS-Storage.repo
+#
+# Please see http://wiki.centos.org/SpecialInterestGroup/Storage for more
+# information
+
+[centos-storage-debuginfo]
+name=CentOS-$releasever - Storage SIG - debuginfo
+baseurl=http://debuginfo.centos.org/$contentdir/$releasever/storage/$basearch/
+gpgcheck=1
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-Storage
+
