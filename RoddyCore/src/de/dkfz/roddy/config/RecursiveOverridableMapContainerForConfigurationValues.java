@@ -67,11 +67,11 @@ public class RecursiveOverridableMapContainerForConfigurationValues
         return get(id, "");
     }
 
-    public boolean getBoolean(String id) throws  ConfigurationError {
+    public boolean getBoolean(String id){
         return getBoolean(id, false);
     }
 
-    public boolean getBoolean(String id, boolean defaultValue) throws ConfigurationError {
+    public boolean getBoolean(String id, boolean defaultValue) {
         return getValue(id, new ConfigurationValue(id, defaultValue)).toBoolean();
     }
 
