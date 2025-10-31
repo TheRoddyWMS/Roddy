@@ -5,7 +5,7 @@
  */
 package de.dkfz.roddy.core
 
-
+import de.dkfz.roddy.Roddy
 import spock.lang.Shared
 import spock.lang.Specification
 
