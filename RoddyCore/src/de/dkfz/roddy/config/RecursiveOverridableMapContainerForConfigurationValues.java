@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.config;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,16 +20,21 @@ import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING;
 public class RecursiveOverridableMapContainerForConfigurationValues
         extends RecursiveOverridableMapContainer<String, ConfigurationValue, Configuration> {
 
-    RecursiveOverridableMapContainerForConfigurationValues(Configuration parent, String id) {
+    RecursiveOverridableMapContainerForConfigurationValues(@NotNull Configuration parent,
+                                                           @NotNull String id) {
         super(parent, id);
     }
 
-    public ConfigurationValue get(String id, String defaultValue) {
+    public @NotNull ConfigurationValue get(String id, String defaultValue) {
         try {
             return getValue(id);
         } catch (ConfigurationError ex) {
             return new ConfigurationValue(getContainerParent(), id, defaultValue);
         }
+    }
+
+    public @NotNull ConfigurationValue get(String id) {
+        return get(id, "");
     }
 
     /**
@@ -50,20 +57,16 @@ public class RecursiveOverridableMapContainerForConfigurationValues
      * @return
      */
     @Override
-    protected ConfigurationValue temporarilyElevateValue(ConfigurationValue src) {
+    protected @NotNull ConfigurationValue temporarilyElevateValue(ConfigurationValue src) {
         return src.elevate(this.getContainerParent());
     }
 
-    public ConfigurationValue get(String id) {
-        return get(id, "");
-    }
-
     /** Get value or throw a ConfigurationError, if the value does not exist. */
-    public ConfigurationValue getOrThrow(String id) throws ConfigurationError {
+    public @NotNull ConfigurationValue getOrThrow(String id) throws ConfigurationError {
         return getValue(id);
     }
 
-    public ConfigurationValue getAt(String id) {
+    public @NotNull ConfigurationValue getAt(String id) {
         return get(id, "");
     }
 
@@ -75,19 +78,19 @@ public class RecursiveOverridableMapContainerForConfigurationValues
         return getValue(id, new ConfigurationValue(id, defaultValue)).toBoolean();
     }
 
-    public Integer getInteger(String id) throws ConfigurationError {
-        return getValue(id).toInt();
+    public @NotNull Integer getInteger(String id) throws ConfigurationError {
+        return getOrThrow(id).toInt();
     }
 
-    public Integer getInteger(String id, Integer defaultValue) throws ConfigurationError {
+    public @NotNull Integer getInteger(String id, Integer defaultValue) throws ConfigurationError {
         return getValue(id, new ConfigurationValue(id, defaultValue)).toInt();
     }
 
-    public List<String> getList(String id) {
+    public @NotNull List<String> getList(String id) {
         return getList(id, ",");
     }
 
-    public List<String> getList(String id, String separator) {
+    public @NotNull List<String> getList(String id, String separator) {
         try {
             return Arrays.asList(getValue(id).toString().split("[" + separator + "]"));
         } catch(ConfigurationError e) {
@@ -101,11 +104,11 @@ public class RecursiveOverridableMapContainerForConfigurationValues
      * @param id The id of the value
      * @return "" or the value converted to a string.
      */
-    public String getString(String id) {
+    public @NotNull String getString(String id) {
         return getString(id, "");
     }
 
-    public String getString(String id, String defaultValue) {
+    public @NotNull String getString(String id, String defaultValue) {
         return getValue(id, new ConfigurationValue(id, defaultValue)).toString();
     }
 
