@@ -67,12 +67,20 @@ public class RecursiveOverridableMapContainerForConfigurationValues
         return get(id, "");
     }
 
-    public boolean getBoolean(String id) {
+    public boolean getBoolean(String id) throws  ConfigurationError {
         return getBoolean(id, false);
     }
 
-    public boolean getBoolean(String id, boolean b) {
-        return getValue(id, new ConfigurationValue(id, b ? "true" : "false")).toBoolean();
+    public boolean getBoolean(String id, boolean defaultValue) throws ConfigurationError {
+        return getValue(id, new ConfigurationValue(id, defaultValue)).toBoolean();
+    }
+
+    public Integer getInteger(String id) throws ConfigurationError {
+        return getValue(id).toInt();
+    }
+
+    public Integer getInteger(String id, Integer defaultValue) throws ConfigurationError {
+        return getValue(id, new ConfigurationValue(id, defaultValue)).toInt();
     }
 
     public List<String> getList(String id) {
@@ -97,8 +105,8 @@ public class RecursiveOverridableMapContainerForConfigurationValues
         return getString(id, "");
     }
 
-    public String getString(String id, String s) {
-        return getValue(id, new ConfigurationValue(id, s)).toString();
+    public String getString(String id, String defaultValue) {
+        return getValue(id, new ConfigurationValue(id, defaultValue)).toString();
     }
 
     /**

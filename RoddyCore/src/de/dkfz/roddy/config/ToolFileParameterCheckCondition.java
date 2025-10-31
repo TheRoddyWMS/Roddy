@@ -42,7 +42,8 @@ public class ToolFileParameterCheckCondition {
         return condition;
     }
 
-    public boolean evaluate(ExecutionContext context) {
+    public boolean evaluate(ExecutionContext context)
+        throws ConfigurationError {
         if (booleanValue != null)
             return booleanValue;
         return context.getConfiguration().getConfigurationValues().getBoolean(condition, true);

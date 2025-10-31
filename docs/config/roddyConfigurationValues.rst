@@ -68,3 +68,5 @@ Other Variables
 
 * usedResourcesSize: Five resource sets can be defined and with this variable. Use the following abbreviations: t(iny/est), s(mall), m(edium), l(arge) xl (extra large). The resource sets are defined in the plugin XML, but can also be overridden by XMLs provided via `additionalImports` CLI parameter.
 * accountingName: A name used to associate every job with a accounting information in the cluster system, if this is possible.
+* maxFileAccessAttempts: In a cluster environment files in shared storage may not be immediately available after creation. This variable defines how often Roddy should retry accessing a file before giving up. Defaults to 3 attempts.
+* fileAccessRetryWaitTimeMS: Time to wait between file access attempts in milliseconds. Defaults to 100 ms.

@@ -48,8 +48,11 @@ class JobTest {
 
     @Test
     void replaceParametersInFilePath() throws Exception {
-        BaseFile bf = new TestFile(new BaseFile.ConstructionHelperForSourceFiles(new File("/invalid"),
-                contextResource.createSimpleContext(JobTest.name), new TestFileStageSettings<>(), null))
+        BaseFile bf = new TestFile(new BaseFile.ConstructionHelperForSourceFiles(
+                new File("/invalid"),
+                contextResource.createSimpleContext(JobTest.name),
+                new TestFileStageSettings(),
+                null))
         def parm = ["abc": "avalue",
                     "def": "anothervalue"
         ] as Map<String, Object>

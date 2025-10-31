@@ -15,13 +15,13 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
-import de.dkfz.roddy.tools.EscapableString
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.Command as BECommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
+import de.dkfz.roddy.tools.EscapableString
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.Tuple2
@@ -34,7 +34,6 @@ import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_PLACEHOLDER_ROD
 import static de.dkfz.roddy.config.ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT
 import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 import static de.dkfz.roddy.execution.jobs.JobConstants.PRM_TOOL_ID
-
 import static de.dkfz.roddy.tools.EscapableString.Shortcuts.*
 
 @CompileStatic
@@ -549,14 +548,13 @@ class Job extends BEJob<BEJob, BEJobResult> {
             String jobId = job.jobID
             if (jobId != null) {
                 if (job.jobState == JobState.UNSTARTED)
-                    jobInfoLine = jobStateInfoLine(jobId, "UNSTARTED", millis, toolID)
+                    jobInfoLine = jobStateInfoLine(jobId, JobState.UNSTARTED.toString(), millis, toolID)
                 else if (job.jobState == JobState.ABORTED)
-                    jobInfoLine = jobStateInfoLine(jobId, "ABORTED", millis, toolID)
-                // TODO Issue 222: COMPLETED_SUCCESSFUL is set by BE.ExecutionService, when the
-                //      execution result is successful, i.e. the qsub, not when the job finished
-                //      successfully on the cluster!
-//                else if (job.jobState == JobState.COMPLETED_SUCCESSFUL)
-//                    jobInfoLine = jobStateInfoLine(jobId, "0", millis, toolID)
+                    jobInfoLine = jobStateInfoLine(jobId, JobState.ABORTED.toString(), millis, toolID)
+                // TODO https://odcf-gitlab.dkfz.de/ilp/odcf/components/BatchEuphoria/-/issues/117
+                //      COMPLETED_SUCCESSFUL is set by BE.ExecutionService, when the
+                //      execution result is successful, i.e. the submission (by `qsub`) -- not when
+                //      the job finished successfully on the cluster!
                 else if (job.jobState == JobState.FAILED)
                     jobInfoLine = jobStateInfoLine(jobId, "" + res.executionResult.exitCode, millis, toolID)
                 else
@@ -601,7 +599,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             String millis = "" + System.currentTimeMillis()
             millis = millis.substring(0, millis.length() - 3)
             String code = "255"
-            if (res.job.jobState == JobState.UNSTARTED)
+            if (res.job.jobState == JobState.SUBMITTED)
                 code = "UNSTARTED" // N
             else if (res.job.jobState == JobState.ABORTED)
                 code = "ABORTED" // A
@@ -841,22 +839,33 @@ class Job extends BEJob<BEJob, BEJobResult> {
         for (BaseFile jobFile : filesToVerify) {
             // See if we know the file... so this way we can use the BaseFiles verification method.
             List<BaseFile> knownFiles = context.getAllFilesInRun()
+            Integer numAttempts = context.getMaxFileAccessAttempts()
+            Integer waitTime = context.getFileAccessRetryWaitTimeMS()
             for (BaseFile contextFile : knownFiles) {
-                for (int i = 0; i < 3; i++) {
-                    if (jobFile == null || contextFile == null
-                            || jobFile.absolutePath == null || contextFile.path == null)
+                for (int i = 0; i < numAttempts; i++) {
+                    if (jobFile == null
+                            || contextFile == null
+                            || jobFile.absolutePath == null
+                            || contextFile.path == null)
                         try {
                             logger.severe("Taking a short nap because a file does not seem to be finished." +
-                                          "context/declared file = $contextFile; job file = $jobFile")
-                            Thread.sleep(100)
+                                          "context/declared file = $contextFile; job file = $jobFile; " +
+                                          "attempt ${i + 1}/$numAttempts")
+                            Thread.sleep(waitTime)
                         } catch (InterruptedException e) {
+                            System.err.println("Sleep interrupted for '${contextFile}': " + e.message)
                             e.printStackTrace()
                         }
                 }
-                if (jobFile.absolutePath.equals(contextFile.path.absolutePath)) {
+                if (jobFile.absolutePath == contextFile.path.absolutePath) {
+                    // Verification and validation is the same in Roddy.
                     if (!contextFile.isFileValid()) {
                         fileUnverified = true
-                        if (isVerbosityHigh) dbgMessage << "\tfile " << contextFile.path.getName() << " could not be verified!" << sep
+                        if (isVerbosityHigh) dbgMessage <<
+                                             "\tfile " <<
+                                             contextFile.path.getName() <<
+                                             " could not be verified!" <<
+                                                sep
                     }
                     knownFilesCnt++
                     break

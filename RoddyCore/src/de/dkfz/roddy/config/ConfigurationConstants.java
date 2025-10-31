@@ -71,6 +71,9 @@ public class ConfigurationConstants {
     public static final String CVALUE_PROCESS_OPTIONS_QUERY_ENV = "processOptionsQueryEnv";
     public static final String CVALUE_PROCESS_OPTIONS_QUERY_ID = "processOptionsQueryID";
 
+    public static final String CFG_MAX_FILE_ACCESS_ATTEMPTS = "maxFileAccessAttempts";
+    public static final String CFG_FILE_ACCESS_RETRY_WAIT_TIME_MS = "fileAccessRetryWaitTimeMS";
+
     public static final String CFG_ALLOW_ACCESS_RIGHTS_MODIFICATION = "outputAllowAccessRightsModification";
     public static final String CFG_OUTPUT_ACCESS_RIGHTS_FOR_DIRECTORIES = "outputAccessRightsForDirectories";
     public static final String CFG_OUTPUT_ACCESS_RIGHTS = "outputAccessRights";
