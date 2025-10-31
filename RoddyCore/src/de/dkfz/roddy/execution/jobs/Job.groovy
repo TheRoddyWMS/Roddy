@@ -838,9 +838,9 @@ class Job extends BEJob<BEJob, BEJobResult> {
         // TODO what about the case if no verifiable files where specified? Or if the know files count does not match
         for (BaseFile jobFile : filesToVerify) {
             // See if we know the file... so this way we can use the BaseFiles verification method.
-            List<BaseFile> knownFiles = context.getAllFilesInRun()
-            Integer numAttempts = context.getMaxFileAccessAttempts()
-            Integer waitTime = context.getFileAccessRetryWaitTimeMS()
+            List<BaseFile> knownFiles = context.allFilesInRun
+            Integer numAttempts = context.maxFileAccessAttempts
+            Integer waitTime = context.fileAccessRetryWaitTimeMS
             for (BaseFile contextFile : knownFiles) {
                 for (int i = 0; i < numAttempts; i++) {
                     if (jobFile == null
@@ -859,11 +859,11 @@ class Job extends BEJob<BEJob, BEJobResult> {
                 }
                 if (jobFile.absolutePath == contextFile.path.absolutePath) {
                     // Verification and validation is the same in Roddy.
-                    if (!contextFile.isFileValid()) {
+                    if (!contextFile.fileValid) {
                         fileUnverified = true
                         if (isVerbosityHigh) dbgMessage <<
                                              "\tfile " <<
-                                             contextFile.path.getName() <<
+                                             contextFile.path.name <<
                                              " could not be verified!" <<
                                                 sep
                     }
