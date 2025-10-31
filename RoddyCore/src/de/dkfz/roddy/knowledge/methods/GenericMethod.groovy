@@ -21,6 +21,7 @@ import de.dkfz.roddy.knowledge.files.FileObjectTupleFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
@@ -579,7 +580,7 @@ class GenericMethod {
         return allCreatedObjects.findAll { FileObject fo -> fo instanceof BaseFile && !((BaseFile) fo).isTemporaryFile() } as List<BaseFile>
     }
 
-    private FileObject createAndRunJob(List<BaseFile> filesToVerify, FileObject outputObject) {
+    private @NotNull FileObject createAndRunJob(List<BaseFile> filesToVerify, @NotNull FileObject outputObject) {
         BEJobResult jobResult = new Job(
                 context,
                 context.createJobName(firstInputFile, toolName),

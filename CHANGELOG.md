@@ -77,8 +77,8 @@ This is, e.g., the case if the data user cuts out columns of a TSV without check
     * Code layout changes, to reduce endless long lines.
     * Replaced many `getX` calls, probably originating from old Java code, into Groovy-idiomatic property accessor calls.
     * Lazy error handling sucks
-      * Added `org.jetbrains.annotations.NotNull` annotations. But I could not get the runtime checks to work, likely because of too old Groovy version.
-      * Added `Precondition` checks to still get some runtime checks (at the cost of additional code, though).
+      * Added `org.jetbrains.annotations.NotNull` annotations. This package only does compile-time checks with IntelliJ, though.
+      * Added `Precondition` checks to runtime checks (at the cost of additional code, though) (Note: With Groovy 3 it will be possible to `@groovy.transform.NullCheck` to add runtime checks, but this is not yet possible with Groovy 2.4 used in Roddy 3.x).
     * Some problems with the start-up scripts were fixed.
 
 * 3.7.3

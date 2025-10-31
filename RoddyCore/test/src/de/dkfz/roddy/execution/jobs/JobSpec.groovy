@@ -6,12 +6,16 @@
 package de.dkfz.roddy.execution.jobs
 
 import de.dkfz.roddy.RunMode
+import de.dkfz.roddy.config.Configuration
+import de.dkfz.roddy.config.EmptyResourceSet
 import de.dkfz.roddy.config.TestFileStageSettings
 import de.dkfz.roddy.core.ContextResource
+import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.execution.io.ExecutionService
 import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.knowledge.files.BaseFile
+import de.dkfz.roddy.tools.Tuple2
 import groovy.transform.CompileStatic
 import spock.lang.Shared
 import spock.lang.Specification
@@ -52,10 +56,5 @@ class JobSpec extends Specification {
 
         expect:
         Job.replaceParametersInFilePath(bf, parm) == new File('/a/test/avalue/anothervalue/text.txt')
-    }
-
-    def "verifyFiles (placeholder)"() {
-        expect:
-        false // Placeholder for future implementation
     }
 }
