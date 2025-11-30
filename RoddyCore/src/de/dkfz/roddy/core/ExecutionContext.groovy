@@ -666,14 +666,14 @@ class ExecutionContext {
     }
 
     void addFile(BaseFile file) {
-        if (!processingFlag.contains(ProcessingFlag.STORE_FILES))
-            return
-        if (executionContextLevel == ExecutionContextLevel.QUERY_STATUS
-                || executionContextLevel == ExecutionContextLevel.RERUN
-                || executionContextLevel == ExecutionContextLevel.TESTRERUN
-                || executionContextLevel == ExecutionContextLevel.RUN) {
-            synchronized (allFilesInRun) {
-                this.allFilesInRun.add(file)
+        if (processingFlag.contains(ProcessingFlag.STORE_FILES)) {
+            if (executionContextLevel == ExecutionContextLevel.QUERY_STATUS
+                    || executionContextLevel == ExecutionContextLevel.RERUN
+                    || executionContextLevel == ExecutionContextLevel.TESTRERUN
+                    || executionContextLevel == ExecutionContextLevel.RUN) {
+                synchronized (allFilesInRun) {
+                    this.allFilesInRun.add(file)
+                }
             }
         }
     }

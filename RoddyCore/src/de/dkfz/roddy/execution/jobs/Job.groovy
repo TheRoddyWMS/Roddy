@@ -872,9 +872,10 @@ class Job extends BEJob<BEJob, BEJobResult> {
                             // I think this should only happen, if the file was not observed (or created) yet.
                             // The two other tests of expectedFile and expectedFile.absolutePath really are
                             // just guards against NPEs that should have been solved elsewhere.
-                            logger.severe("Taking a short nap because a file does not seem to be finished." +
-                                          "observed file = $observedFile; expected file = " +
-                                          "$expectedFile;  attempt ${i + 1}/$numAttempts")
+                            logger.severe("Taking a short nap because a file does not seem to be finished.\n" +
+                                          "  Observed file = $observedFile\n" +
+                                          "  Expected file = $expectedFile\n" +
+                                          "  Attempt ${i + 1}/$numAttempts")
                             Thread.sleep(waitTime)
                         } catch (InterruptedException e) {
                             System.err.println("Sleep interrupted for '${observedFile}': " + e.message)

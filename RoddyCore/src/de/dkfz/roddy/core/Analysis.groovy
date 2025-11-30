@@ -423,6 +423,9 @@ class Analysis {
         } catch (IOException e) {
             logger.always(e.message)
             context.addError(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.message))
+        } catch (BEException e) {
+            logger.always(e.message)
+            context.addError(ExecutionContextError.BACKEND_EXECUTION_ERROR.expand(e.message))
         } catch (Exception e) {
             logger.always("An unhandled exception of type '" + e.class.canonicalName + "' occurred: '" + e.message + "'")
             // OTP depends on stack-traces for error-state recognition. Therefore, keep plotting

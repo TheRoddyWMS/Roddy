@@ -108,6 +108,11 @@ public class ExecutionContextError implements Serializable {
             "Inline scripts cannot be wrapped by a container.",
             Level.SEVERE);
 
+    public static final ExecutionContextError BACKEND_EXECUTION_ERROR = new ExecutionContextError(
+            "Error during job processing on the backend.",
+            Level.SEVERE);
+
+
 
     public final String description;
 
