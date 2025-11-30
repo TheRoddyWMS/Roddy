@@ -667,8 +667,23 @@ public class Roddy {
 
     public static Configuration getApplicationSpecificConfiguration() {
         if (applicationSpecificConfiguration == null) {
-            applicationSpecificConfiguration = new Configuration(null);
-            RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
+            // The `PreloadedConfiguration` is necessary for displaying the correct information if there is an
+            // error or warning in the `applicationProperties.ini`.
+            applicationSpecificConfiguration = new Configuration(new PreloadedConfiguration(
+                    null,
+                    Configuration.ConfigurationType.OTHER,
+                    "applicationProperties.ini",
+                    "Application level configration filed with values from applicationProperties.ini",
+                    null,
+                    null,
+                    null,
+                    null,
+                    new LinkedList<String>(),
+                    new LinkedList<PreloadedConfiguration>(),
+                    null,
+                    null));
+            RecursiveOverridableMapContainerForConfigurationValues configurationValues =
+                    applicationSpecificConfiguration.getConfigurationValues();
 
             if (Roddy.jobManager != null) {
                 setDefaultRoddyJobIdVariable(configurationValues);
