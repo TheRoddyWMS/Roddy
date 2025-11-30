@@ -38,7 +38,6 @@ import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 import static de.dkfz.roddy.execution.jobs.JobConstants.PRM_TOOL_ID
 import static de.dkfz.roddy.tools.EscapableString.Shortcuts.*
 
-@CompileStatic
 class Job extends BEJob<BEJob, BEJobResult> {
 
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(BEJob.class.simpleName)
@@ -612,7 +611,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             String millis = "" + System.currentTimeMillis()
             millis = millis.substring(0, millis.length() - 3)
             String code = "255"
-            if (res.job.jobState == JobState.SUBMITTED)
+            if (res.job.jobState == JobState.UNSTARTED)
                 code = "UNSTARTED" // N
             else if (res.job.jobState == JobState.ABORTED)
                 code = "ABORTED" // A
