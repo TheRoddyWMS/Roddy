@@ -151,8 +151,8 @@ class ExecutionContextTest {
     void fileAccessRetryDefaults() {
         ExecutionContext context = createEmptyContext()
 
-        assert context.maxFileAppearanceAttempts == 3
-        assert context.fileAppearanceRetryWaitTimeMS == 100
+        assert context.maxFileObjectAppearanceRetries == 3
+        assert context.fileObjectAppearanceRetryWaitMs == 100
     }
 
     @Test
@@ -161,10 +161,10 @@ class ExecutionContextTest {
         context.configurationValues.add(
                 new ConfigurationValue(ConfigurationConstants.MAX_FILE_APPEARANCE_ATTEMPTS, "5"))
         context.configurationValues.add(
-                new ConfigurationValue(ConfigurationConstants.CFG_FILE_APPEARANCE_RETRY_WAIT_TIME_MS, "250"))
+                new ConfigurationValue(ConfigurationConstants.FILE_OBJECT_APPEARANCE_RETRY_WAIT_MS, "250"))
 
-        assert context.maxFileAppearanceAttempts == 5
-        assert context.fileAppearanceRetryWaitTimeMS == 250
+        assert context.maxFileObjectAppearanceRetries == 5
+        assert context.fileObjectAppearanceRetryWaitMs == 250
     }
 
 }

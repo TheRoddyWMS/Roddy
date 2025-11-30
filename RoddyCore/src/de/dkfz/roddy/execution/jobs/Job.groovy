@@ -843,6 +843,15 @@ class Job extends BEJob<BEJob, BEJobResult> {
     /** Wait for all file objects in the run to be prepared. This is necessary, because these file
      *  may be updated concurrently (e.g., via runParallel).
      *
+     *  Usually, the initial sleep should be sufficient, but if the system on which Roddy runs is
+     *  very busy, it may be necessary to wait a bit longer.
+     *
+     *  This function is called for every job, and therefore, the total runtime impact of changing
+     *  the wait time depends on the number of jobs.
+     *
+     *  The waiting parameters are configured via the `maxFileObjectAppearanceRetries` and
+     *  `fileObjectAppearanceRetryWaitMs` configuration parameters.
+     *
      *  Note: The previous implementation waited for each files in filesToVerify and waited for
      *        each combination of filesToVerify and allFilesInRun. However, this was an all vs.
      *        all comparison, even waiting for files that are not related to each other.
@@ -852,10 +861,10 @@ class Job extends BEJob<BEJob, BEJobResult> {
      */
     protected void waitForFilesInRun() {
         List<BaseFile> observedFiles = context.allFilesInRun
-        Integer numAttempts = context.maxFileAppearanceAttempts
-        Integer waitTime = context.fileAppearanceRetryWaitTimeMS
+        Integer numAttempts = context.maxFileObjectAppearanceRetries
+        Integer waitTime = context.fileObjectAppearanceRetryWaitMs
 
-        Thread.sleep(100) // Initial short sleep to let other threads start working.
+        Thread.sleep(waitTime) // Initial short sleep to let other threads start working.
         for (int i = 0; i < numAttempts; i++) {
             Queue<BaseFile> filesToWaitFor = new LinkedList<BaseFile>()
             for (BaseFile obsFile : observedFiles) {

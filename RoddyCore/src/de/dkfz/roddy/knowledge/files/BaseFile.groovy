@@ -582,6 +582,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
     void setParentFiles(List<BaseFile> parentfiles, boolean resetFilename, String selectionTag) {
         this.parentFiles.clear()
         this.parentFiles.addAll(parentfiles)
+        // Why is the file name itself reset, if parent files are added?
         if (resetFilename) {
             File temp = path
             Tuple2<File, FilenamePattern> fnresult = getFilename(this, selectionTag)
@@ -589,7 +590,6 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
             this.appliedFilenamePattern = fnresult?.y
             if (path == null) {
                 //TODO Also this should be handled somehow else. It is occurring much too often.
-//                getExecutionContext().addErrorEntry(ExecutionContextError.EXECUTION_FILECREATION_PATH_NOTSET.expand("Setting a new filename with parent files returned null for " + this.getClass().getName() + " returning to " + (temp != null ? temp.getAbsolutePath() : "null"), Level.WARNING));
                 path = temp
             }
         }

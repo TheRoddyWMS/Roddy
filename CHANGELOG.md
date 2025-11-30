@@ -57,9 +57,10 @@ This is, e.g., the case if the data user cuts out columns of a TSV without check
 
 # Changelist
 
-* next
-  * **Minor**: Added `maxFileAppearanceAttempts` and `fileAppearanceRetryWaitTimeMS` to make waiting time for delayed file appearance configurable.  
-  * # TODO: This is probably not file appearance in the files system, but rather because of concurrency.  
+* 3.8.1
+  * **Patch**: Fix a bug resulting in lots of "Taking a short nap" error messages. Additionally, added `maxFileObjectAppearanceRetries` and `fileObjectAppearanceRetryWaitMs` to make waiting time for delayed file object appearance configurable. This is an internal parameter related to concurrent update of objects and has nothing to do with waiting for files to appear in the file system. Increasing these values will make Roddy less chatty ("napping") and more stable on submission hosts under heavy load, but will also increase the time needed for submission.
+  * **Patch**: Do not report 'null' as file for parameters that contain plain `$`-sign references to variables that originate from the `applicationProperties.ini` or the command-line.
+  * **Patch**: Do not show a stack trace for exceptions raised from the BatchEuphoria backend.
   * **Note**: Introduced `dkfz_minimal_x.y.z` tags that mark release commits of the `dkfz_minimal` container.
     * **Patch**: Added `dkfz_minimal:1.1.0` container that contains now an almost full installation of packages present on old DKFZ CentOS 7.9 cluster nodes. Only few packages were left out. Skipped packages are marked with `#` comments in [`containers/dkfz_minimal/packages.txt`](containers/dkfz_minimal/packages.txt).
     * **Patch**: Added `dkfz_minimal:1.0.1` which fixes a missing module definition path. Thus, also `biomodal` and `workflows/husar modules` are becoming available in the container (when the DKFZ software stack is mounted). The container just adds a layer on the 1.0.0 container.
