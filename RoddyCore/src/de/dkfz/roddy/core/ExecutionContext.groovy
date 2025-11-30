@@ -604,12 +604,12 @@ class ExecutionContext {
         return FileSystemAccessProvider.instance
     }
 
-    Integer getMaxFileAccessAttempts() {
-        return configurationValues.getInteger(ConfigurationConstants.CFG_MAX_FILE_ACCESS_ATTEMPTS, 3)
+    Integer getMaxFileAppearanceAttempts() {
+        return configurationValues.getInteger(ConfigurationConstants.MAX_FILE_APPEARANCE_ATTEMPTS, 3)
     }
 
-    Integer getFileAccessRetryWaitTimeMS() {
-        return configurationValues.getInteger(ConfigurationConstants.CFG_FILE_ACCESS_RETRY_WAIT_TIME_MS, 100)
+    Integer getFileAppearanceRetryWaitTimeMS() {
+        return configurationValues.getInteger(ConfigurationConstants.CFG_FILE_APPEARANCE_RETRY_WAIT_TIME_MS, 100)
     }
 
     String getOutputDirectoryAccessRights() {

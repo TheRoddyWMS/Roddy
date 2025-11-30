@@ -651,7 +651,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         parameters.keySet().removeAll(nonEssentialParameters)
     }
 
-    BEJobResult run(boolean appendToJobStateLogfile = true) {
+    @NotNull BEJobResult run(boolean appendToJobStateLogfile = true) {
         if (runResult != null)
             throw new RuntimeException(ERR_MSG_ONLY_ONE_JOB_ALLOWED)
 
@@ -724,7 +724,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             lastCommand = cmd
 
             // For auto filenames. Get the job id and push propagate it to all filenames.
-            if (runResult?.jobID?.shortID) {
+            if (runResult.jobID?.shortID) {
                 allRawInputParameters.each { String k, Object o ->
                     BaseFile bf = o instanceof BaseFile ? (BaseFile) o : null
                     if (!bf) return
@@ -840,6 +840,47 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return true
     }
 
+    /** Wait for all file objects in the run to be prepared. This is necessary, because these file
+     *  may be updated concurrently (e.g., via runParallel).
+     *
+     *  Note: The previous implementation waited for each files in filesToVerify and waited for
+     *        each combination of filesToVerify and allFilesInRun. However, this was an all vs.
+     *        all comparison, even waiting for files that are not related to each other.
+     *
+     *        This new implementation is conceptually simpler and should be sufficient. Just wait
+     *        for all files objects to be ready and continue.
+     */
+    protected void waitForFilesInRun() {
+        List<BaseFile> observedFiles = context.allFilesInRun
+        Integer numAttempts = context.maxFileAppearanceAttempts
+        Integer waitTime = context.fileAppearanceRetryWaitTimeMS
+
+        for (int i = 0; i < numAttempts; i++) {
+            Queue<BaseFile> filesToWaitFor = new LinkedList<BaseFile>()
+            for (BaseFile obsFile : observedFiles) {
+                if (obsFile == null) {
+                    logger.severe("File object in ExecutionContext.allFilesToRun is null. " +
+                                  "This should not happen. Please report this issue.")
+                } else if (obsFile.path == null) {
+                    filesToWaitFor.push(obsFile)
+                }
+            }
+            if (!filesToWaitFor.empty) {
+                try {
+                    logger.severe("Taking a short nap because a file does not seem to be finished." +
+                                  " Attempt ${i + 1}/$numAttempts")
+                    logger.rare(filesToWaitFor.collect {
+                        "Waiting for:\n" + it.toString()
+                    }.join("\n"))
+                    Thread.sleep(waitTime)
+                } catch (InterruptedException e) {
+                    System.err.println("Sleep interrupted for ${filesToWaitFor.size()} files: " + e.message)
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
     /** For all files to verify (expected files), check if they exist. If they exist, check if they are valid.
      *
      * @param dbgMessage
@@ -857,31 +898,10 @@ class Job extends BEJob<BEJob, BEJobResult> {
         // TODO what about the case if no verifiable files where specified? Or if the know files count does not match
         for (BaseFile expFile : filesToVerify) {
             // See if we know the file... so this way we can use the BaseFiles verification method.
+            waitForFilesInRun()
             List<BaseFile> observedFiles = context.allFilesInRun
-            Integer numAttempts = context.maxFileAccessAttempts
-            Integer waitTime = context.fileAccessRetryWaitTimeMS
             for (BaseFile obsFile : observedFiles) {
-                for (int i = 0; i < numAttempts; i++) {
-                    if (expFile == null || expFile.absolutePath == null
-                            || obsFile == null  || obsFile.path == null)
-                        if (expFile == null || expFile.absolutePath == null) {
-                            logger.warning("Expected file is null or has no valid path! " +
-                                           "expectedFile = $expFile")
-                            // I keep this as warning for now because I don't know the exact conditions
-                            // under which these nulls occur.
-                        }
-                        try {
-                            // I think this should only happen, if the file was not observed (or created) yet.
-                            // The two other tests of expectedFile and expectedFile.absolutePath really are
-                            // just guards against NPEs that should have been solved elsewhere.
-                            logger.severe("Taking a short nap because a file does not seem to be finished." +
-                                          " Attempt ${i + 1}/$numAttempts")
-                            Thread.sleep(waitTime)
-                        } catch (InterruptedException e) {
-                            System.err.println("Sleep interrupted for '${obsFile}': " + e.message)
-                            e.printStackTrace()
-                        }
-                }
+
                 // A matching file pair (expected / observed) found.
                 if (expFile.absolutePath == obsFile.path.absolutePath) {
                     // Verification and validation is the same in Roddy.
