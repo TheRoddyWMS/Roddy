@@ -667,21 +667,7 @@ public class Roddy {
 
     public static Configuration getApplicationSpecificConfiguration() {
         if (applicationSpecificConfiguration == null) {
-            // The `PreloadedConfiguration` is necessary for displaying the correct information if there is an
-            // error or warning in the `applicationProperties.ini`.
-            applicationSpecificConfiguration = new Configuration(new PreloadedConfiguration(
-                    null,
-                    Configuration.ConfigurationType.OTHER,
-                    "applicationProperties.ini or commandline",
-                    "Application level configration filed with values from applicationProperties.ini",
-                    null,
-                    null,
-                    null,
-                    null,
-                    new LinkedList<String>(),
-                    new LinkedList<PreloadedConfiguration>(),
-                    null,
-                    null));
+            applicationSpecificConfiguration = new Configuration();
             RecursiveOverridableMapContainerForConfigurationValues configurationValues =
                     applicationSpecificConfiguration.getConfigurationValues();
 

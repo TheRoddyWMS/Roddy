@@ -94,7 +94,10 @@ class DefaultValidator extends ConfigurationValueValidator {
         boolean result = !temp.findAll(matchDetachedDollars)
 
         if (!result) {
-            super.warnings << new ConfigurationIssue(detachedDollarCharacter, cv.id, cv?.configuration?.file?.toString())
+            String fileName = cv?.configuration?.file?.toString()
+            if (fileName == null)
+                fileName = "applicationProperties.ini or commandline"
+            super.warnings << new ConfigurationIssue(detachedDollarCharacter, cv?.id, fileName)
         }
 
         return result

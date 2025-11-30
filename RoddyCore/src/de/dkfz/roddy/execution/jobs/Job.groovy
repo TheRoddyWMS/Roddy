@@ -855,41 +855,41 @@ class Job extends BEJob<BEJob, BEJobResult> {
         if (isVerbosityHigh) dbgMessage << "\tverifying specified files" << sep
 
         // TODO what about the case if no verifiable files where specified? Or if the know files count does not match
-        for (BaseFile expectedFile : filesToVerify) {
+        for (BaseFile expFile : filesToVerify) {
             // See if we know the file... so this way we can use the BaseFiles verification method.
             List<BaseFile> observedFiles = context.allFilesInRun
             Integer numAttempts = context.maxFileAccessAttempts
             Integer waitTime = context.fileAccessRetryWaitTimeMS
-            for (BaseFile observedFile : observedFiles) {
+            for (BaseFile obsFile : observedFiles) {
                 for (int i = 0; i < numAttempts; i++) {
-                    if (expectedFile == null || observedFile == null
-                            || expectedFile.absolutePath == null || observedFile.path == null)
-                        if (expectedFile == null || expectedFile.absolutePath == null) {
+                    if (expFile == null || expFile.absolutePath == null
+                            || obsFile == null  || obsFile.path == null)
+                        if (expFile == null || expFile.absolutePath == null) {
                             logger.warning("Expected file is null or has no valid path! " +
-                                           "expectedFile = $expectedFile")
+                                           "expectedFile = $expFile")
+                            // I keep this as warning for now because I don't know the exact conditions
+                            // under which these nulls occur.
                         }
                         try {
                             // I think this should only happen, if the file was not observed (or created) yet.
                             // The two other tests of expectedFile and expectedFile.absolutePath really are
                             // just guards against NPEs that should have been solved elsewhere.
-                            logger.severe("Taking a short nap because a file does not seem to be finished.\n" +
-                                          "  Observed file = $observedFile\n" +
-                                          "  Expected file = $expectedFile\n" +
-                                          "  Attempt ${i + 1}/$numAttempts")
+                            logger.severe("Taking a short nap because a file does not seem to be finished." +
+                                          " Attempt ${i + 1}/$numAttempts")
                             Thread.sleep(waitTime)
                         } catch (InterruptedException e) {
-                            System.err.println("Sleep interrupted for '${observedFile}': " + e.message)
+                            System.err.println("Sleep interrupted for '${obsFile}': " + e.message)
                             e.printStackTrace()
                         }
                 }
                 // A matching file pair (expected / observed) found.
-                if (expectedFile.absolutePath == observedFile.path.absolutePath) {
+                if (expFile.absolutePath == obsFile.path.absolutePath) {
                     // Verification and validation is the same in Roddy.
-                    if (!observedFile.fileValid) {
+                    if (!obsFile.fileValid) {
                         fileUnverified = true
                         if (isVerbosityHigh) dbgMessage <<
                                              "\tfile " <<
-                                             observedFile.path.name <<
+                                             obsFile.path.name <<
                                              " could not be verified!" <<
                                                 sep
                     }
