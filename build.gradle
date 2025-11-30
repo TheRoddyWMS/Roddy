@@ -212,6 +212,13 @@ jar {
     dependsOn copyRuntimeLibs
 }
 
+clean.doLast {
+    File jarFile = new File(project.ext.developmentDistributionDir, "Roddy.jar")
+    if (jarFile.exists()) {
+        jarFile.delete()
+    }
+}
+
 /** Produce 2 distribution packages:
  *
  *  * Roddy-*.zip with everything that belongs into the dist/bin/develop directory & some other smaller files.
