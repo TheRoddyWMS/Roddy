@@ -672,7 +672,7 @@ public class Roddy {
             applicationSpecificConfiguration = new Configuration(new PreloadedConfiguration(
                     null,
                     Configuration.ConfigurationType.OTHER,
-                    "applicationProperties.ini",
+                    "applicationProperties.ini or commandline",
                     "Application level configration filed with values from applicationProperties.ini",
                     null,
                     null,
@@ -701,12 +701,18 @@ public class Roddy {
             applicationSpecificConfiguration.addParent(commandlineConfiguration);
 
             if (useCustomIODirectories()) {
-                configurationValues.add(new ConfigurationValue(CFG_INPUT_BASE_DIRECTORY, Roddy.getCustomBaseInputDirectory(), CVALUE_TYPE_PATH));
-                configurationValues.add(new ConfigurationValue(CFG_OUTPUT_BASE_DIRECTORY, Roddy.getCustomBaseOutputDirectory(), CVALUE_TYPE_PATH));
+                configurationValues.add(new ConfigurationValue(CFG_INPUT_BASE_DIRECTORY,
+                                                               Roddy.getCustomBaseInputDirectory(),
+                                                               CVALUE_TYPE_PATH));
+                configurationValues.add(new ConfigurationValue(CFG_OUTPUT_BASE_DIRECTORY,
+                                                               Roddy.getCustomBaseOutputDirectory(),
+                                                               CVALUE_TYPE_PATH));
             }
 
             if (getUsedResourcesSize() != null) {
-                configurationValues.add(new ConfigurationValue(CFG_USED_RESOURCES_SIZE, Roddy.getUsedResourcesSize().toString(), CVALUE_TYPE_STRING));
+                configurationValues.add(new ConfigurationValue(CFG_USED_RESOURCES_SIZE,
+                                                               Roddy.getUsedResourcesSize().toString(),
+                                                               CVALUE_TYPE_STRING));
             }
 
         }

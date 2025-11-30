@@ -212,10 +212,10 @@ task copyRuntimeLibs(type: Copy, dependsOn: cleanRuntimeLibs) {
 
 
 jar {
-    setArchivesBaseName("Roddy")
-    setArchiveClassifier(null)
-    setArchiveVersion(null)
-    setDestinationDirectory(project.ext.developmentDistributionDir)
+    archiveBaseName.set("Roddy")
+    archiveClassifier.set("")
+    archiveVersion.set("")
+    destinationDirectory.set(project.ext.developmentDistributionDir)
     archiveFile
     manifest {
         attributes("Implementation-Vendor": "German Cancer Research Center (DKFZ)")
