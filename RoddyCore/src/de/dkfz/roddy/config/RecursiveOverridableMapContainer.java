@@ -7,6 +7,7 @@
 package de.dkfz.roddy.config;
 
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -145,7 +146,7 @@ public class RecursiveOverridableMapContainer<K, V extends RecursiveOverridableM
      * @param id
      * @return
      */
-    protected V _getValueUnchecked(K id) {
+    protected @Nullable V _getValueUnchecked(K id) {
         V cval = getAllValues().get(id);
         if(!values.containsKey(id))
             return temporarilyElevateValue(cval);

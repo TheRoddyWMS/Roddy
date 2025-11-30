@@ -7,6 +7,7 @@
 package de.dkfz.roddy.config;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -25,7 +26,8 @@ public class RecursiveOverridableMapContainerForConfigurationValues
         super(parent, id);
     }
 
-    public @NotNull ConfigurationValue get(String id, String defaultValue) {
+    public @NotNull ConfigurationValue get(@NotNull String id,
+                                           @NotNull String defaultValue) {
         try {
             return getValue(id);
         } catch (ConfigurationError ex) {
@@ -33,7 +35,7 @@ public class RecursiveOverridableMapContainerForConfigurationValues
         }
     }
 
-    public @NotNull ConfigurationValue get(String id) {
+    public @NotNull ConfigurationValue get(@NotNull String id) {
         return get(id, "");
     }
 
@@ -57,40 +59,78 @@ public class RecursiveOverridableMapContainerForConfigurationValues
      * @return
      */
     @Override
-    protected @NotNull ConfigurationValue temporarilyElevateValue(ConfigurationValue src) {
+    protected @NotNull ConfigurationValue temporarilyElevateValue(@NotNull ConfigurationValue src) {
         return src.elevate(this.getContainerParent());
     }
 
     /** Get value or throw a ConfigurationError, if the value does not exist. */
-    public @NotNull ConfigurationValue getOrThrow(String id) throws ConfigurationError {
+    public @NotNull ConfigurationValue getOrThrow(@NotNull String id)
+            throws ConfigurationError {
         return getValue(id);
     }
 
-    public @NotNull ConfigurationValue getAt(String id) {
+    public @NotNull ConfigurationValue getAt(@NotNull String id) {
         return get(id, "");
     }
 
-    public boolean getBoolean(String id){
-        return getBoolean(id, false);
+    public boolean getBoolean(@NotNull String id)
+            throws ConfigurationError {
+        ConfigurationValue value = getValue(id);
+        if (value == null)
+            throw new ConfigurationError("Boolean value for '" + id + "' could not be found.", id);
+        try {
+            return value.toBoolean();
+        } catch (NumberFormatException nfe) {
+            throw new ConfigurationError("Value for '" + id + "' is not a boolean: " + value.toString(), id);
+        }
     }
 
-    public boolean getBoolean(String id, boolean defaultValue) {
+    public boolean getBoolean(@NotNull String id,
+                              boolean defaultValue)
+            throws ConfigurationError {
+        return getBoolean(id, Boolean.toString(defaultValue));
+    }
+
+    public boolean getBoolean(@NotNull String id,
+                              @NotNull String defaultValue)
+            throws ConfigurationError {
+//        if (!defaultValue.isEmpty())
+//            throw new ConfigurationError("Default boolean value must not be empty", id);
         return getValue(id, new ConfigurationValue(id, defaultValue)).toBoolean();
     }
 
-    public @NotNull Integer getInteger(String id) throws ConfigurationError {
-        return getOrThrow(id).toInt();
+    public int getInteger(@NotNull String id,
+                          int defaultValue)
+            throws ConfigurationError {
+        return getInteger(id, Integer.toString(defaultValue));
     }
 
-    public @NotNull Integer getInteger(String id, Integer defaultValue) throws ConfigurationError {
+    public int getInteger(@NotNull String id)
+            throws ConfigurationError {
+        ConfigurationValue value = getValue(id);
+        if (value == null)
+            throw new ConfigurationError("Integer value for '" + id + "' could not be found.", id);
+        try {
+            return Integer.parseInt(value.toString());
+        } catch (NumberFormatException nfe) {
+            throw new ConfigurationError("Value for '" + id + "' is not an integer: " + value.toString(), id);
+        }
+    }
+
+    public int getInteger(@NotNull String id,
+                          @NotNull String defaultValue)
+            throws ConfigurationError {
+        if (defaultValue.isEmpty())
+            throw new ConfigurationError( "Default integer value must not be empty", id);
         return getValue(id, new ConfigurationValue(id, defaultValue)).toInt();
     }
 
-    public @NotNull List<String> getList(String id) {
+    public @NotNull List<String> getList(@NotNull String id) {
         return getList(id, ",");
     }
 
-    public @NotNull List<String> getList(String id, String separator) {
+    public @NotNull List<String> getList(@NotNull String id,
+                                         @NotNull String separator) {
         try {
             return Arrays.asList(getValue(id).toString().split("[" + separator + "]"));
         } catch(ConfigurationError e) {
@@ -104,11 +144,12 @@ public class RecursiveOverridableMapContainerForConfigurationValues
      * @param id The id of the value
      * @return "" or the value converted to a string.
      */
-    public @NotNull String getString(String id) {
+    public @NotNull String getString(@NotNull String id) {
         return getString(id, "");
     }
 
-    public @NotNull String getString(String id, String defaultValue) {
+    public @NotNull String getString(@NotNull String id,
+                                     @NotNull String defaultValue) {
         return getValue(id, new ConfigurationValue(id, defaultValue)).toString();
     }
 
@@ -119,11 +160,14 @@ public class RecursiveOverridableMapContainerForConfigurationValues
      * @param value
      * @param type
      */
-    public void put(String id, String value, String type) {
+    public void put(@NotNull String id,
+                    @Nullable String value,
+                    @Nullable String type) {
         super.add(new ConfigurationValue(this.getContainerParent(), id, value, type));
     }
 
-    public void put(String id, String value) {
+    public void put(@NotNull String id,
+                    @Nullable String value) {
         this.put(id, value, CVALUE_TYPE_STRING);
     }
 

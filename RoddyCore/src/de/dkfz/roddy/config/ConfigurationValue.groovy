@@ -18,6 +18,8 @@ import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyConversionHelperMethods
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 
 import java.util.regex.Matcher
 
@@ -118,7 +120,12 @@ class ConfigurationValue implements RecursiveOverridableMapContainer.Identifiabl
         this(config, id, value, type, "", null)
     }
 
-    ConfigurationValue(Configuration config, String id, String value, String type, String description, List<String> tags) {
+    ConfigurationValue(Configuration config,
+                       @NotNull String id,
+                       @Nullable String value,
+                       @Nullable String type,
+                       @Nullable String description,
+                       @Nullable List<String> tags) {
         this.id = id
         this.value = value != null ? replaceDeprecatedVariableIdentifiers(value) : null
         this.configuration = config
