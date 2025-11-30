@@ -855,6 +855,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         Integer numAttempts = context.maxFileAppearanceAttempts
         Integer waitTime = context.fileAppearanceRetryWaitTimeMS
 
+        Thread.sleep(100) // Initial short sleep to let other threads start working.
         for (int i = 0; i < numAttempts; i++) {
             Queue<BaseFile> filesToWaitFor = new LinkedList<BaseFile>()
             for (BaseFile obsFile : observedFiles) {
@@ -870,7 +871,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
                     logger.severe("Taking a short nap because a file does not seem to be finished." +
                                   " Attempt ${i + 1}/$numAttempts")
                     logger.rare(filesToWaitFor.collect {
-                        "Waiting for:\n" + it.toString()
+                        "Waiting for: " + it.toString()
                     }.join("\n"))
                     Thread.sleep(waitTime)
                 } catch (InterruptedException e) {
@@ -895,23 +896,19 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         if (isVerbosityHigh) dbgMessage << "\tverifying specified files" << sep
 
+        waitForFilesInRun()
+        List<BaseFile> observedFiles = context.allFilesInRun
+
         // TODO what about the case if no verifiable files where specified? Or if the know files count does not match
         for (BaseFile expFile : filesToVerify) {
-            // See if we know the file... so this way we can use the BaseFiles verification method.
-            waitForFilesInRun()
-            List<BaseFile> observedFiles = context.allFilesInRun
             for (BaseFile obsFile : observedFiles) {
-
-                // A matching file pair (expected / observed) found.
                 if (expFile.absolutePath == obsFile.path.absolutePath) {
-                    // Verification and validation is the same in Roddy.
+                    // "Verification" and "validation" are the same in Roddy.
                     if (!obsFile.fileValid) {
                         fileUnverified = true
-                        if (isVerbosityHigh) dbgMessage <<
-                                             "\tfile " <<
-                                             obsFile.path.name <<
-                                             " could not be verified!" <<
-                                                sep
+                        if (isVerbosityHigh) {
+                            dbgMessage << "\tfile ${obsFile.path.name} could not be verified!$sep"
+                        }
                     }
                     knownFilesCnt++
                     break
