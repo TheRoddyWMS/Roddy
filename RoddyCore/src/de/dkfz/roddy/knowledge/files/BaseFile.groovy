@@ -311,7 +311,7 @@ abstract class BaseFile<FS extends FileStageSettings> extends FileObject {
         files.collect { getSourceFile(context, it.absolutePath, _class) }
     }
 
-    protected File path
+    protected volatile File path
 
     protected final List<BaseFile> parentFiles = new LinkedList<>()
 
