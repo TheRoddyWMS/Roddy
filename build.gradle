@@ -226,6 +226,11 @@ clean.doLast {
  */
 distributions {
 
+
+    // IMPORTANT: When potentially changing the name of the zips, please check that the
+    //            expression in the CI (CircleCI, GitLab-CI) that checks the consistency of
+    //            version numbers still works!
+
     roddy {
         distributionBaseName = "Roddy"
         contents {
