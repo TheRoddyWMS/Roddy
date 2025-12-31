@@ -71,6 +71,8 @@ def getVersionName() {
 
 rootProject.version = getVersionName()
 
+System.err.println("Building Roddy version ${rootProject.version}")
+
 test {
     workingDir = projectDir
     ignoreFailures = project.hasProperty("ignoreFailedTests")
