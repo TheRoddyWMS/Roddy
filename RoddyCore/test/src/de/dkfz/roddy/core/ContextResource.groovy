@@ -117,14 +117,14 @@ class ContextResource extends ExternalResource {
 
     ExecutionContext createSimpleContext(
             final Class testClass,
-            final Configuration testConfig = new Configuration(null),
+            final Configuration testConfig = new Configuration(),
             final RuntimeService testRuntimeService = createSimpleRuntimeService(testClass.name)) {
         return createSimpleContext(testClass.name, testConfig, testRuntimeService)
     }
 
     ExecutionContext createSimpleContext(
             final String testID,
-            final Configuration testConfig = new Configuration(null),
+            final Configuration testConfig = new Configuration(),
             final RuntimeService testRuntimeService = createSimpleRuntimeService(testID)) {
 
         final File testInputDirectory = getTestInputDirectory(testID)

@@ -859,19 +859,18 @@ class Job extends BEJob<BEJob, BEJobResult> {
      *        for all files objects to be ready and continue.
      */
     protected void waitForFilesInRun() {
-        List<BaseFile> observedFiles = context.allFilesInRun
         Integer numAttempts = context.maxFileObjectAppearanceRetries
         Integer waitTime = context.fileObjectAppearanceRetryWaitMs
 
         Thread.sleep(waitTime) // Initial short sleep to let other threads start working.
         for (int i = 0; i < numAttempts; i++) {
             Queue<BaseFile> filesToWaitFor = new LinkedList<BaseFile>()
-            for (BaseFile obsFile : observedFiles) {
-                if (obsFile == null) {
+            for (BaseFile observedFile : context.allFilesInRun) {
+                if (observedFile == null) {
                     logger.severe("File object in ExecutionContext.allFilesToRun is null. " +
                                   "This should not happen. Please report this issue.")
-                } else if (obsFile.path == null) {
-                    filesToWaitFor.push(obsFile)
+                } else if (observedFile.path == null) {
+                    filesToWaitFor.push(observedFile)
                 }
             }
             if (!filesToWaitFor.empty) {
