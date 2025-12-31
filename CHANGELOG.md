@@ -57,14 +57,18 @@ This is, e.g., the case if the data user cuts out columns of a TSV without check
 
 # Changelist
 
-* 3.8.1
+* 3.8.2
+  * **Patch**: Made handling of boolean values that are not defined lenient again. 
+
+* 3.8.1 **deprecated release**
+  * **Major**: Boolean configuration values that are used in JVM code but not defined in the configuration result in configuration error. This change slipped into this release and is rolled back in release 3.8.2.
   * **Patch**: Fix a bug resulting in lots of "Taking a short nap" error messages. Additionally, added `maxFileObjectAppearanceRetries` and `fileObjectAppearanceRetryWaitMs` to make waiting time for delayed file object appearance configurable. This is an internal parameter related to concurrent update of objects and has nothing to do with waiting for files to appear in the file system. Increasing these values will make Roddy less chatty ("napping") and more stable on submission hosts under heavy load, but will also increase the time needed for submission.
   * **Patch**: Do not report 'null' as file for parameters that contain plain `$`-sign references to variables that originate from the `applicationProperties.ini` or the command-line.
   * **Patch**: Do not show a stack trace for exceptions raised from the BatchEuphoria backend.
   * **Note**: Introduced `dkfz_minimal_x.y.z` tags that mark release commits of the `dkfz_minimal` container.
     * **Patch**: Added `dkfz_minimal:1.1.0` container that contains now an almost full installation of packages present on old DKFZ CentOS 7.9 cluster nodes. Only few packages were left out. Skipped packages are marked with `#` comments in [`containers/dkfz_minimal/packages.txt`](containers/dkfz_minimal/packages.txt).
     * **Patch**: Added `dkfz_minimal:1.0.1` which fixes a missing module definition path. Thus, also `biomodal` and `workflows/husar modules` are becoming available in the container (when the DKFZ software stack is mounted). The container just adds a layer on the 1.0.0 container.
-  
+
 * 3.8.0
   * **Minor**: Singularity support. Jobs can now be run in singularity containers. Currently, only a single image for a whole workflow is supported.
     > This is only implemented and tested for LSF and SLURM, not tested for PBS and SGE, and not implemented at all for the REST-based submission to LSF and the direct execution job manager.

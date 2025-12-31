@@ -75,13 +75,19 @@ public class RecursiveOverridableMapContainerForConfigurationValues
 
     public boolean getBoolean(@NotNull String id)
             throws ConfigurationError {
-        ConfigurationValue value = getValue(id);
-        if (value == null)
-            throw new ConfigurationError("Boolean value for '" + id + "' could not be found.", id);
-        try {
-            return value.toBoolean();
-        } catch (NumberFormatException nfe) {
-            throw new ConfigurationError("Value for '" + id + "' is not a boolean: " + value.toString(), id);
+        ConfigurationValue value = getValue(id, null);
+        if (value == null) {
+            return false;
+            // The following change would break backwards compatibility. For instance, `runExomeAnalysis` in
+            // the AlignmentAndQCWorkflow 1.2.173-204 is not defined in its default configuration and would
+            // therefore lead to an exception here.
+//            throw new ConfigurationError("Boolean value for '" + id + "' could not be found.", id);
+        } else {
+            try {
+                return value.toBoolean();
+            } catch (NumberFormatException nfe) {
+                throw new ConfigurationError("Value for '" + id + "' is not a boolean: " + value.toString(), id);
+            }
         }
     }
 

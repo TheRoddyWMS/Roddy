@@ -668,20 +668,20 @@ class Analysis {
                     logger.severe("Job ${job.jobID}: " + bex.message, bex)
                 } catch (InterruptedException iex) {
                     logger.warning("Interrupted while trying to abort job '${job.jobID}'. " +
-                                  "You have to kill it manually :(")
+                                   "You have to kill it manually :(")
                 } catch (RuntimeException rex) {
                     // For technical reasons, RoddyToolLib LocalExecutionHelper may throw
                     // RuntimeExceptions wrapping TimeoutExceptions.
                     if (rex.cause instanceof TimeoutException) {
                         logger.warning("Timeout while trying to abort job '${job.jobID}'. " +
-                                      "You have to kill it manually :(")
+                                       "You have to kill it manually :(")
                     } else {
                         logger.severe("Could not abort job '${job.jobID}'. " +
                                       "You have to kill it manually :(", rex)
                     }
                 } catch (Exception ex) {
-                    logger.severe("Could not abort job '${job.jobID}'. "
-                                  + "You have to kill it manually :(", ex)
+                    logger.severe("Could not abort job '${job.jobID}'. " +
+                                  "You have to kill it manually :(", ex)
                 }
             }
         } else {
