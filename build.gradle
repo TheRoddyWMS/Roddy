@@ -5,28 +5,22 @@
  */
 
 // TODO Put git short hash into manifests
-// TODO How to compile Roddy plugins? Can this be done with gradle as well?
 
 import org.cyclonedx.gradle.CycloneDxTask
+import org.gradle.api.artifacts.DependencyResolveDetails
+import org.gradle.api.artifacts.Configuration
 
-buildscript {
-    repositories {
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-        mavenLocal()
-        mavenCentral()
-    }
-}
 
 plugins {
     id 'org.ajoberstar.grgit' version '4.1.1'    // Apache 2.0
     id 'idea'
     id 'pmd'
-    id 'org.cyclonedx.bom' version '1.8.2'
+    id 'org.cyclonedx.bom' version '1.10.0'
     id 'maven-publish'
     id 'kr.motd.sphinx' version '2.10.1'         // Apache 2.0
     id 'application'
+    id 'distribution'
+    id 'groovy'
 }
 
 group = "com.github.theroddywms"
@@ -38,14 +32,9 @@ group = "com.github.theroddywms"
  */
 ext.allowDirtyRepo = (project.hasProperty("allowDirty") && project.allowDirty == "true")
 
-apply plugin: 'distribution'
-apply plugin: 'groovy'
-apply plugin: 'kr.motd.sphinx'  // Apache 2.0
-//apply plugin: 'codenarc'
-
 
 application {
-    mainClass = "de.dkfz.roddy.Roddy"
+    mainClass.set("de.dkfz.roddy.Roddy")
 }
 
 // Java settings
@@ -57,8 +46,10 @@ java {
 //    }
 }
 
-compileJava.options.fork = true
-compileJava.options.compilerArgs = ["-release", targetCompatibility]
+compileJava {
+    options.fork = true
+    options.compilerArgs = ["-release", targetCompatibility]
+}
 
 // Set -Pchecked={true,false} on the command line to change this compiler parameter. Default: unchecked
 if (project.hasProperty("checked") && !project.checked) {
@@ -67,7 +58,7 @@ if (project.hasProperty("checked") && !project.checked) {
 }
 
 // The following keeps the Gradle build files separate from the ones build by IntelliJ (usually in build/).
-buildDir = "${projectDir}/gradleBuild"
+rootProject.layout.buildDirectory = "${projectDir}/gradleBuild"
 
 /*
  * Gets the version name from the current Git tag. If the current commit is not tagged,
@@ -85,13 +76,9 @@ test {
     ignoreFailures = project.hasProperty("ignoreFailedTests")
 
     testLogging {
-        debug {
-            events "started", "skipped", "failed"
-            exceptionFormat "full"
-        }
-        events "failed"
+        events "failed", "skipped", "passed"
         exceptionFormat "full"
-        setShowStandardStreams true
+        showStandardStreams = true
     }
 }
 
@@ -176,54 +163,60 @@ dependencies {
 
 project.ext.developmentDistributionDir = new File(rootProject.projectDir, "dist/bin/develop")
 
-convention.add("releaseDir",
-               new File(project.ext.developmentDistributionDir,
-                        "../" + rootProject.version).absoluteFile)
+project.ext.releaseDir = new File(project.ext.developmentDistributionDir,
+                                  "../" + rootProject.version).absoluteFile
 
 sourceSets {
     main {
         groovy {
-            srcDirs = ["${projectDir}/RoddyCore/src"]
+            setSrcDirs(["${projectDir}/RoddyCore/src"])
         }
     }
     test {
         groovy {
-            srcDirs = ["${projectDir}/RoddyCore/test/src"]
+            setSrcDirs(["${projectDir}/RoddyCore/test/src"])
         }
         resources {
-            srcDirs = ["${projectDir}/RoddyCore/test/resources"]
+            setSrcDirs(["${projectDir}/RoddyCore/test/resources"])
         }
     }
 }
 
 project.ext.librariesDirectory = new File(project.ext.developmentDistributionDir, "lib")
 
-task cleanRuntimeLibs(type: Delete) {
+tasks.register("cleanRuntimeLibs", Delete) {
     delete fileTree(dir: librariesDirectory, exclude: ".keep")
 }
 
 clean.dependsOn(cleanRuntimeLibs)
 
 
-task copyRuntimeLibs(type: Copy, dependsOn: cleanRuntimeLibs) {
+tasks.register("copyRuntimeLibs", Copy) {
+    dependsOn cleanRuntimeLibs
     into librariesDirectory
     from configurations.runtimeClasspath
 }
 
 
 jar {
-    setArchivesBaseName("Roddy")
-    setArchiveClassifier(null)
-    setArchiveVersion(null)
-    setDestinationDirectory(project.ext.developmentDistributionDir)
-    archiveFile
+    archiveBaseName = "Roddy"
+    archiveClassifier = ""
+    archiveVersion = ""
+    destinationDirectory = layout.projectDirectory.dir(project.ext.developmentDistributionDir.absolutePath)
     manifest {
         attributes("Implementation-Vendor": "German Cancer Research Center (DKFZ)")
-        attributes 'Main-Class': application.mainClass
-        attributes("Implementation-Title": archivesBaseName)
+        attributes 'Main-Class': application.mainClass.get()
+        attributes("Implementation-Title": archiveBaseName.get())
         attributes 'Implementation-Version': rootProject.version
     }
     dependsOn copyRuntimeLibs
+}
+
+clean.doLast {
+    File jarFile = new File(project.ext.developmentDistributionDir, "Roddy.jar")
+    if (jarFile.exists()) {
+        jarFile.delete()
+    }
 }
 
 /** Produce 2 distribution packages:
@@ -268,7 +261,6 @@ distributions {
             }
         }
     }
-
 }
 
 roddyDistTar.dependsOn(jar)
@@ -280,8 +272,19 @@ sphinx {
     warningsAsErrors = true
 }
 
-pmd {
-    ignoreFailures = true
+plugins.withType(PmdPlugin) {
+    pmd {
+        ignoreFailures = true
+        toolVersion = "6.55.0"  // Specify a compatible version
+        incrementalAnalysis = true
+    }
+
+    tasks.withType(Pmd) {
+        reports {
+            xml.required = true
+            html.required = true
+        }
+    }
 }
 
 //codenarc {
@@ -297,7 +300,7 @@ pmd {
 //    configFile = project.file("config/codenarc/codenarc.groovy")
 //}
 
-task listConfigurations {
+tasks.register("listConfigurations") {
     group = "reporting"
     description = "List all configurations, as needed for discerning development and production configurations by the SBOM tasks."
     doLast {
@@ -307,14 +310,14 @@ task listConfigurations {
     }
 }
 
-task allBoms() {
+tasks.register("allBoms") {
     group = "reporting"
     description = "A grouping task to execute the CycloneDxTask for each configuration"
 }
 
-rootProject.configurations.each { Configuration configuration ->
+configurations.configureEach { Configuration configuration ->
     String name = configuration.name
-    task "${name}Bom"(type: CycloneDxTask) {
+    tasks.register("${name}Bom", CycloneDxTask) {
         group = "reporting"
         description = "Creates a CycloneDX SBOM for the configuration ${name}."
 
@@ -326,7 +329,7 @@ rootProject.configurations.each { Configuration configuration ->
         includeLicenseText = false
         projectType = "application"
     }
-    allBoms.dependsOn tasks.getByName("${name}Bom")
+    allBoms.dependsOn tasks.named("${name}Bom")
 }
 
 // end of build.gradle

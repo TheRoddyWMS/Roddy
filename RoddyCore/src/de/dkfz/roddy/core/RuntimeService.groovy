@@ -19,6 +19,7 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
 import org.apache.commons.io.filefilter.WildcardFileFilter
+import org.jetbrains.annotations.NotNull
 
 /**
  * * A RuntimeService provides path calculations for file access.
@@ -513,11 +514,11 @@ class RuntimeService {
         return parameters
     }
 
-    String createJobName(ExecutionContext executionContext, BaseFile bf, String TOOLID, boolean reduceLevel) {
+    @NotNull String createJobName(ExecutionContext executionContext, BaseFile bf, String TOOLID, boolean reduceLevel) {
         return _createJobName(executionContext, bf, TOOLID, reduceLevel)
     }
 
-    static String _createJobName(ExecutionContext executionContext, BaseFile bf, String TOOLID, boolean reduceLevel) {
+    static @NotNull String _createJobName(ExecutionContext executionContext, BaseFile bf, String TOOLID, boolean reduceLevel) {
         ExecutionContext rp = bf.executionContext
         String runtime = rp.timestampString
         String pid = rp.dataSet.id

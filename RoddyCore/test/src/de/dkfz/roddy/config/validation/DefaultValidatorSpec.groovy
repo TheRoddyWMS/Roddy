@@ -74,11 +74,11 @@ class DefaultValidatorSpec extends RoddyTestSpec {
         'a\\${b}c'              | CVALUE_TYPE_STRING | true     | []                                      | []  //Escaped dollar with complete braces
 
         // Not ok
-        'abc$'                  | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla', 'null')] | []
-        '$abc'                  | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla', 'null')] | []
-        'tr$ue'                 | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla', 'null')] | []
-        '$'                     | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla', 'null')] | []
-        'abc$\\{'               | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla', 'null')] | []
+        'abc$'                  | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla', 'applicationProperties.ini or commandline')] | []
+        '$abc'                  | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla', 'applicationProperties.ini or commandline')] | []
+        'tr$ue'                 | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla', 'applicationProperties.ini or commandline')] | []
+        '$'                     | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla', 'applicationProperties.ini or commandline')] | []
+        'abc$\\{'               | CVALUE_TYPE_STRING | false    | [detachedDollarCharacter.expand('bla', 'applicationProperties.ini or commandline')] | []
     }
 
     def "test check for proper variable usage definition"() {

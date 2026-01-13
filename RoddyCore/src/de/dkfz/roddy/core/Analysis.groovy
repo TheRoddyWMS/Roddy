@@ -22,6 +22,8 @@ import de.dkfz.roddy.tools.LoggerWrapper
 import groovy.transform.CompileStatic
 import org.apache.commons.io.filefilter.WildcardFileFilter
 
+import java.util.concurrent.TimeoutException
+
 import static de.dkfz.roddy.config.ConfigurationIssue.ConfigurationIssueTemplate
 import static de.dkfz.roddy.tools.RoddyIOHelperMethods.getStackTraceAsString
 
@@ -421,6 +423,9 @@ class Analysis {
         } catch (IOException e) {
             logger.always(e.message)
             context.addError(ExecutionContextError.EXECUTION_UNCAUGHTERROR.expand(e.message))
+        } catch (BEException e) {
+            logger.always(e.message)
+            context.addError(ExecutionContextError.BACKEND_EXECUTION_ERROR.expand(e.message))
         } catch (Exception e) {
             logger.always("An unhandled exception of type '" + e.class.canonicalName + "' occurred: '" + e.message + "'")
             // OTP depends on stack-traces for error-state recognition. Therefore, keep plotting
@@ -645,19 +650,39 @@ class Analysis {
      * try to abort jobs by calling the job manager.
      * Occurring exceptions are caught such that following code can be executed properly.
      *
+     * TODO: Severe feature envy and coupling to technical execution classes.
+     *       Probably, this function does not belong into Analysis.
+     *
      * @param context
      */
     private void maybeAbortStartedJobsOfContext(ExecutionContext context) {
         if (Roddy.isStrictModeEnabled() && context.getFeatureToggleStatus(FeatureToggles.RollbackOnWorkflowError)) {
-            try {
-                logger.severe('A workflow error occurred, try to rollback / abort submitted jobs.')
-                Roddy.jobManager.killJobs(context.jobsForProcess as List<BEJob>)
-                context.jobsForProcess.each { job ->
+            logger.severe('A workflow error occurred, try to rollback / abort submitted jobs.')
+            context.jobsForProcess.each { job ->
+                // Try to kill each job separately (once!), and catch and report any errors.
+                try {
+                    Roddy.jobManager.killJobs([job] as List<BEJob>)
                     logger.severe("Revoked command for job ID" + job.jobID +
-                            ": '" + job.lastCommand.toBashCommandString() + "'")
+                                  ": '" + job.lastCommand.toBashCommandString() + "'")
+                } catch (BEException bex) {
+                    logger.severe("Job ${job.jobID}: " + bex.message, bex)
+                } catch (InterruptedException iex) {
+                    logger.warning("Interrupted while trying to abort job '${job.jobID}'. " +
+                                  "You have to kill it manually :(")
+                } catch (RuntimeException rex) {
+                    // For technical reasons, RoddyToolLib LocalExecutionHelper may throw
+                    // RuntimeExceptions wrapping TimeoutExceptions.
+                    if (rex.cause instanceof TimeoutException) {
+                        logger.warning("Timeout while trying to abort job '${job.jobID}'. " +
+                                      "You have to kill it manually :(")
+                    } else {
+                        logger.severe("Could not abort job '${job.jobID}'. " +
+                                      "You have to kill it manually :(", rex)
+                    }
+                } catch (Exception ex) {
+                    logger.severe("Could not abort job '${job.jobID}'. "
+                                  + "You have to kill it manually :(", ex)
                 }
-            } catch (Exception ex) {
-                logger.severe('Could not abort jobs.', ex)
             }
         } else {
             logger.severe('A workflow error occurred, but strict mode is disabled and/or ' +
@@ -669,15 +694,17 @@ class Analysis {
 
     /**
      * Calls a cleanup script and / or a workflows cleanup method to cleanup the directories of a workflow.
-     * If you call the cleanup script, a new execution context log directory will be created for this purpose. This directory will not be created if
-     * the workflows cleanup method is called!.
+     * If you call the cleanup script, a new execution context log directory will be created for this purpose.
+     * This directory will not be created if the workflows cleanup method is called!.
      *
      * @param pidList
      */
     void cleanup(List<String> pidList) {
         AnalysisConfiguration analysisConfiguration = (AnalysisConfiguration) getConfiguration()
-        if (!analysisConfiguration.hasCleanupScript() && !ExecutionContext.createAnalysisWorkflowObject(this).hasCleanupMethod())
-            logger.postAlwaysInfo('There is neither a configured cleanup script or a native workflow cleanup method available for this analysis.')
+        if (!analysisConfiguration.hasCleanupScript()
+                && !ExecutionContext.createAnalysisWorkflowObject(this).hasCleanupMethod())
+            logger.postAlwaysInfo('There is neither a configured cleanup script or a native ' +
+                                  'workflow cleanup method available for this analysis.')
 
         List<DataSet> dataSets = runtimeService.loadDatasetsWithFilter(this, pidList, true)
         for (DataSet ds : dataSets) {

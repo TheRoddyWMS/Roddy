@@ -6,6 +6,8 @@
 
 package de.dkfz.roddy.config
 
+import org.jetbrains.annotations.NotNull
+
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -397,13 +399,18 @@ class Configuration implements ContainerParent<Configuration>, ConfigurationIssu
         return toolPath.toFile()
     }
 
-    String getProcessingToolMD5(String tool) throws ConfigurationError {
+    @NotNull String getProcessingToolMD5(String tool) throws ConfigurationError {
         if (tool == null || tool == '') {
             logger.warning('Tool id not correctly specified for md5 query.');
             throw new ConfigurationError('Tool ID not correctly specified for md5 query', tool)
         }
         File sourceToolPath = getSourceToolPath(tool)
-        return RoddyIOHelperMethods.getMD5OfFile(sourceToolPath)
+        String result = RoddyIOHelperMethods.getMD5OfFile(sourceToolPath)
+        if (result == null || result.length() == 0) {
+            logger.severe("Could not calculate MD5 of tool '$tool' at path '$sourceToolPath'")
+            throw new ConfigurationError("Could not calculate MD5 of tool '$tool' at path '$sourceToolPath'", tool)
+        }
+        return result
     }
 
     String getSSHExecutionUser() {

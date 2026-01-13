@@ -18,9 +18,12 @@ import de.dkfz.roddy.execution.jobs.*
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.plugins.LibrariesFactory
 import de.dkfz.roddy.tools.LoggerWrapper
+import de.dkfz.roddy.tools.Utils
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import de.dkfz.roddy.execution.jobs.Command as BECommand
+import org.jetbrains.annotations.Nullable
+
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.logging.Level
@@ -264,13 +267,17 @@ class ExecutionContext {
         return runtimeService.getDefaultJobParameters(this, toolId)
     }
 
-    String getToolMd5(@NotNull String toolId) {
+    @NotNull String getToolMd5(@NotNull String toolId) {
         return configuration.getProcessingToolMD5(toolId)
     }
 
-    ResourceSet getResourceSetFromConfiguration(String toolId) {
-        // TODO However the semantics of values null, "", and UNKNOWN are. Use ToolId class and forbid null ToolId.
-        if (!toolId || toolId.trim() == "" || toolId == UNKNOWN) {
+    @NotNull ResourceSet getResourceSetFromConfiguration(@Nullable String toolId) {
+        if (!toolId || toolId.trim() == "") {
+            // TODO However the semantics of values null, "", and UNKNOWN are. Use ToolId class and forbid null ToolId.
+            logger.warning("ToolId was null or empty. Returning EmptyResourceSet. Please report this! " +
+                           "Stacktrace:\n" + Utils.stackTrace())
+            return new EmptyResourceSet()
+        } else if (toolId == UNKNOWN) {
             return new EmptyResourceSet()
         } else {
             ToolEntry te = configuration.tools.getValue(toolId)
@@ -282,7 +289,7 @@ class ExecutionContext {
         return createJobName(p, toolId, false)
     }
 
-    String createJobName(BaseFile p, String toolId, boolean reduceLevel) {
+    @NotNull String createJobName(BaseFile p, String toolId, boolean reduceLevel) {
         return runtimeService.createJobName(this, p, toolId, reduceLevel)
     }
 
@@ -597,6 +604,14 @@ class ExecutionContext {
         return FileSystemAccessProvider.instance
     }
 
+    Integer getMaxFileObjectAppearanceRetries() {
+        return configurationValues.getInteger(ConfigurationConstants.MAX_FILE_APPEARANCE_ATTEMPTS, 3)
+    }
+
+    Integer getFileObjectAppearanceRetryWaitMs() {
+        return configurationValues.getInteger(ConfigurationConstants.FILE_OBJECT_APPEARANCE_RETRY_WAIT_MS, 100)
+    }
+
     String getOutputDirectoryAccessRights() {
         if (!isAccessRightsModificationAllowed()) return null
         configurationValues.get(ConfigurationConstants.CFG_OUTPUT_ACCESS_RIGHTS_FOR_DIRECTORIES,
@@ -651,14 +666,14 @@ class ExecutionContext {
     }
 
     void addFile(BaseFile file) {
-        if (!processingFlag.contains(ProcessingFlag.STORE_FILES))
-            return
-        if (executionContextLevel == ExecutionContextLevel.QUERY_STATUS
-                || executionContextLevel == ExecutionContextLevel.RERUN
-                || executionContextLevel == ExecutionContextLevel.TESTRERUN
-                || executionContextLevel == ExecutionContextLevel.RUN) {
-            synchronized (allFilesInRun) {
-                this.allFilesInRun.add(file)
+        if (processingFlag.contains(ProcessingFlag.STORE_FILES)) {
+            if (executionContextLevel == ExecutionContextLevel.QUERY_STATUS
+                    || executionContextLevel == ExecutionContextLevel.RERUN
+                    || executionContextLevel == ExecutionContextLevel.TESTRERUN
+                    || executionContextLevel == ExecutionContextLevel.RUN) {
+                synchronized (allFilesInRun) {
+                    this.allFilesInRun.add(file)
+                }
             }
         }
     }
@@ -879,7 +894,7 @@ class ExecutionContext {
     }
 
     boolean fileIsExecutable(File file, String variableName = null) {
-        if (!(fileIsAccessible(file, variableName))) return
+        if (!(fileIsAccessible(file, variableName))) return false
         if (!FileSystemAccessProvider.instance.isExecutable(file)) {
             addError(ExecutionContextError.EXECUTION_SETUP_INVALID.
                     expand("File '${file}' is not executable${variableName ? ": " + variableName : "."}"))
@@ -914,7 +929,7 @@ class ExecutionContext {
                 dataSet, InfoObject.formatTimestamp(timestamp))
     }
 
-    ToolCommand getToolCommand(@NotNull String toolId)
+    @NotNull ToolCommand getToolCommand(@NotNull String toolId)
             throws ConfigurationError {
         new ToolCommand(toolId,
                         new Executable(

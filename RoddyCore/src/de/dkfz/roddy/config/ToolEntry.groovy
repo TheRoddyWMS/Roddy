@@ -9,6 +9,7 @@ package de.dkfz.roddy.config
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.knowledge.files.BaseFile
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 
 import java.lang.reflect.Method
 import java.util.stream.Collectors
@@ -194,7 +195,7 @@ class ToolEntry implements RecursiveOverridableMapContainer.Identifiable {
         return resourceSets.size() > 0
     }
 
-    ResourceSet getResourceSet(Configuration configuration) {
+    @NotNull ResourceSet getResourceSet(@NotNull Configuration configuration) {
         ResourceSetSize key = configuration.getResourcesSize();
         int size = key.ordinal()
 

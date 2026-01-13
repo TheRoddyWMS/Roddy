@@ -21,6 +21,8 @@ import de.dkfz.roddy.knowledge.files.FileObjectTupleFactory
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
@@ -40,22 +42,28 @@ import static de.dkfz.roddy.execution.jobs.JobConstants.*
 @CompileStatic
 class GenericMethod {
 
-    private static final LoggerWrapper logger = LoggerWrapper.getLogger(GenericMethod.class.getSimpleName())
+    private static final LoggerWrapper logger =
+            LoggerWrapper.getLogger(GenericMethod.class.simpleName)
+
     /**
      * This method is basically a wrapper around callGenericToolOrToolArray.
      * Both methods were so similar, that it made no sense to keep both.
      * callGenericToolOrToolArray can handle single job calls very well.
+     *
      * @param toolName The tool id to call
-     * @param input The basic input object TODO should be extended or changed to handle FileGroups as well.
-     * @param additionalInput Any additional input to the job. The input must fit the tool i/o specs in your xml file.
-     * @return
+     * @param input The basic input object
+     *        TODO should be extended or changed to handle FileGroups as well.
+     * @param additionalInput Any additional input to the job. The input must fit the tool i/o
+     *        specs in your xml file.
+     * @return FileObject of type F
      */
     // TODO: Roddy 4: Change the interface to use FileObject as input.
-    //       Currently the method is used throughout plugins. Change now breaks bytecode compatibility.
+    //       Currently the method is used throughout plugins. Change now breaks bytecode
+    //       compatibility.
     @Deprecated
-    static <F extends FileObject> F callGenericTool(String toolName,
-                                                    BaseFile input,
-                                                    Object... additionalInput) {
+    @NotNull static <F extends FileObject> F callGenericTool(String toolName,
+                                                             BaseFile input,
+                                                             Object... additionalInput) {
         F result = new GenericMethod(
                 toolName,
                 null,
@@ -66,9 +74,9 @@ class GenericMethod {
     }
 
     // TODO: This is a temporary solution. Rename to just `call`. See above.
-    static <F extends FileObject> F callGenericTool_fileObject(String toolName,
-                                                               FileObject input,
-                                                               Object... additionalInput) {
+    @NotNull static <F extends FileObject> F callGenericTool_fileObject(String toolName,
+                                                                        FileObject input,
+                                                                        Object... additionalInput) {
         F result = new GenericMethod(
                 toolName,
                 null,
@@ -79,8 +87,10 @@ class GenericMethod {
     }
 
     /**
-     * If you need a file group output and the files in the group need an index, then this is the right method to call!
-     * @return
+     * If you need a file group output and the files in the group need an index, then this is the
+     * right method to call!
+     *
+     * @return FileGroup of type F
      */
     static <F extends FileGroup> F callGenericToolWithFileGroupOutput(String toolName,
                                                                       FileObject input,
@@ -96,8 +106,10 @@ class GenericMethod {
     }
 
     /**
-     * If you need a file group output and the files in the group need an index, then this is the right method to call! This one works with number for the files from 0 .. n -1
-     * @return
+     * If you need a file group output and the files in the group need an index, then this is the
+     * right method to call! This one works with number for the files from 0 .. n -1
+     *
+     * @return FileGroup of type F
      */
     static <F extends FileGroup> F callGenericToolWithFileGroupOutput(String toolName,
                                                                       FileObject input,
@@ -113,8 +125,10 @@ class GenericMethod {
     }
 
     /**
-     * If you need a file group output and the files are already set in the cfg, then this is the right method to call.
-     * @return
+     * If you need a file group output and the files are already set in the cfg, then this is
+     * the right method to call.
+     *
+     * @return FileGroup of type F
      */
     static <F extends FileGroup> F callGenericToolWithFileGroupOutput(String toolName,
                                                                       FileObject input,
@@ -129,15 +143,18 @@ class GenericMethod {
     }
 
     /**
-     * This is Roddys most magic method!
+     * This is Roddy's most magic method!
+     * (PRK: Just writing this should ring all alerts for a software developer :( ).
      * It uses all the input parameters and the tool description and magically assembles a full job object.
      * The generated tool object is run() at the end.
      *
      * @param toolName The tool id to call
      * @param arrayIndices If it is an array, we need indices
-     * @param input The basic input object TODO should be extended or changed to handle FileGroups as well.
-     * @param additionalInput Any additional input to the job. The input must fit the tool i/o specs in your xml file.
-     * @return
+     * @param input The basic input object
+     *        TODO should be extended or changed to handle FileGroups as well.
+     * @param additionalInput Any additional input to the job. The input must fit the tool i/o
+     *        specs in your xml file.
+     * @return FileObject of type F
      */
     static <F extends FileObject> F callGenericToolOrToolArray(String toolName,
                                                                List<String> arrayIndices,
@@ -187,8 +204,8 @@ class GenericMethod {
     private final FileObject inputObject
 
     /**
-     * Currently supported are filegroups and basefiles as input objects. In both cases this variable is filled being
-     * inputObject for BaseFile objects and .getFirst() for FileGroups
+     * Currently supported are filegroups and basefiles as input objects. In both cases this
+     * variable is filled being inputObject for BaseFile objects and .getFirst() for FileGroups
      */
     private final BaseFile firstInputFile
 
@@ -210,7 +227,7 @@ class GenericMethod {
     /**
      * The final map of parameters which will be passed to the job.
      */
-    private final LinkedHashMap<String, Object> parameters = [:]
+    private final Map<String, Object> parameters = [:]
 
     /**
      * A list of all created file objects, also the files from file groups.
@@ -229,13 +246,13 @@ class GenericMethod {
         this(toolName, arrayIndices, inputObject, (0..numericCount - 1) as List<String>, additionalInput)
         Preconditions.checkArgument(
                 numericCount > 0,
-                "It is not allowed to call GenericMethod with a negative count for a FileGroup output object.")
+                'It is not allowed to call GenericMethod with a negative count for a FileGroup output object.')
     }
 
     GenericMethod(String toolName,
-                  List<String> arrayIndices,
+                  @Nullable List<String> arrayIndices,
                   FileObject inputObject,
-                  List<String> outputFileGroupIndices,
+                  @Nullable List<String> outputFileGroupIndices,
                   Object... additionalInput) {
         if (null != outputFileGroupIndices) {
             Preconditions.checkArgument(
@@ -245,7 +262,7 @@ class GenericMethod {
         this.outputFileGroupIndices = outputFileGroupIndices
         Preconditions.checkArgument(
                 outputFileGroupIndices == null || outputFileGroupIndices.size() > 0,
-                "It is not allowed to call GenericMethod with an empty non null list of file group indices.")
+                'It is not allowed to call GenericMethod with an empty non null list of file group indices.')
 
         this.context = inputObject.getExecutionContext()
         this.toolName = toolName
@@ -279,7 +296,7 @@ class GenericMethod {
         } as Map<String, ConfigurationValue>)
     }
 
-    private updateParameters() {
+    private void updateParameters() {
         parameters.putAll(parameters.findAll { k, v ->
             // If FileObjects would go into ConfigurationValue (as String) they would not get their variables evaluated.
             // Furthermore input files do not need dependency on job-specific parameters, because they were created by
@@ -290,7 +307,7 @@ class GenericMethod {
         } as Map<String, String>)
     }
 
-    public <F extends FileObject> F _callGenericToolOrToolArray() {
+    @NotNull <F extends FileObject> F _callGenericToolOrToolArray() {
 
         context.setCurrentExecutedTool(calledTool)
         // Check if method may be executed
@@ -318,22 +335,15 @@ class GenericMethod {
 
         F result = createAndRunJob(filesToVerify, outputObject) as F
 
-        // Finally, check the result and append an error to the context.
-        if (result == null) {
-            def errMsg = "The job callGenericTool(${toolName}, ...) returned null."
-            logger.warning(errMsg)
-            context.addErrorEntry(ExecutionContextError.EXECUTION_JOBFAILED.expand(errMsg))
-        }
-
         return result
     }
 
     private void assembleJobParameters() {
         // Assemble initial parameters
-        parameters[PRM_WORKFLOW_ID] = context.analysis.configuration.getName()
+        parameters[PRM_WORKFLOW_ID] = context.analysis.configuration.name
         if (toolName) {
             parameters[PRM_TOOL_ID] = toolName
-            parameters[PRM_TOOLS_DIR] = configuration.getProcessingToolPath(context, toolName).getParent()
+            parameters[PRM_TOOLS_DIR] = configuration.getProcessingToolPath(context, toolName).parent
         }
 
         // Assemble additional parameters
@@ -436,7 +446,7 @@ class GenericMethod {
 
     private <F extends FileObject> F createOutputObject(String arrayIndex = null) {
         F outputObject = null
-        def configuration = firstInputFile.getExecutionContext().getConfiguration()
+        Configuration configuration = firstInputFile.executionContext.configuration
         if (calledTool.getOutputParameters(configuration).size() == 1) {
             ToolEntry.ToolParameter tparm = calledTool.getOutputParameters(configuration)[0]
             if (tparm instanceof ToolFileParameter) {
@@ -471,7 +481,7 @@ class GenericMethod {
                 Field _field = null
                 Method _method = null
                 try {
-                    _field = bf.getClass().getField(childFileParameter.parentVariable)
+                    _field = bf.class.getField(childFileParameter.parentVariable)
                 } catch (Exception ex) {
                 }
                 try {
@@ -575,11 +585,13 @@ class GenericMethod {
 
     private List<BaseFile> fillListOfCreatedObjects(FileObject outputObject) {
         allCreatedObjects << outputObject
-        //Verifiable output files:
-        return allCreatedObjects.findAll { FileObject fo -> fo instanceof BaseFile && !((BaseFile) fo).isTemporaryFile() } as List<BaseFile>
+        // Verifiable output files:
+        return allCreatedObjects.findAll { FileObject fo ->
+            fo instanceof BaseFile && !((BaseFile) fo).isTemporaryFile()
+        } as List<BaseFile>
     }
 
-    private FileObject createAndRunJob(List<BaseFile> filesToVerify, FileObject outputObject) {
+    private @NotNull FileObject createAndRunJob(List<BaseFile> filesToVerify, @NotNull FileObject outputObject) {
         BEJobResult jobResult = new Job(
                 context,
                 context.createJobName(firstInputFile, toolName),
@@ -600,11 +612,11 @@ class GenericMethod {
     }
 
     BaseFile convertToolFileParameterToBaseFile(ToolFileParameter fileParameter) {
-        convertToolFileParameterToBaseFile(fileParameter, null, firstInputFile, allInputFiles)
+        return convertToolFileParameterToBaseFile(fileParameter, null, firstInputFile, allInputFiles)
     }
 
     BaseFile convertToolFileParameterToBaseFile(ToolFileParameter fileParameter, String fileGroupIndexValue) {
-        convertToolFileParameterToBaseFile(fileParameter, fileGroupIndexValue, firstInputFile, allInputFiles)
+        return convertToolFileParameterToBaseFile(fileParameter, fileGroupIndexValue, firstInputFile, allInputFiles)
     }
 
     /**
@@ -616,7 +628,10 @@ class GenericMethod {
      * @param allInputFiles
      * @return
      */
-    BaseFile convertToolFileParameterToBaseFile(ToolFileParameter fileParameter, String fileGroupIndex, BaseFile firstInputFile, List<BaseFile> allInputFiles) {
+    BaseFile convertToolFileParameterToBaseFile(ToolFileParameter fileParameter,
+                                                String fileGroupIndex,
+                                                BaseFile firstInputFile,
+                                                List<BaseFile> allInputFiles) {
         Constructor c = searchBaseFileConstructorForConstructionHelperObject(fileParameter.fileClass)
         BaseFile bf
         try {
@@ -624,12 +639,19 @@ class GenericMethod {
                 context.addError(ExecutionContextError.EXECUTION_FILECREATION_NOCONSTRUCTOR.
                         expand("File object of type ${fileParameter?.fileClass} with input ${firstInputFile?.class}" +
                                 ' needs a constructor which takes a ConstuctionHelper object.'))
-                throw new RuntimeException("Could not find valid constructor for type  ${fileParameter?.fileClass} with input ${firstInputFile?.class}.")
+                throw new RuntimeException("Could not find valid constructor for type  ${fileParameter?.fileClass} " +
+                                           "with input ${firstInputFile?.class}.")
             } else {
                 BaseFile.ConstructionHelperForGenericCreation helper =
-                        new BaseFile.ConstructionHelperForGenericCreation(firstInputFile, allInputFiles as List<FileObject>, calledTool, toolName,
-                                fileParameter.scriptParameterName, fileParameter.filenamePatternSelectionTag, fileGroupIndex,
-                                firstInputFile.fileStage, null)
+                        new BaseFile.ConstructionHelperForGenericCreation(firstInputFile,
+                                                                          allInputFiles as List<FileObject>,
+                                                                          calledTool,
+                                                                          toolName,
+                                                                          fileParameter.scriptParameterName,
+                                                                          fileParameter.filenamePatternSelectionTag,
+                                                                          fileGroupIndex,
+                                                                          firstInputFile.fileStage,
+                                                                          null)
                 if (jobConfiguration) helper.setJobConfiguration(jobConfiguration)
                 bf = c.newInstance(helper)
             }
@@ -643,22 +665,17 @@ class GenericMethod {
         if (fileParameter.scriptParameterName) {
             parameters[fileParameter.scriptParameterName] = bf
         }
-        bf
+        return bf
     }
 
     /**
      * Get the BaseFile extending classes constructor for Construction Helper Objects
+     *
      * @param classToSearch
      * @return
      */
-    static Constructor<BaseFile> searchBaseFileConstructorForConstructionHelperObject(Class classToSearch) {
-        try {
-            return classToSearch.getConstructor(BaseFile.ConstructionHelperForBaseFiles)
-        } catch (Exception e) {
-            logger.severe("There was no valid constructor found for class ${classToSearch?.name}! Roddy needs a constructor which accepts a construction helper object.")
-            logger.postSometimesInfo(e.message)
-            logger.postSometimesInfo(RoddyIOHelperMethods.getStackTraceAsString(e))
-            return null
-        }
+    @NotNull static Constructor<BaseFile> searchBaseFileConstructorForConstructionHelperObject(Class classToSearch)
+            throws NoSuchMethodException, SecurityException {
+        return classToSearch.getConstructor(BaseFile.ConstructionHelperForBaseFiles)
     }
 }

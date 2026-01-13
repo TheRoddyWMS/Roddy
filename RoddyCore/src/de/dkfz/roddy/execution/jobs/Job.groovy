@@ -15,29 +15,29 @@ import de.dkfz.roddy.config.converters.ConfigurationConverter
 import de.dkfz.roddy.core.ExecutionContext
 import de.dkfz.roddy.core.ExecutionContextError
 import de.dkfz.roddy.core.ExecutionContextLevel
-import de.dkfz.roddy.tools.EscapableString
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import de.dkfz.roddy.execution.jobs.Command as BECommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectCommand
 import de.dkfz.roddy.execution.jobs.direct.synchronousexecution.DirectSynchronousExecutionJobManager
 import de.dkfz.roddy.knowledge.files.BaseFile
 import de.dkfz.roddy.knowledge.files.FileGroup
+import de.dkfz.roddy.tools.EscapableString
 import de.dkfz.roddy.tools.LoggerWrapper
 import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import de.dkfz.roddy.tools.Tuple2
+import de.dkfz.roddy.tools.Utils
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 
 import static de.dkfz.roddy.Constants.*
 import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_PLACEHOLDER_RODDY_JOBID
 import static de.dkfz.roddy.config.ConfigurationConstants.DEBUG_WRAP_IN_SCRIPT
 import static de.dkfz.roddy.config.FilenamePattern.PLACEHOLDER_JOBPARAMETER
 import static de.dkfz.roddy.execution.jobs.JobConstants.PRM_TOOL_ID
-
 import static de.dkfz.roddy.tools.EscapableString.Shortcuts.*
 
-@CompileStatic
 class Job extends BEJob<BEJob, BEJobResult> {
 
     private static final LoggerWrapper logger = LoggerWrapper.getLogger(BEJob.class.simpleName)
@@ -54,6 +54,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
      * The tool command you want to call. This is not necessarily the same as in the execution context, e.g.
      * if the job command should be wrapped into a container call.
      */
+    @NotNull
     private final AnyToolCommand toolCommand
 
     /**
@@ -190,8 +191,8 @@ class Job extends BEJob<BEJob, BEJobResult> {
     @Deprecated
     Job(ExecutionContext context,
         String jobName,
-        String toolID,
-        List<String> arrayIndices,
+        @NotNull String toolID,
+        @Nullable List<String> arrayIndices,
         Map<String, Object> inputParameters,
         List<BaseFile> parentFiles,
         List<BaseFile> filesToVerify) {
@@ -221,15 +222,15 @@ class Job extends BEJob<BEJob, BEJobResult> {
               , Roddy.jobManager
               , u(jobName)
               , EffectiveToolCommandBuilder.
-                    from(context).
-                    build(toolCommand).
-                    map { ToolCommand it -> it.command }.
-                    orElse(null)
+                from(context).
+                build(toolCommand).
+                map { ToolCommand it -> it.command }.
+                orElse(null)
               , context.getResourceSetFromConfiguration(toolCommand.toolId)
               , []
               , [:] as Map<String, EscapableString>
               , JobLog.toOneFile(new File(context.loggingDirectory, jobName + ".o{JOB_ID}"))
-              , null
+              , null as File
               , context.accountingName.map { e(it) }.orElse(null))
         Preconditions.checkArgument(context != null)
         Preconditions.checkArgument(jobName != null)
@@ -281,6 +282,16 @@ class Job extends BEJob<BEJob, BEJobResult> {
             initialInputParameters.putAll(inputParameters)
 
         this.parentFiles = parentFiles ?: new LinkedList<BaseFile>()
+
+        // These are debugging methods to get at least some warnings about null values that should not occur.
+        // The only place I could find, where a BaseFile in the list may be null is in the indexFile of a BamFile.
+        if (filesToVerify == null) {
+            logger.warning("filesToVerify parameter must not be null. Please report this! Stacktrace:\n" +
+                           Utils.stackTrace())
+        } else if (filesToVerify.any { it == null }) {
+            logger.warning("filesToVerify parameter must not contain null entries. Please report this! Stacktrace\n" +
+                           Utils.stackTrace())
+        }
 
         this.filesToVerify = filesToVerify ?: new LinkedList<BaseFile>()
         this.context.addExecutedJob(this)
@@ -549,14 +560,13 @@ class Job extends BEJob<BEJob, BEJobResult> {
             String jobId = job.jobID
             if (jobId != null) {
                 if (job.jobState == JobState.UNSTARTED)
-                    jobInfoLine = jobStateInfoLine(jobId, "UNSTARTED", millis, toolID)
+                    jobInfoLine = jobStateInfoLine(jobId, JobState.UNSTARTED.toString(), millis, toolID)
                 else if (job.jobState == JobState.ABORTED)
-                    jobInfoLine = jobStateInfoLine(jobId, "ABORTED", millis, toolID)
-                // TODO Issue 222: COMPLETED_SUCCESSFUL is set by BE.ExecutionService, when the
-                //      execution result is successful, i.e. the qsub, not when the job finished
-                //      successfully on the cluster!
-//                else if (job.jobState == JobState.COMPLETED_SUCCESSFUL)
-//                    jobInfoLine = jobStateInfoLine(jobId, "0", millis, toolID)
+                    jobInfoLine = jobStateInfoLine(jobId, JobState.ABORTED.toString(), millis, toolID)
+                // TODO https://odcf-gitlab.dkfz.de/ilp/odcf/components/BatchEuphoria/-/issues/117
+                //      COMPLETED_SUCCESSFUL is set by BE.ExecutionService, when the
+                //      execution result is successful, i.e. the submission (by `qsub`) -- not when
+                //      the job finished successfully on the cluster!
                 else if (job.jobState == JobState.FAILED)
                     jobInfoLine = jobStateInfoLine(jobId, "" + res.executionResult.exitCode, millis, toolID)
                 else
@@ -640,7 +650,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         parameters.keySet().removeAll(nonEssentialParameters)
     }
 
-    BEJobResult run(boolean appendToJobStateLogfile = true) {
+    @NotNull BEJobResult run(boolean appendToJobStateLogfile = true) {
         if (runResult != null)
             throw new RuntimeException(ERR_MSG_ONLY_ONE_JOB_ALLOWED)
 
@@ -713,7 +723,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
             lastCommand = cmd
 
             // For auto filenames. Get the job id and push propagate it to all filenames.
-            if (runResult?.jobID?.shortID) {
+            if (runResult.jobID?.shortID) {
                 allRawInputParameters.each { String k, Object o ->
                     BaseFile bf = o instanceof BaseFile ? (BaseFile) o : null
                     if (!bf) return
@@ -829,7 +839,63 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return true
     }
 
-    private Tuple2<Boolean, Integer> verifyFiles(StringBuilder dbgMessage) {
+    /** Wait for all file objects in the run to be prepared. This is necessary, because these file
+     *  may be updated concurrently (e.g., via runParallel).
+     *
+     *  Usually, the initial sleep should be sufficient, but if the system on which Roddy runs is
+     *  very busy, it may be necessary to wait a bit longer.
+     *
+     *  This function is called for every job, and therefore, the total runtime impact of changing
+     *  the wait time depends on the number of jobs.
+     *
+     *  The waiting parameters are configured via the `maxFileObjectAppearanceRetries` and
+     *  `fileObjectAppearanceRetryWaitMs` configuration parameters.
+     *
+     *  Note: The previous implementation waited for each files in filesToVerify and waited for
+     *        each combination of filesToVerify and allFilesInRun. However, this was an all vs.
+     *        all comparison, even waiting for files that are not related to each other.
+     *
+     *        This new implementation is conceptually simpler and should be sufficient. Just wait
+     *        for all files objects to be ready and continue.
+     */
+    protected void waitForFilesInRun() {
+        Integer numAttempts = context.maxFileObjectAppearanceRetries
+        Integer waitTime = context.fileObjectAppearanceRetryWaitMs
+
+        Thread.sleep(waitTime) // Initial short sleep to let other threads start working.
+        for (int i = 0; i < numAttempts; i++) {
+            Queue<BaseFile> filesToWaitFor = new LinkedList<BaseFile>()
+            for (BaseFile observedFile : context.allFilesInRun) {
+                if (observedFile == null) {
+                    logger.severe("File object in ExecutionContext.allFilesToRun is null. " +
+                                  "This should not happen. Please report this issue.")
+                } else if (observedFile.path == null) {
+                    filesToWaitFor.push(observedFile)
+                }
+            }
+            if (!filesToWaitFor.empty) {
+                try {
+                    logger.severe("Taking a short nap because a file does not seem to be finished." +
+                                  " Attempt ${i + 1}/$numAttempts")
+                    logger.rare(filesToWaitFor.collect {
+                        "Waiting for: " + it.toString()
+                    }.join("\n"))
+                    Thread.sleep(waitTime)
+                } catch (InterruptedException e) {
+                    System.err.println("Sleep interrupted for ${filesToWaitFor.size()} files: " + e.message)
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    /** For all files to verify (expected files), check if they exist. If they exist, check if they are valid.
+     *
+     * @param dbgMessage
+     * @return A tuple where the first value indicates if one or more files could not be verified,
+     *         and the second value indicates  how many files were known (found).
+     */
+    protected @NotNull Tuple2<Boolean, Integer> verifyFiles(@NotNull StringBuilder dbgMessage) {
         String sep = ENV_LINESEPARATOR
         Boolean fileUnverified = false
         Integer knownFilesCnt = 0
@@ -837,26 +903,19 @@ class Job extends BEJob<BEJob, BEJobResult> {
 
         if (isVerbosityHigh) dbgMessage << "\tverifying specified files" << sep
 
+        waitForFilesInRun()
+        List<BaseFile> observedFiles = context.allFilesInRun
+
         // TODO what about the case if no verifiable files where specified? Or if the know files count does not match
-        for (BaseFile jobFile : filesToVerify) {
-            // See if we know the file... so this way we can use the BaseFiles verification method.
-            List<BaseFile> knownFiles = context.getAllFilesInRun()
-            for (BaseFile contextFile : knownFiles) {
-                for (int i = 0; i < 3; i++) {
-                    if (jobFile == null || contextFile == null
-                            || jobFile.absolutePath == null || contextFile.path == null)
-                        try {
-                            logger.severe("Taking a short nap because a file does not seem to be finished." +
-                                          "context/declared file = $contextFile; job file = $jobFile")
-                            Thread.sleep(100)
-                        } catch (InterruptedException e) {
-                            e.printStackTrace()
-                        }
-                }
-                if (jobFile.absolutePath.equals(contextFile.path.absolutePath)) {
-                    if (!contextFile.isFileValid()) {
+        for (BaseFile expFile : filesToVerify) {
+            for (BaseFile obsFile : observedFiles) {
+                if (expFile.absolutePath == obsFile.path.absolutePath) {
+                    // "Verification" and "validation" are the same in Roddy.
+                    if (!obsFile.fileValid) {
                         fileUnverified = true
-                        if (isVerbosityHigh) dbgMessage << "\tfile " << contextFile.path.getName() << " could not be verified!" << sep
+                        if (isVerbosityHigh) {
+                            dbgMessage << "\tfile ${obsFile.path.name} could not be verified!$sep"
+                        }
                     }
                     knownFilesCnt++
                     break
@@ -870,7 +929,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return context
     }
 
-    List<BaseFile> getParentFiles() {
+    @NotNull List<BaseFile> getParentFiles() {
         if (parentFiles != null)
             return new LinkedList<>(parentFiles)
         else
@@ -903,7 +962,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return this.context.getParameterFilename(this)
     }
 
-    List<BaseFile> getFilesToVerify() {
+    @NotNull List<BaseFile> getFilesToVerify() {
         return new LinkedList<>(filesToVerify)
     }
 
@@ -915,15 +974,15 @@ class Job extends BEJob<BEJob, BEJobResult> {
         return allValid
     }
 
-    AnyToolCommand getToolCommand() {
+    @NotNull AnyToolCommand getToolCommand() {
         this.toolCommand
     }
 
-    String getToolID() {
+    @NotNull String getToolID() {
         return this.toolCommand.toolId
     }
 
-    Boolean getWasSubmittedOnHold() {
+    @NotNull Boolean getWasSubmittedOnHold() {
         return wasSubmittedOnHold
     }
 

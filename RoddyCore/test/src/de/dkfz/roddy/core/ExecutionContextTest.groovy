@@ -16,7 +16,7 @@ import de.dkfz.roddy.execution.io.LocalExecutionService
 import de.dkfz.roddy.execution.io.fs.FileSystemAccessProvider
 import groovy.transform.CompileStatic
 import org.junit.BeforeClass
-import org.junit.Rule;
+import org.junit.Rule
 import org.junit.Test
 
 import java.nio.file.Paths
@@ -145,6 +145,26 @@ class ExecutionContextTest {
         assert userMounts[2].hostPath == Paths.get("/hostPathC")
         assert userMounts[2].containerPath == Paths.get("/containerPathC")
         assert userMounts[2].mode == BindSpec.Mode.RW
+    }
+
+    @Test
+    void fileAccessRetryDefaults() {
+        ExecutionContext context = createEmptyContext()
+
+        assert context.maxFileObjectAppearanceRetries == 3
+        assert context.fileObjectAppearanceRetryWaitMs == 100
+    }
+
+    @Test
+    void fileAccessRetryCustomConfig() {
+        ExecutionContext context = createEmptyContext()
+        context.configurationValues.add(
+                new ConfigurationValue(ConfigurationConstants.MAX_FILE_APPEARANCE_ATTEMPTS, "5"))
+        context.configurationValues.add(
+                new ConfigurationValue(ConfigurationConstants.FILE_OBJECT_APPEARANCE_RETRY_WAIT_MS, "250"))
+
+        assert context.maxFileObjectAppearanceRetries == 5
+        assert context.fileObjectAppearanceRetryWaitMs == 250
     }
 
 }

@@ -667,8 +667,9 @@ public class Roddy {
 
     public static Configuration getApplicationSpecificConfiguration() {
         if (applicationSpecificConfiguration == null) {
-            applicationSpecificConfiguration = new Configuration(null);
-            RecursiveOverridableMapContainerForConfigurationValues configurationValues = applicationSpecificConfiguration.getConfigurationValues();
+            applicationSpecificConfiguration = new Configuration();
+            RecursiveOverridableMapContainerForConfigurationValues configurationValues =
+                    applicationSpecificConfiguration.getConfigurationValues();
 
             if (Roddy.jobManager != null) {
                 setDefaultRoddyJobIdVariable(configurationValues);
@@ -686,12 +687,18 @@ public class Roddy {
             applicationSpecificConfiguration.addParent(commandlineConfiguration);
 
             if (useCustomIODirectories()) {
-                configurationValues.add(new ConfigurationValue(CFG_INPUT_BASE_DIRECTORY, Roddy.getCustomBaseInputDirectory(), CVALUE_TYPE_PATH));
-                configurationValues.add(new ConfigurationValue(CFG_OUTPUT_BASE_DIRECTORY, Roddy.getCustomBaseOutputDirectory(), CVALUE_TYPE_PATH));
+                configurationValues.add(new ConfigurationValue(CFG_INPUT_BASE_DIRECTORY,
+                                                               Roddy.getCustomBaseInputDirectory(),
+                                                               CVALUE_TYPE_PATH));
+                configurationValues.add(new ConfigurationValue(CFG_OUTPUT_BASE_DIRECTORY,
+                                                               Roddy.getCustomBaseOutputDirectory(),
+                                                               CVALUE_TYPE_PATH));
             }
 
             if (getUsedResourcesSize() != null) {
-                configurationValues.add(new ConfigurationValue(CFG_USED_RESOURCES_SIZE, Roddy.getUsedResourcesSize().toString(), CVALUE_TYPE_STRING));
+                configurationValues.add(new ConfigurationValue(CFG_USED_RESOURCES_SIZE,
+                                                               Roddy.getUsedResourcesSize().toString(),
+                                                               CVALUE_TYPE_STRING));
             }
 
         }
