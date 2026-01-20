@@ -48,6 +48,22 @@ jobs: # a collection of steps
             git clone https://github.com/TheRoddyWMS/Roddy-Default-Plugin.git dist/plugins/DefaultPlugin
             git clone https://github.com/TheRoddyWMS/Roddy-Base-Plugin.git dist/plugins/PluginBase
             ./gradlew build check allBoms
+            
+            # Retrieve version
+            ls ./gradleBuild/distributions/Roddy-*.zip
+            FULL_VERSION=$(ls ./gradleBuild/distributions/Roddy-*.zip | sed -r 's/.*Roddy-([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+(-test[[:digit:]]+)?).zip/\1/')
+            VERSION=$(echo "$FULL_VERSION" | sed -r 's/([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+)(-test[[:digit:]]+)?/\1/')
+
+            # Get the build version from buildversion.txt
+            cat ./RoddyCore/buildversion.txt
+            buildVersionTxt=$(cat ./RoddyCore/buildversion.txt | tr '\n' '.' | sed -r s/\.$//)
+            
+            # Ensure the version numbers are consistent.
+            if [[ "$VERSION" != "$buildVersionTxt" ]]; then
+              echo "buildversion.txt not consistent: '$VERSION' != '$buildVersionTxt'" >> /dev/stderr
+              exit 1
+            fi
+
       - save_cache:
           paths:
             - ~/.gradle/wrapper
@@ -84,15 +100,8 @@ jobs: # a collection of steps
             go install github.com/tcnksm/ghr@v0.17.0
 
             # Retrieve version
+            ls ./gradleBuild/distributions/Roddy-*.zip
             FULL_VERSION=$(ls ./gradleBuild/distributions/Roddy-*.zip | sed -r 's/.*Roddy-([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+(-test[[:digit:]]+)?).zip/\1/')
-            VERSION=$(echo "$FULL_VERSION" | sed -r 's/([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+)(-test[[:digit:]]+)?/\1/')
-
-            # Ensure buildversion.txt is up to date. Only version is supported.
-            buildVersionTxt=$(cat ./RoddyCore/buildversion.txt | tr '\n' '.' | sed -r s/\.$//)
-            if [[ "$VERSION" != "$buildVersionTxt" ]]; then
-              echo "buildversion.txt not updated" >> /dev/stderr
-              exit 1
-            fi
 
             # Compile artifacts
             mkdir artifacts/

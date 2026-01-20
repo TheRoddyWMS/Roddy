@@ -65,11 +65,26 @@ rootProject.layout.buildDirectory = "${projectDir}/gradleBuild"
  * this returned string will indicate that. Also if the repository is dirty
  */
 def getVersionName() {
-    def dirtySuffix = grgit.status().isClean() ? '' : '-dirty'
-    return grgit.describe() + dirtySuffix
+    String dirtySuffix = grgit.status().isClean() ? '' : '-dirty'
+    String headCommit = grgit.head().id
+    def tagsAtHead = grgit.tag.list().findAll { it.commit.id == headCommit }
+    if (tagsAtHead.size() == 0) {
+        // If the current commit is not tagged, just use the describe output with a dirty suffix.
+        return grgit.describe() + dirtySuffix
+    } else if (tagsAtHead.size() > 1) {
+        // If there are multiple tags, then we cannot decide which one to use.
+        System.err.println("Warning: Multiple tags found at HEAD: " + tagsAtHead.collect { it.name }.join(", "))
+        System.exit(1)
+    } else {
+        // Exactly one tag found, use it. We cannot use git describe here, because that would only
+        // work for annotated tags, but we want it to work also with lightweight tags.
+        return tagsAtHead.first().name + dirtySuffix
+    }
 }
 
 rootProject.version = getVersionName()
+
+System.err.println("Building Roddy version ${rootProject.version}")
 
 test {
     workingDir = projectDir
@@ -225,6 +240,11 @@ clean.doLast {
  *  * RoddyEnv-*.zip with the runtime environment, starter script, etc.
  */
 distributions {
+
+
+    // IMPORTANT: When potentially changing the name of the zips, please check that the
+    //            expression in the CI (CircleCI, GitLab-CI) that checks the consistency of
+    //            version numbers still works!
 
     roddy {
         distributionBaseName = "Roddy"
