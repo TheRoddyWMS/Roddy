@@ -6,6 +6,7 @@
 
 package de.dkfz.roddy.config;
 
+import de.dkfz.roddy.tools.LoggerWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,10 @@ import static de.dkfz.roddy.config.ConfigurationConstants.CVALUE_TYPE_STRING;
  */
 public class RecursiveOverridableMapContainerForConfigurationValues
         extends RecursiveOverridableMapContainer<String, ConfigurationValue, Configuration> {
+
+    private static final LoggerWrapper logger =
+            LoggerWrapper.getLogger(RecursiveOverridableMapContainerForConfigurationValues.class.getSimpleName());
+
 
     RecursiveOverridableMapContainerForConfigurationValues(@NotNull Configuration parent,
                                                            @NotNull String id) {
@@ -75,13 +80,21 @@ public class RecursiveOverridableMapContainerForConfigurationValues
 
     public boolean getBoolean(@NotNull String id)
             throws ConfigurationError {
-        ConfigurationValue value = getValue(id);
-        if (value == null)
-            throw new ConfigurationError("Boolean value for '" + id + "' could not be found.", id);
-        try {
-            return value.toBoolean();
-        } catch (NumberFormatException nfe) {
-            throw new ConfigurationError("Value for '" + id + "' is not a boolean: " + value.toString(), id);
+        ConfigurationValue value = getValue(id, null);
+        if (value == null) {
+            logger.warning("Boolean value for '" + id + "' could not be found. Returning false as default. " +
+                           "Such defaults may be deprecated in the future. Please set '" + id + "' explicitly.");
+            return false;
+            // The following change would break backwards compatibility. For instance, `runExomeAnalysis` in
+            // the AlignmentAndQCWorkflow 1.2.173-204 is not defined in its default configuration and would
+            // therefore lead to an exception here.
+//            throw new ConfigurationError("Boolean value for '" + id + "' could not be found.", id);
+        } else {
+            try {
+                return value.toBoolean();
+            } catch (NumberFormatException nfe) {
+                throw new ConfigurationError("Value for '" + id + "' is not a boolean: " + value.toString(), id);
+            }
         }
     }
 
@@ -145,6 +158,8 @@ public class RecursiveOverridableMapContainerForConfigurationValues
      * @return "" or the value converted to a string.
      */
     public @NotNull String getString(@NotNull String id) {
+        logger.warning("String value for '" + id + "' could not be found. Returning '' as default. " +
+                       "Such defaults may be deprecated in the future. Please set '" + id + "' explicitly.");
         return getString(id, "");
     }
 

@@ -72,13 +72,14 @@ class RecursiveOverridableMapContainerForConfigurationValuesSpec extends Specifi
         Boolean trueValue = container.getBoolean("trueKey")
         Boolean falseValue = container.getBoolean("falseKey", false)
         Boolean explicitDefaultValue = container.getBoolean("nonExistingKey", true)
-        container.getBoolean("anotherNonExistingKey")  // Should throw
+        Boolean implicitDefaultValue = container.getBoolean("anotherNonExistingKey")
 
         then:
         trueValue == true
         falseValue == false
         explicitDefaultValue == true
-        thrown(ConfigurationError)
+//        thrown(ConfigurationError)
+        implicitDefaultValue == false
     }
 
     def "GetInteger"() {

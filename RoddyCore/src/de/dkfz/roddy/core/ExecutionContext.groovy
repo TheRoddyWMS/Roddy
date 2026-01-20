@@ -273,7 +273,7 @@ class ExecutionContext {
 
     @NotNull ResourceSet getResourceSetFromConfiguration(@Nullable String toolId) {
         if (!toolId || toolId.trim() == "") {
-            // TODO However the semantics of values null, "", and UNKNOWN are. Use ToolId class and forbid null ToolId.
+            // TODO However the semantics of values null, "", and UNKNOWN are, use ToolId class and forbid null ToolId.
             logger.warning("ToolId was null or empty. Returning EmptyResourceSet. Please report this! " +
                            "Stacktrace:\n" + Utils.stackTrace())
             return new EmptyResourceSet()

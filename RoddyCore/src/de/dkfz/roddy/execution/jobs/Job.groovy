@@ -284,7 +284,7 @@ class Job extends BEJob<BEJob, BEJobResult> {
         this.parentFiles = parentFiles ?: new LinkedList<BaseFile>()
 
         // These are debugging methods to get at least some warnings about null values that should not occur.
-        // The only place I could find, where a BaseFile in the list may be null is in the indexFile of a BamFile.
+        // The only place I could find where a BaseFile in the list may be null is in the indexFile of a BamFile.
         if (filesToVerify == null) {
             logger.warning("filesToVerify parameter must not be null. Please report this! Stacktrace:\n" +
                            Utils.stackTrace())
