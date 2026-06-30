@@ -91,7 +91,7 @@ The container can be built from its versioned directory with
 
 [source,bash]
 ----
-cd $repoDir/containers/dkfz_minimal/$version   # e.g. 1.1.0 or 1.2.0
+cd $repoDir/containers/dkfz_minimal/$version   # e.g. 1.1.0 or 1.1.0-testing
 docker build -t ghcr.io/theroddywms/dkfz_minimal:$version -f Dockerfile .
 ----
 
