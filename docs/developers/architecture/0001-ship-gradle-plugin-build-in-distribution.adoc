@@ -1,0 +1,109 @@
+= ADR 0001: Ship a shared Gradle plugin-build script in the Roddy distribution
+:toc:
+
+== Status
+
+Accepted (2026-07-16).
+
+== Context
+
+Roddy plugins carry JVM code (Groovy/Java under `src/`) and Spock tests
+(`test/src/`). Historically the plugin artifact is built by
+`dist/bin/<version>/helperScripts/compileRoddyPlugin.sh` (a Bash `groovyc` +
+`jar` step), and the Spock tests could only be run through Roddy's own Gradle
+build. There was no way to compile/test a single plugin, or build its JAR, with
+a normal `./gradlew` invocation against an already-built Roddy.
+
+Constraints that shaped the decision:
+
+* Plugins are built *against a specific Roddy version*. Roddy already ships each
+  version as a self-contained distribution `dist/bin/<version>/` (`Roddy.jar` +
+  `lib/` with the exact Groovy and all runtime dependencies) plus
+  `helperScripts/`.
+* `RoddyTestSpec` (the base class of most plugin specs) lives in Roddy's *test*
+  sources and is not in the runtime dist; it is available as compiled classes in
+  Roddy's build output (`gradleBuild/classes/groovy/test`).
+* The JVM (Java 8) and Groovy (2.4) are environment/dist-provided, not things a
+  plugin should re-pin.
+* We did **not** want a published Gradle (binary/convention) plugin, and did not
+  want the build logic duplicated and drifting across every plugin's
+  `build.gradle`.
+
+== Decision
+
+Maintain the plugin-build logic **once, in Roddy**, as a plain Gradle script
+`helperScripts/roddyPluginBuild.gradle`, shipped inside every Roddy distribution
+(next to `compileRoddyPlugin.sh`; the `roddy` distribution already packages
+everything under `dist/bin/develop/`). Each plugin keeps a *minimal*
+`build.gradle` that sets three properties and applies the shared script:
+
+[source,groovy]
+----
+plugins { id 'groovy' }
+ext.roddyBaseDir   = file(project.findProperty('roddyBaseDir') ?: "${projectDir}/../../Roddy")
+ext.roddyVersion   = (project.findProperty('roddyVersion') ?: 'develop').toString()
+ext.pluginsBaseDir = file(project.findProperty('pluginsBaseDir') ?: projectDir.parentFile)
+apply from: "${roddyBaseDir}/dist/bin/${roddyVersion}/helperScripts/roddyPluginBuild.gradle"
+----
+
+The shared script derives the plugin's identity/version/dependencies, builds the
+whole classpath from the selected Roddy distribution, wires the test framework
+and `RoddyTestSpec`, and configures `test` and a `jar` task that deploys
+`<pluginName>.jar` at the plugin top level. It is applied with `apply from:`, not
+as a Gradle plugin, so a plugin can still add dependencies or override settings
+*after* the `apply` line.
+
+Key behaviours:
+
+* **Classpath + Groovy** come from `<roddyBaseDir>/dist/bin/<roddyVersion>/`
+  (`Roddy.jar` + `lib/*`); nothing is re-pinned except the test framework
+  (Spock/JUnit from Maven Central, mirroring `Roddy/build.gradle`).
+* **Plugin name** is read from the single `*Plugin` source class; the directory
+  name is only cross-checked (mismatch is a warning; two `*Plugin` classes is an
+  error).
+* **Version** comes from `buildversion.txt` (single source of truth); the build
+  never mutates sources and only *warns* on drift from the `*Plugin`
+  `CURRENT_VERSION_STRING`.
+* **Plugin dependencies** come from `buildinfo.txt` (`dependson`); each can be
+  pointed at an exact directory with `-Pplugin.<Name>=<dir>` and a version
+  mismatch is a warning, not an error.
+* **Roddy API mismatch** (plugin `buildinfo.txt` vs. the dist's) is a warning,
+  not an error, so a plugin can be built/tested against a newer/development
+  Roddy on purpose.
+* The JAR manifest records title/version/build-number/**git revision**
+  (`git describe --tags --always --dirty`)/Roddy-API/JDK/Groovy/built-against.
+* The build performs **no git operations**; it prints a reminder to commit the
+  jar and `buildversion.txt`.
+
+== Alternatives considered
+
+* *Self-contained `build.gradle` per plugin* — trivially copy-transferable, but
+  the logic is duplicated in every plugin and drifts.
+* *`buildSrc/` in each plugin* (the `AlignmentAndQCWorkflows` precedent) — the
+  standard place for build code, but `buildSrc` is per Gradle build, so with one
+  build per plugin it is still duplicated, and it is heavier (a compiled
+  sub-project).
+* *A published/`includeBuild` Gradle convention plugin* — the most "correct"
+  reuse mechanism, but adds a versioning/distribution story and a plugin-portal
+  dependency at configuration time, breaking the offline/dist-only property; and
+  we explicitly did not want a Gradle plugin.
+* *Reference the script from Roddy source* (`Roddy/gradle/…`) instead of the
+  dist — couples the plugin build to a source checkout at HEAD rather than the
+  versioned distribution it actually builds against.
+
+== Consequences
+
+* Single, authoritative copy of the plugin-build logic, versioned *with the
+  distribution* a plugin builds against; parallel to `compileRoddyPlugin.sh`
+  ("Roddy owns plugin builds"). New plugins get a working `./gradlew test` /
+  `./gradlew jar` by applying one line.
+* Requires a built Roddy dist (`./gradlew build` in Roddy) and, for
+  `RoddyTestSpec`-based specs, Roddy's compiled test classes
+  (`./gradlew testClasses`). Only Roddy distributions new enough to ship
+  `roddyPluginBuild.gradle` support Gradle-building plugins.
+* The build stays offline-capable: everything but the test framework is local to
+  the dist; no Gradle-plugin resolution.
+* `git` must be on `PATH` for the manifest's revision (always true in a plugin
+  working tree).
+
+See `docs/developers/BuildingAndTestingPlugins.adoc` for the how-to.

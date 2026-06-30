@@ -1,0 +1,114 @@
+= Compiling plugins from the command line
+
+This describes the command line for compiling a JVM (Java/Groovy) plugin,
+inferred from `Roddy/roddy.sh`, `Roddy/dist/bin/develop/roddy.sh`,
+`Roddy/dist/bin/develop/helperScripts/setupRuntimeEnvironment.sh`, and
+`Roddy/dist/bin/develop/helperScripts/compileRoddyPlugin.sh`.
+
+== Command
+
+Run from the `Roddy/` directory:
+
+[source,bash]
+----
+bash roddy.sh compileplugin PluginID[:dependencyPluginID][_version]
+----
+
+For example, to compile `AlignmentAndQCWorkflows` in place:
+
+[source,bash]
+----
+bash roddy.sh compileplugin AlignmentAndQCWorkflows
+----
+
+A specific dependency plugin used for compilation classpath resolution can be
+named after a colon, and a specific plugin version/revision can be appended
+with an underscore, e.g. `AlignmentAndQCWorkflows_1.2.73-206`. Only the
+plugin-name part (before `_`/`:`) is used as the resulting jar's base name.
+
+`--useconfig=<file>` (or `--c=<file>`) selects the `applicationProperties.ini`
+to use; it defaults to `applicationProperties.ini` in the current directory.
+
+== Preconditions
+
+* `JDK_HOME` must point at a JDK 8 installation (checked explicitly by the
+  `compileplugin` branch in `dist/bin/develop/roddy.sh`, i.e. the per-Roddy-
+  version `roddy.sh` sourced as `$RODDY_BSCRIPT`); a plain JRE is not
+  sufficient.
+* The application properties file must define `pluginDirectories` (see
+  <<_configuring_plugin_directories>> below).
+* The plugin's source folder must contain a `buildinfo.txt` whose
+  `RoddyAPIVersion` matches the Roddy version being used to compile
+  (`RODDY_API`, derived from the `dist/bin/<version>/` directory that
+  `roddy.sh` resolved for this invocation). A mismatch aborts compilation with
+  an error instead of compiling against an incompatible API.
+
+== What `compileplugin` actually does
+
+1. `dist/bin/develop/roddy.sh` recognizes `parm1 == compileplugin` and sources
+   `helperScripts/compileRoddyPlugin.sh`.
+2. `findPluginFolders.groovy` resolves the plugin's source directory from
+   `pluginDirectories` plus the built-in plugin search paths.
+3. `IncreaseAndSetBuildVersion.groovy` updates `buildversion.txt` and the
+   `CURRENT_VERSION_STRING`/`CURRENT_VERSION_BUILD_DATE` constants in the
+   generated `*Plugin.java` class. The build number (`buildversion.txt`'s
+   second line) is incremented unless the environment variable
+   `INCREASE_BUILD_VERSION` is set to `false` (default: `true`); the build
+   date is always refreshed regardless.
+4. All `*.groovy`/`*.java` files under `src/main/` (or `src/` if `src/main/`
+   does not exist) are compiled with `groovyc`, against a classpath built from
+   the current Roddy jar, `dist/bin/<version>/lib/*`, the JavaFX runtime jar,
+   and any plugin dependency jars resolved via `findPluginLibraries.groovy`.
+5. Compiled classes are packed into `<PluginName>.jar` inside the plugin's
+   source directory.
+6. If the plugin directory is under Git or SVN, the new jar and
+   `buildversion.txt` (and the touched `*Plugin.java`) are `git add`/`svn add`ed
+   automatically.
+
+[[_configuring_plugin_directories]]
+== Configuring the application properties file and plugin directories
+
+`compileplugin` (like every other `roddy.sh` mode) reads an application
+properties `.ini` file to find `pluginDirectories`. The file is resolved as
+follows (`resolveAppConfig.sh`):
+
+* `--useconfig=<file>` or `--c=<file>` on the command line names the file
+  explicitly. The `=` is required — `--useconfig <file>` (space-separated) is
+  *silently ignored* (the option-matching in `resolveAppConfig.sh` only
+  recognizes the `--useconfig=*`/`--c=*` glob patterns), falling back to the
+  default below without any error.
+* Otherwise, it defaults to `applicationProperties.ini`.
+* Whichever name is used, it is looked up, in order: as a full/relative path
+  as given; then under `~/.roddy/`; then in the same directory as `roddy.sh`
+  (i.e. `Roddy/` when invoked as `bash roddy.sh ...`).
+
+Within that file, set `pluginDirectories` under `[DIRECTORIES]` to a
+comma-separated list of directories that contain plugin source folders, e.g.
+(`testConfigs/applicationProperties.ini`):
+
+[source,ini]
+----
+[DIRECTORIES]
+pluginDirectories=/omics/groups/OE0526/internal/users/kensche/RoddyProject/plugins
+----
+
+These directories are searched *in addition to* a fixed set of built-in
+locations relative to the Roddy checkout root (`findPluginFolders.groovy`):
+`dist/plugins`, `dist/plugins_2.49plus`, `dist/plugins_R2.3`,
+`dist/plugins_R2.4`, `dist/plugins_R3.0`, `dist/plugins_3.0`. Within all of
+these directories combined, the plugin folder is matched by name, optionally
+with a `_<version>` suffix (e.g. `AlignmentAndQCWorkflows_1.2.73-206`); if no
+version is given, the folder without a version suffix is used.
+
+A template with all recognized properties (including `pluginDirectories`) is
+at `dist/bin/develop/helperScripts/skeletonAppProperties.ini`.
+
+== Related modes
+
+* `bash roddy.sh packplugin PluginID` / `testpackplugin` do *not* recompile;
+  they force `increasebuildonly=true` internally (see step 3 above — this
+  skips the `groovyc`/jar-packing section of `compileRoddyPlugin.sh` while
+  still updating `buildversion.txt`/build date), then copy the plugin
+  directory into a versioned `<PluginID>_<major>.<minor>/` folder and zip it
+  (`packplugin` only) for distribution. Run `compileplugin` first to produce
+  an up-to-date jar before packing.
