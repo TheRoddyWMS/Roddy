@@ -1,0 +1,241 @@
+== Installation guide
+
+Since version 3 of Roddy, Roddy uses https://semver.org[semantic versioning].
+There are several minor versions of Roddy, which can be downloaded and installed in the same directory.
+Minor versions mark additions to the Roddy API, both the commandline-interface and internal API changes, which are important for plugin compatibility.
+Therefore, Roddy plugins are only compatible to a specific minor version and all later versions.
+
+Installations for the different versions differ a bit, so we list all versions here.
+
+=== Premises
+
+To install and run Roddy the following programs need to be installed on your computer or the execution hosts:
+
+* Java 8 and Groovy 2.4.21+ (< 2.5, though).
+* the https://github.com/TheRoddyWMS/Roddy-Default-Plugin[default plugin]
+* the https://github.com/TheRoddyWMS/Roddy-Base-Plugin[base plugin]
+* zip/unzip
+* bash
+* the tool https://manpages.debian.org/stretch/procmail/lockfile.1.en.html[lockfile] from the "procmail" package must be installed on the job-executing hosts.
+
+As Roddy is Linux based, you will be able to find most of these in your OS package manager.
+
+For the JDK and Groovy, -- both required on the host on which you run Roddy -- you may want to use https://sdkman.io/[SDKMan!]. The following will get you going:
+
+[source,Bash]
+----
+curl -s "https://get.sdkman.io" | bash
+source "$HOME/.sdkman/bin/sdkman-init.sh"
+sdk install groovy 2.4.21
+sdk install java 8.0.442-tem
+----
+
+The remaining instructions deal with the installation of the Roddy environment.
+The Roddy "environment" is basically a set of directories into which to install the Roddy (optionally), its plugins.
+
+=== Roddy 2.2
+
+Will not be supported in the future. Releases are only available for legacy plugins.
+
+=== Roddy 2.3
+
+Roddy 2.3 an any other Roddy 2 version are not developed further. Please use a recent Roddy version, unless you want to run an old plugin version.
+
+IMPORTANT: Roddy 2.4 releases are actually Roddy 3 pre-releases! Please use Roddy 3 instead.
+
+[arabic]
+. Clone the repo and select the desired tag.
+. Download any https://java.com/de/download/linux_manual.jsp[JRE
+v1.8.*] (OpenJDK and SunJDK were tested). Also download
+http://groovy-lang.org/download.html[Groovy 2.3.*]
+. Open up the `dist/` folder in the Roddy directory.
+. Create a folder named `runtimeDevel/`
+. Decompress the archives into `runtimeDevel/` with `tar`/`unzip`
+. Optionally unpack one or more of the release zips in `dist/bin/` directory
+
+Please see xref:_versioning[Versioning] for information about how to mix different versions of Roddy in the same directory.
+
+You will need an xref:_application_properties_files[] file with the configuration for accessing your computing environment.
+
+=== Roddy 3
+
+In version 3 the installation was somewhat simplified:
+
+. Download the zip files needed for your release version from https://github.com/TheRoddyWMS/Roddy/tags[GitHub releases]. You can download a newer `RoddyEnv-*.zip` file than `Roddy-*.zip` version.
+. Unpack the `RoddyEnv-*.zip`. It provides directory layout.
+. Unpack the desired `Roddy-*.zip` as `dist/bin/$versionNumber/` directory.
+. Install the https://github.com/TheRoddyWMS/Roddy-Default-Plugin[DefaultPlugin] and https://github.com/TheRoddyWMS/Roddy-Base-Plugin[PluginBase].
+** Note that old workflow versions may depend on older versions of these plugins. Ideally, make versioned plugin installation directories of the form `dist/plugins/DefaultPlugin-$version/` and `dist/plugins/PluginBase-$version/`
+** If you leave out the `-$version` suffix then the plugin version can be used as "develop" version.
+** It is possible to install these plugins in any plugin directory. See xref:_application_properties_files[applicationProperties.ini] or xref:_command_line_options[command-line options] for configuring other plugin directories.
+** Roddy does not care, whether the plugin directories are Git repositories. For development, you'd probably just clone the plugin directories.
+
+=== Versioning
+
+The Roddy environment with the top-level "roddy.sh" allow you to co-install multiple Roddy versions.
+Simply install the different versions of Roddy from the release zips, into directories in "dist/bin".
+Each installation directory should follow the naming scheme `dist/bin/$major.$minor.$patch`.
+The desired version can then be selected during Roddy invocations using the "--useRoddyVersion" parameter.
+
+Additionally, Roddy is capable of handling multiple versions of the same workflow plugin.
+Each plugin may depend on different versions of other plugins.
+Therefore, if you install specific plugins you may need specific versions of, e.g., the default and base plugins and other plugins.
+The way to progress here is to first check in the plugin of interest in the `buildinfo.txt` file located in the plugin's top-level directory, which plugins and their versions are needed as dependencies.
+Then, progress in this way from plugin to plugin recursively.
+
+The installation of specific plugin version needs to be done in directories named after the scheme
+`$pluginName_$major.$minor.$patch[-$revision]` (the revision is optional).
+The simplest way of plugin installation, is to clone the repository into an appropriately named directory and then check out the tag with the version of interest.
+
+=== [Optional] Setup GroovyServ (deprecated)
+
+IMPORTANT: The GroovyServe support is not well tested and not used anymore.
+
+If you find the startup time of Roddy to long, you may want to use https://kobo.github.io/groovyserv/[GroovyServ].
+GroovyServ will wait in the background and wait for Groovy-processes, such as Roddy.
+
+Roddy will try to download and set it up automatically.
+If that fails or if you want to set it up by yourself, do the following in your Roddy directory:
+
+[source,bash]
+----
+mkdir -p dist/runtime
+cd dist/runtime
+
+# Download the GroovyServ binary zip archive from the `GroovyServ`_ download site,
+# unzip it and delete the archive afterwards.
+
+unzip groovyserv*.zip
+rm groovyserv*.zip
+
+# Last step, put Groovy and the Java binary folders to your PATH environment variable. This
+# is e.g. set in your ~/.bashrc file.
+----
+
+By contrast, if you want to disable GroovyServ support, in particular the automatic downloading, you need to do this:
+
+[source,Bash]
+----
+mkdir -p dist/runtime
+cd dist/runtime
+touch gservforbidden
+----
+
+If you create the file, Roddy will not use GroovyServ.
+
+[NOTE]
+====
+This setup was tested using GroovyServ 1.1.0!
+====
+
+=== Test your installation
+
+Head over to the Roddy directory and do
+
+[source,Bash]
+----
+./roddy.sh
+----
+
+If everything is properly done, Roddy will print its help screen.
+
+=== Quick build instructions
+
+If you want to build Roddy yourself, clone the repository.
+The repository already contains the Roddy environment.
+Change into this directory and use Gradle to build the Roddy JAR.
+In summary:
+
+[source,bash]
+----
+git clone https://github.com/TheRoddyWMS/Roddy.git
+cd Roddy
+# Check out specific tags or branches. "master" is the most recent version,
+# which may or may not be a released.
+git checkout master
+pushd dist/plugins
+git clone https://github.com/TheRoddyWMS/Roddy-Default-Plugin.git DefaultPlugin
+git clone https://github.com/TheRoddyWMS/Roddy-Base-Plugin PluginBase
+popd
+./gradlew build
+----
+
+Note that the two basic plugins are required for some of the integration tests.
+
+=== Full developer build instructions
+
+If you want to work with a full Roddy installation and its dependencies, we suggest you create a dedicated directory to install everything.
+Roddy and its dependencies https://github.com/TheRoddyWMS/BatchEuphoria[BatchEuphoria] and
+https://github.com/TheRoddyWMS/RoddyToolLib[RoddyToolLib] use the Gradle build system.
+
+For co-developing Roddy an these libraries, you can use the https://docs.gradle.org/current/userguide/composite_builds.html[composite build feature] of Gradle.
+
+[source,bash]
+----
+mkdir RoddyProject
+cd RoddyProject
+git clone https://github.com/TheRoddyWMS/RoddyToolLib.git
+git clone https://github.com/TheRoddyWMS/BatchEuphoria.git
+git clone https://github.com/TheRoddyWMS/Roddy.git
+
+mkdir -p Roddy/dist/plugins
+pushd Roddy/dist/plugins
+git clone https://github.com/TheRoddyWMS/Roddy-Default-Plugin.git DefaultPlugin
+git clone https://github.com/TheRoddyWMS/Roddy-Base-Plugin PluginBase
+popd
+
+cd Roddy
+./gradlew build --include-build ../RoddyToolLib/ --include-build ../BatchEuphoria/
+----
+
+Via the `--include-build` options you make sure to use the local "development" installations of the libraries. Otherwise, Gradle will downloaded the versions listed in the `build.gradle` file.
+
+==== Gradle and proxies
+
+If you are behind a proxy you should first configure the proxy for Gradle.
+Create `$HOME/.gradle/gradle.properties` with the appropriate settings.
+You can use the following template:
+
+[source,groovy]
+----
+systemProp.http.proxyHost=
+systemProp.http.proxyPort=
+systemProp.https.proxyHost=
+systemProp.https.proxyPort=
+----
+
+=== IntelliJ
+
+For development, we use Jetbrains IntelliJ. You're free to use any other IDE, though.
+
+. Download and activate the Gradle-plugin of IntelliJ, if you have not done so already.
+. Open a new project. The project should be an "Empty Project". Ideally, the project directory should be the superdirectory of the Roddy repository, and possible other related directories, e.g., a `plugins/` directory, where you put your plugins that you need during development.
+. Import the all source repositories via "File" -> "Project Structure" -> "+" (Module pane). For import select the `build.gradle` from the specific repository.
+. Open the Gradle tasks window by clicking on the Gradle symbol on the task bar. If there is no Gradle symbol in the toolbars of IntelliJ, select "View" -> "Tool Windows" -> "Gradle".
+. Configure the composite Gradle builds by right-clicking on the Gradle project.
+. Now, if you go to the Gradle toolbar and select the `build` target of Roddy, RoddyToolLib, BatchEuphoria and Roddy itself will be built with Gradle.
+
+==== Setting up plugins in the project
+
+After these initial steps you can add your Roddy plugins to you project.
+We usually clone the plugin repositories into a dedicated `plugins/` directory just beneath the root project directory.
+This
+directory is then used for the `usePluginVersion`
+command-line option or in the `applicationProperties.ini`.
+The only exception are the `DefaultPlugin` and
+`PluginBase` that need to be in the
+`Roddy/dist/plugins` directory.
+
+In IntelliJ then add the repository to your project as a module, ideally
+by directly importing the `.iml` file from the repository.
+Make sure that the plugin modules depends on the PluginBase, Roddy_main
+and maybe RoddyToolLib_main modules.
+
+==== Running Roddy from within IntelliJ
+
+For running Roddy with parameters from IntelliJ you an "Application"
+configuration with `-enableassertions -Xms4m -Xmx50m` as VM
+options, the path to your `Roddy/` repository as working dir
+and `de.dkfz.roddy.Roddy` as Main class. When debugging
+plugin code you should use the plugin's repository root for "Use class
+path of module".

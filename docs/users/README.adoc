@@ -1,0 +1,13 @@
+:doctype: book
+:toc: left
+
+= User's guide
+
+include::installationGuide.adoc[]
+include::walkthrough.adoc[]
+include::cheatSheet.adoc[]
+include::commandLineOptions.adoc[]
+include::reproduceResults.adoc[]
+include::config/README.adoc[]
+include::output.adoc[]
+include::faq.adoc[]
