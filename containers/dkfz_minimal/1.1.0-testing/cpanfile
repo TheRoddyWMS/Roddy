@@ -1,0 +1,16 @@
+# CPAN modules that are not packaged as RPMs for CentOS 7 / EPEL 7 (see the
+# Dockerfile). They are installed into the system site_perl via
+# `cpanm --installdeps`. Trivy has no Perl analyzer, so the resulting set (these
+# requires plus their transitive dependencies) is recorded for review in
+# cpan-modules.txt next to this file -- regenerate it as documented in that
+# file's header when the modules change.
+#
+# Test::More is intentionally absent: it is provided by the perl-Test-Simple RPM
+# and therefore already appears in the RPM part of the SBOM.
+requires 'Const::Fast';
+requires 'Try::Tiny';
+requires 'Type::Tiny';
+requires 'String::Util';
+requires 'Perl::Tidy';
+requires 'Test::Warn';
+requires 'Test::Exception';

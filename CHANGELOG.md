@@ -57,6 +57,9 @@ This is, e.g., the case if the data user cuts out columns of a TSV without check
 
 # Changelist
 
+* Upcoming
+  * **Patch**: Added `dkfz_minimal:1.1.0-testing`, a *test-only* image layered on `1.1.0` that adds Perl (`Test::More`, `Const::Fast`, `Type::Tiny`, `Try::Tiny`, `String::Util`, `Perl::Tidy`, `Test::Warn`, `Test::Exception`), shell (`shunit2`) and Python (`pytest`) test and code-quality tooling, so the plugin test suites can run against the production Perl (5.16.3). It is not a production runtime. The package diff versus `1.1.0` and a CycloneDX SBOM for review are in [`containers/dkfz_minimal/1.1.0-testing/`](containers/dkfz_minimal/1.1.0-testing/).
+
 * 3.8.2
   * **Patch**: Made handling of boolean values that are not defined lenient again. 
 
