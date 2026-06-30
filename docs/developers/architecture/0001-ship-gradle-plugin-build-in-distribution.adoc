@@ -106,4 +106,4 @@ Key behaviours:
 * `git` must be on `PATH` for the manifest's revision (always true in a plugin
   working tree).
 
-See `docs/developers/BuildingAndTestingPlugins.adoc` for the how-to.
+See `docs/developers/pluginDevelopment/BuildingAndTestingPlugins.adoc` for the how-to.

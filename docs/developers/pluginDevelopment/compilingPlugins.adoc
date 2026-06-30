@@ -5,6 +5,13 @@ inferred from `Roddy/roddy.sh`, `Roddy/dist/bin/develop/roddy.sh`,
 `Roddy/dist/bin/develop/helperScripts/setupRuntimeEnvironment.sh`, and
 `Roddy/dist/bin/develop/helperScripts/compileRoddyPlugin.sh`.
 
+NOTE: For a plugin that ships a `build.gradle`, the *recommended* way to compile
+and test it is the shared Gradle build (`./gradlew test` / `./gradlew jar`),
+which also runs the plugin's Spock tests -- see
+link:BuildingAndTestingPlugins.adoc[Building and Testing Roddy Plugins with Gradle].
+The `roddy.sh compileplugin` mode described here is the fallback and works for
+every plugin, including those without a `build.gradle`.
+
 == Command
 
 Run from the `Roddy/` directory:

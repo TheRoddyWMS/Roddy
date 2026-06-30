@@ -1,12 +1,18 @@
 = Building and Testing Roddy Plugins with Gradle
-:toc: left
 
 Roddy ships a shared Gradle build script,
 `dist/bin/<version>/helperScripts/roddyPluginBuild.gradle`, that compiles a
 plugin's JVM code (`src/`), runs its Spock tests (`test/src/`), and packages and
 deploys the plugin JAR. It is the Gradle counterpart of `compileRoddyPlugin.sh`
 and is maintained here, in Roddy, so every plugin shares one implementation. See
-link:architecture/0001-ship-gradle-plugin-build-in-distribution.adoc[ADR 0001].
+link:../architecture/0001-ship-gradle-plugin-build-in-distribution.adoc[ADR 0001].
+
+This is the *recommended* way to build and test a plugin that ships a
+`build.gradle` (it also runs the Spock test suite, which the command-line
+compiler does not). It applies only to such plugins; a plugin without a
+`build.gradle` -- e.g. a native or older plugin -- is compiled with the
+command-line `roddy.sh compileplugin` mode instead, see
+link:compilingPlugins.adoc[Compiling plugins from the command line].
 
 The whole compile/runtime classpath -- including the exact Groovy that Roddy
 ships -- is taken from a *built Roddy distribution*, so a plugin re-pins nothing
@@ -121,8 +127,8 @@ equivalent to `compileRoddyPlugin.sh`.
 == Extending / overriding in a plugin
 
 Because the script is applied into the plugin's own project, anything *after* the
-`apply from:` line adds to or overrides it (Gradle configuration is order-
-sensitive). For example, to add a test library:
+`apply from:` line adds to or overrides it (Gradle configuration is order-sensitive).
+For example, to add a test library:
 
 [source,groovy]
 ----
