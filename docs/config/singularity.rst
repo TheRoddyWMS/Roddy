@@ -66,7 +66,7 @@ This is to achieve a good isolation of the container environment.
 Minimal Container (DKFZ-only)
 -----------------------------
 
-The Roddy repository contains a ``Dockerfile`` in ``containers/dkfz_minimal`` to build a minimal container for the tasks.
+The Roddy repository contains versioned Dockerfiles under ``containers/dkfz_minimal/<version>`` (currently ``1.1.0`` and ``1.2.0``) to build a minimal container for the tasks. ``1.2.0`` is built on top of ``1.1.0`` and adds the Perl code-quality/testing modules advised in the coding guidelines; build or pull ``1.1.0`` first.
 This is basically, a plain CentOS 7.9 (yeah, "legacy") with some additional packages, like they are available in the DKFZ/ODCF cluster environment.
 It is called "minimal" because it does not contain any reference data or software -- just the basic operating system that is needed to execute exactly the legacy software stack at our institution -- including the module system.
 Therefore, using this container, the DKFZ/ODCF Roddy workflows can be executed as if they are executed in our cluster, provided that all the additional data and software are mounted into the container.
@@ -75,7 +75,7 @@ The container can be build with
 
 .. code-block:: bash
 
-    cd $repoDir/containers/dkfz_minimal
+    cd $repoDir/containers/dkfz_minimal/$version   # e.g. 1.1.0 or 1.2.0
     docker build -t ghcr.io/theroddywms/dkfz_minimal:$version -f Dockerfile .
 
 If you do not want to build the container yourself, you can also download a pre-built container from the GitHub Container Registry:

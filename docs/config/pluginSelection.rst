@@ -1,0 +1,44 @@
+Plugin Selection
+================
+
+Roddy can work with multiple installations of plugins.
+Each plugin has a version number, usually of the form ``major.minor.patch-revision``. The revision number is optional.
+If it is missing, then revision number ``-0`` is assumed.
+Currently, identifies the version number only from the name of the directory in which the plugin is installed, but ignores the content of the directory and does not do any consistency checks (e.g., checking git-tags or JAR-embedded version numbers).
+
+Importantly, if you directly request a plugin version (down to the revision level) in your project XML, exactly that version will be required to be installed and will be used. Otherwise, Roddy will not start.
+
+By contrast, a requested plugin may depend on other plugins. For such "dependency" plugins that are pulled in as dependencies, Roddy has to select a specific version.
+The version Roddy chooses depends the configured plugin selection strategy.
+
+In particular, some strategies automatically select a plugin based on two kind of compatibility-assumptions:
+
+1. If two plugin versions are declared to be compatible using the ``compatibleto`` declaration in the ``buildinfo.txt``, then the newest version compatible to is used.
+2. Revisions are assumed to be compatible to each other.
+
+Since version 3.9.0 of Roddy, Roddy allows to select from multiple plugin-selection algorithms.
+These can be configured using the ``dependencyPluginSelectionStrategy`` configuration value.
+
+1. ``autoupgradeRevisionChain``
+  * This is the algorithm implemented in Roddy .... to 3.7.*.
+  * By default, this strategy follows compatible-to declarations.
+  * The strategy follows continuous chains of installed revisions and selects to the newest revision.
+  * For instance, if revisions 0, 1, 2, 3, and 205 are installed and a plugin-dependency on major.minor.patch-1 is declared, this strategy selects revision 3. The strategy does not select 204, because revisions 4 to 204 are not installed.
+2. ``autoupgradeRevisionGlobal``
+  * This strategy always upgrades automatically to the **highest** revision number, independently of whether all lower revisions are installed or not. This was the originally planned automatic upgrade algorithm that assumes that higher/newer revisions are better than lower/older revisions.
+  * By default, this strategy follows compatible-to declarations.
+  * For instance, if revisions 0, 1, 2, 3, and 205 are installed, then 205 is chosen.
+3. ``autodowngradeRevision``
+  * This is the algorithm implemented in Roddy 3.8.2. This algorithm always **downgrades** to the lowest revision number. This strategy only makes sense, if you consider revision ``-0`` as special as the revision that represents the default dependency-plugin version.
+  * By default, this strategy follows compatible-to declarations.
+  * For instance, if revisions 0, 1, 2. 3, and 205 are installed, then 0 is chosen.
+4. exact
+  * With this strategy all dependency-plugin versions must be defined and only exact version matches are accepted. I.e., if revision major.minor.patch-revision is requested, this version must be installed. If no installation can be found, then Roddy will terminate with an error.
+  * By default, this strategy does **not** follow compatible-to declarations.
+  * This is the safest and only recommended algorithm.
+  * All dependency-plugin versions can exactly be configured via the configuration values ``dependencyPluginVersions``, which must be a space-separated list of "$pluginName:version" strings. By default, this value is empty.
+
+All "auto" algoritms support following ``compatibleto`` declarations from the ``buildinfo.txt`` and by default these "compatibility-edges" are followed.
+This can be modified by changing ``dependencyPluginSelectionHonorCompatibleTo`` to ``false``.
+
+We strongly recommend that you always use the exact matching algorithm, because in most applications simplicity, reproducibility, and predictability strikes convenience!
