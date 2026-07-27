@@ -1,0 +1,415 @@
+= Coding Guidelines
+:toc: left
+
+Conventions covering Python, Bash, Perl, R, Groovy, and Java, plus
+scientific-code practices from the OTP project's
+https://gitlab.com/one-touch-pipeline/otp/-/wikis/Workflow-Development/Coding-Guidelines[Coding Guidelines wiki page] (Bash, Perl, and general failure-mode-awareness
+sections below cite it as source). These are generic conventions meant to
+guide new and changed code in any of the covered languages.
+
+== General Coding Conventions
+
+Coding cycle:
+
+. Design the interface.
+. Present the design for review; optionally refine (1).
+. Write tests to capture the behaviour.
+. Implement functionality without modifying any tests.
+. Present the changes for review; optionally refine the implementation (3).
+
+=== Design Guidelines
+
+* Assess for every change whether the code follows
+  the SOLID principles and flag deviations.
+* Identify and name OOP patterns in code and docs.
+* Analyse the code for code smells and name them explicitly.
+* Adhere to Clean Code principles and discipline.
+* Avoid comments about *what* code does -- prefer comments that state *why* a
+  specific algorithm, data structure, pattern, or approach was chosen (unless
+  trivial or obvious).
+* Prefer object-functional or purely functional style; avoid procedural style.
+* Apply 12-factor app principles.
+* Prefer strongly and statically typed code over weakly or dynamically typed
+  solutions.
+* Apply the principle of least surprise.
+* Use "tell, don't ask" for object-oriented code.
+* Use command-query separation for any code (functional, procedural, and
+  object-oriented).
+* Name variables and functions by what they do, not by the type they refer
+  to. Avoid Hungarian notation. Use type annotations.
+
+Avoid over-engineering: only make changes that are directly requested or
+clearly necessary. Don't add features, refactor surrounding code, or make
+"improvements" beyond what was asked. Don't add error handling for scenarios
+that cannot happen.
+
+=== Failure-Mode Awareness (source: OTP Coding Guidelines)
+
+Scientific/bioinformatics code needs the same rigor as wet-lab work -- errors
+in data analysis can be as damaging as experimental mistakes. The primary
+risk is *"Happy-Path-Coding"*: implementing as if all external interactions
+succeed, and ignoring failure modes.
+
+Common failure points to design against, especially in production workflows
+processing many samples across a cluster (where failure probabilities
+compound):
+
+* Missing or misnamed files.
+* Incorrect parameters (type, range, compatibility, consistency).
+* Syntactically or semantically invalid file content.
+* Empty files (from undetected errors or incomplete writes).
+* Format inconsistencies between tools (e.g. BWA vs. Bowtie BAMs).
+* Filesystem I/O errors on NFS and other networked/cluster filesystems.
+* Truncated input files from external sources.
+* Failing external programs that don't report errors properly.
+* Memory allocation failures with large datasets.
+
+Mitigations: study the error-handling model of the language you're using;
+distinguish spike/exploratory solutions from production code; add automated
+tests (unit, integration, end-to-end); use reusable error-checking patterns
+and functions instead of ad-hoc checks; make input assumptions explicit;
+choose the language deliberately (avoid Bash for complex logic, see below);
+use type checkers (Mypy) and linters, or use statically typed languages.
+
+=== Exit Codes
+
+All codes below shauld be kept in the range `1`-`125` (`0` denotes success). This range avoids
+the exit statuses that POSIX and the shell give a fixed meaning: `126` (command
+found but not executable), `127` (command not found), and any status `> 128`,
+which reports termination by a signal (encoded as `128 + signal number`). Job
+schedulers such as IBM LSF surface these OS/POSIX wait-status values verbatim,
+and IBM explicitly advises that applications must not use exit codes greater
+than `128`. Staying within `1`-`125` therefore keeps every code an unambiguous
+application error. Within one script, every distinct error reason has its own,
+never-reused exit code.
+
+References:
+
+* POSIX Shell & Utilities -- `command`, exit-status rationale for `126`/`127`:
+https://pubs.opengroup.org/onlinepubs/9799919799/utilities/command.html
+* IBM Spectrum LSF -- LSF job exit codes:
+https://www.ibm.com/docs/SSWRJV_10.1.0/lsf_admin/job_exit_codes_lsf.html
+
+
+=== Test Writing
+
+* Aim for full line coverage.
+* Test extreme/boundary values. Consider property-based testing where
+  applicable.
+* Check for division by zero or overflow/underflow.
+* Think about how to break the code, and document possible (security) bugs.
+
+== Language-Specific Conventions
+
+=== Groovy
+
+* Annotate classes/methods `@CompileStatic` by default; use `@CompileDynamic`
+  (or `TypeChecking.SKIP`) only where dynamic dispatch is genuinely needed,
+  and say why at the point it's used.
+* Write idiomatic Groovy, not Java-with-different-syntax: use Groovy's
+  collection/closure operators, GStrings, safe-navigation (`?.`) and Elvis
+  (`?:`) operators, and truthiness rather than porting Java verbosity
+  wholesale.
+* Avoid `null` where possible; where a value is genuinely optional, annotate
+  it explicitly (e.g. JetBrains `@Nullable`) and enable build-level
+  null-checks so that everything left un-annotated is treated as `@NotNull`
+  by default -- this is what makes "prefer strongly typed code" (see Design
+  Guidelines) meaningful for null-handling specifically.
+* Use Spock for testing (BDD-style `given`/`when`/`then` blocks); use Gradle
+  as the build tool where the project's build system allows it.
+
+=== Java
+
+* Prefer the most modern Java idioms actually available at the project's configured language level (e.g. streams, `Optional`, and -- only where the language level supports them -- `var`, records, and pattern matching) over older boilerplate; check the project's
+actual target JDK version before assuming a given feature is usable, rather
+than defaulting to the newest language you happen to know (a repository may
+be pinned to an older JDK for reasons outside this document's scope -- see
+that project's own repository-specific conventions).
+
+=== Python
+
+* Whenever possible use Mypy for type checking.
+** Always use explicit type annotations.
+* Avoid unsafe `cast`. Only use it when the local context makes the type
+  unambiguous, or when necessary because other solutions add unnecessary
+  complexity -- explain and get user-confirmed before using it.
+* Avoid generic "types" such as `str`, `list`, or `dict`. Always prefer
+  existing explicit types, like `Path`, and don't stop with nested types. For
+  instance, instead of `dict`, use `Dict[str, str]` for actual
+  string-to-string maps.
+* Be aware of other types in Python, like named tuple. Types should express
+  the part of the meaning of code that the variables don't (and should not)
+  capture, and much of what is usually only documented in comments.
+* Use pytest for testing. Consider `hypothesis` for property-based testing.
+
+=== Bash
+
+* No braces on variables unless required (`:-`, `:?`, ambiguous boundary).
+* Prefer `$(...)` over backticks; double-quote variables and subshells.
+* Always declare `local` variables in functions.
+* Use subshells for function calls, to prevent leakage of local state to calling environment. If it is much simpler to allow the side-effect of modifying the outer environment, ask the user and present the alternative implementations. Criteria are simplicity and readibility that may conflict with safety (because of possible side-effects).
+* Bind positional params (`$1`, ...) to named `local` variables via `:?` with
+  a purpose description.
+* Apply the same quality standards to shell as to any other language.
+* Always use `set -ueo pipefail` (or the available subset/superset). On
+  Bash >= 4.4, also add `shopt -s inherit_errexit` so `errexit` propagates
+  into subshells and command substitutions, which don't inherit it by
+  default.
+* Prefer a dedicated, non-shell language for complex logic (OTP guideline:
+  "writing safe Bash code is extremely hard, if not impossible" -- Bash
+  lacks real data structures, has fragile/surprising error-handling
+  semantics, and known version-specific bugs). Keep shell scripts to
+  orchestration/glue; move non-trivial logic to a language with better
+  error handling and data structures where practical.
+* Use `shellcheck` on every script -- ideally both as a local check before
+  commit and in CI.
+* Function guideline: "if you write a comment saying what the following code
+  is doing, substitute the code and comment by a function call" -- but use
+  functions sparingly in Bash; if a script needs many, that's a signal to
+  switch languages (per the point above).
+* Function return values: a function's exit/return code should only signal
+  success/failure (an exception channel), not carry a result value. Return
+  actual results via stdout and capture with command substitution:
++
+[source,bash]
+----
+yourFunction() {
+    doSomething
+    echo "$result"
+}
+resultValue=$(yourFunction)
+----
++
+Alternatively, for complex data use I/O to files.
+* For debugging, `set -o verbose`/`set -o xtrace` print commands as read/
+  after expansion; combine with `set -o errtrace` and an `ERR` trap to log
+  the failing command and exit code before propagating.
+* Avoid `[[ something ]] && todo`. Use `if`/`else`.
+
+=== Perl (source: OTP Coding Guidelines)
+
+* Prefer the `autodie` pragma (`use autodie;`) so most I/O failures raise
+  exceptions automatically instead of failing silently. Note its limitation:
+  list-context reads can still fail silently even with `autodie`.
+* Prefer `IO::Handle` over plain `open`/`close`
+* Where `autodie` isn't used, check I/O explicitly rather than trusting a
+  bare read/write/close to succeed:
++
+[source,perl]
+----
+use Carp;
+my $line = readline(STDIN)
+    // croak "Couldn't read header from standard input: $!";
+    # The `//` tests for definedness. This is appropriate for `readline`.
+    # but not for `open`, `close`, and `print`.
+
+open(my $outFh, '>', $filename)
+    || croak "Error opening file '$filename': $!";
+print $outFh "Some text"
+    || croak "Couldn't write to '$filename': $!";
+close $outFh
+    || croak "Error closing file '$filename': $!";
+----
+* For a piped open (`open($fh, "cmd |")` / `open($fh, "|cmd")`), guard both
+  ends, not just `open`: a successful `open()` only confirms the shell fork
+  succeeded, not that `cmd` itself exists, ran, or produced valid output --
+  when the shell invokes a missing or failing command, the fork still
+  succeeds and `open()` still returns true. The command's actual exit
+  status only becomes visible via `close($fh)`'s return value (false if the
+  piped command exited non-zero):
++
+[source,perl]
+----
+open(my $fh, "$cmd |") or die "Could not fork for '$cmd': $!";
+# ... read from $fh ...
+close($fh) or die "Command '$cmd' failed or exited non-zero: $!";
+----
+* Avoid the unsafe idiom of relying on `<>`/`<STDIN>` in a boolean/loop
+  context without checking `defined`-ness -- it can fail silently on a read
+  error rather than only at legitimate EOF. When supplying a failure branch,
+  use the defined-or operator (`//`, Perl >= 5.10) rather than `||` (as in the
+  `readline(STDIN) // croak ...` example above): `||` fires on any false value,
+  so a validly-read but falsy line -- e.g. a final line `0` with no trailing
+  newline -- would be misreported as a read error. `//` fires only on `undef`
+  (EOF or a genuine read error), which is the intended check.
+* `chomp` input immediately after reading it (right after the
+  `defined`-check above), and add newlines back explicitly at output time
+  (`say`, or `print` with an explicit `"\n"`) rather than relying on an
+  unstripped trailing newline surviving through processing. Carrying a raw
+  trailing newline in a variable is fragile: it silently corrupts whichever
+  field happens to still hold it if the column layout ever shifts (e.g. a
+  trailing column being dropped or reordered upstream), even if it's
+  currently harmless because that field is never read or output.
+* Avoid implicit `$_` -- assign the current line/value to a named variable
+  and match/operate against that variable explicitly, even inside a
+  `while`/`readline` loop, rather than relying on `$_` being implicitly set
+  and implicitly matched by a bare `/regex/` or `split(/.../)`. A named
+  variable makes the data flow visible at the point of use and avoids
+  accidental interaction with nested code (a called sub, or a `map`/`grep`
+  in the same block) that also reads or writes `$_`.
+* The backtick operator does not automatically propagate a called command's
+  exit code as a Perl-level failure -- check `$?` explicitly:
++
+[source,perl]
+----
+`executeAndFail --with this-parameter`;
+if ($? & 127) {
+  die "Command failed with code " . ($? >> 8);
+}
+----
+* Avoid the postfix/"reverse" `if` statement modifier (`do_something() if
+  ($condition);`); prefer the regular block form (`if ($condition) {
+  do_something(); }`). The block form reads in execution order (condition,
+  then consequence) instead of backwards, scales to more than one statement
+  without a rewrite, and gives a natural place to add an `else` later
+  without restructuring. Reserve the postfix form for the narrow case of a
+  single, simple early-exit guard clause (e.g. `next if ($skip);`, `return
+  if (!$needed);`), where it reads as an appended condition on a control-flow
+  statement rather than a masked block.
+
+==== Advised packages
+
+Recommended for new/changed Perl code. A package used at *runtime* must be
+present in the deployment image (e.g. `dkfz_minimal`) -- coordinate its
+addition with ops rather than assuming a bare/minimal image ships it (the
+image has been seen to lack even core modules such as `Test::More`). Prefer
+the smallest subset a script actually needs.
+
+Immutable values -- preferred over `use constant` for anything whose value is
+only known at runtime (CLI args, computed data):
+
+* `Const::Fast` -- `const my $x = ...;` declares an immutable value assignable
+  from a runtime value. Because it is an ordinary `my` lexical, a mistyped
+  name is caught at *compile time* by `strict vars`, and `const` makes it
+  read-only. This gives compile-time name-safety *and* immutability with
+  natural `$x` syntax -- without the `BEGIN` block and the parenless-bareword
+  (`FOO`) vs. parenthesised-call (`FOO()`) constraints that `use constant` is
+  forced into for runtime-derived values. Modern, faster successor to
+  `Readonly`; prefer it. (Runtime dependency.)
+
+Static analysis and formatting -- run in CI; catch issues before runtime, no
+runtime dependency:
+
+* `Perl::Critic` -- policy-based static analyzer for unsafe/fragile patterns.
+* `Perl::Tidy` (`perltidy`) -- consistent, enforceable formatting.
+
+I/O and control-flow safety:
+
+* `autodie` (core) -- I/O failures raise exceptions instead of failing
+  silently (see above).
+* `Try::Tiny` -- correct `try`/`catch` without the `eval`/`$@` footguns.
+  (Runtime dependency.)
+
+Input validation / contracts, where a boundary warrants more than an ad-hoc
+check:
+
+* `Type::Tiny` -- declarative, reusable type constraints for validating
+  external input. (Runtime dependency.)
+
+Testing:
+
+* `Test::More` (core), plus `Test::Exception` and `Test::Warn` for clearer
+  assertions on failure and warning behaviour. These must be present wherever
+  the `.t` suite is executed.
+
+=== R
+
+Adopted from the https://style.tidyverse.org/[tidyverse Style Guide]
+(naming/formatting) and the
+https://contributions.bioconductor.org/r-code.html[Bioconductor coding
+guidelines] (defensive/safety practices), after checking both against the
+Design Guidelines above and against one rejected alternative:
+
+Naming and formatting (tidyverse):
+
+* Use `snake_case` for object and function names (lowercase, `_`-separated)
+  -- avoids ambiguity with S3 method-dispatch naming (`function.class`).
+* Variable names are nouns; function names are verbs (the R-specific form of
+  this document's general naming rule).
+* Use `<-` for assignment, never `=`.
+* Use `TRUE`/`FALSE`, never the reassignable `T`/`F` abbreviations.
+* Space after commas, never before; space around infix operators (`==`,
+  `+`, `<-`) except high-precedence ones (`::`, `$`, `[`, `^`, `:`).
+* Use `styler` (auto-formatting) and `lintr` (static analysis -- R's
+  equivalent of `shellcheck`) to enforce the above mechanically rather than
+  by review alone.
+
+Defensive programming and safety (Bioconductor):
+
+* Validate function arguments with `stopifnot()` (or an equivalent explicit
+  check) at the top of the function -- the direct R application of this
+  document's Failure-Mode Awareness section: don't assume a caller always
+  passes valid input.
+* Prefer vectorized operations (`vapply()`, `apply()`-family) over explicit
+  `for` loops; prefer `vapply()` over `sapply()` specifically, since
+  `sapply()`'s return type depends on its input and can silently change
+  shape.
+* Use `seq_len(n)`/`seq_along(x)` instead of `1:n`/`1:length(x)` -- the
+  classic R footgun: `1:length(x)` on a zero-length `x` yields `c(1, 0)`
+  instead of an empty sequence, so a loop guarded this way runs when it
+  should not.
+* Use the `message()`/`warning()`/`stop()` hierarchy deliberately:
+  `message()` for diagnostic progress output, `warning()` for handled-but-
+  unusual situations, `stop()` for actual errors; reserve `cat()`/`print()`
+  for final result display only.
+* Avoid `<<-` (implicit outer-scope assignment); prefer explicit function
+  return values -- consistent with this document's Bash guidance on
+  avoiding hidden mutation of the calling environment.
+* Use `is(x, "Class")` rather than `class(x) == "Class"` for type checks.
+* Use `testthat` for unit tests -- the R analog to the Python `pytest`
+  recommendation above.
+
+Type safety (S4) and static analysis:
+
+R has no compile-time type system comparable to Python's type hints + Mypy
+-- it is dynamically typed at its core. The closest, and recommended,
+approximations:
+
+* Prefer *S4* (`setClass()`) over plain named lists or data frames for any
+  structured value with more than a couple of related fields/invariants
+  (e.g. a parsed-options record, a result table with associated units/
+  provenance). Declare field types via the `representation`/`slots`
+  argument (`setClass("Foo", representation(x = "numeric", label =
+  "character"))`) and add a `setValidity()` method for invariants that a
+  type alone can't express (ranges, cross-field consistency). This is
+  enforced at object-construction/`validObject()` time -- not compile-time,
+  but rigorous and automatic, and it's what makes SOLID's
+  interface/substitution principles literally applicable to R code (see
+  Compatibility assessment above) rather than just analogous.
+* Where a full S4 class is overkill, at minimum validate with
+  `stopifnot()`/`is()` checks per the Defensive programming rules above --
+  don't leave non-trivial structured data as an untyped list with no
+  validation anywhere.
+* For genuine static analysis (bugs caught without running the code):
+  `lintr` (already recommended above; AST-based, R's `shellcheck` analog)
+  and `codetools::checkUsage()` (ships with base R -- finds unused
+  variables, undefined globals, and other usage errors). `goodpractice`
+  bundles `lintr` with cyclomatic-complexity and test-coverage checks into
+  one report if a more comprehensive gate is wanted later.
+* Considered and not currently recommended: the `typed` package (more
+  literal Python-style annotations, but still niche/experimental) and
+  `vctrs` (excellent for building reusable custom vector types, but
+  heavier-weight than most script-local data structures need) -- revisit
+  either if R code in a given codebase grows into a proper package with a
+  reusable data model.
+
+== Performance and Resource Management (source: OTP Coding Guidelines)
+
+Don't over-optimize early -- focus on correctness and data-flow architecture
+first, not micro-patterns. One area that *does* need attention from the
+start on shared cluster infrastructure is garbage-collected runtimes'
+default memory behavior:
+
+* *JVM (Java/Groovy)*: the default JVM heap can expand to a large fraction of
+  node memory, which is fine on a dedicated machine but can starve other jobs
+  on a shared cluster node. Set an explicit, deliberately small default (e.g.
+  `JAVA_OPTS=-Xmx1024m`) and only raise it where a specific job actually
+  needs more, rather than relying on the JVM's automatic sizing.
+* *Python*: consider bounding heap growth for long-running or per-sample
+  scripts with `resource.setrlimit(resource.RLIMIT_DATA, ...)` if a script
+  turns out to use unexpectedly large amounts of memory for what it does
+  (the OTP guideline cites a simple FASTQ parser that used 300 MB
+  unnecessarily as a real example worth catching this way).
+* *R and Perl*: no specific tuning guidance from the source material beyond
+  R's general-purpose `gc()`; revisit if a concrete memory problem in an R or
+  Perl script warrants it.

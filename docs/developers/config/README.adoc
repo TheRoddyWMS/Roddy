@@ -1,0 +1,6 @@
+== Configuration topics
+
+include::configurationFiles.adoc[]
+include::configFilenamesAndToolEntries.adoc[]
+include::xmlConfigurationFiles.adoc[]
+include::metadata.adoc[]

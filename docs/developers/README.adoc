@@ -1,0 +1,16 @@
+:doctype: book
+:toc: left
+
+= Developer's guide
+
+This guide covers both workflow authors (writing and packaging workflows as
+Roddy plugins) and Roddy core developers (working on Roddy itself).
+
+include::exampleWorkflow.adoc[]
+include::config/README.adoc[]
+include::pluginDevelopment/README.adoc[]
+include::roddyDevelopment/README.adoc[]
+
+== Coding Guidelines
+
+See link:CodingGuidelines.adoc[Coding Guidelines] for conventions covering Python, Bash, Perl, R, Groovy, and Java that apply to workflow code.

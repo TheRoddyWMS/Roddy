@@ -1,0 +1,3 @@
+== Native plugins (deprecated)
+
+IMPORTANT: Native plugins are deprecated!

@@ -1,0 +1,6 @@
+== Configuration topics
+
+include::applicationProperties.adoc[]
+include::roddyConfigurationValues.adoc[]
+include::bashConfigurationFiles.adoc[]
+include::singularity.adoc[]

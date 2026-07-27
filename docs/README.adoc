@@ -1,0 +1,57 @@
+= The Roddy WMS
+
+[IMPORTANT]
+====
+Roddy is a legacy workflow management system.
+
+Further development will focus on keeping it running with changing requirements (e.g., containerization of legacy workflows), but probably no new features and improvements will be done beyond that.
+
+Some features are marked as deprecated. The development of these was halted, and these features are usually not well covered by tests. We will not provide support for these features.
+====
+
+== Introduction
+
+=== What is Roddy
+
+Roddy is a framework for development and management of script based
+workflows on a batch processing cluster.
+
+You can find the Roddy source code and its releases on our
+https://github.com/TheRoddyWMS/Roddy[GitHub project site].
+
+=== Key Features
+
+Roddy has several key features which make it a good choice to be used as a base for workflows:
+
+* Multi-Level configuration system
+* Modular application design
+* Access to several cluster backends (via the
+https://github.com/TheRoddyWMS/BatchEuphoria[BatchEuphoria] library)
+* Different versions of plugins/workflows and the Roddy core application are handled in a single installation
+* Various already implemented workflows
+* Callable stand-alone or integrable in other applications
+* Only a few dependencies and no database for the Roddy core application necessary
+* Various execution modes to support users to get their work done faster
+
+The multi-layer configuration system and the handling of plugin versions make Roddy particularly well suited for multi-user, multi-project environments.
+
+=== Documentation
+
+* link:users/README.adoc[User's guide] -- installing Roddy, configuring and running workflows, reproducing results.
+* link:developers/README.adoc[Developer's guide] -- writing and packaging workflows as plugins, and developing Roddy itself.
+* Do you have questions? Check out the link:users/faq.adoc[FAQ].
+
+=== License and associated projects
+
+Roddy is offered under an MIT based license.
+
+We extracted from Roddy two possibly helpful open source libraries, again under MIT license:
+
+* https://github.com/TheRoddyWMS/RoddyToolLib[RoddyToolLib] is a Java /
+Groovy library which provides several tools used in BatchEuphoria and
+Roddy. See the project description for more information.
+* https://github.com/TheRoddyWMS/BatchEuphoria[BatchEuphoria] is a Java
+/ Groovy library designed to offer easy access to cluster systems.
+Currently supported are PBS, SGE and LSF Rest
+
+IMPORTANT: Roddy is for research-use only!

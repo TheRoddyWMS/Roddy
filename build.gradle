@@ -17,7 +17,7 @@ plugins {
     id 'pmd'
     id 'org.cyclonedx.bom' version '1.10.0'
     id 'maven-publish'
-    id 'kr.motd.sphinx' version '2.10.1'         // Apache 2.0
+    id 'org.asciidoctor.jvm.convert' version '4.0.2'   // Apache 2.0
     id 'application'
     id 'distribution'
     id 'groovy'
@@ -286,10 +286,13 @@ distributions {
 roddyDistTar.dependsOn(jar)
 roddyDistZip.dependsOn(jar)
 
-sphinx {
-    sourceDirectory = "${project.projectDir}/docs/"
-    outputDirectory = "${rootProject.layout.buildDirectory.get()}/site/"
-    warningsAsErrors = true
+asciidoctor {
+    sourceDir = file("${project.projectDir}/docs/")
+    sources {
+        include 'README.adoc', 'users/README.adoc', 'developers/README.adoc'
+    }
+    outputDir = file("${rootProject.layout.buildDirectory.get()}/site/")
+    baseDirFollowsSourceFile()
 }
 
 plugins.withType(PmdPlugin) {
