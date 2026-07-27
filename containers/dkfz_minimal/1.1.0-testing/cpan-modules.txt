@@ -1,0 +1,151 @@
+# CPAN modules installed into the system site_perl of dkfz_minimal:1.1.0-testing
+# (package<TAB>version). Trivy has no Perl analyzer, so this file is the
+# reference inventory for review; the CycloneDX SBOM (dkfz_minimal-1.1.0-testing.cyclonedx)
+# covers only the RPM and PyPI packages. These are the cpanfile's `requires`
+# plus their transitive configure/build/runtime dependencies.
+#
+# Regenerate after changing the cpanfile / rebuilding the image:
+#   docker run --rm ghcr.io/theroddywms/dkfz_minimal:1.1.0-testing \
+#     perl -MFile::Find -MModule::Metadata -le \
+#     'my @d=grep{-d}qw(/usr/local/share/perl5 /usr/local/lib64/perl5);my %v;
+#      find({no_chdir=>1,wanted=>sub{return unless /\.pm$/;
+#      my $m=Module::Metadata->new_from_file($_)or return;
+#      for my $p($m->packages_inside){next if exists $v{$p};
+#      my $x=$m->version($p);$v{$p}=defined $x?"$x":"-"}}},@d);
+#      print "$_\t$v{$_}" for sort keys %v' \
+#     | sort > cpan-modules.txt   # then re-add this header
+#
+App::Prove	3.52
+App::Prove::State	3.52
+App::Prove::State::Result	3.52
+App::Prove::State::Result::Test	3.52
+Const::Fast	0.014
+DB	-
+Devel::TypeTiny::Perl58Compat	2.010001
+Error::TypeTiny	2.010001
+Error::TypeTiny::Assertion	2.010001
+Error::TypeTiny::Compilation	2.010001
+Error::TypeTiny::WrongNumberOfParameters	2.010001
+Eval::TypeTiny	2.010001
+Eval::TypeTiny::CodeAccumulator	2.010001
+Exporter::Shiny	1.006003
+Exporter::Tiny	1.006003
+ExtUtils::Config	0.010
+ExtUtils::Config::MakeMaker	0.010
+ExtUtils::Helpers	0.028
+ExtUtils::Helpers::Unix	0.028
+ExtUtils::Helpers::VMS	0.028
+ExtUtils::Helpers::Windows	0.028
+ExtUtils::InstallPaths	0.015
+main	
+Module::Build::Tiny	0.053
+Perl::Tidy	20260705
+Perl::Tidy::Debugger	20260705
+Perl::Tidy::Diagnostics	20260705
+Perl::Tidy::FileWriter	20260705
+Perl::Tidy::Formatter	20260705
+Perl::Tidy::HtmlWriter	20260705
+Perl::Tidy::IndentationItem	20260705
+Perl::Tidy::IOScalar	20260705
+Perl::Tidy::IOScalarArray	20260705
+Perl::Tidy::Logger	20260705
+Perl::Tidy::Tokenizer	20260705
+Perl::Tidy::VerticalAligner	20260705
+Perl::Tidy::VerticalAligner::Alignment	20260705
+Perl::Tidy::VerticalAligner::Line	20260705
+Reply::Plugin::TypeTiny	2.010001
+String::Util	1.36
+Sub::Exporter::Progressive	0.001013
+Sub::Uplevel	0.2800
+TAP::Base	3.52
+TAP::Formatter::Base	3.52
+TAP::Formatter::Color	3.52
+TAP::Formatter::Console	3.52
+TAP::Formatter::Console::ParallelSession	3.52
+TAP::Formatter::Console::Session	3.52
+TAP::Formatter::File	3.52
+TAP::Formatter::File::Session	3.52
+TAP::Formatter::Session	3.52
+TAP::Harness	3.52
+TAP::Harness::Env	3.52
+TAP::Object	3.52
+TAP::Parser	3.52
+TAP::Parser::Aggregator	3.52
+TAP::Parser::Grammar	3.52
+TAP::Parser::Iterator	3.52
+TAP::Parser::Iterator::Array	3.52
+TAP::Parser::IteratorFactory	3.52
+TAP::Parser::Iterator::Process	3.52
+TAP::Parser::Iterator::Stream	3.52
+TAP::Parser::Multiplexer	3.52
+TAP::Parser::Result	3.52
+TAP::Parser::Result::Bailout	3.52
+TAP::Parser::Result::Comment	3.52
+TAP::Parser::ResultFactory	3.52
+TAP::Parser::Result::Plan	3.52
+TAP::Parser::Result::Pragma	3.52
+TAP::Parser::Result::Test	3.52
+TAP::Parser::Result::Unknown	3.52
+TAP::Parser::Result::Version	3.52
+TAP::Parser::Result::YAML	3.52
+TAP::Parser::Scheduler	3.52
+TAP::Parser::Scheduler::Job	3.52
+TAP::Parser::Scheduler::Spinner	3.52
+TAP::Parser::Source	3.52
+TAP::Parser::SourceHandler	3.52
+TAP::Parser::SourceHandler::Executable	3.52
+TAP::Parser::SourceHandler::File	3.52
+TAP::Parser::SourceHandler::Handle	3.52
+TAP::Parser::SourceHandler::Perl	3.52
+TAP::Parser::SourceHandler::RawTAP	3.52
+TAP::Parser::YAMLish::Reader	3.52
+TAP::Parser::YAMLish::Writer	3.52
+Test::Exception	0.43
+Test::Harness	3.52
+Test::TypeTiny	2.010001
+Test::Warn	0.37
+Test::Warn::Categorization	-
+Type::Coercion	2.010001
+Type::Coercion::FromMoose	2.010001
+Type::Coercion::Union	2.010001
+Type::Library	2.010001
+Type::Params	2.010001
+Type::Params::Alternatives	2.010001
+Type::Params::Parameter	2.010001
+Type::Params::Signature	2.010001
+Type::Parser	2.010001
+Type::Parser::AstBuilder	2.010001
+Type::Parser::Token	2.010001
+Type::Parser::TokenStream	2.010001
+Type::Registry	2.010001
+Types::Common	2.010001
+Types::Common::Numeric	2.010001
+Types::Common::String	2.010001
+Types::Standard	2.010001
+Types::Standard::ArrayRef	2.010001
+Types::Standard::CycleTuple	2.010001
+Types::Standard::Dict	2.010001
+Types::Standard::HashRef	2.010001
+Types::Standard::Map	2.010001
+Types::Standard::ScalarRef	2.010001
+Types::Standard::StrMatch	2.010001
+Types::Standard::Tied	2.010001
+Types::Standard::Tuple	2.010001
+Types::TypeTiny	2.010001
+Type::Tie	2.010001
+Type::Tie::ARRAY	2.010001
+Type::Tie::BASE	2.010001
+Type::Tie::HASH	2.010001
+Type::Tie::SCALAR	2.010001
+Type::Tiny	2.010001
+Type::Tiny::Bitfield	2.010001
+Type::Tiny::Class	2.010001
+Type::Tiny::ConstrainedObject	2.010001
+Type::Tiny::_DeclaredType	2.010001
+Type::Tiny::Duck	2.010001
+Type::Tiny::Enum	2.010001
+Type::Tiny::_HalfOp	2.010001
+Type::Tiny::Intersection	2.010001
+Type::Tiny::Role	2.010001
+Type::Tiny::Union	2.010001
+Type::Utils	2.010001

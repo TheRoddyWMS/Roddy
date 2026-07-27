@@ -1,0 +1,120 @@
+= dkfz_minimal package diff: 1.1.0 -> 1.1.0-testing
+:toc: left
+
+Software-inventory difference between the `dkfz_minimal` 1.1.0 and 1.1.0-testing images, for review.
+RPM and PyPI packages are derived from the Trivy CycloneDX SBOMs (`dkfz_minimal-1.1.0-testing.cyclonedx`).
+The CPAN modules are listed separately because Trivy does not inventory Perl dependencies,
+so they do not appear in the SBOM; the complete inventory is in `cpan-modules.txt`.
+
+NOTE: `1.1.0-testing` is a *test-only* image (`dkfz_minimal:1.1.0` plus test
+frameworks and code-quality tooling); it is not a production runtime, so the
+added packages never affect a real workflow environment.
+
+== Summary
+
+* PYPI added: 12
+* RPM added: 27
+* Packages removed: 0 (1.1.0-testing is a strict superset of 1.1.0)
+* CPAN added: 7 declared in `cpanfile` + transitive dependencies = 134 modules in `site_perl` (*not* in the Trivy SBOM; complete list in `cpan-modules.txt`)
+* shunit2: v2.1.8 (single script at `/opt/shunit2/shunit2`; not a package)
+
+== PYPI packages added
+
+[cols="3,2",options="header"]
+|===
+| Package | Version (1.1.0-testing)
+| `apipkg` | 2.0.0
+| `attrs` | 22.2.0
+| `importlib-metadata` | 4.8.3
+| `iniconfig` | 1.1.1
+| `packaging` | 21.3
+| `pluggy` | 1.0.0
+| `py` | 1.11.0
+| `pyparsing` | 3.1.4
+| `pytest` | 7.0.1
+| `tomli` | 1.2.3
+| `typing_extensions` | 4.1.1
+| `zipp` | 3.6.0
+|===
+
+== RPM packages added
+
+[cols="3,2",options="header"]
+|===
+| Package | Version (1.1.0-testing)
+| `gdbm-devel` | 1.10-8.el7
+| `libdb-devel` | 5.3.21-25.el7
+| `perl-CPAN-Meta` | 2.120921-5.el7
+| `perl-CPAN-Meta-Requirements` | 2.122-7.el7
+| `perl-CPAN-Meta-YAML` | 0.008-14.el7
+| `perl-ExtUtils-CBuilder` | 1:0.28.2.6-297.el7
+| `perl-ExtUtils-Embed` | 1.30-297.el7
+| `perl-ExtUtils-Install` | 1.58-297.el7
+| `perl-ExtUtils-MakeMaker` | 6.68-3.el7
+| `perl-ExtUtils-Manifest` | 1.61-244.el7
+| `perl-ExtUtils-ParseXS` | 1:3.18-3.el7
+| `perl-IPC-Cmd` | 1:0.80-4.el7
+| `perl-Locale-Maketext` | 1.23-3.el7
+| `perl-Locale-Maketext-Simple` | 1:0.21-297.el7
+| `perl-Module-Build` | 2:0.40.05-2.el7
+| `perl-Module-CoreList` | 1:2.76.02-297.el7
+| `perl-Module-Load` | 1:0.24-3.el7
+| `perl-Module-Load-Conditional` | 0.54-3.el7
+| `perl-Module-Metadata` | 1.000018-2.el7
+| `perl-Params-Check` | 1:0.38-2.el7
+| `perl-Parse-CPAN-Meta` | 1:1.4404-5.el7
+| `perl-Perl-OSType` | 1.003-3.el7
+| `perl-Test-Simple` | 0.98-243.el7
+| `perl-devel` | 4:5.16.3-297.el7
+| `perl-version` | 3:0.99.07-6.el7
+| `pyparsing` | 1.5.6-9.el7
+| `systemtap-sdt-devel` | 4.0-13.el7
+|===
+
+== CPAN modules added (via `cpanfile`; NOT in the Trivy SBOM)
+
+The 7 modules declared in `cpanfile` are listed below; their transitive
+dependencies bring the total to 134 modules installed in `site_perl`. See
+`cpan-modules.txt` for the complete inventory with versions.
+
+[cols="2,1,3",options="header"]
+|===
+| Module | Version | Role
+| `Const::Fast` | 0.014 | advised: immutable values (`const my $x`)
+| `Try::Tiny` | 0.12 | advised: safe try/catch
+| `Type::Tiny` | 2.010001 | advised: type constraints
+| `String::Util` | 1.36 | runtime dependency of `createpipes.pl`
+| `Perl::Tidy` | 20260705 | advised: formatter (dev/CI)
+| `Test::Warn` | 0.37 | test framework
+| `Test::Exception` | 0.43 | test framework
+|===
+
+== Interaction with `module load`ed interpreters
+
+The added packages do not interfere with the software the workflows activate via
+`module load` (the frozen `PERL_VERSION` / Python installations mounted into the
+container). This was verified against the built image; for Perl specifically:
+
+* *The modules live in the system Perl's `site_perl` only.* `cpanm` installed
+  them under `/usr/local/lib64/perl5` and `/usr/local/share/perl5`, which are on
+  the `@INC` of the container's *system* Perl (`/usr/bin/perl`, v5.16.3) and of
+  no other interpreter.
+* *`module load` selects a different `perl` with its own `@INC`.* A module-tree
+  Perl has its own installation prefix (e.g. `/software/.../perl/<version>/...`)
+  and therefore its own version-specific `@INC`; it does not read the system
+  Perl's `/usr/local/.../perl5` `site_perl`.
+* *Nothing forces the modules onto another interpreter.* `PERL5LIB` is empty in
+  the image and is not set by the container's `profile.d` scripts, so no global
+  search path leaks these modules into a `module load`ed Perl. This is precisely
+  why they were installed into `site_perl` rather than a Carton `local/` tree
+  behind a global `PERL5LIB` -- the latter *would* have been honoured by every
+  Perl, including a different-versioned one (a real risk, given XS ABI
+  compatibility).
+
+Residual case: a `module load`ed Perl that is itself 5.16.3 *and* configured with
+a Red-Hat-style `@INC` that includes `/usr/local/.../perl5` would additionally
+see these modules. That is purely additive -- all the added modules are
+pure-Perl -- and the module tree's own `@INC` entries precede the system
+`site_perl`. The same reasoning applies to `pytest` and a `module load`ed
+Python: it sits in the system Python 3.6 `site-packages`, `PYTHONPATH` is empty,
+and a module-loaded Python of another version uses its own `site-packages`.
