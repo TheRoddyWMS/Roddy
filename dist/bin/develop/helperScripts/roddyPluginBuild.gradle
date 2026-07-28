@@ -1,0 +1,218 @@
+/*
+ * Copyright (c) 2026 German Cancer Research Center (Deutsches Krebsforschungszentrum, DKFZ).
+ *
+ * Distributed under the MIT License (license terms are at https://www.github.com/theroddywms/Roddy/LICENSE.txt).
+ */
+
+// Shared Gradle build logic for Roddy plugins, shipped in the Roddy distribution
+// (dist/bin/<version>/helperScripts/) next to compileRoddyPlugin.sh. A plugin's
+// build.gradle applies it via:
+//
+//     apply from: "${roddyBaseDir}/dist/bin/${roddyVersion}/helperScripts/roddyPluginBuild.gradle"
+//
+// This is NOT a Gradle plugin -- just an applied script -- so a plugin can still
+// add dependencies or override settings AFTER the `apply from:` line.
+//
+// It compiles the plugin's JVM code (src/) and runs its Spock tests (test/src/),
+// and `./gradlew jar` packages + deploys <pluginName>.jar at the plugin top level
+// (thin jar; equivalent to compileRoddyPlugin.sh). The whole compile/runtime
+// classpath -- including the exact Groovy Roddy ships -- comes from the selected
+// Roddy distribution; only the test framework is fetched from Maven Central.
+//
+// Requires (set by the plugin's build.gradle, from -P properties):
+//   roddyBaseDir, roddyVersion, pluginsBaseDir
+// and the `groovy` plugin to be applied by the plugin's build.gradle.
+//
+// See ADR docs/developers/architecture/0001-ship-gradle-plugin-build-in-distribution.adoc.
+
+group = 'com.github.theroddywms'
+
+// The JVM is environment-provided (e.g. sdkman Java 8); only fix the bytecode level.
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+// --- Roddy distribution: compile/runtime classpath + the exact Groovy Roddy ships ---
+ext.roddyDist = new File(roddyBaseDir, "dist/bin/${roddyVersion}")
+if (!roddyDist.isDirectory())
+    throw new GradleException(
+            "Roddy distribution not found at '${roddyDist}'.\n" +
+            "  Build Roddy first (cd '${roddyBaseDir}' && ./gradlew build), or point at an\n" +
+            "  existing distribution via -ProddyBaseDir=<path> and/or -ProddyVersion=<version>.")
+
+// Roddy's compiled TEST classes (RoddyTestSpec etc.); Roddy's buildDir is
+// 'gradleBuild'. Only needed by specs that extend RoddyTestSpec.
+ext.roddyTestClasses = new File(roddyBaseDir, 'gradleBuild/classes/groovy/test')
+if (!roddyTestClasses.isDirectory())
+    logger.warn("WARNING: Roddy test classes not found at '${roddyTestClasses}'. Specs extending " +
+            "RoddyTestSpec will not compile until Roddy is built with tests " +
+            "(cd '${roddyBaseDir}' && ./gradlew testClasses).")
+
+// --- Plugin identity: name from the authoritative single *Plugin source file;
+//     the directory name is only cross-checked (mismatch -> warning). ---
+List<File> pluginClassSources = fileTree(dir: 'src', includes: ['**/*Plugin.groovy', '**/*Plugin.java']).files.toList()
+if (pluginClassSources.isEmpty())
+    throw new GradleException("No *Plugin.groovy/*Plugin.java found under src/ -- cannot determine the plugin name.")
+if (pluginClassSources.size() > 1)
+    throw new GradleException("Multiple plugin classes found under src/: ${pluginClassSources*.name}. " +
+            "A plugin must have exactly one *Plugin class.")
+File pluginClassSource = pluginClassSources.first()
+ext.pluginName = pluginClassSource.name.replaceFirst(/\.(groovy|java)$/, '')
+
+String dirPluginName = projectDir.name.replaceFirst(/_[0-9].*$/, '')
+if (pluginName != dirPluginName)
+    logger.warn("WARNING: plugin name from source (${pluginClassSource.name} -> '${pluginName}') does not " +
+            "match the directory ('${projectDir.name}' -> '${dirPluginName}').")
+
+// --- Version: buildversion.txt is the single source of truth. First line =
+//     version (major.minor), last line = build number; full = "<first>.<last>". ---
+List<String> buildVersionLines = file('buildversion.txt').readLines()*.trim().findAll { it }
+ext.pluginBuildNumber = buildVersionLines ? buildVersionLines.last() : '0'
+ext.pluginVersion     = buildVersionLines ? "${buildVersionLines.first()}.${pluginBuildNumber}".toString() : 'unknown'
+
+// Consistency check only (no mutation): warn if the version baked into the *Plugin
+// source has drifted from buildversion.txt.
+def versionMatcher = (pluginClassSource.text =~ /CURRENT_VERSION_STRING\s*=\s*"([^"]*)"/)
+if (versionMatcher.find() && versionMatcher.group(1) != pluginVersion)
+    logger.warn("WARNING: CURRENT_VERSION_STRING in ${pluginClassSource.name} is '${versionMatcher.group(1)}', " +
+            "but buildversion.txt says '${pluginVersion}'. buildversion.txt is authoritative; update the source " +
+            "(or buildversion.txt) before releasing.")
+
+// --- buildinfo.txt: Roddy API version + plugin dependencies ---
+Properties buildinfo = new Properties()
+file('buildinfo.txt').withInputStream { buildinfo.load(it) }
+
+// Roddy API version: warn but DO NOT fail on a mismatch, so a plugin can be
+// compiled/tested against a newer/development Roddy on purpose.
+Properties roddyDistInfo = new Properties()
+new File(roddyDist, 'buildinfo.txt').withInputStream { roddyDistInfo.load(it) }
+ext.pluginRoddyApi = (buildinfo.getProperty('RoddyAPIVersion') ?: '').trim()
+ext.roddyDistApi   = (roddyDistInfo.getProperty('RoddyAPIVersion') ?: '').trim()
+if (pluginRoddyApi && roddyDistApi && pluginRoddyApi != roddyDistApi)
+    logger.warn("WARNING: Roddy API mismatch -- this plugin targets RoddyAPIVersion=${pluginRoddyApi} " +
+            "(buildinfo.txt), but the selected Roddy distribution '${roddyDist}' provides ${roddyDistApi}. " +
+            "Compiling anyway (e.g. testing against a newer/development Roddy).")
+
+// Plugin dependencies (dependson=Name:Version[, ...]). Each can be pointed at an
+// exact directory with -Pplugin.<Name>=<dir>; otherwise looked up as
+// <pluginsBaseDir>/<Name>_<Version>/. A differing version is a warning, not an error.
+ext.pluginDependencyJars = ((buildinfo.getProperty('dependson') ?: '').trim()
+        .split(/[,;\s]+/) as List<String>).findAll { it }.collect { String entry ->
+    def (String depName, String requiredVersion) = entry.split(':', 2)
+    File depDir
+    Object override = project.findProperty("plugin.${depName}")
+    if (override) {
+        depDir = file(override.toString())
+        def m = (depDir.name =~ /^\Q${depName}\E_(.+)$/)
+        if (m.matches()) {
+            String providedVersion = m.group(1)
+            if (providedVersion != requiredVersion)
+                logger.warn("WARNING: plugin dependency '${depName}': using '${depDir}' " +
+                        "(version ${providedVersion}), but buildinfo.txt requires ${requiredVersion}.")
+        } else {
+            logger.warn("WARNING: plugin dependency '${depName}': cannot read a version from the override " +
+                    "directory name '${depDir.name}' (expected '${depName}_<version>'); " +
+                    "buildinfo.txt requires ${requiredVersion}.")
+        }
+    } else {
+        depDir = new File(pluginsBaseDir, "${depName}_${requiredVersion}")
+    }
+    File jar = new File(depDir, "${depName}.jar")
+    if (!jar.isFile())
+        throw new GradleException("Plugin dependency '${entry}' (buildinfo.txt) JAR not found at '${jar}'. " +
+                "Point at it with -Pplugin.${depName}=<dir>, or set -PpluginsBaseDir=<dir>.")
+    jar
+}
+
+// --- Git revision: `git describe --tags --always --dirty` (lightweight tags too,
+//     short hash when tag-less, '-dirty' on uncommitted tracked changes). ---
+ext.gitRevision = {
+    try {
+        String rev = ['git', '-C', projectDir.absolutePath, 'describe', '--tags', '--always', '--dirty']
+                .execute().text.trim()
+        return rev ?: 'unknown'
+    } catch (Exception e) {
+        logger.warn("Could not determine git revision for the manifest: ${e.message}")
+        return 'unknown'
+    }
+}()
+
+// --- Source layout (non-standard: src/ and test/src/) ---
+sourceSets {
+    main {
+        groovy { srcDirs = ['src'] }
+    }
+    test {
+        groovy    { srcDirs = ['test/src'] }
+        resources { srcDirs = ['test/resources'] }
+    }
+}
+
+repositories {
+    // Only for the test framework; every runtime library comes from the Roddy dist.
+    mavenCentral()
+}
+
+dependencies {
+    // Roddy classes + the exact Groovy Roddy ships + RoddyToolLib + BatchEuphoria
+    // + every runtime dependency, straight from the built distribution; plus the
+    // plugin dependencies declared in buildinfo.txt.
+    implementation files("${roddyDist}/Roddy.jar")
+    implementation fileTree(dir: new File(roddyDist, 'lib'), include: ['*.jar'])
+    implementation files(pluginDependencyJars)
+
+    // Test framework (not in a runtime dist); versions mirror Roddy/build.gradle.
+    // Spock's transitive Groovy is excluded -- Groovy comes from the Roddy dist.
+    testImplementation('org.spockframework:spock-core:1.3-groovy-2.4') {
+        exclude group: 'org.codehaus.groovy'
+    }
+    testImplementation 'junit:junit:4.13.2'
+    testRuntimeOnly    'net.bytebuddy:byte-buddy:1.14.9'   // Spock class-based mocks/stubs
+    testRuntimeOnly    'org.objenesis:objenesis:3.3'       // Spock class-based mocks/stubs
+
+    // RoddyTestSpec + helpers, reused from Roddy's compiled test classes.
+    testImplementation files(roddyTestClasses)
+}
+
+test {
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        exceptionFormat 'full'
+    }
+}
+
+// Package + deploy the plugin JAR at the plugin top level, by convention as
+// <pluginName>.jar (thin: compiled classes only; resources/ is not bundled).
+jar {
+    archiveFileName = "${pluginName}.jar".toString()
+    destinationDirectory = layout.projectDirectory
+    preserveFileTimestamps = false   // reproducible artifact -> avoids noisy diffs on the tracked jar
+    reproducibleFileOrder = true
+    manifest {
+        attributes([
+                'Implementation-Title'   : pluginName,
+                'Implementation-Version' : pluginVersion,
+                'Build-Number'           : pluginBuildNumber,
+                'Git-Revision'           : gitRevision,
+                'Roddy-API-Version'      : pluginRoddyApi,
+                'JDK-Version'            : (buildinfo.getProperty('JDKVersion') ?: '').trim(),
+                'Groovy-Version'         : (buildinfo.getProperty('GroovyVersion') ?: '').trim(),
+                'Built-Against-Roddy'    : "${roddyVersion} (API ${roddyDistApi})".toString(),
+        ])
+    }
+    doLast {
+        logger.lifecycle("""
+Built plugin JAR: ${new File(projectDir, pluginName + '.jar')}
+  Plugin:        ${pluginName}
+  Version:       ${pluginVersion}  (build ${pluginBuildNumber}; source of truth: buildversion.txt)
+  Git revision:  ${gitRevision}
+  Roddy API:     ${pluginRoddyApi}${pluginRoddyApi != roddyDistApi ? "  [built against API ${roddyDistApi} -- MISMATCH]" : ''}
+  Built against: Roddy '${roddyVersion}' at ${roddyDist}
+  JDK / Groovy:  ${(buildinfo.getProperty('JDKVersion') ?: '?').trim()} / ${(buildinfo.getProperty('GroovyVersion') ?: '?').trim()}
+
+  This build performs NO git operations. Commit the result yourself, e.g.:
+      git add ${pluginName}.jar buildversion.txt
+""".toString())
+    }
+}

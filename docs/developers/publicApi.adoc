@@ -1,0 +1,72 @@
+== Marking the public API with `@PublicApi`
+
+Roddy and its plugins share one package space and one class loader, so there is
+no language-level line between "classes other plugins are meant to use" and
+"internal helpers we are free to change". The `@PublicApi` annotation *declares*
+that line in the code.
+
+`de.dkfz.roddy.annotation.PublicApi`
+(`RoddyCore/src/de/dkfz/roddy/annotation/PublicApi.java`) marks a class or
+member as part of the public API -- something plugins (or other Roddy
+components) are meant to use. *Anything not annotated is internal and may change
+without notice.* It is provided once, centrally, in Roddy core so every plugin
+shares one marker instead of redefining its own.
+
+For the rationale, the runtime facts that bound what the marker can achieve, and
+the (deferred) enforcement options, see
+link:architecture/0002-provide-public-api-annotation-in-roddy.adoc[ADR 0002].
+
+=== Declaration, not enforcement
+
+The annotation is inert: it changes no behaviour, no access modifiers, and no
+class structure, and it has no runtime cost. It cannot be *enforced* in-JVM --
+Groovy 2.4 does not honour `private`, and all plugins load into a single shared
+class loader, so any boundary can be bypassed by cast, reflection, or dynamic
+Groovy calls. The guard is therefore code review plus the per-plugin
+interface-usage sweep, not the compiler. `@PublicApi` makes the boundary
+visible and greppable; it does not lock it.
+
+It uses `RetentionPolicy.CLASS` (present in the bytecode, not at runtime), which
+is enough for the bytecode-scanning tools (ArchUnit, japicmp-style API diffing)
+that any future enforcement would most likely use.
+
+=== How to apply it
+
+Annotate the API surface and leave everything else unannotated:
+
+* *Class level* -- for types whose whole surface is public (value and constant
+  types), annotate the type.
+* *Member level* -- for classes that mix public API with internal helpers,
+  annotate the individual public methods, constructors, and fields.
+
+[source,groovy]
+----
+import de.dkfz.roddy.annotation.PublicApi
+
+// Whole type is public API:
+@PublicApi
+class BasicBamFile extends BaseFile { ... }
+
+// Mixed class -- annotate only the members other plugins call:
+class COMetadataAccessor {
+
+    @PublicApi
+    List<BasicBamFile> getAllBamFiles(ExecutionContext context) { ... }
+
+    // no annotation -> internal, may change without notice
+    private BasicBamFile resolveMergedBamFile(...) { ... }
+}
+----
+
+Targets are `TYPE`, `METHOD`, `CONSTRUCTOR`, and `FIELD`.
+
+=== Version coupling and the interim comment form
+
+Using the annotation makes a plugin *depend on a Roddy version that ships it*.
+A plugin that cannot yet raise its required Roddy version may mark the same
+boundary with a greppable `// @PublicApi` *comment* at each site as an interim
+measure, and convert the comments to the real annotation once it depends on a
+Roddy version that provides it. Comment churn inside a plugin is cheaper and
+lower-risk than a premature cross-module code dependency, so the comment form is
+the default until the target Roddy version is settled (for example,
+`COWorkflowsBasePlugin` 2.0.0 uses the comment form).

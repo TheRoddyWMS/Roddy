@@ -1,0 +1,107 @@
+= ADR 0002: Provide a `@PublicApi` annotation centrally in Roddy
+:toc: macro
+
+*Status:* Accepted (2026-07-20)
+
+toc::[]
+
+== Context
+
+Roddy plugins live in a shared package/class-loader space. A *base plugin*
+(e.g. `COWorkflowsBasePlugin`) is used by many other plugins
+(AlignmentAndQCWorkflows, SNVCallingWorkflow, IndelCallingWorkflow,
+ACEseqWorkflow, CnvKitWorkflow, SophiaWorkflow, ...). Because there is no
+visible line between "classes other plugins are meant to use" (the public API)
+and "internal helpers we should be free to change", safe refactoring is hard.
+
+The pragmatic remedy is to *declare* that boundary in the code with a marker
+annotation, `@PublicApi`, on exactly the classes/members that are used from
+outside. Two runtime facts (verified on Groovy 2.4 / JDK 8) bound what such a
+marker can achieve:
+
+* Groovy does not enforce `private` — a private member is still reachable from
+  another class at runtime.
+* All plugins load into a single shared class loader, so any in-JVM boundary
+  can be bypassed (cast, reflection, dynamic Groovy calls).
+
+So the realistic goal is to *declare* the boundary clearly, not to lock it.
+
+`COWorkflowsBasePlugin` originally defined its own copy of this annotation
+(`de.dkfz.b080.co.PublicApi`; see its (now removed) plugin-local ADR
+"Mark the public JVM API with a `@PublicApi` annotation"). Redefining the same
+marker in every base plugin is duplication, and the annotation type would drift
+across plugins.
+
+== Decision
+
+Provide the annotation once, centrally, in Roddy core:
+
+* Type: `de.dkfz.roddy.annotation.PublicApi`
+  (`RoddyCore/src/de/dkfz/roddy/annotation/PublicApi.java`).
+* Retention `CLASS`, targets `TYPE`, `METHOD`, `CONSTRUCTOR`, `FIELD`.
+* Inert: it changes no behaviour, no access modifiers, no class structure, and
+  has no runtime cost. It is documentation that lives next to the code, is
+  greppable, and can be checked in review.
+
+The package is a new `de.dkfz.roddy.annotation` subpackage. It does not collide
+with any plugin's existing `PublicApi` (plugins are under their own package
+roots, e.g. `de.dkfz.b080.co`), it is general rather than tied to
+`de.dkfz.roddy.plugins`, and it leaves room for a future family of API-contract
+annotations (e.g. `@Internal`, `@Beta`).
+
+== Consequences for plugins
+
+* A plugin that annotates its API with `de.dkfz.roddy.annotation.PublicApi`
+  *depends on a Roddy version that ships it*. This version coupling is
+  accepted.
+* Plugins that cannot yet raise their required Roddy version may mark the same
+  boundary with a greppable `// @PublicApi` *comment* at each site as an interim
+  measure, and convert the comments to the annotation once they depend on a
+  Roddy version that provides it. Comment churn inside a plugin is cheaper and
+  lower-risk than a premature cross-module code dependency, so the interim
+  comment form is the default until the target Roddy version is settled.
+  `COWorkflowsBasePlugin` 2.0.0 uses this interim comment form.
+
+== Alternatives considered
+
+The heavier options for *enforcing* the boundary were considered and deferred
+when the annotation was first introduced; they are unchanged by centralizing
+the marker:
+
+* *Access modifiers* (`private`/`protected`) — Groovy 2.4 ignores `private`,
+  and consumers sit in sibling packages, so package-private access does not
+  help. Not a real barrier.
+* *`final` on non-overridable methods* — Groovy 2.4 does enforce `final` against
+  subclassing (a useful future refinement), but it addresses *overriding*, not
+  *calling*.
+* *Facade / delegation* — technically works, but a sizeable, interface-breaking
+  change to how workflows are written, and still not hard-enforced given the
+  shared class loader.
+* *Split into API and `...impl` packages* — more churn than needed and, without
+  a module system, still only a naming convention.
+* *Automated enforcement* (textual reference audit, ArchUnit, an API-only
+  compile artifact) — worth doing only if real guarantees are later needed; the
+  `@PublicApi` set is exactly the input those tools would consume, so nothing is
+  wasted by starting with the annotation.
+
+Retention `CLASS` (not `RUNTIME`) is sufficient for the bytecode-scanning tools
+(ArchUnit, japicmp-style diffing) that any future enforcement would most likely
+use; it can be revisited if runtime/reflection-based checks are ever wanted.
+
+== Why just the annotation
+
+* Cheap and non-intrusive: one annotation type, one line per member; no
+  behaviour, structure, or access changes; no runtime cost.
+* Solves the actual pain: it makes the API/internal boundary visible in the code
+  and in review.
+* Honest about limits: given Groovy's soft `private` and the shared class
+  loader, the heavier options do not buy *hard* enforcement anyway.
+* Not a dead end: it is the input that the audit / ArchUnit / API-artifact
+  options would consume, and the `final` and `...impl`-split refinements build
+  on top.
+
+== Status of enforcement
+
+None. This is documentation, not enforcement. The guard is code review plus the
+usage sweep in the per-plugin interface-identification task. Internals are not
+physically separated.

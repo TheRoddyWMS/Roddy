@@ -1,0 +1,152 @@
+= Building and Testing Roddy Plugins with Gradle
+
+Roddy ships a shared Gradle build script,
+`dist/bin/<version>/helperScripts/roddyPluginBuild.gradle`, that compiles a
+plugin's JVM code (`src/`), runs its Spock tests (`test/src/`), and packages and
+deploys the plugin JAR. It is the Gradle counterpart of `compileRoddyPlugin.sh`
+and is maintained here, in Roddy, so every plugin shares one implementation. See
+link:../architecture/0001-ship-gradle-plugin-build-in-distribution.adoc[ADR 0001].
+
+This is the *recommended* way to build and test a plugin that ships a
+`build.gradle` (it also runs the Spock test suite, which the command-line
+compiler does not). It applies only to such plugins; a plugin without a
+`build.gradle` -- e.g. a native or older plugin -- is compiled with the
+command-line `roddy.sh compileplugin` mode instead, see
+link:compilingPlugins.adoc[Compiling plugins from the command line].
+
+The whole compile/runtime classpath -- including the exact Groovy that Roddy
+ships -- is taken from a *built Roddy distribution*, so a plugin re-pins nothing
+except the test framework. The JVM itself is environment-provided (Java 8, e.g.
+via sdkman); the build only fixes the target bytecode level.
+
+== A plugin's build files
+
+Each plugin carries a minimal `build.gradle` and `settings.gradle`:
+
+.build.gradle
+[source,groovy]
+----
+plugins { id 'groovy' }
+
+ext.roddyBaseDir   = file(project.findProperty('roddyBaseDir') ?: "${projectDir}/../../Roddy")
+ext.roddyVersion   = (project.findProperty('roddyVersion') ?: 'develop').toString()
+ext.pluginsBaseDir = file(project.findProperty('pluginsBaseDir') ?: projectDir.parentFile)
+
+apply from: "${roddyBaseDir}/dist/bin/${roddyVersion}/helperScripts/roddyPluginBuild.gradle"
+----
+
+.settings.gradle
+[source,groovy]
+----
+rootProject.name = settingsDir.name
+----
+
+It is applied with `apply from:` (not as a Gradle plugin), so a plugin can add
+dependencies or override settings *after* the `apply` line -- see
+<<extending>>.
+
+== Prerequisites
+
+1. A built Roddy distribution at `<roddyBaseDir>/dist/bin/<roddyVersion>`
+   (`Roddy.jar` + `lib/` with `groovy-all`, `RoddyToolLib`, `BatchEuphoria`, ...).
+   Released versions are present in a Roddy checkout; for `develop`, build Roddy
+   first: `cd <roddyBaseDir> && ./gradlew build`.
+2. For specs that extend `RoddyTestSpec` (most of them): Roddy's compiled *test*
+   classes at `<roddyBaseDir>/gradleBuild/classes/groovy/test`. Produce them with
+   `cd <roddyBaseDir> && ./gradlew testClasses`. (`RoddyTestSpec` is Roddy
+   test-only code and is not in the runtime dist.)
+3. The plugin dependencies declared in the plugin's `buildinfo.txt`
+   (`dependson=...`), built as `<pluginsBaseDir>/<Name>_<Version>/<Name>.jar`.
+
+== Running
+
+From the plugin directory:
+
+[source,bash]
+----
+./gradlew test        # compile src/ + test/src/ and run the Spock suite
+./gradlew jar         # also deploy <pluginName>.jar next to buildinfo.txt
+----
+
+Run a single spec / feature:
+
+[source,bash]
+----
+./gradlew test --tests '*COMetadataAccessorSpec'
+----
+
+== Configuration (command-line properties)
+
+[cols="2,3,2", options="header"]
+|===
+| Property | Meaning | Default
+
+| `-ProddyBaseDir=<path>`
+| Roddy base directory (checkout / dist root). A relative path is resolved
+  against the plugin directory.
+| `<plugin>/../../Roddy`
+
+| `-ProddyVersion=<version>`
+| Which `dist/bin/<version>` to build/test against. A `RoddyAPIVersion`
+  differing from the plugin's `buildinfo.txt` is a warning, not an error, so you
+  can build against a newer/development Roddy on purpose.
+| `develop`
+
+| `-PpluginsBaseDir=<path>`
+| Directory holding the built `dependson` plugins (`<Name>_<Version>/`).
+| the plugin's parent directory
+
+| `-Pplugin.<Name>=<path>`
+| Exact directory for one dependency plugin (containing `<Name>.jar`); overrides
+  the `-PpluginsBaseDir` lookup for that plugin. A version differing from
+  `buildinfo.txt` is a warning, not an error.
+| (convention lookup)
+|===
+
+If the Roddy dist or a declared plugin dependency is missing, the build fails
+fast, naming the expected path and the property to override.
+
+== The plugin JAR
+
+`./gradlew jar` writes `<pluginName>.jar` at the plugin top level (thin jar,
+compiled classes only -- the plugin's `resources/` tree is not bundled),
+equivalent to `compileRoddyPlugin.sh`.
+
+* The plugin name is read from the single `*Plugin` source class (the directory
+  name is only cross-checked; two `*Plugin` classes is an error). The version is
+  read from `buildversion.txt` (first line = version, last line = build number).
+  The build never mutates sources; it only *warns* if the `*Plugin`
+  `CURRENT_VERSION_STRING` has drifted from `buildversion.txt`.
+* The JAR manifest records title, version, build number, **git revision**
+  (`git describe --tags --always --dirty`), Roddy API version, JDK/Groovy, and
+  the Roddy distribution it was built against.
+* The build performs *no* git operations -- it reminds you to
+  `git add <pluginName>.jar buildversion.txt` yourself.
+
+[[extending]]
+== Extending / overriding in a plugin
+
+Because the script is applied into the plugin's own project, anything *after* the
+`apply from:` line adds to or overrides it (Gradle configuration is order-sensitive).
+For example, to add a test library:
+
+[source,groovy]
+----
+apply from: "${roddyBaseDir}/dist/bin/${roddyVersion}/helperScripts/roddyPluginBuild.gradle"
+
+dependencies {
+    testImplementation 'org.hamcrest:hamcrest:2.2'   // added on top of the shared deps
+}
+----
+
+Scalar settings (e.g. `jar` configuration, `sourceCompatibility`) can likewise
+be reconfigured after the `apply`. Removing something the shared script added is
+the only awkward case; adding and overriding are straightforward.
+
+== Notes / limitations
+
+* This suite is not wired into a plugin's own GitLab CI, because it needs a built
+  Roddy distribution and Roddy's test classes, which a plugin repo alone does not
+  provide.
+* Only Roddy distributions new enough to ship `roddyPluginBuild.gradle` support
+  Gradle-building plugins.
